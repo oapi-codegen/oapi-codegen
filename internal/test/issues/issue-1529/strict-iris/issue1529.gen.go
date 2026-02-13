@@ -17,7 +17,8 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/gorilla/mux"
+	"github.com/kataras/iris/v12"
+	strictiris "github.com/oapi-codegen/runtime/strictmiddleware/iris"
 )
 
 // Test defines model for Test.
@@ -263,157 +264,133 @@ func ParseTestResponse(rsp *http.Response) (*TestResponse, error) {
 type ServerInterface interface {
 
 	// (GET /test)
-	Test(w http.ResponseWriter, r *http.Request)
+	Test(ctx iris.Context)
 }
 
-// ServerInterfaceWrapper converts contexts to parameters.
+// ServerInterfaceWrapper converts echo contexts to parameters.
 type ServerInterfaceWrapper struct {
-	Handler            ServerInterface
-	HandlerMiddlewares []MiddlewareFunc
-	ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
+	Handler ServerInterface
 }
 
-type MiddlewareFunc func(http.Handler) http.Handler
+type MiddlewareFunc iris.Handler
+
+// Test converts iris context to params.
+func (w *ServerInterfaceWrapper) Test(ctx iris.Context) {
+
+	// Invoke the callback with all the unmarshaled arguments
+	w.Handler.Test(ctx)
+}
+
+// IrisServerOption is the option for iris server
+type IrisServerOptions struct {
+	BaseURL     string
+	Middlewares []MiddlewareFunc
+}
+
+// RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
+func RegisterHandlers(router *iris.Application, si ServerInterface) {
+	RegisterHandlersWithOptions(router, si, IrisServerOptions{})
+}
+
+// RegisterHandlersWithOptions creates http.Handler with additional options
+func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, options IrisServerOptions) {
+
+	wrapper := ServerInterfaceWrapper{
+		Handler: si,
+	}
+
+	router.Get(options.BaseURL+"/test", wrapper.Test)
+
+	router.Build()
+}
+
+type TestRequestObject struct {
+}
+
+type TestResponseObject interface {
+	VisitTestResponse(ctx iris.Context) error
+}
+
+type Test200JSONResponse Test
+
+func (response Test200JSONResponse) VisitTestResponse(ctx iris.Context) error {
+	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
+	ctx.StatusCode(200)
+
+	return ctx.JSON(&response)
+}
+
+type Test200ApplicationJSONProfileBarResponse Test
+
+func (response Test200ApplicationJSONProfileBarResponse) VisitTestResponse(ctx iris.Context) error {
+	ctx.ResponseWriter().Header().Set("Content-Type", "application/json; profile=\"Bar\"")
+	ctx.StatusCode(200)
+
+	return ctx.JSON(&response)
+}
+
+type Test200ApplicationJSONProfileFooResponse Test
+
+func (response Test200ApplicationJSONProfileFooResponse) VisitTestResponse(ctx iris.Context) error {
+	ctx.ResponseWriter().Header().Set("Content-Type", "application/json; profile=\"Foo\"")
+	ctx.StatusCode(200)
+
+	return ctx.JSON(&response)
+}
+
+// StrictServerInterface represents all server handlers.
+type StrictServerInterface interface {
+
+	// (GET /test)
+	Test(ctx context.Context, request TestRequestObject) (TestResponseObject, error)
+}
+
+type StrictHandlerFunc = strictiris.StrictIrisHandlerFunc
+type StrictMiddlewareFunc = strictiris.StrictIrisMiddlewareFunc
+
+func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
+	return &strictHandler{ssi: ssi, middlewares: middlewares}
+}
+
+type strictHandler struct {
+	ssi         StrictServerInterface
+	middlewares []StrictMiddlewareFunc
+}
 
 // Test operation middleware
-func (siw *ServerInterfaceWrapper) Test(w http.ResponseWriter, r *http.Request) {
+func (sh *strictHandler) Test(ctx iris.Context) {
+	var request TestRequestObject
 
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.Test(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
+	handler := func(ctx iris.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.Test(ctx, request.(TestRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "Test")
 	}
 
-	handler.ServeHTTP(w, r)
-}
+	response, err := handler(ctx, request)
 
-type UnescapedCookieParamError struct {
-	ParamName string
-	Err       error
-}
-
-func (e *UnescapedCookieParamError) Error() string {
-	return fmt.Sprintf("error unescaping cookie parameter '%s'", e.ParamName)
-}
-
-func (e *UnescapedCookieParamError) Unwrap() error {
-	return e.Err
-}
-
-type UnmarshalingParamError struct {
-	ParamName string
-	Err       error
-}
-
-func (e *UnmarshalingParamError) Error() string {
-	return fmt.Sprintf("Error unmarshaling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
-}
-
-func (e *UnmarshalingParamError) Unwrap() error {
-	return e.Err
-}
-
-type RequiredParamError struct {
-	ParamName string
-}
-
-func (e *RequiredParamError) Error() string {
-	return fmt.Sprintf("Query argument %s is required, but not found", e.ParamName)
-}
-
-type RequiredHeaderError struct {
-	ParamName string
-	Err       error
-}
-
-func (e *RequiredHeaderError) Error() string {
-	return fmt.Sprintf("Header parameter %s is required, but not found", e.ParamName)
-}
-
-func (e *RequiredHeaderError) Unwrap() error {
-	return e.Err
-}
-
-type InvalidParamFormatError struct {
-	ParamName string
-	Err       error
-}
-
-func (e *InvalidParamFormatError) Error() string {
-	return fmt.Sprintf("Invalid format for parameter %s: %s", e.ParamName, e.Err.Error())
-}
-
-func (e *InvalidParamFormatError) Unwrap() error {
-	return e.Err
-}
-
-type TooManyValuesForParamError struct {
-	ParamName string
-	Count     int
-}
-
-func (e *TooManyValuesForParamError) Error() string {
-	return fmt.Sprintf("Expected one value for %s, got %d", e.ParamName, e.Count)
-}
-
-// Handler creates http.Handler with routing matching OpenAPI spec.
-func Handler(si ServerInterface) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{})
-}
-
-type GorillaServerOptions struct {
-	BaseURL          string
-	BaseRouter       *mux.Router
-	Middlewares      []MiddlewareFunc
-	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
-}
-
-// HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *mux.Router) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
-		BaseRouter: r,
-	})
-}
-
-func HandlerFromMuxWithBaseURL(si ServerInterface, r *mux.Router, baseURL string) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
-		BaseURL:    baseURL,
-		BaseRouter: r,
-	})
-}
-
-// HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.Handler {
-	r := options.BaseRouter
-
-	if r == nil {
-		r = mux.NewRouter()
-	}
-	if options.ErrorHandlerFunc == nil {
-		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+	if err != nil {
+		ctx.StopWithError(http.StatusBadRequest, err)
+		return
+	} else if validResponse, ok := response.(TestResponseObject); ok {
+		if err := validResponse.VisitTestResponse(ctx); err != nil {
+			ctx.StopWithError(http.StatusBadRequest, err)
+			return
 		}
+	} else if response != nil {
+		ctx.Writef("Unexpected response type: %T", response)
+		return
 	}
-	wrapper := ServerInterfaceWrapper{
-		Handler:            si,
-		HandlerMiddlewares: options.Middlewares,
-		ErrorHandlerFunc:   options.ErrorHandlerFunc,
-	}
-
-	r.HandleFunc(options.BaseURL+"/test", wrapper.Test).Methods("GET")
-
-	return r
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/6zPMUsDQRAF4L9yPC2Pu1O7FQstBHvLNOveXLLhMjPsToQQ9r/LroGApaR6U8z7mDkj",
-	"yEGFiS3DnZHDjg6+jZ+UraadlOAgX3sKhlJKj8iLwPFxXXuIEnuNcHgapuEBPdTbrgmjXYgttRCl5C0K",
-	"f8xwv36PRFmFM7XG4zTVCMJG3DpedY2htcZ9Fr4eWaf7RAsc7sbrF+PlhbH59dq/xHOnSZa40ssGbz5t",
-	"cGPzXeQfZukxUw4pakXh8Bosfkc7datsu0R2TEzzUDdLKT8BAAD//8FqmYK4AQAA",
+	"H4sIAAAAAAAC/6zPMUsEMRAF4L8iT8twWbWL2FgI9pbXxDjr5cjNDMlYyLL/XRIXFizFad4072NmQZKL",
+	"ChNbQ1jQ0okucayv1KynfSkhQN7OlAzrujpkngWBP0txECWOmhFwf5gOt3DQaKcheNuIDxohSjVaFn55",
+	"R/jxHSo1FW40GnfT1CMJG/HoRNWS02j5cxPej+zbTaUZAdd+/8JvL/jh92t/Ew9XWmXOhR6PeIr1iH82",
+	"n0X+YG7zHQAA//9fnz6pkQEAAA==",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

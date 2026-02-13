@@ -9,7 +9,6 @@ paths:
       operationId: test
       responses:
         200:
-          description: Activity log returned.
           content:
             application/json:
               schema:
