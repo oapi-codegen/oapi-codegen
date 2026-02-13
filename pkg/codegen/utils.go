@@ -1007,7 +1007,7 @@ func renameRequestBody(requestBodyName string, requestBodyRef *openapi3.RequestB
 // if the schema wasn't found, and it'll only work successfully for schemas
 // defined within the spec that we parsed.
 func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
-	if spec.Components == nil {
+	if spec == nil || spec.Components == nil {
 		return "", nil
 	}
 	pathElements := strings.Split(refPath, "/")
