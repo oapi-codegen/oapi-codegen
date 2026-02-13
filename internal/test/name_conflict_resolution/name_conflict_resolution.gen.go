@@ -38,6 +38,12 @@ type GetStatusResponse struct {
 	Timestamp *string `json:"timestamp,omitempty"`
 }
 
+// JsonPatch defines model for JsonPatch.
+type JsonPatch = []struct {
+	Op   *string `json:"op,omitempty"`
+	Path *string `json:"path,omitempty"`
+}
+
 // ListItemsResponse defines model for ListItemsResponse.
 type ListItemsResponse = string
 
@@ -69,6 +75,19 @@ type CustomQux struct {
 	Label *string `json:"label,omitempty"`
 }
 
+// Resource defines model for Resource.
+type Resource struct {
+	Id     *string `json:"id,omitempty"`
+	Name   *string `json:"name,omitempty"`
+	Status *string `json:"status,omitempty"`
+}
+
+// ResourceMVO defines model for Resource_MVO.
+type ResourceMVO struct {
+	Name   *string `json:"name,omitempty"`
+	Status *string `json:"status,omitempty"`
+}
+
 // Widget defines model for Widget.
 type Widget = string
 
@@ -77,6 +96,34 @@ type Zap = string
 
 // BarParameter defines model for Bar.
 type BarParameter = string
+
+// N200ResourcePatchResponseJSONApplicationJSON defines model for 200Resource_Patch.
+type N200ResourcePatchResponseJSONApplicationJSON = Resource
+
+// N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON defines model for 200Resource_Patch.
+type N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON struct {
+	union json.RawMessage
+}
+
+// N200ResourcePatchApplicationJSONPatchPlusJSON1 defines model for .
+type N200ResourcePatchApplicationJSONPatchPlusJSON1 = []Resource
+
+// N200ResourcePatchApplicationJSONPatchPlusJSON2 defines model for .
+type N200ResourcePatchApplicationJSONPatchPlusJSON2 = string
+
+// N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON defines model for 200Resource_Patch.
+type N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON struct {
+	union json.RawMessage
+}
+
+// N200ResourcePatchApplicationJSONPatchQueryPlusJSON1 defines model for .
+type N200ResourcePatchApplicationJSONPatchQueryPlusJSON1 = []Resource
+
+// N200ResourcePatchApplicationJSONPatchQueryPlusJSON2 defines model for .
+type N200ResourcePatchApplicationJSONPatchQueryPlusJSON2 = string
+
+// N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON defines model for 200Resource_Patch.
+type N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON = Resource
 
 // BarResponse defines model for Bar.
 type BarResponse struct {
@@ -122,6 +169,15 @@ type PetRequestBody struct {
 	Name    *string `json:"name,omitempty"`
 	Species *string `json:"species,omitempty"`
 }
+
+// ResourceMVORequestBodyJSON defines model for Resource_MVO.
+type ResourceMVORequestBodyJSON = ResourceMVO
+
+// ResourceMVORequestBodyJSON2 defines model for Resource_MVO.
+type ResourceMVORequestBodyJSON2 = JsonPatch
+
+// ResourceMVORequestBodyJSON3 defines model for Resource_MVO.
+type ResourceMVORequestBodyJSON3 = ResourceMVO
 
 // PostFooJSONBody defines parameters for PostFoo.
 type PostFooJSONBody struct {
@@ -191,8 +247,193 @@ type QueryJSONRequestBody QueryJSONBody
 // PostQuxJSONRequestBody defines body for PostQux for application/json ContentType.
 type PostQuxJSONRequestBody = Qux
 
+// PatchResourceJSONRequestBody defines body for PatchResource for application/json ContentType.
+type PatchResourceJSONRequestBody = ResourceMVO
+
+// PatchResourceApplicationJSONPatchPlusJSONRequestBody defines body for PatchResource for application/json-patch+json ContentType.
+type PatchResourceApplicationJSONPatchPlusJSONRequestBody = JsonPatch
+
+// PatchResourceApplicationMergePatchPlusJSONRequestBody defines body for PatchResource for application/merge-patch+json ContentType.
+type PatchResourceApplicationMergePatchPlusJSONRequestBody = ResourceMVO
+
 // PostZapJSONRequestBody defines body for PostZap for application/json ContentType.
 type PostZapJSONRequestBody = Zap
+
+// AsResource returns the union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON as a Resource
+func (t N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) AsResource() (Resource, error) {
+	var body Resource
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromResource overwrites any union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON as the provided Resource
+func (t *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) FromResource(v Resource) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeResource performs a merge with any union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON, using the provided Resource
+func (t *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) MergeResource(v Resource) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsN200ResourcePatchApplicationJSONPatchPlusJSON1 returns the union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON as a N200ResourcePatchApplicationJSONPatchPlusJSON1
+func (t N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) AsN200ResourcePatchApplicationJSONPatchPlusJSON1() (N200ResourcePatchApplicationJSONPatchPlusJSON1, error) {
+	var body N200ResourcePatchApplicationJSONPatchPlusJSON1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromN200ResourcePatchApplicationJSONPatchPlusJSON1 overwrites any union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON as the provided N200ResourcePatchApplicationJSONPatchPlusJSON1
+func (t *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) FromN200ResourcePatchApplicationJSONPatchPlusJSON1(v N200ResourcePatchApplicationJSONPatchPlusJSON1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeN200ResourcePatchApplicationJSONPatchPlusJSON1 performs a merge with any union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON, using the provided N200ResourcePatchApplicationJSONPatchPlusJSON1
+func (t *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) MergeN200ResourcePatchApplicationJSONPatchPlusJSON1(v N200ResourcePatchApplicationJSONPatchPlusJSON1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsN200ResourcePatchApplicationJSONPatchPlusJSON2 returns the union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON as a N200ResourcePatchApplicationJSONPatchPlusJSON2
+func (t N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) AsN200ResourcePatchApplicationJSONPatchPlusJSON2() (N200ResourcePatchApplicationJSONPatchPlusJSON2, error) {
+	var body N200ResourcePatchApplicationJSONPatchPlusJSON2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromN200ResourcePatchApplicationJSONPatchPlusJSON2 overwrites any union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON as the provided N200ResourcePatchApplicationJSONPatchPlusJSON2
+func (t *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) FromN200ResourcePatchApplicationJSONPatchPlusJSON2(v N200ResourcePatchApplicationJSONPatchPlusJSON2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeN200ResourcePatchApplicationJSONPatchPlusJSON2 performs a merge with any union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON, using the provided N200ResourcePatchApplicationJSONPatchPlusJSON2
+func (t *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) MergeN200ResourcePatchApplicationJSONPatchPlusJSON2(v N200ResourcePatchApplicationJSONPatchPlusJSON2) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsResource returns the union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON as a Resource
+func (t N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) AsResource() (Resource, error) {
+	var body Resource
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromResource overwrites any union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON as the provided Resource
+func (t *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) FromResource(v Resource) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeResource performs a merge with any union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON, using the provided Resource
+func (t *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) MergeResource(v Resource) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsN200ResourcePatchApplicationJSONPatchQueryPlusJSON1 returns the union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON as a N200ResourcePatchApplicationJSONPatchQueryPlusJSON1
+func (t N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) AsN200ResourcePatchApplicationJSONPatchQueryPlusJSON1() (N200ResourcePatchApplicationJSONPatchQueryPlusJSON1, error) {
+	var body N200ResourcePatchApplicationJSONPatchQueryPlusJSON1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromN200ResourcePatchApplicationJSONPatchQueryPlusJSON1 overwrites any union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON as the provided N200ResourcePatchApplicationJSONPatchQueryPlusJSON1
+func (t *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) FromN200ResourcePatchApplicationJSONPatchQueryPlusJSON1(v N200ResourcePatchApplicationJSONPatchQueryPlusJSON1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeN200ResourcePatchApplicationJSONPatchQueryPlusJSON1 performs a merge with any union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON, using the provided N200ResourcePatchApplicationJSONPatchQueryPlusJSON1
+func (t *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) MergeN200ResourcePatchApplicationJSONPatchQueryPlusJSON1(v N200ResourcePatchApplicationJSONPatchQueryPlusJSON1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsN200ResourcePatchApplicationJSONPatchQueryPlusJSON2 returns the union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON as a N200ResourcePatchApplicationJSONPatchQueryPlusJSON2
+func (t N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) AsN200ResourcePatchApplicationJSONPatchQueryPlusJSON2() (N200ResourcePatchApplicationJSONPatchQueryPlusJSON2, error) {
+	var body N200ResourcePatchApplicationJSONPatchQueryPlusJSON2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromN200ResourcePatchApplicationJSONPatchQueryPlusJSON2 overwrites any union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON as the provided N200ResourcePatchApplicationJSONPatchQueryPlusJSON2
+func (t *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) FromN200ResourcePatchApplicationJSONPatchQueryPlusJSON2(v N200ResourcePatchApplicationJSONPatchQueryPlusJSON2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeN200ResourcePatchApplicationJSONPatchQueryPlusJSON2 performs a merge with any union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON, using the provided N200ResourcePatchApplicationJSONPatchQueryPlusJSON2
+func (t *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) MergeN200ResourcePatchApplicationJSONPatchQueryPlusJSON2(v N200ResourcePatchApplicationJSONPatchQueryPlusJSON2) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -309,6 +550,15 @@ type ClientInterface interface {
 	PostQuxWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostQux(ctx context.Context, body PostQuxJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PatchResourceWithBody request with any body
+	PatchResourceWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PatchResource(ctx context.Context, id string, body PatchResourceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PatchResourceWithApplicationJSONPatchPlusJSONBody(ctx context.Context, id string, body PatchResourceApplicationJSONPatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PatchResourceWithApplicationMergePatchPlusJSONBody(ctx context.Context, id string, body PatchResourceApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetStatus request
 	GetStatus(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -516,6 +766,54 @@ func (c *Client) PostQuxWithBody(ctx context.Context, contentType string, body i
 
 func (c *Client) PostQux(ctx context.Context, body PostQuxJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostQuxRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchResourceWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchResourceRequestWithBody(c.Server, id, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchResource(ctx context.Context, id string, body PatchResourceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchResourceRequest(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchResourceWithApplicationJSONPatchPlusJSONBody(ctx context.Context, id string, body PatchResourceApplicationJSONPatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchResourceRequestWithApplicationJSONPatchPlusJSONBody(c.Server, id, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PatchResourceWithApplicationMergePatchPlusJSONBody(ctx context.Context, id string, body PatchResourceApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchResourceRequestWithApplicationMergePatchPlusJSONBody(c.Server, id, body)
 	if err != nil {
 		return nil, err
 	}
@@ -939,6 +1237,75 @@ func NewPostQuxRequestWithBody(server string, contentType string, body io.Reader
 	return req, nil
 }
 
+// NewPatchResourceRequest calls the generic PatchResource builder with application/json body
+func NewPatchResourceRequest(server string, id string, body PatchResourceJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPatchResourceRequestWithBody(server, id, "application/json", bodyReader)
+}
+
+// NewPatchResourceRequestWithApplicationJSONPatchPlusJSONBody calls the generic PatchResource builder with application/json-patch+json body
+func NewPatchResourceRequestWithApplicationJSONPatchPlusJSONBody(server string, id string, body PatchResourceApplicationJSONPatchPlusJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPatchResourceRequestWithBody(server, id, "application/json-patch+json", bodyReader)
+}
+
+// NewPatchResourceRequestWithApplicationMergePatchPlusJSONBody calls the generic PatchResource builder with application/merge-patch+json body
+func NewPatchResourceRequestWithApplicationMergePatchPlusJSONBody(server string, id string, body PatchResourceApplicationMergePatchPlusJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPatchResourceRequestWithBody(server, id, "application/merge-patch+json", bodyReader)
+}
+
+// NewPatchResourceRequestWithBody generates requests for PatchResource with any type of body
+func NewPatchResourceRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/resources/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetStatusRequest generates requests for GetStatus
 func NewGetStatusRequest(server string) (*http.Request, error) {
 	var err error
@@ -1118,6 +1485,15 @@ type ClientWithResponsesInterface interface {
 	PostQuxWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostQuxResponse, error)
 
 	PostQuxWithResponse(ctx context.Context, body PostQuxJSONRequestBody, reqEditors ...RequestEditorFn) (*PostQuxResponse, error)
+
+	// PatchResourceWithBodyWithResponse request with any body
+	PatchResourceWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error)
+
+	PatchResourceWithResponse(ctx context.Context, id string, body PatchResourceJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error)
+
+	PatchResourceWithApplicationJSONPatchPlusJSONBodyWithResponse(ctx context.Context, id string, body PatchResourceApplicationJSONPatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error)
+
+	PatchResourceWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, id string, body PatchResourceApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error)
 
 	// GetStatusWithResponse request
 	GetStatusWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetStatusResponse2, error)
@@ -1325,6 +1701,35 @@ func (r PostQuxResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PostQuxResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PatchResourceResponse struct {
+	Body                             []byte
+	HTTPResponse                     *http.Response
+	JSON200                          *N200ResourcePatchResponseJSONApplicationJSON
+	ApplicationjsonPatchJSON200      *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON
+	ApplicationjsonPatchQueryJSON200 *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON
+	ApplicationmergePatchJSON200     *N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON
+}
+type PatchResource200ApplicationJSONPatchPlusJSON1 = []Resource
+type PatchResource200ApplicationJSONPatchPlusJSON2 = string
+type PatchResource200ApplicationJSONPatchQueryPlusJSON1 = []Resource
+type PatchResource200ApplicationJSONPatchQueryPlusJSON2 = string
+
+// Status returns HTTPResponse.Status
+func (r PatchResourceResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PatchResourceResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1539,6 +1944,39 @@ func (c *ClientWithResponses) PostQuxWithResponse(ctx context.Context, body Post
 		return nil, err
 	}
 	return ParsePostQuxResponse(rsp)
+}
+
+// PatchResourceWithBodyWithResponse request with arbitrary body returning *PatchResourceResponse
+func (c *ClientWithResponses) PatchResourceWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error) {
+	rsp, err := c.PatchResourceWithBody(ctx, id, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchResourceResponse(rsp)
+}
+
+func (c *ClientWithResponses) PatchResourceWithResponse(ctx context.Context, id string, body PatchResourceJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error) {
+	rsp, err := c.PatchResource(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchResourceResponse(rsp)
+}
+
+func (c *ClientWithResponses) PatchResourceWithApplicationJSONPatchPlusJSONBodyWithResponse(ctx context.Context, id string, body PatchResourceApplicationJSONPatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error) {
+	rsp, err := c.PatchResourceWithApplicationJSONPatchPlusJSONBody(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchResourceResponse(rsp)
+}
+
+func (c *ClientWithResponses) PatchResourceWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, id string, body PatchResourceApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error) {
+	rsp, err := c.PatchResourceWithApplicationMergePatchPlusJSONBody(ctx, id, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchResourceResponse(rsp)
 }
 
 // GetStatusWithResponse request returning *GetStatusResponse2
@@ -1798,6 +2236,53 @@ func ParsePostQuxResponse(rsp *http.Response) (*PostQuxResponse, error) {
 	response := &PostQuxResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParsePatchResourceResponse parses an HTTP response from a PatchResourceWithResponse call
+func ParsePatchResourceResponse(rsp *http.Response) (*PatchResourceResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PatchResourceResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.Header.Get("Content-Type") == "application/json-patch+json" && rsp.StatusCode == 200:
+		var dest N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationjsonPatchJSON200 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json-patch-query+json" && rsp.StatusCode == 200:
+		var dest N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationjsonPatchQueryJSON200 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
+		var dest N200ResourcePatchResponseJSONApplicationJSON
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/merge-patch+json" && rsp.StatusCode == 200:
+		var dest N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationmergePatchJSON200 = &dest
+
 	}
 
 	return response, nil

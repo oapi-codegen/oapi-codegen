@@ -153,7 +153,7 @@ func TestSchemaMatchesOpResponse(t *testing.T) {
 //   - OrderRequestBodyJSON2 []struct  (application/json-patch+json, numeric fallback)
 //   - OrderRequestBodyJSON3 struct    (application/merge-patch+json, numeric fallback)
 //
-// Covers: PR #2213 (TMF622 scenario)
+// Covers: PR #2213 (multiple JSON content types in requestBody)
 func TestMultipleJsonContentTypes(t *testing.T) {
 	// Schema type keeps bare name "Order"
 	order := Order{
@@ -311,6 +311,61 @@ func TestInlineResponseWithRefProperties(t *testing.T) {
 	// pointing to the inline response type.
 	var wrapper ListEntitiesResponse
 	assert.Nil(t, wrapper.JSON200)
+}
+
+// TestDuplicateOneOfMembersAcrossContentTypes verifies Pattern J:
+// when a response has multiple JSON content types (e.g., application/json-patch+json
+// and application/json-patch-query+json) that share an identical oneOf schema with
+// inline (non-$ref) members, the codegen must not emit duplicate type declarations
+// for those inline members.
+//
+// Additionally, when a requestBody shares its name with a component schema and its
+// content schemas $ref the component schema (plus one $refs a different schema),
+// the collision resolver must assign unique names.
+//
+// Expected types:
+//   - ResourceMVO struct                          (schema keeps bare name)
+//   - Resource struct                             (no collision)
+//   - JsonPatch []struct                          (no collision)
+//   - ResourceMVORequestBodyJSON = ResourceMVO    (requestBody application/json)
+//   - ResourceMVORequestBodyJSON2 = JsonPatch     (requestBody application/json-patch+json)
+//   - ResourceMVORequestBodyJSON3 = ResourceMVO   (requestBody application/merge-patch+json)
+//   - PatchResourceResponse struct                (client response wrapper)
+//   - inline oneOf member types                   (must not be duplicated)
+func TestDuplicateOneOfMembersAcrossContentTypes(t *testing.T) {
+	// Schema types keep bare names
+	resource := Resource{
+		Id:     ptr("res-1"),
+		Name:   ptr("MyResource"),
+		Status: ptr("active"),
+	}
+	assert.Equal(t, "res-1", *resource.Id)
+
+	resourceMVO := ResourceMVO{
+		Name:   ptr("MyResource"),
+		Status: ptr("active"),
+	}
+	assert.Equal(t, "MyResource", *resourceMVO.Name)
+
+	// RequestBody collision resolution: schema "Resource_MVO" keeps bare name,
+	// requestBody content types get suffixed.
+	var reqBodyJSON ResourceMVORequestBodyJSON
+	reqBodyJSON.Name = ptr("test")
+	assert.Equal(t, "test", *reqBodyJSON.Name)
+
+	var reqBodyPatch ResourceMVORequestBodyJSON2
+	assert.Nil(t, reqBodyPatch) // JsonPatch alias (slice type)
+
+	var reqBodyMerge ResourceMVORequestBodyJSON3
+	reqBodyMerge.Name = ptr("merge")
+	assert.Equal(t, "merge", *reqBodyMerge.Name)
+
+	// Client response wrapper should exist. The primary assertion here
+	// is that the package compiles — no duplicate oneOf member types and
+	// no undefined response type names.
+	var wrapper PatchResourceResponse
+	assert.Nil(t, wrapper.Body)
+	assert.Nil(t, wrapper.HTTPResponse)
 }
 
 func ptr[T any](v T) *T {

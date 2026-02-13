@@ -131,7 +131,7 @@ paths:
         '200':
           description: OK
 
-  # Pattern H: Multiple JSON content types in requestBody (TMF622 scenario, PR #2213)
+  # Pattern H: Multiple JSON content types in requestBody (PR #2213)
   # "Order" appears in schemas and requestBodies. The requestBody has 3 content
   # types that all contain "json" and collapse to the same "JSON" short name:
   #   application/json, application/merge-patch+json, application/json-patch+json
@@ -171,6 +171,31 @@ paths:
                       $ref: '#/components/schemas/Widget'
                   metadata:
                     $ref: '#/components/schemas/Metadata'
+
+  # Pattern J: Duplicate inline oneOf members across response content types
+  # A PATCH operation returns multiple JSON content types
+  # (application/json, application/json-patch+json, application/json-patch-query+json,
+  # application/merge-patch+json). The json-patch and json-patch-query variants
+  # share an identical oneOf schema with inline (non-$ref) members. The codegen
+  # must not emit duplicate type declarations for those inline members.
+  #
+  # Additionally, the requestBody shares the same name as a component schema
+  # ("Resource_MVO") where the requestBody content schemas $ref the component
+  # schema, and one content type $refs a different schema.
+  /resources/{id}:
+    patch:
+      operationId: patchResource
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        $ref: '#/components/requestBodies/Resource_MVO'
+      responses:
+        '200':
+          $ref: '#/components/responses/200Resource_Patch'
 
   # Cross-section: requestBody vs schema (issues #254, #407)
   # "Pet" appears in both schemas and requestBodies.
@@ -262,6 +287,39 @@ components:
         total:
           type: integer
 
+    # Pattern J: schema "Resource_MVO" collides with requestBody "Resource_MVO".
+    # The requestBody's content schemas $ref the component schema, plus one
+    # content type $refs a different schema (JsonPatch). The response for the
+    # PATCH operation has multiple JSON content types, two of which share an
+    # identical oneOf schema with inline members.
+    Resource_MVO:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+
+    Resource:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+
+    JsonPatch:
+      type: array
+      items:
+        type: object
+        properties:
+          op:
+            type: string
+          path:
+            type: string
+
     # Pattern F: x-go-type-name extension + cross-section collision
     # Schema "Qux" has x-go-type-name: CustomQux and collides with response "Qux".
     Qux:
@@ -339,6 +397,20 @@ components:
               species:
                 type: string
 
+    # Pattern J: requestBody "Resource_MVO" shares name with schema "Resource_MVO".
+    # Content schemas $ref the component schema, except json-patch which $refs JsonPatch.
+    Resource_MVO:
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Resource_MVO'
+        application/merge-patch+json:
+          schema:
+            $ref: '#/components/schemas/Resource_MVO'
+        application/json-patch+json:
+          schema:
+            $ref: '#/components/schemas/JsonPatch'
+
   headers:
     Bar:
       schema:
@@ -379,3 +451,35 @@ components:
             properties:
               result:
                 type: string
+
+    # Pattern J: response with multiple JSON content types where json-patch
+    # and json-patch-query variants share an identical oneOf schema with
+    # inline (non-$ref) members. The codegen must not emit duplicate type
+    # declarations for those inline members.
+    200Resource_Patch:
+      description: Patch success
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Resource'
+        application/merge-patch+json:
+          schema:
+            $ref: '#/components/schemas/Resource'
+        application/json-patch+json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Resource'
+              - type: array
+                items:
+                  $ref: '#/components/schemas/Resource'
+              - type: string
+                nullable: true
+        application/json-patch-query+json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Resource'
+              - type: array
+                items:
+                  $ref: '#/components/schemas/Resource'
+              - type: string
+                nullable: true

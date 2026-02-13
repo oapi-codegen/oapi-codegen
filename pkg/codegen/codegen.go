@@ -725,7 +725,22 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				continue
 			}
 
-			goType, err := GenerateGoSchema(response.Schema, []string{responseName})
+			// When a response has multiple JSON content types, include the
+			// content type in the schema path so that inline types (e.g.,
+			// oneOf union members) get unique names per content type.
+			// See the matching logic in GetResponseTypeDefinitions.
+			//
+			// We only add the content type segment when collision resolution
+			// is enabled (resolve-type-name-collisions) and jsonCount > 1,
+			// to avoid changing type names for existing users. Ideally the
+			// media type would always be part of the path for consistency.
+			// TODO: revisit this at the next major version change —
+			// always include the media type in the schema path.
+			schemaPath := []string{responseName}
+			if jsonCount > 1 && globalState.options.OutputOptions.ResolveTypeNameCollisions {
+				schemaPath = append(schemaPath, mediaTypeToCamelCase(mediaType))
+			}
+			goType, err := GenerateGoSchema(response.Schema, schemaPath)
 			if err != nil {
 				return nil, fmt.Errorf("error generating Go type for schema in response %s: %w", responseName, err)
 			}
@@ -883,6 +898,19 @@ func resolvedNameForComponent(section, name string, contentType ...string) strin
 	}
 
 	return ""
+}
+
+// resolvedNameForRefPath looks up the resolved Go type name for a $ref path
+// like "#/components/responses/Foo", optionally scoped to a specific content type.
+func resolvedNameForRefPath(refPath, contentType string) string {
+	if len(globalState.resolvedNames) == 0 || !strings.HasPrefix(refPath, "#/") {
+		return ""
+	}
+	parts := strings.Split(refPath, "/")
+	if len(parts) != 4 || parts[1] != "components" {
+		return ""
+	}
+	return resolvedNameForComponent(parts[2], parts[3], contentType)
 }
 
 func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error) {
