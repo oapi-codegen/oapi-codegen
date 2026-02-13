@@ -90,8 +90,8 @@ func (im importMap) GoImports() []string {
 
 func constructImportMapping(importMapping map[string]string) importMap {
 	var (
-		pathToName = map[string]string{}
-		result     = importMap{}
+		pathToImport = importMap{}
+		result       = importMap{}
 	)
 
 	{
@@ -102,13 +102,32 @@ func constructImportMapping(importMapping map[string]string) importMap {
 		sort.Strings(packagePaths)
 
 		for _, packagePath := range packagePaths {
-			if _, ok := pathToName[packagePath]; !ok && packagePath != importMappingCurrentPackage {
-				pathToName[packagePath] = fmt.Sprintf("externalRef%d", len(pathToName))
+			if _, ok := pathToImport[packagePath]; !ok && packagePath != importMappingCurrentPackage {
+				split := strings.Split(packagePath, " ")
+				if len(split) == 2 {
+					// if we have 2 parts, we assume both the package name and path are provided, and we use them as is
+					pathToImport[packagePath] = goImport{
+						Name: split[0],
+						Path: split[1],
+					}
+				} else {
+					// otherwise, we auto-generate a package name based on the order of the imports, to ensure deterministic output
+					pathToImport[packagePath] = goImport{
+						Name: fmt.Sprintf("externalRef%d", len(pathToImport)),
+						Path: packagePath,
+					}
+				}
 			}
 		}
 	}
 	for specPath, packagePath := range importMapping {
-		result[specPath] = goImport{Name: pathToName[packagePath], Path: packagePath}
+		if packagePath == importMappingCurrentPackage {
+			result[specPath] = goImport{
+				Path: importMappingCurrentPackage,
+			}
+		} else {
+			result[specPath] = pathToImport[packagePath]
+		}
 	}
 	return result
 }
