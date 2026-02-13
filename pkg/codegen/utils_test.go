@@ -99,6 +99,8 @@ func TestToCamelCaseWithDigits(t *testing.T) {
 }
 
 func TestToCamelCaseWithInitialisms(t *testing.T) {
+	globalState.initialismsMap = makeInitialismsMap(initialismsList)
+
 	tests := []struct {
 		str  string
 		want string
