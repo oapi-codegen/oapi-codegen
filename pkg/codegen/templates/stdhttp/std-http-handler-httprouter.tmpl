@@ -5,7 +5,7 @@ func Handler(si ServerInterface) http.Handler {
 
 // ServeMux is an abstraction of http.ServeMux.
 type ServeMux interface {
-	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
+    HandlerFunc(method, path string, handler http.HandlerFunc)
 	ServeHTTP(w http.ResponseWriter, r *http.Request)
 }
 
@@ -35,7 +35,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m := options.BaseRouter
 
 	if m == nil {
-		m = http.NewServeMux()
+	    m = httprouter.New()
 	}
 	if options.ErrorHandlerFunc == nil {
 		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
@@ -49,7 +49,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc: options.ErrorHandlerFunc,
 	}
 {{end}}
-{{range .}}m.HandleFunc("{{.Method }} "+options.BaseURL+"{{.Path | swaggerUriToStdHttpUri}}", wrapper.{{.OperationId}})
+{{range .}}m.HandlerFunc("{{.Method }}", options.BaseURL+"{{.Path | swaggerUriToStdHttpUri}}", wrapper.{{.OperationId}})
 {{end}}
 	return m
 }

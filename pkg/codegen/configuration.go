@@ -308,14 +308,6 @@ type OutputOptions struct {
 	// "RequestBody"). Without this, the codegen will error on duplicate type
 	// names, requiring manual resolution via x-go-name.
 	ResolveTypeNameCollisions bool `yaml:"resolve-type-name-collisions,omitempty"`
-
-	// UseHttprouterInStdHttpServer makes the generated std http server use
-	// the httprouter package (github.com/julienschmidt/httprouter) instead of
-	// the default net/http ServeMux. This allows for better performance and
-	// more features like path parameters.
-	// NOTE: This option requires that the httprouter package is available in
-	// your module dependencies.
-	UseHttprouterInStdHttpServer bool `yaml:"use-httprouter-in-std-http-server,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {

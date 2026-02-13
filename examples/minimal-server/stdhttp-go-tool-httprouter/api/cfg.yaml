@@ -4,5 +4,6 @@ output: ping.gen.go
 generate:
   models: true
   std-http-server: true
-output-options:
-  use-httprouter-in-std-http-server: true
+additional-imports:
+  - package: github.com/julienschmidt/httprouter
+    alias: httprouter

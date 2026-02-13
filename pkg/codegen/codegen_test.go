@@ -97,8 +97,11 @@ func TestExampleOpenAPICodeGeneration_UseHttprouterInStdHttpServer(t *testing.T)
 			Models:        true,
 			EmbeddedSpec:  true,
 		},
-		OutputOptions: OutputOptions{
-			UseHttprouterInStdHttpServer: true,
+		AdditionalImports: []AdditionalImport{
+			{
+				Alias:   "httprouter",
+				Package: "github.com/julienschmidt/httprouter",
+			},
 		},
 	}
 
@@ -221,8 +224,11 @@ func TestGoTypeImport_UseHttprouterInStdHttpServer(t *testing.T) {
 			Models:        true,
 			EmbeddedSpec:  true,
 		},
-		OutputOptions: OutputOptions{
-			UseHttprouterInStdHttpServer: true,
+		AdditionalImports: []AdditionalImport{
+			{
+				Alias:   "httprouter",
+				Package: "github.com/julienschmidt/httprouter",
+			},
 		},
 	}
 	spec := "test_specs/x-go-type-import-pet.yaml"

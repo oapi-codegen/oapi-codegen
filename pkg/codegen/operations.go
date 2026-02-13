@@ -1027,6 +1027,12 @@ func GenerateStdHTTPServer(t *template.Template, operations []OperationDefinitio
 	return GenerateTemplates([]string{"stdhttp/std-http-interface.tmpl", "stdhttp/std-http-middleware.tmpl", "stdhttp/std-http-handler.tmpl"}, t, operations)
 }
 
+// GenerateStdHTTPServerWithHttpRouter generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers with github.com/julienschmidt/httprouter.
+func GenerateStdHTTPServerWithHttpRouter(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"stdhttp/std-http-interface.tmpl", "stdhttp/std-http-middleware.tmpl", "stdhttp/std-http-handler-httprouter.tmpl"}, t, operations)
+}
+
 func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
 
 	var templates []string

@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/julienschmidt/httprouter"
+	httprouter "github.com/julienschmidt/httprouter"
 )
 
 // Pong defines model for Pong.

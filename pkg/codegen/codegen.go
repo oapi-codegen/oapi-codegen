@@ -38,6 +38,9 @@ import (
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
+// router override for std-http-handler
+const httprouter = "github.com/julienschmidt/httprouter"
+
 // Embed the templates directory
 //
 //go:embed templates
@@ -262,7 +265,16 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var stdHTTPServerOut string
 	if opts.Generate.StdHTTPServer {
-		stdHTTPServerOut, err = GenerateStdHTTPServer(t, ops)
+		for _, ai := range opts.AdditionalImports {
+			// use override for httprouter if it is present in additional imports
+			if ai.Package == httprouter {
+				stdHTTPServerOut, err = GenerateStdHTTPServerWithHttpRouter(t, ops)
+				break
+			}
+		}
+		if stdHTTPServerOut == "" {
+			stdHTTPServerOut, err = GenerateStdHTTPServer(t, ops)
+		}
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -321,6 +333,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		externalImports,
 		opts.PackageName,
 		opts.NoVCSVersionOverride,
+		opts.AdditionalImports,
 	)
 	if err != nil {
 		return "", fmt.Errorf("error generating imports: %w", err)
@@ -861,7 +874,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 }
 
 // GenerateImports generates our import statements and package definition.
-func GenerateImports(t *template.Template, externalImports []string, packageName string, versionOverride *string) (string, error) {
+func GenerateImports(t *template.Template, externalImports []string, packageName string, versionOverride *string, additionalImports []AdditionalImport) (string, error) {
 	// Read build version for incorporating into generated files
 	// Unit tests have ok=false, so we'll just use "unknown" for the
 	// version if we can't read this.
@@ -886,13 +899,12 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 		ModuleName        string
 		Version           string
 		AdditionalImports []AdditionalImport
-		OutputOptions     OutputOptions
 	}{
-		ExternalImports: externalImports,
-		PackageName:     packageName,
-		ModuleName:      modulePath,
-		Version:         moduleVersion,
-		OutputOptions:   globalState.options.OutputOptions,
+		ExternalImports:   externalImports,
+		PackageName:       packageName,
+		ModuleName:        modulePath,
+		Version:           moduleVersion,
+		AdditionalImports: additionalImports,
 	}
 
 	return GenerateTemplates([]string{"imports.tmpl"}, t, context)
