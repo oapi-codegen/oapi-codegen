@@ -1,6 +1,6 @@
 module github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1529/strict-fiber
 
-go 1.25.0
+go 1.24.0
 
 replace github.com/oapi-codegen/oapi-codegen/v2 => ../../../../../
 

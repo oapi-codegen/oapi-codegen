@@ -17,19 +17,20 @@ fi \
 endef
 
 lint:
-	$(GOBIN)/golangci-lint run ./...
+	$(call execute-if-go-124,$(GOBIN)/golangci-lint run ./...)
 
 lint-ci:
-	$(GOBIN)/golangci-lint run ./... --output.text.path=stdout --timeout=5m
+
+	$(call execute-if-go-124,$(GOBIN)/golangci-lint run ./... --output.text.path=stdout --timeout=5m)
 
 generate:
-	go generate ./...
+	$(call execute-if-go-124,go generate ./...)
 
 test:
-	go test -cover ./...
+	$(call execute-if-go-124,go test -cover ./...)
 
 tidy:
-	go mod tidy
+	$(call execute-if-go-124,go mod tidy)
 
 tidy-ci:
-	tidied -verbose
+	$(call execute-if-go-124,tidied -verbose)
