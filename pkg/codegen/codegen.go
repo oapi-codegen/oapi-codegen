@@ -695,6 +695,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 			}
 
 			types = append(types, typeDef)
+			types = append(types, goType.AdditionalTypes...)
 		}
 	}
 	return types, nil
@@ -743,6 +744,7 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
 			types = append(types, typeDef)
+			types = append(types, goType.AdditionalTypes...)
 		}
 	}
 	return types, nil
