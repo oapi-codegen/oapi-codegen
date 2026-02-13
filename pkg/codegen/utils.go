@@ -864,6 +864,13 @@ func PathToTypeName(path []string) string {
 	return strings.Join(path, "_")
 }
 
+// StringToGoString takes an arbitrary string and converts it to a valid Go string literal,
+// including the quotes. For instance, `foo "bar"` would be converted to `"foo \"bar\""`
+func StringToGoString(in string) string {
+	esc := strings.ReplaceAll(in, "\"", "\\\"")
+	return fmt.Sprintf("\"%s\"", esc)
+}
+
 // StringToGoComment renders a possible multi-line string as a valid Go-Comment.
 // Each line is prefixed as a comment.
 func StringToGoComment(in string) string {

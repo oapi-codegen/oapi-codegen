@@ -469,6 +469,36 @@ func TestReplacePathParamsWithStr(t *testing.T) {
 	assert.EqualValues(t, "/path/%s/%s/%s/foo", result)
 }
 
+func TestStringToGoStringValue(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected string
+		message  string
+	}{
+		{
+			input:    ``,
+			expected: `""`,
+			message:  "blank string should be converted to empty Go string literal",
+		},
+		{
+			input:    `application/json`,
+			expected: `"application/json"`,
+			message:  "typical string should be returned as-is",
+		},
+		{
+			input:    `application/json; foo="bar"`,
+			expected: `"application/json; foo=\"bar\""`,
+			message:  "string with quotes should include escape characters",
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.message, func(t *testing.T) {
+			result := StringToGoString(testCase.input)
+			assert.EqualValues(t, testCase.expected, result, testCase.message)
+		})
+	}
+}
+
 func TestStringToGoComment(t *testing.T) {
 	testCases := []struct {
 		input    string
