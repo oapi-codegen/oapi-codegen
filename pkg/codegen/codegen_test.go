@@ -83,6 +83,16 @@ type GetTestByNameResponse struct {
 	assert.Contains(t, code, "type EnumTestEnumNames int")
 	assert.Contains(t, code, "Two  EnumTestEnumNames = 2")
 	assert.Contains(t, code, "Double EnumTestEnumVarnames = 2")
+
+	// Check that enum validation maps are generated:
+	assert.Contains(t, code, "var EnumTestNumericsValues = map[EnumTestNumerics]struct{}")
+	assert.Contains(t, code, "var EnumTestEnumNamesValues = map[EnumTestEnumNames]struct{}")
+	assert.Contains(t, code, "var EnumTestEnumVarnamesValues = map[EnumTestEnumVarnames]struct{}")
+
+	// Check that IsValid() methods are generated for each enum:
+	assert.Contains(t, code, "func (s EnumTestNumerics) IsValid() bool {")
+	assert.Contains(t, code, "func (s EnumTestEnumNames) IsValid() bool {")
+	assert.Contains(t, code, "func (s EnumTestEnumVarnames) IsValid() bool {")
 }
 
 func TestExtPropGoTypeSkipOptionalPointer(t *testing.T) {
