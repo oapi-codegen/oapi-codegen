@@ -629,62 +629,26 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		setSkipOptionalPointerForContainerType(outSchema)
 
 	} else if t.Is("integer") {
-		// We default to int if format doesn't ask for something else.
-		switch f {
-		case "int64",
-			"int32",
-			"int16",
-			"int8",
-			"int",
-			"uint64",
-			"uint32",
-			"uint16",
-			"uint8",
-			"uint":
-			outSchema.GoType = f
-		default:
-			outSchema.GoType = "int"
-		}
+		spec := globalState.typeMapping.Integer.Resolve(f)
+		outSchema.GoType = spec.Type
 		outSchema.DefineViaAlias = true
 	} else if t.Is("number") {
-		// We default to float for "number"
-		switch f {
-		case "double":
-			outSchema.GoType = "float64"
-		case "float", "":
-			outSchema.GoType = "float32"
-		default:
-			return fmt.Errorf("invalid number format: %s", f)
-		}
+		spec := globalState.typeMapping.Number.Resolve(f)
+		outSchema.GoType = spec.Type
 		outSchema.DefineViaAlias = true
 	} else if t.Is("boolean") {
-		if f != "" {
-			return fmt.Errorf("invalid format (%s) for boolean", f)
-		}
-		outSchema.GoType = "bool"
+		spec := globalState.typeMapping.Boolean.Resolve(f)
+		outSchema.GoType = spec.Type
 		outSchema.DefineViaAlias = true
 	} else if t.Is("string") {
-		// Special case string formats here.
-		switch f {
-		case "byte":
-			outSchema.GoType = "[]byte"
+		spec := globalState.typeMapping.String.Resolve(f)
+		outSchema.GoType = spec.Type
+		// Preserve special behaviors for specific types
+		if outSchema.GoType == "[]byte" {
 			setSkipOptionalPointerForContainerType(outSchema)
-		case "email":
-			outSchema.GoType = "openapi_types.Email"
-		case "date":
-			outSchema.GoType = "openapi_types.Date"
-		case "date-time":
-			outSchema.GoType = "time.Time"
-		case "json":
-			outSchema.GoType = "json.RawMessage"
+		}
+		if outSchema.GoType == "json.RawMessage" {
 			outSchema.SkipOptionalPointer = true
-		case "uuid":
-			outSchema.GoType = "openapi_types.UUID"
-		case "binary":
-			outSchema.GoType = "openapi_types.File"
-		default:
-			// All unrecognized formats are simply a regular string.
-			outSchema.GoType = "string"
 		}
 		outSchema.DefineViaAlias = true
 	} else {
