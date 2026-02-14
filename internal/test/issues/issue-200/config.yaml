@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: issue200
+generate:
+  models: true
+output: issue200.gen.go
+output-options:
+  resolve-type-name-collisions: true

@@ -864,6 +864,13 @@ func PathToTypeName(path []string) string {
 	return strings.Join(path, "_")
 }
 
+// StringToGoString takes an arbitrary string and converts it to a valid Go string literal,
+// including the quotes. For instance, `foo "bar"` would be converted to `"foo \"bar\""`
+func StringToGoString(in string) string {
+	esc := strings.ReplaceAll(in, "\"", "\\\"")
+	return fmt.Sprintf("\"%s\"", esc)
+}
+
 // StringToGoComment renders a possible multi-line string as a valid Go-Comment.
 // Each line is prefixed as a comment.
 func StringToGoComment(in string) string {
@@ -1111,4 +1118,87 @@ func sliceContains[E comparable](s []E, v E) bool {
 		}
 	}
 	return false
+}
+
+// FixDuplicateTypeNames renames duplicate type names.
+func FixDuplicateTypeNames(typeDefs []TypeDefinition) []TypeDefinition {
+	if !hasDuplicatedTypeNames(typeDefs) {
+		return typeDefs
+	}
+
+	// try to fix duplicate type names with their definition section
+	typeDefs = fixDuplicateTypeNamesWithCompName(typeDefs)
+	if !hasDuplicatedTypeNames(typeDefs) {
+		return typeDefs
+	}
+
+	const maxIter = 100
+	for i := 0; i < maxIter && hasDuplicatedTypeNames(typeDefs); i++ {
+		typeDefs = fixDuplicateTypeNamesDupCounts(typeDefs)
+	}
+
+	if hasDuplicatedTypeNames(typeDefs) {
+		panic("too much duplicate type names")
+	}
+
+	return typeDefs
+}
+
+func hasDuplicatedTypeNames(typeDefs []TypeDefinition) bool {
+	dupCheck := make(map[string]int, len(typeDefs))
+
+	for _, d := range typeDefs {
+		dupCheck[d.TypeName]++
+
+		if dupCheck[d.TypeName] != 1 {
+			return true
+		}
+	}
+
+	return false
+}
+
+func fixDuplicateTypeNamesWithCompName(typeDefs []TypeDefinition) []TypeDefinition {
+	dupCheck := make(map[string]int, len(typeDefs))
+	deDup := make([]TypeDefinition, len(typeDefs))
+
+	for i, d := range typeDefs {
+		dupCheck[d.TypeName]++
+
+		if dupCheck[d.TypeName] != 1 {
+			switch d.Schema.DefinedComp {
+			case ComponentTypeSchema:
+				d.TypeName += "Schema"
+			case ComponentTypeParameter:
+				d.TypeName += "Parameter"
+			case ComponentTypeRequestBody:
+				d.TypeName += "RequestBody"
+			case ComponentTypeResponse:
+				d.TypeName += "Response"
+			case ComponentTypeHeader:
+				d.TypeName += "Header"
+			}
+		}
+
+		deDup[i] = d
+	}
+
+	return deDup
+}
+
+func fixDuplicateTypeNamesDupCounts(typeDefs []TypeDefinition) []TypeDefinition {
+	dupCheck := make(map[string]int, len(typeDefs))
+	deDup := make([]TypeDefinition, len(typeDefs))
+
+	for i, d := range typeDefs {
+		dupCheck[d.TypeName]++
+
+		if dupCheck[d.TypeName] != 1 {
+			d.TypeName = d.TypeName + strconv.Itoa(dupCheck[d.TypeName])
+		}
+
+		deDup[i] = d
+	}
+
+	return deDup
 }
