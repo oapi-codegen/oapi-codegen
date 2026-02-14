@@ -50,6 +50,9 @@ func (o Configuration) Validate() error {
 	if o.Generate.EchoServer {
 		nServers++
 	}
+	if o.Generate.Echo5Server {
+		nServers++
+	}
 	if o.Generate.GorillaServer {
 		nServers++
 	}
@@ -112,6 +115,8 @@ type GenerateOptions struct {
 	FiberServer bool `yaml:"fiber-server,omitempty"`
 	// EchoServer specifies whether to generate echo server boilerplate
 	EchoServer bool `yaml:"echo-server,omitempty"`
+	// Echo5Server specifies whether to generate echo v5 server boilerplate
+	Echo5Server bool `yaml:"echo5-server,omitempty"`
 	// GinServer specifies whether to generate gin server boilerplate
 	GinServer bool `yaml:"gin-server,omitempty"`
 	// GorillaServer specifies whether to generate Gorilla server boilerplate

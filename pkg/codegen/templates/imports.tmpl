@@ -28,19 +28,35 @@ import (
 
 	"github.com/oapi-codegen/runtime"
 	"github.com/oapi-codegen/nullable"
+	strictecho5 "github.com/oapi-codegen/runtime/strictmiddleware/echo/v5"
 	strictecho "github.com/oapi-codegen/runtime/strictmiddleware/echo"
 	strictgin "github.com/oapi-codegen/runtime/strictmiddleware/gin"
 	strictiris "github.com/oapi-codegen/runtime/strictmiddleware/iris"
 	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/getkin/kin-openapi/openapi3"
+	{{- if opts.Generate.ChiServer }}
 	"github.com/go-chi/chi/v5"
+	{{- end }}
+	{{- if opts.Generate.EchoServer }}
 	"github.com/labstack/echo/v4"
+	{{- end }}
+	{{- if opts.Generate.Echo5Server }}
+	"github.com/labstack/echo/v5"
+	{{- end }}
+	{{- if opts.Generate.GinServer }}
 	"github.com/gin-gonic/gin"
+	{{- end }}
+	{{- if opts.Generate.FiberServer }}
 	"github.com/gofiber/fiber/v2"
+	{{- end }}
+	{{- if opts.Generate.IrisServer }}
 	"github.com/kataras/iris/v12"
 	"github.com/kataras/iris/v12/core/router"
+	{{- end }}
+	{{- if opts.Generate.GorillaServer }}
 	"github.com/gorilla/mux"
+	{{- end }}
 	{{- range .ExternalImports}}
 	{{ . }}
 	{{- end}}
