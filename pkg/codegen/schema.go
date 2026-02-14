@@ -602,6 +602,9 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		if err != nil {
 			return fmt.Errorf("error generating type for array: %w", err)
 		}
+
+		var itemPrefix string
+
 		if (arrayType.HasAdditionalProperties || len(arrayType.UnionElements) != 0) && arrayType.RefType == "" {
 			// If we have items which have additional properties or union values,
 			// but are not a pre-defined type, we need to define a type
@@ -618,8 +621,13 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 
 			arrayType.RefType = typeName
 		}
+
+		if arrayType.OAPISchema != nil && arrayType.OAPISchema.Nullable {
+			itemPrefix = "*"
+		}
+
 		outSchema.ArrayType = &arrayType
-		outSchema.GoType = "[]" + arrayType.TypeDecl()
+		outSchema.GoType = "[]" + itemPrefix + arrayType.TypeDecl()
 		outSchema.AdditionalTypes = arrayType.AdditionalTypes
 		outSchema.Properties = arrayType.Properties
 		outSchema.DefineViaAlias = true
