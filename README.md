@@ -2349,7 +2349,7 @@ However, you lose the ability to understand the three cases, as there's no way t
 - is this field `null`? (Can be checked with `S.Field == nil`)
 - does this field have a value? (`S.Field != nil && *S.Field == "123"`)
 
-As of `oapi-codegen` [v2.1.0](https://github.com/oapi-codegen/oapi-codegen/releases/tag/v2.1.0) it is now possible to represent this with the `nullable.Nullable` type from [our new library, oapi-codegen/nullable](https://github.com/oapi-codegen/nullable).
+As of `oapi-codegen` [v2.1.0](https://github.com/oapi-codegen/oapi-codegen/releases/tag/v2.1.0) it is now possible to represent this with the `nullable.Value` type from [our library, oapi-codegen/nullable](https://github.com/oapi-codegen/nullable). (previously `nullable.Nullable`, now deprecated);
 
 If you configure your generator's Output Options to opt-in to this behaviour, as so:
 
@@ -2363,7 +2363,7 @@ You will now receive the following output:
 ```go
 type S struct {
     // note that there's no pointer here, just `omitempty`
-    Field nullable.Nullable[string] `json:"field,omitempty"`
+    Field nullable.Value[string] `json:"field,omitempty"`
 }
 ```
 
