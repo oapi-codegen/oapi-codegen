@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -38,6 +39,12 @@ type ServerInterface interface {
 
 	// (POST /multiple)
 	MultipleRequestAndResponseTypes(c *gin.Context)
+
+	// (POST /required-json-body)
+	RequiredJSONBody(c *gin.Context)
+
+	// (POST /required-text-body)
+	RequiredTextBody(c *gin.Context)
 
 	// (GET /reserved-go-keyword-parameters/{type})
 	ReservedGoKeywordParameters(c *gin.Context, pType string)
@@ -123,6 +130,32 @@ func (siw *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(c *gin.Contex
 	}
 
 	siw.Handler.MultipleRequestAndResponseTypes(c)
+}
+
+// RequiredJSONBody operation middleware
+func (siw *ServerInterfaceWrapper) RequiredJSONBody(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.RequiredJSONBody(c)
+}
+
+// RequiredTextBody operation middleware
+func (siw *ServerInterfaceWrapper) RequiredTextBody(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.RequiredTextBody(c)
 }
 
 // ReservedGoKeywordParameters operation middleware
@@ -319,6 +352,8 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/multipart", wrapper.MultipartExample)
 	router.POST(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample)
 	router.POST(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
+	router.POST(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody)
+	router.POST(options.BaseURL+"/required-text-body", wrapper.RequiredTextBody)
 	router.GET(options.BaseURL+"/reserved-go-keyword-parameters/:type", wrapper.ReservedGoKeywordParameters)
 	router.POST(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
 	router.POST(options.BaseURL+"/text", wrapper.TextExample)
@@ -524,6 +559,73 @@ type MultipleRequestAndResponseTypes400Response = BadrequestResponse
 
 func (response MultipleRequestAndResponseTypes400Response) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
 	w.WriteHeader(400)
+	return nil
+}
+
+type RequiredJSONBodyRequestObject struct {
+	Body *RequiredJSONBodyJSONRequestBody
+}
+
+type RequiredJSONBodyResponseObject interface {
+	VisitRequiredJSONBodyResponse(w http.ResponseWriter) error
+}
+
+type RequiredJSONBody200JSONResponse Example
+
+func (response RequiredJSONBody200JSONResponse) VisitRequiredJSONBodyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RequiredJSONBody400Response = BadrequestResponse
+
+func (response RequiredJSONBody400Response) VisitRequiredJSONBodyResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type RequiredJSONBodydefaultResponse struct {
+	StatusCode int
+}
+
+func (response RequiredJSONBodydefaultResponse) VisitRequiredJSONBodyResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
+	return nil
+}
+
+type RequiredTextBodyRequestObject struct {
+	Body *RequiredTextBodyTextRequestBody
+}
+
+type RequiredTextBodyResponseObject interface {
+	VisitRequiredTextBodyResponse(w http.ResponseWriter) error
+}
+
+type RequiredTextBody200TextResponse string
+
+func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(200)
+
+	_, err := w.Write([]byte(response))
+	return err
+}
+
+type RequiredTextBody400Response = BadrequestResponse
+
+func (response RequiredTextBody400Response) VisitRequiredTextBodyResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type RequiredTextBodydefaultResponse struct {
+	StatusCode int
+}
+
+func (response RequiredTextBodydefaultResponse) VisitRequiredTextBodyResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
 	return nil
 }
 
@@ -874,6 +976,12 @@ type StrictServerInterface interface {
 	// (POST /multiple)
 	MultipleRequestAndResponseTypes(ctx context.Context, request MultipleRequestAndResponseTypesRequestObject) (MultipleRequestAndResponseTypesResponseObject, error)
 
+	// (POST /required-json-body)
+	RequiredJSONBody(ctx context.Context, request RequiredJSONBodyRequestObject) (RequiredJSONBodyResponseObject, error)
+
+	// (POST /required-text-body)
+	RequiredTextBody(ctx context.Context, request RequiredTextBodyRequestObject) (RequiredTextBodyResponseObject, error)
+
 	// (GET /reserved-go-keyword-parameters/{type})
 	ReservedGoKeywordParameters(ctx context.Context, request ReservedGoKeywordParametersRequestObject) (ReservedGoKeywordParametersResponseObject, error)
 
@@ -917,11 +1025,14 @@ func (sh *strictHandler) JSONExample(ctx *gin.Context) {
 
 	var body JSONExampleJSONRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.Error(err)
-		return
+		if !errors.Is(err, io.EOF) {
+			ctx.Status(http.StatusBadRequest)
+			ctx.Error(err)
+			return
+		}
+	} else {
+		request.Body = &body
 	}
-	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.JSONExample(ctx, request.(JSONExampleRequestObject))
@@ -1019,11 +1130,14 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 
 		var body MultipleRequestAndResponseTypesJSONRequestBody
 		if err := ctx.ShouldBindJSON(&body); err != nil {
-			ctx.Status(http.StatusBadRequest)
-			ctx.Error(err)
-			return
+			if !errors.Is(err, io.EOF) {
+				ctx.Status(http.StatusBadRequest)
+				ctx.Error(err)
+				return
+			}
+		} else {
+			request.JSONBody = &body
 		}
-		request.JSONBody = &body
 	}
 	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "application/x-www-form-urlencoded") {
 		if err := ctx.Request.ParseForm(); err != nil {
@@ -1054,8 +1168,10 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 			ctx.Error(err)
 			return
 		}
-		body := MultipleRequestAndResponseTypesTextRequestBody(data)
-		request.TextBody = &body
+		if len(data) > 0 {
+			body := MultipleRequestAndResponseTypesTextRequestBody(data)
+			request.TextBody = &body
+		}
 	}
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
@@ -1072,6 +1188,72 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 		ctx.Status(http.StatusInternalServerError)
 	} else if validResponse, ok := response.(MultipleRequestAndResponseTypesResponseObject); ok {
 		if err := validResponse.VisitMultipleRequestAndResponseTypesResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RequiredJSONBody operation middleware
+func (sh *strictHandler) RequiredJSONBody(ctx *gin.Context) {
+	var request RequiredJSONBodyRequestObject
+
+	var body RequiredJSONBodyJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		ctx.Status(http.StatusBadRequest)
+		ctx.Error(err)
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RequiredJSONBody(ctx, request.(RequiredJSONBodyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RequiredJSONBody")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(RequiredJSONBodyResponseObject); ok {
+		if err := validResponse.VisitRequiredJSONBodyResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RequiredTextBody operation middleware
+func (sh *strictHandler) RequiredTextBody(ctx *gin.Context) {
+	var request RequiredTextBodyRequestObject
+
+	data, err := io.ReadAll(ctx.Request.Body)
+	if err != nil {
+		ctx.Error(err)
+		return
+	}
+	body := RequiredTextBodyTextRequestBody(data)
+	request.Body = &body
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.RequiredTextBody(ctx, request.(RequiredTextBodyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RequiredTextBody")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(RequiredTextBodyResponseObject); ok {
+		if err := validResponse.VisitRequiredTextBodyResponse(ctx.Writer); err != nil {
 			ctx.Error(err)
 		}
 	} else if response != nil {
@@ -1112,11 +1294,14 @@ func (sh *strictHandler) ReusableResponses(ctx *gin.Context) {
 
 	var body ReusableResponsesJSONRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.Error(err)
-		return
+		if !errors.Is(err, io.EOF) {
+			ctx.Status(http.StatusBadRequest)
+			ctx.Error(err)
+			return
+		}
+	} else {
+		request.Body = &body
 	}
-	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.ReusableResponses(ctx, request.(ReusableResponsesRequestObject))
@@ -1148,8 +1333,10 @@ func (sh *strictHandler) TextExample(ctx *gin.Context) {
 		ctx.Error(err)
 		return
 	}
-	body := TextExampleTextRequestBody(data)
-	request.Body = &body
+	if len(data) > 0 {
+		body := TextExampleTextRequestBody(data)
+		request.Body = &body
+	}
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.TextExample(ctx, request.(TextExampleRequestObject))
@@ -1272,11 +1459,14 @@ func (sh *strictHandler) HeadersExample(ctx *gin.Context, params HeadersExampleP
 
 	var body HeadersExampleJSONRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.Error(err)
-		return
+		if !errors.Is(err, io.EOF) {
+			ctx.Status(http.StatusBadRequest)
+			ctx.Error(err)
+			return
+		}
+	} else {
+		request.Body = &body
 	}
-	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.HeadersExample(ctx, request.(HeadersExampleRequestObject))
@@ -1305,11 +1495,14 @@ func (sh *strictHandler) UnionExample(ctx *gin.Context) {
 
 	var body UnionExampleJSONRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.Error(err)
-		return
+		if !errors.Is(err, io.EOF) {
+			ctx.Status(http.StatusBadRequest)
+			ctx.Error(err)
+			return
+		}
+	} else {
+		request.Body = &body
 	}
-	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.UnionExample(ctx, request.(UnionExampleRequestObject))
@@ -1335,24 +1528,25 @@ func (sh *strictHandler) UnionExample(ctx *gin.Context) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/+xYS3PbNhD+Kxi0p5QUZccn3hpPJm3T1h3ZPnV8gIilhIQE0MVStEaj/94BQb0sWpUS",
-	"PTqZ3PhY7C6+b3ex2BnPTGmNBk2OpzOO4KzRDpqXoZAI/1TgyL9JcBkqS8ponvJ3Qg7af/OII1RODAtY",
-	"LPfymdEEulkqrC1UJvzS5JPz62fcZWMohX/6ESHnKf8hWbmShL8ugWdR2gL4fD6PXnhw95FHfAxCAjbe",
-	"hserTd00tcBT7giVHnGvJIhdd4opTTAC9Na8aOuEF1j4kc64RWMBSQWMJqKooNtS+8UMP0FGYQdK52Yb",
-	"y1ujSSjtmFR5DgiaWAse8zocc5W1BgkkG06Zt5ARc4ATQB5xUuQd4/fr31nrsOMRnwC6YOiq1+/1PV/G",
-	"ghZW8ZS/bT5F3AoaNxtaEmRNF++/3d/9yZRjoiJTClKZKIopKwW6sShAMqXJeBerjFyPN5awIf5X2a5+",
-	"30Lpo6YJoHdGTk8RME1croXzdb9/pricR/wmGOvSsXQqWUuwRk0uqqID80f9WZtaM0A02O4sKauClBVI",
-	"61xtov3HQmQfyJf6ktxgGUtB4kSoH8vSpYGPEQpBIPcgYBAkD+NhTf1JWfgaOxfloK3HnXXqfmxqx8am",
-	"ZmSYBFGwWtGYLRa+KLBKM8Gc0qMC2MKpqJPMAtpj72ctB+1eHryOk9ezaEPLc1zXddwkUIUF6MzIL6Mw",
-	"4qoUI0isHm0u97oF8ZQPp+RDdvuAO1IiR5zgmRJbCKV3n95nKunfkT5aYod0RWi6EhmPTPwZprVBGVuB",
-	"ogQCdMnMW597xSPoSOW/lpIsE5oNgWlRgmQiJ0D2wbBWpdtK2UFr94P5GERWqpqWZ/mS/j3jHpKmDeIR",
-	"9wZ4GlAJea3Qk05YQbQDtqf/jM+vImCBZmi24w1T3WVwUaKW0CHkzpfELuY68AuWBmsSl2nadkfc1vXj",
-	"HGeQZ/L1o/8Bnvdqu45Y+s6d24cCVoWPr2PWrtoHti+spHugOFESTFLamwM1XwxUZyFTuQIZt7uIg2+v",
-	"lYRbozME2myB/JVOG2JLZf6mSWNgAYGIOcNqYGXliFnhHFPUVJFChduqhK3i8bjy7DZYeliV012svjkR",
-	"p28uxehN/+rwJW9PHDcbrcwr+Tj4/X2QOfTOfrSe6cCO73h2L5TO/pISrw21ulP4lyCwOtMzUBPfEWnJ",
-	"EKhCDZJNlFgMYrZys1WworWrFwpurLqhxYDtkIYo2qnrmke7hnBP3/CI6JSjy3PFaaXVrlHho//N2h76",
-	"5dmgjP6fDgJFQYBakJrAT8e5QW5rMRru8ibTXrAc7Wnh6duLqnnEw+w6lKAKC18niGyaJGHm3XO1GI0A",
-	"e8okwiqPwr8BAAD//4h9qqfAGAAA",
+	"H4sIAAAAAAAC/+xZTXPbNhP+Kzt431NKmrbjE2+NJ5O2aeuObJ86PkDESkJCAiiwFK3R6L93QEBfFq1K",
+	"qT4ynt5Ecr/wPLuLBTRlha6MVqjIsXzKLDqjlcP2oc+Fxb9qdOSfBLrCSkNSK5azD1z04rdZwizWjvdL",
+	"nKt7+UIrQtWqcmNKWXCvmn1xXn/KXDHCivtf/7c4YDn7X7YMJQtfXYbPvDIlstlslryI4O4zS9gIuUDb",
+	"Rht+Xq3bpolBljNHVqoh80aC2HWnmFSEQ7TemxeNQXiBeRz5lBmrDVqSAaMxL2vs9hTf6P4XLCisQKqB",
+	"3sTyViviUjkQcjBAi4ogggfehgNXG6MtoYD+BLyHgsChHaNlCSNJPjB2v/oeYsCOJWyM1gVHVxeXF5ee",
+	"L21QcSNZzt63rxJmOI3aBS0IMrqL91/u734H6YDXpCtOsuBlOYGKWzfiJQqQirQPsS7IXbDWk22J/1lE",
+	"7Y8RSp81bQJ90GJyjIRp83Ilna8vL0+Ul7OE3QRnXTYWQWUrBdaaGfC67MD8UX1VulGA1mobV5ZVdUnS",
+	"cEurXK2j/dtcZBfIF/aygbZVKjjxI6F+KE/nBj61WHJCsQMBvSC5Hw8r5o/Kwr/xc1YOYj/u7FP3I904",
+	"GOkGSINAXkIjaQRzxRcNVirg4KQalgjzoJJOMkuM296PSvTiWh68jaP3s2TNynPaNE3aFlBtS1SFFt9G",
+	"YcJkxYeYGTVcV/e2ObGc9SfkU3ZzgztQISeM8JkyU3Kptu/eJ2rp/yF9sMIO5eofpUWRekbSfqyP7sKN",
+	"5QVeyg8ac90EnIZKOl+l4aMb6boUwMuGT1zoD5sTRy+q+8mjLcyjjx3BgffJcrI1vu0xZEGtz6zzUPuA",
+	"z/SP1O6R+PvSd+qa2p+i9kwg0qFOv+Kk0VakhlteIaF12dTHOfO2hthh8o+FJBRcQR9B8QoF8AGhhU8a",
+	"oknXwU/w+0l/DiJLU+2BY/GQ/zllHrz2EMIS5h2wPOD3ko5kC8BPx6VqjmY46qZrrl5L+Cgyh87iwPmB",
+	"pIvjDvyCp96KxHmOTNtzc+Pwf4qk9ky+Pnj7lrDLsH3AweN77wJ1ePk6ZlFrF9i+cY7ZAcWxFKizytzs",
+	"aflsoDqDhRxIFGlcRRpie60l3GpVWKT1A4jfDJUmWBiD/gRohBAQaPfHBqGqHYHhzoGktouUMtwVCdxo",
+	"Ho/LyG6Dp4dlO93G6rsjcfruXIzeXF7tr/L+yHmzdpB4pR57v34MMvvemB3sxLLneetwfs9Uzo2kUbpy",
+	"pdxdwj8FgeWeXqAc+4lICbBItVUoYCz5/Bp0ozajgSWtXbNQCGM5Dc2vt/cZiJKttq5Zsu0K/OkNX9Ae",
+	"84+DU+VpreS2i/pH/xniDP1yb5BafafX8LwktIqTHOMPh7m/2bSiFd4N2kp7wXKyo4ent5dVs4SFf45C",
+	"C6pt6fsEkcmzLPzjdOEaPhyivZA640Z6FP4OAAD//0nTejA+HAAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
