@@ -308,6 +308,10 @@ type OutputOptions struct {
 	// "RequestBody"). Without this, the codegen will error on duplicate type
 	// names, requiring manual resolution via x-go-name.
 	ResolveTypeNameCollisions bool `yaml:"resolve-type-name-collisions,omitempty"`
+
+	// TypeMapping allows customizing OpenAPI type/format to Go type mappings.
+	// User-specified mappings are merged on top of the defaults.
+	TypeMapping *TypeMapping `yaml:"type-mapping,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {
