@@ -35,6 +35,21 @@ func TestDuplicateTypeNamesCompile(t *testing.T) {
 	// RequestBody type: BarRequestBody (was "Bar" in components/requestBodies)
 	_ = BarRequestBody{Value: ptr(42)}
 
+	// Inline nested object with additionalProperties inside a response
+	// must produce a named AdditionalType (not get silently dropped).
+	_ = Bar_Pagination{
+		Page:                 ptr(1),
+		TotalPages:           ptr(10),
+		AdditionalProperties: map[string]string{"cursor": "abc"},
+	}
+
+	// Inline nested object with additionalProperties inside a requestBody
+	// must produce a named AdditionalType (not get silently dropped).
+	_ = Bar_Metadata{
+		Key:                  ptr("k"),
+		AdditionalProperties: map[string]string{"extra": "val"},
+	}
+
 	// Operation-derived types
 	_ = PostFooParams{Bar: &Bar{}}
 	_ = PostFooJSONBody{Value: ptr(99)}
