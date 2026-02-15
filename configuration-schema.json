@@ -257,25 +257,25 @@
           "type": "boolean",
           "description": "When set to true, automatically renames types that collide across different OpenAPI component sections (schemas, parameters, requestBodies, responses, headers) by appending a suffix based on the component section (e.g., 'Parameter', 'Response', 'RequestBody'). Without this, the codegen will error on duplicate type names, requiring manual resolution via x-go-name.",
           "default": false
-        }
-      }
-    },
-    "type-mapping": {
-      "type": "object",
-      "additionalProperties": false,
-      "description": "TypeMapping allows customizing OpenAPI type/format to Go type mappings. User-specified mappings are merged on top of the defaults, so you only need to specify the types you want to override.",
-      "properties": {
-        "integer": {
-          "$ref": "#/$defs/format-mapping"
         },
-        "number": {
-          "$ref": "#/$defs/format-mapping"
-        },
-        "boolean": {
-          "$ref": "#/$defs/format-mapping"
-        },
-        "string": {
-          "$ref": "#/$defs/format-mapping"
+        "type-mapping": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "TypeMapping allows customizing OpenAPI type/format to Go type mappings. User-specified mappings are merged on top of the defaults, so you only need to specify the types you want to override.",
+          "properties": {
+            "integer": {
+              "$ref": "#/$defs/format-mapping"
+            },
+            "number": {
+              "$ref": "#/$defs/format-mapping"
+            },
+            "boolean": {
+              "$ref": "#/$defs/format-mapping"
+            },
+            "string": {
+              "$ref": "#/$defs/format-mapping"
+            }
+          }
         }
       }
     },

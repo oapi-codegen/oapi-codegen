@@ -142,8 +142,8 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	globalState.options = opts
 	globalState.spec = spec
 	globalState.importMapping = constructImportMapping(opts.ImportMapping)
-	if opts.TypeMapping != nil {
-		globalState.typeMapping = DefaultTypeMapping.Merge(*opts.TypeMapping)
+	if opts.OutputOptions.TypeMapping != nil {
+		globalState.typeMapping = DefaultTypeMapping.Merge(*opts.OutputOptions.TypeMapping)
 	} else {
 		globalState.typeMapping = DefaultTypeMapping
 	}

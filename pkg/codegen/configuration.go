@@ -23,9 +23,6 @@ type Configuration struct {
 	OutputOptions OutputOptions `yaml:"output-options,omitempty"`
 	// ImportMapping specifies the golang package path for each external reference
 	ImportMapping map[string]string `yaml:"import-mapping,omitempty"`
-	// TypeMapping allows customizing OpenAPI type/format to Go type mappings.
-	// User-specified mappings are merged on top of the defaults.
-	TypeMapping *TypeMapping `yaml:"type-mapping,omitempty"`
 	// AdditionalImports defines any additional Go imports to add to the generated code
 	AdditionalImports []AdditionalImport `yaml:"additional-imports,omitempty"`
 	// NoVCSVersionOverride allows overriding the version of the application for cases where no Version Control System (VCS) is available when building, for instance when using a Nix derivation.
@@ -311,6 +308,10 @@ type OutputOptions struct {
 	// "RequestBody"). Without this, the codegen will error on duplicate type
 	// names, requiring manual resolution via x-go-name.
 	ResolveTypeNameCollisions bool `yaml:"resolve-type-name-collisions,omitempty"`
+
+	// TypeMapping allows customizing OpenAPI type/format to Go type mappings.
+	// User-specified mappings are merged on top of the defaults.
+	TypeMapping *TypeMapping `yaml:"type-mapping,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {
