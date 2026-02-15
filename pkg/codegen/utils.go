@@ -654,15 +654,29 @@ func ReplacePathParamsWithStr(uri string) string {
 }
 
 // SortParamsByPath reorders the given parameter definitions to match those in the path URI.
+// If a parameter appears more than once in the path (e.g. Keycloak's
+// /clients/{client-uuid}/roles/{role-name}/composites/clients/{client-uuid}),
+// duplicates are removed and only the first occurrence determines the order.
 func SortParamsByPath(path string, in []ParameterDefinition) ([]ParameterDefinition, error) {
 	pathParams := OrderedParamsFromUri(path)
-	n := len(in)
-	if len(pathParams) != n {
-		return nil, fmt.Errorf("path '%s' has %d positional parameters, but spec has %d declared",
-			path, len(pathParams), n)
+
+	// Deduplicate, preserving first-occurrence order.
+	seen := make(map[string]struct{}, len(pathParams))
+	uniqueParams := make([]string, 0, len(pathParams))
+	for _, name := range pathParams {
+		if _, exists := seen[name]; !exists {
+			seen[name] = struct{}{}
+			uniqueParams = append(uniqueParams, name)
+		}
 	}
-	out := make([]ParameterDefinition, len(in))
-	for i, name := range pathParams {
+
+	n := len(in)
+	if len(uniqueParams) != n {
+		return nil, fmt.Errorf("path '%s' has %d positional parameters, but spec has %d declared",
+			path, len(uniqueParams), n)
+	}
+	out := make([]ParameterDefinition, n)
+	for i, name := range uniqueParams {
 		p := ParameterDefinitions(in).FindByName(name)
 		if p == nil {
 			return nil, fmt.Errorf("path '%s' refers to parameter '%s', which doesn't exist in specification",
