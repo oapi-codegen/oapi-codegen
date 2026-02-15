@@ -348,10 +348,22 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		if err != nil {
 			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
 		}
-		outSchema.GoType = typeName
-		outSchema.DefineViaAlias = true
 
-		return outSchema, nil
+		exludeCurrentPackage := false
+		currentPackage := globalState.options.PackageName
+		if globalState.options.OutputOptions.ExcludePackageGoType {
+			parts := strings.Split(typeName, ".")
+			if parts[0] == currentPackage {
+				exludeCurrentPackage = true
+			}
+		}
+
+		if !exludeCurrentPackage {
+			outSchema.GoType = typeName
+			outSchema.DefineViaAlias = true
+
+			return outSchema, nil
+		}
 	}
 
 	// Schema type and format, eg. string / binary
