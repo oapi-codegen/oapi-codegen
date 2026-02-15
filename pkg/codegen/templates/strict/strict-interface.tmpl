@@ -132,6 +132,42 @@
                 return nil
             }
         {{end}}
+        
+        {{/* Generate Visit methods for discriminator concrete types */}}
+        {{range .Contents}}
+            {{$discriminator := .Schema.Discriminator}}
+            {{if $discriminator}}
+                {{if ne 0 (len $discriminator.Mapping)}}
+                    {{range $value, $concreteType := $discriminator.Mapping}}
+                        // Visit{{$opid}}Response for {{$concreteType}} allows direct return of concrete discriminator type
+                        func (response {{$concreteType}}) Visit{{$opid}}Response(w http.ResponseWriter) error {
+                            w.Header().Set("Content-Type", "application/json")
+                            w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}200{{end}})
+                            return json.NewEncoder(w).Encode(response)
+                        }
+
+                    {{end}}
+                {{end}}
+            {{else if .Schema.ArrayType}}
+                {{/* Check if array element type has discriminator */}}
+                {{$elemDiscriminator := .Schema.ArrayType.Discriminator}}
+                {{if $elemDiscriminator}}
+                    {{if ne 0 (len $elemDiscriminator.Mapping)}}
+                        {{$baseType := .Schema.ArrayType.TypeDecl}}
+                        
+                        // Type definition for []{{$baseType}}Interface to enable direct return of mixed discriminator types
+                        type {{$opid}}{{$statusCode}}{{$baseType}}InterfaceResponse []{{$baseType}}Interface
+                        
+                        func (response {{$opid}}{{$statusCode}}{{$baseType}}InterfaceResponse) Visit{{$opid}}Response(w http.ResponseWriter) error {
+                            w.Header().Set("Content-Type", "application/json")
+                            w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}200{{end}})
+                            return json.NewEncoder(w).Encode(response)
+                        }
+
+                    {{end}}
+                {{end}}
+            {{end}}
+        {{end}}
     {{end}}
 {{end}}
 
