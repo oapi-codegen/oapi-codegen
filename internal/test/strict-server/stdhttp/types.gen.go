@@ -14,6 +14,9 @@ type Reusableresponse = Example
 // MultipleRequestAndResponseTypesTextBody defines parameters for MultipleRequestAndResponseTypes.
 type MultipleRequestAndResponseTypesTextBody = string
 
+// RequiredTextBodyTextBody defines parameters for RequiredTextBody.
+type RequiredTextBodyTextBody = string
+
 // TextExampleTextBody defines parameters for TextExample.
 type TextExampleTextBody = string
 
@@ -43,6 +46,12 @@ type MultipleRequestAndResponseTypesMultipartRequestBody = Example
 
 // MultipleRequestAndResponseTypesTextRequestBody defines body for MultipleRequestAndResponseTypes for text/plain ContentType.
 type MultipleRequestAndResponseTypesTextRequestBody = MultipleRequestAndResponseTypesTextBody
+
+// RequiredJSONBodyJSONRequestBody defines body for RequiredJSONBody for application/json ContentType.
+type RequiredJSONBodyJSONRequestBody = Example
+
+// RequiredTextBodyTextRequestBody defines body for RequiredTextBody for text/plain ContentType.
+type RequiredTextBodyTextRequestBody = RequiredTextBodyTextBody
 
 // ReusableResponsesJSONRequestBody defines body for ReusableResponses for application/json ContentType.
 type ReusableResponsesJSONRequestBody = Example

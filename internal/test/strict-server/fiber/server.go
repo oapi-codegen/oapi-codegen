@@ -126,6 +126,14 @@ func (s StrictServer) ReusableResponses(ctx context.Context, request ReusableRes
 	return ReusableResponses200JSONResponse{ReusableresponseJSONResponse: ReusableresponseJSONResponse{Body: *request.Body}}, nil
 }
 
+func (s StrictServer) RequiredJSONBody(ctx context.Context, request RequiredJSONBodyRequestObject) (RequiredJSONBodyResponseObject, error) {
+	return RequiredJSONBody200JSONResponse(*request.Body), nil
+}
+
+func (s StrictServer) RequiredTextBody(ctx context.Context, request RequiredTextBodyRequestObject) (RequiredTextBodyResponseObject, error) {
+	return RequiredTextBody200TextResponse(*request.Body), nil
+}
+
 func (s StrictServer) ReservedGoKeywordParameters(ctx context.Context, request ReservedGoKeywordParametersRequestObject) (ReservedGoKeywordParametersResponseObject, error) {
 	return ReservedGoKeywordParameters200TextResponse(""), nil
 }
