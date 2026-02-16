@@ -58,6 +58,13 @@ components:
             properties:
               value:
                 type: integer
+              metadata:
+                type: object
+                properties:
+                  key:
+                    type: string
+                additionalProperties:
+                  type: string
 
   responses:
     Bar:
@@ -78,3 +85,12 @@ components:
                 $ref: '#/components/schemas/BarParam'
               value4:
                 $ref: '#/components/schemas/BarParam2'
+              pagination:
+                type: object
+                properties:
+                  page:
+                    type: integer
+                  totalPages:
+                    type: integer
+                additionalProperties:
+                  type: string

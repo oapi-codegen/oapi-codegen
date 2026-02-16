@@ -462,6 +462,53 @@ func TestOrderedParamsFromUri(t *testing.T) {
 
 	result = OrderedParamsFromUri("/path/foo")
 	assert.EqualValues(t, []string{}, result)
+
+	// A parameter can appear more than once in the URI (e.g. Keycloak API).
+	// OrderedParamsFromUri faithfully returns all occurrences.
+	result = OrderedParamsFromUri("/admin/realms/{realm}/clients/{client-uuid}/roles/{role-name}/composites/clients/{client-uuid}")
+	assert.EqualValues(t, []string{"realm", "client-uuid", "role-name", "client-uuid"}, result)
+}
+
+func TestSortParamsByPath(t *testing.T) {
+	strSchema := &openapi3.Schema{Type: &openapi3.Types{"string"}}
+
+	t.Run("reorders params to match path order", func(t *testing.T) {
+		params := []ParameterDefinition{
+			{ParamName: "b", In: "path", Spec: &openapi3.Parameter{Name: "b", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+			{ParamName: "a", In: "path", Spec: &openapi3.Parameter{Name: "a", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+		}
+		sorted, err := SortParamsByPath("/foo/{a}/bar/{b}", params)
+		require.NoError(t, err)
+		require.Len(t, sorted, 2)
+		assert.Equal(t, "a", sorted[0].ParamName)
+		assert.Equal(t, "b", sorted[1].ParamName)
+	})
+
+	t.Run("errors on missing parameter", func(t *testing.T) {
+		params := []ParameterDefinition{
+			{ParamName: "a", In: "path", Spec: &openapi3.Parameter{Name: "a", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+		}
+		_, err := SortParamsByPath("/foo/{a}/bar/{b}", params)
+		assert.Error(t, err)
+	})
+
+	t.Run("handles duplicate path parameters", func(t *testing.T) {
+		// This is the Keycloak-style path where {client-uuid} appears twice.
+		// The spec only declares 3 unique parameters.
+		params := []ParameterDefinition{
+			{ParamName: "realm", In: "path", Spec: &openapi3.Parameter{Name: "realm", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+			{ParamName: "client-uuid", In: "path", Spec: &openapi3.Parameter{Name: "client-uuid", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+			{ParamName: "role-name", In: "path", Spec: &openapi3.Parameter{Name: "role-name", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+		}
+		path := "/admin/realms/{realm}/clients/{client-uuid}/roles/{role-name}/composites/clients/{client-uuid}"
+		sorted, err := SortParamsByPath(path, params)
+		require.NoError(t, err)
+		// Should return 3 unique params in first-occurrence order
+		require.Len(t, sorted, 3)
+		assert.Equal(t, "realm", sorted[0].ParamName)
+		assert.Equal(t, "client-uuid", sorted[1].ParamName)
+		assert.Equal(t, "role-name", sorted[2].ParamName)
+	})
 }
 
 func TestReplacePathParamsWithStr(t *testing.T) {

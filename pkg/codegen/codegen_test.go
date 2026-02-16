@@ -227,5 +227,65 @@ func (t *ExampleSchema_Item) FromExternalRef0NewPet(v externalRef0.NewPet) error
 `)
 }
 
+func TestDuplicatePathParameter(t *testing.T) {
+	// Regression test for https://github.com/oapi-codegen/oapi-codegen/issues/1574
+	// Some real-world specs (e.g. Keycloak) have paths where the same parameter
+	// appears more than once: /clients/{client-uuid}/.../clients/{client-uuid}
+	spec := `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Duplicate path param test
+paths:
+  /admin/realms/{realm}/clients/{client-uuid}/roles/{role-name}/composites/clients/{client-uuid}:
+    get:
+      operationId: getCompositeRoles
+      parameters:
+        - name: realm
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: client-uuid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: role-name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	opts := Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			EchoServer: true,
+			Client:     true,
+			Models:     true,
+		},
+	}
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Verify the generated code is valid Go.
+	_, err = format.Source([]byte(code))
+	require.NoError(t, err)
+
+	// The path params should appear exactly once in the function signature.
+	assert.Contains(t, code, "realm string")
+	assert.Contains(t, code, "clientUuid string")
+	assert.Contains(t, code, "roleName string")
+}
+
 //go:embed test_spec.yaml
 var testOpenAPIDefinition string

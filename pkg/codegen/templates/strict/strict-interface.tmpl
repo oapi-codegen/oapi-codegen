@@ -40,7 +40,7 @@
         {{range .Contents}}
             {{$receiverTypeName := printf "%s%s%s%s" $opid $statusCode .NameTagOrContentType "Response"}}
             {{if and $fixedStatusCode $isRef -}}
-                {{ if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (eq .NameTag "Multipart") -}}
+                {{ if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (or (eq .NameTag "Multipart") (eq .NameTag "Text")) -}}
                 type {{$receiverTypeName}} {{$ref}}{{.NameTagOrContentType}}Response
                 {{else if $isExternalRef -}}
                 type {{$receiverTypeName}} struct { {{$ref}} }

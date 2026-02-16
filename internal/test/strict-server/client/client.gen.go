@@ -27,6 +27,9 @@ type Reusableresponse = Example
 // MultipleRequestAndResponseTypesTextBody defines parameters for MultipleRequestAndResponseTypes.
 type MultipleRequestAndResponseTypesTextBody = string
 
+// RequiredTextBodyTextBody defines parameters for RequiredTextBody.
+type RequiredTextBodyTextBody = string
+
 // TextExampleTextBody defines parameters for TextExample.
 type TextExampleTextBody = string
 
@@ -56,6 +59,12 @@ type MultipleRequestAndResponseTypesMultipartRequestBody = Example
 
 // MultipleRequestAndResponseTypesTextRequestBody defines body for MultipleRequestAndResponseTypes for text/plain ContentType.
 type MultipleRequestAndResponseTypesTextRequestBody = MultipleRequestAndResponseTypesTextBody
+
+// RequiredJSONBodyJSONRequestBody defines body for RequiredJSONBody for application/json ContentType.
+type RequiredJSONBodyJSONRequestBody = Example
+
+// RequiredTextBodyTextRequestBody defines body for RequiredTextBody for text/plain ContentType.
+type RequiredTextBodyTextRequestBody = RequiredTextBodyTextBody
 
 // ReusableResponsesJSONRequestBody defines body for ReusableResponses for application/json ContentType.
 type ReusableResponsesJSONRequestBody = Example
@@ -164,6 +173,16 @@ type ClientInterface interface {
 	MultipleRequestAndResponseTypesWithFormdataBody(ctx context.Context, body MultipleRequestAndResponseTypesFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	MultipleRequestAndResponseTypesWithTextBody(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RequiredJSONBodyWithBody request with any body
+	RequiredJSONBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RequiredJSONBody(ctx context.Context, body RequiredJSONBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RequiredTextBodyWithBody request with any body
+	RequiredTextBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RequiredTextBodyWithTextBody(ctx context.Context, body RequiredTextBodyTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ReservedGoKeywordParameters request
 	ReservedGoKeywordParameters(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -286,6 +305,54 @@ func (c *Client) MultipleRequestAndResponseTypesWithFormdataBody(ctx context.Con
 
 func (c *Client) MultipleRequestAndResponseTypesWithTextBody(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewMultipleRequestAndResponseTypesRequestWithTextBody(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequiredJSONBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequiredJSONBodyRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequiredJSONBody(ctx context.Context, body RequiredJSONBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequiredJSONBodyRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequiredTextBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequiredTextBodyRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequiredTextBodyWithTextBody(ctx context.Context, body RequiredTextBodyTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequiredTextBodyRequestWithTextBody(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -589,6 +656,82 @@ func NewMultipleRequestAndResponseTypesRequestWithBody(server string, contentTyp
 	}
 
 	operationPath := fmt.Sprintf("/multiple")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewRequiredJSONBodyRequest calls the generic RequiredJSONBody builder with application/json body
+func NewRequiredJSONBodyRequest(server string, body RequiredJSONBodyJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRequiredJSONBodyRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewRequiredJSONBodyRequestWithBody generates requests for RequiredJSONBody with any type of body
+func NewRequiredJSONBodyRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/required-json-body")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewRequiredTextBodyRequestWithTextBody calls the generic RequiredTextBody builder with text/plain body
+func NewRequiredTextBodyRequestWithTextBody(server string, body RequiredTextBodyTextRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	bodyReader = strings.NewReader(string(body))
+	return NewRequiredTextBodyRequestWithBody(server, "text/plain", bodyReader)
+}
+
+// NewRequiredTextBodyRequestWithBody generates requests for RequiredTextBody with any type of body
+func NewRequiredTextBodyRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/required-text-body")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -983,6 +1126,16 @@ type ClientWithResponsesInterface interface {
 
 	MultipleRequestAndResponseTypesWithTextBodyWithResponse(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error)
 
+	// RequiredJSONBodyWithBodyWithResponse request with any body
+	RequiredJSONBodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequiredJSONBodyResponse, error)
+
+	RequiredJSONBodyWithResponse(ctx context.Context, body RequiredJSONBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*RequiredJSONBodyResponse, error)
+
+	// RequiredTextBodyWithBodyWithResponse request with any body
+	RequiredTextBodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequiredTextBodyResponse, error)
+
+	RequiredTextBodyWithTextBodyWithResponse(ctx context.Context, body RequiredTextBodyTextRequestBody, reqEditors ...RequestEditorFn) (*RequiredTextBodyResponse, error)
+
 	// ReservedGoKeywordParametersWithResponse request
 	ReservedGoKeywordParametersWithResponse(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*ReservedGoKeywordParametersResponse, error)
 
@@ -1098,6 +1251,49 @@ func (r MultipleRequestAndResponseTypesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r MultipleRequestAndResponseTypesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type RequiredJSONBodyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Example
+}
+
+// Status returns HTTPResponse.Status
+func (r RequiredJSONBodyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RequiredJSONBodyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type RequiredTextBodyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r RequiredTextBodyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RequiredTextBodyResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1347,6 +1543,40 @@ func (c *ClientWithResponses) MultipleRequestAndResponseTypesWithTextBodyWithRes
 	return ParseMultipleRequestAndResponseTypesResponse(rsp)
 }
 
+// RequiredJSONBodyWithBodyWithResponse request with arbitrary body returning *RequiredJSONBodyResponse
+func (c *ClientWithResponses) RequiredJSONBodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequiredJSONBodyResponse, error) {
+	rsp, err := c.RequiredJSONBodyWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequiredJSONBodyResponse(rsp)
+}
+
+func (c *ClientWithResponses) RequiredJSONBodyWithResponse(ctx context.Context, body RequiredJSONBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*RequiredJSONBodyResponse, error) {
+	rsp, err := c.RequiredJSONBody(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequiredJSONBodyResponse(rsp)
+}
+
+// RequiredTextBodyWithBodyWithResponse request with arbitrary body returning *RequiredTextBodyResponse
+func (c *ClientWithResponses) RequiredTextBodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequiredTextBodyResponse, error) {
+	rsp, err := c.RequiredTextBodyWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequiredTextBodyResponse(rsp)
+}
+
+func (c *ClientWithResponses) RequiredTextBodyWithTextBodyWithResponse(ctx context.Context, body RequiredTextBodyTextRequestBody, reqEditors ...RequestEditorFn) (*RequiredTextBodyResponse, error) {
+	rsp, err := c.RequiredTextBodyWithTextBody(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequiredTextBodyResponse(rsp)
+}
+
 // ReservedGoKeywordParametersWithResponse request returning *ReservedGoKeywordParametersResponse
 func (c *ClientWithResponses) ReservedGoKeywordParametersWithResponse(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*ReservedGoKeywordParametersResponse, error) {
 	rsp, err := c.ReservedGoKeywordParameters(ctx, pType, reqEditors...)
@@ -1541,6 +1771,48 @@ func ParseMultipleRequestAndResponseTypesResponse(rsp *http.Response) (*Multiple
 	case rsp.StatusCode == 200:
 		// Content-type (text/plain) unsupported
 
+	}
+
+	return response, nil
+}
+
+// ParseRequiredJSONBodyResponse parses an HTTP response from a RequiredJSONBodyWithResponse call
+func ParseRequiredJSONBodyResponse(rsp *http.Response) (*RequiredJSONBodyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RequiredJSONBodyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Example
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRequiredTextBodyResponse parses an HTTP response from a RequiredTextBodyWithResponse call
+func ParseRequiredTextBodyResponse(rsp *http.Response) (*RequiredTextBodyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RequiredTextBodyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
 	}
 
 	return response, nil
