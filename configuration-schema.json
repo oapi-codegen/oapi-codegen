@@ -257,6 +257,25 @@
           "type": "boolean",
           "description": "When set to true, automatically renames types that collide across different OpenAPI component sections (schemas, parameters, requestBodies, responses, headers) by appending a suffix based on the component section (e.g., 'Parameter', 'Response', 'RequestBody'). Without this, the codegen will error on duplicate type names, requiring manual resolution via x-go-name.",
           "default": false
+        },
+        "type-mapping": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "TypeMapping allows customizing OpenAPI type/format to Go type mappings. User-specified mappings are merged on top of the defaults, so you only need to specify the types you want to override.",
+          "properties": {
+            "integer": {
+              "$ref": "#/$defs/format-mapping"
+            },
+            "number": {
+              "$ref": "#/$defs/format-mapping"
+            },
+            "boolean": {
+              "$ref": "#/$defs/format-mapping"
+            },
+            "string": {
+              "$ref": "#/$defs/format-mapping"
+            }
+          }
         }
       }
     },
@@ -294,5 +313,43 @@
   "required": [
     "package",
     "output"
-  ]
+  ],
+  "$defs": {
+    "simple-type-spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Specifies a Go type and optional import path",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The Go type to use (e.g. \"int64\", \"time.Time\", \"github.com/shopspring/decimal.Decimal\")"
+        },
+        "import": {
+          "type": "string",
+          "description": "The Go import path required for this type (e.g. \"time\", \"encoding/json\")"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "format-mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Maps an OpenAPI type's formats to Go types",
+      "properties": {
+        "default": {
+          "$ref": "#/$defs/simple-type-spec",
+          "description": "The default Go type when no format is specified or the format is unrecognized"
+        },
+        "formats": {
+          "type": "object",
+          "description": "Format-specific Go type overrides (e.g. \"int32\": {\"type\": \"int32\"}, \"double\": {\"type\": \"float64\"})",
+          "additionalProperties": {
+            "$ref": "#/$defs/simple-type-spec"
+          }
+        }
+      }
+    }
+  }
 }

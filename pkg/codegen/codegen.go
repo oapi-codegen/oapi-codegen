@@ -52,6 +52,8 @@ var globalState struct {
 	// initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
 	// List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
 	initialismsMap map[string]string
+	// typeMapping is the merged type mapping (defaults + user overrides).
+	typeMapping TypeMapping
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -140,6 +142,11 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	globalState.options = opts
 	globalState.spec = spec
 	globalState.importMapping = constructImportMapping(opts.ImportMapping)
+	if opts.OutputOptions.TypeMapping != nil {
+		globalState.typeMapping = DefaultTypeMapping.Merge(*opts.OutputOptions.TypeMapping)
+	} else {
+		globalState.typeMapping = DefaultTypeMapping
+	}
 
 	filterOperationsByTag(spec, opts)
 	filterOperationsByOperationID(spec, opts)
