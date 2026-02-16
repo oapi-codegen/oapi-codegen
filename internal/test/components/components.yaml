@@ -386,6 +386,24 @@ components:
       required:
         - type
       additionalProperties: true
+    OneOfObject14:
+      description: oneOf with discriminator where multiple values map to the same schema (tests deterministic generation)
+      type: object
+      properties:
+        category:
+          type: string
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant4'
+        - $ref: '#/components/schemas/OneOfVariant5'
+      discriminator:
+        propertyName: category
+        mapping:
+          type_a: '#/components/schemas/OneOfVariant4'
+          type_b: '#/components/schemas/OneOfVariant4'
+          type_x: '#/components/schemas/OneOfVariant5'
+          type_y: '#/components/schemas/OneOfVariant5'
+      required:
+        - category
     AnyOfObject1:
       description: simple anyOf case
       anyOf:
