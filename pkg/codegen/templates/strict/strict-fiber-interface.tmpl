@@ -77,7 +77,7 @@
                 {{if eq .NameTag "Multipart" -}}
                     writer := multipart.NewWriter(ctx.Response().BodyWriter())
                 {{end -}}
-                ctx.Response().Header.Set("Content-Type", {{if eq .NameTag "Multipart"}}{{if eq .ContentType "multipart/form-data"}}writer.FormDataContentType(){{else}}mime.FormatMediaType("{{.ContentType}}", map[string]string{"boundary": writer.Boundary()}){{end}}{{else if .HasFixedContentType }}"{{.ContentType}}"{{else}}response.ContentType{{end}})
+                ctx.Response().Header.Set("Content-Type", {{if eq .NameTag "Multipart"}}{{if eq .ContentType "multipart/form-data"}}writer.FormDataContentType(){{else}}mime.FormatMediaType("{{.ContentType}}", map[string]string{"boundary": writer.Boundary()}){{end}}{{else if .HasFixedContentType }}{{.ContentType | toGoString}}{{else}}response.ContentType{{end}})
                 {{if not .IsSupported -}}
                     if response.ContentLength != 0 {
                         ctx.Response().Header.Set("Content-Length", fmt.Sprint(response.ContentLength))

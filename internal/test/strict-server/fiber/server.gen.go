@@ -151,10 +151,14 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c *fiber.Ctx) error {
 	headers := c.GetReqHeaders()
 
 	// ------------- Required header parameter "header1" -------------
-	if value, found := headers[http.CanonicalHeaderKey("header1")]; found {
+	if valueList, found := headers[http.CanonicalHeaderKey("header1")]; found {
 		var Header1 string
+		n := len(valueList)
+		if n != 1 {
+			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName header1, 1 is required, but %d found", n))
+		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "header1", value, &Header1, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		err = runtime.BindStyledParameterWithOptions("simple", "header1", valueList[0], &Header1, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter header1: %w", err).Error())
 		}
@@ -167,10 +171,14 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c *fiber.Ctx) error {
 	}
 
 	// ------------- Optional header parameter "header2" -------------
-	if value, found := headers[http.CanonicalHeaderKey("header2")]; found {
+	if valueList, found := headers[http.CanonicalHeaderKey("header2")]; found {
 		var Header2 int
+		n := len(valueList)
+		if n != 1 {
+			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName header2, 1 is required, but %d found", n))
+		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "header2", value, &Header2, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		err = runtime.BindStyledParameterWithOptions("simple", "header2", valueList[0], &Header2, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter header2: %w", err).Error())
 		}

@@ -1,0 +1,21 @@
+openapi: "3.0.1"
+components:
+  schemas:
+    Test:
+      type: object
+paths:
+  /test:
+    get:
+      operationId: test
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Test"
+            application/json; profile="Foo":
+              schema:
+                $ref: "#/components/schemas/Test"
+            application/json; profile="Bar":
+              schema:
+                $ref: "#/components/schemas/Test"
