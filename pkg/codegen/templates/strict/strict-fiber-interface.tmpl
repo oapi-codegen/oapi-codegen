@@ -89,7 +89,7 @@
                     {{$hasUnionElements := ne 0 (len .Schema.UnionElements)}}
                     return ctx.JSON(&{{if $hasBodyVar}}response.Body{{else}}response{{end}}{{if $hasUnionElements}}.union{{end}})
                 {{else if eq .NameTag "Text" -}}
-                    _, err := ctx.WriteString(string({{if $hasBodyVar}}response.Body{{else}}response{{end}}))
+                    _, err := ctx.WriteString(string({{if $hasBodyVar}}response.Body{{else}}response{{if and $ref .NameTagOrContentType}}.{{$ref}}{{.NameTagOrContentType}}Response{{end}}{{end}}))
                     return err
                 {{else if eq .NameTag "Formdata" -}}
                     if form, err := runtime.MarshalForm({{if $hasBodyVar}}response.Body{{else}}response{{end}}, nil); err != nil {
