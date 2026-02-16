@@ -14,7 +14,7 @@ import (
 // where the generated code tried to do []byte(response) on a struct type,
 // which does not compile.
 func TestGetTest401TextResponse(t *testing.T) {
-	resp := GetTest401TextResponse{UnauthorizedTextResponse("Unauthorized")}
+	resp := GetTest401TextResponse("Unauthorized")
 	w := httptest.NewRecorder()
 
 	err := resp.VisitGetTestResponse(w)

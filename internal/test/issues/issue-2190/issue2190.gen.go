@@ -415,7 +415,7 @@ func (response GetTest200JSONResponse) VisitGetTestResponse(w http.ResponseWrite
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetTest401TextResponse struct{ UnauthorizedTextResponse }
+type GetTest401TextResponse UnauthorizedTextResponse
 
 func (response GetTest401TextResponse) VisitGetTestResponse(w http.ResponseWriter) error {
 	w.Header().Set("Content-Type", "text/plain")
