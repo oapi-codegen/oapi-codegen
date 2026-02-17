@@ -539,6 +539,28 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 		return "", fmt.Errorf("error generating code for type enums: %w", err)
 	}
 
+	// Collect all types for constraint generation, including parameter types from operations
+	constraintTypes := allTypes
+	for _, op := range ops {
+		constraintTypes = append(constraintTypes, op.TypeDefinitions...)
+		// Extract inline parameter schemas with constraints
+		for _, param := range op.AllParams() {
+			if param.Schema.OAPISchema != nil && hasConstraints(param.Schema.OAPISchema) {
+				// Create a type definition for this parameter's schema
+				typeName := op.OperationId + SchemaNameToTypeName(param.ParamName)
+				constraintTypes = append(constraintTypes, TypeDefinition{
+					TypeName: typeName,
+					Schema:   param.Schema,
+				})
+			}
+		}
+	}
+
+	constraintsOut, err := GenerateConstraints(t, constraintTypes)
+	if err != nil {
+		return "", fmt.Errorf("error generating code for type constraints: %w", err)
+	}
+
 	typesOut, err := GenerateTypes(t, allTypes)
 	if err != nil {
 		return "", fmt.Errorf("error generating code for type definitions: %w", err)
@@ -559,7 +581,7 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 		return "", fmt.Errorf("error generating boilerplate for union types with additionalProperties: %w", err)
 	}
 
-	typeDefinitions := strings.Join([]string{enumsOut, typesOut, operationsOut, allOfBoilerplate, unionBoilerplate, unionAndAdditionalBoilerplate}, "")
+	typeDefinitions := strings.Join([]string{enumsOut, constraintsOut, typesOut, operationsOut, allOfBoilerplate, unionBoilerplate, unionAndAdditionalBoilerplate}, "")
 	return typeDefinitions, nil
 }
 
@@ -886,6 +908,90 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 	// Now see if enums conflict with any non-enum typenames
 
 	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{EnumDefinitions: enums})
+}
+
+// hasConstraints checks if a schema has any constraints worth generating constants for
+func hasConstraints(schema *openapi3.Schema) bool {
+	if schema == nil {
+		return false
+	}
+	return schema.Min != nil || schema.Max != nil ||
+		schema.MinLength > 0 || schema.MaxLength != nil ||
+		schema.MinItems > 0 || schema.MaxItems != nil ||
+		schema.Default != nil
+}
+
+// GenerateConstraints generates constants for schema constraints (min, max, default, etc.)
+func GenerateConstraints(t *template.Template, types []TypeDefinition) (string, error) {
+	var constraints []ConstraintDefinition
+
+	// Keep track of which types we've processed
+	m := map[string]bool{}
+
+	// Go through all types and extract constraint information
+	for _, tp := range types {
+		if found := m[tp.TypeName]; found {
+			continue
+		}
+
+		m[tp.TypeName] = true
+
+		// Skip if there are no constraints to generate
+		if tp.Schema.OAPISchema == nil {
+			continue
+		}
+
+		schema := tp.Schema.OAPISchema
+		hasConstraints := false
+		constraint := ConstraintDefinition{
+			TypeName: tp.TypeName,
+			Schema:   tp.Schema,
+		}
+
+		// Extract numeric constraints
+		if schema.Min != nil {
+			constraint.Minimum = schema.Min
+			constraint.ExclusiveMinimum = schema.ExclusiveMin
+			hasConstraints = true
+		}
+		if schema.Max != nil {
+			constraint.Maximum = schema.Max
+			constraint.ExclusiveMaximum = schema.ExclusiveMax
+			hasConstraints = true
+		}
+
+		// Extract string constraints
+		if schema.MinLength > 0 {
+			constraint.MinLength = &schema.MinLength
+			hasConstraints = true
+		}
+		if schema.MaxLength != nil {
+			constraint.MaxLength = schema.MaxLength
+			hasConstraints = true
+		}
+
+		// Extract array constraints
+		if schema.MinItems > 0 {
+			constraint.MinItems = &schema.MinItems
+			hasConstraints = true
+		}
+		if schema.MaxItems != nil {
+			constraint.MaxItems = schema.MaxItems
+			hasConstraints = true
+		}
+
+		// Extract default value
+		if schema.Default != nil {
+			constraint.Default = schema.Default
+			hasConstraints = true
+		}
+
+		if hasConstraints {
+			constraints = append(constraints, constraint)
+		}
+	}
+
+	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{ConstraintDefinitions: constraints})
 }
 
 // GenerateImports generates our import statements and package definition.
