@@ -6,7 +6,6 @@ package param
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -271,7 +270,7 @@ func NewGetTestRequest(server string, params *GetTestParams) (*http.Request, err
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/test")
+	operationPath := "/test"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

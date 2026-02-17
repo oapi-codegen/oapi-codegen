@@ -6,7 +6,6 @@ package inline
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -143,7 +142,7 @@ func NewGetPetsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/pets")
+	operationPath := "/pets"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

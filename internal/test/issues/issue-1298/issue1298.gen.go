@@ -150,7 +150,7 @@ func NewTestRequestWithBody(server string, contentType string, body io.Reader) (
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/test")
+	operationPath := "/test"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

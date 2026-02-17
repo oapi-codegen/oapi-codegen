@@ -648,9 +648,30 @@ func OrderedParamsFromUri(uri string) []string {
 	return result
 }
 
-// ReplacePathParamsWithStr replaces path parameters of the form {param} with %s
-func ReplacePathParamsWithStr(uri string) string {
-	return pathParamRE.ReplaceAllString(uri, "%s")
+// GenPathString constructs a string that embeds path-parameter variables into a URI template.
+func GenPathString(uri, paramVarName string) string {
+	tmpl := pathParamRE.ReplaceAllString(uri, "%s")
+
+	nParams := strings.Count(tmpl, "%s")
+	params := make([]any, nParams)
+
+	for i := range nParams {
+		params[i] = fmt.Sprintf(`" + %s%d + "`, paramVarName, i)
+	}
+
+	uri = fmt.Sprintf(tmpl, params...)
+
+	uri, found := strings.CutPrefix(uri, `" + `)
+	if !found {
+		uri = `"` + uri
+	}
+
+	uri, found = strings.CutSuffix(uri, ` + "`)
+	if !found {
+		uri = uri + `"`
+	}
+
+	return uri
 }
 
 // SortParamsByPath reorders the given parameter definitions to match those in the path URI.
