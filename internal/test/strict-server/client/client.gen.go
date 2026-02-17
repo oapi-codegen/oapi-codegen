@@ -1768,9 +1768,6 @@ func ParseMultipleRequestAndResponseTypesResponse(rsp *http.Response) (*Multiple
 		}
 		response.JSON200 = &dest
 
-	case rsp.StatusCode == 200:
-		// Content-type (text/plain) unsupported
-
 	}
 
 	return response, nil

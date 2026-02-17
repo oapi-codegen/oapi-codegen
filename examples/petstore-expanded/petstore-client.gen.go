@@ -652,6 +652,9 @@ func ParseDeletePetResponse(rsp *http.Response) (*DeletePetResponse, error) {
 	}
 
 	switch {
+	case rsp.StatusCode == 204:
+		break // No content-type
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Error
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
