@@ -9,17 +9,47 @@ const (
 	EXP ClientType = "EXP"
 )
 
+var ClientTypeValues = map[ClientType]struct{}{
+	ACT: {},
+	EXP: {},
+}
+
+func (s ClientType) IsValid() bool {
+	_, ok := ClientTypeValues[s]
+	return ok
+}
+
 // Defines values for ClientTypeWithNamesExtension.
 const (
 	ClientTypeWithNamesExtensionActive  ClientTypeWithNamesExtension = "ACT"
 	ClientTypeWithNamesExtensionExpired ClientTypeWithNamesExtension = "EXP"
 )
 
+var ClientTypeWithNamesExtensionValues = map[ClientTypeWithNamesExtension]struct{}{
+	ClientTypeWithNamesExtensionActive:  {},
+	ClientTypeWithNamesExtensionExpired: {},
+}
+
+func (s ClientTypeWithNamesExtension) IsValid() bool {
+	_, ok := ClientTypeWithNamesExtensionValues[s]
+	return ok
+}
+
 // Defines values for ClientTypeWithVarNamesExtension.
 const (
 	ClientTypeWithVarNamesExtensionActive  ClientTypeWithVarNamesExtension = "ACT"
 	ClientTypeWithVarNamesExtensionExpired ClientTypeWithVarNamesExtension = "EXP"
 )
+
+var ClientTypeWithVarNamesExtensionValues = map[ClientTypeWithVarNamesExtension]struct{}{
+	ClientTypeWithVarNamesExtensionActive:  {},
+	ClientTypeWithVarNamesExtensionExpired: {},
+}
+
+func (s ClientTypeWithVarNamesExtension) IsValid() bool {
+	_, ok := ClientTypeWithVarNamesExtensionValues[s]
+	return ok
+}
 
 // ClientType defines model for ClientType.
 type ClientType string
