@@ -24,6 +24,17 @@ type HttpRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// operationIdKey is the context key for the operationId
+type operationIdKey int
+
+// GetOperationIdFromContext returns the operationId from the context
+func GetOperationIdFromContext(ctx context.Context) string {
+	if opid, ok := ctx.Value(operationIdKey(0)).(string); ok {
+		return opid
+	}
+	return ""
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -94,6 +105,7 @@ type ClientInterface interface {
 }
 
 func (c *Client) ExamplePatchWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "ExamplePatchWithBody")
 	req, err := NewExamplePatchRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -106,6 +118,7 @@ func (c *Client) ExamplePatchWithBody(ctx context.Context, contentType string, b
 }
 
 func (c *Client) ExamplePatch(ctx context.Context, body ExamplePatchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "ExamplePatch")
 	req, err := NewExamplePatchRequest(c.Server, body)
 	if err != nil {
 		return nil, err

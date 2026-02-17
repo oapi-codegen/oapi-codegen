@@ -57,6 +57,17 @@ type HttpRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// operationIdKey is the context key for the operationId
+type operationIdKey int
+
+// GetOperationIdFromContext returns the operationId from the context
+func GetOperationIdFromContext(ctx context.Context) string {
+	if opid, ok := ctx.Value(operationIdKey(0)).(string); ok {
+		return opid
+	}
+	return ""
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -130,6 +141,7 @@ type ClientInterface interface {
 }
 
 func (c *Client) ListThings(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "ListThings")
 	req, err := NewListThingsRequest(c.Server)
 	if err != nil {
 		return nil, err
@@ -142,6 +154,7 @@ func (c *Client) ListThings(ctx context.Context, reqEditors ...RequestEditorFn) 
 }
 
 func (c *Client) AddThingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "AddThingWithBody")
 	req, err := NewAddThingRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -154,6 +167,7 @@ func (c *Client) AddThingWithBody(ctx context.Context, contentType string, body 
 }
 
 func (c *Client) AddThing(ctx context.Context, body AddThingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "AddThing")
 	req, err := NewAddThingRequest(c.Server, body)
 	if err != nil {
 		return nil, err
