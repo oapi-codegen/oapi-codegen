@@ -36,7 +36,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
   {{end}}
 
 {{range .SecurityDefinitions}}
-  c.Context().SetUserValue({{.ProviderName | ucFirst}}Scopes, {{toStringArray .Scopes}})
+  c.Context().SetUserValue(({{.ProviderName | ucFirst}}Scopes), {{toStringArray .Scopes}})
 {{end}}
 
   {{if .RequiresParamObject}}
