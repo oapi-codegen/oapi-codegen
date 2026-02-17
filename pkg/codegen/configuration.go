@@ -250,6 +250,8 @@ type OutputOptions struct {
 	IncludeTags []string `yaml:"include-tags,omitempty"`
 	// Exclude operations that have one of these tags. Ignored when empty.
 	ExcludeTags []string `yaml:"exclude-tags,omitempty"`
+	// Exclude package the `x-go-type` extension when generating types from schemas
+	ExcludePackageGoType bool `yaml:"exclude-package-go-type,omitempty"`
 	// Only include operations that have one of these operation-ids. Ignored when empty.
 	IncludeOperationIDs []string `yaml:"include-operation-ids,omitempty"`
 	// Exclude operations that have one of these operation-ids. Ignored when empty.
