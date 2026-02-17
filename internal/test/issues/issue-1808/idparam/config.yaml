@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: idparam
+generate:
+  models: true
+output: idparam/idparam.gen.go
+output-options:
+  skip-prune: true
+import-mapping:
+  ../id/spec.yaml: github.com/oapi-codegen/oapi-codegen/internal/test/issues/issue-1808/id
