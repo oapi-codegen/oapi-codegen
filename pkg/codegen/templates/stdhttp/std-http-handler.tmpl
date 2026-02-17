@@ -10,10 +10,11 @@ type ServeMux interface {
 }
 
 type StdHTTPServerOptions struct {
-    BaseURL          string
-    BaseRouter       ServeMux
-    Middlewares      []MiddlewareFunc
-    ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
+    BaseURL             string
+    BaseRouter          ServeMux
+    Middlewares         []MiddlewareFunc
+    ErrorHandlerFunc    func(w http.ResponseWriter, r *http.Request, err error)
+    WithRequestMetadata bool
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
@@ -44,9 +45,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 {{if .}}
 	wrapper := ServerInterfaceWrapper{
-		Handler: si,
-		HandlerMiddlewares: options.Middlewares,
-		ErrorHandlerFunc: options.ErrorHandlerFunc,
+		Handler:             si,
+		HandlerMiddlewares:  options.Middlewares,
+		ErrorHandlerFunc:    options.ErrorHandlerFunc,
+		WithRequestMetadata: options.WithRequestMetadata,
 	}
 {{end}}
 {{range .}}m.HandleFunc("{{.Method }} "+options.BaseURL+"{{.Path | swaggerUriToStdHttpUri}}", wrapper.{{.OperationId}})

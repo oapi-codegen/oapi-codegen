@@ -6,6 +6,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 )
@@ -24,15 +25,54 @@ type ServerInterface interface {
 
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
-	Handler            ServerInterface
-	HandlerMiddlewares []MiddlewareFunc
-	ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
+	Handler             ServerInterface
+	HandlerMiddlewares  []MiddlewareFunc
+	ErrorHandlerFunc    func(w http.ResponseWriter, r *http.Request, err error)
+	WithRequestMetadata bool
 }
+
+type RequestMetadata struct {
+	OperationID  string
+	RequestRoute string
+}
+
+type contextKey string
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
+var requestMetadataContextKey = contextKey("oapi-request-metadata")
+
+func RequestMetadataFromContext(ctx context.Context) *RequestMetadata {
+	if ctx == nil {
+		return nil
+	}
+
+	rmd, ok := ctx.Value(requestMetadataContextKey).(*RequestMetadata)
+
+	if ok {
+		return rmd
+	}
+
+	return nil
+}
+
+func RequestMetadataFromRequest(r *http.Request) *RequestMetadata {
+	if r == nil {
+		return nil
+	}
+
+	return RequestMetadataFromContext(r.Context())
+}
+
 // GetPing operation middleware
 func (siw *ServerInterfaceWrapper) GetPing(w http.ResponseWriter, r *http.Request) {
+	// inject request metadata into the request context
+	if siw.WithRequestMetadata {
+		r = r.WithContext(context.WithValue(r.Context(), requestMetadataContextKey, &RequestMetadata{
+			OperationID:  "GetPing",
+			RequestRoute: "/ping",
+		}))
+	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetPing(w, r)
@@ -126,10 +166,11 @@ type ServeMux interface {
 }
 
 type StdHTTPServerOptions struct {
-	BaseURL          string
-	BaseRouter       ServeMux
-	Middlewares      []MiddlewareFunc
-	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
+	BaseURL             string
+	BaseRouter          ServeMux
+	Middlewares         []MiddlewareFunc
+	ErrorHandlerFunc    func(w http.ResponseWriter, r *http.Request, err error)
+	WithRequestMetadata bool
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
@@ -160,9 +201,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	wrapper := ServerInterfaceWrapper{
-		Handler:            si,
-		HandlerMiddlewares: options.Middlewares,
-		ErrorHandlerFunc:   options.ErrorHandlerFunc,
+		Handler:             si,
+		HandlerMiddlewares:  options.Middlewares,
+		ErrorHandlerFunc:    options.ErrorHandlerFunc,
+		WithRequestMetadata: options.WithRequestMetadata,
 	}
 
 	m.HandleFunc("GET "+options.BaseURL+"/ping", wrapper.GetPing)
