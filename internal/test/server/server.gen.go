@@ -19,6 +19,18 @@ const (
 	Text GetWithContentTypeParamsContentType = "text"
 )
 
+// Valid indicates whether the value is a known member of the GetWithContentTypeParamsContentType enum.
+func (e GetWithContentTypeParamsContentType) Valid() bool {
+	switch e {
+	case Json:
+		return true
+	case Text:
+		return true
+	default:
+		return false
+	}
+}
+
 // EveryTypeOptional defines model for EveryTypeOptional.
 type EveryTypeOptional struct {
 	ArrayInlineField     *[]int              `json:"array_inline_field,omitempty"`

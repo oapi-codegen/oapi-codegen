@@ -23,6 +23,22 @@ const (
 	Two   Document_Status = "two"
 )
 
+// Valid indicates whether the value is a known member of the Document_Status enum.
+func (e Document_Status) Valid() bool {
+	switch e {
+	case Four:
+		return true
+	case One:
+		return true
+	case Three:
+		return true
+	case Two:
+		return true
+	default:
+		return false
+	}
+}
+
 // Document defines model for Document.
 type Document struct {
 	Name   *string          `json:"name,omitempty"`
