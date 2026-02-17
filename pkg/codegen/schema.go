@@ -3,7 +3,6 @@ package codegen
 import (
 	"errors"
 	"fmt"
-	"sort"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -196,17 +195,6 @@ func (e *EnumDefinition) GetValues() map[string]string {
 		newValues[newName] = v
 	}
 	return newValues
-}
-
-// GetValueNames returns a sorted list of constant names for this enum.
-func (e *EnumDefinition) GetValueNames() []string {
-	values := e.GetValues()
-	names := make([]string, 0, len(values))
-	for k := range values {
-		names = append(names, k)
-	}
-	sort.Strings(names)
-	return names
 }
 
 type Constants struct {
