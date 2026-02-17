@@ -2509,6 +2509,17 @@ Explicitly order struct fields
 <tr>
 <td>
 
+`x-go-embedding`
+
+</td>
+<td>
+Embed referenced schema(s) into the generated struct when using `allOf`
+</td>
+</tr>
+
+<tr>
+<td>
+
 `x-oapi-codegen-only-honour-go-name`
 
 </td>
@@ -3175,6 +3186,53 @@ type ClientWithExtension struct {
 ```
 
 You can see this in more detail in [the example code](examples/extensions/xorder/).
+
+### `x-go-embedding` - embed referenced schema(s) into the generated struct when using `allOf`
+
+When composing schemas with `allOf`, setting `x-go-embedding: true` on the composed type causes referenced schema(s) to be embedded in the generated Go struct. This results in Go field promotion for the embedded type(s).
+
+We can see this at play with the following schemas:
+
+```yaml
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: x-go-embedding
+components:
+  schemas:
+    response.Placeholder:
+      x-go-embedding: true
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Response"
+        - type: object
+          properties:
+            hello:
+              type: string
+
+    Response:
+      x-go-name: Response
+      type: object
+      properties:
+        status:
+          type: integer
+```
+
+This will produce models similar to:
+
+```go
+// Response defines model for Response.
+type Response struct {
+    Status *int `json:"status,omitempty"`
+}
+
+// ResponsePlaceholder defines model for response.Placeholder.
+// Note the embedded Response, due to x-go-embedding: true
+type ResponsePlaceholder struct {
+    Response
+    Hello *string `json:"hello,omitempty"`
+}
+```
 
 ### `x-oapi-codegen-only-honour-go-name` - only honour the `x-go-name` when generating field names
 
