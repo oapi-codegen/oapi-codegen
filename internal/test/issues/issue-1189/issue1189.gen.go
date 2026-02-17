@@ -27,17 +27,53 @@ const (
 	TestFieldA1Foo TestFieldA1 = "foo"
 )
 
+// Valid indicates whether the value is a known member of the TestFieldA1 enum.
+func (e TestFieldA1) Valid() bool {
+	switch e {
+	case TestFieldA1Bar:
+		return true
+	case TestFieldA1Foo:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TestFieldB.
 const (
 	TestFieldBBar TestFieldB = "bar"
 	TestFieldBFoo TestFieldB = "foo"
 )
 
+// Valid indicates whether the value is a known member of the TestFieldB enum.
+func (e TestFieldB) Valid() bool {
+	switch e {
+	case TestFieldBBar:
+		return true
+	case TestFieldBFoo:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TestFieldC1.
 const (
 	Bar TestFieldC1 = "bar"
 	Foo TestFieldC1 = "foo"
 )
+
+// Valid indicates whether the value is a known member of the TestFieldC1 enum.
+func (e TestFieldC1) Valid() bool {
+	switch e {
+	case Bar:
+		return true
+	case Foo:
+		return true
+	default:
+		return false
+	}
+}
 
 // Test defines model for test.
 type Test struct {
