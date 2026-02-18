@@ -102,7 +102,7 @@ type Property struct {
 	ReadOnly      bool
 	WriteOnly     bool
 	NeedsFormTag  bool
-	Extensions    map[string]interface{}
+	Extensions    map[string]any
 	Deprecated    bool
 }
 
@@ -270,11 +270,11 @@ func (u UnionElement) String() string {
 
 // Method generate union method name for template functions `As/From/Merge`.
 func (u UnionElement) Method() string {
-	var method string
+	var method strings.Builder
 	for _, part := range strings.Split(string(u), `.`) {
-		method += UppercaseFirstCharacter(part)
+		method.WriteString(UppercaseFirstCharacter(part))
 	}
-	return method
+	return method.String()
 }
 
 func PropertiesEqual(a, b Property) bool {
