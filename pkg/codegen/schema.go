@@ -631,6 +631,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		outSchema.AdditionalTypes = arrayType.AdditionalTypes
 		outSchema.Properties = arrayType.Properties
 		outSchema.DefineViaAlias = true
+		// kept for backward compatibility, array can be disabled via either "array" or "[]type"
 		if sliceContains(globalState.options.OutputOptions.DisableTypeAliasesForType, "array") {
 			outSchema.DefineViaAlias = false
 		}
@@ -661,6 +662,10 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		outSchema.DefineViaAlias = true
 	} else {
 		return fmt.Errorf("unhandled Schema type: %v", t)
+	}
+
+	if outSchema.GoType != "" && sliceContains(globalState.options.OutputOptions.DisableTypeAliasesForType, outSchema.GoType) {
+		outSchema.DefineViaAlias = false
 	}
 	return nil
 }

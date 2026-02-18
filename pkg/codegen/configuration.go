@@ -271,9 +271,9 @@ type OutputOptions struct {
 	// Whether to generate nullable type for nullable fields
 	NullableType bool `yaml:"nullable-type,omitempty"`
 
-	// DisableTypeAliasesForType allows defining which OpenAPI `type`s will explicitly not use type aliases
-	// Currently supports:
-	//   "array"
+	// DisableTypeAliasesForType allows defining which OpenAPI `type`s will explicitly not use type aliases. Use Go type names
+	// and not the OpenAPI type names. Use "[]type" to disable arrays, a shortcut for all arrays can be used by specifying
+	// `array` value.
 	DisableTypeAliasesForType []string `yaml:"disable-type-aliases-for-type"`
 
 	// NameNormalizer is the method used to normalize Go names and types, for instance converting the text `MyApi` to `MyAPI`. Corresponds with the constants defined for `codegen.NameNormalizerFunction`
