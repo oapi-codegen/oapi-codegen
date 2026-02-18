@@ -10,7 +10,7 @@ import (
 
 func TestServerUrlTheProductionAPIServer(t *testing.T) {
 	t.Run("when no values are provided, it does not error", func(t *testing.T) {
-		serverUrl, err := NewServerUrlTheProductionAPIServer("", "", "", "")
+		serverUrl, err := NewServerUrlTheProductionAPIServer("", "", "", "", "")
 		require.NoError(t, err)
 
 		assert.Equal(t, "https://.gigantic-server.com:/", serverUrl)
@@ -25,6 +25,7 @@ func TestServerUrlTheProductionAPIServer(t *testing.T) {
 		invalidPort := ServerUrlTheProductionAPIServerPortVariable("12345")
 		serverUrl, err := NewServerUrlTheProductionAPIServer(
 			ServerUrlTheProductionAPIServerBasePathVariableDefault,
+			ServerUrlTheProductionAPIServerConflictingVariableDefault,
 			ServerUrlTheProductionAPIServerNoDefaultVariable(""),
 			invalidPort,
 			ServerUrlTheProductionAPIServerUsernameVariableDefault,
@@ -37,6 +38,7 @@ func TestServerUrlTheProductionAPIServer(t *testing.T) {
 	t.Run("when default values are provided, it does not error", func(t *testing.T) {
 		serverUrl, err := NewServerUrlTheProductionAPIServer(
 			ServerUrlTheProductionAPIServerBasePathVariableDefault,
+			ServerUrlTheProductionAPIServerConflictingVariableDefault,
 			ServerUrlTheProductionAPIServerNoDefaultVariable(""),
 			ServerUrlTheProductionAPIServerPortVariableDefault,
 			ServerUrlTheProductionAPIServerUsernameVariableDefault,

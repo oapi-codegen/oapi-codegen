@@ -18,9 +18,12 @@ type ServerObjectDefinition struct {
 
 	// OAPISchema is the underlying OpenAPI representation of the Server
 	OAPISchema *openapi3.Server
+
+	// EnumServerVariablesConflict indicates whether the server variables conflict should be avoided
+	EnumServerVariablesConflict bool
 }
 
-func GenerateServerURLs(t *template.Template, spec *openapi3.T) (string, error) {
+func GenerateServerURLs(t *template.Template, spec *openapi3.T, enumServerVariablesConflict bool) (string, error) {
 	names := make(map[string]*openapi3.Server)
 
 	for _, server := range spec.Servers {
@@ -71,8 +74,9 @@ func GenerateServerURLs(t *template.Template, spec *openapi3.T) (string, error) 
 	i := 0
 	for _, k := range keys {
 		servers[i] = ServerObjectDefinition{
-			GoName:     k,
-			OAPISchema: names[k],
+			GoName:                      k,
+			OAPISchema:                  names[k],
+			EnumServerVariablesConflict: enumServerVariablesConflict,
 		}
 		i++
 	}

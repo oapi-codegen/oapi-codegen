@@ -1,6 +1,8 @@
 # yaml-language-server: $schema=../../../configuration-schema.json
 package: serverurls
 output: gen.go
+compatibility:
+  enum-server-variables-conflict: true
 generate:
   server-urls: true
 output-options:
