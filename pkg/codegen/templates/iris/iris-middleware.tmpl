@@ -20,7 +20,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     err = json.Unmarshal([]byte(ctx.URLParam("{{.ParamName}}")), &{{$varName}})
     if err != nil {
     	ctx.StatusCode(http.StatusBadRequest)
-        ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
+        ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
         return
     }
 {{end}}
@@ -62,7 +62,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     err = json.Unmarshal([]byte(paramValue), &value)
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
-        ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
+        ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
         return
     }
     params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
@@ -93,7 +93,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
         err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
         if err != nil {
             ctx.StatusCode(http.StatusBadRequest)
-            ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
+            ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
             return
         }
 {{end}}
@@ -131,7 +131,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     err = json.Unmarshal([]byte(decoded), &value)
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
-        ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
+        ctx.WriteString("Error unmarshalling parameter '{{.ParamName}}' as JSON")
         return
     }
     params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
