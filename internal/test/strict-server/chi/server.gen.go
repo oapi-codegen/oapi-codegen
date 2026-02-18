@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"mime"
@@ -38,6 +39,12 @@ type ServerInterface interface {
 
 	// (POST /multiple)
 	MultipleRequestAndResponseTypes(w http.ResponseWriter, r *http.Request)
+
+	// (POST /required-json-body)
+	RequiredJSONBody(w http.ResponseWriter, r *http.Request)
+
+	// (POST /required-text-body)
+	RequiredTextBody(w http.ResponseWriter, r *http.Request)
 
 	// (GET /reserved-go-keyword-parameters/{type})
 	ReservedGoKeywordParameters(w http.ResponseWriter, r *http.Request, pType string)
@@ -85,6 +92,16 @@ func (_ Unimplemented) MultipartRelatedExample(w http.ResponseWriter, r *http.Re
 
 // (POST /multiple)
 func (_ Unimplemented) MultipleRequestAndResponseTypes(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /required-json-body)
+func (_ Unimplemented) RequiredJSONBody(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (POST /required-text-body)
+func (_ Unimplemented) RequiredTextBody(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -184,6 +201,34 @@ func (siw *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(w http.Respon
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.MultipleRequestAndResponseTypes(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RequiredJSONBody operation middleware
+func (siw *ServerInterfaceWrapper) RequiredJSONBody(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RequiredJSONBody(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RequiredTextBody operation middleware
+func (siw *ServerInterfaceWrapper) RequiredTextBody(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RequiredTextBody(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -491,6 +536,12 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/required-text-body", wrapper.RequiredTextBody)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/reserved-go-keyword-parameters/{type}", wrapper.ReservedGoKeywordParameters)
 	})
 	r.Group(func(r chi.Router) {
@@ -713,6 +764,73 @@ type MultipleRequestAndResponseTypes400Response = BadrequestResponse
 
 func (response MultipleRequestAndResponseTypes400Response) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
 	w.WriteHeader(400)
+	return nil
+}
+
+type RequiredJSONBodyRequestObject struct {
+	Body *RequiredJSONBodyJSONRequestBody
+}
+
+type RequiredJSONBodyResponseObject interface {
+	VisitRequiredJSONBodyResponse(w http.ResponseWriter) error
+}
+
+type RequiredJSONBody200JSONResponse Example
+
+func (response RequiredJSONBody200JSONResponse) VisitRequiredJSONBodyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type RequiredJSONBody400Response = BadrequestResponse
+
+func (response RequiredJSONBody400Response) VisitRequiredJSONBodyResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type RequiredJSONBodydefaultResponse struct {
+	StatusCode int
+}
+
+func (response RequiredJSONBodydefaultResponse) VisitRequiredJSONBodyResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
+	return nil
+}
+
+type RequiredTextBodyRequestObject struct {
+	Body *RequiredTextBodyTextRequestBody
+}
+
+type RequiredTextBodyResponseObject interface {
+	VisitRequiredTextBodyResponse(w http.ResponseWriter) error
+}
+
+type RequiredTextBody200TextResponse string
+
+func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(200)
+
+	_, err := w.Write([]byte(response))
+	return err
+}
+
+type RequiredTextBody400Response = BadrequestResponse
+
+func (response RequiredTextBody400Response) VisitRequiredTextBodyResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type RequiredTextBodydefaultResponse struct {
+	StatusCode int
+}
+
+func (response RequiredTextBodydefaultResponse) VisitRequiredTextBodyResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
 	return nil
 }
 
@@ -1063,6 +1181,12 @@ type StrictServerInterface interface {
 	// (POST /multiple)
 	MultipleRequestAndResponseTypes(ctx context.Context, request MultipleRequestAndResponseTypesRequestObject) (MultipleRequestAndResponseTypesResponseObject, error)
 
+	// (POST /required-json-body)
+	RequiredJSONBody(ctx context.Context, request RequiredJSONBodyRequestObject) (RequiredJSONBodyResponseObject, error)
+
+	// (POST /required-text-body)
+	RequiredTextBody(ctx context.Context, request RequiredTextBodyRequestObject) (RequiredTextBodyResponseObject, error)
+
 	// (GET /reserved-go-keyword-parameters/{type})
 	ReservedGoKeywordParameters(ctx context.Context, request ReservedGoKeywordParametersRequestObject) (ReservedGoKeywordParametersResponseObject, error)
 
@@ -1123,10 +1247,13 @@ func (sh *strictHandler) JSONExample(w http.ResponseWriter, r *http.Request) {
 
 	var body JSONExampleJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
 	}
-	request.Body = &body
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.JSONExample(ctx, request.(JSONExampleRequestObject))
@@ -1221,10 +1348,13 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 
 		var body MultipleRequestAndResponseTypesJSONRequestBody
 		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-			return
+			if !errors.Is(err, io.EOF) {
+				sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+				return
+			}
+		} else {
+			request.JSONBody = &body
 		}
-		request.JSONBody = &body
 	}
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "application/x-www-form-urlencoded") {
 		if err := r.ParseForm(); err != nil {
@@ -1255,8 +1385,10 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't read body: %w", err))
 			return
 		}
-		body := MultipleRequestAndResponseTypesTextRequestBody(data)
-		request.TextBody = &body
+		if len(data) > 0 {
+			body := MultipleRequestAndResponseTypesTextRequestBody(data)
+			request.TextBody = &body
+		}
 	}
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
@@ -1272,6 +1404,69 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(MultipleRequestAndResponseTypesResponseObject); ok {
 		if err := validResponse.VisitMultipleRequestAndResponseTypesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RequiredJSONBody operation middleware
+func (sh *strictHandler) RequiredJSONBody(w http.ResponseWriter, r *http.Request) {
+	var request RequiredJSONBodyRequestObject
+
+	var body RequiredJSONBodyJSONRequestBody
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RequiredJSONBody(ctx, request.(RequiredJSONBodyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RequiredJSONBody")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RequiredJSONBodyResponseObject); ok {
+		if err := validResponse.VisitRequiredJSONBodyResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RequiredTextBody operation middleware
+func (sh *strictHandler) RequiredTextBody(w http.ResponseWriter, r *http.Request) {
+	var request RequiredTextBodyRequestObject
+
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't read body: %w", err))
+		return
+	}
+	body := RequiredTextBodyTextRequestBody(data)
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RequiredTextBody(ctx, request.(RequiredTextBodyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RequiredTextBody")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RequiredTextBodyResponseObject); ok {
+		if err := validResponse.VisitRequiredTextBodyResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -1311,10 +1506,13 @@ func (sh *strictHandler) ReusableResponses(w http.ResponseWriter, r *http.Reques
 
 	var body ReusableResponsesJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
 	}
-	request.Body = &body
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.ReusableResponses(ctx, request.(ReusableResponsesRequestObject))
@@ -1345,8 +1543,10 @@ func (sh *strictHandler) TextExample(w http.ResponseWriter, r *http.Request) {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't read body: %w", err))
 		return
 	}
-	body := TextExampleTextRequestBody(data)
-	request.Body = &body
+	if len(data) > 0 {
+		body := TextExampleTextRequestBody(data)
+		request.Body = &body
+	}
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.TextExample(ctx, request.(TextExampleRequestObject))
@@ -1465,10 +1665,13 @@ func (sh *strictHandler) HeadersExample(w http.ResponseWriter, r *http.Request, 
 
 	var body HeadersExampleJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
 	}
-	request.Body = &body
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.HeadersExample(ctx, request.(HeadersExampleRequestObject))
@@ -1496,10 +1699,13 @@ func (sh *strictHandler) UnionExample(w http.ResponseWriter, r *http.Request) {
 
 	var body UnionExampleJSONRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
-		return
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
 	}
-	request.Body = &body
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.UnionExample(ctx, request.(UnionExampleRequestObject))
@@ -1523,24 +1729,25 @@ func (sh *strictHandler) UnionExample(w http.ResponseWriter, r *http.Request) {
 
 // Base64 encoded, compressed with deflate, json marshaled Swagger object
 const swaggerSpec = "" +
-	"7FhLc9s2EP4rGLSnlBRlxyfeGk8mbdPWHdk+dXyAiKWEhATQxVK0RqP/3gFBvSxalRI9Opnc+FjsLr5v" +
-	"d7HYGc9MaY0GTY6nM47grNEOmpehkAj/VODIv0lwGSpLymie8ndCDtp/84gjVE4MC1gs9/KZ0QS6WSqs" +
-	"LVQm/NLkk/PrZ9xlYyiFf/oRIecp/yFZuZKEvy6BZ1HaAvh8Po9eeHD3kUd8DEICNt6Gx6tN3TS1wFPu" +
-	"CJUeca8kiF13iilNMAL01rxo64QXWPiRzrhFYwFJBYwmoqig21L7xQw/QUZhB0rnZhvLW6NJKO2YVHkO" +
-	"CJpYCx7zOhxzlbUGCSQbTpm3kBFzgBNAHnFS5B3j9+vfWeuw4xGfALpg6KrX7/U9X8aCFlbxlL9tPkXc" +
-	"Cho3G1oSZE0X77/d3/3JlGOiIlMKUpkoiikrBbqxKEAypcl4F6uMXI83lrAh/lfZrn7fQumjpgmgd0ZO" +
-	"TxEwTVyuhfN1v3+muJxH/CYY69KxdCpZS7BGTS6qogPzR/1Zm1ozQDTY7iwpq4KUFUjrXG2i/cdCZB/I" +
-	"l/qS3GAZS0HiRKgfy9KlgY8RCkEg9yBgECQP42FN/UlZ+Bo7F+Wgrceddep+bGrHxqZmZJgEUbBa0Zgt" +
-	"Fr4osEozwZzSowLYwqmok8wC2mPvZy0H7V4evI6T17NoQ8tzXNd13CRQhQXozMgvozDiqhQjSKwebS73" +
-	"ugXxlA+n5EN2+4A7UiJHnOCZElsIpXef3mcq6d+RPlpih3RFaLoSGY9M/BmmtUEZW4GiBAJ0ycxbn3vF" +
-	"I+hI5b+WkiwTmg2BaVGCZCInQPbBsFal20rZQWv3g/kYRFaqmpZn+ZL+PeMekqYN4hH3BngaUAl5rdCT" +
-	"TlhBtAO2p/+Mz68iYIFmaLbjDVPdZXBRopbQIeTOl8Qu5jrwC5YGaxKXadp2R9zW9eMcZ5Bn8vWj/wGe" +
-	"92q7jlj6zp3bhwJWhY+vY9au2ge2L6yke6A4URJMUtqbAzVfDFRnIVO5Ahm3u4iDb6+VhFujMwTabIH8" +
-	"lU4bYktl/qZJY2ABgYg5w2pgZeWIWeEcU9RUkUKF26qEreLxuPLsNlh6WJXTXay+ORGnby7F6E3/6vAl" +
-	"b08cNxutzCv5OPj9fZA59M5+tJ7pwI7veHYvlM7+khKvDbW6U/iXILA60zNQE98RackQqEINkk2UWAxi" +
-	"tnKzVbCitasXCm6suqHFgO2QhijaqeuaR7uGcE/f8IjolKPLc8VppdWuUeGj/83aHvrl2aCM/p8OAkVB" +
-	"gFqQmsBPx7lBbmsxGu7yJtNesBztaeHp24uqecTD7DqUoAoLXyeIbJokYebdc7UYjQB7yiTCKo/CvwEA" +
-	"AP//"
+	"7FlNc9s2E/4rO3jfU0qatuMTb40nk7Zp645snzo+QMRKQkICKLAUrdHov3dAQF8WrUqpPjKe3kRyv/A8" +
+	"u4sFNGWFroxWqMixfMosOqOVw/ahz4XFv2p05J8EusJKQ1IrlrMPXPTit1nCLNaO90ucq3v5QitC1apy" +
+	"Y0pZcK+afXFef8pcMcKK+1//tzhgOftftgwlC19dhs+8MiWy2WyWvIjg7jNL2Ai5QNtGG35erdumiUGW" +
+	"M0dWqiHzRoLYdaeYVIRDtN6bF41BeIF5HPmUGasNWpIBozEva+z2FN/o/hcsKKxAqoHexPJWK+JSORBy" +
+	"MECLiiCCB96GA1cboy2hgP4EvIeCwKEdo2UJI0k+MHa/+h5iwI4lbIzWBUdXF5cXl54vbVBxI1nO3rev" +
+	"EmY4jdoFLQgyuov3X+7vfgfpgNekK06y4GU5gYpbN+IlCpCKtA+xLshdsNaTbYn/WUTtjxFKnzVtAn3Q" +
+	"YnKMhGnzciWdry8vT5SXs4TdBGddNhZBZSsF1poZ8LrswPxRfVW6UYDWahtXllV1SdJwS6tcraP921xk" +
+	"F8gX9rKBtlUqOPEjoX4oT+cGPrVYckKxAwG9ILkfDyvmj8rCv/FzVg5iP+7sU/cj3TgY6QZIg0BeQiNp" +
+	"BHPFFw1WKuDgpBqWCPOgkk4yS4zb3o9K9OJaHryNo/ezZM3Kc9o0TdoWUG1LVIUW30ZhwmTFh5gZNVxX" +
+	"97Y5sZz1J+RTdnODO1AhJ4zwmTJTcqm2794naun/IX2wwg7l6h+lRZF6RtJ+rI/uwo3lBV7KDxpz3QSc" +
+	"hko6X6XhoxvpuhTAy4ZPXOgPmxNHL6r7yaMtzKOPHcGB98lysjW+7TFkQa3PrPNQ+4DP9I/U7pH4+9J3" +
+	"6pran6L2TCDSoU6/4qTRVqSGW14hoXXZ1Mc587aG2GHyj4UkFFxBH0HxCgXwAaGFTxqiSdfBT/D7SX8O" +
+	"IktT7YFj8ZD/OWUevPYQwhLmHbA84PeSjmQLwE/HpWqOZjjqpmuuXkv4KDKHzuLA+YGki+MO/IKn3orE" +
+	"eY5M23Nz4/B/iqT2TL4+ePuWsMuwfcDB43vvAnV4+TpmUWsX2L5xjtkBxbEUqLPK3Oxp+WygOoOFHEgU" +
+	"aVxFGmJ7rSXcalVYpPUDiN8MlSZYGIP+BGiEEBBo98cGoaodgeHOgaS2i5Qy3BUJ3Ggej8vIboOnh2U7" +
+	"3cbquyNx+u5cjN5cXu2v8v7IebN2kHilHnu/fgwy+96YHezEsud563B+z1TOjaRRunKl3F3CPwWB5Z5e" +
+	"oBz7iUgJsEi1VShgLPn8GnSjNqOBJa1ds1AIYzkNza+39xmIkq22rlmy7Qr86Q1f0B7zj4NT5Wmt5LaL" +
+	"+kf/GeIM/XJvkFp9p9fwvCS0ipMc4w+Hub/ZtKIV3g3aSnvBcrKjh6e3l1WzhIV/jkILqm3p+wSRybMs" +
+	"/ON04Ro+HKK9kDrjRnoU/g4AAP//"
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode

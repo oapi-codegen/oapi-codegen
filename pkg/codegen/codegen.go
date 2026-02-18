@@ -19,7 +19,9 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"errors"
 	"fmt"
+	"go/scanner"
 	"io"
 	"io/fs"
 	"net/http"
@@ -50,6 +52,8 @@ var globalState struct {
 	// initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
 	// List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
 	initialismsMap map[string]string
+	// typeMapping is the merged type mapping (defaults + user overrides).
+	typeMapping TypeMapping
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -88,8 +92,8 @@ func (im importMap) GoImports() []string {
 
 func constructImportMapping(importMapping map[string]string) importMap {
 	var (
-		pathToName = map[string]string{}
-		result     = importMap{}
+		pathToImport = importMap{}
+		result       = importMap{}
 	)
 
 	{
@@ -100,13 +104,32 @@ func constructImportMapping(importMapping map[string]string) importMap {
 		sort.Strings(packagePaths)
 
 		for _, packagePath := range packagePaths {
-			if _, ok := pathToName[packagePath]; !ok && packagePath != importMappingCurrentPackage {
-				pathToName[packagePath] = fmt.Sprintf("externalRef%d", len(pathToName))
+			if _, ok := pathToImport[packagePath]; !ok && packagePath != importMappingCurrentPackage {
+				split := strings.Split(packagePath, " ")
+				if len(split) == 2 {
+					// if we have 2 parts, we assume both the package name and path are provided, and we use them as is
+					pathToImport[packagePath] = goImport{
+						Name: split[0],
+						Path: split[1],
+					}
+				} else {
+					// otherwise, we auto-generate a package name based on the order of the imports, to ensure deterministic output
+					pathToImport[packagePath] = goImport{
+						Name: fmt.Sprintf("externalRef%d", len(pathToImport)),
+						Path: packagePath,
+					}
+				}
 			}
 		}
 	}
 	for specPath, packagePath := range importMapping {
-		result[specPath] = goImport{Name: pathToName[packagePath], Path: packagePath}
+		if packagePath == importMappingCurrentPackage {
+			result[specPath] = goImport{
+				Path: importMappingCurrentPackage,
+			}
+		} else {
+			result[specPath] = pathToImport[packagePath]
+		}
 	}
 	return result
 }
@@ -119,6 +142,11 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	globalState.options = opts
 	globalState.spec = spec
 	globalState.importMapping = constructImportMapping(opts.ImportMapping)
+	if opts.OutputOptions.TypeMapping != nil {
+		globalState.typeMapping = DefaultTypeMapping.Merge(*opts.OutputOptions.TypeMapping)
+	} else {
+		globalState.typeMapping = DefaultTypeMapping
+	}
 
 	filterOperationsByTag(spec, opts)
 	filterOperationsByOperationID(spec, opts)
@@ -435,9 +463,34 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	outBytes, err := imports.Process(opts.PackageName+".go", []byte(goCode), nil)
 	if err != nil {
-		return "", fmt.Errorf("error formatting Go code %s: %w", goCode, err)
+		// if we don't get a line number
+		errLine := -1
+		var scanErr scanner.ErrorList
+		if errors.As(err, &scanErr) && scanErr.Len() > 0 {
+			// for now, only return the first error's information
+			errLine = scanErr[0].Pos.Line
+		}
+		return "", fmt.Errorf("error formatting Go code:\n%s\nerror was: %w", addLineNumbers(goCode, errLine), err)
 	}
 	return string(outBytes), nil
+}
+
+func addLineNumbers(goCode string, lineWithError int) string {
+	var out []string
+	lines := strings.Split(goCode, "\n")
+	for i, line := range lines {
+		// lines for humans start at 1
+		lineNumber := i + 1
+
+		errLine := "  "
+		if lineNumber == lineWithError {
+			errLine = "❗"
+		}
+
+		out = append(out, fmt.Sprintf("%s%5d: %s", errLine, lineNumber, line))
+	}
+
+	return strings.Join(out, "\n")
 }
 
 func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []OperationDefinition, excludeSchemas []string) (string, error) {
@@ -646,6 +699,8 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				return nil, fmt.Errorf("error making name for components/responses/%s: %w", responseName, err)
 			}
 
+			goType.DefinedComp = ComponentTypeResponse
+
 			typeDef := TypeDefinition{
 				JsonName: responseName,
 				Schema:   goType,
@@ -666,6 +721,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 			}
 
 			types = append(types, typeDef)
+			types = append(types, goType.AdditionalTypes...)
 		}
 	}
 	return types, nil
@@ -697,6 +753,8 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 				return nil, fmt.Errorf("error making name for components/schemas/%s: %w", requestBodyName, err)
 			}
 
+			goType.DefinedComp = ComponentTypeRequestBody
+
 			typeDef := TypeDefinition{
 				JsonName: requestBodyName,
 				Schema:   goType,
@@ -712,6 +770,7 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
 			types = append(types, typeDef)
+			types = append(types, goType.AdditionalTypes...)
 		}
 	}
 	return types, nil
@@ -723,15 +782,18 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 	m := map[string]TypeDefinition{}
 	var ts []TypeDefinition
 
+	if globalState.options.OutputOptions.ResolveTypeNameCollisions {
+		types = FixDuplicateTypeNames(types)
+	}
+
 	for _, typ := range types {
 		if prevType, found := m[typ.TypeName]; found {
-			// If type names collide, we need to see if they refer to the same
-			// exact type definition, in which case, we can de-dupe. If they don't
-			// match, we error out.
+			// If type names collide after auto-rename, we need to see if they
+			// refer to the same exact type definition, in which case, we can
+			// de-dupe. If they don't match, we error out.
 			if TypeDefinitionsEquivalent(prevType, typ) {
 				continue
 			}
-			// We want to create an error when we try to define the same type twice.
 			return "", fmt.Errorf("duplicate typename '%s' detected, can't auto-rename, "+
 				"please use x-go-name to specify your own name for one of them", typ.TypeName)
 		}

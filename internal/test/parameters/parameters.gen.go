@@ -27,6 +27,18 @@ const (
 	N200 EnumParamsParamsEnumPathParam = 200
 )
 
+// Valid indicates whether the value is a known member of the EnumParamsParamsEnumPathParam enum.
+func (e EnumParamsParamsEnumPathParam) Valid() bool {
+	switch e {
+	case N100:
+		return true
+	case N200:
+		return true
+	default:
+		return false
+	}
+}
+
 // ComplexObject defines model for ComplexObject.
 type ComplexObject struct {
 	Id      int    `json:"Id"`

@@ -300,6 +300,18 @@ type OutputOptions struct {
 
 	// PreferSkipOptionalPointerOnContainerTypes allows disabling the generation of an "optional pointer" for an optional field that is a container type (such as a slice or a map), which ends up requiring an additional, unnecessary, `... != nil` check
 	PreferSkipOptionalPointerOnContainerTypes bool `yaml:"prefer-skip-optional-pointer-on-container-types,omitempty"`
+
+	// ResolveTypeNameCollisions, when set to true, automatically renames
+	// types that collide across different OpenAPI component sections
+	// (schemas, parameters, requestBodies, responses, headers) by appending
+	// a suffix based on the component section (e.g., "Parameter", "Response",
+	// "RequestBody"). Without this, the codegen will error on duplicate type
+	// names, requiring manual resolution via x-go-name.
+	ResolveTypeNameCollisions bool `yaml:"resolve-type-name-collisions,omitempty"`
+
+	// TypeMapping allows customizing OpenAPI type/format to Go type mappings.
+	// User-specified mappings are merged on top of the defaults.
+	TypeMapping *TypeMapping `yaml:"type-mapping,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {

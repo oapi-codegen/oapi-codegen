@@ -40,7 +40,7 @@
         {{range .Contents}}
             {{$receiverTypeName := printf "%s%s%s%s" $opid $statusCode .NameTagOrContentType "Response"}}
             {{if and $fixedStatusCode $isRef -}}
-                {{ if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (eq .NameTag "Multipart") -}}
+                {{ if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (or (eq .NameTag "Multipart") (eq .NameTag "Text")) -}}
                 type {{$receiverTypeName}} {{$ref}}{{.NameTagOrContentType}}Response
                 {{else if $isExternalRef -}}
                 type {{$receiverTypeName}} struct { {{$ref}} }
@@ -74,7 +74,7 @@
                 {{if eq .NameTag "Multipart" -}}
                     writer := multipart.NewWriter(w)
                 {{end -}}
-                w.Header().Set("Content-Type", {{if eq .NameTag "Multipart"}}{{if eq .ContentType "multipart/form-data"}}writer.FormDataContentType(){{else}}mime.FormatMediaType("{{.ContentType}}", map[string]string{"boundary": writer.Boundary()}){{end}}{{else if .HasFixedContentType }}"{{.ContentType}}"{{else}}response.ContentType{{end}})
+                w.Header().Set("Content-Type", {{if eq .NameTag "Multipart"}}{{if eq .ContentType "multipart/form-data"}}writer.FormDataContentType(){{else}}mime.FormatMediaType("{{.ContentType}}", map[string]string{"boundary": writer.Boundary()}){{end}}{{else if .HasFixedContentType }}{{.ContentType | toGoString}}{{else}}response.ContentType{{end}})
                 {{if not .IsSupported -}}
                     if response.ContentLength != 0 {
                         w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))

@@ -34,6 +34,34 @@ const (
 	BarUnderscoreFoo Bar = "_Foo_"
 )
 
+// Valid indicates whether the value is a known member of the Bar enum.
+func (e Bar) Valid() bool {
+	switch e {
+	case BarBar:
+		return true
+	case BarEmpty:
+		return true
+	case BarFoo:
+		return true
+	case BarFoo1:
+		return true
+	case BarFoo2:
+		return true
+	case BarFooBar:
+		return true
+	case BarFooBar1:
+		return true
+	case BarN1:
+		return true
+	case BarN1Foo:
+		return true
+	case BarUnderscoreFoo:
+		return true
+	default:
+		return false
+	}
+}
+
 // Bar defines model for Bar.
 type Bar string
 
