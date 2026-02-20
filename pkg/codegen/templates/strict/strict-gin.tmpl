@@ -99,7 +99,7 @@ type strictHandler struct {
         {{end}}{{/* range .Bodies */}}
 
         handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-            return sh.ssi.{{.OperationId}}(ctx, request.({{$opid | ucFirst}}RequestObject))
+            return sh.ssi.{{.OperationId}}(ctx.Request.Context(), request.({{$opid | ucFirst}}RequestObject))
         }
         for _, middleware := range sh.middlewares {
             handler = middleware(handler, "{{.OperationId}}")

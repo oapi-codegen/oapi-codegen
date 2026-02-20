@@ -383,7 +383,7 @@ func (sh *strictHandler) Test(ctx *gin.Context) {
 	}
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
-		return sh.ssi.Test(ctx, request.(TestRequestObject))
+		return sh.ssi.Test(ctx.Request.Context(), request.(TestRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
 		handler = middleware(handler, "Test")
