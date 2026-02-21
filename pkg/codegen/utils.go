@@ -20,6 +20,7 @@ import (
 	"net/url"
 	"reflect"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -205,7 +206,7 @@ func LowercaseFirstCharacters(str string) string {
 
 	runes := []rune(str)
 
-	for i := 0; i < len(runes); i++ {
+	for i := range runes {
 		next := i + 1
 		if i != 0 && next < len(runes) && unicode.IsLower(runes[next]) {
 			break
@@ -224,25 +225,25 @@ func LowercaseFirstCharacters(str string) string {
 func ToCamelCase(str string) string {
 	s := strings.Trim(str, " ")
 
-	n := ""
+	var n strings.Builder
 	capNext := true
 	for _, v := range s {
 		if unicode.IsUpper(v) {
-			n += string(v)
+			n.WriteString(string(v))
 		}
 		if unicode.IsDigit(v) {
-			n += string(v)
+			n.WriteString(string(v))
 		}
 		if unicode.IsLower(v) {
 			if capNext {
-				n += strings.ToUpper(string(v))
+				n.WriteString(strings.ToUpper(string(v)))
 			} else {
-				n += string(v)
+				n.WriteString(string(v))
 			}
 		}
 		_, capNext = separatorSet[v]
 	}
-	return n
+	return n.String()
 }
 
 // ToCamelCaseWithDigits function will convert query-arg style strings to CamelCase. We will
@@ -407,12 +408,7 @@ func schemaXOrder(v *openapi3.SchemaRef) (int64, bool) {
 // StringInArray checks whether the specified string is present in an array
 // of strings
 func StringInArray(str string, array []string) bool {
-	for _, elt := range array {
-		if elt == str {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(array, str)
 }
 
 // RefPathToObjName returns the name of referenced object without changes.
@@ -1074,7 +1070,7 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 
 	goTypeImportExt := v.Value.Extensions[extPropGoImport]
 
-	importI, ok := goTypeImportExt.(map[string]interface{})
+	importI, ok := goTypeImportExt.(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("failed to convert type: %T", goTypeImportExt)
 	}
@@ -1126,12 +1122,7 @@ func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
 }
 
 func sliceContains[E comparable](s []E, v E) bool {
-	for _, ss := range s {
-		if ss == v {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(s, v)
 }
 
 // FixDuplicateTypeNames renames duplicate type names.
