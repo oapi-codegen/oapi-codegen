@@ -890,11 +890,19 @@ func resolvedNameForComponent(section, name string, contentType ...string) strin
 	}
 
 	// Fall back to prefix match for callers that don't specify content type.
+	// Sort matching keys so the result is deterministic across runs.
 	prefix := key + "/"
-	for k, resolved := range globalState.resolvedNames {
+	var matches []string
+	for k := range globalState.resolvedNames {
 		if strings.HasPrefix(k, prefix) {
-			return resolved
+			matches = append(matches, k)
 		}
+	}
+	if len(matches) > 0 {
+		if len(matches) > 1 {
+			sort.Strings(matches)
+		}
+		return globalState.resolvedNames[matches[0]]
 	}
 
 	return ""
