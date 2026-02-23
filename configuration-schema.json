@@ -238,6 +238,10 @@
           "type": "boolean",
           "description": "Enable the generation of a `Bytes()` method on response objects for `ClientWithResponses`"
         },
+        "client-response-content-type-function": {
+          "type": "boolean",
+          "description": "Enable the generation of a `ContentType()` method on response objects for `ClientWithResponses`"
+        },
         "prefer-skip-optional-pointer": {
           "type": "boolean",
           "description": "Allows defining at a global level whether to omit the pointer for a type to indicate that the field/type is optional. This is the same as adding `x-go-type-skip-optional-pointer` to each field (manually, or using an OpenAPI Overlay). A field can set `x-go-type-skip-optional-pointer: false` to still require the optional pointer.",
