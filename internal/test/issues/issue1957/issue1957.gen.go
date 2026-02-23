@@ -4,7 +4,11 @@
 package issue1957
 
 import (
+	"encoding/json"
+	"fmt"
+
 	googleuuid "github.com/google/uuid"
+	"github.com/oapi-codegen/runtime"
 )
 
 // ID defines model for ID.
@@ -15,6 +19,20 @@ type TypeWithAllOf struct {
 	Id googleuuid.UUID `json:"id,omitempty"`
 }
 
+// TypeWithComplexAllOf defines model for TypeWithComplexAllOf.
+type TypeWithComplexAllOf struct {
+	EitherId googleuuid.UUID `json:"either_id,omitempty"`
+	Id       ID              `json:"id"`
+	OrId     googleuuid.UUID `json:"or_id,omitempty"`
+	union    json.RawMessage
+}
+
+// TypeWithComplexAllOf0 defines model for .
+type TypeWithComplexAllOf0 = interface{}
+
+// TypeWithComplexAllOf1 defines model for .
+type TypeWithComplexAllOf1 = interface{}
+
 // TypeWithOptionalField defines model for TypeWithOptionalField.
 type TypeWithOptionalField struct {
 	At         googleuuid.UUID `json:"at,omitempty"`
@@ -24,4 +42,126 @@ type TypeWithOptionalField struct {
 // GetRootParams defines parameters for GetRoot.
 type GetRootParams struct {
 	At googleuuid.UUID `form:"at,omitempty" json:"at,omitempty"`
+}
+
+// AsTypeWithComplexAllOf0 returns the union data inside the TypeWithComplexAllOf as a TypeWithComplexAllOf0
+func (t TypeWithComplexAllOf) AsTypeWithComplexAllOf0() (TypeWithComplexAllOf0, error) {
+	var body TypeWithComplexAllOf0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTypeWithComplexAllOf0 overwrites any union data inside the TypeWithComplexAllOf as the provided TypeWithComplexAllOf0
+func (t *TypeWithComplexAllOf) FromTypeWithComplexAllOf0(v TypeWithComplexAllOf0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTypeWithComplexAllOf0 performs a merge with any union data inside the TypeWithComplexAllOf, using the provided TypeWithComplexAllOf0
+func (t *TypeWithComplexAllOf) MergeTypeWithComplexAllOf0(v TypeWithComplexAllOf0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTypeWithComplexAllOf1 returns the union data inside the TypeWithComplexAllOf as a TypeWithComplexAllOf1
+func (t TypeWithComplexAllOf) AsTypeWithComplexAllOf1() (TypeWithComplexAllOf1, error) {
+	var body TypeWithComplexAllOf1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTypeWithComplexAllOf1 overwrites any union data inside the TypeWithComplexAllOf as the provided TypeWithComplexAllOf1
+func (t *TypeWithComplexAllOf) FromTypeWithComplexAllOf1(v TypeWithComplexAllOf1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTypeWithComplexAllOf1 performs a merge with any union data inside the TypeWithComplexAllOf, using the provided TypeWithComplexAllOf1
+func (t *TypeWithComplexAllOf) MergeTypeWithComplexAllOf1(v TypeWithComplexAllOf1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TypeWithComplexAllOf) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if t.EitherId != nil {
+		object["either_id"], err = json.Marshal(t.EitherId)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'either_id': %w", err)
+		}
+	}
+
+	object["id"], err = json.Marshal(t.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'id': %w", err)
+	}
+
+	if t.OrId != nil {
+		object["or_id"], err = json.Marshal(t.OrId)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'or_id': %w", err)
+		}
+	}
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *TypeWithComplexAllOf) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["either_id"]; found {
+		err = json.Unmarshal(raw, &t.EitherId)
+		if err != nil {
+			return fmt.Errorf("error reading 'either_id': %w", err)
+		}
+	}
+
+	if raw, found := object["id"]; found {
+		err = json.Unmarshal(raw, &t.Id)
+		if err != nil {
+			return fmt.Errorf("error reading 'id': %w", err)
+		}
+	}
+
+	if raw, found := object["or_id"]; found {
+		err = json.Unmarshal(raw, &t.OrId)
+		if err != nil {
+			return fmt.Errorf("error reading 'or_id': %w", err)
+		}
+	}
+
+	return err
 }

@@ -51,4 +51,18 @@ func TestGeneratedCode(t *testing.T) {
 			require.NotZero(t, theType.Id)
 		})
 	})
+
+	t.Run("For a field with optional required fields (via AnyOf) and those fields having an AllOf", func(t *testing.T) {
+		t.Run("An optional field with x-go-type-skip-optional-pointer should be a non-pointer", func(t *testing.T) {
+			anID := ID(uuid.New())
+
+			theType := TypeWithComplexAllOf{
+				EitherId: anID,
+			}
+
+			require.IsType(t, ID{}, theType.EitherId)
+
+			require.NotZero(t, theType.Id)
+		})
+	})
 }

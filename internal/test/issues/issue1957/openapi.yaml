@@ -53,3 +53,21 @@ components:
           allOf:
             - $ref: '#/components/schemas/ID'
             - x-go-type-skip-optional-pointer: true
+    TypeWithComplexAllOf:
+      type: object
+      required:
+        - id
+      oneOf:
+        - required: [ either_id ]
+        - required: [ or_id ]
+      properties:
+        id:
+          $ref: '#/components/schemas/ID'
+        either_id:
+          allOf:
+            - $ref: '#/components/schemas/ID'
+            - x-go-type-skip-optional-pointer: true
+        or_id:
+          allOf:
+            - $ref: '#/components/schemas/ID'
+            - x-go-type-skip-optional-pointer: true
