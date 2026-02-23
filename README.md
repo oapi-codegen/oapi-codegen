@@ -2017,7 +2017,10 @@ output: only-models.gen.go
 generate:
   models: true
 output-options:
-  # NOTE that this is only required for the `Unreferenced` type
+  # To keep only specific unreferenced schemas, use preserve-schemas instead of skip-prune:
+  # preserve-schemas: [Unreferenced]
+  # Or add x-oapi-codegen-keep-unused: true on a schema in your spec.
+  # To keep all unreferenced components, use:
   skip-prune: true
 ```
 
@@ -4454,6 +4457,7 @@ output-options:
   include-operation-ids: []
   exclude-operation-ids: []
   exclude-schemas: []
+  preserve-schemas: []  # schema names to keep when pruning unreferenced components
 ```
 
 Check [the docs](https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen#OutputOptions) for more details of usage.

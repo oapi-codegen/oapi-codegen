@@ -151,7 +151,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	filterOperationsByTag(spec, opts)
 	filterOperationsByOperationID(spec, opts)
 	if !opts.OutputOptions.SkipPrune {
-		pruneUnusedComponents(spec)
+		pruneUnusedComponents(spec, opts.OutputOptions.PreserveSchemas)
 	}
 
 	// if we are provided an override for the response type suffix update it
