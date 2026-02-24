@@ -195,7 +195,13 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 
 {{if .QueryParams}}
     if params != nil {
+        // queryValues collects non-styled parameters (passthrough, JSON)
+        // that are safe to round-trip through url.Values.Encode().
         queryValues := queryURL.Query()
+        // rawQueryFragments collects pre-encoded query fragments from
+        // styled parameters, preserving literal commas as delimiters
+        // per the OpenAPI spec (e.g. "color=blue,black,brown").
+        var rawQueryFragments []string
             {{range $paramIdx, $param := .QueryParams}}
             {{if .HasOptionalPointer}} if params.{{.GoName}} != nil { {{end}}
             {{if .IsPassThrough}}
@@ -210,21 +216,18 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 
             {{end}}
             {{if .IsStyled}}
-            if queryFrag, err := runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationQuery, {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}}); err != nil {
+            if queryFragments, err := runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationQuery, {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}}); err != nil {
                 return nil, err
-            } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-               return nil, err
             } else {
-               for k, v := range parsed {
-                   for _, v2 := range v {
-                       queryValues.Add(k, v2)
-                   }
-               }
+                rawQueryFragments = append(rawQueryFragments, queryFragments)
             }
             {{end}}
             {{if .HasOptionalPointer}}}{{end}}
         {{end}}
-        queryURL.RawQuery = queryValues.Encode()
+        if encoded := queryValues.Encode(); encoded != "" {
+            rawQueryFragments = append(rawQueryFragments, encoded)
+        }
+        queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
     }
 {{end}}{{/* if .QueryParams */}}
     req, err := http.NewRequest("{{.Method}}", queryURL.String(), {{if .HasBody}}body{{else}}nil{{end}})

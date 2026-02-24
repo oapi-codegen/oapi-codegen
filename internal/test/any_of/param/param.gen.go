@@ -282,41 +282,38 @@ func NewGetTestRequest(server string, params *GetTestParams) (*http.Request, err
 	}
 
 	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
 		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
 
 		if params.Test != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "test", runtime.ParamLocationQuery, *params.Test); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			if queryFragments, err := runtime.StyleParamWithLocation("form", true, "test", runtime.ParamLocationQuery, *params.Test); err != nil {
 				return nil, err
 			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
+				rawQueryFragments = append(rawQueryFragments, queryFragments)
 			}
 
 		}
 
 		if params.Test2 != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "test2", runtime.ParamLocationQuery, *params.Test2); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			if queryFragments, err := runtime.StyleParamWithLocation("form", true, "test2", runtime.ParamLocationQuery, *params.Test2); err != nil {
 				return nil, err
 			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
+				rawQueryFragments = append(rawQueryFragments, queryFragments)
 			}
 
 		}
 
-		queryURL.RawQuery = queryValues.Encode()
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
