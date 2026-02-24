@@ -1,0 +1,4 @@
+{
+  "skipReview": "AUTOMATIC",
+  "ignorePatterns": "**/*.gen.go"
+}
