@@ -44,6 +44,23 @@ func (pd ParameterDefinition) TypeDef() string {
 	return typeDecl
 }
 
+// RequiresNilCheck indicates whether the generated property should have a nil check performed on it before other checks.
+// This should be used in templates when performing `nil` checks, but NOT when i.e. determining if there should be an optional pointer given to the type - in that case, use `HasOptionalPointer`
+func (pd ParameterDefinition) RequiresNilCheck() bool {
+	return pd.ZeroValueIsNil() || pd.HasOptionalPointer()
+}
+
+// ZeroValueIsNil is a helper function to determine if the given Go type used for this property
+// Will return true if the OpenAPI `type` is:
+// - `array`
+func (pd ParameterDefinition) ZeroValueIsNil() bool {
+	if pd.Schema.OAPISchema == nil {
+		return false
+	}
+
+	return pd.Schema.OAPISchema.Type.Is("array")
+}
+
 // JsonTag generates the JSON annotation to map GoType to json type name. If Parameter
 // Foo is marshaled to json as "foo", this will create the annotation
 // 'json:"foo"'

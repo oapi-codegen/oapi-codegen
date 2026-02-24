@@ -1,0 +1,7 @@
+package: issue2031
+generate:
+  models: true
+  client: true
+output-options:
+  prefer-skip-optional-pointer: true
+output: issue2031.gen.go
