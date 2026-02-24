@@ -1,0 +1,21 @@
+openapi: "3.0.4"
+info:
+  title: API
+  version: "0.0.1"
+paths:
+  /things:
+    get:
+      operationId: listThings
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "400":
+          $ref: "./common/spec.yaml#/components/responses/StandardError"
+        default:
+          $ref: "./common/spec.yaml#/components/responses/StandardError"
