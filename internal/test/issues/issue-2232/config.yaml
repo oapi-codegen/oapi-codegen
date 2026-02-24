@@ -1,0 +1,5 @@
+package: issue2232
+output: issue2232.gen.go
+generate:
+  std-http-server: true
+  models: true
