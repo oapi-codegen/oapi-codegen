@@ -942,13 +942,24 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 				Schema:   param.Schema,
 			})
 		}
+		// Merge extensions from the schema level and the parameter level.
+		// Parameter-level extensions take precedence over schema-level ones.
+		extensions := make(map[string]any)
+		if param.Spec.Schema != nil && param.Spec.Schema.Value != nil {
+			for k, v := range param.Spec.Schema.Value.Extensions {
+				extensions[k] = v
+			}
+		}
+		for k, v := range param.Spec.Extensions {
+			extensions[k] = v
+		}
 		prop := Property{
 			Description:   param.Spec.Description,
 			JsonFieldName: param.ParamName,
 			Required:      param.Required,
 			Schema:        pSchema,
 			NeedsFormTag:  param.Style() == "form",
-			Extensions:    param.Spec.Extensions,
+			Extensions:    extensions,
 		}
 		s.Properties = append(s.Properties, prop)
 	}
