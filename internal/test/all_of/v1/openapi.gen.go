@@ -20,6 +20,7 @@ type Person struct {
 	// Embedded struct due to allOf(#/components/schemas/PersonProperties)
 	PersonProperties `yaml:",inline"`
 	// Embedded fields due to inline allOf schema
+	// Embedded fields due to inline allOf schema
 }
 
 // PersonProperties These are fields that specify a person. They are all optional, and
@@ -36,22 +37,32 @@ type PersonWithID struct {
 	Person `yaml:",inline"`
 	// Embedded fields due to inline allOf schema
 	ID int64 `json:"ID"`
+	// Embedded fields due to inline allOf schema
+}
+
+// PersonWithMorePropertiesOutsideOfAllOf defines model for PersonWithMorePropertiesOutsideOfAllOf.
+type PersonWithMorePropertiesOutsideOfAllOf struct {
+	// Embedded struct due to allOf(#/components/schemas/Person)
+	Person `yaml:",inline"`
+	// Embedded fields due to inline allOf schema
+	AdditionalProperty string `json:"additionalProperty"`
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/5SUT2/bOBDFv8qAu0dBTrCLPegWrNtAQJEaaNIc4gAZSyOLKTVkyVEMwfB3L0jJ/+AW",
-	"aX0awOTjvDe/0VZVtnOWiSWoYqtC1VKHqVyQD5ZjhcZ8blTxtFV/e2pUof6aHW/Npiuz8fzCW0deNAW1",
-	"y7bK0/dee6pV8aQ+ah/kDjtSmfqEU/m8e85UTaHy2omO76n7VgfQARBcksxgo6WFDrlGsX6AJgoBcg0G",
-	"gwBjRxmsegGbJNBAOV8y992KfA5JbmN7U8OKwJP0nqmG1QAIL7ckLxBkMAQ3izKHR4KO/JpAWpqeX7I7",
-	"eBo7QbbSkocvyTlsWl21YNkM4Lx90zUF2PuGRpOpQ75klSkZHKlC2dUrVaJ2mbqIrNheZEGBAD1NQiAt",
-	"CgRHlW6GQ0LRJA3pGBpziCGLGS354L0Pk2+Glw+1PnUOxLWzmiWDTUuegLBq4xD2WqMDd9bqcaDFdm8u",
-	"iNe8juZu7Rt57oilnN+lWcRjjfUdiiqUZvnv32MomoXW5OPFAxuXqrtfhviopS3nf0prYvTc1Cjybpu7",
-	"7Iztcv47JIOnyvoaMBw5bLztAOF/Tyh0GEMOpUBlWVBzWHKcaiRygsA2gLA4XQ5kwLrWE/6egu19RfDw",
-	"UM5/yl7sX3NjU8ZaTPzvnoIEuInxQUosJD2VqTfyYXR0nV/lVzF164jRaVWof/Kr/DqygdKmBGfOYEWt",
-	"NfU48jXJJdhf0ei0zgE2yAIoYChus2WCKJVBsCAxwA6/UQSfOmjRuWE0FGeGUaysVaEWJ0/GyQRnOewX",
-	"qsHepBZioMSpROeMrpLA7HX6zo1sxOp9cibeUpDnzk7d79LvRwAAAP//lzc18GUFAAA=",
+	"H4sIAAAAAAAC/8xVzY7bNhB+lQHboyBv0KIH3YK6DQS0WQNNmkO8wI7FkcWUGrLkyIZg+N0LUvIfvG26",
+	"t/g0gDkf5/vh6KAa13vHxBJVdVCx6ajHXK4oRMepQmsfW1V9PqjvA7WqUt8tLl2LuWUxnV8F5ymIoaiO",
+	"xUEF+nswgbSqPqtfTYjyHntShfoN5/Lp+FQoTbEJxotJ96kPnYlgIiD4DFnA3kgHPbJGcWGENgEBsgaL",
+	"UYCxpwI2g4DLEGihXq6Zh35DoYQMt3eD1bAhCCRDYNKwGQHh+R3JM0QZLcHbVV3CJ4KewpZAOpqvX7M/",
+	"c5omQXbSUYA/MnPYd6bpwLEdwQe3M5oinHhDa8jqWK5ZFUpGT6pSbvOFGlHHQt1JVh3utKBIgIFmIJAO",
+	"BaKnxrTjWaFEksZ8DK09y1AkjdZ85j7EmTfD8y/aXDMHYu2dYSlg31EgIGy6ZMIJa2Lgb0a9GFodTuSi",
+	"BMPbRO6d21Hgnljq5fvsRTrWutCjqEoZlp9+vIhiWGhLITWes3GPevxXET8Z6erla9OaM3pLagL56pjH",
+	"4ibb9fL/JBkCNS5owHjJYRtcDwg/B0Khsw0l1AKNY0HDcc3J1ZTIOQSuBYTV9eNABtTazPEPFN0QGoKP",
+	"H+vlf2Yvyfa7C3TJ4OMg0Wh6bN9OOr5W0G9GhNnWEdzEKDckKqBNoEbMjuJLqb5AzKKMLwfx2v4Xep7u",
+	"NE9NhluX4YzY9N8HihIhSw1Z1JhxVKF2FOIk4JvyoXxIljlPjN6oSv1QPpRv0uQoXR564S021Dmrp2e2",
+	"JblfJn+iNXmFRtgjC6CApbRBHRMkqAKiA0l+9fgXpWVDPXTo/TgJlahhAqu1qtTq6sokR/SO42mJtTjY",
+	"PELyjziX6L01TQZYfJm/LVN8UvX1cM1vPAt5y+ya/TH//gkAAP//d44HiNkGAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
