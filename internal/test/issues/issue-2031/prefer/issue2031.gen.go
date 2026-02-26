@@ -132,7 +132,7 @@ func NewGetTestRequest(server string, params *GetTestParams) (*http.Request, err
 
 		if params.UserIds != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "user_ids[]", runtime.ParamLocationQuery, params.UserIds); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "user_ids[]", params.UserIds, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err

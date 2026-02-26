@@ -212,7 +212,7 @@ func NewGetHttpPetRequest(server string, petId string) (*http.Request, error) {
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "petId", runtime.ParamLocationPath, petId)
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "petId", petId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
 	if err != nil {
 		return nil, err
 	}
@@ -368,7 +368,7 @@ func (siw *ServerInterfaceWrapper) GetHttpPet(w http.ResponseWriter, r *http.Req
 	// ------------- Path parameter "petId" -------------
 	var petId string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "petId", mux.Vars(r)["petId"], &petId, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "petId", mux.Vars(r)["petId"], &petId, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "petId", Err: err})
 		return

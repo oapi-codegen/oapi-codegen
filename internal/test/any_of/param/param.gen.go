@@ -286,7 +286,7 @@ func NewGetTestRequest(server string, params *GetTestParams) (*http.Request, err
 
 		if params.Test != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "test", runtime.ParamLocationQuery, *params.Test); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "test", *params.Test, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -302,7 +302,7 @@ func NewGetTestRequest(server string, params *GetTestParams) (*http.Request, err
 
 		if params.Test2 != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "test2", runtime.ParamLocationQuery, *params.Test2); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "test2", *params.Test2, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err

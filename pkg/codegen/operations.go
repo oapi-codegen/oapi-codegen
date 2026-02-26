@@ -131,6 +131,26 @@ func (pd *ParameterDefinition) Explode() bool {
 	return *pd.Spec.Explode
 }
 
+// SchemaType returns the first OpenAPI type string for this parameter's schema (e.g. "string", "integer"),
+// or empty string if unavailable.
+func (pd *ParameterDefinition) SchemaType() string {
+	if pd.Spec.Schema != nil && pd.Spec.Schema.Value != nil && pd.Spec.Schema.Value.Type != nil {
+		if s := pd.Spec.Schema.Value.Type.Slice(); len(s) > 0 {
+			return s[0]
+		}
+	}
+	return ""
+}
+
+// SchemaFormat returns the OpenAPI format string for this parameter's schema (e.g. "byte", "date-time"),
+// or empty string if unavailable.
+func (pd *ParameterDefinition) SchemaFormat() string {
+	if pd.Spec.Schema != nil && pd.Spec.Schema.Value != nil {
+		return pd.Spec.Schema.Value.Format
+	}
+	return ""
+}
+
 func (pd ParameterDefinition) GoVariableName() string {
 	name := LowercaseFirstCharacters(pd.GoName())
 	if IsGoKeyword(name) {
