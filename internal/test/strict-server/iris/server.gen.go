@@ -128,7 +128,7 @@ func (w *ServerInterfaceWrapper) ReservedGoKeywordParameters(ctx iris.Context) {
 	// ------------- Path parameter "type" -------------
 	var pType string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "type", ctx.Params().Get("type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "type", ctx.Params().Get("type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter type: %s", err)
@@ -193,7 +193,7 @@ func (w *ServerInterfaceWrapper) HeadersExample(ctx iris.Context) {
 			return
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "header1", valueList[0], &Header1, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		err = runtime.BindStyledParameterWithOptions("simple", "header1", valueList[0], &Header1, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
 		if err != nil {
 			ctx.StatusCode(http.StatusBadRequest)
 			ctx.Writef("Invalid format for parameter header1: %s", err)
@@ -216,7 +216,7 @@ func (w *ServerInterfaceWrapper) HeadersExample(ctx iris.Context) {
 			return
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "header2", valueList[0], &Header2, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		err = runtime.BindStyledParameterWithOptions("simple", "header2", valueList[0], &Header2, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""})
 		if err != nil {
 			ctx.StatusCode(http.StatusBadRequest)
 			ctx.Writef("Invalid format for parameter header2: %s", err)

@@ -94,7 +94,7 @@ func (siw *ServerInterfaceWrapper) GetEndpoint(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	err = runtime.BindQueryParameter("form", true, true, "env_param_level", r.URL.Query(), &params.EnvParamLevel)
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "env_param_level", r.URL.Query(), &params.EnvParamLevel, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "env_param_level", Err: err})
 		return
@@ -109,7 +109,7 @@ func (siw *ServerInterfaceWrapper) GetEndpoint(w http.ResponseWriter, r *http.Re
 		return
 	}
 
-	err = runtime.BindQueryParameter("form", true, true, "env_schema_level", r.URL.Query(), &params.EnvSchemaLevel)
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "env_schema_level", r.URL.Query(), &params.EnvSchemaLevel, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "env_schema_level", Err: err})
 		return
@@ -117,7 +117,7 @@ func (siw *ServerInterfaceWrapper) GetEndpoint(w http.ResponseWriter, r *http.Re
 
 	// ------------- Optional query parameter "limit" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
 		return

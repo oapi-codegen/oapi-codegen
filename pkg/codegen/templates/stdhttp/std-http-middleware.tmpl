@@ -29,7 +29,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   }
   {{end}}
   {{if .IsStyled}}
-  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", r.PathValue("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: {{.Explode}}, Required: {{.Required}}})
+  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", r.PathValue("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
   if err != nil {
     siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
     return
@@ -77,7 +77,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         }{{end}}
       {{end}}
       {{if .IsStyled}}
-      err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", r.URL.Query(), &params.{{.GoName}})
+      err = runtime.BindQueryParameterWithOptions("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", r.URL.Query(), &params.{{.GoName}}, runtime.BindQueryParameterOptions{Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
       if err != nil {
         siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
         return
@@ -110,7 +110,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         {{end}}
 
         {{if .IsStyled}}
-          err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}})
+          err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
           if err != nil {
             siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
             return
@@ -159,7 +159,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
 
       {{- if .IsStyled}}
         var value {{.TypeDef}}
-        err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie.Value, &value, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}})
+        err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie.Value, &value, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
         if err != nil {
           siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
           return

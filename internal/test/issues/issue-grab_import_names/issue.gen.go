@@ -148,7 +148,7 @@ func NewGetFooRequest(server string, params *GetFooParams) (*http.Request, error
 		if params.Foo != nil {
 			var headerParam0 string
 
-			headerParam0, err = runtime.StyleParamWithLocation("simple", false, "Foo", runtime.ParamLocationHeader, *params.Foo)
+			headerParam0, err = runtime.StyleParamWithOptions("simple", false, "Foo", *params.Foo, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
 			if err != nil {
 				return nil, err
 			}
@@ -159,7 +159,7 @@ func NewGetFooRequest(server string, params *GetFooParams) (*http.Request, error
 		if params.Bar != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithLocation("simple", false, "Bar", runtime.ParamLocationHeader, *params.Bar)
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "Bar", *params.Bar, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
 			if err != nil {
 				return nil, err
 			}
@@ -304,7 +304,7 @@ func (w *ServerInterfaceWrapper) GetFoo(ctx echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for Foo, got %d", n))
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "Foo", valueList[0], &Foo, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		err = runtime.BindStyledParameterWithOptions("simple", "Foo", valueList[0], &Foo, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter Foo: %s", err))
 		}
@@ -319,7 +319,7 @@ func (w *ServerInterfaceWrapper) GetFoo(ctx echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for Bar, got %d", n))
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "Bar", valueList[0], &Bar, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		err = runtime.BindStyledParameterWithOptions("simple", "Bar", valueList[0], &Bar, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter Bar: %s", err))
 		}

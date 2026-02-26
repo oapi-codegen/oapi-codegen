@@ -172,7 +172,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     pathParam{{$paramIdx}} = string(pathParamBuf{{$paramIdx}})
     {{end}}
     {{if .IsStyled}}
-    pathParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationPath, {{.GoVariableName}})
+    pathParam{{$paramIdx}}, err = runtime.StyleParamWithOptions("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{.GoVariableName}}, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
     if err != nil {
         return nil, err
     }
@@ -210,7 +210,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 
             {{end}}
             {{if .IsStyled}}
-            if queryFrag, err := runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationQuery, {{if and .RequiresNilCheck .HasOptionalPointer}}*{{end}}params.{{.GoName}}); err != nil {
+            if queryFrag, err := runtime.StyleParamWithOptions("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if and .RequiresNilCheck .HasOptionalPointer}}*{{end}}params.{{.GoName}}, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"}); err != nil {
                 return nil, err
             } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
                return nil, err
@@ -250,7 +250,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
         headerParam{{$paramIdx}} = string(headerParamBuf{{$paramIdx}})
         {{end}}
         {{if .IsStyled}}
-        headerParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("{{.Style}}", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationHeader, {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}})
+        headerParam{{$paramIdx}}, err = runtime.StyleParamWithOptions("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}}, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
         if err != nil {
             return nil, err
         }
@@ -278,7 +278,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
         cookieParam{{$paramIdx}} = url.QueryEscape(string(cookieParamBuf{{$paramIdx}}))
         {{end}}
         {{if .IsStyled}}
-        cookieParam{{$paramIdx}}, err = runtime.StyleParamWithLocation("simple", {{.Explode}}, "{{.ParamName}}", runtime.ParamLocationCookie, {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}})
+        cookieParam{{$paramIdx}}, err = runtime.StyleParamWithOptions("simple", {{.Explode}}, "{{.ParamName}}", {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}}, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationCookie, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
         if err != nil {
             return nil, err
         }

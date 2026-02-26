@@ -27,7 +27,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
   }
   {{end}}
   {{if .IsStyled}}
-  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", c.Params("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}})
+  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", c.Params("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
   if err != nil {
     return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
   }
@@ -78,7 +78,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
         }{{end}}
       {{end}}
       {{if .IsStyled}}
-      err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", query, &params.{{.GoName}})
+      err = runtime.BindQueryParameterWithOptions("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", query, &params.{{.GoName}}, runtime.BindQueryParameterOptions{Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
       if err != nil {
         return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
       }
@@ -108,7 +108,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
         {{end}}
 
         {{if .IsStyled}}
-          err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}})
+          err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
           if err != nil {
             return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
           }
@@ -151,7 +151,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
 
       {{- if .IsStyled}}
         var value {{.TypeDef}}
-        err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie, &value, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}})
+        err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie, &value, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
         if err != nil {
           return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
         }
