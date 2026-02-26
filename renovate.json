@@ -19,6 +19,16 @@
 			"commitMessageSuffix": "{{#if isGroup }}{{ else }} ({{#if packageFileDir}}{{packageFileDir}}{{else}}{{packageFile}}{{/if}}){{/if}}"
 		},
 		{
+			"description": "Label example/test code separately",
+			"matchFileNames": [
+				"internal/test/**/*",
+				"examples/**/*"
+			],
+			"labels": [
+				"dependencies-test-only"
+			]
+		},
+		{
 			"description": "Don't attempt to bump dependencies if they're only used in example code, but allow manually forcing them via Dependency Dashboard",
 			"matchFileNames": [
 				"internal/test/**/*",
