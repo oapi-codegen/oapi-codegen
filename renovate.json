@@ -6,6 +6,9 @@
 	"gomod": {
 		"ignorePaths": []
 	},
+	"vulnerabilityAlerts": {
+		"commitMessageSuffix": "{{#if isGroup }}{{ else }} ({{#if packageFileDir}}{{packageFileDir}}{{else}}{{packageFile}}{{/if}}){{/if}} [SECURITY]"
+	},
 	"packageRules": [
 		{
 			"description": "Ensure that each directory has their own set of dependency updates, split by the parent directory of the package file (`packageFileDir`). Groups will be unaffected.",
