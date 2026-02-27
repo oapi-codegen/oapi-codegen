@@ -3444,6 +3444,8 @@ It is also possible to use HTTPS URLs.
 >
 > See [this blog post](https://www.jvt.me/posts/2024/04/27/github-actions-update-file/) for an example of how to use GitHub Actions to manage the updates of files across repos
 >
+> See [this blog post](https://www.jvt.me/posts/2026/02/27/renovate-update-file) for an example of how to use Renovate to manage the updates of files across repos
+>
 > This will be disabled by default (but possible to turn back on via configuration) [in the future](https://github.com/oapi-codegen/oapi-codegen/issues/1564)
 
 To use it, you can use the following configuration:
