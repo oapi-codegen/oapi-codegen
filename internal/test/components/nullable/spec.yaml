@@ -1,0 +1,96 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Nullable Types
+  description: Tests nullable types and nullable array items
+paths:
+  /example:
+    patch:
+      operationId: examplePatch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PatchRequest"
+      responses:
+        "200":
+          description: OK
+  /container:
+    get:
+      operationId: getContainer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Container"
+components:
+  schemas:
+    # From issue-1039: comprehensive nullable type combinations
+    PatchRequest:
+      type: object
+      description: A request to patch an existing object.
+      required:
+        - simple_required_nullable
+        - complex_required_nullable
+      properties:
+        simple_required_nullable:
+          $ref: "#/components/schemas/SimpleRequiredNullable"
+        simple_optional_nullable:
+          $ref: "#/components/schemas/SimpleOptionalNullable"
+        simple_optional_non_nullable:
+          $ref: "#/components/schemas/SimpleOptionalNonNullable"
+        complex_required_nullable:
+          $ref: "#/components/schemas/ComplexRequiredNullable"
+        complex_optional_nullable:
+          $ref: "#/components/schemas/ComplexOptionalNullable"
+      additionalProperties: false
+
+    SimpleRequiredNullable:
+      type: integer
+      nullable: true
+      description: Simple required and nullable
+
+    SimpleOptionalNullable:
+      type: integer
+      nullable: true
+      description: Simple optional and nullable
+
+    SimpleOptionalNonNullable:
+      type: string
+      description: Simple optional and non nullable
+
+    ComplexRequiredNullable:
+      type: object
+      nullable: true
+      description: Complex required and nullable
+      properties:
+        name:
+          description: Optional and non nullable
+          type: string
+
+    ComplexOptionalNullable:
+      type: object
+      description: Complex, optional and nullable
+      properties:
+        alias_name:
+          description: Optional and nullable
+          type: string
+          nullable: true
+        name:
+          description: Optional and non nullable
+          type: string
+      nullable: true
+
+    # From issue-2185: array of nullable items
+    Container:
+      required:
+        - may-be-null
+      properties:
+        may-be-null:
+          type: array
+          items:
+            type: string
+            nullable: true

@@ -1,0 +1,211 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: AllOf Composition
+  description: Tests allOf composition and additionalProperties merging
+paths:
+  /person:
+    get:
+      operationId: getPerson
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PersonWithID"
+  /merge:
+    get:
+      operationId: getMerge
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mergeWithAnyWithAny:
+                    $ref: "#/components/schemas/MergeWithAnyWithAny"
+                  mergeWithAnyWithString:
+                    $ref: "#/components/schemas/MergeWithAnyWithString"
+                  mergeWithStringWithAny:
+                    $ref: "#/components/schemas/MergeWithStringWithAny"
+                  mergeWithAnyDefault:
+                    $ref: "#/components/schemas/MergeWithAnyDefault"
+                  mergeDefaultWithAny:
+                    $ref: "#/components/schemas/MergeDefaultWithAny"
+                  mergeWithAnyWithout:
+                    $ref: "#/components/schemas/MergeWithAnyWithout"
+                  mergeWithoutWithAny:
+                    $ref: "#/components/schemas/MergeWithoutWithAny"
+                  mergeWithStringDefault:
+                    $ref: "#/components/schemas/MergeWithStringDefault"
+                  mergeDefaultWithString:
+                    $ref: "#/components/schemas/MergeDefaultWithString"
+                  mergeWithStringWithout:
+                    $ref: "#/components/schemas/MergeWithStringWithout"
+                  mergeWithoutWithString:
+                    $ref: "#/components/schemas/MergeWithoutWithString"
+                  mergeDefaultDefault:
+                    $ref: "#/components/schemas/MergeDefaultDefault"
+                  mergeDefaultWithout:
+                    $ref: "#/components/schemas/MergeDefaultWithout"
+                  mergeWithoutDefault:
+                    $ref: "#/components/schemas/MergeWithoutDefault"
+                  mergeWithoutWithout:
+                    $ref: "#/components/schemas/MergeWithoutWithout"
+components:
+  schemas:
+    # allOf composition hierarchy from existing all_of/ tests
+    PersonProperties:
+      type: object
+      properties:
+        FirstName:
+          type: string
+        LastName:
+          type: string
+        GovernmentIDNumber:
+          type: integer
+          format: int64
+    Person:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/PersonProperties"
+        - required: [FirstName, LastName]
+    PersonWithID:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Person"
+        - properties:
+            ID:
+              type: integer
+              format: int64
+          required: [ID]
+
+    # additionalProperties merge matrix from issue-1219
+    WithAnyAdditional1:
+      type: object
+      properties:
+        field1:
+          type: integer
+        field2:
+          type: string
+      additionalProperties: true
+    WithAnyAdditional2:
+      type: object
+      properties:
+        fieldA:
+          type: integer
+        fieldB:
+          type: string
+      additionalProperties: true
+    WithStringAdditional1:
+      type: object
+      properties:
+        field1:
+          type: integer
+        field2:
+          type: string
+      additionalProperties:
+        type: string
+    WithStringAdditional2:
+      type: object
+      properties:
+        fieldA:
+          type: integer
+        fieldB:
+          type: string
+      additionalProperties:
+        type: string
+    WithoutAdditional1:
+      type: object
+      properties:
+        field1:
+          type: integer
+        field2:
+          type: string
+      additionalProperties: false
+    WithoutAdditional2:
+      type: object
+      properties:
+        fieldA:
+          type: integer
+        fieldB:
+          type: string
+      additionalProperties: false
+    DefaultAdditional1:
+      type: object
+      properties:
+        field1:
+          type: integer
+        field2:
+          type: string
+    DefaultAdditional2:
+      type: object
+      properties:
+        fieldA:
+          type: integer
+        fieldB:
+          type: string
+
+    MergeWithAnyWithAny:
+      allOf:
+        - $ref: "#/components/schemas/WithAnyAdditional1"
+        - $ref: "#/components/schemas/WithAnyAdditional2"
+    MergeWithAnyWithString:
+      allOf:
+        - $ref: "#/components/schemas/WithAnyAdditional1"
+        - $ref: "#/components/schemas/WithStringAdditional2"
+    MergeWithStringWithAny:
+      allOf:
+        - $ref: "#/components/schemas/WithStringAdditional1"
+        - $ref: "#/components/schemas/WithAnyAdditional2"
+    MergeWithAnyDefault:
+      allOf:
+        - $ref: "#/components/schemas/WithAnyAdditional1"
+        - $ref: "#/components/schemas/DefaultAdditional2"
+    MergeDefaultWithAny:
+      allOf:
+        - $ref: "#/components/schemas/DefaultAdditional1"
+        - $ref: "#/components/schemas/WithAnyAdditional2"
+    MergeWithAnyWithout:
+      allOf:
+        - $ref: "#/components/schemas/WithAnyAdditional1"
+        - $ref: "#/components/schemas/WithoutAdditional2"
+    MergeWithoutWithAny:
+      allOf:
+        - $ref: "#/components/schemas/WithoutAdditional1"
+        - $ref: "#/components/schemas/WithAnyAdditional2"
+    MergeWithStringDefault:
+      allOf:
+        - $ref: "#/components/schemas/WithStringAdditional1"
+        - $ref: "#/components/schemas/DefaultAdditional2"
+    MergeDefaultWithString:
+      allOf:
+        - $ref: "#/components/schemas/DefaultAdditional1"
+        - $ref: "#/components/schemas/WithStringAdditional2"
+    MergeWithStringWithout:
+      allOf:
+        - $ref: "#/components/schemas/WithStringAdditional1"
+        - $ref: "#/components/schemas/WithoutAdditional2"
+    MergeWithoutWithString:
+      allOf:
+        - $ref: "#/components/schemas/WithoutAdditional1"
+        - $ref: "#/components/schemas/WithStringAdditional2"
+    MergeDefaultDefault:
+      allOf:
+        - $ref: "#/components/schemas/DefaultAdditional1"
+        - $ref: "#/components/schemas/DefaultAdditional2"
+    MergeDefaultWithout:
+      allOf:
+        - $ref: "#/components/schemas/DefaultAdditional1"
+        - $ref: "#/components/schemas/WithoutAdditional2"
+    MergeWithoutDefault:
+      allOf:
+        - $ref: "#/components/schemas/WithoutAdditional1"
+        - $ref: "#/components/schemas/DefaultAdditional2"
+    MergeWithoutWithout:
+      allOf:
+        - $ref: "#/components/schemas/WithoutAdditional1"
+        - $ref: "#/components/schemas/WithoutAdditional2"

@@ -1,15 +1,21 @@
-openapi: "3.0.0"
-info: { }
-paths: { }
-components:
-  schemas:
-    Container:
-      properties:
-        object_a:
-          $ref: ./packageA/spec.yaml#/components/schemas/ObjectA
-        object_b:
-          $ref: ./packageB/spec.yaml#/components/schemas/ObjectB
-        object_c:
-          $ref: ./object_c.json
-        pet:
-          $ref: https://petstore3.swagger.io/api/v3/openapi.json#/components/schemas/Pet
+openapi: "3.0.4"
+info:
+  title: API
+  version: "0.0.1"
+paths:
+  /things:
+    get:
+      operationId: listThings
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "400":
+          $ref: "./common/spec.yaml#/components/responses/StandardError"
+        default:
+          $ref: "./common/spec.yaml#/components/responses/StandardError"

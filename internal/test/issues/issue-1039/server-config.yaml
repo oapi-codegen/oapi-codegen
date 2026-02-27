@@ -1,5 +1,0 @@
-# yaml-language-server: $schema=../../../../configuration-schema.json
-package: issue1039
-generate:
-  chi-server: true
-output: server.gen.go

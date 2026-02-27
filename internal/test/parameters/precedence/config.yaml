@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: precedence
+generate:
+  client: true
+  models: true
+output: precedence.gen.go
