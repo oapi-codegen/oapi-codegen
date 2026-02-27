@@ -29,6 +29,10 @@
           "type": "boolean",
           "description": "EchoServer specifies whether to generate echo server boilerplate"
         },
+        "echo5-server": {
+          "type": "boolean",
+          "description": "Echo5Server specifies whether to generate echo v5 server boilerplate"
+        },
         "gin-server": {
           "type": "boolean",
           "description": "GinServer specifies whether to generate gin server boilerplate"
