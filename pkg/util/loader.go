@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/speakeasy-api/openapi-overlay/pkg/loader"
+	"github.com/speakeasy-api/openapi/overlay/loader"
 	"gopkg.in/yaml.v3"
 )
 
