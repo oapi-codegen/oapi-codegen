@@ -7,7 +7,7 @@ replace github.com/oapi-codegen/oapi-codegen/v2 => ../../../../
 tool github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
 
 require (
-	github.com/gofiber/fiber/v2 v2.52.11
+	github.com/gofiber/fiber/v2 v2.52.12
 	github.com/stretchr/testify v1.11.1
 )
 
