@@ -6,3 +6,5 @@ generate:
 output-options:
   # NOTE that this is only required for the `Unreferenced` type
   skip-prune: true
+  overlay:
+    path: overlay.yaml
