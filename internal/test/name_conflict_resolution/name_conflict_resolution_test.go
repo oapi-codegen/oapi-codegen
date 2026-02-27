@@ -368,6 +368,93 @@ func TestDuplicateOneOfMembersAcrossContentTypes(t *testing.T) {
 	assert.Nil(t, wrapper.HTTPResponse)
 }
 
+// TestXGoNameOnSchemaPreserved verifies Pattern K: when a component schema
+// has x-go-name, the collision resolver must use the x-go-name value as the
+// schema's type name (pinned), not the original spec name.
+//
+// Schema "Renamer" has x-go-name: "SpecialName" and shares a name with
+// response "Renamer". With correct x-go-name handling the schema becomes
+// "SpecialName", so no collision exists and the response keeps "Renamer".
+//
+// Expected types:
+//   - SpecialName struct   (schema "Renamer" pinned by x-go-name)
+//   - Renamer struct       (response "Renamer" — no collision)
+//
+// Covers: PR #2213 review finding (x-go-name not respected by resolver)
+func TestXGoNameOnSchemaPreserved(t *testing.T) {
+	// Schema "Renamer" should use its x-go-name "SpecialName"
+	schema := SpecialName{Label: ptr("test-label")}
+	assert.Equal(t, "test-label", *schema.Label)
+
+	// Response "Renamer" should keep its bare name (no collision with schema)
+	resp := Renamer{Data: ptr("response-data")}
+	assert.Equal(t, "response-data", *resp.Data)
+
+	// Client wrapper for getRenamedSchema should reference the response type
+	var wrapper GetRenamedSchemaResponse
+	assert.Nil(t, wrapper.JSON200)
+	wrapper.JSON200 = &resp
+	assert.Equal(t, "response-data", *wrapper.JSON200.Data)
+}
+
+// TestXGoNameOnResponsePreserved verifies Pattern L: when a component response
+// has x-go-name, the collision resolver must use the x-go-name value as the
+// response's type name (pinned), not the original spec name.
+//
+// Response "Outcome" has x-go-name: "OutcomeResult" and shares a name with
+// schema "Outcome". With correct x-go-name handling the response becomes
+// "OutcomeResult", so no collision exists and the schema keeps "Outcome".
+//
+// Expected types:
+//   - Outcome struct        (schema keeps bare name — no collision)
+//   - OutcomeResult struct  (response "Outcome" pinned by x-go-name)
+//
+// Covers: PR #2213 review finding (x-go-name not respected by resolver)
+func TestXGoNameOnResponsePreserved(t *testing.T) {
+	// Schema "Outcome" should keep its bare name
+	schema := Outcome{Value: ptr("some-value")}
+	assert.Equal(t, "some-value", *schema.Value)
+
+	// Response "Outcome" should use its x-go-name "OutcomeResult"
+	resp := OutcomeResult{Result: ptr("outcome-data")}
+	assert.Equal(t, "outcome-data", *resp.Result)
+
+	// Client wrapper for getOutcome should reference the response type
+	var wrapper GetOutcomeResponse
+	assert.Nil(t, wrapper.JSON200)
+	wrapper.JSON200 = &resp
+	assert.Equal(t, "outcome-data", *wrapper.JSON200.Result)
+}
+
+// TestXGoNameOnRequestBodyPreserved verifies Pattern M: when a component
+// requestBody has x-go-name, the collision resolver must use the x-go-name
+// value as the requestBody's type name (pinned), not the original spec name.
+//
+// RequestBody "Payload" has x-go-name: "PayloadBody" and shares a name with
+// schema "Payload". With correct x-go-name handling the requestBody becomes
+// "PayloadBody", so no collision exists and the schema keeps "Payload".
+//
+// Expected types:
+//   - Payload struct      (schema keeps bare name — no collision)
+//   - PayloadBody struct  (requestBody "Payload" pinned by x-go-name)
+//
+// Covers: PR #2213 review finding (x-go-name not respected by resolver)
+func TestXGoNameOnRequestBodyPreserved(t *testing.T) {
+	// Schema "Payload" should keep its bare name
+	schema := Payload{Content: ptr("payload-content")}
+	assert.Equal(t, "payload-content", *schema.Content)
+
+	// RequestBody "Payload" should use its x-go-name "PayloadBody"
+	reqBody := PayloadBody{Data: ptr("body-data")}
+	assert.Equal(t, "body-data", *reqBody.Data)
+
+	// Client wrapper for sendPayload should reference the schema type
+	var wrapper SendPayloadResponse
+	assert.Nil(t, wrapper.JSON200)
+	wrapper.JSON200 = &schema
+	assert.Equal(t, "payload-content", *wrapper.JSON200.Content)
+}
+
 func ptr[T any](v T) *T {
 	return &v
 }

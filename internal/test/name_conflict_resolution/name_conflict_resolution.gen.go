@@ -56,6 +56,16 @@ type Order struct {
 	Product *string `json:"product,omitempty"`
 }
 
+// Outcome defines model for Outcome.
+type Outcome struct {
+	Value *string `json:"value,omitempty"`
+}
+
+// Payload defines model for Payload.
+type Payload struct {
+	Content *string `json:"content,omitempty"`
+}
+
 // Pet defines model for Pet.
 type Pet struct {
 	Id   *int    `json:"id,omitempty"`
@@ -72,6 +82,11 @@ type Qux = CustomQux
 
 // CustomQux defines model for .
 type CustomQux struct {
+	Label *string `json:"label,omitempty"`
+}
+
+// SpecialName defines model for Renamer.
+type SpecialName struct {
 	Label *string `json:"label,omitempty"`
 }
 
@@ -131,8 +146,18 @@ type BarResponse struct {
 	Value2 *Bar2 `json:"value2,omitempty"`
 }
 
+// OutcomeResult defines model for Outcome.
+type OutcomeResult struct {
+	Result *string `json:"result,omitempty"`
+}
+
 // QuxResponse defines model for Qux.
 type QuxResponse struct {
+	Data *string `json:"data,omitempty"`
+}
+
+// Renamer defines model for Renamer.
+type Renamer struct {
 	Data *string `json:"data,omitempty"`
 }
 
@@ -162,6 +187,11 @@ type OrderRequestBodyJSON2 = []struct {
 // OrderRequestBodyJSON3 defines model for Order.
 type OrderRequestBodyJSON3 struct {
 	Product *string `json:"product,omitempty"`
+}
+
+// PayloadBody defines model for Payload.
+type PayloadBody struct {
+	Data *string `json:"data,omitempty"`
 }
 
 // PetRequestBody defines model for Pet.
@@ -212,6 +242,11 @@ type CreateOrderApplicationMergePatchPlusJSONBody struct {
 	Product *string `json:"product,omitempty"`
 }
 
+// SendPayloadJSONBody defines parameters for SendPayload.
+type SendPayloadJSONBody struct {
+	Data *string `json:"data,omitempty"`
+}
+
 // CreatePetJSONBody defines parameters for CreatePet.
 type CreatePetJSONBody struct {
 	Name    *string `json:"name,omitempty"`
@@ -238,6 +273,12 @@ type CreateOrderApplicationJSONPatchPlusJSONRequestBody = CreateOrderApplication
 // CreateOrderApplicationMergePatchPlusJSONRequestBody defines body for CreateOrder for application/merge-patch+json ContentType.
 type CreateOrderApplicationMergePatchPlusJSONRequestBody CreateOrderApplicationMergePatchPlusJSONBody
 
+// PostOutcomeJSONRequestBody defines body for PostOutcome for application/json ContentType.
+type PostOutcomeJSONRequestBody = Outcome
+
+// SendPayloadJSONRequestBody defines body for SendPayload for application/json ContentType.
+type SendPayloadJSONRequestBody SendPayloadJSONBody
+
 // CreatePetJSONRequestBody defines body for CreatePet for application/json ContentType.
 type CreatePetJSONRequestBody CreatePetJSONBody
 
@@ -246,6 +287,9 @@ type QueryJSONRequestBody QueryJSONBody
 
 // PostQuxJSONRequestBody defines body for PostQux for application/json ContentType.
 type PostQuxJSONRequestBody = Qux
+
+// PostRenamedSchemaJSONRequestBody defines body for PostRenamedSchema for application/json ContentType.
+type PostRenamedSchemaJSONRequestBody = SpecialName
 
 // PatchResourceJSONRequestBody defines body for PatchResource for application/json ContentType.
 type PatchResourceJSONRequestBody = ResourceMVO
@@ -533,6 +577,19 @@ type ClientInterface interface {
 
 	CreateOrderWithApplicationMergePatchPlusJSONBody(ctx context.Context, body CreateOrderApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetOutcome request
+	GetOutcome(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostOutcomeWithBody request with any body
+	PostOutcomeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostOutcome(ctx context.Context, body PostOutcomeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SendPayloadWithBody request with any body
+	SendPayloadWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	SendPayload(ctx context.Context, body SendPayloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CreatePetWithBody request with any body
 	CreatePetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -550,6 +607,14 @@ type ClientInterface interface {
 	PostQuxWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostQux(ctx context.Context, body PostQuxJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetRenamedSchema request
+	GetRenamedSchema(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// PostRenamedSchemaWithBody request with any body
+	PostRenamedSchemaWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	PostRenamedSchema(ctx context.Context, body PostRenamedSchemaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PatchResourceWithBody request with any body
 	PatchResourceWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -692,6 +757,66 @@ func (c *Client) CreateOrderWithApplicationMergePatchPlusJSONBody(ctx context.Co
 	return c.Client.Do(req)
 }
 
+func (c *Client) GetOutcome(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetOutcomeRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostOutcomeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostOutcomeRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostOutcome(ctx context.Context, body PostOutcomeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostOutcomeRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SendPayloadWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSendPayloadRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) SendPayload(ctx context.Context, body SendPayloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSendPayloadRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *Client) CreatePetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreatePetRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -766,6 +891,42 @@ func (c *Client) PostQuxWithBody(ctx context.Context, contentType string, body i
 
 func (c *Client) PostQux(ctx context.Context, body PostQuxJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostQuxRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) GetRenamedSchema(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetRenamedSchemaRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostRenamedSchemaWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostRenamedSchemaRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) PostRenamedSchema(ctx context.Context, body PostRenamedSchemaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostRenamedSchemaRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -934,7 +1095,7 @@ func NewPostFooRequestWithBody(server string, params *PostFooParams, contentType
 
 		if params.Bar != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "bar", runtime.ParamLocationQuery, *params.Bar); err != nil {
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "bar", *params.Bar, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -1071,6 +1232,113 @@ func NewCreateOrderRequestWithBody(server string, contentType string, body io.Re
 	}
 
 	operationPath := fmt.Sprintf("/orders")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetOutcomeRequest generates requests for GetOutcome
+func NewGetOutcomeRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/outcome")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPostOutcomeRequest calls the generic PostOutcome builder with application/json body
+func NewPostOutcomeRequest(server string, body PostOutcomeJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostOutcomeRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPostOutcomeRequestWithBody generates requests for PostOutcome with any type of body
+func NewPostOutcomeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/outcome")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewSendPayloadRequest calls the generic SendPayload builder with application/json body
+func NewSendPayloadRequest(server string, body SendPayloadJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSendPayloadRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewSendPayloadRequestWithBody generates requests for SendPayload with any type of body
+func NewSendPayloadRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/payload")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1237,6 +1505,73 @@ func NewPostQuxRequestWithBody(server string, contentType string, body io.Reader
 	return req, nil
 }
 
+// NewGetRenamedSchemaRequest generates requests for GetRenamedSchema
+func NewGetRenamedSchemaRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/renamed-schema")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewPostRenamedSchemaRequest calls the generic PostRenamedSchema builder with application/json body
+func NewPostRenamedSchemaRequest(server string, body PostRenamedSchemaJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostRenamedSchemaRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPostRenamedSchemaRequestWithBody generates requests for PostRenamedSchema with any type of body
+func NewPostRenamedSchemaRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/renamed-schema")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewPatchResourceRequest calls the generic PatchResource builder with application/json body
 func NewPatchResourceRequest(server string, id string, body PatchResourceJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -1276,7 +1611,7 @@ func NewPatchResourceRequestWithBody(server string, id string, contentType strin
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
 	if err != nil {
 		return nil, err
 	}
@@ -1468,6 +1803,19 @@ type ClientWithResponsesInterface interface {
 
 	CreateOrderWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, body CreateOrderApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error)
 
+	// GetOutcomeWithResponse request
+	GetOutcomeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOutcomeResponse, error)
+
+	// PostOutcomeWithBodyWithResponse request with any body
+	PostOutcomeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOutcomeResponse, error)
+
+	PostOutcomeWithResponse(ctx context.Context, body PostOutcomeJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOutcomeResponse, error)
+
+	// SendPayloadWithBodyWithResponse request with any body
+	SendPayloadWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendPayloadResponse, error)
+
+	SendPayloadWithResponse(ctx context.Context, body SendPayloadJSONRequestBody, reqEditors ...RequestEditorFn) (*SendPayloadResponse, error)
+
 	// CreatePetWithBodyWithResponse request with any body
 	CreatePetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePetResponse, error)
 
@@ -1485,6 +1833,14 @@ type ClientWithResponsesInterface interface {
 	PostQuxWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostQuxResponse, error)
 
 	PostQuxWithResponse(ctx context.Context, body PostQuxJSONRequestBody, reqEditors ...RequestEditorFn) (*PostQuxResponse, error)
+
+	// GetRenamedSchemaWithResponse request
+	GetRenamedSchemaWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetRenamedSchemaResponse, error)
+
+	// PostRenamedSchemaWithBodyWithResponse request with any body
+	PostRenamedSchemaWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostRenamedSchemaResponse, error)
+
+	PostRenamedSchemaWithResponse(ctx context.Context, body PostRenamedSchemaJSONRequestBody, reqEditors ...RequestEditorFn) (*PostRenamedSchemaResponse, error)
 
 	// PatchResourceWithBodyWithResponse request with any body
 	PatchResourceWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error)
@@ -1620,6 +1976,71 @@ func (r CreateOrderResponse) StatusCode() int {
 	return 0
 }
 
+type GetOutcomeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *OutcomeResult
+}
+
+// Status returns HTTPResponse.Status
+func (r GetOutcomeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetOutcomeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostOutcomeResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PostOutcomeResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostOutcomeResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type SendPayloadResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Payload
+}
+
+// Status returns HTTPResponse.Status
+func (r SendPayloadResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SendPayloadResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type CreatePetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1701,6 +2122,49 @@ func (r PostQuxResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PostQuxResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetRenamedSchemaResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Renamer
+}
+
+// Status returns HTTPResponse.Status
+func (r GetRenamedSchemaResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetRenamedSchemaResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type PostRenamedSchemaResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r PostRenamedSchemaResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PostRenamedSchemaResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -1886,6 +2350,49 @@ func (c *ClientWithResponses) CreateOrderWithApplicationMergePatchPlusJSONBodyWi
 	return ParseCreateOrderResponse(rsp)
 }
 
+// GetOutcomeWithResponse request returning *GetOutcomeResponse
+func (c *ClientWithResponses) GetOutcomeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOutcomeResponse, error) {
+	rsp, err := c.GetOutcome(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetOutcomeResponse(rsp)
+}
+
+// PostOutcomeWithBodyWithResponse request with arbitrary body returning *PostOutcomeResponse
+func (c *ClientWithResponses) PostOutcomeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOutcomeResponse, error) {
+	rsp, err := c.PostOutcomeWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostOutcomeResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostOutcomeWithResponse(ctx context.Context, body PostOutcomeJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOutcomeResponse, error) {
+	rsp, err := c.PostOutcome(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostOutcomeResponse(rsp)
+}
+
+// SendPayloadWithBodyWithResponse request with arbitrary body returning *SendPayloadResponse
+func (c *ClientWithResponses) SendPayloadWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendPayloadResponse, error) {
+	rsp, err := c.SendPayloadWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSendPayloadResponse(rsp)
+}
+
+func (c *ClientWithResponses) SendPayloadWithResponse(ctx context.Context, body SendPayloadJSONRequestBody, reqEditors ...RequestEditorFn) (*SendPayloadResponse, error) {
+	rsp, err := c.SendPayload(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSendPayloadResponse(rsp)
+}
+
 // CreatePetWithBodyWithResponse request with arbitrary body returning *CreatePetResponse
 func (c *ClientWithResponses) CreatePetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePetResponse, error) {
 	rsp, err := c.CreatePetWithBody(ctx, contentType, body, reqEditors...)
@@ -1944,6 +2451,32 @@ func (c *ClientWithResponses) PostQuxWithResponse(ctx context.Context, body Post
 		return nil, err
 	}
 	return ParsePostQuxResponse(rsp)
+}
+
+// GetRenamedSchemaWithResponse request returning *GetRenamedSchemaResponse
+func (c *ClientWithResponses) GetRenamedSchemaWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetRenamedSchemaResponse, error) {
+	rsp, err := c.GetRenamedSchema(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetRenamedSchemaResponse(rsp)
+}
+
+// PostRenamedSchemaWithBodyWithResponse request with arbitrary body returning *PostRenamedSchemaResponse
+func (c *ClientWithResponses) PostRenamedSchemaWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostRenamedSchemaResponse, error) {
+	rsp, err := c.PostRenamedSchemaWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostRenamedSchemaResponse(rsp)
+}
+
+func (c *ClientWithResponses) PostRenamedSchemaWithResponse(ctx context.Context, body PostRenamedSchemaJSONRequestBody, reqEditors ...RequestEditorFn) (*PostRenamedSchemaResponse, error) {
+	rsp, err := c.PostRenamedSchema(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostRenamedSchemaResponse(rsp)
 }
 
 // PatchResourceWithBodyWithResponse request with arbitrary body returning *PatchResourceResponse
@@ -2147,6 +2680,74 @@ func ParseCreateOrderResponse(rsp *http.Response) (*CreateOrderResponse, error) 
 	return response, nil
 }
 
+// ParseGetOutcomeResponse parses an HTTP response from a GetOutcomeWithResponse call
+func ParseGetOutcomeResponse(rsp *http.Response) (*GetOutcomeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetOutcomeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest OutcomeResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostOutcomeResponse parses an HTTP response from a PostOutcomeWithResponse call
+func ParsePostOutcomeResponse(rsp *http.Response) (*PostOutcomeResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostOutcomeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseSendPayloadResponse parses an HTTP response from a SendPayloadWithResponse call
+func ParseSendPayloadResponse(rsp *http.Response) (*SendPayloadResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SendPayloadResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Payload
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseCreatePetResponse parses an HTTP response from a CreatePetWithResponse call
 func ParseCreatePetResponse(rsp *http.Response) (*CreatePetResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -2234,6 +2835,48 @@ func ParsePostQuxResponse(rsp *http.Response) (*PostQuxResponse, error) {
 	}
 
 	response := &PostQuxResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetRenamedSchemaResponse parses an HTTP response from a GetRenamedSchemaWithResponse call
+func ParseGetRenamedSchemaResponse(rsp *http.Response) (*GetRenamedSchemaResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetRenamedSchemaResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Renamer
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParsePostRenamedSchemaResponse parses an HTTP response from a PostRenamedSchemaWithResponse call
+func ParsePostRenamedSchemaResponse(rsp *http.Response) (*PostRenamedSchemaResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PostRenamedSchemaResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

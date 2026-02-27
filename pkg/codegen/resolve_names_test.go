@@ -245,6 +245,118 @@ func TestResolveNames_MultipleJsonContentTypes(t *testing.T) {
 	assert.Contains(t, mergePatchName, "OrderRequestBodyJSON")
 }
 
+func TestResolveNames_XGoNamePinned_Schema(t *testing.T) {
+	// Pattern K: schema "Renamer" has x-go-name="SpecialName" which collides
+	// with nothing, but a response also named "Renamer" should keep its
+	// normal resolved name. The schema is pinned.
+	schemas := []*GatheredSchema{
+		{
+			Path:           SchemaPath{"components", "schemas", "Renamer"},
+			Context:        ContextComponentSchema,
+			Schema:         &openapi3.Schema{},
+			ComponentName:  "Renamer",
+			GoNameOverride: "SpecialName",
+		},
+		{
+			Path:          SchemaPath{"components", "responses", "Renamer", "content", "application/json"},
+			Context:       ContextComponentResponse,
+			Schema:        &openapi3.Schema{},
+			ComponentName: "Renamer",
+			ContentType:   "application/json",
+		},
+	}
+
+	result := ResolveNames(schemas)
+
+	// Schema pinned to SpecialName
+	assert.Equal(t, "SpecialName", result["components/schemas/Renamer"])
+	// Response keeps bare name since there's no collision with "Renamer"
+	assert.Equal(t, "Renamer", result["components/responses/Renamer/content/application/json"])
+}
+
+func TestResolveNames_XGoNamePinned_Response(t *testing.T) {
+	// Pattern L: response "Outcome" has x-go-name="OutcomeResult" and
+	// schema also named "Outcome". The response is pinned as "OutcomeResult",
+	// so the schema keeps "Outcome" (no collision).
+	schemas := []*GatheredSchema{
+		{
+			Path:          SchemaPath{"components", "schemas", "Outcome"},
+			Context:       ContextComponentSchema,
+			Schema:        &openapi3.Schema{},
+			ComponentName: "Outcome",
+		},
+		{
+			Path:           SchemaPath{"components", "responses", "Outcome", "content", "application/json"},
+			Context:        ContextComponentResponse,
+			Schema:         &openapi3.Schema{},
+			ComponentName:  "Outcome",
+			ContentType:    "application/json",
+			GoNameOverride: "OutcomeResult",
+		},
+	}
+
+	result := ResolveNames(schemas)
+
+	// Schema keeps bare name
+	assert.Equal(t, "Outcome", result["components/schemas/Outcome"])
+	// Response pinned to OutcomeResult
+	assert.Equal(t, "OutcomeResult", result["components/responses/Outcome/content/application/json"])
+}
+
+func TestResolveNames_XGoNamePinned_RequestBody(t *testing.T) {
+	// Pattern M: requestBody "Payload" has x-go-name="PayloadBody" and
+	// schema also named "Payload". The requestBody is pinned.
+	schemas := []*GatheredSchema{
+		{
+			Path:          SchemaPath{"components", "schemas", "Payload"},
+			Context:       ContextComponentSchema,
+			Schema:        &openapi3.Schema{},
+			ComponentName: "Payload",
+		},
+		{
+			Path:           SchemaPath{"components", "requestBodies", "Payload", "content", "application/json"},
+			Context:        ContextComponentRequestBody,
+			Schema:         &openapi3.Schema{},
+			ComponentName:  "Payload",
+			ContentType:    "application/json",
+			GoNameOverride: "PayloadBody",
+		},
+	}
+
+	result := ResolveNames(schemas)
+
+	// Schema keeps bare name
+	assert.Equal(t, "Payload", result["components/schemas/Payload"])
+	// RequestBody pinned to PayloadBody
+	assert.Equal(t, "PayloadBody", result["components/requestBodies/Payload/content/application/json"])
+}
+
+func TestResolveNames_PinnedNotModifiedByStrategies(t *testing.T) {
+	// Pinned name "Foo" vs non-pinned parameter "Foo" → parameter gets suffixed
+	schemas := []*GatheredSchema{
+		{
+			Path:           SchemaPath{"components", "schemas", "Foo"},
+			Context:        ContextComponentSchema,
+			Schema:         &openapi3.Schema{},
+			ComponentName:  "Foo",
+			GoNameOverride: "Foo",
+		},
+		{
+			Path:          SchemaPath{"components", "parameters", "Foo"},
+			Context:       ContextComponentParameter,
+			Schema:        &openapi3.Schema{},
+			ComponentName: "Foo",
+		},
+	}
+
+	result := ResolveNames(schemas)
+
+	// Pinned schema stays as "Foo"
+	assert.Equal(t, "Foo", result["components/schemas/Foo"])
+	// Parameter gets suffixed to resolve collision
+	assert.Equal(t, "FooParameter", result["components/parameters/Foo"])
+}
+
 func TestContentTypeSuffix(t *testing.T) {
 	tests := []struct {
 		input    string

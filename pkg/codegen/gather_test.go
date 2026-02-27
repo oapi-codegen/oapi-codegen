@@ -177,6 +177,103 @@ func TestGatherSchemas_ClientResponseWrappers(t *testing.T) {
 	assert.Equal(t, "listPets", schemas[1].OperationID)
 }
 
+func TestGatherSchemas_GoNameOverride_Schema(t *testing.T) {
+	spec := &openapi3.T{
+		Components: &openapi3.Components{
+			Schemas: openapi3.Schemas{
+				"Renamer": &openapi3.SchemaRef{
+					Value: &openapi3.Schema{
+						Type:       &openapi3.Types{"object"},
+						Extensions: map[string]any{"x-go-name": "SpecialName"},
+					},
+				},
+			},
+		},
+	}
+
+	opts := Configuration{}
+	schemas := GatherSchemas(spec, opts)
+
+	require.Len(t, schemas, 1)
+	assert.Equal(t, "SpecialName", schemas[0].GoNameOverride)
+}
+
+func TestGatherSchemas_GoNameOverride_Response(t *testing.T) {
+	spec := &openapi3.T{
+		Components: &openapi3.Components{
+			Responses: openapi3.ResponseBodies{
+				"Outcome": &openapi3.ResponseRef{
+					Value: &openapi3.Response{
+						Extensions: map[string]any{"x-go-name": "OutcomeResult"},
+						Content: openapi3.Content{
+							"application/json": &openapi3.MediaType{
+								Schema: &openapi3.SchemaRef{
+									Value: &openapi3.Schema{Type: &openapi3.Types{"object"}},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	opts := Configuration{}
+	schemas := GatherSchemas(spec, opts)
+
+	require.Len(t, schemas, 1)
+	assert.Equal(t, "OutcomeResult", schemas[0].GoNameOverride)
+}
+
+func TestGatherSchemas_GoNameOverride_RequestBody(t *testing.T) {
+	spec := &openapi3.T{
+		Components: &openapi3.Components{
+			RequestBodies: openapi3.RequestBodies{
+				"Payload": &openapi3.RequestBodyRef{
+					Value: &openapi3.RequestBody{
+						Extensions: map[string]any{"x-go-name": "PayloadBody"},
+						Content: openapi3.Content{
+							"application/json": &openapi3.MediaType{
+								Schema: &openapi3.SchemaRef{
+									Value: &openapi3.Schema{Type: &openapi3.Types{"object"}},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	opts := Configuration{}
+	schemas := GatherSchemas(spec, opts)
+
+	require.Len(t, schemas, 1)
+	assert.Equal(t, "PayloadBody", schemas[0].GoNameOverride)
+}
+
+func TestGatherSchemas_GoNameOverride_SkippedForRef(t *testing.T) {
+	spec := &openapi3.T{
+		Components: &openapi3.Components{
+			Schemas: openapi3.Schemas{
+				"AliasedPet": &openapi3.SchemaRef{
+					Ref: "#/components/schemas/Pet",
+					Value: &openapi3.Schema{
+						Type:       &openapi3.Types{"object"},
+						Extensions: map[string]any{"x-go-name": "ShouldBeIgnored"},
+					},
+				},
+			},
+		},
+	}
+
+	opts := Configuration{}
+	schemas := GatherSchemas(spec, opts)
+
+	require.Len(t, schemas, 1)
+	assert.Equal(t, "", schemas[0].GoNameOverride)
+}
+
 func TestGatherSchemas_AllSections(t *testing.T) {
 	// Spec with "Bar" in schemas, parameters, responses, requestBodies, headers
 	// This is the issue #200 scenario (cross-section collision)

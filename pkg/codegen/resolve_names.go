@@ -12,6 +12,7 @@ type ResolvedName struct {
 	Schema    *GatheredSchema
 	GoName    string // The resolved Go type name
 	Candidate string // The initial candidate name before collision resolution
+	Pinned    bool   // True if name came from x-go-name; must not be renamed
 }
 
 // ResolveNames takes the gathered schemas and assigns unique Go type names to each.
@@ -25,6 +26,7 @@ func ResolveNames(schemas []*GatheredSchema) map[string]string {
 			Schema:    s,
 			GoName:    candidate,
 			Candidate: candidate,
+			Pinned:    s.GoNameOverride != "",
 		}
 	}
 
@@ -42,6 +44,10 @@ func ResolveNames(schemas []*GatheredSchema) map[string]string {
 // generateCandidateName produces an initial Go type name candidate based on
 // the schema's location and context in the OpenAPI document.
 func generateCandidateName(s *GatheredSchema) string {
+	if s.GoNameOverride != "" {
+		return s.GoNameOverride
+	}
+
 	switch s.Context {
 	case ContextComponentSchema:
 		return SchemaNameToTypeName(s.ComponentName)
@@ -60,7 +66,7 @@ func generateCandidateName(s *GatheredSchema) string {
 
 	case ContextClientResponseWrapper:
 		// Client response wrappers use: OperationId + responseTypeSuffix
-		return fmt.Sprintf("%s%s", UppercaseFirstCharacter(s.OperationID), responseTypeSuffix)
+		return fmt.Sprintf("%s%s", SchemaNameToTypeName(s.OperationID), responseTypeSuffix)
 
 	case ContextOperationParameter:
 		if s.OperationID != "" {
@@ -155,6 +161,10 @@ func strategyContextSuffix(group []*ResolvedName) bool {
 
 	progress := false
 	for _, n := range group {
+		if n.Pinned {
+			continue
+		}
+
 		suffix := n.Schema.Context.Suffix()
 		if suffix == "" {
 			continue
@@ -206,6 +216,9 @@ func tryContentTypeSuffix(group []*ResolvedName) bool {
 
 	progress := false
 	for _, n := range group {
+		if n.Pinned {
+			continue
+		}
 		if n.Schema.ContentType == "" {
 			continue
 		}
@@ -233,6 +246,9 @@ func tryStatusCodeSuffix(group []*ResolvedName) bool {
 
 	progress := false
 	for _, n := range group {
+		if n.Pinned {
+			continue
+		}
 		if n.Schema.StatusCode != "" && !strings.HasSuffix(n.GoName, n.Schema.StatusCode) {
 			n.GoName = n.GoName + n.Schema.StatusCode
 			progress = true
@@ -262,6 +278,9 @@ func tryParamIndexSuffix(group []*ResolvedName) bool {
 
 	progress := false
 	for _, n := range group {
+		if n.Pinned {
+			continue
+		}
 		suffix := strconv.Itoa(n.Schema.ParamIndex)
 		if !strings.HasSuffix(n.GoName, suffix) {
 			n.GoName = n.GoName + suffix
@@ -274,16 +293,22 @@ func tryParamIndexSuffix(group []*ResolvedName) bool {
 // strategyNumericFallback is the last resort: append increasing numbers.
 // Returns true if any name was modified (always true when group has 2+ members).
 func strategyNumericFallback(group []*ResolvedName) bool {
-	// Sort for determinism: component schemas first, then by path
+	// Sort for determinism: pinned first, then component schemas, then by path
 	sort.Slice(group, func(i, j int) bool {
+		if group[i].Pinned != group[j].Pinned {
+			return group[i].Pinned
+		}
 		if group[i].Schema.IsComponentSchema() != group[j].Schema.IsComponentSchema() {
 			return group[i].Schema.IsComponentSchema()
 		}
 		return group[i].Schema.Path.String() < group[j].Schema.Path.String()
 	})
 
-	// First entry keeps name, rest get numeric suffix
+	// First non-pinned keeps name, rest get numeric suffix
 	for i := 1; i < len(group); i++ {
+		if group[i].Pinned {
+			continue
+		}
 		group[i].GoName = group[i].GoName + strconv.Itoa(i+1)
 	}
 	return len(group) > 1

@@ -89,8 +89,9 @@ type GatheredSchema struct {
 	OperationID string           // Enclosing operation's ID, if any
 	ContentType string           // Media type, if from request/response body
 	StatusCode  string           // HTTP status code, if from a response
-	ParamIndex  int              // Parameter index within an operation
-	ComponentName string         // The component name (e.g., "Bar" for components/schemas/Bar)
+	ParamIndex     int              // Parameter index within an operation
+	ComponentName  string           // The component name (e.g., "Bar" for components/schemas/Bar)
+	GoNameOverride string           // x-go-name override from the component or its parent container
 }
 
 // IsComponentSchema returns true if this schema came from components/schemas.
@@ -128,12 +129,17 @@ func gatherComponentSchemas(components *openapi3.Components) []*GatheredSchema {
 		if schemaRef == nil || schemaRef.Value == nil {
 			continue
 		}
+		var goNameOverride string
+		if schemaRef.Ref == "" {
+			goNameOverride = extractGoNameOverride(schemaRef.Value.Extensions)
+		}
 		result = append(result, &GatheredSchema{
-			Path:          SchemaPath{"components", "schemas", name},
-			Context:       ContextComponentSchema,
-			Ref:           schemaRef.Ref,
-			Schema:        schemaRef.Value,
-			ComponentName: name,
+			Path:           SchemaPath{"components", "schemas", name},
+			Context:        ContextComponentSchema,
+			Ref:            schemaRef.Ref,
+			Schema:         schemaRef.Value,
+			ComponentName:  name,
+			GoNameOverride: goNameOverride,
 		})
 	}
 	return result
@@ -148,12 +154,17 @@ func gatherComponentParameters(components *openapi3.Components) []*GatheredSchem
 		}
 		param := paramRef.Value
 		if param.Schema != nil && param.Schema.Value != nil {
+			var goNameOverride string
+			if paramRef.Ref == "" {
+				goNameOverride = extractGoNameOverride(param.Extensions)
+			}
 			result = append(result, &GatheredSchema{
-				Path:          SchemaPath{"components", "parameters", name},
-				Context:       ContextComponentParameter,
-				Ref:           paramRef.Ref,
-				Schema:        param.Schema.Value,
-				ComponentName: name,
+				Path:           SchemaPath{"components", "parameters", name},
+				Context:        ContextComponentParameter,
+				Ref:            paramRef.Ref,
+				Schema:         param.Schema.Value,
+				ComponentName:  name,
+				GoNameOverride: goNameOverride,
 			})
 		}
 	}
@@ -168,6 +179,10 @@ func gatherComponentResponses(components *openapi3.Components) []*GatheredSchema
 			continue
 		}
 		response := responseRef.Value
+		var goNameOverride string
+		if responseRef.Ref == "" {
+			goNameOverride = extractGoNameOverride(response.Extensions)
+		}
 		for _, mediaType := range SortedMapKeys(response.Content) {
 			if !util.IsMediaTypeJson(mediaType) {
 				continue
@@ -175,12 +190,13 @@ func gatherComponentResponses(components *openapi3.Components) []*GatheredSchema
 			mt := response.Content[mediaType]
 			if mt.Schema != nil && mt.Schema.Value != nil {
 				result = append(result, &GatheredSchema{
-					Path:          SchemaPath{"components", "responses", name, "content", mediaType},
-					Context:       ContextComponentResponse,
-					Ref:           responseRef.Ref,
-					Schema:        mt.Schema.Value,
-					ContentType:   mediaType,
-					ComponentName: name,
+					Path:           SchemaPath{"components", "responses", name, "content", mediaType},
+					Context:        ContextComponentResponse,
+					Ref:            responseRef.Ref,
+					Schema:         mt.Schema.Value,
+					ContentType:    mediaType,
+					ComponentName:  name,
+					GoNameOverride: goNameOverride,
 				})
 			}
 		}
@@ -196,6 +212,10 @@ func gatherComponentRequestBodies(components *openapi3.Components) []*GatheredSc
 			continue
 		}
 		body := bodyRef.Value
+		var goNameOverride string
+		if bodyRef.Ref == "" {
+			goNameOverride = extractGoNameOverride(body.Extensions)
+		}
 		for _, mediaType := range SortedMapKeys(body.Content) {
 			if !util.IsMediaTypeJson(mediaType) {
 				continue
@@ -203,12 +223,13 @@ func gatherComponentRequestBodies(components *openapi3.Components) []*GatheredSc
 			mt := body.Content[mediaType]
 			if mt.Schema != nil && mt.Schema.Value != nil {
 				result = append(result, &GatheredSchema{
-					Path:          SchemaPath{"components", "requestBodies", name, "content", mediaType},
-					Context:       ContextComponentRequestBody,
-					Ref:           bodyRef.Ref,
-					Schema:        mt.Schema.Value,
-					ContentType:   mediaType,
-					ComponentName: name,
+					Path:           SchemaPath{"components", "requestBodies", name, "content", mediaType},
+					Context:        ContextComponentRequestBody,
+					Ref:            bodyRef.Ref,
+					Schema:         mt.Schema.Value,
+					ContentType:    mediaType,
+					ComponentName:  name,
+					GoNameOverride: goNameOverride,
 				})
 			}
 		}
@@ -225,12 +246,17 @@ func gatherComponentHeaders(components *openapi3.Components) []*GatheredSchema {
 		}
 		header := headerRef.Value
 		if header.Schema != nil && header.Schema.Value != nil {
+			var goNameOverride string
+			if headerRef.Ref == "" {
+				goNameOverride = extractGoNameOverride(header.Extensions)
+			}
 			result = append(result, &GatheredSchema{
-				Path:          SchemaPath{"components", "headers", name},
-				Context:       ContextComponentHeader,
-				Ref:           headerRef.Ref,
-				Schema:        header.Schema.Value,
-				ComponentName: name,
+				Path:           SchemaPath{"components", "headers", name},
+				Context:        ContextComponentHeader,
+				Ref:            headerRef.Ref,
+				Schema:         header.Schema.Value,
+				ComponentName:  name,
+				GoNameOverride: goNameOverride,
 			})
 		}
 	}
@@ -288,4 +314,18 @@ func gatherClientResponseWrappers(spec *openapi3.T) []*GatheredSchema {
 // FormatPath returns a human-readable representation of the path for debugging.
 func (gs *GatheredSchema) FormatPath() string {
 	return fmt.Sprintf("#/%s", strings.Join(gs.Path, "/"))
+}
+
+// extractGoNameOverride reads the x-go-name extension from extensions and
+// returns its value, or "" if not present or invalid.
+func extractGoNameOverride(extensions map[string]any) string {
+	ext, ok := extensions[extGoName]
+	if !ok {
+		return ""
+	}
+	name, err := extTypeName(ext)
+	if err != nil {
+		return ""
+	}
+	return name
 }

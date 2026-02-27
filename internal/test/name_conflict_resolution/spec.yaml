@@ -6,6 +6,7 @@ info:
     Exercises all documented name collision patterns across issues and PRs:
     #200, #254, #255, #292, #407, #899, #1357, #1450, #1474, #1713, #1881, #2097, #2213
     Also covers oapi-codegen-exp#14 (inline response object with $ref properties).
+    Patterns K/L/M cover x-go-name preservation during collision resolution (PR #2213 review).
   version: 0.0.0
 
 paths:
@@ -197,6 +198,70 @@ paths:
         '200':
           $ref: '#/components/responses/200Resource_Patch'
 
+  # Pattern K: x-go-name on schema — resolver must preserve user-specified names
+  # Schema "Renamer" has x-go-name: "SpecialName". Response "Renamer" also exists.
+  # The resolver should use "SpecialName" for the schema (pinned by x-go-name)
+  # and "Renamer" for the response (no collision since the schema is "SpecialName").
+  # Covers: PR #2213 review finding (x-go-name not respected by resolver)
+  /renamed-schema:
+    get:
+      operationId: getRenamedSchema
+      responses:
+        '200':
+          $ref: '#/components/responses/Renamer'
+    post:
+      operationId: postRenamedSchema
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Renamer'
+      responses:
+        '200':
+          description: OK
+
+  # Pattern L: x-go-name on response — resolver must preserve user-specified names
+  # Response "Outcome" has x-go-name: "OutcomeResult". Schema "Outcome" also exists.
+  # The resolver should use "OutcomeResult" for the response (pinned by x-go-name)
+  # and "Outcome" for the schema (no collision since the response is "OutcomeResult").
+  # Covers: PR #2213 review finding (x-go-name not respected by resolver)
+  /outcome:
+    get:
+      operationId: getOutcome
+      responses:
+        '200':
+          $ref: '#/components/responses/Outcome'
+    post:
+      operationId: postOutcome
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Outcome'
+      responses:
+        '200':
+          description: OK
+
+  # Pattern M: x-go-name on requestBody — resolver must preserve user-specified names
+  # RequestBody "Payload" has x-go-name: "PayloadBody". Schema "Payload" also exists.
+  # The resolver should use "PayloadBody" for the requestBody (pinned by x-go-name)
+  # and "Payload" for the schema (no collision since the requestBody is "PayloadBody").
+  # Covers: PR #2213 review finding (x-go-name not respected by resolver)
+  /payload:
+    post:
+      operationId: sendPayload
+      requestBody:
+        $ref: '#/components/requestBodies/Payload'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payload'
+
   # Cross-section: requestBody vs schema (issues #254, #407)
   # "Pet" appears in both schemas and requestBodies.
   /pets:
@@ -320,6 +385,28 @@ components:
           path:
             type: string
 
+    # Pattern K: x-go-name on schema — should be pinned as "SpecialName"
+    Renamer:
+      x-go-name: SpecialName
+      type: object
+      properties:
+        label:
+          type: string
+
+    # Pattern L: schema "Outcome" (no x-go-name — keeps bare name)
+    Outcome:
+      type: object
+      properties:
+        value:
+          type: string
+
+    # Pattern M: schema "Payload" (no x-go-name — keeps bare name)
+    Payload:
+      type: object
+      properties:
+        content:
+          type: string
+
     # Pattern F: x-go-type-name extension + cross-section collision
     # Schema "Qux" has x-go-type-name: CustomQux and collides with response "Qux".
     Qux:
@@ -397,6 +484,17 @@ components:
               species:
                 type: string
 
+    # Pattern M: requestBody "Payload" has x-go-name — should be pinned as "PayloadBody"
+    Payload:
+      x-go-name: PayloadBody
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: string
+
     # Pattern J: requestBody "Resource_MVO" shares name with schema "Resource_MVO".
     # Content schemas $ref the component schema, except json-patch which $refs JsonPatch.
     Resource_MVO:
@@ -431,6 +529,30 @@ components:
                 $ref: '#/components/schemas/Bar'
               value2:
                 $ref: '#/components/schemas/Bar2'
+
+    # Pattern K: response "Renamer" — no x-go-name, should keep bare name "Renamer"
+    # because the schema collision is avoided by the schema's x-go-name: SpecialName.
+    Renamer:
+      description: A Renamer response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              data:
+                type: string
+
+    # Pattern L: response "Outcome" has x-go-name — should be pinned as "OutcomeResult"
+    Outcome:
+      x-go-name: OutcomeResult
+      description: An Outcome response
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              result:
+                type: string
 
     Qux:
       description: A Qux response
