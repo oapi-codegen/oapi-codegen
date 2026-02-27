@@ -41,9 +41,9 @@ func TestPetJSONRoundTrip(t *testing.T) {
 	assert.Equal(t, int32(5), *pet.Age)
 	assert.Equal(t, 12.5, *pet.Weight)
 	assert.True(t, *pet.IsGood)
-	assert.Equal(t, 2020, pet.BornAt.Time.Year())
-	assert.Equal(t, time.January, pet.BornAt.Time.Month())
-	assert.Equal(t, 15, pet.BornAt.Time.Day())
+	assert.Equal(t, 2020, pet.BornAt.Year())
+	assert.Equal(t, time.January, pet.BornAt.Month())
+	assert.Equal(t, 15, pet.BornAt.Day())
 
 	marshaled, err := json.Marshal(pet)
 	require.NoError(t, err)
@@ -63,13 +63,13 @@ func TestAliasedDateRoundTrip(t *testing.T) {
 	err := json.Unmarshal([]byte(input), &pet)
 	require.NoError(t, err)
 
-	assert.Equal(t, 2022, pet.Born.Time.Year())
-	assert.Equal(t, time.May, pet.Born.Time.Month())
-	assert.Equal(t, 19, pet.Born.Time.Day())
+	assert.Equal(t, 2022, pet.Born.Year())
+	assert.Equal(t, time.May, pet.Born.Month())
+	assert.Equal(t, 19, pet.Born.Day())
 
-	assert.Equal(t, 2022, pet.BornAt.Time.Year())
-	assert.Equal(t, time.May, pet.BornAt.Time.Month())
-	assert.Equal(t, 20, pet.BornAt.Time.Day())
+	assert.Equal(t, 2022, pet.BornAt.Year())
+	assert.Equal(t, time.May, pet.BornAt.Month())
+	assert.Equal(t, 20, pet.BornAt.Day())
 }
 
 func TestAllFormatsRoundTrip(t *testing.T) {
