@@ -1,0 +1,119 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Object Schemas
+  description: Tests object schemas with various additionalProperties configurations
+paths:
+  /ensure-everything-is-referenced:
+    get:
+      operationId: ensureEverythingIsReferenced
+      responses:
+        "200":
+          description: placeholder
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  one:
+                    $ref: "#/components/schemas/TypedAdditionalProperties"
+                  two:
+                    $ref: "#/components/schemas/NoAdditionalProperties"
+                  three:
+                    $ref: "#/components/schemas/AnyAdditionalProperties"
+                  four:
+                    $ref: "#/components/schemas/NestedAdditionalProperties"
+                  five:
+                    $ref: "#/components/schemas/RefAdditionalProperties"
+                  six:
+                    $ref: "#/components/schemas/ArrayOfMaps"
+                  seven:
+                    $ref: "#/components/schemas/ReadOnlyWriteOnly"
+components:
+  schemas:
+    BaseObject:
+      type: object
+      properties:
+        role:
+          type: string
+        firstName:
+          type: string
+      required: [role, firstName]
+
+    TypedAdditionalProperties:
+      description: Has additional properties of type int
+      type: object
+      properties:
+        name:
+          type: string
+        id:
+          type: integer
+        optional:
+          type: string
+      required: [name, id]
+      additionalProperties:
+        type: integer
+
+    NoAdditionalProperties:
+      description: Does not allow additional properties
+      type: object
+      properties:
+        name:
+          type: string
+        id:
+          type: integer
+      required: [name, id]
+      additionalProperties: false
+
+    AnyAdditionalProperties:
+      description: Allows any additional property
+      type: object
+      properties:
+        name:
+          type: string
+      required: [name]
+      additionalProperties: true
+
+    NestedAdditionalProperties:
+      description: Has anonymous field which has additional properties
+      type: object
+      properties:
+        name:
+          type: string
+        inner:
+          type: object
+          properties:
+            name:
+              type: string
+          required: [name]
+          additionalProperties: true
+      required: [inner, name]
+      additionalProperties: true
+
+    RefAdditionalProperties:
+      description: Has additional properties with schema reference for dictionaries
+      type: object
+      additionalProperties:
+        $ref: "#/components/schemas/BaseObject"
+
+    ArrayOfMaps:
+      description: Array of objects with additional properties
+      type: array
+      items:
+        type: object
+        additionalProperties:
+          $ref: "#/components/schemas/BaseObject"
+
+    ReadOnlyWriteOnly:
+      type: object
+      properties:
+        readOnlyProp:
+          description: This property is required and readOnly
+          type: string
+          readOnly: true
+        writeOnlyProp:
+          type: integer
+          writeOnly: true
+        normalProp:
+          type: string
+      required: [readOnlyProp, writeOnlyProp, normalProp]

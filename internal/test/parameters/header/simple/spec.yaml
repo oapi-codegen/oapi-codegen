@@ -1,0 +1,74 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Header Parameters - Simple Style
+paths:
+  /header:
+    get:
+      operationId: getHeader
+      parameters:
+        - name: X-Primitive
+          in: header
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            format: int32
+        - name: X-Primitive-Exploded
+          in: header
+          required: false
+          style: simple
+          explode: true
+          schema:
+            type: integer
+            format: int32
+        - name: X-Array
+          in: header
+          required: false
+          style: simple
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+        - name: X-Array-Exploded
+          in: header
+          required: false
+          style: simple
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+        - name: X-Object
+          in: header
+          required: false
+          style: simple
+          explode: false
+          schema:
+            $ref: "#/components/schemas/Object"
+        - name: X-Object-Exploded
+          in: header
+          required: false
+          style: simple
+          explode: true
+          schema:
+            $ref: "#/components/schemas/Object"
+      responses:
+        "200":
+          description: OK
+components:
+  schemas:
+    Object:
+      type: object
+      properties:
+        role:
+          type: string
+        firstName:
+          type: string
+      required:
+        - role
+        - firstName

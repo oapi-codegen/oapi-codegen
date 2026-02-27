@@ -1,0 +1,100 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: AnyOf Types
+  description: Tests anyOf with discriminators, inline/ref schemas, and parameter-level anyOf
+paths:
+  /animal:
+    get:
+      operationId: getAnimal
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnyOfAnimal"
+  /search:
+    get:
+      operationId: search
+      parameters:
+        - name: filter
+          in: query
+          required: false
+          schema:
+            anyOf:
+              - $ref: "#/components/schemas/NameFilter"
+              - $ref: "#/components/schemas/IdFilter"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  simple:
+                    $ref: "#/components/schemas/SimpleAnyOf"
+                  duplicate:
+                    $ref: "#/components/schemas/DuplicateAnyOf"
+components:
+  schemas:
+    Cat:
+      type: object
+      properties:
+        type:
+          type: string
+        name:
+          type: string
+        indoor:
+          type: boolean
+      required: [type, name]
+    Dog:
+      type: object
+      properties:
+        type:
+          type: string
+        name:
+          type: string
+        breed:
+          type: string
+      required: [type, name]
+
+    AnyOfAnimal:
+      description: anyOf with discriminator
+      anyOf:
+        - $ref: "#/components/schemas/Cat"
+        - $ref: "#/components/schemas/Dog"
+
+    SimpleAnyOf:
+      description: Simple anyOf without discriminator
+      anyOf:
+        - type: object
+          properties:
+            name:
+              type: string
+        - type: object
+          properties:
+            id:
+              type: integer
+
+    # From issue-1189: anyOf with duplicate schema types
+    DuplicateAnyOf:
+      description: anyOf with overlapping string schemas
+      anyOf:
+        - type: string
+        - type: string
+          enum: [alpha, beta, gamma]
+
+    NameFilter:
+      type: object
+      properties:
+        name:
+          type: string
+      required: [name]
+    IdFilter:
+      type: object
+      properties:
+        id:
+          type: integer
+      required: [id]

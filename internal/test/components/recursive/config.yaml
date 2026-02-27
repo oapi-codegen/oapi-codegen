@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: recursive
+generate:
+  models: true
+output: recursive.gen.go

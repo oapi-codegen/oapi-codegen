@@ -1,0 +1,113 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Path Parameters - Simple Style
+paths:
+  # explode: false (default for path)
+  /noExplodePrimitive/{param}:
+    get:
+      operationId: getNoExplodePrimitive
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: OK
+  /noExplodeArray/{param}:
+    get:
+      operationId: getNoExplodeArray
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: simple
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+      responses:
+        "200":
+          description: OK
+  /noExplodeObject/{param}:
+    get:
+      operationId: getNoExplodeObject
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: simple
+          explode: false
+          schema:
+            $ref: "#/components/schemas/Object"
+      responses:
+        "200":
+          description: OK
+
+  # explode: true
+  /explodePrimitive/{param}:
+    get:
+      operationId: getExplodePrimitive
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: simple
+          explode: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        "200":
+          description: OK
+  /explodeArray/{param*}:
+    get:
+      operationId: getExplodeArray
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: simple
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+      responses:
+        "200":
+          description: OK
+  /explodeObject/{param*}:
+    get:
+      operationId: getExplodeObject
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: simple
+          explode: true
+          schema:
+            $ref: "#/components/schemas/Object"
+      responses:
+        "200":
+          description: OK
+
+components:
+  schemas:
+    Object:
+      type: object
+      properties:
+        role:
+          type: string
+        firstName:
+          type: string
+      required:
+        - role
+        - firstName

@@ -1,6 +1,0 @@
-package: issue1957
-generate:
-  models: true
-output: issue1957.gen.go
-output-options:
-  skip-prune: true
