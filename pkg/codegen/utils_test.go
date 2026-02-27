@@ -674,7 +674,7 @@ func TestSchemaNameToTypeName(t *testing.T) {
 		"123":          "N123",
 		"-1":           "Minus1",
 		"+1":           "Plus1",
-		"@timestamp,":  "Timestamp",
+		"@timestamp,":  "AtTimestamp",
 		"&now":         "AndNow",
 		"~":            "Tilde",
 		"_foo":         "UnderscoreFoo",
