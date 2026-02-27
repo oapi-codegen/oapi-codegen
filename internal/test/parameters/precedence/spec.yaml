@@ -1,0 +1,27 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Parameter Precedence
+  description: Operation-level parameter should override path-level parameter with same name
+paths:
+  /simplePrimitive/{param}:
+    parameters:
+      - name: param
+        in: path
+        required: true
+        style: simple
+        schema:
+          type: integer
+          format: int32
+    get:
+      operationId: getSimplePrimitive
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK

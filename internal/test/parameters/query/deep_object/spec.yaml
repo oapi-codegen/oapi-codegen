@@ -1,0 +1,53 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Query Parameters - DeepObject Style
+paths:
+  /deepObject:
+    get:
+      operationId: getDeepObject
+      parameters:
+        - name: obj
+          description: deep object
+          in: query
+          required: true
+          style: deepObject
+          explode: true
+          schema:
+            $ref: "#/components/schemas/Object"
+        - name: complex
+          description: deep complex object
+          in: query
+          required: false
+          style: deepObject
+          explode: true
+          schema:
+            $ref: "#/components/schemas/ComplexObject"
+      responses:
+        "200":
+          description: OK
+components:
+  schemas:
+    Object:
+      type: object
+      properties:
+        role:
+          type: string
+        firstName:
+          type: string
+      required:
+        - role
+        - firstName
+    ComplexObject:
+      type: object
+      properties:
+        Object:
+          $ref: "#/components/schemas/Object"
+        Id:
+          type: integer
+        IsAdmin:
+          type: boolean
+      required:
+        - Object
+        - Id
+        - IsAdmin

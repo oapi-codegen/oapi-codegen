@@ -1,7 +1,0 @@
-# yaml-language-server: $schema=../../../../configuration-schema.json
-package: xorder
-generate:
-  models: true
-output: issue.gen.go
-output-options:
-  skip-prune: true

@@ -1,0 +1,126 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Primitive Types
+  description: Tests basic types, formats, date/time aliases, and enums
+paths:
+  /ensure-everything-is-referenced:
+    get:
+      operationId: ensureEverythingIsReferenced
+      responses:
+        "200":
+          description: placeholder
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pet:
+                    $ref: "#/components/schemas/Pet"
+                  aliasedDate:
+                    $ref: "#/components/schemas/AliasedDate"
+                  stringEnum:
+                    $ref: "#/components/schemas/StringEnum"
+                  intEnum:
+                    $ref: "#/components/schemas/IntEnum"
+                  edgeCaseEnum:
+                    $ref: "#/components/schemas/EdgeCaseEnum"
+                  customFormat:
+                    $ref: "#/components/schemas/CustomFormatString"
+                  allFormats:
+                    $ref: "#/components/schemas/AllFormats"
+components:
+  schemas:
+    AliasedDate:
+      type: string
+      format: date
+
+    Pet:
+      type: object
+      required:
+        - name
+        - born_at
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+          format: int32
+        weight:
+          type: number
+          format: double
+        is_good:
+          type: boolean
+        born:
+          $ref: "#/components/schemas/AliasedDate"
+        born_at:
+          type: string
+          format: date
+
+    AllFormats:
+      type: object
+      required:
+        - dateField
+        - dateTimeField
+        - uuidField
+        - emailField
+        - int32Field
+        - int64Field
+        - floatField
+        - doubleField
+        - byteField
+      properties:
+        dateField:
+          type: string
+          format: date
+        dateTimeField:
+          type: string
+          format: date-time
+        uuidField:
+          type: string
+          format: uuid
+        emailField:
+          type: string
+          format: email
+        int32Field:
+          type: integer
+          format: int32
+        int64Field:
+          type: integer
+          format: int64
+        floatField:
+          type: number
+          format: float
+        doubleField:
+          type: number
+          format: double
+        byteField:
+          type: string
+          format: byte
+
+    CustomFormatString:
+      type: string
+      format: custom
+
+    StringEnum:
+      type: string
+      enum: [cat, dog, mouse]
+
+    IntEnum:
+      type: integer
+      enum: [1, 2, 3]
+
+    EdgeCaseEnum:
+      description: Enum values with invalid Go identifiers
+      type: string
+      enum:
+        - ''
+        - Foo
+        - Bar
+        - Foo Bar
+        - Foo-Bar
+        - 1Foo
+        - ' Foo'
+        - ' Foo '
+        - _Foo_
+        - "1"

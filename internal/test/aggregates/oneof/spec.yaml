@@ -1,0 +1,174 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: OneOf Types
+  description: Tests oneOf with discriminators, mappings, fixed properties
+paths:
+  /ensure-everything-is-referenced:
+    get:
+      operationId: ensureEverythingIsReferenced
+      responses:
+        "200":
+          description: placeholder
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  basic:
+                    $ref: "#/components/schemas/BasicOneOf"
+                  inline:
+                    $ref: "#/components/schemas/InlineOneOf"
+                  withDiscriminator:
+                    $ref: "#/components/schemas/OneOfWithDiscriminator"
+                  withMapping:
+                    $ref: "#/components/schemas/OneOfWithMapping"
+                  fixedProps:
+                    $ref: "#/components/schemas/OneOfWithFixedProps"
+                  fixedDiscriminator:
+                    $ref: "#/components/schemas/OneOfWithFixedDiscriminator"
+                  arrayOfOneOf:
+                    $ref: "#/components/schemas/ArrayOfOneOf"
+                  multiMapping:
+                    $ref: "#/components/schemas/OneOfMultiMapping"
+components:
+  schemas:
+    # Variants
+    Variant1:
+      type: object
+      properties:
+        name:
+          type: string
+      required: [name]
+    Variant2:
+      type: array
+      items:
+        type: integer
+    Variant3:
+      type: boolean
+
+    DiscriminatedVariantA:
+      type: object
+      properties:
+        discriminator:
+          type: string
+        name:
+          type: string
+      required: [discriminator, name]
+    DiscriminatedVariantB:
+      type: object
+      properties:
+        discriminator:
+          type: string
+        id:
+          type: integer
+      required: [discriminator, id]
+
+    FixedPropVariant:
+      type: object
+      properties:
+        values:
+          $ref: "#/components/schemas/Variant2"
+      required: [values]
+
+    # oneOf without discriminator
+    BasicOneOf:
+      description: oneOf with references, no discriminator
+      oneOf:
+        - $ref: "#/components/schemas/Variant1"
+        - $ref: "#/components/schemas/Variant2"
+        - $ref: "#/components/schemas/Variant3"
+
+    # oneOf with inline elements
+    InlineOneOf:
+      description: oneOf with inline elements
+      oneOf:
+        - type: object
+          properties:
+            label:
+              type: string
+        - type: array
+          items:
+            type: number
+        - type: boolean
+
+    # oneOf with discriminator but no mapping
+    OneOfWithDiscriminator:
+      oneOf:
+        - $ref: "#/components/schemas/DiscriminatedVariantA"
+        - $ref: "#/components/schemas/DiscriminatedVariantB"
+      discriminator:
+        propertyName: discriminator
+
+    # oneOf with discriminator and mapping
+    OneOfWithMapping:
+      oneOf:
+        - $ref: "#/components/schemas/DiscriminatedVariantA"
+        - $ref: "#/components/schemas/DiscriminatedVariantB"
+      discriminator:
+        propertyName: discriminator
+        mapping:
+          va: "#/components/schemas/DiscriminatedVariantA"
+          vb: "#/components/schemas/DiscriminatedVariantB"
+
+    # oneOf with fixed properties
+    OneOfWithFixedProps:
+      type: object
+      properties:
+        fixed:
+          type: string
+      oneOf:
+        - $ref: "#/components/schemas/Variant1"
+        - $ref: "#/components/schemas/Variant2"
+
+    # oneOf with fixed discriminator
+    OneOfWithFixedDiscriminator:
+      type: object
+      properties:
+        type:
+          type: string
+      oneOf:
+        - $ref: "#/components/schemas/Variant1"
+        - $ref: "#/components/schemas/FixedPropVariant"
+      discriminator:
+        propertyName: type
+        mapping:
+          v1: "#/components/schemas/Variant1"
+          v_fixed: "#/components/schemas/FixedPropVariant"
+      required: [type]
+
+    # Array of oneOf
+    ArrayOfOneOf:
+      type: array
+      items:
+        oneOf:
+          - $ref: "#/components/schemas/Variant1"
+          - $ref: "#/components/schemas/Variant2"
+
+    # From issue-1530: multiple discriminator values mapping to same type
+    ConfigHttp:
+      type: object
+      properties:
+        config_type:
+          type: string
+        url:
+          type: string
+      required: [config_type, url]
+    ConfigSsh:
+      type: object
+      properties:
+        config_type:
+          type: string
+        host:
+          type: string
+      required: [config_type, host]
+    OneOfMultiMapping:
+      oneOf:
+        - $ref: "#/components/schemas/ConfigHttp"
+        - $ref: "#/components/schemas/ConfigSsh"
+      discriminator:
+        propertyName: config_type
+        mapping:
+          ssh_server: "#/components/schemas/ConfigSsh"
+          apache_server: "#/components/schemas/ConfigHttp"
+          web_server: "#/components/schemas/ConfigHttp"

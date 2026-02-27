@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: pathmatrix
+generate:
+  echo-server: true
+  client: true
+  models: true
+output: path_matrix.gen.go
