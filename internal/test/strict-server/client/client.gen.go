@@ -642,7 +642,11 @@ func NewMultipleRequestAndResponseTypesRequestWithFormdataBody(server string, bo
 // NewMultipleRequestAndResponseTypesRequestWithTextBody calls the generic MultipleRequestAndResponseTypes builder with text/plain body
 func NewMultipleRequestAndResponseTypesRequestWithTextBody(server string, body MultipleRequestAndResponseTypesTextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	bodyReader = strings.NewReader(string(body))
+	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+		bodyReader = strings.NewReader(stringer.String())
+	} else {
+		bodyReader = strings.NewReader(fmt.Sprintf("%v", body))
+	}
 	return NewMultipleRequestAndResponseTypesRequestWithBody(server, "text/plain", bodyReader)
 }
 
@@ -828,7 +832,11 @@ func NewReusableResponsesRequestWithBody(server string, contentType string, body
 // NewTextExampleRequestWithTextBody calls the generic TextExample builder with text/plain body
 func NewTextExampleRequestWithTextBody(server string, body TextExampleTextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	bodyReader = strings.NewReader(string(body))
+	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+		bodyReader = strings.NewReader(stringer.String())
+	} else {
+		bodyReader = strings.NewReader(fmt.Sprintf("%v", body))
+	}
 	return NewTextExampleRequestWithBody(server, "text/plain", bodyReader)
 }
 
