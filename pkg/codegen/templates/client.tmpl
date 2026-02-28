@@ -236,7 +236,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 {{ if .HeaderParams }}
     if params != nil {
     {{range $paramIdx, $param := .HeaderParams}}
-        {{if .HasOptionalPointer}} if params.{{.GoName}} != nil { {{end}}
+        {{if .RequiresNilCheck}} if params.{{.GoName}} != nil { {{end}}
         var headerParam{{$paramIdx}} string
         {{if .IsPassThrough}}
         headerParam{{$paramIdx}} = {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}}
@@ -256,7 +256,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
         }
         {{end}}
         req.Header.Set("{{.ParamName}}", headerParam{{$paramIdx}})
-        {{if .HasOptionalPointer}}}{{end}}
+        {{if .RequiresNilCheck}}}{{end}}
     {{end}}
     }
 {{- end }}{{/* if .HeaderParams */}}
@@ -264,7 +264,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 {{ if .CookieParams }}
     if params != nil {
     {{range $paramIdx, $param := .CookieParams}}
-        {{if .HasOptionalPointer}} if params.{{.GoName}} != nil { {{end}}
+        {{if .RequiresNilCheck}} if params.{{.GoName}} != nil { {{end}}
         var cookieParam{{$paramIdx}} string
         {{if .IsPassThrough}}
         cookieParam{{$paramIdx}} = {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}}
@@ -288,7 +288,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
             Value:cookieParam{{$paramIdx}},
         }
         req.AddCookie(cookie{{$paramIdx}})
-        {{if .HasOptionalPointer}}}{{end}}
+        {{if .RequiresNilCheck}}}{{end}}
     {{ end -}}
     }
 {{- end }}{{/* if .CookieParams */}}
