@@ -1,6 +1,6 @@
 module github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue1469
 
-go 1.24.0
+go 1.24
 
 replace github.com/oapi-codegen/oapi-codegen/v2 => ../../../../
 
