@@ -9,7 +9,6 @@ import (
 
 	"github.com/oapi-codegen/testutil"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -243,7 +242,6 @@ func (t *testServer) EnumParams(ctx echo.Context, params EnumParamsParams) error
 func TestParameterBinding(t *testing.T) {
 	var ts testServer
 	e := echo.New()
-	e.Use(middleware.Logger())
 	RegisterHandlers(e, &ts)
 
 	expectedObject := Object{
@@ -527,7 +525,6 @@ func doRequest(t *testing.T, e *echo.Echo, code int, req *http.Request) *httptes
 func TestClientPathParams(t *testing.T) {
 	var ts testServer
 	e := echo.New()
-	e.Use(middleware.Logger())
 	RegisterHandlers(e, &ts)
 	server := "http://example.com"
 
@@ -651,7 +648,6 @@ func TestClientPathParams(t *testing.T) {
 func TestClientQueryParams(t *testing.T) {
 	var ts testServer
 	e := echo.New()
-	e.Use(middleware.Logger())
 	RegisterHandlers(e, &ts)
 	server := "http://example.com"
 
