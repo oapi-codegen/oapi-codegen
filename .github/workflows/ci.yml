@@ -9,6 +9,7 @@ jobs:
   build:
     uses: oapi-codegen/actions/.github/workflows/ci.yml@75566d848d25021f137594c947f26171094fb511 # v0.5.0
     with:
+      excluding_versions: '["1.22", "1.23"]'
       lint_versions: '["1.25"]'
 
   build-binaries:
