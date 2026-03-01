@@ -291,6 +291,17 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 	schema := sref.Value
 
+	// Pre-process allOf schemas: lift inline discriminators to schema level.
+	// Required for allOf merging and subsequent $ref uses.
+	if schema != nil && schema.AllOf != nil && schema.Discriminator == nil {
+		for _, ref := range schema.AllOf {
+			if ref.Ref == "" && ref.Value != nil && ref.Value.Discriminator != nil {
+				schema.Discriminator = ref.Value.Discriminator
+				break
+			}
+		}
+	}
+
 	// Check x-go-type-skip-optional-pointer, which will override if the type
 	// should be a pointer or not when the field is optional.
 	// NOTE skipOptionalPointer will be defaulted to the global value, but can be overridden on a per-type/-field basis
@@ -312,13 +323,31 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			return Schema{}, fmt.Errorf("error turning reference (%s) into a Go type: %s",
 				sref.Ref, err)
 		}
-		return Schema{
+
+		outSchema := Schema{
 			GoType:              refType,
 			Description:         schema.Description,
 			DefineViaAlias:      true,
 			OAPISchema:          schema,
 			SkipOptionalPointer: skipOptionalPointer,
-		}, nil
+		}
+
+		if schema.Discriminator != nil {
+			outSchema.Discriminator = &Discriminator{
+				Property: schema.Discriminator.PropertyName,
+				Mapping:  make(map[string]string),
+			}
+			// Convert discriminator mapping refs to Go type names
+			for k, v := range schema.Discriminator.Mapping {
+				goType, err := RefPathToGoType(v)
+				if err != nil {
+					return Schema{}, fmt.Errorf("error converting ref to Go type for discriminator mapping %s: %w", k, err)
+				}
+				outSchema.Discriminator.Mapping[k] = goType
+			}
+		}
+
+		return outSchema, nil
 	}
 
 	outSchema := Schema{
@@ -333,7 +362,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// so that in a RESTful paradigm, the Create operation can return
 	// (object, id), so that other operations can refer to (id)
 	if schema.AllOf != nil {
-		mergedSchema, err := MergeSchemas(schema.AllOf, path)
+		mergedSchema, err := MergeSchemas(schema.AllOf, path, schema.Discriminator)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas: %w", err)
 		}
@@ -490,6 +519,23 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			if schema.OneOf != nil {
 				if err := generateUnion(&outSchema, schema.OneOf, schema.Discriminator, path); err != nil {
 					return Schema{}, fmt.Errorf("error generating type for oneOf: %w", err)
+				}
+			}
+
+			// Handle discriminator for object types (not oneOf/anyOf)
+			// This is for base types with discriminator that don't use oneOf/anyOf
+			if schema.Discriminator != nil && schema.OneOf == nil && schema.AnyOf == nil {
+				outSchema.Discriminator = &Discriminator{
+					Property: schema.Discriminator.PropertyName,
+					Mapping:  make(map[string]string),
+				}
+				// Convert discriminator mapping refs to Go type names
+				for k, v := range schema.Discriminator.Mapping {
+					goType, err := RefPathToGoType(v)
+					if err != nil {
+						return Schema{}, fmt.Errorf("error converting ref to Go type for discriminator mapping %s: %w", k, err)
+					}
+					outSchema.Discriminator.Mapping[k] = goType
 				}
 			}
 
@@ -821,6 +867,11 @@ func GenStructFromSchema(schema Schema) string {
 	}
 	if len(schema.UnionElements) != 0 {
 		objectParts = append(objectParts, "union json.RawMessage")
+	}
+	// Add raw JSON storage for discriminator
+	// Only add discriminatorRaw to types that directly define a discriminator
+	if schema.Discriminator != nil && len(schema.UnionElements) == 0 {
+		objectParts = append(objectParts, "discriminatorRaw json.RawMessage `json:\"-\"`")
 	}
 	objectParts = append(objectParts, "}")
 	return strings.Join(objectParts, "\n")

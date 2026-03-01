@@ -144,6 +144,14 @@ func walkSchemaRef(ref *openapi3.SchemaRef, doFn func(RefWrapper) (bool, error))
 
 	_ = walkSchemaRef(ref.Value.AdditionalProperties.Schema, doFn)
 
+	// Walk discriminator mappings to ensure referenced schemas aren't pruned
+	if ref.Value.Discriminator != nil && ref.Value.Discriminator.Mapping != nil {
+		for _, mappedRef := range ref.Value.Discriminator.Mapping {
+			refWrapper := RefWrapper{Ref: mappedRef, HasValue: false, SourceRef: nil}
+			_, _ = doFn(refWrapper)
+		}
+	}
+
 	return nil
 }
 
