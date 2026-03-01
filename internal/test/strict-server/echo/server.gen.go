@@ -5,7 +5,7 @@ package api
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -1402,45 +1402,42 @@ func (sh *strictHandler) UnionExample(ctx echo.Context) error {
 	return nil
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/+xZTXPbNhP+Kzt431NKmrbjE2+NJ5O2aeuObJ86PkDESkJCAiiwFK3R6L93QEBfFq1K",
-	"qT4ynt5Ecr/wPLuLBTRlha6MVqjIsXzKLDqjlcP2oc+Fxb9qdOSfBLrCSkNSK5azD1z04rdZwizWjvdL",
-	"nKt7+UIrQtWqcmNKWXCvmn1xXn/KXDHCivtf/7c4YDn7X7YMJQtfXYbPvDIlstlslryI4O4zS9gIuUDb",
-	"Rht+Xq3bpolBljNHVqoh80aC2HWnmFSEQ7TemxeNQXiBeRz5lBmrDVqSAaMxL2vs9hTf6P4XLCisQKqB",
-	"3sTyViviUjkQcjBAi4ogggfehgNXG6MtoYD+BLyHgsChHaNlCSNJPjB2v/oeYsCOJWyM1gVHVxeXF5ee",
-	"L21QcSNZzt63rxJmOI3aBS0IMrqL91/u734H6YDXpCtOsuBlOYGKWzfiJQqQirQPsS7IXbDWk22J/1lE",
-	"7Y8RSp81bQJ90GJyjIRp83Ilna8vL0+Ul7OE3QRnXTYWQWUrBdaaGfC67MD8UX1VulGA1mobV5ZVdUnS",
-	"cEurXK2j/dtcZBfIF/aygbZVKjjxI6F+KE/nBj61WHJCsQMBvSC5Hw8r5o/Kwr/xc1YOYj/u7FP3I904",
-	"GOkGSINAXkIjaQRzxRcNVirg4KQalgjzoJJOMkuM296PSvTiWh68jaP3s2TNynPaNE3aFlBtS1SFFt9G",
-	"YcJkxYeYGTVcV/e2ObGc9SfkU3ZzgztQISeM8JkyU3Kptu/eJ2rp/yF9sMIO5eofpUWRekbSfqyP7sKN",
-	"5QVeyg8ac90EnIZKOl+l4aMb6boUwMuGT1zoD5sTRy+q+8mjLcyjjx3BgffJcrI1vu0xZEGtz6zzUPuA",
-	"z/SP1O6R+PvSd+qa2p+i9kwg0qFOv+Kk0VakhlteIaF12dTHOfO2hthh8o+FJBRcQR9B8QoF8AGhhU8a",
-	"oknXwU/w+0l/DiJLU+2BY/GQ/zllHrz2EMIS5h2wPOD3ko5kC8BPx6VqjmY46qZrrl5L+Cgyh87iwPmB",
-	"pIvjDvyCp96KxHmOTNtzc+Pwf4qk9ky+Pnj7lrDLsH3AweN77wJ1ePk6ZlFrF9i+cY7ZAcWxFKizytzs",
-	"aflsoDqDhRxIFGlcRRpie60l3GpVWKT1A4jfDJUmWBiD/gRohBAQaPfHBqGqHYHhzoGktouUMtwVCdxo",
-	"Ho/LyG6Dp4dlO93G6rsjcfruXIzeXF7tr/L+yHmzdpB4pR57v34MMvvemB3sxLLneetwfs9Uzo2kUbpy",
-	"pdxdwj8FgeWeXqAc+4lICbBItVUoYCz5/Bp0ozajgSWtXbNQCGM5Dc2vt/cZiJKttq5Zsu0K/OkNX9Ae",
-	"84+DU+VpreS2i/pH/xniDP1yb5BafafX8LwktIqTHOMPh7m/2bSiFd4N2kp7wXKyo4ent5dVs4SFf45C",
-	"C6pt6fsEkcmzLPzjdOEaPhyivZA640Z6FP4OAAD//0nTejA+HAAA",
-}
+// Base64 encoded, compressed with deflate, json marshaled Swagger object
+const swaggerSpec = "" +
+	"7FlNc9s2E/4rO3jfU0qatuMTb40nk7Zp645snzo+QMRKQkICKLAUrdHov3dAQF8WrUqpPjKe3kRyv/A8" +
+	"u4sFNGWFroxWqMixfMosOqOVw/ahz4XFv2p05J8EusJKQ1IrlrMPXPTit1nCLNaO90ucq3v5QitC1apy" +
+	"Y0pZcK+afXFef8pcMcKK+1//tzhgOftftgwlC19dhs+8MiWy2WyWvIjg7jNL2Ai5QNtGG35erdumiUGW" +
+	"M0dWqiHzRoLYdaeYVIRDtN6bF41BeIF5HPmUGasNWpIBozEva+z2FN/o/hcsKKxAqoHexPJWK+JSORBy" +
+	"MECLiiCCB96GA1cboy2hgP4EvIeCwKEdo2UJI0k+MHa/+h5iwI4lbIzWBUdXF5cXl54vbVBxI1nO3rev" +
+	"EmY4jdoFLQgyuov3X+7vfgfpgNekK06y4GU5gYpbN+IlCpCKtA+xLshdsNaTbYn/WUTtjxFKnzVtAn3Q" +
+	"YnKMhGnzciWdry8vT5SXs4TdBGddNhZBZSsF1poZ8LrswPxRfVW6UYDWahtXllV1SdJwS6tcraP921xk" +
+	"F8gX9rKBtlUqOPEjoX4oT+cGPrVYckKxAwG9ILkfDyvmj8rCv/FzVg5iP+7sU/cj3TgY6QZIg0BeQiNp" +
+	"BHPFFw1WKuDgpBqWCPOgkk4yS4zb3o9K9OJaHryNo/ezZM3Kc9o0TdoWUG1LVIUW30ZhwmTFh5gZNVxX" +
+	"97Y5sZz1J+RTdnODO1AhJ4zwmTJTcqm2794naun/IX2wwg7l6h+lRZF6RtJ+rI/uwo3lBV7KDxpz3QSc" +
+	"hko6X6XhoxvpuhTAy4ZPXOgPmxNHL6r7yaMtzKOPHcGB98lysjW+7TFkQa3PrPNQ+4DP9I/U7pH4+9J3" +
+	"6pran6L2TCDSoU6/4qTRVqSGW14hoXXZ1Mc587aG2GHyj4UkFFxBH0HxCgXwAaGFTxqiSdfBT/D7SX8O" +
+	"IktT7YFj8ZD/OWUevPYQwhLmHbA84PeSjmQLwE/HpWqOZjjqpmuuXkv4KDKHzuLA+YGki+MO/IKn3orE" +
+	"eY5M23Nz4/B/iqT2TL4+ePuWsMuwfcDB43vvAnV4+TpmUWsX2L5xjtkBxbEUqLPK3Oxp+WygOoOFHEgU" +
+	"aVxFGmJ7rSXcalVYpPUDiN8MlSZYGIP+BGiEEBBo98cGoaodgeHOgaS2i5Qy3BUJ3Ggej8vIboOnh2U7" +
+	"3cbquyNx+u5cjN5cXu2v8v7IebN2kHilHnu/fgwy+96YHezEsud563B+z1TOjaRRunKl3F3CPwWB5Z5e" +
+	"oBz7iUgJsEi1VShgLPn8GnSjNqOBJa1ds1AIYzkNza+39xmIkq22rlmy7Qr86Q1f0B7zj4NT5Wmt5LaL" +
+	"+kf/GeIM/XJvkFp9p9fwvCS0ipMc4w+Hub/ZtKIV3g3aSnvBcrKjh6e3l1WzhIV/jkILqm3p+wSRybMs" +
+	"/ON04Ro+HKK9kDrjRnoU/g4AAP//"
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	compressed, err := base64.StdEncoding.DecodeString(swaggerSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil

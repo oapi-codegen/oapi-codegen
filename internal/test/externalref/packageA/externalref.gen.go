@@ -5,12 +5,11 @@ package packagea
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"encoding/base64"
 	"fmt"
 	"net/url"
 	"path"
-	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/packageB"
@@ -22,29 +21,26 @@ type ObjectA struct {
 	ObjectB *externalRef0.ObjectB `json:"object_b,omitempty"`
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/4yOMcrDMAxG7/L9/xjI7q25QI8QHKMkbhNZ2OpQgu5e7BS6dOikBw896UBIuyQm1gJ3",
-	"oISVdt/wOt0o6KWi5CSUNVIT7HeqU59CcCiaIy+wDqltjFOV/5lmOPz1n37/jvfiw90vNIxFKIznnQFm",
-	"1uG7+vUFa43Ic4Ljx7Z1SELsJcIBNa5rOY29AgAA//84dUj5+QAAAA==",
-}
+// Base64 encoded, compressed with deflate, json marshaled Swagger object
+const swaggerSpec = "" +
+	"jI4xysMwDEbv8v3/GMjurblAjxAcoyRuE1nY6lCC7l7sFLp06KQHDz3pQEi7JCbWAneghJV23/A63Sjo" +
+	"paLkJJQ1UhPsd6pTn0JwKJojL7AOqW2MU5X/mWY4/PWffv+O9+LD3S80jEUojOedAWbW4bv69QVrjchz" +
+	"guPHtnVIQuwlwgE1rms5jb0CAAD//w=="
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	compressed, err := base64.StdEncoding.DecodeString(swaggerSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil

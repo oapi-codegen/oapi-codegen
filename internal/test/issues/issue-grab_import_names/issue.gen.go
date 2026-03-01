@@ -5,7 +5,7 @@ package grabimportnames
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -364,32 +364,28 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/3yRzWrrQAyFX0VoPSgmudyFl6W0dN9dKWXiKPEUzw+SUpIGv3uZcVahqTdCwvrm6JwL",
-	"hrTP2F/Qgk2MPRIROvxi0ZAT9thRRx3ODnPh5EvAHjfU0RodFm+j1t3VPjfGga2WHesgodgCWIC5sPg6",
-	"edlhj89sTzk3hPjIxqLYv91ubr3y/38E27OxEgxjIBhyMj4ZAQ9jJmCRLEqwj0Zw+A6FYDQrBCETfGpO",
-	"BFfdm6oiVOzIfseCDpOP9eJFiQ4jR9+cOJc6VpOQDjjP7lbXlfhRf1SCagOBHJOFyATLnhK09vG4nL10",
-	"ryEyHGUiOMWJ4OzjdFfWg5c/Zb07FNaSk3ILYd11tTSDUsvBlzKFoT2/ql7U2X3e7H4Jbm7fTwAAAP//",
-	"VfuleiYCAAA=",
-}
+// Base64 encoded, compressed with deflate, json marshaled Swagger object
+const swaggerSpec = "" +
+	"fJHNautADIVfRWg9KCa53IWXpbR0310pZeIo8RTPD5JSkga/e5lxVqGpN0LC+ubonAuGtM/YX9CCTYw9" +
+	"EhE6/GLRkBP22FFHHc4Oc+HkS8AeN9TRGh0Wb6PW3dU+N8aBrZYd6yCh2AJYgLmw+Dp52WGPz2xPOTeE" +
+	"+MjGoti/3W5uvfL/fwTbs7ESDGMgGHIyPhkBD2MmYJEsSrCPRnD4DoVgNCsEIRN8ak4EV92bqiJU7Mh+" +
+	"x4IOk4/14kWJDiNH35w4lzpWk5AOOM/uVteV+FF/VIJqA4Eck4XIBMueErT28bicvXSvITIcZSI4xYng" +
+	"7ON0V9aDlz9lvTsU1pKTcgth3XW1NINSy8GXMoWhPb+qXtTZfd7sfglubt9PAAAA//8="
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	compressed, err := base64.StdEncoding.DecodeString(swaggerSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil

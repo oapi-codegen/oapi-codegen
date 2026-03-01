@@ -5,13 +5,12 @@ package api
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"encoding/base64"
 	"fmt"
 	"net/http"
 	"net/url"
 	"path"
-	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gorilla/mux"
@@ -170,34 +169,30 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	return r
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/1xSwW7UMBD9FWvgAFJ2ve2Ki28VQmjFYVeCW9WD60xil8Rj7ElpVfnf0Ti7FHqaePLs",
-	"997MewFHc6KIkQuYFyjO42zb54niKDVlSpg5YOumsHbxyc5pQjCQBNcBPyc5Fc6CqLWDjL+WkLEHc7te",
-	"u/uLovsHdAwdPG1G2kQ7S/P4iDmHvsfYqKu8EeJAQseBG9mXlVYxqRD74Cyj8vRbzktBxR7VMWG8OR2U",
-	"PDfZZ1USujAINFBUHzxzKkbrMbBf7reOZn28OegzevP9X/RH6OARcwkUwcDVdrfdNc10BtuUpiAGxfbi",
-	"eMnYX35C7YASRpsCGNif7ybLvs1R234OUduFqTg7rVOtHejLgEdkKT0Wl0PiVcJnj+6nYm+5WRWboai8",
-	"xBjiqI7foHHmJv4gur4in0LbT8aSKJZ1i9e7nRRHkTE2nmZlda0fipBdwiBf7zMOYOCdfk2LPkdFvy7r",
-	"f60nzAPlWVkllpSkAQu3ZBTMMlYwt28N/vCoehzsMrFaUVvoYMkTGJDNGa0ncnbyVNjsP11d76He1Vrr",
-	"nwAAAP//QsRK0MkCAAA=",
-}
+// Base64 encoded, compressed with deflate, json marshaled Swagger object
+const swaggerSpec = "" +
+	"XFLBbtQwEP0Va+AAUna97YqLbxVCaMVhV4Jb1YPrTGKXxGPsSWlV+d/ROLsUepp48uz33sx7AUdzooiR" +
+	"C5gXKM7jbNvnieIoNWVKmDlg66awdvHJzmlCMJAE1wE/JzkVzoKotYOMv5aQsQdzu167+4ui+wd0DB08" +
+	"bUbaRDtL8/iIOYe+x9ioq7wR4kBCx4Eb2ZeVVjGpEPvgLKPy9FvOS0HFHtUxYbw5HZQ8N9lnVRK6MAg0" +
+	"UFQfPHMqRusxsF/ut45mfbw56DN68/1f9Efo4BFzCRTBwNV2t901zXQG25SmIAbF9uJ4ydhffkLtgBJG" +
+	"mwIY2J/vJsu+zVHbfg5R24WpODutU60d6MuAR2QpPRaXQ+JVwmeP7qdib7lZFZuhqLzEGOKojt+gceYm" +
+	"/iC6viKfQttPxpIolnWL17udFEeRMTaeZmV1rR+KkF3CIF/vMw5g4J1+TYs+R0W/Lut/rSfMA+VZWSWW" +
+	"lKQBC7dkFMwyVjC3bw3+8Kh6HOwysVpRW+hgyRMYkM0ZrSdydvJU2Ow/XV3vod7VWuufAAAA//8="
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	compressed, err := base64.StdEncoding.DecodeString(swaggerSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil

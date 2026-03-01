@@ -5,7 +5,7 @@ package schemas
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -1595,52 +1595,49 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"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",
-	"VhcdujoNJECWimwgFCn8PwEAAP//WUiKvIcUAAA=",
-}
+// Base64 encoded, compressed with deflate, json marshaled Swagger object
+const swaggerSpec = "" +
+	"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" +
+	"bCAUKfw/AQAA//8="
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	compressed, err := base64.StdEncoding.DecodeString(swaggerSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil

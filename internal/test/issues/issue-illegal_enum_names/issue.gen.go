@@ -5,7 +5,7 @@ package illegalenumnames
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -338,31 +338,27 @@ func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL 
 
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/0xQQU4DMQz8SjVwDNml3HLkUMQbEKqirbcN6tpRYpCqKn9HzkIhl5kkHtszV0yyZGFi",
-	"rQhX1OlES+z0ORYD4s8F4Q1w2InA9ffONzf2sLLH/wWb9WKwgcN+J7K3Grw76CUTAqqWxEe01hwSz2Lj",
-	"NOnZ/rz3cPiiUpMwAkY/+hHNQTJxzAkBT370WzjkqKe+8TBL73EkNZBMJWoSfj0g4IV03ahQzcKVumQ7",
-	"jgaTsBJ3Vcz5nKauGz6qzf5NxVhSWrrwvtCMgLvhL7/hJ7zBAmg3l7GUeFlNHqhOJWVdLZnF1s93AAAA",
-	"//9U8KAOhgEAAA==",
-}
+// Base64 encoded, compressed with deflate, json marshaled Swagger object
+const swaggerSpec = "" +
+	"TFBBTgMxDPxKNXAM2aXccuRQxBsQqqKttw3q2lFikKoqf0fOQiGXmSQe2zNXTLJkYWKtCFfU6URL7PQ5" +
+	"FgPizwXhDXDYicD19843N/awssf/BZv1YrCBw34nsrcavDvoJRMCqpbER7TWHBLPYuM06dn+vPdw+KJS" +
+	"kzACRj/6Ec1BMnHMCQFPfvRbOOSop77xMEvvcSQ1kEwlahJ+PSDghXTdqFDNwpW6ZDuOBpOwEndVzPmc" +
+	"pq4bPqrN/k3FWFJauvC+0IyAu+Evv+EnvMECaDeXsZR4WU0eqE4lZV0tmcXWz3cAAAD//w=="
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	compressed, err := base64.StdEncoding.DecodeString(swaggerSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil
