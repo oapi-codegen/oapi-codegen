@@ -246,6 +246,8 @@ type OutputOptions struct {
 	SkipFmt bool `yaml:"skip-fmt,omitempty"`
 	// Whether to skip pruning unused components on the generated code
 	SkipPrune bool `yaml:"skip-prune,omitempty"`
+	// PreserveSchemas lists schema names to keep during prune even when unreferenced. Ignored when empty. See also x-oapi-codegen-keep-unused on a schema.
+	PreserveSchemas []string `yaml:"preserve-schemas,omitempty"`
 	// Only include operations that have one of these tags. Ignored when empty.
 	IncludeTags []string `yaml:"include-tags,omitempty"`
 	// Exclude operations that have one of these tags. Ignored when empty.

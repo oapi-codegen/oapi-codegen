@@ -398,10 +398,14 @@ func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
 
 	for key := range swagger.Components.Schemas {
 		ref := fmt.Sprintf("#/components/schemas/%s", key)
-		if !stringInSlice(ref, refs) {
-			countRemoved++
-			delete(swagger.Components.Schemas, key)
+		if stringInSlice(ref, refs) {
+			continue
 		}
+		if schemaRef := swagger.Components.Schemas[key]; schemaRef != nil && schemaKeepUnused(schemaRef) {
+			continue
+		}
+		countRemoved++
+		delete(swagger.Components.Schemas, key)
 	}
 
 	for key := range swagger.Components.Parameters {
@@ -474,9 +478,25 @@ func removeOrphanedComponents(swagger *openapi3.T, refs []string) int {
 	return countRemoved
 }
 
-func pruneUnusedComponents(swagger *openapi3.T) {
+// schemaKeepUnused returns true if the schema has x-oapi-codegen-keep-unused: true and should not be pruned when unreferenced.
+func schemaKeepUnused(schemaRef *openapi3.SchemaRef) bool {
+	if schemaRef == nil || schemaRef.Value == nil || schemaRef.Value.Extensions == nil {
+		return false
+	}
+	v, ok := schemaRef.Value.Extensions[extKeepUnused]
+	if !ok {
+		return false
+	}
+	b, ok := v.(bool)
+	return ok && b
+}
+
+func pruneUnusedComponents(swagger *openapi3.T, preserveSchemas []string) {
 	for {
 		refs := findComponentRefs(swagger)
+		for _, name := range preserveSchemas {
+			refs = append(refs, fmt.Sprintf("#/components/schemas/%s", name))
+		}
 		countRemoved := removeOrphanedComponents(swagger, refs)
 		if countRemoved < 1 {
 			break

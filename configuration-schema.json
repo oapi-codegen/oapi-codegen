@@ -127,6 +127,13 @@
           "type": "boolean",
           "description": "Whether to skip pruning unused components on the generated code"
         },
+        "preserve-schemas": {
+          "type": "array",
+          "description": "Schema names to keep during prune even when unreferenced. Ignored when empty. See also x-oapi-codegen-keep-unused on a schema.",
+          "items": {
+            "type": "string"
+          }
+        },
         "include-tags": {
           "type": "array",
           "description": "Only include operations that have one of these tags. Ignored when empty.",

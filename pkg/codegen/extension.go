@@ -27,6 +27,8 @@ const (
 	// extOapiCodegenOnlyHonourGoName is to be used to explicitly enforce the generation of a field as the `x-go-name` extension has describe it.
 	// This is intended to be used alongside the `allow-unexported-struct-field-names` Compatibility option
 	extOapiCodegenOnlyHonourGoName = "x-oapi-codegen-only-honour-go-name"
+	// extKeepUnused marks a schema to be kept during prune even when not referenced (x-oapi-codegen-keep-unused: true).
+	extKeepUnused = "x-oapi-codegen-keep-unused"
 )
 
 func extString(extPropValue any) (string, error) {
