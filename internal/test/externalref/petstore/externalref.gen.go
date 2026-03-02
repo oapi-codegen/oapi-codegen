@@ -163,6 +163,9 @@ type User struct {
 	Username   *string `json:"username,omitempty"`
 }
 
+// PetRequestBody defines model for Pet.
+type PetRequestBody = Pet
+
 // UserArray defines model for UserArray.
 type UserArray = []User
 

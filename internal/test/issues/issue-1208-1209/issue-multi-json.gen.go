@@ -31,11 +31,11 @@ type Foo struct {
 	Field1 *string `json:"field1,omitempty"`
 }
 
-// BazApplicationBarPlusJSON defines model for baz.
-type BazApplicationBarPlusJSON = Bar
+// BazResponseJSONApplicationBarPlusJSON defines model for baz.
+type BazResponseJSONApplicationBarPlusJSON = Bar
 
-// BazApplicationFooPlusJSON defines model for baz.
-type BazApplicationFooPlusJSON = Foo
+// BazResponseJSON2ApplicationFooPlusJSON defines model for baz.
+type BazResponseJSON2ApplicationFooPlusJSON = Foo
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -205,8 +205,8 @@ type TestResponse struct {
 	HTTPResponse          *http.Response
 	ApplicationbarJSON200 *Bar
 	ApplicationfooJSON200 *Foo
-	ApplicationbarJSON201 *BazApplicationBarPlusJSON
-	ApplicationfooJSON201 *BazApplicationFooPlusJSON
+	ApplicationbarJSON201 *BazResponseJSONApplicationBarPlusJSON
+	ApplicationfooJSON201 *BazResponseJSON2ApplicationFooPlusJSON
 }
 
 // Status returns HTTPResponse.Status
@@ -256,7 +256,7 @@ func ParseTestResponse(rsp *http.Response) (*TestResponse, error) {
 		response.ApplicationbarJSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/bar+json" && rsp.StatusCode == 201:
-		var dest BazApplicationBarPlusJSON
+		var dest BazResponseJSONApplicationBarPlusJSON
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -270,7 +270,7 @@ func ParseTestResponse(rsp *http.Response) (*TestResponse, error) {
 		response.ApplicationfooJSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/foo+json" && rsp.StatusCode == 201:
-		var dest BazApplicationFooPlusJSON
+		var dest BazResponseJSON2ApplicationFooPlusJSON
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -369,7 +369,7 @@ func (response Test200ApplicationFooPlusJSONResponse) VisitTestResponse(w http.R
 }
 
 type Test201ApplicationBarPlusJSONResponse struct {
-	BazApplicationBarPlusJSONResponse
+	BazResponseJSONApplicationBarPlusJSONResponse
 }
 
 func (response Test201ApplicationBarPlusJSONResponse) VisitTestResponse(w http.ResponseWriter) error {
@@ -380,7 +380,7 @@ func (response Test201ApplicationBarPlusJSONResponse) VisitTestResponse(w http.R
 }
 
 type Test201ApplicationFooPlusJSONResponse struct {
-	BazApplicationFooPlusJSONResponse
+	BazResponseJSONApplicationFooPlusJSONResponse
 }
 
 func (response Test201ApplicationFooPlusJSONResponse) VisitTestResponse(w http.ResponseWriter) error {
