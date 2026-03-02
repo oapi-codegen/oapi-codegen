@@ -1,0 +1,19 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Cookie Parameters - Nil Check
+paths:
+  /cookie:
+    get:
+      operationId: getCookie
+      parameters:
+        - name: tags
+          in: cookie
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: OK

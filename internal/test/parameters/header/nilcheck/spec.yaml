@@ -1,22 +1,19 @@
-openapi: "3.0.0"
+openapi: "3.0.1"
 info:
   version: 1.0.0
-  title: Issue 2238
+  title: Header Parameters - Nil Check
 paths:
-  /test:
+  /header:
     get:
+      operationId: getHeader
       parameters:
         - name: X-Tags
           in: header
+          required: false
           schema:
             type: array
             items:
               type: string
-          required: false
-        - name: tags
-          in: cookie
-          schema:
-            type: array
-            items:
-              type: string
-          required: false
+      responses:
+        "200":
+          description: OK
