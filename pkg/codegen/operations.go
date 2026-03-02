@@ -361,7 +361,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 					// TODO: revisit this at the next major version change —
 					// always include the media type in the schema path.
 					schemaPath := []string{o.OperationId, responseName}
-					if jsonCount > 1 && util.IsMediaTypeJson(contentTypeName) && globalState.options.OutputOptions.ResolveTypeNameCollisions {
+					if jsonCount > 1 && util.IsMediaTypeJson(contentTypeName) && true { // HACK
 						schemaPath = append(schemaPath, mediaTypeToCamelCase(contentTypeName))
 					}
 					responseSchema, err := GenerateGoSchema(contentType.Schema, schemaPath)

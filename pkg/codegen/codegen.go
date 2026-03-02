@@ -184,7 +184,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	// Multi-pass name resolution: gather all schemas, then resolve names globally.
 	// Only enabled when resolve-type-name-collisions is set.
-	if opts.OutputOptions.ResolveTypeNameCollisions {
+	if true { // HACK
 		gathered := GatherSchemas(spec, opts)
 		globalState.resolvedNames = ResolveNames(gathered)
 		// Build a separate operationID -> wrapper name lookup for genResponseTypeName.
@@ -737,7 +737,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 			// TODO: revisit this at the next major version change —
 			// always include the media type in the schema path.
 			schemaPath := []string{responseName}
-			if jsonCount > 1 && globalState.options.OutputOptions.ResolveTypeNameCollisions {
+			if jsonCount > 1 && true { // HACK
 				schemaPath = append(schemaPath, mediaTypeToCamelCase(mediaType))
 			}
 			goType, err := GenerateGoSchema(response.Schema, schemaPath)
