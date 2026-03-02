@@ -137,10 +137,12 @@ For full details of what is supported, it's worth checking out [the GoDoc for `c
 We also have [a JSON Schema](configuration-schema.json) that can be used by IDEs/editors with the Language Server Protocol (LSP) to perform intelligent suggestions, i.e.:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.6.0/configuration-schema.json
 package: api
 # ...
 ```
+
+Note that it's recommended to pin to a specific version of the configuration schema, so it matches the version of `oapi-codegen` you're using. For instance, if you're using [Renovate](https://docs.renovatebot.com/), you can [have Renovate automagically update this version for you](https://www.jvt.me/posts/2026/03/01/oapi-codegen-config-renovate/).
 
 ### Backwards compatibility
 
