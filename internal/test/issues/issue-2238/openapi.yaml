@@ -1,0 +1,22 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Issue 2238
+paths:
+  /test:
+    get:
+      parameters:
+        - name: X-Tags
+          in: header
+          schema:
+            type: array
+            items:
+              type: string
+          required: false
+        - name: tags
+          in: cookie
+          schema:
+            type: array
+            items:
+              type: string
+          required: false
