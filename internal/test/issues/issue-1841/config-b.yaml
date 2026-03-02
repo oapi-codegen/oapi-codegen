@@ -1,0 +1,6 @@
+package: b
+generate:
+  models: true
+output-options:
+  skip-prune: true
+output: b/openapi.gen.go

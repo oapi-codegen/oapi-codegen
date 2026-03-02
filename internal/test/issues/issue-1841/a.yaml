@@ -1,0 +1,14 @@
+openapi: 3.0.0
+components:
+  schemas:
+    Merged:
+      allOf:
+        - $ref: '#/components/schemas/Example'
+        - $ref: 'b.yaml#/components/schemas/Merge'
+    Example:
+      type: object
+      properties:
+        a:
+          type: string
+        c:
+          $ref: 'b.yaml#/components/schemas/Element'

@@ -1,0 +1,8 @@
+package: issues
+generate:
+  models: true
+import-mapping:
+  b.yaml: github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1841/b
+output-options:
+  skip-prune: true
+output: openapi.gen.go
