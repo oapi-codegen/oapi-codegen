@@ -5,7 +5,10 @@ import (
 )
 
 const (
-	// extPropGoType overrides the generated type definition.
+	// extPropGoType overrides the generated type definition. When
+	// resolve-type-name-collisions is enabled, the collision resolver
+	// controls the final Go type name; this extension controls what
+	// that name aliases or refers to.
 	extPropGoType = "x-go-type"
 	// extPropGoTypeSkipOptionalPointer specifies that optional fields should
 	// be the type itself instead of a pointer to the type.
@@ -14,7 +17,10 @@ const (
 	extPropGoImport = "x-go-type-import"
 	// extGoName is used to override a field name
 	extGoName = "x-go-name"
-	// extGoTypeName is used to override a generated typename for something.
+	// extGoTypeName overrides a generated typename. When
+	// resolve-type-name-collisions is enabled, the collision resolver
+	// controls the top-level Go type name; this extension controls
+	// the name of the underlying type definition that gets aliased.
 	extGoTypeName        = "x-go-type-name"
 	extPropGoJsonIgnore  = "x-go-json-ignore"
 	extPropOmitEmpty     = "x-omitempty"

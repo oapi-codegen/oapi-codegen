@@ -54,6 +54,12 @@ var globalState struct {
 	initialismsMap map[string]string
 	// typeMapping is the merged type mapping (defaults + user overrides).
 	typeMapping TypeMapping
+	// resolvedNames maps schema path strings (e.g. "components/schemas/Pet")
+	// to their resolved Go type names, assigned by the multi-pass name resolver.
+	resolvedNames map[string]string
+	// resolvedClientWrapperNames maps operationID to the resolved Go type name
+	// for client response wrapper types (e.g., "createChatCompletion" -> "CreateChatCompletionResponseWrapper").
+	resolvedClientWrapperNames map[string]string
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -175,6 +181,28 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 
 	globalState.initialismsMap = makeInitialismsMap(opts.OutputOptions.AdditionalInitialisms)
+
+	// Multi-pass name resolution: gather all schemas, then resolve names globally.
+	// Only enabled when resolve-type-name-collisions is set.
+	if opts.OutputOptions.ResolveTypeNameCollisions {
+		gathered := GatherSchemas(spec, opts)
+		globalState.resolvedNames = ResolveNames(gathered)
+		// Build a separate operationID -> wrapper name lookup for genResponseTypeName.
+		// Keys must use the normalized operationID (via nameNormalizer) because
+		// OperationDefinition.OperationId is normalized before templates run.
+		globalState.resolvedClientWrapperNames = make(map[string]string)
+		for _, gs := range gathered {
+			if gs.Context == ContextClientResponseWrapper && gs.OperationID != "" {
+				if name, ok := globalState.resolvedNames[gs.Path.String()]; ok {
+					normalizedOpID := nameNormalizer(gs.OperationID)
+					globalState.resolvedClientWrapperNames[normalizedOpID] = name
+				}
+			}
+		}
+	} else {
+		globalState.resolvedNames = nil
+		globalState.resolvedClientWrapperNames = nil
+	}
 
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
@@ -614,6 +642,10 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 			return nil, fmt.Errorf("error making name for components/schemas/%s: %w", schemaName, err)
 		}
 
+		if resolved := resolvedNameForComponent("schemas", schemaName); resolved != "" {
+			goTypeName = resolved
+		}
+
 		types = append(types, TypeDefinition{
 			JsonName: schemaName,
 			TypeName: goTypeName,
@@ -640,6 +672,10 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 		goTypeName, err := renameParameter(paramName, paramOrRef)
 		if err != nil {
 			return nil, fmt.Errorf("error making name for components/parameters/%s: %w", paramName, err)
+		}
+
+		if resolved := resolvedNameForComponent("parameters", paramName); resolved != "" {
+			goTypeName = resolved
 		}
 
 		typeDef := TypeDefinition{
@@ -689,7 +725,22 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				continue
 			}
 
-			goType, err := GenerateGoSchema(response.Schema, []string{responseName})
+			// When a response has multiple JSON content types, include the
+			// content type in the schema path so that inline types (e.g.,
+			// oneOf union members) get unique names per content type.
+			// See the matching logic in GetResponseTypeDefinitions.
+			//
+			// We only add the content type segment when collision resolution
+			// is enabled (resolve-type-name-collisions) and jsonCount > 1,
+			// to avoid changing type names for existing users. Ideally the
+			// media type would always be part of the path for consistency.
+			// TODO: revisit this at the next major version change —
+			// always include the media type in the schema path.
+			schemaPath := []string{responseName}
+			if jsonCount > 1 && globalState.options.OutputOptions.ResolveTypeNameCollisions {
+				schemaPath = append(schemaPath, mediaTypeToCamelCase(mediaType))
+			}
+			goType, err := GenerateGoSchema(response.Schema, schemaPath)
 			if err != nil {
 				return nil, fmt.Errorf("error generating Go type for schema in response %s: %w", responseName, err)
 			}
@@ -699,7 +750,9 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				return nil, fmt.Errorf("error making name for components/responses/%s: %w", responseName, err)
 			}
 
-			goType.DefinedComp = ComponentTypeResponse
+			if resolved := resolvedNameForComponent("responses", responseName, mediaType); resolved != "" {
+				goTypeName = resolved
+			}
 
 			typeDef := TypeDefinition{
 				JsonName: responseName,
@@ -738,7 +791,8 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 		// As for responses, we will only generate Go code for JSON bodies,
 		// the other body formats are up to the user.
 		response := requestBodyRef.Value
-		for mediaType, body := range response.Content {
+		for _, mediaType := range SortedMapKeys(response.Content) {
+			body := response.Content[mediaType]
 			if !util.IsMediaTypeJson(mediaType) {
 				continue
 			}
@@ -753,7 +807,9 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 				return nil, fmt.Errorf("error making name for components/schemas/%s: %w", requestBodyName, err)
 			}
 
-			goType.DefinedComp = ComponentTypeRequestBody
+			if resolved := resolvedNameForComponent("requestBodies", requestBodyName, mediaType); resolved != "" {
+				goTypeName = resolved
+			}
 
 			typeDef := TypeDefinition{
 				JsonName: requestBodyName,
@@ -782,15 +838,11 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 	m := map[string]TypeDefinition{}
 	var ts []TypeDefinition
 
-	if globalState.options.OutputOptions.ResolveTypeNameCollisions {
-		types = FixDuplicateTypeNames(types)
-	}
-
 	for _, typ := range types {
 		if prevType, found := m[typ.TypeName]; found {
-			// If type names collide after auto-rename, we need to see if they
-			// refer to the same exact type definition, in which case, we can
-			// de-dupe. If they don't match, we error out.
+			// If type names collide, we need to see if they refer to the same
+			// exact type definition, in which case, we can de-dupe. If they
+			// don't match, we error out.
 			if TypeDefinitionsEquivalent(prevType, typ) {
 				continue
 			}
@@ -810,6 +862,63 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 	}
 
 	return GenerateTemplates([]string{"typedef.tmpl"}, t, context)
+}
+
+// resolvedNameForComponent looks up the resolved Go type name for a component
+// identified by its section (e.g., "schemas", "parameters") and name.
+// For content-bearing sections (responses, requestBodies), an optional
+// contentType can be provided to match the exact media type entry.
+// Returns empty string if no resolved name is available.
+func resolvedNameForComponent(section, name string, contentType ...string) string {
+	if len(globalState.resolvedNames) == 0 {
+		return ""
+	}
+
+	// Direct key match for schemas, parameters, headers
+	key := "components/" + section + "/" + name
+	if resolved, ok := globalState.resolvedNames[key]; ok {
+		return resolved
+	}
+
+	// For responses and requestBodies, the path includes content type info.
+	// If a specific content type was provided, do an exact match.
+	if len(contentType) > 0 && contentType[0] != "" {
+		exactKey := key + "/content/" + contentType[0]
+		if resolved, ok := globalState.resolvedNames[exactKey]; ok {
+			return resolved
+		}
+	}
+
+	// Fall back to prefix match for callers that don't specify content type.
+	// Sort matching keys so the result is deterministic across runs.
+	prefix := key + "/"
+	var matches []string
+	for k := range globalState.resolvedNames {
+		if strings.HasPrefix(k, prefix) {
+			matches = append(matches, k)
+		}
+	}
+	if len(matches) > 0 {
+		if len(matches) > 1 {
+			sort.Strings(matches)
+		}
+		return globalState.resolvedNames[matches[0]]
+	}
+
+	return ""
+}
+
+// resolvedNameForRefPath looks up the resolved Go type name for a $ref path
+// like "#/components/responses/Foo", optionally scoped to a specific content type.
+func resolvedNameForRefPath(refPath, contentType string) string {
+	if len(globalState.resolvedNames) == 0 || !strings.HasPrefix(refPath, "#/") {
+		return ""
+	}
+	parts := strings.Split(refPath, "/")
+	if len(parts) != 4 || parts[1] != "components" {
+		return ""
+	}
+	return resolvedNameForComponent(parts[2], parts[3], contentType)
 }
 
 func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error) {

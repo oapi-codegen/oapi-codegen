@@ -259,8 +259,13 @@ func buildUnmarshalCaseStrict(typeDefinition ResponseTypeDefinition, caseAction 
 	return caseKey, caseClause
 }
 
-// genResponseTypeName creates the name of generated response types (given the operationID):
+// genResponseTypeName creates the name of generated response types (given the operationID).
+// It first checks if the multi-pass name resolver has assigned a name for this
+// wrapper type (which would happen if the default name collides with a schema type).
 func genResponseTypeName(operationID string) string {
+	if name, ok := globalState.resolvedClientWrapperNames[operationID]; ok {
+		return name
+	}
 	return fmt.Sprintf("%s%s", UppercaseFirstCharacter(operationID), responseTypeSuffix)
 }
 
