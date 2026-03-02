@@ -85,6 +85,7 @@ type ClientInterface interface {
     {{end -}}
 {{end}}{{/* range .Bodies */}}
 {{end}}{{/* range . $opid := .OperationId */}}
+
 }
 
 
@@ -309,4 +310,13 @@ func (c *{{ $clientTypeName }}) applyEditors(ctx context.Context, req *http.Requ
         }
     }
     return nil
+}
+
+ // GetAllPath returns all available paths.
+func GetAllPath() []string {
+    return []string{
+        {{range . -}}
+        "{{.Path}}",
+        {{end}}
+    }
 }
