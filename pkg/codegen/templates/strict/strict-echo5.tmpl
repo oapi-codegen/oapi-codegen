@@ -1,5 +1,5 @@
-type StrictHandlerFunc = strictecho5.StrictEchoHandlerFunc
-type StrictMiddlewareFunc = strictecho5.StrictEchoMiddlewareFunc
+type StrictHandlerFunc func(ctx *echo.Context, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
     return &strictHandler{ssi: ssi, middlewares: middlewares}

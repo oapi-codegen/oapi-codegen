@@ -22,7 +22,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
 	"github.com/oapi-codegen/runtime"
-	strictgin "github.com/oapi-codegen/runtime/strictmiddleware/gin"
 )
 
 // ServerInterface represents all server handlers.
@@ -1064,8 +1063,8 @@ type StrictServerInterface interface {
 	UnionExample(ctx context.Context, request UnionExampleRequestObject) (UnionExampleResponseObject, error)
 }
 
-type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
-type StrictMiddlewareFunc = strictgin.StrictGinMiddlewareFunc
+type StrictHandlerFunc func(ctx *gin.Context, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictGinServerOptions struct {
 	// RequestErrorHandlerFunc is called when a request cannot be parsed or

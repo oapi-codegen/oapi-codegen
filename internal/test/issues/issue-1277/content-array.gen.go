@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	"github.com/go-chi/chi/v5"
-	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 )
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -443,8 +442,8 @@ type StrictServerInterface interface {
 	Test(ctx context.Context, request TestRequestObject) (TestResponseObject, error)
 }
 
-type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
-type StrictMiddlewareFunc = strictnethttp.StrictHTTPMiddlewareFunc
+type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
