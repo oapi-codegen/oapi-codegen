@@ -44,6 +44,23 @@ func (pd ParameterDefinition) TypeDef() string {
 	return typeDecl
 }
 
+// RequiresNilCheck indicates whether the generated property should have a nil check performed on it before other checks.
+// This should be used in templates when performing `nil` checks, but NOT when i.e. determining if there should be an optional pointer given to the type - in that case, use `HasOptionalPointer`
+func (pd ParameterDefinition) RequiresNilCheck() bool {
+	return pd.ZeroValueIsNil() || pd.HasOptionalPointer()
+}
+
+// ZeroValueIsNil is a helper function to determine if the given Go type used for this property
+// Will return true if the OpenAPI `type` is:
+// - `array`
+func (pd ParameterDefinition) ZeroValueIsNil() bool {
+	if pd.Schema.OAPISchema == nil {
+		return false
+	}
+
+	return pd.Schema.OAPISchema.Type.Is("array")
+}
+
 // JsonTag generates the JSON annotation to map GoType to json type name. If Parameter
 // Foo is marshaled to json as "foo", this will create the annotation
 // 'json:"foo"'
@@ -112,6 +129,26 @@ func (pd *ParameterDefinition) Explode() bool {
 		}
 	}
 	return *pd.Spec.Explode
+}
+
+// SchemaType returns the first OpenAPI type string for this parameter's schema (e.g. "string", "integer"),
+// or empty string if unavailable.
+func (pd *ParameterDefinition) SchemaType() string {
+	if pd.Spec.Schema != nil && pd.Spec.Schema.Value != nil && pd.Spec.Schema.Value.Type != nil {
+		if s := pd.Spec.Schema.Value.Type.Slice(); len(s) > 0 {
+			return s[0]
+		}
+	}
+	return ""
+}
+
+// SchemaFormat returns the OpenAPI format string for this parameter's schema (e.g. "byte", "date-time"),
+// or empty string if unavailable.
+func (pd *ParameterDefinition) SchemaFormat() string {
+	if pd.Spec.Schema != nil && pd.Spec.Schema.Value != nil {
+		return pd.Spec.Schema.Value.Format
+	}
+	return ""
 }
 
 func (pd ParameterDefinition) GoVariableName() string {
@@ -305,7 +342,29 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
 				if contentType.Schema != nil {
-					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{o.OperationId, responseName})
+					// When a response has multiple JSON content types (e.g.,
+					// application/json, application/json-patch+json, and
+					// application/merge-patch+json), we include a content-type-derived
+					// segment in the schema path. This is necessary because
+					// GenerateGoSchema uses the path to name any inline types it
+					// creates (e.g., oneOf union members). Without the content type
+					// in the path, all content types for the same response produce
+					// identically-named inline types. If those content types have
+					// different schemas, the result is conflicting type declarations;
+					// if they have the same schema, the result is duplicate
+					// declarations. Both cases produce code that won't compile.
+					//
+					// We only add the content type segment when collision resolution
+					// is enabled (resolve-type-name-collisions) and jsonCount > 1,
+					// to avoid changing type names for existing users. Ideally the
+					// media type would always be part of the path for consistency.
+					// TODO: revisit this at the next major version change —
+					// always include the media type in the schema path.
+					schemaPath := []string{o.OperationId, responseName}
+					if jsonCount > 1 && util.IsMediaTypeJson(contentTypeName) && globalState.options.OutputOptions.ResolveTypeNameCollisions {
+						schemaPath = append(schemaPath, mediaTypeToCamelCase(contentTypeName))
+					}
+					responseSchema, err := GenerateGoSchema(contentType.Schema, schemaPath)
 					if err != nil {
 						return nil, fmt.Errorf("unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
 					}
@@ -349,7 +408,11 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
 						}
 						if jsonCount > 1 && util.IsMediaTypeJson(contentTypeName) {
-							refType += mediaTypeToCamelCase(contentTypeName)
+							if resolved := resolvedNameForRefPath(responseRef.Ref, contentTypeName); resolved != "" {
+								refType = resolved + mediaTypeToCamelCase(contentTypeName)
+							} else {
+								refType += mediaTypeToCamelCase(contentTypeName)
+							}
 						}
 						td.Schema.RefType = refType
 					}
@@ -877,6 +940,12 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 				rd.Ref = refType
 				refSet[refType] = struct{}{}
 			}
+			// Ensure content schemas get the external ref qualifier so that
+			// non-fixed status code paths (e.g. "default") emit the qualified type.
+			for i, rcd := range rd.Contents {
+				ensureExternalRefsInSchema(&rcd.Schema, responseOrRef.Ref)
+				rd.Contents[i] = rcd
+			}
 		}
 		responseDefinitions = append(responseDefinitions, rd)
 	}
@@ -925,13 +994,24 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 				Schema:   param.Schema,
 			})
 		}
+		// Merge extensions from the schema level and the parameter level.
+		// Parameter-level extensions take precedence over schema-level ones.
+		extensions := make(map[string]any)
+		if param.Spec.Schema != nil && param.Spec.Schema.Value != nil {
+			for k, v := range param.Spec.Schema.Value.Extensions {
+				extensions[k] = v
+			}
+		}
+		for k, v := range param.Spec.Extensions {
+			extensions[k] = v
+		}
 		prop := Property{
 			Description:   param.Spec.Description,
 			JsonFieldName: param.ParamName,
 			Required:      param.Required,
 			Schema:        pSchema,
 			NeedsFormTag:  param.Style() == "form",
-			Extensions:    param.Spec.Extensions,
+			Extensions:    extensions,
 		}
 		s.Properties = append(s.Properties, prop)
 	}

@@ -9,6 +9,7 @@ jobs:
   build:
     uses: oapi-codegen/actions/.github/workflows/ci.yml@75566d848d25021f137594c947f26171094fb511 # v0.5.0
     with:
+      excluding_versions: '["1.22", "1.23"]'
       lint_versions: '["1.25"]'
 
   build-binaries:
@@ -21,10 +22,10 @@ jobs:
           - "oldstable"
     steps:
       - name: Check out source code
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Set up Go
-        uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        uses: actions/setup-go@4b73464bb391d4059bd26b0524d20df3927bd417 # v6.3.0
         with:
           go-version: ${{ matrix.version }}
 

@@ -757,7 +757,7 @@ func NewReservedGoKeywordParametersRequest(server string, pType string) (*http.R
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "type", runtime.ParamLocationPath, pType)
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "type", pType, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
 	if err != nil {
 		return nil, err
 	}
@@ -1000,7 +1000,7 @@ func NewHeadersExampleRequestWithBody(server string, params *HeadersExampleParam
 
 		var headerParam0 string
 
-		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "header1", runtime.ParamLocationHeader, params.Header1)
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "header1", params.Header1, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
 		if err != nil {
 			return nil, err
 		}
@@ -1010,7 +1010,7 @@ func NewHeadersExampleRequestWithBody(server string, params *HeadersExampleParam
 		if params.Header2 != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithLocation("simple", false, "header2", runtime.ParamLocationHeader, *params.Header2)
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "header2", *params.Header2, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "integer", Format: ""})
 			if err != nil {
 				return nil, err
 			}
