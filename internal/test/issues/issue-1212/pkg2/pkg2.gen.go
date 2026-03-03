@@ -40,6 +40,17 @@ type HttpRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// operationIdKey is the context key for the operationId
+type operationIdKey int
+
+// GetOperationIdFromContext returns the operationId from the context
+func GetOperationIdFromContext(ctx context.Context) string {
+	if opid, ok := ctx.Value(operationIdKey(0)).(string); ok {
+		return opid
+	}
+	return ""
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
