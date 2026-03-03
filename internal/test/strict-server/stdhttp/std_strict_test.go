@@ -9,6 +9,7 @@ import (
 	"mime"
 	"mime/multipart"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
@@ -226,4 +227,41 @@ func testImpl(t *testing.T, handler http.Handler) {
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
 	})
+}
+
+func TestStdHTTPServer_WithRequestMetadata(t *testing.T) {
+	han := HandlerWithOptions(&MockServer{
+		JSONExampleMock: func(w http.ResponseWriter, r *http.Request) {
+			rmd := RequestMetadataFromRequest(r)
+
+			if !assert.NotNilf(t, rmd, "RequestMetadataFromRequest should not be nil") {
+				return
+			}
+
+			assert.Equalf(t, "JSONExample", rmd.OperationID, "OperationID should be JSONExample")
+			assert.Equalf(t, "/json", rmd.RequestRoute, "RequestRoute should be /json")
+		},
+	}, StdHTTPServerOptions{
+		WithRequestMetadata: true,
+	})
+
+	res := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/json", nil)
+
+	han.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
+
+	han = HandlerWithOptions(&MockServer{
+		JSONExampleMock: func(w http.ResponseWriter, r *http.Request) {
+			assert.Nilf(t, RequestMetadataFromRequest(r), "RequestMetadataFromRequest should not be nil")
+		},
+	}, StdHTTPServerOptions{})
+
+	res = httptest.NewRecorder()
+	req = httptest.NewRequest(http.MethodPost, "/json", nil)
+
+	han.ServeHTTP(res, req)
+
+	assert.Equal(t, http.StatusOK, res.Code)
 }

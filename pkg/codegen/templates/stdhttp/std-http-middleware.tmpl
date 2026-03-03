@@ -1,16 +1,56 @@
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
-    Handler ServerInterface
-    HandlerMiddlewares []MiddlewareFunc
-    ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
+    Handler             ServerInterface
+    HandlerMiddlewares  []MiddlewareFunc
+    ErrorHandlerFunc    func(w http.ResponseWriter, r *http.Request, err error)
+    WithRequestMetadata bool
 }
 
+type RequestMetadata struct {
+    OperationID  string
+    RequestRoute string
+}
+
+type contextKey string
+
 type MiddlewareFunc func(http.Handler) http.Handler
+
+var requestMetadataContextKey = contextKey("oapi-request-metadata")
+
+func RequestMetadataFromContext(ctx context.Context) *RequestMetadata {
+    if ctx == nil {
+        return nil
+    }
+
+    rmd, ok := ctx.Value(requestMetadataContextKey).(*RequestMetadata)
+
+    if ok {
+        return rmd
+    }
+
+    return nil
+}
+
+func RequestMetadataFromRequest(r *http.Request) *RequestMetadata {
+    if r == nil {
+        return nil
+    }
+
+    return RequestMetadataFromContext(r.Context())
+}
 
 {{range .}}{{$opid := .OperationId}}
 
 // {{$opid}} operation middleware
 func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Request) {
+  // inject request metadata into the request context
+  if siw.WithRequestMetadata {
+    r = r.WithContext(context.WithValue(r.Context(), requestMetadataContextKey, &RequestMetadata{
+        OperationID:  "{{$opid}}",
+        RequestRoute: "{{.Path | swaggerUriToStdHttpUri}}",
+    }))
+  }
+
   {{if or .RequiresParamObject (gt (len .PathParams) 0) }}
   var err error
   {{end}}
