@@ -35,7 +35,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
 {{end}}
 
 {{range .SecurityDefinitions}}
-    ctx.Set({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, {{toStringArray .Scopes}})
+    ctx.Values().Set({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, {{toStringArray .Scopes}})
 {{end}}
 
 {{if .RequiresParamObject}}
