@@ -23,6 +23,7 @@ const (
 	// the name of the underlying type definition that gets aliased.
 	extGoTypeName        = "x-go-type-name"
 	extPropGoJsonIgnore  = "x-go-json-ignore"
+	extGoEmbedding       = "x-go-embedding"
 	extPropOmitEmpty     = "x-omitempty"
 	extPropOmitZero      = "x-omitzero"
 	extPropExtraTags     = "x-oapi-codegen-extra-tags"
