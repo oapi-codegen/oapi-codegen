@@ -1038,12 +1038,14 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 		ModuleName        string
 		Version           string
 		AdditionalImports []AdditionalImport
+		RouterImports     []AdditionalImport
 	}{
 		ExternalImports:   externalImports,
 		PackageName:       packageName,
 		ModuleName:        modulePath,
 		Version:           moduleVersion,
 		AdditionalImports: globalState.options.AdditionalImports,
+		RouterImports:     globalState.options.Generate.RouterImports(),
 	}
 
 	return GenerateTemplates([]string{"imports.tmpl"}, t, context)

@@ -135,6 +135,54 @@ type GenerateOptions struct {
 	ServerURLs bool `yaml:"server-urls,omitempty"`
 }
 
+// RouterImports returns the framework-specific and strict middleware imports
+// needed based on which server type is selected.
+func (g GenerateOptions) RouterImports() []AdditionalImport {
+	var imports []AdditionalImport
+
+	switch {
+	case g.EchoServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/labstack/echo/v4"})
+		if g.Strict {
+			imports = append(imports, AdditionalImport{Alias: "strictecho", Package: "github.com/oapi-codegen/runtime/strictmiddleware/echo"})
+		}
+	case g.Echo5Server:
+		imports = append(imports, AdditionalImport{Package: "github.com/labstack/echo/v5"})
+		if g.Strict {
+			imports = append(imports, AdditionalImport{Alias: "strictecho5", Package: "github.com/oapi-codegen/runtime/strictmiddleware/echo/v5"})
+		}
+	case g.ChiServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/go-chi/chi/v5"})
+		if g.Strict {
+			imports = append(imports, AdditionalImport{Alias: "strictnethttp", Package: "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"})
+		}
+	case g.GinServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/gin-gonic/gin"})
+		if g.Strict {
+			imports = append(imports, AdditionalImport{Alias: "strictgin", Package: "github.com/oapi-codegen/runtime/strictmiddleware/gin"})
+		}
+	case g.GorillaServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/gorilla/mux"})
+		if g.Strict {
+			imports = append(imports, AdditionalImport{Alias: "strictnethttp", Package: "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"})
+		}
+	case g.FiberServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/gofiber/fiber/v2"})
+	case g.IrisServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/kataras/iris/v12"})
+		imports = append(imports, AdditionalImport{Package: "github.com/kataras/iris/v12/core/router"})
+		if g.Strict {
+			imports = append(imports, AdditionalImport{Alias: "strictiris", Package: "github.com/oapi-codegen/runtime/strictmiddleware/iris"})
+		}
+	case g.StdHTTPServer:
+		if g.Strict {
+			imports = append(imports, AdditionalImport{Alias: "strictnethttp", Package: "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"})
+		}
+	}
+
+	return imports
+}
+
 func (oo GenerateOptions) Validate() map[string]string {
 	return nil
 }
