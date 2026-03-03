@@ -1089,6 +1089,12 @@ func GenerateEchoServer(t *template.Template, operations []OperationDefinition) 
 	return GenerateTemplates([]string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl", "echo/echo-register.tmpl"}, t, operations)
 }
 
+// GenerateEcho5Server generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateEcho5Server(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"echo/v5/echo-interface.tmpl", "echo/v5/echo-wrappers.tmpl", "echo/v5/echo-register.tmpl"}, t, operations)
+}
+
 // GenerateGinServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
@@ -1125,6 +1131,9 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 	}
 	if opts.Generate.IrisServer {
 		templates = append(templates, "strict/strict-iris-interface.tmpl", "strict/strict-iris.tmpl")
+	}
+	if opts.Generate.Echo5Server {
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-echo5.tmpl")
 	}
 
 	return GenerateTemplates(templates, t, operations)

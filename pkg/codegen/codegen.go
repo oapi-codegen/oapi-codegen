@@ -282,6 +282,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	var echo5ServerOut string
+	if opts.Generate.Echo5Server {
+		echo5ServerOut, err = GenerateEcho5Server(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
+	}
+
 	var chiServerOut string
 	if opts.Generate.ChiServer {
 		chiServerOut, err = GenerateChiServer(t, ops)
@@ -421,6 +429,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	if opts.Generate.EchoServer {
 		_, err = w.WriteString(echoServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+	}
+
+	if opts.Generate.Echo5Server {
+		_, err = w.WriteString(echo5ServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}
@@ -1023,12 +1038,14 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 		ModuleName        string
 		Version           string
 		AdditionalImports []AdditionalImport
+		RouterImports     []AdditionalImport
 	}{
 		ExternalImports:   externalImports,
 		PackageName:       packageName,
 		ModuleName:        modulePath,
 		Version:           moduleVersion,
 		AdditionalImports: globalState.options.AdditionalImports,
+		RouterImports:     globalState.options.Generate.RouterImports(),
 	}
 
 	return GenerateTemplates([]string{"imports.tmpl"}, t, context)

@@ -29,6 +29,10 @@
           "type": "boolean",
           "description": "EchoServer specifies whether to generate echo server boilerplate"
         },
+        "echo5-server": {
+          "type": "boolean",
+          "description": "Echo5Server specifies whether to generate echo v5 server boilerplate"
+        },
         "gin-server": {
           "type": "boolean",
           "description": "GinServer specifies whether to generate gin server boilerplate"
@@ -197,9 +201,7 @@
           "description": "DisableTypeAliasesForType allows defining which OpenAPI `type`s will explicitly not use type aliases",
           "items": {
             "type": "string",
-            "enum": [
-              "array"
-            ]
+            "enum": ["array"]
           }
         },
         "name-normalizer": {
@@ -226,9 +228,7 @@
               "default": true
             }
           },
-          "required": [
-            "path"
-          ]
+          "required": ["path"]
         },
         "yaml-tags": {
           "type": "boolean",
@@ -299,9 +299,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "package"
-        ]
+        "required": ["package"]
       },
       "description": "AdditionalImports defines any additional Go imports to add to the generated code"
     },
