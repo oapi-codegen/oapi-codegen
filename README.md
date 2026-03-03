@@ -42,8 +42,6 @@ go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 
 ## Install
 
-### For Go 1.24+
-
 It is recommended to follow [the `go tool` support available from Go 1.24+](https://www.jvt.me/posts/2025/01/27/go-tools-124/) for managing the dependency of `oapi-codegen` alongside your core application.
 
 To do this, you run `go get -tool`:
@@ -57,29 +55,6 @@ From there, each invocation of `oapi-codegen` would be used like so:
 
 ```go
 //go:generate go tool oapi-codegen -config cfg.yaml ../../api.yaml
-```
-
-### Prior to Go 1.24
-
-It is recommended to follow [the `tools.go` pattern](https://www.jvt.me/posts/2022/06/15/go-tools-dependency-management/) for managing the dependency of `oapi-codegen` alongside your core application.
-
-This would give you a `tools/tools.go`:
-
-```go
-//go:build tools
-// +build tools
-
-package main
-
-import (
-	_ "github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen"
-)
-```
-
-Then, each invocation of `oapi-codegen` would be used like so:
-
-```go
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml ../../api.yaml
 ```
 
 Alternatively, you can install it as a binary with:
@@ -137,10 +112,12 @@ For full details of what is supported, it's worth checking out [the GoDoc for `c
 We also have [a JSON Schema](configuration-schema.json) that can be used by IDEs/editors with the Language Server Protocol (LSP) to perform intelligent suggestions, i.e.:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.6.0/configuration-schema.json
 package: api
 # ...
 ```
+
+Note that it's recommended to pin to a specific version of the configuration schema, so it matches the version of `oapi-codegen` you're using. For instance, if you're using [Renovate](https://docs.renovatebot.com/), you can [have Renovate automagically update this version for you](https://www.jvt.me/posts/2026/03/01/oapi-codegen-config-renovate/).
 
 ### Backwards compatibility
 
@@ -3443,6 +3420,8 @@ It is also possible to use HTTPS URLs.
 > Although possible, this does lead to `oapi-codegen` executions not necessarily being reproducible. It's recommended to vendor (copy) the OpenAPI spec into your codebase and reference it locally
 >
 > See [this blog post](https://www.jvt.me/posts/2024/04/27/github-actions-update-file/) for an example of how to use GitHub Actions to manage the updates of files across repos
+>
+> See [this blog post](https://www.jvt.me/posts/2026/02/27/renovate-update-file) for an example of how to use Renovate to manage the updates of files across repos
 >
 > This will be disabled by default (but possible to turn back on via configuration) [in the future](https://github.com/oapi-codegen/oapi-codegen/issues/1564)
 

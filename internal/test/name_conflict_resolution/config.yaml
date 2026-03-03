@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: nameconflictresolution
+generate:
+  models: true
+  client: true
+output: name_conflict_resolution.gen.go
+output-options:
+  resolve-type-name-collisions: true

@@ -20,6 +20,7 @@ import (
 	"net/url"
 	"reflect"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -205,7 +206,7 @@ func LowercaseFirstCharacters(str string) string {
 
 	runes := []rune(str)
 
-	for i := 0; i < len(runes); i++ {
+	for i := range runes {
 		next := i + 1
 		if i != 0 && next < len(runes) && unicode.IsLower(runes[next]) {
 			break
@@ -224,25 +225,25 @@ func LowercaseFirstCharacters(str string) string {
 func ToCamelCase(str string) string {
 	s := strings.Trim(str, " ")
 
-	n := ""
+	var n strings.Builder
 	capNext := true
 	for _, v := range s {
 		if unicode.IsUpper(v) {
-			n += string(v)
+			n.WriteString(string(v))
 		}
 		if unicode.IsDigit(v) {
-			n += string(v)
+			n.WriteString(string(v))
 		}
 		if unicode.IsLower(v) {
 			if capNext {
-				n += strings.ToUpper(string(v))
+				n.WriteString(strings.ToUpper(string(v)))
 			} else {
-				n += string(v)
+				n.WriteString(string(v))
 			}
 		}
 		_, capNext = separatorSet[v]
 	}
-	return n
+	return n.String()
 }
 
 // ToCamelCaseWithDigits function will convert query-arg style strings to CamelCase. We will
@@ -407,12 +408,7 @@ func schemaXOrder(v *openapi3.SchemaRef) (int64, bool) {
 // StringInArray checks whether the specified string is present in an array
 // of strings
 func StringInArray(str string, array []string) bool {
-	for _, elt := range array {
-		if elt == str {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(array, str)
 }
 
 // RefPathToObjName returns the name of referenced object without changes.
@@ -476,6 +472,20 @@ func refPathToGoTypeSelf(refPath string, local bool) (string, error) {
 		}
 	} else if depth != 4 && depth != 2 {
 		return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
+	}
+
+	// When multi-pass name resolution is active, the resolved name takes
+	// precedence over the spec-given name. For a $ref like
+	// #/components/schemas/Thing, we pass the section ("schemas") and
+	// name ("Thing") to resolvedNameForComponent, which looks up the
+	// final Go type name assigned by the collision resolver.
+	// Note: the resolver prioritizes component schemas — if a schema and
+	// a response both claim "Thing", the component schema keeps the original
+	// name and the response becomes "ThingResponse".
+	if depth == 4 && pathParts[0] == "#" && pathParts[1] == "components" {
+		if resolved := resolvedNameForComponent(pathParts[2], pathParts[3]); resolved != "" {
+			return resolved, nil
+		}
 	}
 
 	// Schemas may have been renamed locally, so look up the actual name in
@@ -1074,7 +1084,7 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 
 	goTypeImportExt := v.Value.Extensions[extPropGoImport]
 
-	importI, ok := goTypeImportExt.(map[string]interface{})
+	importI, ok := goTypeImportExt.(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("failed to convert type: %T", goTypeImportExt)
 	}
@@ -1126,93 +1136,5 @@ func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
 }
 
 func sliceContains[E comparable](s []E, v E) bool {
-	for _, ss := range s {
-		if ss == v {
-			return true
-		}
-	}
-	return false
-}
-
-// FixDuplicateTypeNames renames duplicate type names.
-func FixDuplicateTypeNames(typeDefs []TypeDefinition) []TypeDefinition {
-	if !hasDuplicatedTypeNames(typeDefs) {
-		return typeDefs
-	}
-
-	// try to fix duplicate type names with their definition section
-	typeDefs = fixDuplicateTypeNamesWithCompName(typeDefs)
-	if !hasDuplicatedTypeNames(typeDefs) {
-		return typeDefs
-	}
-
-	const maxIter = 100
-	for i := 0; i < maxIter && hasDuplicatedTypeNames(typeDefs); i++ {
-		typeDefs = fixDuplicateTypeNamesDupCounts(typeDefs)
-	}
-
-	if hasDuplicatedTypeNames(typeDefs) {
-		panic("too much duplicate type names")
-	}
-
-	return typeDefs
-}
-
-func hasDuplicatedTypeNames(typeDefs []TypeDefinition) bool {
-	dupCheck := make(map[string]int, len(typeDefs))
-
-	for _, d := range typeDefs {
-		dupCheck[d.TypeName]++
-
-		if dupCheck[d.TypeName] != 1 {
-			return true
-		}
-	}
-
-	return false
-}
-
-func fixDuplicateTypeNamesWithCompName(typeDefs []TypeDefinition) []TypeDefinition {
-	dupCheck := make(map[string]int, len(typeDefs))
-	deDup := make([]TypeDefinition, len(typeDefs))
-
-	for i, d := range typeDefs {
-		dupCheck[d.TypeName]++
-
-		if dupCheck[d.TypeName] != 1 {
-			switch d.Schema.DefinedComp {
-			case ComponentTypeSchema:
-				d.TypeName += "Schema"
-			case ComponentTypeParameter:
-				d.TypeName += "Parameter"
-			case ComponentTypeRequestBody:
-				d.TypeName += "RequestBody"
-			case ComponentTypeResponse:
-				d.TypeName += "Response"
-			case ComponentTypeHeader:
-				d.TypeName += "Header"
-			}
-		}
-
-		deDup[i] = d
-	}
-
-	return deDup
-}
-
-func fixDuplicateTypeNamesDupCounts(typeDefs []TypeDefinition) []TypeDefinition {
-	dupCheck := make(map[string]int, len(typeDefs))
-	deDup := make([]TypeDefinition, len(typeDefs))
-
-	for i, d := range typeDefs {
-		dupCheck[d.TypeName]++
-
-		if dupCheck[d.TypeName] != 1 {
-			d.TypeName = d.TypeName + strconv.Itoa(dupCheck[d.TypeName])
-		}
-
-		deDup[i] = d
-	}
-
-	return deDup
+	return slices.Contains(s, v)
 }

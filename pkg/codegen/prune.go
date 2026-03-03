@@ -2,23 +2,19 @@ package codegen
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
 func stringInSlice(a string, list []string) bool {
-	for _, b := range list {
-		if b == a {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(list, a)
 }
 
 type RefWrapper struct {
 	Ref       string
 	HasValue  bool
-	SourceRef interface{}
+	SourceRef any
 }
 
 func walkSwagger(swagger *openapi3.T, doFn func(RefWrapper) (bool, error)) error {
