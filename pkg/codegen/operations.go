@@ -1132,6 +1132,9 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 	if opts.Generate.IrisServer {
 		templates = append(templates, "strict/strict-iris-interface.tmpl", "strict/strict-iris.tmpl")
 	}
+	if opts.Generate.Echo5Server {
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-echo5.tmpl")
+	}
 
 	return GenerateTemplates(templates, t, operations)
 }
