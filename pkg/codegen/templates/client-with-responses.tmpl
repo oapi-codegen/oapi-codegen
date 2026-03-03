@@ -81,6 +81,17 @@ func (r {{genResponseTypeName $opid | ucFirst}}) Bytes() []byte {
     return r.Body
 }
 {{end}}
+
+{{ if opts.OutputOptions.ClientResponseContentTypeFunction }}
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r {{genResponseTypeName $opid | ucFirst}}) ContentType() string {
+    if r.HTTPResponse != nil {
+        return r.HTTPResponse.Header.Get("Content-Type")
+    }
+    return ""
+}
+{{end}}
+
 {{end}}
 
 
