@@ -350,6 +350,7 @@ var TemplateFunctions = template.FuncMap{
 	"title":                      titleCaser.String,
 	"stripNewLines":              stripNewLines,
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
+	"schemaNameToTypeName":       SchemaNameToTypeName,
 	"toGoString":                 StringToGoString,
 	"toGoComment":                StringWithTypeNameToGoComment,
 

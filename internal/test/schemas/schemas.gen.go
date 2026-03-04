@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	Access_tokenScopes access_tokenContextKey = "access_token.Scopes"
+	Access_tokenScopes accessTokenContextKey = "access_token.Scopes"
 )
 
 // Defines values for EnumInObjInArrayVal.
