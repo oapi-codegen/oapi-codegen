@@ -29,7 +29,7 @@ import (
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
-func errExit(format string, args ...interface{}) {
+func errExit(format string, args ...any) {
 	if !strings.HasSuffix(format, "\n") {
 		format = format + "\n"
 	}
@@ -271,6 +271,16 @@ func main() {
 		errExit("configuration error: %v\n", err)
 	}
 
+	if warnings := opts.Generate.Warnings(); len(warnings) > 0 {
+		var out strings.Builder
+		out.WriteString("WARNING: A number of warning(s) were returned when validating the GenerateOptions:")
+		for k, v := range warnings {
+			out.WriteString("\n- " + k + ": " + v)
+		}
+
+		_, _ = fmt.Fprint(os.Stderr, out.String())
+	}
+
 	// If the user asked to output configuration, output it to stdout and exit
 	if flagOutputConfig {
 		buf, err := yaml.Marshal(opts)
@@ -301,7 +311,7 @@ func main() {
 	}
 
 	if len(noVCSVersionOverride) > 0 {
-		opts.Configuration.NoVCSVersionOverride = &noVCSVersionOverride
+		opts.NoVCSVersionOverride = &noVCSVersionOverride
 	}
 
 	code, err := codegen.Generate(swagger, opts.Configuration)
@@ -310,6 +320,9 @@ func main() {
 	}
 
 	if opts.OutputFile != "" {
+		if err := os.MkdirAll(filepath.Dir(opts.OutputFile), 0o755); err != nil {
+			errExit("error unable to create directory: %s\n", err)
+		}
 		err = os.WriteFile(opts.OutputFile, []byte(code), 0o644)
 		if err != nil {
 			errExit("error writing generated code to file: %s\n", err)
@@ -499,6 +512,8 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 			opts.FiberServer = true
 		case "server", "echo-server", "echo":
 			opts.EchoServer = true
+		case "echo5", "echo5-server":
+			opts.Echo5Server = true
 		case "gin", "gin-server":
 			opts.GinServer = true
 		case "gorilla", "gorilla-server":

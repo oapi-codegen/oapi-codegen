@@ -87,7 +87,7 @@ func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
 func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, error) {
 	var result openapi3.Schema
 
-	result.Extensions = make(map[string]interface{})
+	result.Extensions = make(map[string]any)
 	for k, v := range s1.Extensions {
 		result.Extensions[k] = v
 	}
@@ -225,6 +225,17 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 	// Allow discriminators for allOf merges, but disallow for one/anyOfs.
 	if !allOf && (s1.Discriminator != nil || s2.Discriminator != nil) {
 		return openapi3.Schema{}, errors.New("merging two schemas with discriminators is not supported")
+	}
+
+	// For allOf merges, propagate a discriminator if only one schema has it.
+	// Merging two different discriminators is not supported.
+	if s1.Discriminator != nil && s2.Discriminator != nil {
+		return openapi3.Schema{}, errors.New("merging two schemas with discriminators is not supported")
+	}
+	if s1.Discriminator != nil {
+		result.Discriminator = s1.Discriminator
+	} else if s2.Discriminator != nil {
+		result.Discriminator = s2.Discriminator
 	}
 
 	return result, nil

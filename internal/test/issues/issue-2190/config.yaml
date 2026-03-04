@@ -1,0 +1,9 @@
+package: issue2190
+output: issue2190.gen.go
+generate:
+  std-http-server: true
+  strict-server: true
+  models: true
+  client: true
+output-options:
+  nullable-type: true

@@ -27,7 +27,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
   }
   {{end}}
   {{if .IsStyled}}
-  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", c.Params("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}})
+  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", c.Params("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
   if err != nil {
     return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
   }
@@ -59,7 +59,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
         if paramValue := c.Query("{{.ParamName}}"); paramValue != "" {
 
         {{if .IsPassThrough}}
-          params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
+          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}paramValue
         {{end}}
 
         {{if .IsJson}}
@@ -69,7 +69,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
             return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
           }
 
-          params.{{.GoName}} = {{if not .Required}}&{{end}}value
+          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
         {{end}}
         }{{if .Required}} else {
             err = fmt.Errorf("Query argument {{.ParamName}} is required, but not found")
@@ -78,7 +78,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
         }{{end}}
       {{end}}
       {{if .IsStyled}}
-      err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", query, &params.{{.GoName}})
+      err = runtime.BindQueryParameterWithOptions("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", query, &params.{{.GoName}}, runtime.BindQueryParameterOptions{Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
       if err != nil {
         return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
       }
@@ -89,28 +89,32 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
       headers := c.GetReqHeaders()
 
       {{range .HeaderParams}}// ------------- {{if .Required}}Required{{else}}Optional{{end}} header parameter "{{.ParamName}}" -------------
-        if value, found := headers[http.CanonicalHeaderKey("{{.ParamName}}")]; found {
+        if valueList, found := headers[http.CanonicalHeaderKey("{{.ParamName}}")]; found {
           var {{.GoName}} {{.TypeDef}}
+          n := len(valueList)
+          if n != 1 {
+            return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName {{.ParamName}}, 1 is required, but %d found", n))
+         }
 
         {{if .IsPassThrough}}
-          params.{{.GoName}} = {{if not .Required}}&{{end}}value
+          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}valueList[0]
         {{end}}
 
         {{if .IsJson}}
-          err = json.Unmarshal([]byte(value), &{{.GoName}})
+          err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
           if err != nil {
             return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
           }
         {{end}}
 
         {{if .IsStyled}}
-          err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", value, &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}})
+          err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
           if err != nil {
             return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
           }
         {{end}}
 
-          params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
+          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
 
         } {{if .Required}}else {
             err = fmt.Errorf("Header parameter {{.ParamName}} is required, but not found: %w", err)
@@ -126,7 +130,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
       if cookie = c.Cookies("{{.ParamName}}"); cookie == "" {
 
       {{- if .IsPassThrough}}
-        params.{{.GoName}} = {{if not .Required}}&{{end}}cookie
+        params.{{.GoName}} = {{if .HasOptionalPointer}}}&{{end}}cookie
       {{end}}
 
       {{- if .IsJson}}
@@ -142,16 +146,16 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
           return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
         }
 
-        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
       {{end}}
 
       {{- if .IsStyled}}
         var value {{.TypeDef}}
-        err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie, &value, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}})
+        err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie, &value, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
         if err != nil {
           return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
         }
-        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
       {{end}}
 
       }

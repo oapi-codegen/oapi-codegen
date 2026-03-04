@@ -48,13 +48,17 @@ func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (s
 	}
 
 	// parse out the yaml.Node, which is required by the overlay library
-	data, err := yaml.Marshal(spec)
+	buf := &bytes.Buffer{}
+	enc := yaml.NewEncoder(buf)
+	// set to 2 to work around https://github.com/yaml/go-yaml/issues/76
+	enc.SetIndent(2)
+	err = enc.Encode(spec)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal spec from %#v as YAML: %w", filePath, err)
 	}
 
 	var node yaml.Node
-	err = yaml.NewDecoder(bytes.NewReader(data)).Decode(&node)
+	err = yaml.NewDecoder(buf).Decode(&node)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse spec from %#v: %w", filePath, err)
 	}
@@ -66,24 +70,24 @@ func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (s
 
 	err = overlay.Validate()
 	if err != nil {
-		return nil, fmt.Errorf("The Overlay in %#v was not valid: %v", opts.Path, err)
+		return nil, fmt.Errorf("the Overlay in %#v was not valid: %v", opts.Path, err)
 	}
 
 	if opts.Strict {
 		err, vs := overlay.ApplyToStrict(&node)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to apply Overlay %#v to specification %#v: %v\nAdditionally, the following validation errors were found:\n- %s", opts.Path, filePath, err, strings.Join(vs, "\n- "))
+			return nil, fmt.Errorf("failed to apply Overlay %#v to specification %#v: %v\nAdditionally, the following validation errors were found:\n- %s", opts.Path, filePath, err, strings.Join(vs, "\n- "))
 		}
 	} else {
 		err = overlay.ApplyTo(&node)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to apply Overlay %#v to specification %#v: %v", opts.Path, filePath, err)
+			return nil, fmt.Errorf("failed to apply Overlay %#v to specification %#v: %v", opts.Path, filePath, err)
 		}
 	}
 
 	b, err := yaml.Marshal(&node)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
+		return nil, fmt.Errorf("failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
 	}
 
 	loader := openapi3.NewLoader()
@@ -93,7 +97,7 @@ func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (s
 		Path: filepath.ToSlash(filePath),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("Failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
+		return nil, fmt.Errorf("failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
 	}
 
 	return swagger, nil

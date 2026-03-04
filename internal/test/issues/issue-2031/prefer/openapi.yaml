@@ -1,0 +1,17 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Issue 2031
+paths:
+  /test:
+    get:
+      parameters:
+        - name: "user_ids[]"
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+          required: false

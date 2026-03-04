@@ -34,6 +34,18 @@ const (
 	Second EnumInObjInArrayVal = "second"
 )
 
+// Valid indicates whether the value is a known member of the EnumInObjInArrayVal enum.
+func (e EnumInObjInArrayVal) Valid() bool {
+	switch e {
+	case First:
+		return true
+	case Second:
+		return true
+	default:
+		return false
+	}
+}
+
 // N5StartsWithNumber This schema name starts with a number
 type N5StartsWithNumber = map[string]interface{}
 
@@ -52,11 +64,11 @@ type CustomStringType = string
 type DeprecatedProperty struct {
 	// NewProp Use this now!
 	NewProp string `json:"newProp"`
-	// Deprecated:
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	OldProp1 *string `json:"oldProp1,omitempty"`
 
 	// OldProp2 It used to do this and that
-	// Deprecated:
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	OldProp2 *string `json:"oldProp2,omitempty"`
 	// Deprecated: Use NewProp instead!
 	OldProp3 *string `json:"oldProp3,omitempty"`
@@ -80,7 +92,7 @@ type GenericObject = map[string]interface{}
 // NullableProperties defines model for NullableProperties.
 type NullableProperties struct {
 	Optional            *string `json:"optional,omitempty"`
-	OptionalAndNullable *string `json:"optionalAndNullable"`
+	OptionalAndNullable *string `json:"optionalAndNullable,omitempty"`
 	Required            string  `json:"required"`
 	RequiredAndNullable *string `json:"requiredAndNullable"`
 }
@@ -495,7 +507,7 @@ func NewIssue209Request(server string, str StringInPath) (*http.Request, error) 
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "str", runtime.ParamLocationPath, str)
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "str", str, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
 	if err != nil {
 		return nil, err
 	}
@@ -529,7 +541,7 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "fallthrough", runtime.ParamLocationPath, pFallthrough)
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "fallthrough", pFallthrough, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
 	if err != nil {
 		return nil, err
 	}
@@ -590,7 +602,7 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "1param", runtime.ParamLocationPath, n1param)
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "1param", n1param, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "object", Format: ""})
 	if err != nil {
 		return nil, err
 	}
@@ -651,7 +663,7 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "foo", runtime.ParamLocationQuery, params.Foo); err != nil {
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "foo", params.Foo, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 			return nil, err
 		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 			return nil, err
@@ -1455,7 +1467,7 @@ func (w *ServerInterfaceWrapper) Issue209(ctx echo.Context) error {
 	// ------------- Path parameter "str" -------------
 	var str StringInPath
 
-	err = runtime.BindStyledParameterWithOptions("simple", "str", ctx.Param("str"), &str, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "str", ctx.Param("str"), &str, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter str: %s", err))
 	}
@@ -1473,7 +1485,7 @@ func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 	// ------------- Path parameter "fallthrough" -------------
 	var pFallthrough string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "fallthrough", ctx.Param("fallthrough"), &pFallthrough, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "fallthrough", ctx.Param("fallthrough"), &pFallthrough, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err))
 	}
@@ -1502,7 +1514,7 @@ func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 	// ------------- Path parameter "1param" -------------
 	var n1param N5StartsWithNumber
 
-	err = runtime.BindStyledParameterWithOptions("simple", "1param", ctx.Param("1param"), &n1param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "1param", ctx.Param("1param"), &n1param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "object", Format: ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1param: %s", err))
 	}
@@ -1524,7 +1536,7 @@ func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 	var params Issue9Params
 	// ------------- Required query parameter "foo" -------------
 
-	err = runtime.BindQueryParameter("form", true, true, "foo", ctx.QueryParams(), &params.Foo)
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "foo", ctx.QueryParams(), &params.Foo, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter foo: %s", err))
 	}

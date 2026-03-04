@@ -44,6 +44,23 @@ func (pd ParameterDefinition) TypeDef() string {
 	return typeDecl
 }
 
+// RequiresNilCheck indicates whether the generated property should have a nil check performed on it before other checks.
+// This should be used in templates when performing `nil` checks, but NOT when i.e. determining if there should be an optional pointer given to the type - in that case, use `HasOptionalPointer`
+func (pd ParameterDefinition) RequiresNilCheck() bool {
+	return pd.ZeroValueIsNil() || pd.HasOptionalPointer()
+}
+
+// ZeroValueIsNil is a helper function to determine if the given Go type used for this property
+// Will return true if the OpenAPI `type` is:
+// - `array`
+func (pd ParameterDefinition) ZeroValueIsNil() bool {
+	if pd.Schema.OAPISchema == nil {
+		return false
+	}
+
+	return pd.Schema.OAPISchema.Type.Is("array")
+}
+
 // JsonTag generates the JSON annotation to map GoType to json type name. If Parameter
 // Foo is marshaled to json as "foo", this will create the annotation
 // 'json:"foo"'
@@ -114,6 +131,26 @@ func (pd *ParameterDefinition) Explode() bool {
 	return *pd.Spec.Explode
 }
 
+// SchemaType returns the first OpenAPI type string for this parameter's schema (e.g. "string", "integer"),
+// or empty string if unavailable.
+func (pd *ParameterDefinition) SchemaType() string {
+	if pd.Spec.Schema != nil && pd.Spec.Schema.Value != nil && pd.Spec.Schema.Value.Type != nil {
+		if s := pd.Spec.Schema.Value.Type.Slice(); len(s) > 0 {
+			return s[0]
+		}
+	}
+	return ""
+}
+
+// SchemaFormat returns the OpenAPI format string for this parameter's schema (e.g. "byte", "date-time"),
+// or empty string if unavailable.
+func (pd *ParameterDefinition) SchemaFormat() string {
+	if pd.Spec.Schema != nil && pd.Spec.Schema.Value != nil {
+		return pd.Spec.Schema.Value.Format
+	}
+	return ""
+}
+
 func (pd ParameterDefinition) GoVariableName() string {
 	name := LowercaseFirstCharacters(pd.GoName())
 	if IsGoKeyword(name) {
@@ -135,8 +172,15 @@ func (pd ParameterDefinition) GoName() string {
 	return SchemaNameToTypeName(goName)
 }
 
+// Deprecated: Use HasOptionalPointer, as it is clearer what the intent is.
 func (pd ParameterDefinition) IndirectOptional() bool {
 	return !pd.Required && !pd.Schema.SkipOptionalPointer
+}
+
+// HasOptionalPointer indicates whether the generated property has an optional pointer associated with it.
+// This takes into account the `x-go-type-skip-optional-pointer` extension, allowing a parameter definition to control whether the pointer should be skipped.
+func (pd ParameterDefinition) HasOptionalPointer() bool {
+	return pd.Required == false && pd.Schema.SkipOptionalPointer == false //nolint:staticcheck
 }
 
 type ParameterDefinitions []ParameterDefinition
@@ -298,9 +342,31 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
 				if contentType.Schema != nil {
-					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{o.OperationId, responseName})
+					// When a response has multiple JSON content types (e.g.,
+					// application/json, application/json-patch+json, and
+					// application/merge-patch+json), we include a content-type-derived
+					// segment in the schema path. This is necessary because
+					// GenerateGoSchema uses the path to name any inline types it
+					// creates (e.g., oneOf union members). Without the content type
+					// in the path, all content types for the same response produce
+					// identically-named inline types. If those content types have
+					// different schemas, the result is conflicting type declarations;
+					// if they have the same schema, the result is duplicate
+					// declarations. Both cases produce code that won't compile.
+					//
+					// We only add the content type segment when collision resolution
+					// is enabled (resolve-type-name-collisions) and jsonCount > 1,
+					// to avoid changing type names for existing users. Ideally the
+					// media type would always be part of the path for consistency.
+					// TODO: revisit this at the next major version change —
+					// always include the media type in the schema path.
+					schemaPath := []string{o.OperationId, responseName}
+					if jsonCount > 1 && util.IsMediaTypeJson(contentTypeName) && globalState.options.OutputOptions.ResolveTypeNameCollisions {
+						schemaPath = append(schemaPath, mediaTypeToCamelCase(contentTypeName))
+					}
+					responseSchema, err := GenerateGoSchema(contentType.Schema, schemaPath)
 					if err != nil {
-						return nil, fmt.Errorf("Unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
+						return nil, fmt.Errorf("unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
 					}
 
 					var typeName string
@@ -309,7 +375,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 					// HAL+JSON:
 					case StringInArray(contentTypeName, contentTypesHalJSON):
 						typeName = fmt.Sprintf("HALJSON%s", nameNormalizer(responseName))
-					case "application/json" == contentTypeName:
+					case contentTypeName == "application/json":
 						// if it's the standard application/json
 						typeName = fmt.Sprintf("JSON%s", nameNormalizer(responseName))
 					// Vendored JSON
@@ -342,7 +408,11 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
 						}
 						if jsonCount > 1 && util.IsMediaTypeJson(contentTypeName) {
-							refType += mediaTypeToCamelCase(contentTypeName)
+							if resolved := resolvedNameForRefPath(responseRef.Ref, contentTypeName); resolved != "" {
+								refType = resolved + mediaTypeToCamelCase(contentTypeName)
+							} else {
+								refType += mediaTypeToCamelCase(contentTypeName)
+							}
 						}
 						td.Schema.RefType = refType
 					}
@@ -870,6 +940,12 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 				rd.Ref = refType
 				refSet[refType] = struct{}{}
 			}
+			// Ensure content schemas get the external ref qualifier so that
+			// non-fixed status code paths (e.g. "default") emit the qualified type.
+			for i, rcd := range rd.Contents {
+				ensureExternalRefsInSchema(&rcd.Schema, responseOrRef.Ref)
+				rd.Contents[i] = rcd
+			}
 		}
 		responseDefinitions = append(responseDefinitions, rd)
 	}
@@ -918,13 +994,24 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 				Schema:   param.Schema,
 			})
 		}
+		// Merge extensions from the schema level and the parameter level.
+		// Parameter-level extensions take precedence over schema-level ones.
+		extensions := make(map[string]any)
+		if param.Spec.Schema != nil && param.Spec.Schema.Value != nil {
+			for k, v := range param.Spec.Schema.Value.Extensions {
+				extensions[k] = v
+			}
+		}
+		for k, v := range param.Spec.Extensions {
+			extensions[k] = v
+		}
 		prop := Property{
 			Description:   param.Spec.Description,
 			JsonFieldName: param.ParamName,
 			Required:      param.Required,
 			Schema:        pSchema,
 			NeedsFormTag:  param.Style() == "form",
-			Extensions:    param.Spec.Extensions,
+			Extensions:    extensions,
 		}
 		s.Properties = append(s.Properties, prop)
 	}
@@ -1002,6 +1089,12 @@ func GenerateEchoServer(t *template.Template, operations []OperationDefinition) 
 	return GenerateTemplates([]string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl", "echo/echo-register.tmpl"}, t, operations)
 }
 
+// GenerateEcho5Server generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateEcho5Server(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"echo/v5/echo-interface.tmpl", "echo/v5/echo-wrappers.tmpl", "echo/v5/echo-register.tmpl"}, t, operations)
+}
+
 // GenerateGinServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
@@ -1039,6 +1132,9 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 	if opts.Generate.IrisServer {
 		templates = append(templates, "strict/strict-iris-interface.tmpl", "strict/strict-iris.tmpl")
 	}
+	if opts.Generate.Echo5Server {
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-echo5.tmpl")
+	}
 
 	return GenerateTemplates(templates, t, operations)
 }
@@ -1060,7 +1156,7 @@ func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition
 }
 
 // GenerateTemplates used to generate templates
-func GenerateTemplates(templates []string, t *template.Template, ops interface{}) (string, error) {
+func GenerateTemplates(templates []string, t *template.Template, ops any) (string, error) {
 	var generatedTemplates []string
 	for _, tmpl := range templates {
 		var buf bytes.Buffer

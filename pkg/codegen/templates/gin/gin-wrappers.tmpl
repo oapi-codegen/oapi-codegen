@@ -30,7 +30,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
   }
   {{end}}
   {{if .IsStyled}}
-  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", c.Param("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}})
+  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", c.Param("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
   if err != nil {
     siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
     return
@@ -55,7 +55,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
         if paramValue := c.Query("{{.ParamName}}"); paramValue != "" {
 
         {{if .IsPassThrough}}
-          params.{{.GoName}} = {{if not .Required}}&{{end}}paramValue
+          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}paramValue
         {{end}}
 
         {{if .IsJson}}
@@ -66,7 +66,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
             return
           }
 
-          params.{{.GoName}} = {{if not .Required}}&{{end}}value
+          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
         {{end}}
         }{{if .Required}} else {
            siw.ErrorHandler(c, fmt.Errorf("Query argument {{.ParamName}} is required, but not found"), http.StatusBadRequest)
@@ -75,7 +75,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
       {{end}}
 
       {{if .IsStyled}}
-      err = runtime.BindQueryParameter("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", c.Request.URL.Query(), &params.{{.GoName}})
+      err = runtime.BindQueryParameterWithOptions("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", c.Request.URL.Query(), &params.{{.GoName}}, runtime.BindQueryParameterOptions{Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
       if err != nil {
         siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
         return
@@ -96,7 +96,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
           }
 
         {{if .IsPassThrough}}
-          params.{{.GoName}} = {{if not .Required}}&{{end}}valueList[0]
+          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}valueList[0]
         {{end}}
 
         {{if .IsJson}}
@@ -108,14 +108,14 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
         {{end}}
 
         {{if .IsStyled}}
-          err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}})
+          err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
           if err != nil {
             siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
             return
           }
         {{end}}
 
-          params.{{.GoName}} = {{if not .Required}}&{{end}}{{.GoName}}
+          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
 
         } {{if .Required}}else {
             siw.ErrorHandler(c, fmt.Errorf("Header parameter {{.ParamName}} is required, but not found"), http.StatusBadRequest)
@@ -132,7 +132,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
       if cookie, err = c.Cookie("{{.ParamName}}"); err == nil {
 
       {{- if .IsPassThrough}}
-        params.{{.GoName}} = {{if not .Required}}&{{end}}cookie
+        params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}cookie
       {{end}}
 
       {{- if .IsJson}}
@@ -150,17 +150,17 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
             return
         }
 
-        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
       {{end}}
 
       {{- if .IsStyled}}
         var value {{.TypeDef}}
-        err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie, &value, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}})
+        err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie, &value, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
         if err != nil {
             siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
             return
         }
-        params.{{.GoName}} = {{if not .Required}}&{{end}}value
+        params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
       {{end}}
 
       }
