@@ -227,6 +227,17 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 		return openapi3.Schema{}, errors.New("merging two schemas with discriminators is not supported")
 	}
 
+	// For allOf merges, propagate a discriminator if only one schema has it.
+	// Merging two different discriminators is not supported.
+	if s1.Discriminator != nil && s2.Discriminator != nil {
+		return openapi3.Schema{}, errors.New("merging two schemas with discriminators is not supported")
+	}
+	if s1.Discriminator != nil {
+		result.Discriminator = s1.Discriminator
+	} else if s2.Discriminator != nil {
+		result.Discriminator = s2.Discriminator
+	}
+
 	return result, nil
 }
 
