@@ -12,36 +12,18 @@ import (
 	"net"
 	"os"
 
-	"github.com/labstack/echo/v5"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/echo-v5/api"
-	mw "github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/echo-v5/middleware"
+	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/echo-v5/server"
 )
 
 func main() {
 	port := flag.String("port", "8080", "Port for test HTTP server")
 	flag.Parse()
 
-	swagger, err := api.GetSwagger()
+	e, err := server.NewEchoServer()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
+		fmt.Fprintf(os.Stderr, "Error setting up server: %s\n", err)
 		os.Exit(1)
 	}
-
-	// Clear out the servers array in the swagger spec, that skips validating
-	// that server names match. We don't know how this thing will be run.
-	swagger.Servers = nil
-
-	// Create an instance of our handler which satisfies the generated interface
-	petStore := api.NewPetStore()
-
-	// This is how you set up a basic Echo router
-	e := echo.New()
-	// Use our validation middleware to check all requests against the
-	// OpenAPI schema.
-	e.Use(mw.OapiRequestValidator(swagger))
-
-	// We now register our petStore above as the handler for the interface
-	api.RegisterHandlers(e, petStore)
 
 	// And we serve HTTP until the world ends.
 	log.Fatal(e.Start(net.JoinHostPort("0.0.0.0", *port)))
