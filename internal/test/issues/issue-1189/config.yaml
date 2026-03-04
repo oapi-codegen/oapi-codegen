@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: param
+generate:
+  echo-server: true
+  client: true
+  models: true
+  embedded-spec: true
+output: issue1189.gen.go

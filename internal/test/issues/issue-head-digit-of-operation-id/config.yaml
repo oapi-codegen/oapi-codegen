@@ -1,0 +1,8 @@
+---
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: head_digit_of_operation_id
+generate:
+  strict-server: true
+output: issue.gen.go
+output-options:
+  skip-prune: true

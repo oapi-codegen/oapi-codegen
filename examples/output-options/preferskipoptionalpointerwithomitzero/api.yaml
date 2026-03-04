@@ -1,0 +1,44 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: prefer-skip-optional-pointer-with-omitzero
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          description: This field is required, so will never have an optional pointer, nor `omitzero`.
+          type: string
+        id:
+          description: This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer. However, it will receive `omitzero`.
+          type: number
+    ClientWithExtension:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          description: This field is required, so will never have an optional pointer, nor `omitzero`.
+          type: string
+        id:
+          description: This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer. However, it will receive `omitzero`.
+          type: number
+        pointer_id:
+          type: number
+          description: This field should have an optional pointer, as the field-level definition of `x-go-type-skip-optional-pointer` overrides the `prefer-skip-optional-pointer` Output Option. This will also not receive an `omitzero`.
+          # NOTE that this overrides the global preference
+          x-go-type-skip-optional-pointer: false
+        no_omit:
+          type: number
+          description: This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer. This will not receive `omitzero`, as the field-level definition of `x-omitzero` overrides the `prefer-skip-optional-pointer-with-omitzero` Output Option.
+          # NOTE that this overrides the global preference
+          x-omitzero: false
+    NestedType:
+      type: object
+      properties:
+        client:
+          description: This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer.
+          $ref: '#/components/schemas/Client'

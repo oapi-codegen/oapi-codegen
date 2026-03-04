@@ -1,0 +1,84 @@
+openapi: 3.0.1
+info:
+  version: '0.0.1'
+  title: example
+  description: |
+    Make sure that nullable types are generated properly
+paths:
+  /example:
+    patch:
+      operationId: examplePatch
+      requestBody:
+        description: The patch body
+        required: true
+        content:
+          application/json:
+            example:
+              name: Example Patch
+            schema:
+              $ref: "#/components/schemas/PatchRequest"
+      responses:
+        '200':
+          description: "OK"
+
+components:
+  schemas:
+    PatchRequest:
+      type: object
+      description: A request to patch an existing user object.
+      required:
+        - simple_required_nullable
+        - complex_required_nullable
+      properties:
+        simple_required_nullable:
+          # required and nullable
+          $ref: "#/components/schemas/simple_required_nullable"
+        simple_optional_nullable:
+          # optional and nullable
+          $ref: "#/components/schemas/simple_optional_nullable"
+        simple_optional_non_nullable:
+          # optional and non-nullable
+          $ref: "#/components/schemas/simple_optional_non_nullable"
+        complex_required_nullable:
+          # required and nullable
+          $ref: "#/components/schemas/complex_required_nullable"
+        complex_optional_nullable:
+          # optional and nullable
+          $ref: "#/components/schemas/complex_optional_nullable"
+      additionalProperties: false
+
+    simple_required_nullable:
+      type: integer
+      nullable: true
+      description: Simple required and nullable
+
+    simple_optional_nullable:
+      type: integer
+      nullable: true
+      description: Simple optional and nullable
+
+    simple_optional_non_nullable:
+      type: string
+      description: Simple optional and non nullable
+
+    complex_required_nullable:
+      type: object
+      nullable: true
+      description: Complex required and nullable
+      properties:
+        name:
+          description: Optional and non nullable
+          type: string
+
+    complex_optional_nullable:
+      type: object
+      description: Complex, optional and nullable
+      properties:
+        alias_name:
+          description: Optional and nullable
+          type: string
+          nullable: true
+        name:
+          description: Optional and non nullable
+          type: string
+      nullable: true

@@ -1,0 +1,64 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Using complex schemas
+  description: An example of `anyOf`, `allOf` and `oneOf`
+components:
+  schemas:
+    # base types
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    Identity:
+      type: object
+      required:
+        - issuer
+      properties:
+        issuer:
+          type: string
+
+    # allOf performs a union of all types defined
+    ClientWithId:
+      allOf:
+        - $ref: '#/components/schemas/Client'
+        - properties:
+            id:
+              type: integer
+          required:
+            - id
+
+    # allOf performs a union of all types defined, but if there's a duplicate field defined, it'll be overwritten by the last schema
+    # https://github.com/oapi-codegen/oapi-codegen/issues/1569
+    IdentityWithDuplicateField:
+      allOf:
+        # `issuer` will be ignored
+        - $ref: '#/components/schemas/Identity'
+        # `issuer` will be ignored
+        - properties:
+            issuer:
+              type: integer
+        # `issuer` will take precedence
+        - properties:
+            issuer:
+              type: object
+              properties:
+                name:
+                  type: string
+              required:
+                - name
+
+    # anyOf results in a type that has an `AsClient`/`MergeClient`/`FromClient` and an `AsIdentity`/`MergeIdentity`/`FromIdentity` method so you can choose which of them you want to retrieve
+    ClientAndMaybeIdentity:
+      anyOf:
+        - $ref: '#/components/schemas/Client'
+        - $ref: '#/components/schemas/Identity'
+
+    # oneOf results in a type that has an `AsClient`/`MergeClient`/`FromClient` and an `AsIdentity`/`MergeIdentity`/`FromIdentity` method so you can choose which of them you want to retrieve
+    ClientOrIdentity:
+      oneOf:
+        - $ref: '#/components/schemas/Client'
+        - $ref: '#/components/schemas/Identity'

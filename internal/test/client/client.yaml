@@ -11,7 +11,7 @@ paths:
     get:
       operationId: GetJson
       security:
-      - OpenId: [json.read, json.admin]
+        - OpenId: [ json.read, json.admin ]
       responses:
         200:
           application/json:
@@ -21,7 +21,7 @@ paths:
     get:
       operationId: GetJsonWithTrailingSlash
       security:
-        - OpenId: [json.read, json.admin]
+        - OpenId: [ json.read, json.admin ]
       responses:
         200:
           application/json:
@@ -80,6 +80,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SchemaObject'
+  /with_vendor_json:
+    post:
+      operationId: PostVendorJson
+      requestBody:
+        required: true
+        content:
+          application/vnd.api+json:
+            schema:
+              type: object
 components:
   schemas:
     SchemaObject:

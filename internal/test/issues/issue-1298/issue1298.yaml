@@ -1,0 +1,25 @@
+openapi: "3.0.1"
+components:
+  schemas:
+    Test:
+      type: object
+      properties:
+        field1:
+          type: string
+        field2:
+          type: string
+      required:
+        - field1
+        - field2
+paths:
+  /test:
+    get:
+      operationId: test
+      requestBody:
+        content:
+          application/test+json:
+            schema:
+              $ref: "#/components/schemas/Test"
+      responses:
+        204:
+          description: good

@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+# child.yaml
+package: api
+generate:
+  gin-server: true
+  embedded-spec: true
+  strict-server: true
+  models: true
+import-mapping:
+  parent.api.yaml: github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1093/api/parent
+output: api/child/child.gen.go

@@ -87,6 +87,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+  /enum:
+    get:
+      tags:
+        - enum
+      summary: References enum
+      operationId: getEnum
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EnumTest'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /user:
+    get:
+      tags:
+        - mergeAllOf
+      summary: Merges allOf ref-ing a JSON schema
+      operationId: getUser
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   schemas:
@@ -124,15 +164,74 @@ components:
           format: date-time
 
     CatDead:
+      required:
+        - sliced_birds
+        - very_dead_since
+        - very_memorable_birds
       properties:
         name:
           type: string
+        favourite_birds:
+          type: array
+          items:
+            type: string
+            nullable: true
+        detested_birds:
+          type: array
+          items:
+            type: string
+        sliced_birds:
+          type: array
+          items:
+            type: string
+        forgettable_birds:
+          additionalProperties:
+            type: string
+            nullable: true
+        memorable_birds:
+          additionalProperties:
+            type: string
+        very_memorable_birds:
+          additionalProperties:
+            type: string
         dead_since:
           type: string
           format: date-time
           x-oapi-codegen-extra-tags:
             tag1: value1
             tag2: value2
+        very_dead_since:
+          type: string
+          format: date-time
         cause:
           type: string
-          enum: [car, dog, oldage]
+          enum: [ car, dog, oldage ]
+
+    EnumTest:
+      properties:
+        numerics:
+          type: integer
+          enum: [0, 1, 2]
+        enumNames:
+          type: integer
+          enum: [0, 1, 2]
+          x-enumNames:
+            - zero
+            - one
+            - two
+        enumVarnames:
+          type: integer
+          enum: [0, 1, 2]
+          x-enum-varnames:
+            - na
+            - single
+            - double
+    User:
+      allOf:
+        - $ref: ./test_schema.json
+        - type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+              description: User name

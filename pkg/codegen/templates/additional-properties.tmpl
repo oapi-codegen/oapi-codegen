@@ -17,6 +17,7 @@ func (a *{{.TypeName}}) Set(fieldName string, value {{$addType}}) {
     a.AdditionalProperties[fieldName] = value
 }
 
+{{if eq 0 (len .Schema.UnionElements) -}}
 // Override default JSON handling for {{.TypeName}} to handle AdditionalProperties
 func (a *{{.TypeName}}) UnmarshalJSON(b []byte) error {
     object := make(map[string]json.RawMessage)
@@ -52,12 +53,12 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
     var err error
     object := make(map[string]json.RawMessage)
 {{range .Schema.Properties}}
-{{if not .Required}}if a.{{.GoFieldName}} != nil { {{end}}
+{{if .RequiresNilCheck}}if a.{{.GoFieldName}} != nil { {{end}}
     object["{{.JsonFieldName}}"], err = json.Marshal(a.{{.GoFieldName}})
     if err != nil {
         return nil, fmt.Errorf("error marshaling '{{.JsonFieldName}}': %w", err)
     }
-{{if not .Required}} }{{end}}
+{{if .RequiresNilCheck}} }{{end}}
 {{end}}
     for fieldName, field := range a.AdditionalProperties {
 		object[fieldName], err = json.Marshal(field)
@@ -67,4 +68,5 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(object)
 }
+{{end}}
 {{end}}

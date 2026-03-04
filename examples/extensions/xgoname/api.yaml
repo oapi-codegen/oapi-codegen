@@ -1,0 +1,27 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-go-name
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+    ClientWithExtension:
+      type: object
+      x-go-name: ClientRenamedByExtension
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+          # maybe we want to be intentionally verbose here?
+          x-go-name: AccountIdentifier

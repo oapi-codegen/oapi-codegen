@@ -2,17 +2,16 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
+	"net"
 
-	"github.com/deepmap/oapi-codegen/examples/authenticated-api/echo/api"
-	"github.com/deepmap/oapi-codegen/examples/authenticated-api/echo/server"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	"github.com/oapi-codegen/oapi-codegen/v2/examples/authenticated-api/echo/api"
+	"github.com/oapi-codegen/oapi-codegen/v2/examples/authenticated-api/echo/server"
 )
 
 func main() {
-	var port = flag.Int("port", 8080, "port where to serve traffic")
+	port := flag.String("port", "8080", "port where to serve traffic")
 
 	e := echo.New()
 
@@ -28,7 +27,6 @@ func main() {
 	if err != nil {
 		log.Fatalln("error creating middleware:", err)
 	}
-	e.Use(middleware.Logger())
 	e.Use(mw...)
 
 	svr := server.NewServer()
@@ -50,5 +48,5 @@ func main() {
 	log.Println("Reader token", string(readerJWS))
 	log.Println("Writer token", string(writerJWS))
 
-	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", *port)))
+	e.Logger.Fatal(e.Start(net.JoinHostPort("0.0.0.0", *port)))
 }

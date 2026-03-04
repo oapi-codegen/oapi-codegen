@@ -27,7 +27,7 @@ paths:
         write.
       security:
         - BearerAuth:
-          - "things:w"
+            - "things:w"
       requestBody:
         description: A thing to insert. Returns the inserted thing with an ID
         required: true

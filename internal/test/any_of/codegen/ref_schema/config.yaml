@@ -1,0 +1,6 @@
+package: ref_schema
+generate:
+  models: true
+  client: true
+  echo-server: true
+output: openapi.gen.go

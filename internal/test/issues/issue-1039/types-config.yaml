@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: issue1039
+generate:
+  models: true
+output-options:
+  nullable-type: true
+output: types.gen.go

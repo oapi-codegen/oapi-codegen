@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: api
+generate:
+  fiber-server: true
+  strict-server: true
+  embedded-spec: true
+output: server.gen.go

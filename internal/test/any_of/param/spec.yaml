@@ -1,0 +1,42 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: AnyOf parameter
+  description: Checks parameter serialize has AnyOf
+paths:
+  /test:
+    get:
+      parameters:
+      - name: test
+        in: query
+        schema:
+          $ref: '#/components/schemas/test'
+      - name: test2
+        in: query
+        schema:
+          type: array
+          items:
+            $ref: '#/components/schemas/test2'
+components:
+  schemas:
+    test:
+      anyOf:
+        - type: object
+          required:
+            - item1
+            - item2
+          properties:
+            item1:
+              type: string
+            item2:
+              type: string
+        - type: object
+          properties:
+            item2:
+              type: string
+            item3:
+              type: string
+    test2:
+      oneOf:
+        - type: integer
+        - type: string

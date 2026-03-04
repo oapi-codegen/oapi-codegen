@@ -1,0 +1,21 @@
+openapi: "3.0.1"
+components:
+  schemas:
+    foo:
+      properties:
+        field1:
+          type: string
+    bar:
+      properties:
+        field2:
+          type: string
+  responses:
+    test:
+      content:
+        multipart/related:
+          schema:
+            properties:
+              jsonFoo:
+                $ref: '#/components/schemas/foo'
+              jsonBar:
+                $ref: '#/components/schemas/bar'

@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: tocamelcase
+generate:
+  gorilla-server: true
+  client: true
+  models: true
+  embedded-spec: true
+output: name_normalizer.gen.go
+output-options:
+  skip-prune: true
+  name-normalizer: ToCamelCase

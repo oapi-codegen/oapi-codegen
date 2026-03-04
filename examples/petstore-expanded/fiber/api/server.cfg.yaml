@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: api
+generate:
+  fiber-server: true
+  embedded-spec: true
+output: petstore-server.gen.go

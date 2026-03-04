@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: issue1087
+output:
+  api.gen.go
+generate:
+  chi-server: true
+  models: true
+  embedded-spec: false
+  client: true
+import-mapping:
+  ./deps/my-deps.json: github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1087/deps

@@ -10,7 +10,7 @@ paths:
       parameters:
         - name: Foo
           in: header
-          description: base64. bytes. chi. context. echo. errors. fmt. gzip. http. io. ioutil. json. openapi3.
+          description: base64. bytes. chi. context. echo. errors. fmt. gzip. http. io. json. openapi3.
           schema:
             type: string
           required: false

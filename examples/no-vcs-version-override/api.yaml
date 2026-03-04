@@ -1,0 +1,14 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: NOOP API
+  description: An test API to check some build-time features
+paths:
+  /nothing:
+    get:
+      operationId: getNothing
+      description: |
+        Returns nothing as expected
+      responses:
+        200:
+          description: Ok

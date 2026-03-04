@@ -1,0 +1,27 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-enumNames and x-enum-varnames
+components:
+  schemas:
+    ClientType:
+      type: string
+      enum:
+        - ACT
+        - EXP
+    ClientTypeWithNamesExtension:
+      type: string
+      enum:
+        - ACT
+        - EXP
+      x-enumNames:
+        - Active
+        - Expired
+    ClientTypeWithVarNamesExtension:
+      type: string
+      enum:
+        - ACT
+        - EXP
+      x-enum-varnames:
+        - Active
+        - Expired

@@ -1,0 +1,16 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Test Server
+  license:
+    name: MIT
+servers:
+  - url: http://openapitest.deepmap.ai
+paths:
+  /test:
+    get:
+      summary: get test response
+      operationId: TestGet
+      responses:
+        '200':
+          $ref: "pkg2.yaml#/components/responses/ResponseWithReference"

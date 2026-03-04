@@ -1,0 +1,10 @@
+openapi: 3.0.1
+
+info:
+  title: Test
+  description: Test
+  version: 1.0.0
+
+paths:
+  /bionicle/{name}:
+    $ref: "bionicle.yaml#/paths/~1bionicle~1{name}"

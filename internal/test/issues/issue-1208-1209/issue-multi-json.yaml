@@ -1,0 +1,35 @@
+openapi: 3.0.0
+paths:
+  /test:
+    get:
+      operationId: Test
+      responses:
+        "200":
+          content:
+            application/foo+json:
+              schema:
+                $ref: '#/components/schemas/foo'
+            application/bar+json:
+              schema:
+                $ref: '#/components/schemas/bar'
+        "201":
+          $ref: '#/components/responses/baz'
+components:
+  schemas:
+    foo:
+      properties:
+        field1:
+          type: string
+    bar:
+      properties:
+        field2:
+          type: string
+  responses:
+    baz:
+      content:
+        application/foo+json:
+          schema:
+            $ref: '#/components/schemas/foo'
+        application/bar+json:
+          schema:
+            $ref: '#/components/schemas/bar'

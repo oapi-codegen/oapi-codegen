@@ -1,0 +1,54 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Example with x-go-type-skip-optional-pointer
+paths:
+  /check:
+    get:
+      summary: Return example
+      responses:
+        '200':
+          description: Ok
+          content:
+            application/json:
+              schema:
+                required:
+                  - requiredField
+                properties:
+                  # Optional field where the type is a pointer to a string, and
+                  # the x-go-type-skip-optional-pointer is not set.
+                  optionalField:
+                    type: string
+                  # Optional field where the type is a pointer to a string, and
+                  # the x-go-type-skip-optional-pointer is set to false.
+                  optionalFieldSkipFalse:
+                    type: string
+                    x-go-type-skip-optional-pointer: false
+                  # Optional field where the type is a pointer to a string, and
+                  # the x-go-type-skip-optional-pointer is set to true.
+                  optionalFieldSkipTrue:
+                      type: string
+                      x-go-type-skip-optional-pointer: true
+                  # Optional field where the type is a pointer to a string, and
+                  # the x-go-type-skip-optional-pointer is set to true.
+                  customTypeWithSkipTrue:
+                    type: string
+                    x-go-type: string
+                    x-go-type-skip-optional-pointer: true
+                  # Nullable field where the type is a pointer to a string, and
+                  # the x-go-type-skip-optional-pointer is set to false.
+                  nullableFieldSkipFalse:
+                    type: string
+                    nullable: true
+                    x-go-type-skip-optional-pointer: false
+                  # Nullable field where the type is a pointer to a string, and
+                  # the x-go-type-skip-optional-pointer is set to true.
+                  nullableFieldSkipTrue:
+                    type: string
+                    nullable: true
+                    x-go-type-skip-optional-pointer: true
+                  # Check that x-go-type-skip-optional-pointer has no effect on
+                  # required fields.
+                  requiredField:
+                    type: string
+                    x-go-type-skip-optional-pointer: false

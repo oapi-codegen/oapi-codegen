@@ -1,0 +1,27 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-go-type-name
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+    ClientWithExtension:
+      type: object
+      x-go-type-name: ClientRenamedByExtension
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+          # NOTE attempting a `x-go-type-name` here is a no-op, as we're not producing a _type_ only a _field_
+          x-go-type-name: ThisWillNotBeUsed

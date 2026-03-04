@@ -1,0 +1,8 @@
+openapi: 3.0.0
+paths:
+  /test:
+    get:
+      operationId: Test
+      responses:
+        "200":
+          $ref: 'pkg2.yaml#/components/responses/test'

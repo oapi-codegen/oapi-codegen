@@ -1,0 +1,13 @@
+---
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: spec_base
+generate:
+  chi-server: true
+  strict-server: true
+  models: true
+import-mapping:
+  spec-ext.yaml: "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-removed-external-ref/gen/spec_ext"
+output: gen/spec_base/issue.gen.go
+output-options:
+  skip-prune: true
+    # skip-fmt: true

@@ -1,0 +1,18 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-oapi-codegen-only-honour-go-name
+components:
+  schemas:
+    TypeWithUnexportedField:
+      description: A struct will be output where one of the fields is not exported
+      properties:
+        name:
+          type: string
+        id:
+          type: string
+          # NOTE that there is an explicit usage of a lowercase character
+          x-go-name: accountIdentifier
+          x-oapi-codegen-extra-tags:
+            json: "-"
+          x-oapi-codegen-only-honour-go-name: true

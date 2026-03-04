@@ -1,0 +1,153 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Models",
+    "description": "",
+    "version": "2.0.0"
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "paths": {},
+  "components": {
+    "responses": {
+      "DefaultError": {
+        "description": "Default error response for any errors in the API",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "403": {
+        "description": "Forbidden. Indicates that request cannot be authorized",
+        "content": {
+          "text/plain": {
+            "schema": {
+              "type": "string",
+              "example": "Access Denied"
+            }
+          },
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "code": 403,
+              "domain": "Auth",
+              "message": "Access Denied",
+              "reason": "Access_Denied"
+            }
+          }
+        }
+      },
+      "401": {
+        "description": "Unauthorized. Indicates that provided credentials is not valid",
+        "content": {
+          "text/plain": {
+            "schema": {
+              "type": "string",
+              "example": "Jwt is expired"
+            }
+          },
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "code": 401,
+              "domain": "Auth",
+              "message": "Invalid authentication",
+              "reason": "Invalid_Authentication"
+            }
+          }
+        }
+      },
+      "410": {
+        "description": "Record no longer available",
+        "content": {
+          "text/plain": {
+            "schema": {
+              "type": "string",
+              "example": "Gone"
+            }
+          },
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            },
+            "example": {
+              "code": 410,
+              "domain": "",
+              "message": "Gone",
+              "reason": "Gone"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/BaseError"
+          }
+        ],
+        "required": [
+          "code",
+          "domain",
+          "message",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "A reason code specific to the service and can be used to identify the exact issue. Should be unique within a domain",
+            "example": "Reason_Code"
+          }
+        }
+      },
+      "BaseError": {
+        "required": [
+          "code",
+          "domain",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "The underlying http status code",
+            "format": "int32",
+            "example": 500
+          },
+          "message": {
+            "type": "string",
+            "description": "A simple message in english describing the error and can be returned to the consumer",
+            "example": "Age cannot be less than 18"
+          },
+          "domain": {
+            "type": "string",
+            "description": "The domain where the error is originating from as defined by the service",
+            "example": ""
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Any additional details to be conveyed as determined by the service. If present, will return map of key value pairs",
+            "example": {
+              "propertyName": "propertyName is required"
+            }
+          }
+        }
+      }
+    }
+  }
+}

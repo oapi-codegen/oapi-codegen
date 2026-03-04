@@ -8,16 +8,16 @@ package main
 import (
 	"flag"
 	"fmt"
+	"net"
 	"os"
 
-	"github.com/deepmap/oapi-codegen/examples/petstore-expanded/echo/api"
-	"github.com/deepmap/oapi-codegen/pkg/middleware"
 	"github.com/labstack/echo/v4"
-	echomiddleware "github.com/labstack/echo/v4/middleware"
+	middleware "github.com/oapi-codegen/echo-middleware"
+	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/echo/api"
 )
 
 func main() {
-	var port = flag.Int("port", 8080, "Port for test HTTP server")
+	port := flag.String("port", "8080", "Port for test HTTP server")
 	flag.Parse()
 
 	swagger, err := api.GetSwagger()
@@ -35,8 +35,6 @@ func main() {
 
 	// This is how you set up a basic Echo router
 	e := echo.New()
-	// Log all requests
-	e.Use(echomiddleware.Logger())
 	// Use our validation middleware to check all requests against the
 	// OpenAPI schema.
 	e.Use(middleware.OapiRequestValidator(swagger))
@@ -45,5 +43,5 @@ func main() {
 	api.RegisterHandlers(e, petStore)
 
 	// And we serve HTTP until the world ends.
-	e.Logger.Fatal(e.Start(fmt.Sprintf("0.0.0.0:%d", *port)))
+	e.Logger.Fatal(e.Start(net.JoinHostPort("0.0.0.0", *port)))
 }

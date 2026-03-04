@@ -1,4 +1,4 @@
-package issue_312
+package issue312
 
 import (
 	"context"
@@ -26,7 +26,8 @@ func TestClient_WhenPathHasColon_RequestHasCorrectPath(t *testing.T) {
 		assert.Equal(t, "http://host/pets:validate", req.URL.String())
 	})
 
-	client.ValidatePetsWithResponse(context.Background(), ValidatePetsJSONRequestBody{
+	// TODO: this err should be checked, but it defaults to returning the "something went wrong", so we should refactor accordingly
+	_, _ = client.ValidatePetsWithResponse(context.Background(), ValidatePetsJSONRequestBody{
 		Names: []string{"fido"},
 	})
 	doer.AssertExpectations(t)
@@ -43,7 +44,8 @@ func TestClient_WhenPathHasId_RequestHasCorrectPath(t *testing.T) {
 		assert.Equal(t, "/pets/id", req.URL.Path)
 	})
 	petID := "id"
-	client.GetPetWithResponse(context.Background(), petID)
+	// TODO: this err should be checked, but it defaults to returning the "something went wrong", so we should refactor accordingly
+	_, _ = client.GetPetWithResponse(context.Background(), petID)
 	doer.AssertExpectations(t)
 }
 
@@ -58,7 +60,8 @@ func TestClient_WhenPathHasIdContainingReservedCharacter_RequestHasCorrectPath(t
 		assert.Equal(t, "http://host/pets/id1%2Fid2", req.URL.String())
 	})
 	petID := "id1/id2"
-	client.GetPetWithResponse(context.Background(), petID)
+	// TODO: this err should be checked, but it defaults to returning the "something went wrong", so we should refactor accordingly
+	_, _ = client.GetPetWithResponse(context.Background(), petID)
 	doer.AssertExpectations(t)
 }
 

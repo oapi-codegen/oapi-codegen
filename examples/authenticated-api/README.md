@@ -35,7 +35,7 @@ This means that all API endpoints require a JWT bearer token for access, and
 without any specific scopes, as denoted by `[]`.
 
 However, we want our `addThing` operation to require a special write permission,
-denoted by `things:w`. This is a convention that we use in naming scopes, 
+denoted by `things:w`. This is a convention that we use in naming scopes,
 noun followed by type of access, in this case, `:w` means write. Read permission
 is implicit from having a valid JWT.
 
@@ -55,8 +55,7 @@ instead of implementing too much ourselves. We've chosen to use the excellent
 validation, and the [kin-openapi](https://github.com/getkin/kin-openapi/tree/master/openapi3filter)
 request filter to help us perform validation.
 
-First, we need to configure our [OapiRequestValidator](https://github.com/deepmap/oapi-codegen/blob/master/pkg/middleware/oapi_validate.go)
-to perform authentication:
+First, we need to configure our `OapiRequestValidator` to perform authentication:
 ```go
 validator := middleware.OapiRequestValidatorWithOptions(spec,
     &middleware.Options{

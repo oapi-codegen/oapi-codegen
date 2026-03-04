@@ -1,0 +1,23 @@
+// IrisServerOption is the option for iris server
+type IrisServerOptions struct {
+    BaseURL string
+    Middlewares []MiddlewareFunc
+}
+
+// RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
+func RegisterHandlers(router *iris.Application, si ServerInterface) {
+    RegisterHandlersWithOptions(router, si, IrisServerOptions{})
+}
+
+
+// RegisterHandlersWithOptions creates http.Handler with additional options
+func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, options IrisServerOptions) {
+{{if .}}
+    wrapper := ServerInterfaceWrapper{
+        Handler: si,
+    }
+{{end}}
+{{range .}}router.{{.Method | lower | title}}(options.BaseURL + "{{.Path | swaggerUriToIrisUri}}", wrapper.{{.OperationId}})
+{{end}}
+    router.Build()
+}

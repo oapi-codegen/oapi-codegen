@@ -1,0 +1,36 @@
+openapi: 3.0.0
+paths:
+  /test:
+    get:
+      operationId: Test
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/test'
+components:
+  schemas:
+    test:
+      properties:
+        fieldA:
+          anyOf:
+            - type: string
+            - type: string
+              enum:
+                - foo
+                - bar
+        fieldB:
+          allOf:
+            - type: string
+            - type: string
+              enum:
+                - foo
+                - bar
+        fieldC:
+          oneOf:
+            - type: string
+            - type: string
+              enum:
+                - foo
+                - bar

@@ -1,59 +1,128 @@
 package codegen
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
 const (
-	extPropGoType    = "x-go-type"
-	extGoName        = "x-go-name"
-	extPropOmitEmpty = "x-omitempty"
-	extPropExtraTags = "x-oapi-codegen-extra-tags"
+	// extPropGoType overrides the generated type definition. When
+	// resolve-type-name-collisions is enabled, the collision resolver
+	// controls the final Go type name; this extension controls what
+	// that name aliases or refers to.
+	extPropGoType = "x-go-type"
+	// extPropGoTypeSkipOptionalPointer specifies that optional fields should
+	// be the type itself instead of a pointer to the type.
+	extPropGoTypeSkipOptionalPointer = "x-go-type-skip-optional-pointer"
+	// extPropGoImport specifies the module to import which provides above type
+	extPropGoImport = "x-go-type-import"
+	// extGoName is used to override a field name
+	extGoName = "x-go-name"
+	// extGoTypeName overrides a generated typename. When
+	// resolve-type-name-collisions is enabled, the collision resolver
+	// controls the top-level Go type name; this extension controls
+	// the name of the underlying type definition that gets aliased.
+	extGoTypeName        = "x-go-type-name"
+	extPropGoJsonIgnore  = "x-go-json-ignore"
+	extPropOmitEmpty     = "x-omitempty"
+	extPropOmitZero      = "x-omitzero"
+	extPropExtraTags     = "x-oapi-codegen-extra-tags"
+	extEnumVarNames      = "x-enum-varnames"
+	extEnumNames         = "x-enumNames"
+	extDeprecationReason = "x-deprecated-reason"
+	extOrder             = "x-order"
+	// extOapiCodegenOnlyHonourGoName is to be used to explicitly enforce the generation of a field as the `x-go-name` extension has describe it.
+	// This is intended to be used alongside the `allow-unexported-struct-field-names` Compatibility option
+	extOapiCodegenOnlyHonourGoName = "x-oapi-codegen-only-honour-go-name"
 )
 
-func extString(extPropValue interface{}) (string, error) {
-	raw, ok := extPropValue.(json.RawMessage)
+func extString(extPropValue any) (string, error) {
+	str, ok := extPropValue.(string)
 	if !ok {
 		return "", fmt.Errorf("failed to convert type: %T", extPropValue)
 	}
-	var str string
-	if err := json.Unmarshal(raw, &str); err != nil {
-		return "", fmt.Errorf("failed to unmarshal json: %w", err)
-	}
-
 	return str, nil
 }
-func extTypeName(extPropValue interface{}) (string, error) {
+
+func extTypeName(extPropValue any) (string, error) {
 	return extString(extPropValue)
 }
 
-func extParseGoFieldName(extPropValue interface{}) (string, error) {
-	return extString(extPropValue)
-}
-
-func extParseOmitEmpty(extPropValue interface{}) (bool, error) {
-	raw, ok := extPropValue.(json.RawMessage)
+func extParsePropGoTypeSkipOptionalPointer(extPropValue any) (bool, error) {
+	goTypeSkipOptionalPointer, ok := extPropValue.(bool)
 	if !ok {
 		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
 	}
+	return goTypeSkipOptionalPointer, nil
+}
 
-	var omitEmpty bool
-	if err := json.Unmarshal(raw, &omitEmpty); err != nil {
-		return false, fmt.Errorf("failed to unmarshal json: %w", err)
+func extParseGoFieldName(extPropValue any) (string, error) {
+	return extString(extPropValue)
+}
+
+func extParseOmitEmpty(extPropValue any) (bool, error) {
+	omitEmpty, ok := extPropValue.(bool)
+	if !ok {
+		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
 	}
-
 	return omitEmpty, nil
 }
 
-func extExtraTags(extPropValue interface{}) (map[string]string, error) {
-	raw, ok := extPropValue.(json.RawMessage)
+func extParseOmitZero(extPropValue any) (bool, error) {
+	omitZero, ok := extPropValue.(bool)
+	if !ok {
+		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
+	}
+	return omitZero, nil
+}
+
+func extExtraTags(extPropValue any) (map[string]string, error) {
+	tagsI, ok := extPropValue.(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("failed to convert type: %T", extPropValue)
 	}
-	var tags map[string]string
-	if err := json.Unmarshal(raw, &tags); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal json: %w", err)
+	tags := make(map[string]string, len(tagsI))
+	for k, v := range tagsI {
+		vs, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to convert type: %T", v)
+		}
+		tags[k] = vs
 	}
 	return tags, nil
+}
+
+func extParseGoJsonIgnore(extPropValue any) (bool, error) {
+	goJsonIgnore, ok := extPropValue.(bool)
+	if !ok {
+		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
+	}
+	return goJsonIgnore, nil
+}
+
+func extParseEnumVarNames(extPropValue any) ([]string, error) {
+	namesI, ok := extPropValue.([]any)
+	if !ok {
+		return nil, fmt.Errorf("failed to convert type: %T", extPropValue)
+	}
+	names := make([]string, len(namesI))
+	for i, v := range namesI {
+		vs, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("failed to convert type: %T", v)
+		}
+		names[i] = vs
+	}
+	return names, nil
+}
+
+func extParseDeprecationReason(extPropValue any) (string, error) {
+	return extString(extPropValue)
+}
+
+func extParseOapiCodegenOnlyHonourGoName(extPropValue any) (bool, error) {
+	onlyHonourGoName, ok := extPropValue.(bool)
+	if !ok {
+		return false, fmt.Errorf("failed to convert type: %T", extPropValue)
+	}
+	return onlyHonourGoName, nil
 }

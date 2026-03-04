@@ -1,0 +1,7 @@
+openapi: 3.0.2
+info:
+  version: "0.0.1"
+paths:
+  /3gpp/foo:
+    get:
+      operationId: 3GPPFoo

@@ -1,0 +1,26 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-order
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        a_name:
+          type: string
+        id:
+          type: number
+    ClientWithExtension:
+      type: object
+      required:
+        - name
+      properties:
+        a_name:
+          type: string
+          x-order: 2
+        id:
+          type: number
+          x-order: 1

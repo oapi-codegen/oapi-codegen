@@ -1,0 +1,30 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-oapi-codegen-extra-tags
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+        - id
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+    ClientWithExtension:
+      type: object
+      required:
+        - name
+        - id
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+          x-oapi-codegen-extra-tags:
+            validate: "required,min=1,max=256"
+            safe-to-log: "true"
+            gorm: primarykey

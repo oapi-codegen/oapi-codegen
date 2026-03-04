@@ -12,12 +12,6 @@
     {{range .Contents -}}
         {{if and (not $hasHeaders) (.IsSupported) -}}
             type {{$name}}{{.NameTagOrContentType}}Response {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if .Schema.IsRef}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
-
-            {{if and (not (and .Schema.IsRef)) (eq .NameTag "JSON")}}
-                func (t {{$name}}{{.NameTagOrContentType}}Response) MarshalJSON() ([]byte, error) {
-                    return json.Marshal(({{.Schema.GoType}})(t))
-                }
-            {{end}}
         {{else -}}
             type {{$name}}{{.NameTagOrContentType}}Response struct {
                 Body {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
@@ -34,11 +28,6 @@
                     ContentLength int64
                 {{end -}}
             }
-            {{if eq .NameTag "JSON"}}
-                func (t {{$name}}{{.NameTagOrContentType}}Response) MarshalJSON() ([]byte, error) {
-                    return json.Marshal(t.Body)
-                }
-            {{end}}
         {{end -}}
     {{end -}}
 
