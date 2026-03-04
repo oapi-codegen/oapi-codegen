@@ -1,0 +1,4 @@
+package: discriminator
+generate:
+  models: true
+output: client.gen.go

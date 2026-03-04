@@ -1,0 +1,534 @@
+openapi: 3.0.1
+info:
+  title: Animal Management API with Discriminator
+  version: 1.0.0
+  description: Example API demonstrating discriminator usage with allOf
+
+paths:
+  # pets
+  /pets:
+    get:
+      summary: Get pets
+      operationId: getPets
+      responses:
+        '200':
+          description: List of pets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+    post:
+      summary: Create a pet
+      operationId: createPet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+      responses:
+        '200':
+          description: Pet created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+  
+  /pets/{petId}:
+    get:
+      summary: Get a pet by ID
+      operationId: getPet
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pet retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+
+  # pets activities
+  /pets/{petId}/activities:
+    get:
+      summary: Get all activities
+      operationId: getActivities
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of activities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PetActivity'
+    post:
+      summary: Log activity
+      operationId: logActivity
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetActivity'
+      responses:
+        '201':
+          description: Activity logged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetActivity'
+  
+  /pets/{petId}/activities/{activityId}:
+    get:
+      summary: Get activity by ID
+      operationId: getActivity
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: activityId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Activity retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PetActivity'
+
+  # pets health-records
+  /pets/{petId}/health-records:
+    get:
+      summary: Get all health records
+      operationId: getHealthRecords
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of health records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HealthRecord'
+    post:
+      summary: Add health record
+      operationId: addHealthRecord
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HealthRecord'
+      responses:
+        '201':
+          description: Record added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthRecord'
+  
+  /pets/{petId}/health-records/{recordId}:
+    get:
+      summary: Get health record by ID
+      operationId: getHealthRecord
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: recordId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Health record retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthRecord'
+
+  # animals
+  /animals:
+    get:
+      summary: Get all animals
+      operationId: getAllAnimals
+      responses:
+        '200':
+          description: List of animals
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Animal'
+    post:
+      summary: Register animal
+      operationId: registerAnimal
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Animal'
+      responses:
+        '201':
+          description: Animal registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Animal'
+  
+  /animals/{animalId}:
+    get:
+      summary: Get an animal by ID
+      operationId: getAnimal
+      parameters:
+        - name: animalId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Animal retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Animal'
+  
+  # pests
+  /pests:
+    get:
+      summary: Get pests
+      operationId: getPests
+      responses:
+        '200':
+          description: List of pests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pest'
+    post:
+      summary: Create a pest
+      operationId: createPest
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pest'
+      responses:
+        '200':
+          description: Pest created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pest'
+  
+  /pests/{pestId}:
+    get:
+      summary: Get a pest by ID
+      operationId: getPest
+      parameters:
+        - name: pestId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pest retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pest'
+
+components:
+  schemas:
+    # Scenario 1: Standard discriminator (inherited from base)
+    Pet:
+      type: object
+      required:
+        - petType
+        - name
+      properties:
+        id:
+          type: string
+        petType:
+          type: string
+        name:
+          type: string
+      discriminator:
+        propertyName: petType
+        mapping:
+          cat: '#/components/schemas/Cat'
+          dog: '#/components/schemas/Dog'
+          mouse: '#/components/schemas/Mouse'
+    
+    Cat:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+        - type: object
+          properties:
+            meow:
+              type: boolean
+    
+    Dog:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+        - type: object
+          properties:
+            bark:
+              type: boolean
+
+    # Scenario 2: Discriminator at schema level with allOf
+    # PetActivity has allOf + discriminator defined at top level (not in base)
+    BaseActivity:
+      type: object
+      required:
+        - duration
+      properties:
+        id:
+          type: string
+        duration:
+          type: integer
+    
+    PetActivity:
+      allOf:
+        - $ref: '#/components/schemas/BaseActivity'
+        - type: object
+          required:
+            - activityType
+          properties:
+            activityType:
+              type: string
+      discriminator:
+        propertyName: activityType
+        mapping:
+          feeding: '#/components/schemas/FeedingActivity'
+          walking: '#/components/schemas/WalkingActivity'
+    
+    FeedingActivity:
+      allOf:
+        - $ref: '#/components/schemas/PetActivity'
+        - type: object
+          required:
+            - foodType
+          properties:
+            foodType:
+              type: string
+    
+    WalkingActivity:
+      allOf:
+        - $ref: '#/components/schemas/PetActivity'
+        - type: object
+          required:
+            - distance
+          properties:
+            distance:
+              type: number
+
+    # Scenario 3: Discriminator in inline allOf element
+    # Discriminator defined inside an inline (non-$ref) allOf element
+    BaseHealthRecord:
+      type: object
+      required:
+        - date
+      properties:
+        id:
+          type: string
+        date:
+          type: string
+          format: date
+    
+    HealthRecord:
+      allOf:
+        - $ref: '#/components/schemas/BaseHealthRecord'
+        - type: object
+          required:
+            - recordType
+          properties:
+            recordType:
+              type: string
+          discriminator:
+            propertyName: recordType
+            mapping:
+              vaccination: '#/components/schemas/VaccinationRecord'
+              checkup: '#/components/schemas/CheckupRecord'
+    
+    VaccinationRecord:
+      allOf:
+        - $ref: '#/components/schemas/HealthRecord'
+        - type: object
+          required:
+            - vaccine
+          properties:
+            vaccine:
+              type: string
+    
+    CheckupRecord:
+      allOf:
+        - $ref: '#/components/schemas/HealthRecord'
+        - type: object
+          required:
+            - weight
+          properties:
+            weight:
+              type: number
+
+    # Scenario 4: Nested discriminators (multi-level hierarchy)
+    # Top -> Middle (with discriminator) -> Child
+    Animal:
+      type: object
+      required:
+        - animalType
+        - name
+      properties:
+        id:
+          type: string
+        animalType:
+          type: string
+        name:
+          type: string
+      discriminator:
+        propertyName: animalType
+        mapping:
+          domestic: '#/components/schemas/DomesticAnimal'
+          wild: '#/components/schemas/WildAnimal'
+    
+    # Middle level with its own discriminator
+    DomesticAnimal:
+      allOf:
+        - $ref: '#/components/schemas/Animal'
+        - type: object
+          required:
+            - domesticType
+          properties:
+            domesticType:
+              type: string
+            owner:
+              type: string
+      discriminator:
+        propertyName: domesticType
+        mapping:
+          housecat: '#/components/schemas/HouseCat'
+          housedog: '#/components/schemas/HouseDog'
+    
+    HouseCat:
+      allOf:
+        - $ref: '#/components/schemas/DomesticAnimal'
+        - type: object
+          properties:
+            indoor:
+              type: boolean
+    
+    HouseDog:
+      allOf:
+        - $ref: '#/components/schemas/DomesticAnimal'
+        - type: object
+          properties:
+            trained:
+              type: boolean
+    
+    # Another middle level with its own discriminator
+    WildAnimal:
+      allOf:
+        - $ref: '#/components/schemas/Animal'
+        - type: object
+          required:
+            - wildType
+          properties:
+            wildType:
+              type: string
+            habitat:
+              type: string
+      discriminator:
+        propertyName: wildType
+        mapping:
+          lion: '#/components/schemas/Lion'
+          tiger: '#/components/schemas/Tiger'
+    
+    Lion:
+      allOf:
+        - $ref: '#/components/schemas/WildAnimal'
+        - type: object
+          required:
+            - maneColor
+          properties:
+            maneColor:
+              type: string
+    
+    Tiger:
+      allOf:
+        - $ref: '#/components/schemas/WildAnimal'
+        - type: object
+          properties:
+            stripeCount:
+              type: integer
+
+    # Scenario 5: Multiple discriminators (merging two schemas with discriminators)
+    Pest:
+      type: object
+      required:
+        - pestType
+        - habitat
+      properties:
+        id:
+          type: string
+        pestType:
+          type: string
+        habitat:
+          type: string
+      discriminator:
+        propertyName: pestType
+        mapping:
+          mouse: '#/components/schemas/Mouse'
+    
+    # Mouse inherits from both Pet and Pest which have different discriminator property names
+    Mouse:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+        - $ref: '#/components/schemas/Pest'
+        - type: object
+          properties:
+            tailLength:
+              type: number
+
