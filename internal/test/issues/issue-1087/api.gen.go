@@ -33,6 +33,9 @@ type N404 = externalRef0.Error
 // ThingResponse Object containing list of Things
 type ThingResponse = ThingList
 
+// bearerAuthWebhookContextKey is the context key for bearerAuthWebhook security scheme
+type bearerAuthWebhookContextKey string
+
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 

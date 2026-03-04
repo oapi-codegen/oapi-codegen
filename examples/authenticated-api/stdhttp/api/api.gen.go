@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	BearerAuthScopes = "BearerAuth.Scopes"
+	BearerAuthScopes bearerAuthContextKey = "BearerAuth.Scopes"
 )
 
 // Error defines model for Error.
@@ -44,6 +44,9 @@ type ThingWithID struct {
 	Id   int64  `json:"id"`
 	Name string `json:"name"`
 }
+
+// bearerAuthContextKey is the context key for BearerAuth security scheme
+type bearerAuthContextKey string
 
 // AddThingJSONRequestBody defines body for AddThing for application/json ContentType.
 type AddThingJSONRequestBody = Thing
