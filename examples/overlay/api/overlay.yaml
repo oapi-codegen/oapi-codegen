@@ -1,0 +1,65 @@
+overlay: 1.0.0
+info:
+  title: "Example to indicate how to use the OpenAPI Overlay specification (https://github.com/OAI/Overlay-Specification)"
+  version: 1.0.0
+actions:
+####################################################################################################
+# Structured Overlays, via https://github.com/OAI/Overlay-Specification/blob/main/versions/1.0.0.md#examples
+- target: "$"
+  description: Perform a structural overlay, which can be more readable, as it's clear what the shape of the document is
+  update:
+    info:
+      x-overlay-applied: structured-overlay
+    paths:
+      /ping:
+        get:
+          responses:
+            '200':
+              description: Perform a ping request
+
+####################################################################################################
+# Wildcard/Targeted overlays, via https://github.com/OAI/Overlay-Specification/blob/main/versions/1.0.0.md#examples
+#
+- target: $.paths.*.*[?(!@.servers)]
+  description: Override the servers
+  update:
+    servers:
+      - url: http://localhost:35123
+        description: The default server.
+- target: $.components.schemas.Pong
+  description: Override the Pong schema to utilise the `x-go-name` to override the generated Go type name
+  update:
+    x-go-name: OverriddenPong
+
+- target: $.paths['/ping'].get
+  description: Override the poorly documented internal description for the ping API
+  update:
+    description: Check that the API is running OK
+
+- target: $.components.schemas.Pong.properties.seed
+  description: Hide information about the Seed parameter
+  remove: true
+
+- target: $.components.schemas.*.*.*[?(@.x-internal)]
+  description: Remove any internal fields on Schemas (noted by x-internal)
+  remove: true
+
+- target: $.paths.*.*.requestBody.*.*.schema..[?(@.x-internal)]
+  description: Remove any internal fields on request bodies (noted by x-internal)
+  remove: true
+
+- target: $.paths.*.*.responses.*.*.*.schema..[?(@.x-internal)]
+  description: Remove any internal fields on responses (noted by x-internal)
+  remove: true
+
+- target: $.paths.*[?(@.x-internal)]
+  description: Remove internal endpoints (noted by x-internal)
+  remove: true
+
+- target: $.paths.*.*[?(@.x-internal)]
+  description: Remove internal endpoints (noted by x-internal)
+  remove: true
+
+- target: $.paths.*.*[?(@.tags[*] == 'internal')]
+  description: Remove internal endpoints (noted by internal tag)
+  remove: true

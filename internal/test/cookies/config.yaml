@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: cookies
+generate:
+  chi-server: true
+  models: true
+output: cookies.gen.go

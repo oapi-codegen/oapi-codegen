@@ -26,7 +26,7 @@ This may get converted into a feature request if we don't deem it a bug, but a m
 
 ### Asking a question
 
-We'd prefer that questions about "how do I use (this feature)?" or "what do the community think about ...?" get asked using [GitHub Discussions](https://github.com/deepmap/oapi-codegen/discussions) which allow the community to answer them more easily.
+We'd prefer that questions about "how do I use (this feature)?" or "what do the community think about ...?" get asked using [GitHub Discussions](https://github.com/oapi-codegen/oapi-codegen/discussions) which allow the community to answer them more easily.
 
 ### Making changes that tweak generated code
 
@@ -35,7 +35,7 @@ If you are making changes to the codebase that affects the code that gets genera
 These generated test cases and examples provide a means to not only validate the functionality, but as they are checked in to source code, allow us to see if there are any subtle issues or breaking changes.
 
 > [!NOTE]
-> Significant changes to generated code are likely to be merged, especially in cases where there would be a breaking change that all consumers would have to respond to i.e. renaming a function or changing the function signature.
+> Significant changes to generated code are unlikely to be merged, especially in cases where there would be a breaking change that all consumers would have to respond to i.e. renaming a function or changing the function signature.
 >
 > However, if we can make this an opt-in feature (using the `output-options` configuration object) then that would be our preference.
 
@@ -51,6 +51,8 @@ Features that amend the way existing codegen works should - ideally - be behind 
 
 > [!TIP]
 > The minimal reproductions for bugs may get taken into the codebase (licensed under `Apache-2.0`) as a test-case for future regression testing
+>
+> However, this can only be done if you license the code under `Apache-2.0` itself - if you are comfortable doing so, please do.
 
 When raising a bug report, or asking a question about functionality, it's super helpful if you can share:
 

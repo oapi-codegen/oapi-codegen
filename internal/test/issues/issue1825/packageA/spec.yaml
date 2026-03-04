@@ -1,0 +1,6 @@
+components:
+  schemas:
+    ObjectA:
+      properties:
+        name:
+          type: string

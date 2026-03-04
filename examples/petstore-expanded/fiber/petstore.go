@@ -13,8 +13,8 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/deepmap/oapi-codegen/v2/examples/petstore-expanded/fiber/api"
 	middleware "github.com/oapi-codegen/fiber-middleware"
+	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/fiber/api"
 )
 
 func main() {

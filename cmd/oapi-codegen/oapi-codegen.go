@@ -25,11 +25,14 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/deepmap/oapi-codegen/v2/pkg/codegen"
-	"github.com/deepmap/oapi-codegen/v2/pkg/util"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
-func errExit(format string, args ...interface{}) {
+func errExit(format string, args ...any) {
+	if !strings.HasSuffix(format, "\n") {
+		format = format + "\n"
+	}
 	_, _ = fmt.Fprintf(os.Stderr, format, args...)
 	os.Exit(1)
 }
@@ -108,7 +111,7 @@ func main() {
 	flag.StringVar(&flagImportMapping, "import-mapping", "", "A dict from the external reference to golang package path.")
 	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation.")
 	flag.StringVar(&flagResponseTypeSuffix, "response-type-suffix", "", "The suffix used for responses types.")
-	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations of possible.")
+	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations if possible.")
 	flag.BoolVar(&flagInitialismOverrides, "initialism-overrides", false, "Use initialism overrides.")
 
 	flag.Parse()
@@ -268,6 +271,16 @@ func main() {
 		errExit("configuration error: %v\n", err)
 	}
 
+	if warnings := opts.Generate.Warnings(); len(warnings) > 0 {
+		var out strings.Builder
+		out.WriteString("WARNING: A number of warning(s) were returned when validating the GenerateOptions:")
+		for k, v := range warnings {
+			out.WriteString("\n- " + k + ": " + v)
+		}
+
+		_, _ = fmt.Fprint(os.Stderr, out.String())
+	}
+
 	// If the user asked to output configuration, output it to stdout and exit
 	if flagOutputConfig {
 		buf, err := yaml.Marshal(opts)
@@ -278,17 +291,27 @@ func main() {
 		return
 	}
 
-	swagger, err := util.LoadSwaggerWithCircularReferenceCount(flag.Arg(0), opts.Compatibility.CircularReferenceLimit)
+	overlayOpts := util.LoadSwaggerWithOverlayOpts{
+		Path: opts.OutputOptions.Overlay.Path,
+		// default to strict, but can be overridden
+		Strict: true,
+	}
+
+	if opts.OutputOptions.Overlay.Strict != nil {
+		overlayOpts.Strict = *opts.OutputOptions.Overlay.Strict
+	}
+
+	swagger, err := util.LoadSwaggerWithOverlay(flag.Arg(0), overlayOpts)
 	if err != nil {
-		errExit("error loading swagger spec in %s\n: %s", flag.Arg(0), err)
+		errExit("error loading swagger spec in %s\n: %s\n", flag.Arg(0), err)
 	}
 
 	if strings.HasPrefix(swagger.OpenAPI, "3.1.") {
-		fmt.Println("WARNING: You are using an OpenAPI 3.1.x specification, which is not yet supported by oapi-codegen (https://github.com/deepmap/oapi-codegen/issues/373) and so some functionality may not be available. Until oapi-codegen supports OpenAPI 3.1, it is recommended to downgrade your spec to 3.0.x")
+		fmt.Fprintln(os.Stderr, "WARNING: You are using an OpenAPI 3.1.x specification, which is not yet supported by oapi-codegen (https://github.com/oapi-codegen/oapi-codegen/issues/373) and so some functionality may not be available. Until oapi-codegen supports OpenAPI 3.1, it is recommended to downgrade your spec to 3.0.x")
 	}
 
 	if len(noVCSVersionOverride) > 0 {
-		opts.Configuration.NoVCSVersionOverride = &noVCSVersionOverride
+		opts.NoVCSVersionOverride = &noVCSVersionOverride
 	}
 
 	code, err := codegen.Generate(swagger, opts.Configuration)
@@ -297,6 +320,9 @@ func main() {
 	}
 
 	if opts.OutputFile != "" {
+		if err := os.MkdirAll(filepath.Dir(opts.OutputFile), 0o755); err != nil {
+			errExit("error unable to create directory: %s\n", err)
+		}
 		err = os.WriteFile(opts.OutputFile, []byte(code), 0o644)
 		if err != nil {
 			errExit("error writing generated code to file: %s\n", err)
@@ -486,6 +512,8 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 			opts.FiberServer = true
 		case "server", "echo-server", "echo":
 			opts.EchoServer = true
+		case "echo5", "echo5-server":
+			opts.Echo5Server = true
 		case "gin", "gin-server":
 			opts.GinServer = true
 		case "gorilla", "gorilla-server":

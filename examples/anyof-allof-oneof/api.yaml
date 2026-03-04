@@ -32,7 +32,7 @@ components:
             - id
 
     # allOf performs a union of all types defined, but if there's a duplicate field defined, it'll be overwritten by the last schema
-    # https://github.com/deepmap/oapi-codegen/issues/1569
+    # https://github.com/oapi-codegen/oapi-codegen/issues/1569
     IdentityWithDuplicateField:
       allOf:
         # `issuer` will be ignored

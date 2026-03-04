@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: issue1469
+generate:
+  fiber-server: true
+output: main.gen.go

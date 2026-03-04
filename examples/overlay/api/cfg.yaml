@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: api
+output: ping.gen.go
+generate:
+  models: true
+  gorilla-server: true
+  embedded-spec: true
+output-options:
+  overlay:
+    path: overlay.yaml

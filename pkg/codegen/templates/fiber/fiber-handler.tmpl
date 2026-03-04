@@ -16,7 +16,7 @@ Handler: si,
 }
 
 for _, m := range options.Middlewares {
-    router.Use(m)
+    router.Use(fiber.Handler(m))
 }
 {{end}}
 {{range .}}

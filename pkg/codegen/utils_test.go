@@ -156,26 +156,11 @@ func TestToCamelCaseWithInitialisms(t *testing.T) {
 	}
 }
 
-func TestSortedSchemaKeys(t *testing.T) {
-	dict := map[string]*openapi3.SchemaRef{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedSchemaKeys(dict), "Keys are not sorted properly")
-}
-
 func TestSortedSchemaKeysWithXOrder(t *testing.T) {
 	withOrder := func(i float64) *openapi3.SchemaRef {
 		return &openapi3.SchemaRef{
 			Value: &openapi3.Schema{
-				Extensions: map[string]interface{}{"x-order": i},
+				Extensions: map[string]any{"x-order": i},
 			},
 		}
 	}
@@ -246,102 +231,16 @@ components:
 
 }
 
-func TestSortedPathsKeys(t *testing.T) {
-	dict := map[string]*openapi3.PathItem{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedPathsKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedOperationsKeys(t *testing.T) {
-	dict := map[string]*openapi3.Operation{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedOperationsKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedResponsesKeys(t *testing.T) {
-	dict := map[string]*openapi3.ResponseRef{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedResponsesKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedContentKeys(t *testing.T) {
-	dict := openapi3.Content{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedContentKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedParameterKeys(t *testing.T) {
-	dict := map[string]*openapi3.ParameterRef{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedParameterKeys(dict), "Keys are not sorted properly")
-}
-
-func TestSortedRequestBodyKeys(t *testing.T) {
-	dict := map[string]*openapi3.RequestBodyRef{
-		"f": nil,
-		"c": nil,
-		"b": nil,
-		"e": nil,
-		"d": nil,
-		"a": nil,
-	}
-
-	expected := []string{"a", "b", "c", "d", "e", "f"}
-
-	assert.EqualValues(t, expected, SortedRequestBodyKeys(dict), "Keys are not sorted properly")
-}
-
 func TestRefPathToGoType(t *testing.T) {
 	old := globalState.importMapping
-	globalState.importMapping = constructImportMapping(map[string]string{
-		"doc.json":                    "externalref0",
-		"http://deepmap.com/doc.json": "externalref1",
-	})
+	globalState.importMapping = constructImportMapping(
+		map[string]string{
+			"doc.json":                    "externalref0",
+			"http://deepmap.com/doc.json": "externalref1",
+			// using the "current package" mapping
+			"dj-current-package.yml": "-",
+		},
+	)
 	defer func() { globalState.importMapping = old }()
 
 	tests := []struct {
@@ -363,6 +262,11 @@ func TestRefPathToGoType(t *testing.T) {
 			name:   "local-responses",
 			path:   "#/components/responses/wibble",
 			goType: "Wibble",
+		},
+		{
+			name:   "local-mapped-current-package",
+			path:   "dj-current-package.yml#/components/schemas/Foo",
+			goType: "Foo",
 		},
 		{
 			name:   "remote-root",
@@ -535,6 +439,7 @@ func TestSwaggerUriToChiUri(t *testing.T) {
 }
 
 func TestSwaggerUriToStdHttpUriUri(t *testing.T) {
+	assert.Equal(t, "/{$}", SwaggerUriToStdHttpUri("/"))
 	assert.Equal(t, "/path", SwaggerUriToStdHttpUri("/path"))
 	assert.Equal(t, "/path/{arg}", SwaggerUriToStdHttpUri("/path/{arg}"))
 	assert.Equal(t, "/path/{arg1}/{arg2}", SwaggerUriToStdHttpUri("/path/{arg1}/{arg2}"))
@@ -557,11 +462,88 @@ func TestOrderedParamsFromUri(t *testing.T) {
 
 	result = OrderedParamsFromUri("/path/foo")
 	assert.EqualValues(t, []string{}, result)
+
+	// A parameter can appear more than once in the URI (e.g. Keycloak API).
+	// OrderedParamsFromUri faithfully returns all occurrences.
+	result = OrderedParamsFromUri("/admin/realms/{realm}/clients/{client-uuid}/roles/{role-name}/composites/clients/{client-uuid}")
+	assert.EqualValues(t, []string{"realm", "client-uuid", "role-name", "client-uuid"}, result)
+}
+
+func TestSortParamsByPath(t *testing.T) {
+	strSchema := &openapi3.Schema{Type: &openapi3.Types{"string"}}
+
+	t.Run("reorders params to match path order", func(t *testing.T) {
+		params := []ParameterDefinition{
+			{ParamName: "b", In: "path", Spec: &openapi3.Parameter{Name: "b", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+			{ParamName: "a", In: "path", Spec: &openapi3.Parameter{Name: "a", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+		}
+		sorted, err := SortParamsByPath("/foo/{a}/bar/{b}", params)
+		require.NoError(t, err)
+		require.Len(t, sorted, 2)
+		assert.Equal(t, "a", sorted[0].ParamName)
+		assert.Equal(t, "b", sorted[1].ParamName)
+	})
+
+	t.Run("errors on missing parameter", func(t *testing.T) {
+		params := []ParameterDefinition{
+			{ParamName: "a", In: "path", Spec: &openapi3.Parameter{Name: "a", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+		}
+		_, err := SortParamsByPath("/foo/{a}/bar/{b}", params)
+		assert.Error(t, err)
+	})
+
+	t.Run("handles duplicate path parameters", func(t *testing.T) {
+		// This is the Keycloak-style path where {client-uuid} appears twice.
+		// The spec only declares 3 unique parameters.
+		params := []ParameterDefinition{
+			{ParamName: "realm", In: "path", Spec: &openapi3.Parameter{Name: "realm", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+			{ParamName: "client-uuid", In: "path", Spec: &openapi3.Parameter{Name: "client-uuid", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+			{ParamName: "role-name", In: "path", Spec: &openapi3.Parameter{Name: "role-name", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+		}
+		path := "/admin/realms/{realm}/clients/{client-uuid}/roles/{role-name}/composites/clients/{client-uuid}"
+		sorted, err := SortParamsByPath(path, params)
+		require.NoError(t, err)
+		// Should return 3 unique params in first-occurrence order
+		require.Len(t, sorted, 3)
+		assert.Equal(t, "realm", sorted[0].ParamName)
+		assert.Equal(t, "client-uuid", sorted[1].ParamName)
+		assert.Equal(t, "role-name", sorted[2].ParamName)
+	})
 }
 
 func TestReplacePathParamsWithStr(t *testing.T) {
 	result := ReplacePathParamsWithStr("/path/{param1}/{.param2}/{;param3*}/foo")
 	assert.EqualValues(t, "/path/%s/%s/%s/foo", result)
+}
+
+func TestStringToGoStringValue(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected string
+		message  string
+	}{
+		{
+			input:    ``,
+			expected: `""`,
+			message:  "blank string should be converted to empty Go string literal",
+		},
+		{
+			input:    `application/json`,
+			expected: `"application/json"`,
+			message:  "typical string should be returned as-is",
+		},
+		{
+			input:    `application/json; foo="bar"`,
+			expected: `"application/json; foo=\"bar\""`,
+			message:  "string with quotes should include escape characters",
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.message, func(t *testing.T) {
+			result := StringToGoString(testCase.input)
+			assert.EqualValues(t, testCase.expected, result, testCase.message)
+		})
+	}
 }
 
 func TestStringToGoComment(t *testing.T) {
@@ -695,10 +677,15 @@ func TestSchemaNameToTypeName(t *testing.T) {
 		"@timestamp,":  "Timestamp",
 		"&now":         "AndNow",
 		"~":            "Tilde",
-		"_foo":         "Foo",
+		"_foo":         "UnderscoreFoo",
 		"=3":           "Equal3",
 		"#Tag":         "HashTag",
 		".com":         "DotCom",
+		"_1":           "Underscore1",
+		">=":           "GreaterThanEqual",
+		"<=":           "LessThanEqual",
+		"<":            "LessThan",
+		">":            "GreaterThan",
 	} {
 		assert.Equal(t, want, SchemaNameToTypeName(in))
 	}
@@ -759,7 +746,7 @@ func TestLowercaseFirstCharacters(t *testing.T) {
 	}
 }
 
-func Test_replaceInitialisms(t *testing.T) {
+func Test_replaceInitialism(t *testing.T) {
 	type args struct {
 		s string
 	}
@@ -792,6 +779,16 @@ func Test_replaceInitialisms(t *testing.T) {
 			name: "already initialism",
 			args: args{s: "fooIDBarAPI"},
 			want: "fooIDBarAPI",
+		},
+		{
+			name: "one initialism at start",
+			args: args{s: "idFoo"},
+			want: "idFoo",
+		},
+		{
+			name: "one initialism at start and one in middle",
+			args: args{s: "apiIdFoo"},
+			want: "apiIDFoo",
 		},
 	}
 	for _, tt := range tests {

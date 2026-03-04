@@ -29,8 +29,4 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/User'
-components:
-  schemas:
-    User:
-      $ref: '../common/api.yaml#/components/schemas/User'
+                $ref: '../common/api.yaml#/components/schemas/User'
