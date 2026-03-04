@@ -1,0 +1,100 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Content-Based Parameters
+paths:
+  /pathJson/{param}:
+    get:
+      operationId: getPathJson
+      parameters:
+        - name: param
+          in: path
+          required: true
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplexObject"
+      responses:
+        "200":
+          description: OK
+  /pathText/{param}:
+    get:
+      operationId: getPathText
+      parameters:
+        - name: param
+          in: path
+          required: true
+          content:
+            text/plain:
+              schema:
+                type: string
+      responses:
+        "200":
+          description: OK
+  /queryJson:
+    get:
+      operationId: getQueryJson
+      parameters:
+        - name: obj
+          in: query
+          required: false
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplexObject"
+      responses:
+        "200":
+          description: OK
+  /headerJson:
+    get:
+      operationId: getHeaderJson
+      parameters:
+        - name: X-Object
+          in: header
+          required: false
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplexObject"
+      responses:
+        "200":
+          description: OK
+  /cookieJson:
+    get:
+      operationId: getCookieJson
+      parameters:
+        - name: obj
+          in: cookie
+          required: false
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ComplexObject"
+      responses:
+        "200":
+          description: OK
+components:
+  schemas:
+    Object:
+      type: object
+      properties:
+        role:
+          type: string
+        firstName:
+          type: string
+      required:
+        - role
+        - firstName
+    ComplexObject:
+      type: object
+      properties:
+        Object:
+          $ref: "#/components/schemas/Object"
+        Id:
+          type: integer
+        IsAdmin:
+          type: boolean
+      required:
+        - Object
+        - Id
+        - IsAdmin

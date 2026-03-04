@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../../../configuration-schema.json
+package: headernilcheck
+generate:
+  models: true
+  client: true
+output-options:
+  prefer-skip-optional-pointer: true
+output: header_nilcheck.gen.go

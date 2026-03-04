@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: pathlabel
+generate:
+  echo-server: true
+  client: true
+  models: true
+output: path_label.gen.go

@@ -1,7 +1,0 @@
-# yaml-language-server: $schema=../../../configuration-schema.json
-package: components
-generate:
-  models: true
-output-options:
-  skip-prune: true
-output: components.gen.go

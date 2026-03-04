@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: allof
+generate:
+  models: true
+output: allof.gen.go

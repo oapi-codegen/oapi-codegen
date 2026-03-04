@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../../../configuration-schema.json
+package: cookienilcheck
+generate:
+  models: true
+  client: true
+output-options:
+  prefer-skip-optional-pointer: true
+output: cookie_nilcheck.gen.go

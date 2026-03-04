@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: primitives
+generate:
+  models: true
+output: primitives.gen.go

@@ -1,0 +1,80 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Query Parameters - Form Style
+paths:
+  /queryForm:
+    get:
+      operationId: getQueryForm
+      parameters:
+        - name: p
+          description: unexploded primitive
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: integer
+            format: int32
+        - name: ep
+          description: exploded primitive
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: integer
+            format: int32
+        - name: a
+          description: unexploded array
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+        - name: ea
+          description: exploded array
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+        - name: o
+          description: unexploded object
+          in: query
+          required: false
+          style: form
+          explode: false
+          schema:
+            $ref: "#/components/schemas/Object"
+        - name: eo
+          description: exploded object
+          in: query
+          required: false
+          style: form
+          explode: true
+          schema:
+            $ref: "#/components/schemas/Object"
+      responses:
+        "200":
+          description: OK
+components:
+  schemas:
+    Object:
+      type: object
+      properties:
+        role:
+          type: string
+        firstName:
+          type: string
+      required:
+        - role
+        - firstName

@@ -1,0 +1,19 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Header Parameters - Nil Check
+paths:
+  /header:
+    get:
+      operationId: getHeader
+      parameters:
+        - name: X-Tags
+          in: header
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: OK

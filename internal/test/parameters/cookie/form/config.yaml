@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../../../configuration-schema.json
+package: cookieform
+generate:
+  echo-server: true
+  client: true
+  models: true
+output: cookie_form.gen.go

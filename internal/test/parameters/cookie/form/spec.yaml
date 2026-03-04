@@ -1,0 +1,74 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Cookie Parameters - Form Style
+paths:
+  /cookie:
+    get:
+      operationId: getCookie
+      parameters:
+        - name: p
+          description: unexploded primitive
+          in: cookie
+          required: false
+          explode: false
+          schema:
+            type: integer
+            format: int32
+        - name: ep
+          description: exploded primitive
+          in: cookie
+          required: false
+          explode: true
+          schema:
+            type: integer
+            format: int32
+        - name: a
+          description: unexploded array
+          in: cookie
+          required: false
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+        - name: ea
+          description: exploded array
+          in: cookie
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+        - name: o
+          description: unexploded object
+          in: cookie
+          required: false
+          explode: false
+          schema:
+            $ref: "#/components/schemas/Object"
+        - name: eo
+          description: exploded object
+          in: cookie
+          required: false
+          explode: true
+          schema:
+            $ref: "#/components/schemas/Object"
+      responses:
+        "200":
+          description: OK
+components:
+  schemas:
+    Object:
+      type: object
+      properties:
+        role:
+          type: string
+        firstName:
+          type: string
+      required:
+        - role
+        - firstName
