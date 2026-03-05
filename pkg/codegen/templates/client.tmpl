@@ -151,7 +151,11 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
         if stringer, ok := interface{}(body).(fmt.Stringer); ok {
             bodyReader = strings.NewReader(stringer.String())
         } else {
+        {{if .Schema.IsPrimitive -}}
             bodyReader = strings.NewReader(fmt.Sprintf("%v", body))
+        {{else -}}
+            return nil, fmt.Errorf("text/plain is not supported for complex types, define a String() method on {{.Schema.TypeDecl}} to marshal it as text")
+        {{end -}}
         }
     {{end -}}
     return New{{$opid}}RequestWithBody(server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, "{{.ContentType}}", bodyReader)
