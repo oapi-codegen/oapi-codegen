@@ -19,7 +19,9 @@ import (
 	"bytes"
 	"context"
 	"embed"
+	"errors"
 	"fmt"
+	"go/scanner"
 	"io"
 	"io/fs"
 	"net/http"
@@ -50,6 +52,14 @@ var globalState struct {
 	// initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
 	// List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
 	initialismsMap map[string]string
+	// typeMapping is the merged type mapping (defaults + user overrides).
+	typeMapping TypeMapping
+	// resolvedNames maps schema path strings (e.g. "components/schemas/Pet")
+	// to their resolved Go type names, assigned by the multi-pass name resolver.
+	resolvedNames map[string]string
+	// resolvedClientWrapperNames maps operationID to the resolved Go type name
+	// for client response wrapper types (e.g., "createChatCompletion" -> "CreateChatCompletionResponseWrapper").
+	resolvedClientWrapperNames map[string]string
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -88,8 +98,8 @@ func (im importMap) GoImports() []string {
 
 func constructImportMapping(importMapping map[string]string) importMap {
 	var (
-		pathToName = map[string]string{}
-		result     = importMap{}
+		pathToImport = importMap{}
+		result       = importMap{}
 	)
 
 	{
@@ -100,13 +110,32 @@ func constructImportMapping(importMapping map[string]string) importMap {
 		sort.Strings(packagePaths)
 
 		for _, packagePath := range packagePaths {
-			if _, ok := pathToName[packagePath]; !ok && packagePath != importMappingCurrentPackage {
-				pathToName[packagePath] = fmt.Sprintf("externalRef%d", len(pathToName))
+			if _, ok := pathToImport[packagePath]; !ok && packagePath != importMappingCurrentPackage {
+				split := strings.Split(packagePath, " ")
+				if len(split) == 2 {
+					// if we have 2 parts, we assume both the package name and path are provided, and we use them as is
+					pathToImport[packagePath] = goImport{
+						Name: split[0],
+						Path: split[1],
+					}
+				} else {
+					// otherwise, we auto-generate a package name based on the order of the imports, to ensure deterministic output
+					pathToImport[packagePath] = goImport{
+						Name: fmt.Sprintf("externalRef%d", len(pathToImport)),
+						Path: packagePath,
+					}
+				}
 			}
 		}
 	}
 	for specPath, packagePath := range importMapping {
-		result[specPath] = goImport{Name: pathToName[packagePath], Path: packagePath}
+		if packagePath == importMappingCurrentPackage {
+			result[specPath] = goImport{
+				Path: importMappingCurrentPackage,
+			}
+		} else {
+			result[specPath] = pathToImport[packagePath]
+		}
 	}
 	return result
 }
@@ -119,6 +148,11 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	globalState.options = opts
 	globalState.spec = spec
 	globalState.importMapping = constructImportMapping(opts.ImportMapping)
+	if opts.OutputOptions.TypeMapping != nil {
+		globalState.typeMapping = DefaultTypeMapping.Merge(*opts.OutputOptions.TypeMapping)
+	} else {
+		globalState.typeMapping = DefaultTypeMapping
+	}
 
 	filterOperationsByTag(spec, opts)
 	filterOperationsByOperationID(spec, opts)
@@ -147,6 +181,28 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 
 	globalState.initialismsMap = makeInitialismsMap(opts.OutputOptions.AdditionalInitialisms)
+
+	// Multi-pass name resolution: gather all schemas, then resolve names globally.
+	// Only enabled when resolve-type-name-collisions is set.
+	if opts.OutputOptions.ResolveTypeNameCollisions {
+		gathered := GatherSchemas(spec, opts)
+		globalState.resolvedNames = ResolveNames(gathered)
+		// Build a separate operationID -> wrapper name lookup for genResponseTypeName.
+		// Keys must use the normalized operationID (via nameNormalizer) because
+		// OperationDefinition.OperationId is normalized before templates run.
+		globalState.resolvedClientWrapperNames = make(map[string]string)
+		for _, gs := range gathered {
+			if gs.Context == ContextClientResponseWrapper && gs.OperationID != "" {
+				if name, ok := globalState.resolvedNames[gs.Path.String()]; ok {
+					normalizedOpID := nameNormalizer(gs.OperationID)
+					globalState.resolvedClientWrapperNames[normalizedOpID] = name
+				}
+			}
+		}
+	} else {
+		globalState.resolvedNames = nil
+		globalState.resolvedClientWrapperNames = nil
+	}
 
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
@@ -202,6 +258,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		MergeImports(xGoTypeImports, imprts)
 	}
 
+	var serverURLsDefinitions string
+	if opts.Generate.ServerURLs {
+		serverURLsDefinitions, err = GenerateServerURLs(t, spec)
+		if err != nil {
+			return "", fmt.Errorf("error generating Server URLs: %w", err)
+		}
+	}
+
 	var irisServerOut string
 	if opts.Generate.IrisServer {
 		irisServerOut, err = GenerateIrisServer(t, ops)
@@ -213,6 +277,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	var echoServerOut string
 	if opts.Generate.EchoServer {
 		echoServerOut, err = GenerateEchoServer(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
+	}
+
+	var echo5ServerOut string
+	if opts.Generate.Echo5Server {
+		echo5ServerOut, err = GenerateEcho5Server(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -326,6 +398,11 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", fmt.Errorf("error writing constants: %w", err)
 	}
 
+	_, err = w.WriteString(serverURLsDefinitions)
+	if err != nil {
+		return "", fmt.Errorf("error writing Server URLs: %w", err)
+	}
+
 	_, err = w.WriteString(typeDefinitions)
 	if err != nil {
 		return "", fmt.Errorf("error writing type definitions: %w", err)
@@ -352,6 +429,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	if opts.Generate.EchoServer {
 		_, err = w.WriteString(echoServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+	}
+
+	if opts.Generate.Echo5Server {
+		_, err = w.WriteString(echo5ServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}
@@ -422,9 +506,34 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	outBytes, err := imports.Process(opts.PackageName+".go", []byte(goCode), nil)
 	if err != nil {
-		return "", fmt.Errorf("error formatting Go code %s: %w", goCode, err)
+		// if we don't get a line number
+		errLine := -1
+		var scanErr scanner.ErrorList
+		if errors.As(err, &scanErr) && scanErr.Len() > 0 {
+			// for now, only return the first error's information
+			errLine = scanErr[0].Pos.Line
+		}
+		return "", fmt.Errorf("error formatting Go code:\n%s\nerror was: %w", addLineNumbers(goCode, errLine), err)
 	}
 	return string(outBytes), nil
+}
+
+func addLineNumbers(goCode string, lineWithError int) string {
+	var out []string
+	lines := strings.Split(goCode, "\n")
+	for i, line := range lines {
+		// lines for humans start at 1
+		lineNumber := i + 1
+
+		errLine := "  "
+		if lineNumber == lineWithError {
+			errLine = "❗"
+		}
+
+		out = append(out, fmt.Sprintf("%s%5d: %s", errLine, lineNumber, line))
+	}
+
+	return strings.Join(out, "\n")
 }
 
 func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []OperationDefinition, excludeSchemas []string) (string, error) {
@@ -452,6 +561,12 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 			return "", fmt.Errorf("error generating Go types for component request bodies: %w", err)
 		}
 		allTypes = append(allTypes, bodyTypes...)
+
+		securitySchemeTypes, err := GenerateTypesForSecuritySchemes(t, swagger.Components.SecuritySchemes)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go types for component security schemes: %w", err)
+		}
+		allTypes = append(allTypes, securitySchemeTypes...)
 	}
 
 	// Go through all operations, and add their types to allTypes, so that we can
@@ -548,6 +663,10 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 			return nil, fmt.Errorf("error making name for components/schemas/%s: %w", schemaName, err)
 		}
 
+		if resolved := resolvedNameForComponent("schemas", schemaName); resolved != "" {
+			goTypeName = resolved
+		}
+
 		types = append(types, TypeDefinition{
 			JsonName: schemaName,
 			TypeName: goTypeName,
@@ -574,6 +693,10 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 		goTypeName, err := renameParameter(paramName, paramOrRef)
 		if err != nil {
 			return nil, fmt.Errorf("error making name for components/parameters/%s: %w", paramName, err)
+		}
+
+		if resolved := resolvedNameForComponent("parameters", paramName); resolved != "" {
+			goTypeName = resolved
 		}
 
 		typeDef := TypeDefinition{
@@ -623,7 +746,22 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				continue
 			}
 
-			goType, err := GenerateGoSchema(response.Schema, []string{responseName})
+			// When a response has multiple JSON content types, include the
+			// content type in the schema path so that inline types (e.g.,
+			// oneOf union members) get unique names per content type.
+			// See the matching logic in GetResponseTypeDefinitions.
+			//
+			// We only add the content type segment when collision resolution
+			// is enabled (resolve-type-name-collisions) and jsonCount > 1,
+			// to avoid changing type names for existing users. Ideally the
+			// media type would always be part of the path for consistency.
+			// TODO: revisit this at the next major version change —
+			// always include the media type in the schema path.
+			schemaPath := []string{responseName}
+			if jsonCount > 1 && globalState.options.OutputOptions.ResolveTypeNameCollisions {
+				schemaPath = append(schemaPath, mediaTypeToCamelCase(mediaType))
+			}
+			goType, err := GenerateGoSchema(response.Schema, schemaPath)
 			if err != nil {
 				return nil, fmt.Errorf("error generating Go type for schema in response %s: %w", responseName, err)
 			}
@@ -631,6 +769,10 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 			goTypeName, err := renameResponse(responseName, responseOrRef)
 			if err != nil {
 				return nil, fmt.Errorf("error making name for components/responses/%s: %w", responseName, err)
+			}
+
+			if resolved := resolvedNameForComponent("responses", responseName, mediaType); resolved != "" {
+				goTypeName = resolved
 			}
 
 			typeDef := TypeDefinition{
@@ -653,6 +795,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 			}
 
 			types = append(types, typeDef)
+			types = append(types, goType.AdditionalTypes...)
 		}
 	}
 	return types, nil
@@ -669,7 +812,8 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 		// As for responses, we will only generate Go code for JSON bodies,
 		// the other body formats are up to the user.
 		response := requestBodyRef.Value
-		for mediaType, body := range response.Content {
+		for _, mediaType := range SortedMapKeys(response.Content) {
+			body := response.Content[mediaType]
 			if !util.IsMediaTypeJson(mediaType) {
 				continue
 			}
@@ -682,6 +826,10 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 			goTypeName, err := renameRequestBody(requestBodyName, requestBodyRef)
 			if err != nil {
 				return nil, fmt.Errorf("error making name for components/schemas/%s: %w", requestBodyName, err)
+			}
+
+			if resolved := resolvedNameForComponent("requestBodies", requestBodyName, mediaType); resolved != "" {
+				goTypeName = resolved
 			}
 
 			typeDef := TypeDefinition{
@@ -699,8 +847,32 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
 			types = append(types, typeDef)
+			types = append(types, goType.AdditionalTypes...)
 		}
 	}
+	return types, nil
+}
+
+// GenerateTypesForSecuritySchemes generates type definitions for any custom types defined in the
+// components/securitySchemes section of the Swagger spec.
+func GenerateTypesForSecuritySchemes(t *template.Template, schemes map[string]*openapi3.SecuritySchemeRef) ([]TypeDefinition, error) {
+	var types []TypeDefinition
+
+	for _, schemeName := range SortedSecuritySchemeKeys(schemes) {
+		// Generate a type to be used as a key in context.WithValue
+		goTypeName := LowercaseFirstCharacter(SchemaNameToTypeName(schemeName)) + "ContextKey"
+		goType := Schema{
+			GoType:      "string",
+			Description: fmt.Sprintf("is the context key for %s security scheme", schemeName),
+		}
+
+		types = append(types, TypeDefinition{
+			JsonName: schemeName,
+			TypeName: goTypeName,
+			Schema:   goType,
+		})
+	}
+
 	return types, nil
 }
 
@@ -713,12 +885,11 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 	for _, typ := range types {
 		if prevType, found := m[typ.TypeName]; found {
 			// If type names collide, we need to see if they refer to the same
-			// exact type definition, in which case, we can de-dupe. If they don't
-			// match, we error out.
+			// exact type definition, in which case, we can de-dupe. If they
+			// don't match, we error out.
 			if TypeDefinitionsEquivalent(prevType, typ) {
 				continue
 			}
-			// We want to create an error when we try to define the same type twice.
 			return "", fmt.Errorf("duplicate typename '%s' detected, can't auto-rename, "+
 				"please use x-go-name to specify your own name for one of them", typ.TypeName)
 		}
@@ -735,6 +906,63 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 	}
 
 	return GenerateTemplates([]string{"typedef.tmpl"}, t, context)
+}
+
+// resolvedNameForComponent looks up the resolved Go type name for a component
+// identified by its section (e.g., "schemas", "parameters") and name.
+// For content-bearing sections (responses, requestBodies), an optional
+// contentType can be provided to match the exact media type entry.
+// Returns empty string if no resolved name is available.
+func resolvedNameForComponent(section, name string, contentType ...string) string {
+	if len(globalState.resolvedNames) == 0 {
+		return ""
+	}
+
+	// Direct key match for schemas, parameters, headers
+	key := "components/" + section + "/" + name
+	if resolved, ok := globalState.resolvedNames[key]; ok {
+		return resolved
+	}
+
+	// For responses and requestBodies, the path includes content type info.
+	// If a specific content type was provided, do an exact match.
+	if len(contentType) > 0 && contentType[0] != "" {
+		exactKey := key + "/content/" + contentType[0]
+		if resolved, ok := globalState.resolvedNames[exactKey]; ok {
+			return resolved
+		}
+	}
+
+	// Fall back to prefix match for callers that don't specify content type.
+	// Sort matching keys so the result is deterministic across runs.
+	prefix := key + "/"
+	var matches []string
+	for k := range globalState.resolvedNames {
+		if strings.HasPrefix(k, prefix) {
+			matches = append(matches, k)
+		}
+	}
+	if len(matches) > 0 {
+		if len(matches) > 1 {
+			sort.Strings(matches)
+		}
+		return globalState.resolvedNames[matches[0]]
+	}
+
+	return ""
+}
+
+// resolvedNameForRefPath looks up the resolved Go type name for a $ref path
+// like "#/components/responses/Foo", optionally scoped to a specific content type.
+func resolvedNameForRefPath(refPath, contentType string) string {
+	if len(globalState.resolvedNames) == 0 || !strings.HasPrefix(refPath, "#/") {
+		return ""
+	}
+	parts := strings.Split(refPath, "/")
+	if len(parts) != 4 || parts[1] != "components" {
+		return ""
+	}
+	return resolvedNameForComponent(parts[2], parts[3], contentType)
 }
 
 func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error) {
@@ -839,12 +1067,14 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 		ModuleName        string
 		Version           string
 		AdditionalImports []AdditionalImport
+		RouterImports     []AdditionalImport
 	}{
 		ExternalImports:   externalImports,
 		PackageName:       packageName,
 		ModuleName:        modulePath,
 		Version:           moduleVersion,
 		AdditionalImports: globalState.options.AdditionalImports,
+		RouterImports:     globalState.options.Generate.RouterImports(),
 	}
 
 	return GenerateTemplates([]string{"imports.tmpl"}, t, context)

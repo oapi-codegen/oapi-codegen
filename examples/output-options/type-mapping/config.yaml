@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=../../configuration-schema.json
+package: typemapping
+generate:
+  models: true
+output-options:
+  skip-prune: true
+  type-mapping:
+    number:
+      default:
+        type: int64
+      formats:
+        date:
+          type: CustomDateHandler
+output: typemapping.gen.go
