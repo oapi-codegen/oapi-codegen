@@ -430,6 +430,21 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
 }
 
 func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc, options StrictGinServerOptions) ServerInterface {
+	if options.RequestErrorHandlerFunc == nil {
+		options.RequestErrorHandlerFunc = func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
+		}
+	}
+	if options.HandlerErrorFunc == nil {
+		options.HandlerErrorFunc = func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		}
+	}
+	if options.ResponseErrorHandlerFunc == nil {
+		options.ResponseErrorHandlerFunc = func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		}
+	}
 	return &strictHandler{ssi: ssi, middlewares: middlewares, options: options}
 }
 
