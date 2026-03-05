@@ -645,7 +645,7 @@ func NewMultipleRequestAndResponseTypesRequestWithTextBody(server string, body M
 	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
 		bodyReader = strings.NewReader(stringer.String())
 	} else {
-		bodyReader = strings.NewReader(fmt.Sprintf("%v", body))
+		bodyReader = strings.NewReader(fmt.Sprint(body))
 	}
 	return NewMultipleRequestAndResponseTypesRequestWithBody(server, "text/plain", bodyReader)
 }
@@ -725,7 +725,7 @@ func NewRequiredTextBodyRequestWithTextBody(server string, body RequiredTextBody
 	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
 		bodyReader = strings.NewReader(stringer.String())
 	} else {
-		bodyReader = strings.NewReader(fmt.Sprintf("%v", body))
+		bodyReader = strings.NewReader(fmt.Sprint(body))
 	}
 	return NewRequiredTextBodyRequestWithBody(server, "text/plain", bodyReader)
 }
@@ -839,7 +839,7 @@ func NewTextExampleRequestWithTextBody(server string, body TextExampleTextReques
 	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
 		bodyReader = strings.NewReader(stringer.String())
 	} else {
-		bodyReader = strings.NewReader(fmt.Sprintf("%v", body))
+		bodyReader = strings.NewReader(fmt.Sprint(body))
 	}
 	return NewTextExampleRequestWithBody(server, "text/plain", bodyReader)
 }

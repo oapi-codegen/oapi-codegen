@@ -164,7 +164,7 @@ func NewPostPetRequestWithTextBody(server string, body PostPetTextRequestBody) (
 	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
 		bodyReader = strings.NewReader(stringer.String())
 	} else {
-		bodyReader = strings.NewReader(fmt.Sprintf("%v", body))
+		bodyReader = strings.NewReader(fmt.Sprint(body))
 	}
 	return NewPostPetRequestWithBody(server, "text/plain", bodyReader)
 }
@@ -204,7 +204,7 @@ func NewPostPet1234RequestWithTextBody(server string, body PostPet1234TextReques
 	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
 		bodyReader = strings.NewReader(stringer.String())
 	} else {
-		bodyReader = strings.NewReader(fmt.Sprintf("%v", body))
+		bodyReader = strings.NewReader(fmt.Sprint(body))
 	}
 	return NewPostPet1234RequestWithBody(server, "text/plain", bodyReader)
 }
