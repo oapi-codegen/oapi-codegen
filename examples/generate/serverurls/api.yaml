@@ -1,0 +1,47 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Server URLs can be optionally generated
+servers:
+# adapted from https://spec.openapis.org/oas/v3.0.3#server-object
+- url: https://development.gigantic-server.com/v1
+  description: Development server
+- url: https://staging.gigantic-server.com/v1
+  description: Staging server
+- url: https://api.gigantic-server.com/v1
+  description: Production server
+# adapted from https://spec.openapis.org/oas/v3.0.3#server-object
+- url: https://{username}.gigantic-server.com:{port}/{basePath}
+  description: The production API server
+  variables:
+    username:
+      # note! no enum here means it is an open value
+      default: demo
+      description: this value is assigned by the service provider, in this example `gigantic-server.com`
+    port:
+      enum:
+        - '8443'
+        - '443'
+      default: '8443'
+    basePath:
+      # open meaning there is the opportunity to use special base paths as assigned by the provider, default is `v2`
+      default: v2
+    # an example of a type that's defined, but doesn't have a default
+    noDefault: {}
+    # # TODO this conflict will cause broken generated code https://github.com/oapi-codegen/oapi-codegen/issues/2003
+    # conflicting:
+    #   enum:
+    #     - 'default'
+    #     - '443'
+    #   default: 'default'
+# clash with the previous definition of `Development server` to trigger a new name
+- url: http://localhost:80
+  description: Development server
+# clash with the previous definition of `Development server` to trigger a new name (again)
+- url: http://localhost:80
+  description: Development server
+# make sure that the lowercase `description` gets converted to an uppercase
+- url: http://localhost:80
+  description: some lowercase name
+# there may be URLs on their own, without a `description`
+- url: http://localhost:443

@@ -247,6 +247,48 @@ paths:
           $ref: "#/components/responses/badrequest"
         default:
           description: Unknown error
+  /required-json-body:
+    post:
+      operationId: RequiredJSONBody
+      description: Request body is required, so missing body should always error.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/example"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/example"
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
+  /required-text-body:
+    post:
+      operationId: RequiredTextBody
+      description: Request body is required, so missing body should always error.
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        200:
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
   /reserved-go-keyword-parameters/{type}:
     get:
         operationId: ReservedGoKeywordParameters

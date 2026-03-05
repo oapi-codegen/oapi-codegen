@@ -26,6 +26,18 @@ const (
 	Option2 TestField1 = "option2"
 )
 
+// Valid indicates whether the value is a known member of the TestField1 enum.
+func (e TestField1) Valid() bool {
+	switch e {
+	case Option1:
+		return true
+	case Option2:
+		return true
+	default:
+		return false
+	}
+}
+
 // Test defines model for Test.
 type Test = MyTestRequest
 
