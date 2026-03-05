@@ -5,7 +5,7 @@ package fooservice
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gorilla/mux"
@@ -272,32 +271,29 @@ func (sh *strictHandler) GetBionicleName(w http.ResponseWriter, r *http.Request,
 	}
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/5RRQU/zMAz9K5O/7xg1HXDqcRfEBS7cpgllmbtmWpPgeEioyn9HTldtYwOJXpzEr37P",
-	"7w1gQx+DR88JmgGiIdMjI5Xb2gXv7B7fpsOz6VEaG0yWXGQXPDQgr7PQzrjDme0MGctIoMBJMxruQIEv",
-	"f45FAeH7wRFuoGE6oIJkO+yNTObPKLjE5PwWcs5T81LQ4ngomilEJHZYIP4o8fugc9LliFqpCRXWO7Q8",
-	"0jnfhusdXzExKGDHQjpdP5DS2J9XdVVDVhAiehMdNHBf1dUcVHGgSNOTfD0If5a3LbIU2cAI1dMGGnhE",
-	"Xpw7ri5yWQ7wn7CFBv7pU3r6BNG3c8sr8SDF4NNo1V1dS7HBM/oiw8S4d7YI0bskiw1n2dxiPYajr5PJ",
-	"xc2HP3IEjy/tjzv+wrbK0/cVAAD//37MjEPUAgAA",
-}
+// Base64 encoded, compressed with deflate, json marshaled Swagger object
+const swaggerSpec = "" +
+	"lFFBT/MwDP0rk7/vGDUdcOpxF8QFLtymCWWZu2Zak+B4SKjKf0dOV21jA4lenMSvfs/vDWBDH4NHzwma" +
+	"AaIh0yMjldvaBe/sHt+mw7PpURobTJZcZBc8NCCvs9DOuMOZ7QwZy0igwEkzGu5AgS9/jkUB4fvBEW6g" +
+	"YTqggmQ77I1M5s8ouMTk/BZyzlPzUtDieCiaKUQkdlgg/ijx+6Bz0uWIWqkJFdY7tDzSOd+G6x1fMTEo" +
+	"YMdCOl0/kNLYn1d1VUNWECJ6Ex00cF/V1RxUcaBI05N8PQh/lrctshTZwAjV0wYaeERenDuuLnJZDvCf" +
+	"sIUG/ulTevoE0bdzyyvxIMXg02jVXV1LscEz+iLDxLh3tgjRuySLDWfZ3GI9hqOvk8nFzYc/cgSPL+2P" +
+	"O/7CtsrT9xUAAP//"
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	compressed, err := base64.StdEncoding.DecodeString(swaggerSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil
