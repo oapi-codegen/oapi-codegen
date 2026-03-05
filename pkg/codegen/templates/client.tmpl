@@ -152,7 +152,7 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
             bodyReader = strings.NewReader(stringer.String())
         } else {
         {{if .Schema.IsPrimitive -}}
-            bodyReader = strings.NewReader(fmt.Sprintf("%v", body))
+            bodyReader = strings.NewReader(fmt.Sprint(body))
         {{else -}}
             return nil, fmt.Errorf("text/plain is not supported for complex types, define a String() method on {{.Schema.TypeDecl}} to marshal it as text")
         {{end -}}
