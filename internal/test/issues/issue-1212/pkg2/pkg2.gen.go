@@ -189,13 +189,43 @@ type StrictServerInterface interface {
 type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
 type StrictMiddlewareFunc = strictgin.StrictGinMiddlewareFunc
 
+type StrictGinServerOptions struct {
+	// RequestErrorHandlerFunc is called when a request cannot be parsed or
+	// decoded. It is invoked for JSON bind failures, form parse/bind errors,
+	// multipart reader errors, media type parse errors, missing multipart
+	// boundaries, and request body read errors. The default returns 400.
+	RequestErrorHandlerFunc func(ctx *gin.Context, err error)
+	// HandlerErrorFunc is called when the application handler (or any
+	// middleware wrapping it) returns a non-nil error. The default returns 500.
+	HandlerErrorFunc func(ctx *gin.Context, err error)
+	// ResponseErrorHandlerFunc is called when the response object fails to
+	// serialize (Visit*Response returns an error) or when the handler returns
+	// an unexpected response type. The default returns 500.
+	ResponseErrorHandlerFunc func(ctx *gin.Context, err error)
+}
+
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
-	return &strictHandler{ssi: ssi, middlewares: middlewares}
+	return &strictHandler{ssi: ssi, middlewares: middlewares, options: StrictGinServerOptions{
+		RequestErrorHandlerFunc: func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
+		},
+		HandlerErrorFunc: func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		},
+		ResponseErrorHandlerFunc: func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		},
+	}}
+}
+
+func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc, options StrictGinServerOptions) ServerInterface {
+	return &strictHandler{ssi: ssi, middlewares: middlewares, options: options}
 }
 
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+	options     StrictGinServerOptions
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
