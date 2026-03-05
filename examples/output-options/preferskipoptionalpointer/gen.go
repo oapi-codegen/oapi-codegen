@@ -23,3 +23,24 @@ type ClientWithExtension struct {
 	// PointerId This field should have an optional pointer, as the field-level definition of `x-go-type-skip-optional-pointer` overrides the `prefer-skip-optional-pointer` Output Option.
 	PointerId *float32 `json:"pointer_id,omitempty"`
 }
+
+// NestedType defines model for NestedType.
+type NestedType struct {
+	Client Client `json:"client,omitempty"`
+}
+
+// ReferencedWithExtension defines model for ReferencedWithExtension.
+type ReferencedWithExtension struct {
+	Foo string `json:"foo,omitempty"`
+}
+
+// ReferencedWithoutExtension defines model for ReferencedWithoutExtension.
+type ReferencedWithoutExtension struct {
+	Foo string `json:"foo,omitempty"`
+}
+
+// ReferencesATypeWithAnExtensionInsideAllOf This type has a field which references - via an `allOf` - a type which should have an optional pointer, as the field-level definition of `x-go-type-skip-optional-pointer` overrides the `prefer-skip-optional-pointer` Output Option, as well as a field without that property.
+type ReferencesATypeWithAnExtensionInsideAllOf struct {
+	NoExtension          ReferencedWithoutExtension `json:"noExtension,omitempty"`
+	WithExtensionPointer *ReferencedWithExtension   `json:"withExtensionPointer,omitempty"`
+}

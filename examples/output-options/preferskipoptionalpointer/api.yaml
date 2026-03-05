@@ -31,3 +31,37 @@ components:
           description: This field should have an optional pointer, as the field-level definition of `x-go-type-skip-optional-pointer` overrides the `prefer-skip-optional-pointer` Output Option.
           # NOTE that this overrides the global preference
           x-go-type-skip-optional-pointer: false
+    NestedType:
+      type: object
+      properties:
+        client:
+          description: This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer.
+          $ref: '#/components/schemas/Client'
+    ReferencesATypeWithAnExtensionInsideAllOf:
+      type: object
+      description: This type has a field which references - via an `allOf` - a type which should have an optional pointer, as the field-level definition of `x-go-type-skip-optional-pointer` overrides the `prefer-skip-optional-pointer` Output Option, as well as a field without that property.
+      additionalProperties: false
+      required:
+        - description
+      properties:
+        noExtension:
+          # NOTE this will not generate pointer type as global preference `prefer-skip-optional-pointer: true`
+          allOf:
+            - $ref: '#/components/schemas/ReferencedWithoutExtension'
+        withExtensionPointer:
+          # NOTE this will generate pointer type (despite global preference `prefer-skip-optional-pointer: true`) as we have field-level `x-go-type-skip-optional-pointer: false`
+          allOf:
+            - $ref: '#/components/schemas/ReferencedWithExtension'
+    ReferencedWithoutExtension:
+      type: object
+      additionalProperties: false
+      properties:
+        foo:
+          type: string
+    ReferencedWithExtension:
+      type: object
+      additionalProperties: false
+      properties:
+        foo:
+          type: string
+      x-go-type-skip-optional-pointer: false
