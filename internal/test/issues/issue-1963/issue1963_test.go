@@ -13,6 +13,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/oapi-codegen/runtime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -158,7 +159,7 @@ func (s *errorServer) TextEndpoint(_ context.Context, _ TextEndpointRequestObjec
 }
 
 func (s *errorServer) FormdataEndpoint(_ context.Context, _ FormdataEndpointRequestObject) (FormdataEndpointResponseObject, error) {
-	return nil, fmt.Errorf("not implemented")
+	return &unmarshalableFormdataResponse{}, nil
 }
 
 func (s *errorServer) MultipartEndpoint(_ context.Context, _ MultipartEndpointRequestObject) (MultipartEndpointResponseObject, error) {
@@ -167,6 +168,38 @@ func (s *errorServer) MultipartEndpoint(_ context.Context, _ MultipartEndpointRe
 
 func (s *errorServer) BinaryEndpoint(_ context.Context, _ BinaryEndpointRequestObject) (BinaryEndpointResponseObject, error) {
 	return nil, fmt.Errorf("not implemented")
+}
+
+// TestFormdataEndpoint_MarshalError verifies that when form marshalling fails,
+// ResponseErrorHandlerFunc can set the status code because nothing has been
+// written to the ResponseWriter yet.
+func TestFormdataEndpoint_MarshalError_ErrorHandlerCanSetStatus(t *testing.T) {
+	server := &errorServer{}
+	var errHandlerCalled bool
+	handler := NewStrictHandlerWithOptions(server, nil, StrictHTTPServerOptions{
+		RequestErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		},
+		ResponseErrorHandlerFunc: func(w http.ResponseWriter, r *http.Request, err error) {
+			errHandlerCalled = true
+			w.WriteHeader(http.StatusInternalServerError)
+		},
+	})
+	mux := http.NewServeMux()
+	HandlerFromMux(handler, mux)
+
+	body := "value=test"
+	req := httptest.NewRequest(http.MethodPost, "/formdata", strings.NewReader(body))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	w := httptest.NewRecorder()
+
+	mux.ServeHTTP(w, req)
+
+	assert.True(t, errHandlerCalled, "ResponseErrorHandlerFunc should have been called")
+	assert.Equal(t, http.StatusInternalServerError, w.Code,
+		"error handler should be able to set status code to 500 when form marshalling fails")
+	assert.Empty(t, w.Header().Get("Content-Type"),
+		"Content-Type should not be set when marshalling fails before headers are written")
 }
 
 // unmarshalableJSONResponse implements JsonEndpointResponseObject with a Visit
@@ -185,5 +218,22 @@ func (u *unmarshalableJSONResponse) VisitJsonEndpointResponse(w http.ResponseWri
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
+	return err
+}
+
+// unmarshalableFormdataResponse implements FormdataEndpointResponseObject with
+// a Visit method that follows the generated code pattern but passes a channel
+// to runtime.MarshalForm, which will always fail (it expects a struct or map).
+type unmarshalableFormdataResponse struct{}
+
+func (u *unmarshalableFormdataResponse) VisitFormdataEndpointResponse(w http.ResponseWriter) error {
+	// A channel is never a valid form body; MarshalForm will return an error.
+	form, err := runtime.MarshalForm(make(chan int), nil)
+	if err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	w.WriteHeader(200)
+	_, err = w.Write([]byte(form.Encode()))
 	return err
 }

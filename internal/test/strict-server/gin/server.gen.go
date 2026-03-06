@@ -517,15 +517,14 @@ type MultipleRequestAndResponseTypes200FormdataResponse Example
 
 func (response MultipleRequestAndResponseTypes200FormdataResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
 
-	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.WriteHeader(200)
-
-	if form, err := runtime.MarshalForm(response, nil); err != nil {
-		return err
-	} else {
-		_, err := w.Write([]byte(form.Encode()))
+	form, err := runtime.MarshalForm(response, nil)
+	if err != nil {
 		return err
 	}
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	w.WriteHeader(200)
+	_, err = w.Write([]byte(form.Encode()))
+	return err
 }
 
 type MultipleRequestAndResponseTypes200ImagepngResponse struct {
@@ -863,15 +862,14 @@ type URLEncodedExample200FormdataResponse Example
 
 func (response URLEncodedExample200FormdataResponse) VisitURLEncodedExampleResponse(w http.ResponseWriter) error {
 
-	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.WriteHeader(200)
-
-	if form, err := runtime.MarshalForm(response, nil); err != nil {
-		return err
-	} else {
-		_, err := w.Write([]byte(form.Encode()))
+	form, err := runtime.MarshalForm(response, nil)
+	if err != nil {
 		return err
 	}
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	w.WriteHeader(200)
+	_, err = w.Write([]byte(form.Encode()))
+	return err
 }
 
 type URLEncodedExample400Response = BadrequestResponse
