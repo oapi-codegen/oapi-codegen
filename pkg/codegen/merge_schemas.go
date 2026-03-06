@@ -59,15 +59,54 @@ func valueWithPropagatedRef(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
 	remoteComponent := pathParts[0]
 
 	// remote ref
-	schema := *ref.Value
-	for _, value := range schema.Properties {
-		if len(value.Ref) > 0 && value.Ref[0] == '#' {
-			// local reference, should propagate remote
-			value.Ref = remoteComponent + value.Ref
-		}
-	}
+	schema := *propagateToSchema(ref.Value, remoteComponent)
 
 	return schema, nil
+}
+
+func propagateToRef(ref *openapi3.SchemaRef, remoteComponent string) *openapi3.SchemaRef {
+	if ref == nil {
+		return nil
+	}
+	newRef := *ref
+	if len(ref.Ref) > 0 && ref.Ref[0] == '#' {
+		// local reference, should propagate remote
+		newRef.Ref = remoteComponent + ref.Ref
+	}
+	newRef.Value = propagateToSchema(ref.Value, remoteComponent)
+	return &newRef
+}
+
+func propagateToSchema(schema *openapi3.Schema, remoteComponent string) *openapi3.Schema {
+	newSchema := *schema
+	newSchema.AdditionalProperties.Schema = propagateToRef(schema.AdditionalProperties.Schema, remoteComponent)
+	if schema.AllOf != nil {
+		newSchema.AllOf = make(openapi3.SchemaRefs, len(schema.AllOf))
+		for i, ref := range schema.AllOf {
+			newSchema.AllOf[i] = propagateToRef(ref, remoteComponent)
+		}
+	}
+	if schema.AnyOf != nil {
+		newSchema.AnyOf = make(openapi3.SchemaRefs, len(schema.AnyOf))
+		for i, ref := range schema.AnyOf {
+			newSchema.AnyOf[i] = propagateToRef(ref, remoteComponent)
+		}
+	}
+	newSchema.Items = propagateToRef(schema.Items, remoteComponent)
+	newSchema.Not = propagateToRef(schema.Not, remoteComponent)
+	if schema.OneOf != nil {
+		newSchema.OneOf = make(openapi3.SchemaRefs, len(schema.OneOf))
+		for i, ref := range schema.OneOf {
+			newSchema.OneOf[i] = propagateToRef(ref, remoteComponent)
+		}
+	}
+	if schema.Properties != nil {
+		newSchema.Properties = make(openapi3.Schemas, len(schema.Properties))
+		for key, ref := range schema.Properties {
+			newSchema.Properties[key] = propagateToRef(ref, remoteComponent)
+		}
+	}
+	return &newSchema
 }
 
 func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
