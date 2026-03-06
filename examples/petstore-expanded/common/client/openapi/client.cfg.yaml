@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../../../configuration-schema.json
+package: openapi
+generate:
+  client: true
+additional-imports:
+  - package: github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/common/models
+    alias: .
+output: client.gen.go

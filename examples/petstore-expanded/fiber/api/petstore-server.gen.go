@@ -14,6 +14,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gofiber/fiber/v2"
+	. "github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/common/models"
 	"github.com/oapi-codegen/runtime"
 )
 

@@ -15,7 +15,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v5"
-	. "github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/echo-v5/api/models"
+	. "github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/common/models"
 	"github.com/oapi-codegen/runtime"
 )
 
