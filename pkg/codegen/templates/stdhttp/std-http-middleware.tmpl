@@ -19,17 +19,17 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
 
   {{if .IsPassThrough}}
-  {{$varName}} = r.PathValue("{{.ParamName}}")
+  {{$varName}} = r.PathValue("{{.SanitizedParamName}}")
   {{end}}
   {{if .IsJson}}
-  err = json.Unmarshal([]byte(r.PathValue("{{.ParamName}}")), &{{$varName}})
+  err = json.Unmarshal([]byte(r.PathValue("{{.SanitizedParamName}}")), &{{$varName}})
   if err != nil {
     siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
     return
   }
   {{end}}
   {{if .IsStyled}}
-  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", r.PathValue("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", r.PathValue("{{.SanitizedParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
   if err != nil {
     siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
     return

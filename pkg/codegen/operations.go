@@ -151,6 +151,14 @@ func (pd *ParameterDefinition) SchemaFormat() string {
 	return ""
 }
 
+// SanitizedParamName returns the parameter name sanitized to be a valid Go
+// identifier. This is needed for routers like net/http's ServeMux where path
+// wildcards (e.g. {name}) must be valid Go identifiers. For the original
+// OpenAPI parameter name (e.g. for error messages or JSON tags), use ParamName.
+func (pd ParameterDefinition) SanitizedParamName() string {
+	return SanitizeGoIdentifier(pd.ParamName)
+}
+
 func (pd ParameterDefinition) GoVariableName() string {
 	name := LowercaseFirstCharacters(pd.GoName())
 	if IsGoKeyword(name) {
