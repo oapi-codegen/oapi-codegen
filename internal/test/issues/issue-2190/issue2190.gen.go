@@ -6,6 +6,7 @@
 package issue2190
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -409,15 +410,21 @@ type GetTestResponseObject interface {
 type GetTest200JSONResponse struct{ SuccessJSONResponse }
 
 func (response GetTest200JSONResponse) VisitGetTestResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type GetTest401TextResponse UnauthorizedTextResponse
 
 func (response GetTest401TextResponse) VisitGetTestResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(401)
 
