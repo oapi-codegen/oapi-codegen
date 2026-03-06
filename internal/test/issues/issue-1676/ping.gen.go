@@ -177,6 +177,7 @@ type GetPing200TextResponse struct {
 }
 
 func (response GetPing200TextResponse) VisitGetPingResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "text/plain")
 	w.Header().Set("MyHeader", fmt.Sprint(response.Headers.MyHeader))
 	w.WriteHeader(200)

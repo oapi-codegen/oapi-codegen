@@ -353,19 +353,29 @@ type TestResponseObject interface {
 type Test200ApplicationBarPlusJSONResponse Bar
 
 func (response Test200ApplicationBarPlusJSONResponse) VisitTestResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/bar+json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type Test200ApplicationFooPlusJSONResponse Foo
 
 func (response Test200ApplicationFooPlusJSONResponse) VisitTestResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/foo+json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type Test201ApplicationBarPlusJSONResponse struct {
@@ -373,10 +383,15 @@ type Test201ApplicationBarPlusJSONResponse struct {
 }
 
 func (response Test201ApplicationBarPlusJSONResponse) VisitTestResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/bar+json")
 	w.WriteHeader(201)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type Test201ApplicationFooPlusJSONResponse struct {
@@ -384,10 +399,15 @@ type Test201ApplicationFooPlusJSONResponse struct {
 }
 
 func (response Test201ApplicationFooPlusJSONResponse) VisitTestResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/foo+json")
 	w.WriteHeader(201)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 // StrictServerInterface represents all server handlers.
