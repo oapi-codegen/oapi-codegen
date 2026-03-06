@@ -17,7 +17,6 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
-	strictgin "github.com/oapi-codegen/runtime/strictmiddleware/gin"
 )
 
 // Pet defines model for Pet.
@@ -113,8 +112,8 @@ type StrictServerInterface interface {
 	GetPets(ctx context.Context, request GetPetsRequestObject) (GetPetsResponseObject, error)
 }
 
-type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
-type StrictMiddlewareFunc = strictgin.StrictGinMiddlewareFunc
+type StrictHandlerFunc func(ctx *gin.Context, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
 	return &strictHandler{ssi: ssi, middlewares: middlewares}
