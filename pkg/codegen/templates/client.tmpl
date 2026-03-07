@@ -147,6 +147,8 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
             return nil, err
         }
         bodyReader = strings.NewReader(bodyStr.Encode())
+    {{else if and (eq .NameTag "Text") (eq .Schema.OAPISchema.Format "uuid") -}}
+        bodyReader = strings.NewReader(body.String())
     {{else if eq .NameTag "Text" -}}
         bodyReader = strings.NewReader(string(body))
     {{end -}}
