@@ -51,10 +51,18 @@ type strictHandler struct {
                 {{if .IsJSON }}
                     var body {{$opid}}{{.NameTag}}RequestBody
                     if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+                        {{if not .Required -}}
+                        if !errors.Is(err, io.EOF) {
+                            sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+                            return
+                        }
+                        {{else -}}
                         sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
                         return
-                    }
+                        {{end -}}
+                    } {{if not .Required -}} else { {{end}}
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                    {{if not .Required -}} } {{end}}
                 {{else if eq .NameTag "Formdata" -}}
                     if err := r.ParseForm(); err != nil {
                         sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode formdata: %w", err))
@@ -91,8 +99,14 @@ type strictHandler struct {
                         sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't read body: %w", err))
                         return
                     }
+                    {{if not .Required -}}
+                    if len(data) > 0 {
+                    {{end -}}
                     body := {{$opid}}{{.NameTag}}RequestBody(data)
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                    {{if not .Required -}}
+                    }
+                    {{end -}}
                 {{else -}}
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = r.Body
                 {{end}}{{/* if eq .NameTag "JSON" */ -}}

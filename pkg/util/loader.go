@@ -48,13 +48,17 @@ func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (s
 	}
 
 	// parse out the yaml.Node, which is required by the overlay library
-	data, err := yaml.Marshal(spec)
+	buf := &bytes.Buffer{}
+	enc := yaml.NewEncoder(buf)
+	// set to 2 to work around https://github.com/yaml/go-yaml/issues/76
+	enc.SetIndent(2)
+	err = enc.Encode(spec)
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal spec from %#v as YAML: %w", filePath, err)
 	}
 
 	var node yaml.Node
-	err = yaml.NewDecoder(bytes.NewReader(data)).Decode(&node)
+	err = yaml.NewDecoder(buf).Decode(&node)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse spec from %#v: %w", filePath, err)
 	}

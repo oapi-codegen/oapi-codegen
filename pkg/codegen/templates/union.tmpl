@@ -2,6 +2,7 @@
     {{$typeName := .TypeName -}}
     {{$discriminator := .Schema.Discriminator}}
     {{$properties := .Schema.Properties -}}
+    {{$numberOfUnionTypes := len .Schema.UnionElements -}}
     {{range .Schema.UnionElements}}
         {{$element := . -}}
         // As{{ .Method }} returns the union data inside the {{$typeName}} as a {{.}}
@@ -14,16 +15,18 @@
         // From{{ .Method }} overwrites any union data inside the {{$typeName}} as the provided {{.}}
         func (t *{{$typeName}}) From{{ .Method }} (v {{.}}) error {
             {{if $discriminator -}}
-                {{range $value, $type := $discriminator.Mapping -}}
-                    {{if eq $type $element -}}
-                        {{$hasProperty := false -}}
-                        {{range $properties -}}
-                            {{if eq .GoFieldName $discriminator.PropertyName -}}
-                                t.{{$discriminator.PropertyName}} = "{{$value}}"
-                                {{$hasProperty = true -}}
+                {{if eq $numberOfUnionTypes (len $discriminator.Mapping) -}}
+                    {{range $value, $type := $discriminator.Mapping -}}
+                        {{if eq $type $element -}}
+                            {{$hasProperty := false -}}
+                            {{range $properties -}}
+                                {{if eq .GoFieldName $discriminator.PropertyName -}}
+                                    t.{{$discriminator.PropertyName}} = "{{$value}}"
+                                    {{$hasProperty = true -}}
+                                {{end -}}
                             {{end -}}
+                            {{if not $hasProperty}}v.{{$discriminator.PropertyName}} = "{{$value}}"{{end}}
                         {{end -}}
-                        {{if not $hasProperty}}v.{{$discriminator.PropertyName}} = "{{$value}}"{{end}}
                     {{end -}}
                 {{end -}}
             {{end -}}
@@ -35,16 +38,18 @@
         // Merge{{ .Method }} performs a merge with any union data inside the {{$typeName}}, using the provided {{.}}
         func (t *{{$typeName}}) Merge{{ .Method }} (v {{.}}) error {
             {{if $discriminator -}}
-                {{range $value, $type := $discriminator.Mapping -}}
-                    {{if eq $type $element -}}
-                        {{$hasProperty := false -}}
-                        {{range $properties -}}
-                            {{if eq .GoFieldName $discriminator.PropertyName -}}
-                                t.{{$discriminator.PropertyName}} = "{{$value}}"
-                                {{$hasProperty = true -}}
+                {{if eq $numberOfUnionTypes (len $discriminator.Mapping) -}}
+                    {{range $value, $type := $discriminator.Mapping -}}
+                        {{if eq $type $element -}}
+                            {{$hasProperty := false -}}
+                            {{range $properties -}}
+                                {{if eq .GoFieldName $discriminator.PropertyName -}}
+                                    t.{{$discriminator.PropertyName}} = "{{$value}}"
+                                    {{$hasProperty = true -}}
+                                {{end -}}
                             {{end -}}
+                            {{if not $hasProperty}}v.{{$discriminator.PropertyName}} = "{{$value}}"{{end}}
                         {{end -}}
-                        {{if not $hasProperty}}v.{{$discriminator.PropertyName}} = "{{$value}}"{{end}}
                     {{end -}}
                 {{end -}}
             {{end -}}

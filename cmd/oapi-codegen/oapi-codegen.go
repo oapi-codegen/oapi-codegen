@@ -29,7 +29,7 @@ import (
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
-func errExit(format string, args ...interface{}) {
+func errExit(format string, args ...any) {
 	if !strings.HasSuffix(format, "\n") {
 		format = format + "\n"
 	}
@@ -272,12 +272,13 @@ func main() {
 	}
 
 	if warnings := opts.Generate.Warnings(); len(warnings) > 0 {
-		out := "WARNING: A number of warning(s) were returned when validating the GenerateOptions:"
+		var out strings.Builder
+		out.WriteString("WARNING: A number of warning(s) were returned when validating the GenerateOptions:")
 		for k, v := range warnings {
-			out += "\n- " + k + ": " + v
+			out.WriteString("\n- " + k + ": " + v)
 		}
 
-		_, _ = fmt.Fprint(os.Stderr, out)
+		_, _ = fmt.Fprint(os.Stderr, out.String())
 	}
 
 	// If the user asked to output configuration, output it to stdout and exit
@@ -511,6 +512,8 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 			opts.FiberServer = true
 		case "server", "echo-server", "echo":
 			opts.EchoServer = true
+		case "echo5", "echo5-server":
+			opts.Echo5Server = true
 		case "gin", "gin-server":
 			opts.GinServer = true
 		case "gorilla", "gorilla-server":

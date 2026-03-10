@@ -1,0 +1,22 @@
+openapi: "3.0.4"
+info:
+  title: Common
+  version: "0.0.1"
+paths: {}
+components:
+  schemas:
+    ProblemDetails:
+      type: object
+      properties:
+        title:
+          type: string
+        status:
+          type: integer
+      required: [title, status]
+  responses:
+    StandardError:
+      description: Error response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"

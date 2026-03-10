@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	ApiKeyAuthScopes = "ApiKeyAuth.Scopes"
+	ApiKeyAuthScopes apiKeyAuthContextKey = "ApiKeyAuth.Scopes"
 )
 
 // Cat This is a cat
@@ -44,6 +44,9 @@ type Rat struct {
 	Name    *string `json:"name,omitempty"`
 	Squeaks *bool   `json:"squeaks,omitempty"`
 }
+
+// apiKeyAuthContextKey is the context key for ApiKeyAuth security scheme
+type apiKeyAuthContextKey string
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -288,7 +291,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) GetPets(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(ApiKeyAuthScopes, []string{})
+	ctx.Set(string(ApiKeyAuthScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetPets(ctx)

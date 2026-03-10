@@ -39,6 +39,7 @@ type Schema struct {
 
 	// The original OpenAPIv3 Schema.
 	OAPISchema *openapi3.Schema
+
 }
 
 func (s Schema) IsRef() bool {
@@ -88,7 +89,7 @@ type Property struct {
 	ReadOnly      bool
 	WriteOnly     bool
 	NeedsFormTag  bool
-	Extensions    map[string]interface{}
+	Extensions    map[string]any
 	Deprecated    bool
 }
 
@@ -256,11 +257,11 @@ func (u UnionElement) String() string {
 
 // Method generate union method name for template functions `As/From/Merge`.
 func (u UnionElement) Method() string {
-	var method string
+	var method strings.Builder
 	for _, part := range strings.Split(string(u), `.`) {
-		method += UppercaseFirstCharacter(part)
+		method.WriteString(UppercaseFirstCharacter(part))
 	}
-	return method
+	return method.String()
 }
 
 func PropertiesEqual(a, b Property) bool {
@@ -587,6 +588,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		if err != nil {
 			return fmt.Errorf("error generating type for array: %w", err)
 		}
+
 		if (arrayType.HasAdditionalProperties || len(arrayType.UnionElements) != 0) && arrayType.RefType == "" {
 			// If we have items which have additional properties or union values,
 			// but are not a pre-defined type, we need to define a type
@@ -603,8 +605,18 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 
 			arrayType.RefType = typeName
 		}
+
+		typeDeclaration := arrayType.TypeDecl()
+		if arrayType.OAPISchema != nil && arrayType.OAPISchema.Nullable {
+			if globalState.options.OutputOptions.NullableType {
+				typeDeclaration = "nullable.Nullable[" + typeDeclaration + "]"
+			} else {
+				typeDeclaration = "*" + typeDeclaration
+			}
+		}
+
 		outSchema.ArrayType = &arrayType
-		outSchema.GoType = "[]" + arrayType.TypeDecl()
+		outSchema.GoType = "[]" + typeDeclaration
 		outSchema.AdditionalTypes = arrayType.AdditionalTypes
 		outSchema.Properties = arrayType.Properties
 		outSchema.DefineViaAlias = true
@@ -614,62 +626,26 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		setSkipOptionalPointerForContainerType(outSchema)
 
 	} else if t.Is("integer") {
-		// We default to int if format doesn't ask for something else.
-		switch f {
-		case "int64",
-			"int32",
-			"int16",
-			"int8",
-			"int",
-			"uint64",
-			"uint32",
-			"uint16",
-			"uint8",
-			"uint":
-			outSchema.GoType = f
-		default:
-			outSchema.GoType = "int"
-		}
+		spec := globalState.typeMapping.Integer.Resolve(f)
+		outSchema.GoType = spec.Type
 		outSchema.DefineViaAlias = true
 	} else if t.Is("number") {
-		// We default to float for "number"
-		switch f {
-		case "double":
-			outSchema.GoType = "float64"
-		case "float", "":
-			outSchema.GoType = "float32"
-		default:
-			return fmt.Errorf("invalid number format: %s", f)
-		}
+		spec := globalState.typeMapping.Number.Resolve(f)
+		outSchema.GoType = spec.Type
 		outSchema.DefineViaAlias = true
 	} else if t.Is("boolean") {
-		if f != "" {
-			return fmt.Errorf("invalid format (%s) for boolean", f)
-		}
-		outSchema.GoType = "bool"
+		spec := globalState.typeMapping.Boolean.Resolve(f)
+		outSchema.GoType = spec.Type
 		outSchema.DefineViaAlias = true
 	} else if t.Is("string") {
-		// Special case string formats here.
-		switch f {
-		case "byte":
-			outSchema.GoType = "[]byte"
+		spec := globalState.typeMapping.String.Resolve(f)
+		outSchema.GoType = spec.Type
+		// Preserve special behaviors for specific types
+		if outSchema.GoType == "[]byte" {
 			setSkipOptionalPointerForContainerType(outSchema)
-		case "email":
-			outSchema.GoType = "openapi_types.Email"
-		case "date":
-			outSchema.GoType = "openapi_types.Date"
-		case "date-time":
-			outSchema.GoType = "time.Time"
-		case "json":
-			outSchema.GoType = "json.RawMessage"
+		}
+		if outSchema.GoType == "json.RawMessage" {
 			outSchema.SkipOptionalPointer = true
-		case "uuid":
-			outSchema.GoType = "openapi_types.UUID"
-		case "binary":
-			outSchema.GoType = "openapi_types.File"
-		default:
-			// All unrecognized formats are simply a regular string.
-			outSchema.GoType = "string"
 		}
 		outSchema.DefineViaAlias = true
 	} else {
@@ -744,11 +720,7 @@ func GenFieldsFromProperties(props []Property) []string {
 		shouldOmitEmpty := (!p.Required || p.ReadOnly || p.WriteOnly) &&
 			(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
 
-		omitEmpty := !p.Nullable && shouldOmitEmpty
-
-		if p.Nullable && globalState.options.OutputOptions.NullableType {
-			omitEmpty = shouldOmitEmpty
-		}
+		omitEmpty := shouldOmitEmpty
 
 		omitZero := false
 
@@ -917,7 +889,6 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 				if v == element.Ref {
 					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
 					mapped = true
-					break
 				}
 			}
 			// Implicit mapping.
@@ -928,7 +899,7 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 		outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
 	}
 
-	if (outSchema.Discriminator != nil) && len(outSchema.Discriminator.Mapping) != len(elements) {
+	if (outSchema.Discriminator != nil) && len(outSchema.Discriminator.Mapping) < len(elements) {
 		return errors.New("discriminator: not all schemas were mapped")
 	}
 

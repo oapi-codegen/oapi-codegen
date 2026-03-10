@@ -1,7 +1,7 @@
 {{ range . }}
 {{ if eq 0 (len .OAPISchema.Variables) }}
 {{/* URLs without variables are straightforward, so we'll create them a constant */}}
-// {{ .GoName }} defines the Server URL for {{ .OAPISchema.Description }}
+// {{ .GoName }} defines the Server URL for {{ if len .OAPISchema.Description }}{{ .OAPISchema.Description }}{{ else }}{{ .OAPISchema.URL }}{{ end }}
 const {{ .GoName}} = "{{ .OAPISchema.URL }}"
 {{ else }}
 {{/* URLs with variables are not straightforward, as we may need multiple types, and so will model them as a function */}}
