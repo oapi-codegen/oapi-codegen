@@ -1,7 +1,6 @@
 package issue2183
 
 import (
-	"net/url"
 	"reflect"
 	"strings"
 	"testing"
@@ -27,7 +26,7 @@ func TestQueryCommunication(t *testing.T) {
 		// SkipServerRoundTrip skips the server-side deserialization check.
 		// This is needed for cases where values contain the delimiter character
 		// (comma for form/explode=false), because Go's url.ParseQuery decodes
-		// %2C to "," before BindQueryParameter can distinguish delimiters from
+		// %2C to "," before BindRawQueryParameter can distinguish delimiters from
 		// literal commas. Fixing this requires changes to the runtime library.
 		SkipServerRoundTrip bool
 	}{
@@ -93,11 +92,11 @@ func TestQueryCommunication(t *testing.T) {
 			for _, param := range tc.Params {
 
 				// following code equivalent to generated client (after fix)
-				queryFragments, err := runtime.StyleParamWithLocation(param.style, param.explode, param.paramName, runtime.ParamLocationQuery, param.value)
+				queryFrag, err := runtime.StyleParamWithOptions(param.style, param.explode, param.paramName, param.value, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery})
 				if err != nil {
 					t.Fatal(err)
 				}
-				rawQueryFragments = append(rawQueryFragments, queryFragments)
+				rawQueryFragments = append(rawQueryFragments, queryFrag)
 			}
 
 			rawQuery := strings.Join(rawQueryFragments, "&")
@@ -110,16 +109,11 @@ func TestQueryCommunication(t *testing.T) {
 				return
 			}
 
-			serverValues, err := url.ParseQuery(rawQuery)
-			if err != nil {
-				t.Fatal(err)
-			}
-
 			// following code equivalent to generated server
 			for _, param := range tc.Params {
 
 				dest := reflect.New(reflect.TypeOf(param.value))
-				err := runtime.BindQueryParameter(param.style, param.explode, true, param.paramName, serverValues, dest.Interface())
+				err := runtime.BindRawQueryParameter(param.style, param.explode, true, param.paramName, rawQuery, dest.Interface())
 				if err != nil {
 					t.Error(err)
 				} else if !reflect.DeepEqual(dest.Elem().Interface(), param.value) {
