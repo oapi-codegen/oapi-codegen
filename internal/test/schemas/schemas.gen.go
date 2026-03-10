@@ -672,7 +672,15 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "foo", params.Foo, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 			return nil, err
 		} else {
-			rawQueryFragments = append(rawQueryFragments, queryFrag)
+			// Split query fragments into name/value pairs so that we can
+			// encode the names, while leaving the values raw.
+			for _, qp := range strings.Split(queryFrag, "&") {
+				if k, v, ok := strings.Cut(qp, "="); ok {
+					rawQueryFragments = append(rawQueryFragments, url.QueryEscape(k)+"="+v)
+				} else {
+					rawQueryFragments = append(rawQueryFragments, url.QueryEscape(qp))
+				}
+			}
 		}
 
 		if encoded := queryValues.Encode(); encoded != "" {
