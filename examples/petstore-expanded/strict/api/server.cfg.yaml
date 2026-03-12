@@ -1,7 +1,10 @@
-# yaml-language-server: $schema=../../../../configuration-schema.json
+# yaml-language-server: $schema=../../../../../configuration-schema.json
 package: api
 generate:
   chi-server: true
   strict-server: true
   embedded-spec: true
+additional-imports:
+  - package: github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/common/models
+    alias: .
 output: petstore-server.gen.go

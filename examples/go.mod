@@ -23,7 +23,6 @@ require (
 	github.com/oapi-codegen/runtime v1.2.0
 	github.com/oapi-codegen/testutil v1.1.0
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/lint v0.0.0-20241112194109-818c5a804067
 )
 
 require (
