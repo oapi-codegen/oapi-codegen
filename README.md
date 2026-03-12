@@ -42,8 +42,6 @@ go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 
 ## Install
 
-### For Go 1.24+
-
 It is recommended to follow [the `go tool` support available from Go 1.24+](https://www.jvt.me/posts/2025/01/27/go-tools-124/) for managing the dependency of `oapi-codegen` alongside your core application.
 
 To do this, you run `go get -tool`:
@@ -57,29 +55,6 @@ From there, each invocation of `oapi-codegen` would be used like so:
 
 ```go
 //go:generate go tool oapi-codegen -config cfg.yaml ../../api.yaml
-```
-
-### Prior to Go 1.24
-
-It is recommended to follow [the `tools.go` pattern](https://www.jvt.me/posts/2022/06/15/go-tools-dependency-management/) for managing the dependency of `oapi-codegen` alongside your core application.
-
-This would give you a `tools/tools.go`:
-
-```go
-//go:build tools
-// +build tools
-
-package main
-
-import (
-	_ "github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen"
-)
-```
-
-Then, each invocation of `oapi-codegen` would be used like so:
-
-```go
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml ../../api.yaml
 ```
 
 Alternatively, you can install it as a binary with:
@@ -137,10 +112,12 @@ For full details of what is supported, it's worth checking out [the GoDoc for `c
 We also have [a JSON Schema](configuration-schema.json) that can be used by IDEs/editors with the Language Server Protocol (LSP) to perform intelligent suggestions, i.e.:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.6.0/configuration-schema.json
 package: api
 # ...
 ```
+
+Note that it's recommended to pin to a specific version of the configuration schema, so it matches the version of `oapi-codegen` you're using. For instance, if you're using [Renovate](https://docs.renovatebot.com/), you can [have Renovate automagically update this version for you](https://www.jvt.me/posts/2026/03/01/oapi-codegen-config-renovate/).
 
 ### Backwards compatibility
 
@@ -394,6 +371,8 @@ We can see that this provides the best means to focus on the implementation of t
 - Support multiple OpenAPI files by having a package-per-OpenAPI file
 - Support of OpenAPI 3.0
   - OpenAPI 3.1 support is [awaiting upstream support](https://github.com/oapi-codegen/oapi-codegen/issues/373)
+    However, we do have an experimental version using a different OpenAPI parser which does support 3.1 and 3.2, which
+    you can play around with in our [experimental repo](https://github.com/oapi-codegen/oapi-codegen-exp/tree/main/experimental)
   - Note that this does not include OpenAPI 2.0 (aka Swagger)
 - Extract parameters from requests, to reduce work required by your implementation
 - Implicit `additionalProperties` are ignored by default ([more details](#additional-properties-additionalproperties))
@@ -421,6 +400,9 @@ Server
 <code>generate</code> flag to enable code generation
 </th>
 <th>
+Required Go Version
+</th>
+<th>
 Example usage
 </th>
 </tr>
@@ -433,6 +415,9 @@ Example usage
 </td>
 <td>
 <code>chi-server</code>
+</td>
+<td>
+1.22+
 </td>
 <td>
 
@@ -463,6 +448,9 @@ To implement this, check out [the Chi docs](#impl-chi).
 <code>echo-server</code>
 </td>
 <td>
+1.22+
+</td>
+<td>
 
 For an Echo server, you will want a configuration file such as:
 
@@ -489,7 +477,9 @@ To implement this, check out [the Echo docs](#impl-echo).
 <td>
 <code>fiber-server</code>
 </td>
-
+<td>
+1.24+
+</td>
 <td>
 
 For a Fiber server, you will want a configuration file such as:
@@ -519,6 +509,9 @@ To implement this, check out [the Fiber docs](#impl-fiber).
 <code>gin-server</code>
 </td>
 <td>
+1.22+
+</td>
+<td>
 
 For a Gin server, you will want a configuration file such as:
 
@@ -546,7 +539,9 @@ To implement this, check out [the Gin docs](#impl-gin).
 <td>
 <code>gorilla-server</code>
 </td>
-
+<td>
+1.22+
+</td>
 <td>
 
 For a gorilla/mux server, you will want a configuration file such as:
@@ -574,7 +569,9 @@ To implement this, check out [the gorilla/mux docs](#impl-gorillamux).
 <td>
 <code>iris-server</code>
 </td>
-
+<td>
+1.22+
+</td>
 <td>
 
 For a Iris server, you will want a configuration file such as:
@@ -602,7 +599,9 @@ To implement this, check out [the Iris docs](#impl-iris).
 <td>
 <code>std-http-server</code>
 </td>
-
+<td>
+1.22+
+</td>
 <td>
 
 To use purely `net/http` (for Go 1.22+), you will want a configuration file such as:
@@ -3422,6 +3421,8 @@ It is also possible to use HTTPS URLs.
 >
 > See [this blog post](https://www.jvt.me/posts/2024/04/27/github-actions-update-file/) for an example of how to use GitHub Actions to manage the updates of files across repos
 >
+> See [this blog post](https://www.jvt.me/posts/2026/02/27/renovate-update-file) for an example of how to use Renovate to manage the updates of files across repos
+>
 > This will be disabled by default (but possible to turn back on via configuration) [in the future](https://github.com/oapi-codegen/oapi-codegen/issues/1564)
 
 To use it, you can use the following configuration:
@@ -4476,7 +4477,7 @@ Please consider sponsoring us through GitHub Sponsors either [on the organisatio
 
 See [this blog post from Tidelift](https://blog.tidelift.com/paying-maintainers-the-howto) for more details on how to talk to your company about sponsoring maintainers of (Open Source) projects you depend on.
 
-In addition, we are also generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
+We are also generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
 
 <p align="center">
 	<a href="https://www.devzero.io/lp/dev-environment?utm_campaign=github&utm_source=oapi-codegen%20repo&utm_medium=github%20sponsorship">
@@ -4489,28 +4490,8 @@ In addition, we are also generously sponsored by the following folks, each of wh
 </p>
 
 <p align="center">
-	<a href="https://sandbox.speakeasy.com/?s=iQ5hEdrjLCii&utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
-		<picture>
-		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/speakeasy-light.svg">
-		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/speakeasy-dark.svg">
-		  <img alt="Speakeasy logo" src=".github/sponsors/speakeasy-dark.svg" height="60px">
-		</picture>
-	</a>
-</p>
-
-<p align="center">
 	<a href="https://cybozu.co.jp/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
 		<img alt="Cybozu logo" src=".github/sponsors/cybozu.svg" height="100px">
-	</a>
-</p>
-
-<p align="center">
-	<a href="https://livepeer.org/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
-		<picture>
-		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/livepeer-light.svg">
-		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/livepeer-dark.svg">
-		  <img alt="Livepeer logo" src=".github/sponsors/livepeer-dark.svg" height="50px">
-		</picture>
 	</a>
 </p>
 

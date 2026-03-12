@@ -77,7 +77,14 @@ type GetTestByNameResponse struct {
 	assert.Contains(t, code, "Top *int `form:\"$top,omitempty\" json:\"$top,omitempty\"`")
 	assert.Contains(t, code, "func (c *Client) GetTestByName(ctx context.Context, name string, params *GetTestByNameParams, reqEditors ...RequestEditorFn) (*http.Response, error) {")
 	assert.Contains(t, code, "func (c *ClientWithResponses) GetTestByNameWithResponse(ctx context.Context, name string, params *GetTestByNameParams, reqEditors ...RequestEditorFn) (*GetTestByNameResponse, error) {")
-	assert.Contains(t, code, "DeadSince *time.Time    `json:\"dead_since,omitempty\" tag1:\"value1\" tag2:\"value2\"`")
+	assert.Contains(t, code, "FavouriteBirds     *[]*string          `json:\"favourite_birds,omitempty\"`")
+	assert.Contains(t, code, "DetestedBirds      *[]string           `json:\"detested_birds,omitempty\"`")
+	assert.Contains(t, code, "SlicedBirds        []string            `json:\"sliced_birds\"`")
+	assert.Contains(t, code, "ForgettableBirds   *map[string]*string `json:\"forgettable_birds,omitempty\"`")
+	assert.Contains(t, code, "MemorableBirds     *map[string]string  `json:\"memorable_birds,omitempty\"`")
+	assert.Contains(t, code, "VeryMemorableBirds map[string]string   `json:\"very_memorable_birds\"`")
+	assert.Contains(t, code, "DeadSince          *time.Time          `json:\"dead_since,omitempty\" tag1:\"value1\" tag2:\"value2\"`")
+	assert.Contains(t, code, "VeryDeadSince      time.Time           `json:\"very_dead_since\"`")
 	assert.Contains(t, code, "type EnumTestNumerics int")
 	assert.Contains(t, code, "N2 EnumTestNumerics = 2")
 	assert.Contains(t, code, "type EnumTestEnumNames int")
@@ -110,8 +117,8 @@ func TestExtPropGoTypeSkipOptionalPointer(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Check that optional pointer fields are skipped if requested
-	assert.Contains(t, code, "NullableFieldSkipFalse *string `json:\"nullableFieldSkipFalse\"`")
-	assert.Contains(t, code, "NullableFieldSkipTrue  string  `json:\"nullableFieldSkipTrue\"`")
+	assert.Contains(t, code, "NullableFieldSkipFalse *string `json:\"nullableFieldSkipFalse,omitempty\"`")
+	assert.Contains(t, code, "NullableFieldSkipTrue  string  `json:\"nullableFieldSkipTrue,omitempty\"`")
 	assert.Contains(t, code, "OptionalField          *string `json:\"optionalField,omitempty\"`")
 	assert.Contains(t, code, "OptionalFieldSkipFalse *string `json:\"optionalFieldSkipFalse,omitempty\"`")
 	assert.Contains(t, code, "OptionalFieldSkipTrue  string  `json:\"optionalFieldSkipTrue,omitempty\"`")
@@ -225,6 +232,66 @@ func (t *ExampleSchema_Item) FromExternalRef0NewPet(v externalRef0.NewPet) error
 // FromExternalRef0NewPet overwrites any union data inside the ExampleSchema_Item as the provided externalRef0.NewPet
 func (t *ExampleSchema_Item) FromExternalRef0NewPet(v externalRef0.NewPet) error {
 `)
+}
+
+func TestDuplicatePathParameter(t *testing.T) {
+	// Regression test for https://github.com/oapi-codegen/oapi-codegen/issues/1574
+	// Some real-world specs (e.g. Keycloak) have paths where the same parameter
+	// appears more than once: /clients/{client-uuid}/.../clients/{client-uuid}
+	spec := `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Duplicate path param test
+paths:
+  /admin/realms/{realm}/clients/{client-uuid}/roles/{role-name}/composites/clients/{client-uuid}:
+    get:
+      operationId: getCompositeRoles
+      parameters:
+        - name: realm
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: client-uuid
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: role-name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	opts := Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			EchoServer: true,
+			Client:     true,
+			Models:     true,
+		},
+	}
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Verify the generated code is valid Go.
+	_, err = format.Source([]byte(code))
+	require.NoError(t, err)
+
+	// The path params should appear exactly once in the function signature.
+	assert.Contains(t, code, "realm string")
+	assert.Contains(t, code, "clientUuid string")
+	assert.Contains(t, code, "roleName string")
 }
 
 //go:embed test_spec.yaml

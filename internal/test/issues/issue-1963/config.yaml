@@ -1,0 +1,6 @@
+package: issue1963
+output: issue1963.gen.go
+generate:
+  std-http-server: true
+  strict-server: true
+  models: true
