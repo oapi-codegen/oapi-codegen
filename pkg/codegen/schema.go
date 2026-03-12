@@ -42,6 +42,17 @@ type Schema struct {
 
 }
 
+// IsPrimitive returns true if the schema represents a primitive OpenAPI type
+// (string, integer, number, or boolean) as opposed to an object, array, or
+// composed type.
+func (s Schema) IsPrimitive() bool {
+	if s.OAPISchema == nil {
+		return false
+	}
+	t := s.OAPISchema.Type
+	return t.Is("string") || t.Is("integer") || t.Is("number") || t.Is("boolean")
+}
+
 func (s Schema) IsRef() bool {
 	return s.RefType != ""
 }
