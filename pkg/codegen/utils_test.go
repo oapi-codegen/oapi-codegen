@@ -454,6 +454,13 @@ func TestSwaggerUriToStdHttpUriUri(t *testing.T) {
 	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{;arg*}/foo"))
 	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{?arg}/foo"))
 	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{?arg*}/foo"))
+
+	// Parameter names that are not valid Go identifiers must be sanitized (issue #2278)
+	assert.Equal(t, "/path/{addressing_identifier}", SwaggerUriToStdHttpUri("/path/{addressing-identifier}"))
+	assert.Equal(t, "/path/{my_param}/{other_param}", SwaggerUriToStdHttpUri("/path/{my-param}/{other-param}"))
+
+	// Go keywords are valid ServeMux wildcard names and should not be prefixed
+	assert.Equal(t, "/path/{type}", SwaggerUriToStdHttpUri("/path/{type}"))
 }
 
 func TestOrderedParamsFromUri(t *testing.T) {
