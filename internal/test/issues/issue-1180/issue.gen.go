@@ -125,7 +125,7 @@ func NewGetSimplePrimitiveRequest(server string, param string) (*http.Request, e
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/simplePrimitive/%s", pathParam0)
+	operationPath := "/simplePrimitive/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
