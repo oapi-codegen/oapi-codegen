@@ -8,6 +8,18 @@ type HttpRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+
+// operationIdKey is the context key for the operationId
+type operationIdKey int
+
+// GetOperationIdFromContext returns the operationId from the context
+func GetOperationIdFromContext(ctx context.Context) string {
+    if opid, ok := ctx.Value(operationIdKey(0)).(string); ok {
+        return opid
+    }
+    return ""
+}
+
 {{$clientTypeName := opts.OutputOptions.ClientTypeName -}}
 
 // {{ $clientTypeName }} which conforms to the OpenAPI3 specification for this service.
@@ -95,6 +107,7 @@ type ClientInterface interface {
 {{$opid := .OperationId -}}
 
 func (c *{{ $clientTypeName }}) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error) {
+    ctx = context.WithValue(ctx, operationIdKey(0), "{{$opid}}{{if .HasBody}}WithBody{{end}}")
     req, err := New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(c.Server{{genParamNames .PathParams}}{{if $hasParams}}, params{{end}}{{if .HasBody}}, contentType, body{{end}})
     if err != nil {
         return nil, err
@@ -109,6 +122,7 @@ func (c *{{ $clientTypeName }}) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx cont
 {{range .Bodies}}
 {{if .IsSupportedByClient -}}
 func (c *{{ $clientTypeName }}) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error) {
+    ctx = context.WithValue(ctx, operationIdKey(0), "{{$opid}}{{.Suffix}}")
     req, err := New{{$opid}}Request{{.Suffix}}(c.Server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
     if err != nil {
         return nil, err
