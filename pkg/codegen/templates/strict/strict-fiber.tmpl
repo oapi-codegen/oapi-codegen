@@ -90,7 +90,7 @@ type strictHandler struct {
         response, err := handler(ctx, request)
 
         if err != nil {
-            return fiber.NewError(fiber.StatusBadRequest, err.Error())
+            return err
         } else if validResponse, ok := response.({{$opid | ucFirst}}ResponseObject); ok {
             if err := validResponse.Visit{{$opid}}Response(ctx); err != nil {
                 return fiber.NewError(fiber.StatusBadRequest, err.Error())

@@ -945,7 +945,7 @@ func (sh *strictHandler) JSONExample(ctx *fiber.Ctx) error {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	} else if validResponse, ok := response.(JSONExampleResponseObject); ok {
 		if err := validResponse.VisitJSONExampleResponse(ctx); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -972,7 +972,7 @@ func (sh *strictHandler) MultipartExample(ctx *fiber.Ctx) error {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	} else if validResponse, ok := response.(MultipartExampleResponseObject); ok {
 		if err := validResponse.VisitMultipartExampleResponse(ctx); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -1005,7 +1005,7 @@ func (sh *strictHandler) MultipartRelatedExample(ctx *fiber.Ctx) error {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	} else if validResponse, ok := response.(MultipartRelatedExampleResponseObject); ok {
 		if err := validResponse.VisitMultipartRelatedExampleResponse(ctx); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -1062,7 +1062,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *fiber.Ctx) error {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	} else if validResponse, ok := response.(MultipleRequestAndResponseTypesResponseObject); ok {
 		if err := validResponse.VisitMultipleRequestAndResponseTypesResponse(ctx); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -1149,7 +1149,7 @@ func (sh *strictHandler) ReservedGoKeywordParameters(ctx *fiber.Ctx, pType strin
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	} else if validResponse, ok := response.(ReservedGoKeywordParametersResponseObject); ok {
 		if err := validResponse.VisitReservedGoKeywordParametersResponse(ctx); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -1183,7 +1183,7 @@ func (sh *strictHandler) ReusableResponses(ctx *fiber.Ctx) error {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	} else if validResponse, ok := response.(ReusableResponsesResponseObject); ok {
 		if err := validResponse.VisitReusableResponsesResponse(ctx); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -1214,7 +1214,7 @@ func (sh *strictHandler) TextExample(ctx *fiber.Ctx) error {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	} else if validResponse, ok := response.(TextExampleResponseObject); ok {
 		if err := validResponse.VisitTextExampleResponse(ctx); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -1241,7 +1241,7 @@ func (sh *strictHandler) UnknownExample(ctx *fiber.Ctx) error {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	} else if validResponse, ok := response.(UnknownExampleResponseObject); ok {
 		if err := validResponse.VisitUnknownExampleResponse(ctx); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -1270,7 +1270,7 @@ func (sh *strictHandler) UnspecifiedContentType(ctx *fiber.Ctx) error {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	} else if validResponse, ok := response.(UnspecifiedContentTypeResponseObject); ok {
 		if err := validResponse.VisitUnspecifiedContentTypeResponse(ctx); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -1301,7 +1301,7 @@ func (sh *strictHandler) URLEncodedExample(ctx *fiber.Ctx) error {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	} else if validResponse, ok := response.(URLEncodedExampleResponseObject); ok {
 		if err := validResponse.VisitURLEncodedExampleResponse(ctx); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -1337,7 +1337,7 @@ func (sh *strictHandler) HeadersExample(ctx *fiber.Ctx, params HeadersExamplePar
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	} else if validResponse, ok := response.(HeadersExampleResponseObject); ok {
 		if err := validResponse.VisitHeadersExampleResponse(ctx); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
@@ -1371,7 +1371,7 @@ func (sh *strictHandler) UnionExample(ctx *fiber.Ctx) error {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	} else if validResponse, ok := response.(UnionExampleResponseObject); ok {
 		if err := validResponse.VisitUnionExampleResponse(ctx); err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
