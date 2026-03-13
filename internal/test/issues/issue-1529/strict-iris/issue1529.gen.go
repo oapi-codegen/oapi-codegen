@@ -5,7 +5,7 @@ package issue1529
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -384,30 +384,27 @@ func (sh *strictHandler) Test(ctx iris.Context) {
 	}
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/6zPMUsEMRAF4L8iT8twWbWL2FgI9pbXxDjr5cjNDMlYyLL/XRIXFizFad4072NmQZKL",
-	"ChNbQ1jQ0okucayv1KynfSkhQN7OlAzrujpkngWBP0txECWOmhFwf5gOt3DQaKcheNuIDxohSjVaFn55",
-	"R/jxHSo1FW40GnfT1CMJG/HoRNWS02j5cxPej+zbTaUZAdd+/8JvL/jh92t/Ew9XWmXOhR6PeIr1iH82",
-	"n0X+YG7zHQAA//9fnz6pkQEAAA==",
-}
+// Base64 encoded, compressed with deflate, json marshaled Swagger object
+const swaggerSpec = "" +
+	"rM8xSwQxEAXgvyJPy3BZtYvYWAj2ltfEOOvlyM0MyVjIsv9dEhcWLMVp3jTvY2ZBkosKE1tDWNDSiS5x" +
+	"rK/UrKd9KSFA3s6UDOu6OmSeBYE/S3EQJY6aEXB/mA63cNBopyF424gPGiFKNVoWfnlH+PEdKjUVbjQa" +
+	"d9PUIwkb8ehE1ZLTaPlzE96P7NtNpRkB137/wm8v+OH3a38TD1daZc6FHo94ivWIfzafRf5gbvMdAAD/" +
+	"/w=="
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	compressed, err := base64.StdEncoding.DecodeString(swaggerSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil
