@@ -1055,13 +1055,58 @@ type StrictServerInterface interface {
 type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
 type StrictMiddlewareFunc = strictgin.StrictGinMiddlewareFunc
 
+type StrictGinServerOptions struct {
+	// RequestErrorHandlerFunc is called when a request cannot be parsed or
+	// decoded. It is invoked for JSON bind failures, form parse/bind errors,
+	// multipart reader errors, media type parse errors, missing multipart
+	// boundaries, and request body read errors. The default returns 400.
+	RequestErrorHandlerFunc func(ctx *gin.Context, err error)
+	// HandlerErrorFunc is called when the application handler (or any
+	// middleware wrapping it) returns a non-nil error. The default returns 500.
+	HandlerErrorFunc func(ctx *gin.Context, err error)
+	// ResponseErrorHandlerFunc is called when the response object fails to
+	// serialize (Visit*Response returns an error) or when the handler returns
+	// an unexpected response type. The default returns 500.
+	ResponseErrorHandlerFunc func(ctx *gin.Context, err error)
+}
+
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
-	return &strictHandler{ssi: ssi, middlewares: middlewares}
+	return &strictHandler{ssi: ssi, middlewares: middlewares, options: StrictGinServerOptions{
+		RequestErrorHandlerFunc: func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
+		},
+		HandlerErrorFunc: func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		},
+		ResponseErrorHandlerFunc: func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		},
+	}}
+}
+
+func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc, options StrictGinServerOptions) ServerInterface {
+	if options.RequestErrorHandlerFunc == nil {
+		options.RequestErrorHandlerFunc = func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
+		}
+	}
+	if options.HandlerErrorFunc == nil {
+		options.HandlerErrorFunc = func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		}
+	}
+	if options.ResponseErrorHandlerFunc == nil {
+		options.ResponseErrorHandlerFunc = func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		}
+	}
+	return &strictHandler{ssi: ssi, middlewares: middlewares, options: options}
 }
 
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+	options     StrictGinServerOptions
 }
 
 // JSONExample operation middleware
@@ -1071,8 +1116,7 @@ func (sh *strictHandler) JSONExample(ctx *gin.Context) {
 	var body JSONExampleJSONRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		if !errors.Is(err, io.EOF) {
-			ctx.Status(http.StatusBadRequest)
-			ctx.Error(err)
+			sh.options.RequestErrorHandlerFunc(ctx, err)
 			return
 		}
 	} else {
@@ -1089,14 +1133,13 @@ func (sh *strictHandler) JSONExample(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(JSONExampleResponseObject); ok {
 		if err := validResponse.VisitJSONExampleResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1104,11 +1147,11 @@ func (sh *strictHandler) JSONExample(ctx *gin.Context) {
 func (sh *strictHandler) MultipartExample(ctx *gin.Context) {
 	var request MultipartExampleRequestObject
 
-	if reader, err := ctx.Request.MultipartReader(); err == nil {
-		request.Body = reader
-	} else {
-		ctx.Error(err)
+	if reader, err := ctx.Request.MultipartReader(); err != nil {
+		sh.options.RequestErrorHandlerFunc(ctx, err)
 		return
+	} else {
+		request.Body = reader
 	}
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
@@ -1121,14 +1164,13 @@ func (sh *strictHandler) MultipartExample(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(MultipartExampleResponseObject); ok {
 		if err := validResponse.VisitMultipartExampleResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1137,10 +1179,10 @@ func (sh *strictHandler) MultipartRelatedExample(ctx *gin.Context) {
 	var request MultipartRelatedExampleRequestObject
 
 	if _, params, err := mime.ParseMediaType(ctx.Request.Header.Get("Content-Type")); err != nil {
-		ctx.Error(err)
+		sh.options.RequestErrorHandlerFunc(ctx, err)
 		return
 	} else if boundary := params["boundary"]; boundary == "" {
-		ctx.Error(http.ErrMissingBoundary)
+		sh.options.RequestErrorHandlerFunc(ctx, http.ErrMissingBoundary)
 		return
 	} else {
 		request.Body = multipart.NewReader(ctx.Request.Body, boundary)
@@ -1156,14 +1198,13 @@ func (sh *strictHandler) MultipartRelatedExample(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(MultipartRelatedExampleResponseObject); ok {
 		if err := validResponse.VisitMultipartRelatedExampleResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1176,8 +1217,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 		var body MultipleRequestAndResponseTypesJSONRequestBody
 		if err := ctx.ShouldBindJSON(&body); err != nil {
 			if !errors.Is(err, io.EOF) {
-				ctx.Status(http.StatusBadRequest)
-				ctx.Error(err)
+				sh.options.RequestErrorHandlerFunc(ctx, err)
 				return
 			}
 		} else {
@@ -1186,12 +1226,12 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 	}
 	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "application/x-www-form-urlencoded") {
 		if err := ctx.Request.ParseForm(); err != nil {
-			ctx.Error(err)
+			sh.options.RequestErrorHandlerFunc(ctx, err)
 			return
 		}
 		var body MultipleRequestAndResponseTypesFormdataRequestBody
 		if err := runtime.BindForm(&body, ctx.Request.Form, nil, nil); err != nil {
-			ctx.Error(err)
+			sh.options.RequestErrorHandlerFunc(ctx, err)
 			return
 		}
 		request.FormdataBody = &body
@@ -1200,17 +1240,17 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 		request.Body = ctx.Request.Body
 	}
 	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "multipart/form-data") {
-		if reader, err := ctx.Request.MultipartReader(); err == nil {
-			request.MultipartBody = reader
-		} else {
-			ctx.Error(err)
+		if reader, err := ctx.Request.MultipartReader(); err != nil {
+			sh.options.RequestErrorHandlerFunc(ctx, err)
 			return
+		} else {
+			request.MultipartBody = reader
 		}
 	}
 	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "text/plain") {
 		data, err := io.ReadAll(ctx.Request.Body)
 		if err != nil {
-			ctx.Error(err)
+			sh.options.RequestErrorHandlerFunc(ctx, err)
 			return
 		}
 		if len(data) > 0 {
@@ -1229,14 +1269,13 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(MultipleRequestAndResponseTypesResponseObject); ok {
 		if err := validResponse.VisitMultipleRequestAndResponseTypesResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1246,8 +1285,7 @@ func (sh *strictHandler) RequiredJSONBody(ctx *gin.Context) {
 
 	var body RequiredJSONBodyJSONRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.Error(err)
+		sh.options.RequestErrorHandlerFunc(ctx, err)
 		return
 	}
 	request.Body = &body
@@ -1262,14 +1300,13 @@ func (sh *strictHandler) RequiredJSONBody(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(RequiredJSONBodyResponseObject); ok {
 		if err := validResponse.VisitRequiredJSONBodyResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1279,7 +1316,7 @@ func (sh *strictHandler) RequiredTextBody(ctx *gin.Context) {
 
 	data, err := io.ReadAll(ctx.Request.Body)
 	if err != nil {
-		ctx.Error(err)
+		sh.options.RequestErrorHandlerFunc(ctx, err)
 		return
 	}
 	body := RequiredTextBodyTextRequestBody(data)
@@ -1295,14 +1332,13 @@ func (sh *strictHandler) RequiredTextBody(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(RequiredTextBodyResponseObject); ok {
 		if err := validResponse.VisitRequiredTextBodyResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1322,14 +1358,13 @@ func (sh *strictHandler) ReservedGoKeywordParameters(ctx *gin.Context, pType str
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(ReservedGoKeywordParametersResponseObject); ok {
 		if err := validResponse.VisitReservedGoKeywordParametersResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1340,8 +1375,7 @@ func (sh *strictHandler) ReusableResponses(ctx *gin.Context) {
 	var body ReusableResponsesJSONRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		if !errors.Is(err, io.EOF) {
-			ctx.Status(http.StatusBadRequest)
-			ctx.Error(err)
+			sh.options.RequestErrorHandlerFunc(ctx, err)
 			return
 		}
 	} else {
@@ -1358,14 +1392,13 @@ func (sh *strictHandler) ReusableResponses(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(ReusableResponsesResponseObject); ok {
 		if err := validResponse.VisitReusableResponsesResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1375,7 +1408,7 @@ func (sh *strictHandler) TextExample(ctx *gin.Context) {
 
 	data, err := io.ReadAll(ctx.Request.Body)
 	if err != nil {
-		ctx.Error(err)
+		sh.options.RequestErrorHandlerFunc(ctx, err)
 		return
 	}
 	if len(data) > 0 {
@@ -1393,14 +1426,13 @@ func (sh *strictHandler) TextExample(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(TextExampleResponseObject); ok {
 		if err := validResponse.VisitTextExampleResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1420,14 +1452,13 @@ func (sh *strictHandler) UnknownExample(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(UnknownExampleResponseObject); ok {
 		if err := validResponse.VisitUnknownExampleResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1449,14 +1480,13 @@ func (sh *strictHandler) UnspecifiedContentType(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(UnspecifiedContentTypeResponseObject); ok {
 		if err := validResponse.VisitUnspecifiedContentTypeResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1465,12 +1495,12 @@ func (sh *strictHandler) URLEncodedExample(ctx *gin.Context) {
 	var request URLEncodedExampleRequestObject
 
 	if err := ctx.Request.ParseForm(); err != nil {
-		ctx.Error(err)
+		sh.options.RequestErrorHandlerFunc(ctx, err)
 		return
 	}
 	var body URLEncodedExampleFormdataRequestBody
 	if err := runtime.BindForm(&body, ctx.Request.Form, nil, nil); err != nil {
-		ctx.Error(err)
+		sh.options.RequestErrorHandlerFunc(ctx, err)
 		return
 	}
 	request.Body = &body
@@ -1485,14 +1515,13 @@ func (sh *strictHandler) URLEncodedExample(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(URLEncodedExampleResponseObject); ok {
 		if err := validResponse.VisitURLEncodedExampleResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1505,8 +1534,7 @@ func (sh *strictHandler) HeadersExample(ctx *gin.Context, params HeadersExampleP
 	var body HeadersExampleJSONRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		if !errors.Is(err, io.EOF) {
-			ctx.Status(http.StatusBadRequest)
-			ctx.Error(err)
+			sh.options.RequestErrorHandlerFunc(ctx, err)
 			return
 		}
 	} else {
@@ -1523,14 +1551,13 @@ func (sh *strictHandler) HeadersExample(ctx *gin.Context, params HeadersExampleP
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(HeadersExampleResponseObject); ok {
 		if err := validResponse.VisitHeadersExampleResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -1541,8 +1568,7 @@ func (sh *strictHandler) UnionExample(ctx *gin.Context) {
 	var body UnionExampleJSONRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
 		if !errors.Is(err, io.EOF) {
-			ctx.Status(http.StatusBadRequest)
-			ctx.Error(err)
+			sh.options.RequestErrorHandlerFunc(ctx, err)
 			return
 		}
 	} else {
@@ -1559,14 +1585,13 @@ func (sh *strictHandler) UnionExample(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(UnionExampleResponseObject); ok {
 		if err := validResponse.VisitUnionExampleResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
