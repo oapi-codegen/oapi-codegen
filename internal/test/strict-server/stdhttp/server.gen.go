@@ -74,15 +74,54 @@ type ServerInterface interface {
 
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
-	Handler            ServerInterface
-	HandlerMiddlewares []MiddlewareFunc
-	ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
+	Handler             ServerInterface
+	HandlerMiddlewares  []MiddlewareFunc
+	ErrorHandlerFunc    func(w http.ResponseWriter, r *http.Request, err error)
+	WithRequestMetadata bool
 }
+
+type RequestMetadata struct {
+	OperationID  string
+	RequestRoute string
+}
+
+type contextKey string
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
+var requestMetadataContextKey = contextKey("oapi-request-metadata")
+
+func RequestMetadataFromContext(ctx context.Context) *RequestMetadata {
+	if ctx == nil {
+		return nil
+	}
+
+	rmd, ok := ctx.Value(requestMetadataContextKey).(*RequestMetadata)
+
+	if ok {
+		return rmd
+	}
+
+	return nil
+}
+
+func RequestMetadataFromRequest(r *http.Request) *RequestMetadata {
+	if r == nil {
+		return nil
+	}
+
+	return RequestMetadataFromContext(r.Context())
+}
+
 // JSONExample operation middleware
 func (siw *ServerInterfaceWrapper) JSONExample(w http.ResponseWriter, r *http.Request) {
+	// inject request metadata into the request context
+	if siw.WithRequestMetadata {
+		r = r.WithContext(context.WithValue(r.Context(), requestMetadataContextKey, &RequestMetadata{
+			OperationID:  "JSONExample",
+			RequestRoute: "/json",
+		}))
+	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.JSONExample(w, r)
@@ -97,6 +136,13 @@ func (siw *ServerInterfaceWrapper) JSONExample(w http.ResponseWriter, r *http.Re
 
 // MultipartExample operation middleware
 func (siw *ServerInterfaceWrapper) MultipartExample(w http.ResponseWriter, r *http.Request) {
+	// inject request metadata into the request context
+	if siw.WithRequestMetadata {
+		r = r.WithContext(context.WithValue(r.Context(), requestMetadataContextKey, &RequestMetadata{
+			OperationID:  "MultipartExample",
+			RequestRoute: "/multipart",
+		}))
+	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.MultipartExample(w, r)
@@ -111,6 +157,13 @@ func (siw *ServerInterfaceWrapper) MultipartExample(w http.ResponseWriter, r *ht
 
 // MultipartRelatedExample operation middleware
 func (siw *ServerInterfaceWrapper) MultipartRelatedExample(w http.ResponseWriter, r *http.Request) {
+	// inject request metadata into the request context
+	if siw.WithRequestMetadata {
+		r = r.WithContext(context.WithValue(r.Context(), requestMetadataContextKey, &RequestMetadata{
+			OperationID:  "MultipartRelatedExample",
+			RequestRoute: "/multipart-related",
+		}))
+	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.MultipartRelatedExample(w, r)
@@ -125,6 +178,13 @@ func (siw *ServerInterfaceWrapper) MultipartRelatedExample(w http.ResponseWriter
 
 // MultipleRequestAndResponseTypes operation middleware
 func (siw *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(w http.ResponseWriter, r *http.Request) {
+	// inject request metadata into the request context
+	if siw.WithRequestMetadata {
+		r = r.WithContext(context.WithValue(r.Context(), requestMetadataContextKey, &RequestMetadata{
+			OperationID:  "MultipleRequestAndResponseTypes",
+			RequestRoute: "/multiple",
+		}))
+	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.MultipleRequestAndResponseTypes(w, r)
@@ -167,6 +227,13 @@ func (siw *ServerInterfaceWrapper) RequiredTextBody(w http.ResponseWriter, r *ht
 
 // ReservedGoKeywordParameters operation middleware
 func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(w http.ResponseWriter, r *http.Request) {
+	// inject request metadata into the request context
+	if siw.WithRequestMetadata {
+		r = r.WithContext(context.WithValue(r.Context(), requestMetadataContextKey, &RequestMetadata{
+			OperationID:  "ReservedGoKeywordParameters",
+			RequestRoute: "/reserved-go-keyword-parameters/{type}",
+		}))
+	}
 
 	var err error
 
@@ -192,6 +259,13 @@ func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(w http.ResponseWr
 
 // ReusableResponses operation middleware
 func (siw *ServerInterfaceWrapper) ReusableResponses(w http.ResponseWriter, r *http.Request) {
+	// inject request metadata into the request context
+	if siw.WithRequestMetadata {
+		r = r.WithContext(context.WithValue(r.Context(), requestMetadataContextKey, &RequestMetadata{
+			OperationID:  "ReusableResponses",
+			RequestRoute: "/reusable-responses",
+		}))
+	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ReusableResponses(w, r)
@@ -206,6 +280,13 @@ func (siw *ServerInterfaceWrapper) ReusableResponses(w http.ResponseWriter, r *h
 
 // TextExample operation middleware
 func (siw *ServerInterfaceWrapper) TextExample(w http.ResponseWriter, r *http.Request) {
+	// inject request metadata into the request context
+	if siw.WithRequestMetadata {
+		r = r.WithContext(context.WithValue(r.Context(), requestMetadataContextKey, &RequestMetadata{
+			OperationID:  "TextExample",
+			RequestRoute: "/text",
+		}))
+	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TextExample(w, r)
@@ -220,6 +301,13 @@ func (siw *ServerInterfaceWrapper) TextExample(w http.ResponseWriter, r *http.Re
 
 // UnknownExample operation middleware
 func (siw *ServerInterfaceWrapper) UnknownExample(w http.ResponseWriter, r *http.Request) {
+	// inject request metadata into the request context
+	if siw.WithRequestMetadata {
+		r = r.WithContext(context.WithValue(r.Context(), requestMetadataContextKey, &RequestMetadata{
+			OperationID:  "UnknownExample",
+			RequestRoute: "/unknown",
+		}))
+	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UnknownExample(w, r)
@@ -234,6 +322,13 @@ func (siw *ServerInterfaceWrapper) UnknownExample(w http.ResponseWriter, r *http
 
 // UnspecifiedContentType operation middleware
 func (siw *ServerInterfaceWrapper) UnspecifiedContentType(w http.ResponseWriter, r *http.Request) {
+	// inject request metadata into the request context
+	if siw.WithRequestMetadata {
+		r = r.WithContext(context.WithValue(r.Context(), requestMetadataContextKey, &RequestMetadata{
+			OperationID:  "UnspecifiedContentType",
+			RequestRoute: "/unspecified-content-type",
+		}))
+	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UnspecifiedContentType(w, r)
@@ -248,6 +343,13 @@ func (siw *ServerInterfaceWrapper) UnspecifiedContentType(w http.ResponseWriter,
 
 // URLEncodedExample operation middleware
 func (siw *ServerInterfaceWrapper) URLEncodedExample(w http.ResponseWriter, r *http.Request) {
+	// inject request metadata into the request context
+	if siw.WithRequestMetadata {
+		r = r.WithContext(context.WithValue(r.Context(), requestMetadataContextKey, &RequestMetadata{
+			OperationID:  "URLEncodedExample",
+			RequestRoute: "/urlencoded",
+		}))
+	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.URLEncodedExample(w, r)
@@ -262,6 +364,13 @@ func (siw *ServerInterfaceWrapper) URLEncodedExample(w http.ResponseWriter, r *h
 
 // HeadersExample operation middleware
 func (siw *ServerInterfaceWrapper) HeadersExample(w http.ResponseWriter, r *http.Request) {
+	// inject request metadata into the request context
+	if siw.WithRequestMetadata {
+		r = r.WithContext(context.WithValue(r.Context(), requestMetadataContextKey, &RequestMetadata{
+			OperationID:  "HeadersExample",
+			RequestRoute: "/with-headers",
+		}))
+	}
 
 	var err error
 
@@ -325,6 +434,13 @@ func (siw *ServerInterfaceWrapper) HeadersExample(w http.ResponseWriter, r *http
 
 // UnionExample operation middleware
 func (siw *ServerInterfaceWrapper) UnionExample(w http.ResponseWriter, r *http.Request) {
+	// inject request metadata into the request context
+	if siw.WithRequestMetadata {
+		r = r.WithContext(context.WithValue(r.Context(), requestMetadataContextKey, &RequestMetadata{
+			OperationID:  "UnionExample",
+			RequestRoute: "/with-union",
+		}))
+	}
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UnionExample(w, r)
@@ -418,10 +534,11 @@ type ServeMux interface {
 }
 
 type StdHTTPServerOptions struct {
-	BaseURL          string
-	BaseRouter       ServeMux
-	Middlewares      []MiddlewareFunc
-	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
+	BaseURL             string
+	BaseRouter          ServeMux
+	Middlewares         []MiddlewareFunc
+	ErrorHandlerFunc    func(w http.ResponseWriter, r *http.Request, err error)
+	WithRequestMetadata bool
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
@@ -452,9 +569,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	wrapper := ServerInterfaceWrapper{
-		Handler:            si,
-		HandlerMiddlewares: options.Middlewares,
-		ErrorHandlerFunc:   options.ErrorHandlerFunc,
+		Handler:             si,
+		HandlerMiddlewares:  options.Middlewares,
+		ErrorHandlerFunc:    options.ErrorHandlerFunc,
+		WithRequestMetadata: options.WithRequestMetadata,
 	}
 
 	m.HandleFunc("POST "+options.BaseURL+"/json", wrapper.JSONExample)
