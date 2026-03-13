@@ -64,12 +64,44 @@ func (pd ParameterDefinition) ZeroValueIsNil() bool {
 // JsonTag generates the JSON annotation to map GoType to json type name. If Parameter
 // Foo is marshaled to json as "foo", this will create the annotation
 // 'json:"foo"'
+// It also includes any additional struct tags from x-oapi-codegen-extra-tags
+// at the parameter or schema level (parameter-level takes precedence).
 func (pd *ParameterDefinition) JsonTag() string {
+	fieldTags := make(map[string]string)
+
 	if pd.Required {
-		return fmt.Sprintf("`json:\"%s\"`", pd.ParamName)
+		fieldTags["json"] = pd.ParamName
 	} else {
-		return fmt.Sprintf("`json:\"%s,omitempty\"`", pd.ParamName)
+		fieldTags["json"] = pd.ParamName + ",omitempty"
 	}
+
+	// Merge x-oapi-codegen-extra-tags from schema level first, then parameter level
+	// so that parameter-level takes precedence.
+	if pd.Spec != nil && pd.Spec.Schema != nil && pd.Spec.Schema.Value != nil {
+		if extension, ok := pd.Spec.Schema.Value.Extensions[extPropExtraTags]; ok {
+			if tags, err := extExtraTags(extension); err == nil {
+				for k, v := range tags {
+					fieldTags[k] = v
+				}
+			}
+		}
+	}
+	if pd.Spec != nil {
+		if extension, ok := pd.Spec.Extensions[extPropExtraTags]; ok {
+			if tags, err := extExtraTags(extension); err == nil {
+				for k, v := range tags {
+					fieldTags[k] = v
+				}
+			}
+		}
+	}
+
+	keys := SortedMapKeys(fieldTags)
+	tags := make([]string, len(keys))
+	for i, k := range keys {
+		tags[i] = fmt.Sprintf(`%s:"%s"`, k, fieldTags[k])
+	}
+	return "`" + strings.Join(tags, " ") + "`"
 }
 
 func (pd *ParameterDefinition) IsJson() bool {
