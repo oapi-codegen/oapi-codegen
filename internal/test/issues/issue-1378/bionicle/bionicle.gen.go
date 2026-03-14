@@ -184,7 +184,7 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/bionicle/{name}", wrapper.GetBionicleName).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/bionicle/{name}", wrapper.GetBionicleName).Methods(http.MethodGet)
 
 	return r
 }

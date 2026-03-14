@@ -165,7 +165,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc("GET "+options.BaseURL+"/ping", wrapper.GetPing)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/ping", wrapper.GetPing)
 
 	return m
 }
