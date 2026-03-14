@@ -449,33 +449,33 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/json", wrapper.JSONExample).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/json", wrapper.JSONExample).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/multipart", wrapper.MultipartExample).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/multipart", wrapper.MultipartExample).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/required-text-body", wrapper.RequiredTextBody).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/required-text-body", wrapper.RequiredTextBody).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/reserved-go-keyword-parameters/{type}", wrapper.ReservedGoKeywordParameters).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/reserved-go-keyword-parameters/{type}", wrapper.ReservedGoKeywordParameters).Methods(http.MethodGet)
 
-	r.HandleFunc(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/text", wrapper.TextExample).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/text", wrapper.TextExample).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/unknown", wrapper.UnknownExample).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/unknown", wrapper.UnknownExample).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/with-headers", wrapper.HeadersExample).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/with-headers", wrapper.HeadersExample).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/with-union", wrapper.UnionExample).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/with-union", wrapper.UnionExample).Methods(http.MethodPost)
 
 	return r
 }

@@ -254,7 +254,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc("GET "+options.BaseURL+"/v1/endpoint", wrapper.GetEndpoint)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/endpoint", wrapper.GetEndpoint)
 
 	return m
 }
