@@ -129,7 +129,7 @@ func NewGetTestRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -391,7 +391,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc("GET "+options.BaseURL+"/v1/test", wrapper.GetTest)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/v1/test", wrapper.GetTest)
 
 	return m
 }
