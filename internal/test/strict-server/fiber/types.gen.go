@@ -26,6 +26,9 @@ type HeadersExampleParams struct {
 	Header2 *int   `json:"header2,omitempty"`
 }
 
+// UnionExample200JSONResponse0 defines parameters for UnionExample.
+type UnionExample200JSONResponse0 = string
+
 // JSONExampleJSONRequestBody defines body for JSONExample for application/json ContentType.
 type JSONExampleJSONRequestBody = Example
 

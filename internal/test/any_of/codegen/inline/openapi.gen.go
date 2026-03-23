@@ -48,6 +48,11 @@ type Rat struct {
 // apiKeyAuthContextKey is the context key for ApiKeyAuth security scheme
 type apiKeyAuthContextKey string
 
+// GetPets200JSONResponse_Data_Item defines parameters for GetPets.
+type GetPets200JSONResponse_Data_Item struct {
+	union json.RawMessage
+}
+
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
