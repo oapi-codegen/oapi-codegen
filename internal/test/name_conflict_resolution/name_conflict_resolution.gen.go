@@ -258,6 +258,18 @@ type QueryJSONBody struct {
 	Q *string `json:"q,omitempty"`
 }
 
+// PatchResource200ApplicationJSONPatchPlusJSONResponse1 defines parameters for PatchResource.
+type PatchResource200ApplicationJSONPatchPlusJSONResponse1 = []Resource
+
+// PatchResource200ApplicationJSONPatchPlusJSONResponse2 defines parameters for PatchResource.
+type PatchResource200ApplicationJSONPatchPlusJSONResponse2 = string
+
+// PatchResource200ApplicationJSONPatchQueryPlusJSONResponse1 defines parameters for PatchResource.
+type PatchResource200ApplicationJSONPatchQueryPlusJSONResponse1 = []Resource
+
+// PatchResource200ApplicationJSONPatchQueryPlusJSONResponse2 defines parameters for PatchResource.
+type PatchResource200ApplicationJSONPatchQueryPlusJSONResponse2 = string
+
 // PostFooJSONRequestBody defines body for PostFoo for application/json ContentType.
 type PostFooJSONRequestBody PostFooJSONBody
 
