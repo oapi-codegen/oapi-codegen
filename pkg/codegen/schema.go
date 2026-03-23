@@ -897,7 +897,7 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 			// Explicit mapping.
 			var mapped bool
 			for k, v := range discriminator.Mapping {
-				if v == element.Ref {
+				if v.Ref == element.Ref {
 					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
 					mapped = true
 				}
