@@ -149,7 +149,7 @@ func (g GenerateOptions) RouterImports() []AdditionalImport {
 	case g.Echo5Server:
 		imports = append(imports, AdditionalImport{Package: "github.com/labstack/echo/v5"})
 		if g.Strict {
-			imports = append(imports, AdditionalImport{Alias: "strictecho5", Package: "github.com/oapi-codegen/runtime/strictmiddleware/echo/v5"})
+			imports = append(imports, AdditionalImport{Alias: "strictecho5", Package: "github.com/oapi-codegen/runtime/strictmiddleware/echo-v5"})
 		}
 	case g.ChiServer:
 		imports = append(imports, AdditionalImport{Package: "github.com/go-chi/chi/v5"})
