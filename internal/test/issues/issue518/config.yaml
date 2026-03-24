@@ -2,4 +2,5 @@
 package: issue518
 generate:
   fiber-server: true
+  models: true
 output: main.gen.go
