@@ -148,7 +148,15 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
         }
         bodyReader = strings.NewReader(bodyStr.Encode())
     {{else if eq .NameTag "Text" -}}
-        bodyReader = strings.NewReader(string(body))
+        if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+            bodyReader = strings.NewReader(stringer.String())
+        } else {
+        {{if .Schema.IsPrimitive -}}
+            bodyReader = strings.NewReader(fmt.Sprint(body))
+        {{else -}}
+            return nil, fmt.Errorf("text/plain is not supported for complex types, define a String() method on {{.Schema.TypeDecl}} to marshal it as text")
+        {{end -}}
+        }
     {{end -}}
     return New{{$opid}}RequestWithBody(server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, "{{.ContentType}}", bodyReader)
 }
@@ -238,7 +246,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
         queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
     }
 {{end}}{{/* if .QueryParams */}}
-    req, err := http.NewRequest("{{.Method}}", queryURL.String(), {{if .HasBody}}body{{else}}nil{{end}})
+    req, err := http.NewRequest({{.Method | httpMethodConstant}}, queryURL.String(), {{if .HasBody}}body{{else}}nil{{end}})
     if err != nil {
         return nil, err
     }

@@ -602,15 +602,8 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]OperationDefinition, error) {
+func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
-
-	var toCamelCaseFunc func(string) string
-	if initialismOverrides {
-		toCamelCaseFunc = ToCamelCaseWithInitialism
-	} else {
-		toCamelCaseFunc = ToCamelCase
-	}
 
 	if swagger == nil || swagger.Paths == nil {
 		return operations, nil
@@ -639,7 +632,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 			operationId := op.OperationID
 			// We rely on OperationID to generate function names, it's required
 			if operationId == "" {
-				operationId, err = generateDefaultOperationID(opName, requestPath, toCamelCaseFunc)
+				operationId, err = generateDefaultOperationID(opName, requestPath)
 				if err != nil {
 					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
 						opName, requestPath, err)
@@ -736,7 +729,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 	return operations, nil
 }
 
-func generateDefaultOperationID(opName string, requestPath string, toCamelCaseFunc func(string) string) (string, error) {
+func generateDefaultOperationID(opName string, requestPath string) (string, error) {
 	var operationId = strings.ToLower(opName)
 
 	if opName == "" {

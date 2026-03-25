@@ -457,20 +457,20 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc("POST "+options.BaseURL+"/json", wrapper.JSONExample)
-	m.HandleFunc("POST "+options.BaseURL+"/multipart", wrapper.MultipartExample)
-	m.HandleFunc("POST "+options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample)
-	m.HandleFunc("POST "+options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
-	m.HandleFunc("POST "+options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody)
-	m.HandleFunc("POST "+options.BaseURL+"/required-text-body", wrapper.RequiredTextBody)
-	m.HandleFunc("GET "+options.BaseURL+"/reserved-go-keyword-parameters/{type}", wrapper.ReservedGoKeywordParameters)
-	m.HandleFunc("POST "+options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
-	m.HandleFunc("POST "+options.BaseURL+"/text", wrapper.TextExample)
-	m.HandleFunc("POST "+options.BaseURL+"/unknown", wrapper.UnknownExample)
-	m.HandleFunc("POST "+options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
-	m.HandleFunc("POST "+options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
-	m.HandleFunc("POST "+options.BaseURL+"/with-headers", wrapper.HeadersExample)
-	m.HandleFunc("POST "+options.BaseURL+"/with-union", wrapper.UnionExample)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/json", wrapper.JSONExample)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/multipart", wrapper.MultipartExample)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/required-text-body", wrapper.RequiredTextBody)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/reserved-go-keyword-parameters/{type}", wrapper.ReservedGoKeywordParameters)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/text", wrapper.TextExample)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/unknown", wrapper.UnknownExample)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/with-headers", wrapper.HeadersExample)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/with-union", wrapper.UnionExample)
 
 	return m
 }

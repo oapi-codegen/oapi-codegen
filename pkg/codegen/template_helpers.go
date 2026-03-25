@@ -323,6 +323,31 @@ func genServerURLWithVariablesFunctionParams(goTypePrefix string, variables map[
 	return strings.Join(parts, ", ")
 }
 
+// httpMethodConstant converts an HTTP method string (e.g. "GET") to the
+// corresponding Go net/http constant (e.g. "http.MethodGet").
+func httpMethodConstant(method string) string {
+	switch method {
+	case "GET":
+		return "http.MethodGet"
+	case "POST":
+		return "http.MethodPost"
+	case "PUT":
+		return "http.MethodPut"
+	case "DELETE":
+		return "http.MethodDelete"
+	case "PATCH":
+		return "http.MethodPatch"
+	case "HEAD":
+		return "http.MethodHead"
+	case "OPTIONS":
+		return "http.MethodOptions"
+	case "TRACE":
+		return "http.MethodTrace"
+	default:
+		return fmt.Sprintf("%q", method)
+	}
+}
+
 // TemplateFunctions is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
@@ -355,4 +380,5 @@ var TemplateFunctions = template.FuncMap{
 	"toGoComment":                StringWithTypeNameToGoComment,
 
 	"genServerURLWithVariablesFunctionParams": genServerURLWithVariablesFunctionParams,
+	"httpMethodConstant":                      httpMethodConstant,
 }
