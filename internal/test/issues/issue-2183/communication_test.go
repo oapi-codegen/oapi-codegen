@@ -23,12 +23,6 @@ func TestQueryCommunication(t *testing.T) {
 		Params []ParamDefinition
 		// SpecQuery is the expected raw query string per the OpenAPI spec.
 		SpecQuery string
-		// SkipServerRoundTrip skips the server-side deserialization check.
-		// This is needed for cases where values contain the delimiter character
-		// (comma for form/explode=false), because Go's url.ParseQuery decodes
-		// %2C to "," before BindRawQueryParameter can distinguish delimiters from
-		// literal commas. Fixing this requires changes to the runtime library.
-		SkipServerRoundTrip bool
 	}{
 		{
 			Name: "explode=false",
@@ -49,8 +43,7 @@ func TestQueryCommunication(t *testing.T) {
 				paramName: "search_term",
 				value:     []string{"a", "b", "c,d"},
 			}},
-			SpecQuery:           "search_term=a,b,c%2Cd",
-			SkipServerRoundTrip: true,
+			SpecQuery: "search_term=a,b,c%2Cd",
 		},
 		{
 			Name: "explode=true",
@@ -103,10 +96,6 @@ func TestQueryCommunication(t *testing.T) {
 			t.Logf("client query: %s", rawQuery)
 			if tc.SpecQuery != "" && rawQuery != tc.SpecQuery {
 				t.Errorf("spec query: expected %q, got %q", tc.SpecQuery, rawQuery)
-			}
-
-			if tc.SkipServerRoundTrip {
-				return
 			}
 
 			// following code equivalent to generated server
