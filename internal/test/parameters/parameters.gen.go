@@ -760,14 +760,8 @@ func NewEnumParamsRequest(server string, params *EnumParamsParams) (*http.Reques
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "enumPathParam", *params.EnumPathParam, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int32"}); err != nil {
 				return nil, err
 			} else {
-				// Split query fragments into name/value pairs so that we can
-				// encode the names, while leaving the values raw.
 				for _, qp := range strings.Split(queryFrag, "&") {
-					if k, v, ok := strings.Cut(qp, "="); ok {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(k)+"="+v)
-					} else {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(qp))
-					}
+					rawQueryFragments = append(rawQueryFragments, qp)
 				}
 			}
 
@@ -1242,14 +1236,8 @@ func NewGetDeepObjectRequest(server string, params *GetDeepObjectParams) (*http.
 		if queryFrag, err := runtime.StyleParamWithOptions("deepObject", true, "deepObj", params.DeepObj, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "", Format: ""}); err != nil {
 			return nil, err
 		} else {
-			// Split query fragments into name/value pairs so that we can
-			// encode the names, while leaving the values raw.
 			for _, qp := range strings.Split(queryFrag, "&") {
-				if k, v, ok := strings.Cut(qp, "="); ok {
-					rawQueryFragments = append(rawQueryFragments, url.QueryEscape(k)+"="+v)
-				} else {
-					rawQueryFragments = append(rawQueryFragments, url.QueryEscape(qp))
-				}
+				rawQueryFragments = append(rawQueryFragments, qp)
 			}
 		}
 
@@ -1300,14 +1288,8 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "ea", *params.Ea, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
 				return nil, err
 			} else {
-				// Split query fragments into name/value pairs so that we can
-				// encode the names, while leaving the values raw.
 				for _, qp := range strings.Split(queryFrag, "&") {
-					if k, v, ok := strings.Cut(qp, "="); ok {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(k)+"="+v)
-					} else {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(qp))
-					}
+					rawQueryFragments = append(rawQueryFragments, qp)
 				}
 			}
 
@@ -1318,14 +1300,8 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 			if queryFrag, err := runtime.StyleParamWithOptions("form", false, "a", *params.A, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "array", Format: ""}); err != nil {
 				return nil, err
 			} else {
-				// Split query fragments into name/value pairs so that we can
-				// encode the names, while leaving the values raw.
 				for _, qp := range strings.Split(queryFrag, "&") {
-					if k, v, ok := strings.Cut(qp, "="); ok {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(k)+"="+v)
-					} else {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(qp))
-					}
+					rawQueryFragments = append(rawQueryFragments, qp)
 				}
 			}
 
@@ -1336,14 +1312,8 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "eo", *params.Eo, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "", Format: ""}); err != nil {
 				return nil, err
 			} else {
-				// Split query fragments into name/value pairs so that we can
-				// encode the names, while leaving the values raw.
 				for _, qp := range strings.Split(queryFrag, "&") {
-					if k, v, ok := strings.Cut(qp, "="); ok {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(k)+"="+v)
-					} else {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(qp))
-					}
+					rawQueryFragments = append(rawQueryFragments, qp)
 				}
 			}
 
@@ -1354,14 +1324,8 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 			if queryFrag, err := runtime.StyleParamWithOptions("form", false, "o", *params.O, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "", Format: ""}); err != nil {
 				return nil, err
 			} else {
-				// Split query fragments into name/value pairs so that we can
-				// encode the names, while leaving the values raw.
 				for _, qp := range strings.Split(queryFrag, "&") {
-					if k, v, ok := strings.Cut(qp, "="); ok {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(k)+"="+v)
-					} else {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(qp))
-					}
+					rawQueryFragments = append(rawQueryFragments, qp)
 				}
 			}
 
@@ -1372,14 +1336,8 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "ep", *params.Ep, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int32"}); err != nil {
 				return nil, err
 			} else {
-				// Split query fragments into name/value pairs so that we can
-				// encode the names, while leaving the values raw.
 				for _, qp := range strings.Split(queryFrag, "&") {
-					if k, v, ok := strings.Cut(qp, "="); ok {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(k)+"="+v)
-					} else {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(qp))
-					}
+					rawQueryFragments = append(rawQueryFragments, qp)
 				}
 			}
 
@@ -1390,14 +1348,8 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 			if queryFrag, err := runtime.StyleParamWithOptions("form", false, "p", *params.P, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: "int32"}); err != nil {
 				return nil, err
 			} else {
-				// Split query fragments into name/value pairs so that we can
-				// encode the names, while leaving the values raw.
 				for _, qp := range strings.Split(queryFrag, "&") {
-					if k, v, ok := strings.Cut(qp, "="); ok {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(k)+"="+v)
-					} else {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(qp))
-					}
+					rawQueryFragments = append(rawQueryFragments, qp)
 				}
 			}
 
@@ -1408,14 +1360,8 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "ps", *params.Ps, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
-				// Split query fragments into name/value pairs so that we can
-				// encode the names, while leaving the values raw.
 				for _, qp := range strings.Split(queryFrag, "&") {
-					if k, v, ok := strings.Cut(qp, "="); ok {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(k)+"="+v)
-					} else {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(qp))
-					}
+					rawQueryFragments = append(rawQueryFragments, qp)
 				}
 			}
 
@@ -1436,14 +1382,8 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "1s", *params.N1s, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
-				// Split query fragments into name/value pairs so that we can
-				// encode the names, while leaving the values raw.
 				for _, qp := range strings.Split(queryFrag, "&") {
-					if k, v, ok := strings.Cut(qp, "="); ok {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(k)+"="+v)
-					} else {
-						rawQueryFragments = append(rawQueryFragments, url.QueryEscape(qp))
-					}
+					rawQueryFragments = append(rawQueryFragments, qp)
 				}
 			}
 
