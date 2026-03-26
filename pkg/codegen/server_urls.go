@@ -24,12 +24,20 @@ func GenerateServerURLs(t *template.Template, spec *openapi3.T) (string, error) 
 	names := make(map[string]*openapi3.Server)
 
 	for _, server := range spec.Servers {
-		suffix := server.Description
-		if suffix == "" {
-			suffix = nameNormalizer(server.URL)
+		var name string
+		if goNameExt, ok := server.Extensions[extGoName]; ok {
+			if customName, err := extParseGoFieldName(goNameExt); err == nil && customName != "" {
+				name = customName
+			}
 		}
-		name := serverURLPrefix + UppercaseFirstCharacter(suffix)
-		name = nameNormalizer(name)
+		if name == "" {
+			suffix := server.Description
+			if suffix == "" {
+				suffix = nameNormalizer(server.URL)
+			}
+			name = serverURLPrefix + UppercaseFirstCharacter(suffix)
+			name = nameNormalizer(name)
+		}
 
 		// if this is the only type with this name, store it
 		if _, conflict := names[name]; !conflict {
