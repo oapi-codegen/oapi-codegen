@@ -71,7 +71,7 @@ func TestFilterOnlyCat(t *testing.T) {
 	assert.NotEmpty(t, swagger.Paths.Value("/cat").Get, "GET /cat operation should still be in spec")
 	assert.Empty(t, swagger.Paths.Value("/dog").Get, "GET /dog should have been removed from spec")
 
-	pruneUnusedComponents(swagger)
+	pruneUnusedComponents(swagger, nil)
 
 	assert.Len(t, swagger.Components.Schemas, 3)
 }
@@ -101,7 +101,7 @@ func TestFilterOnlyDog(t *testing.T) {
 	assert.NotEmpty(t, swagger.Paths.Value("/dog").Get)
 	assert.Empty(t, swagger.Paths.Value("/cat").Get)
 
-	pruneUnusedComponents(swagger)
+	pruneUnusedComponents(swagger, nil)
 
 	assert.Len(t, swagger.Components.Schemas, 3)
 }
@@ -121,7 +121,7 @@ func TestPruningUnusedComponents(t *testing.T) {
 	assert.Len(t, swagger.Components.Links, 1)
 	assert.Len(t, swagger.Components.Callbacks, 1)
 
-	pruneUnusedComponents(swagger)
+	pruneUnusedComponents(swagger, nil)
 
 	assert.Len(t, swagger.Components.Schemas, 0)
 	assert.Len(t, swagger.Components.Parameters, 0)
@@ -135,6 +135,105 @@ func TestPruningUnusedComponents(t *testing.T) {
 	assert.Len(t, swagger.Components.Links, 0)
 	assert.Len(t, swagger.Components.Callbacks, 0)
 }
+
+func TestPrunePreserveSchemas(t *testing.T) {
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(prunePreserveSchemasFixture))
+	assert.NoError(t, err)
+	assert.Len(t, swagger.Components.Schemas, 3)
+
+	pruneUnusedComponents(swagger, []string{"KeepMe"})
+
+	// Only KeepMe is in preserve list; others are unreferenced and pruned.
+	assert.Contains(t, swagger.Components.Schemas, "KeepMe")
+	assert.NotContains(t, swagger.Components.Schemas, "PruneA")
+	assert.NotContains(t, swagger.Components.Schemas, "PruneB")
+	assert.Len(t, swagger.Components.Schemas, 1)
+}
+
+const prunePreserveSchemasFixture = `
+openapi: 3.0.1
+info:
+  title: Test
+  version: 1.0.0
+paths:
+  /test:
+    get:
+      operationId: test
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  schemas:
+    KeepMe:
+      type: object
+      properties:
+        id:
+          type: integer
+    PruneA:
+      type: object
+      properties:
+        name:
+          type: string
+    PruneB:
+      type: object
+      properties:
+        value:
+          type: string
+`
+
+func TestPruneSchemaKeepUnusedExtension(t *testing.T) {
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneKeepUnusedExtensionFixture))
+	assert.NoError(t, err)
+	assert.Len(t, swagger.Components.Schemas, 3)
+
+	pruneUnusedComponents(swagger, nil)
+
+	// UnusedSchema has x-oapi-codegen-keep-unused: true so it is kept; UsedSchema is referenced; OtherUnused is pruned.
+	assert.Contains(t, swagger.Components.Schemas, "UsedSchema")
+	assert.Contains(t, swagger.Components.Schemas, "UnusedSchema")
+	assert.NotContains(t, swagger.Components.Schemas, "OtherUnused")
+	assert.Len(t, swagger.Components.Schemas, 2)
+}
+
+const pruneKeepUnusedExtensionFixture = `
+openapi: 3.0.1
+info:
+  title: Test
+  version: 1.0.0
+paths:
+  /test:
+    get:
+      operationId: test
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsedSchema'
+components:
+  schemas:
+    UsedSchema:
+      type: object
+      properties:
+        id:
+          type: integer
+    UnusedSchema:
+      x-oapi-codegen-keep-unused: true
+      type: object
+      properties:
+        name:
+          type: string
+    OtherUnused:
+      type: object
+      properties:
+        value:
+          type: string
+`
 
 const pruneComprehensiveTestFixture = `
 openapi: 3.0.1
