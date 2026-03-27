@@ -49,6 +49,7 @@ type MiddlewareFunc func(http.Handler) http.Handler
 func (siw *ServerInterfaceWrapper) CookieParams(w http.ResponseWriter, r *http.Request) {
 
 	var err error
+	_ = err
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params CookieParamsParams
@@ -58,7 +59,7 @@ func (siw *ServerInterfaceWrapper) CookieParams(w http.ResponseWriter, r *http.R
 
 		if cookie, err = r.Cookie("authId"); err == nil {
 			var value string
-			err = runtime.BindStyledParameterWithOptions("simple", "authId", cookie.Value, &value, runtime.BindStyledParameterOptions{Explode: true, Required: false, Type: "string", Format: ""})
+			err = runtime.BindStyledParameterWithOptions("simple", "authId", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false, Type: "string", Format: ""})
 			if err != nil {
 				siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "authId", Err: err})
 				return
@@ -73,7 +74,7 @@ func (siw *ServerInterfaceWrapper) CookieParams(w http.ResponseWriter, r *http.R
 
 		if cookie, err = r.Cookie("serverId"); err == nil {
 			var value string
-			err = runtime.BindStyledParameterWithOptions("simple", "serverId", cookie.Value, &value, runtime.BindStyledParameterOptions{Explode: true, Required: false, Type: "string", Format: ""})
+			err = runtime.BindStyledParameterWithOptions("simple", "serverId", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false, Type: "string", Format: ""})
 			if err != nil {
 				siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "serverId", Err: err})
 				return
