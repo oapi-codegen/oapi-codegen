@@ -1,9 +1,11 @@
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
     Handler ServerInterface
+    HandlerMiddlewares []HandlerMiddlewareFunc
 }
 
 type MiddlewareFunc fiber.Handler
+type HandlerMiddlewareFunc func(c *fiber.Ctx, next fiber.Handler) error
 
 {{range .}}{{$opid := .OperationId}}
 
@@ -36,7 +38,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
   {{end}}
 
 {{range .SecurityDefinitions}}
-  c.Context().SetUserValue(({{.ProviderName | ucFirst}}Scopes), {{toStringArray .Scopes}})
+  c.Context().SetUserValue(({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes), {{toStringArray .Scopes}})
 {{end}}
 
   {{if .RequiresParamObject}}
@@ -168,6 +170,18 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
     {{end}}
   {{end}}
 
-  return siw.Handler.{{.OperationId}}(c{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+  handler := func(c *fiber.Ctx) error {
+    return siw.Handler.{{.OperationId}}(c{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+  }
+
+  for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+    m := siw.HandlerMiddlewares[i]
+    next := handler
+    handler = func(c *fiber.Ctx) error {
+      return m(c, next)
+    }
+  }
+
+  return handler(c)
 }
 {{end}}
