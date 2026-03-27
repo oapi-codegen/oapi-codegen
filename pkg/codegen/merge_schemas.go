@@ -168,14 +168,59 @@ func valueWithPropagatedRef(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
 	}
 	remoteComponent := pathParts[0]
 
+	propagateRemoteRefs(remoteComponent, &schema)
+
+	return schema, nil
+}
+
+// propagateRemoteRefs rewrites local "#/..." refs within a schema to be
+// qualified with the remote component path. This is needed so that when an
+// external schema is flattened via allOf, nested type references (array items,
+// additionalProperties, sub-object properties) retain their external
+// qualification. See https://github.com/oapi-codegen/oapi-codegen/issues/2288
+func propagateRemoteRefs(remoteComponent string, schema *openapi3.Schema) {
 	for _, value := range schema.Properties {
 		if len(value.Ref) > 0 && value.Ref[0] == '#' {
-			// local reference, should propagate remote
 			value.Ref = remoteComponent + value.Ref
+		} else if value.Value != nil {
+			propagateRemoteRefs(remoteComponent, value.Value)
 		}
 	}
 
-	return schema, nil
+	if schema.Items != nil {
+		if len(schema.Items.Ref) > 0 && schema.Items.Ref[0] == '#' {
+			schema.Items.Ref = remoteComponent + schema.Items.Ref
+		} else if schema.Items.Value != nil {
+			propagateRemoteRefs(remoteComponent, schema.Items.Value)
+		}
+	}
+
+	if schema.AdditionalProperties.Schema != nil {
+		ap := schema.AdditionalProperties.Schema
+		if len(ap.Ref) > 0 && ap.Ref[0] == '#' {
+			ap.Ref = remoteComponent + ap.Ref
+		} else if ap.Value != nil {
+			propagateRemoteRefs(remoteComponent, ap.Value)
+		}
+	}
+
+	for _, list := range [][]*openapi3.SchemaRef{schema.AllOf, schema.AnyOf, schema.OneOf} {
+		for _, ref := range list {
+			if len(ref.Ref) > 0 && ref.Ref[0] == '#' {
+				ref.Ref = remoteComponent + ref.Ref
+			} else if ref.Value != nil {
+				propagateRemoteRefs(remoteComponent, ref.Value)
+			}
+		}
+	}
+
+	if schema.Not != nil {
+		if len(schema.Not.Ref) > 0 && schema.Not.Ref[0] == '#' {
+			schema.Not.Ref = remoteComponent + schema.Not.Ref
+		} else if schema.Not.Value != nil {
+			propagateRemoteRefs(remoteComponent, schema.Not.Value)
+		}
+	}
 }
 
 func mergeAllOf(allOf []*openapi3.SchemaRef, seenSchemaRef map[string]bool) (openapi3.Schema, error) {
