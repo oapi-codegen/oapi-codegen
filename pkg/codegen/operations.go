@@ -947,7 +947,7 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 				Name:     headerName,
 				GoName:   SchemaNameToTypeName(headerName),
 				Schema:   contentSchema,
-				Required: header.Value.Required,
+				Required: header.Value.Required || globalState.options.Compatibility.HeadersImplicitlyRequired,
 				Nullable: nullable,
 			}
 			responseHeaderDefinitions = append(responseHeaderDefinitions, headerDefinition)

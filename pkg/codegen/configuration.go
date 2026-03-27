@@ -287,6 +287,16 @@ type CompatibilityOptions struct {
 	// NOTE that this will not impact generated code.
 	// NOTE that if you're using `include-operation-ids` or `exclude-operation-ids` you may want to ensure that the `operationId`s used are correct.
 	PreserveOriginalOperationIdCasingInEmbeddedSpec bool `yaml:"preserve-original-operation-id-casing-in-embedded-spec"`
+
+	// HeadersImplicitlyRequired treats all response headers as required, ignoring
+	// the `required` property from the header definition. Prior to v2.6.0,
+	// oapi-codegen generated all response headers as direct values (implicitly
+	// required). The OpenAPI specification defaults headers to optional
+	// (required: false), so the corrected behavior generates optional headers as
+	// pointers. Set this to true to restore the old behavior where all headers
+	// are treated as required.
+	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/2267
+	HeadersImplicitlyRequired bool `yaml:"headers-implicitly-required,omitempty"`
 }
 
 func (co CompatibilityOptions) Validate() map[string]string {
