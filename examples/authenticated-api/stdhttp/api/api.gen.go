@@ -469,8 +469,6 @@ func (siw *ServerInterfaceWrapper) AddThing(w http.ResponseWriter, r *http.Reque
 	handler.ServeHTTP(w, r)
 }
 
-var _ error = (*UnescapedCookieParamError)(nil)
-
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -483,8 +481,6 @@ func (e *UnescapedCookieParamError) Error() string {
 func (e *UnescapedCookieParamError) Unwrap() error {
 	return e.Err
 }
-
-var _ error = (*UnmarshalingParamError)(nil)
 
 type UnmarshalingParamError struct {
 	ParamName string
@@ -499,8 +495,6 @@ func (e *UnmarshalingParamError) Unwrap() error {
 	return e.Err
 }
 
-var _ error = (*RequiredParamError)(nil)
-
 type RequiredParamError struct {
 	ParamName string
 }
@@ -508,8 +502,6 @@ type RequiredParamError struct {
 func (e *RequiredParamError) Error() string {
 	return fmt.Sprintf("Query argument %s is required, but not found", e.ParamName)
 }
-
-var _ error = (*RequiredHeaderError)(nil)
 
 type RequiredHeaderError struct {
 	ParamName string
@@ -524,8 +516,6 @@ func (e *RequiredHeaderError) Unwrap() error {
 	return e.Err
 }
 
-var _ error = (*InvalidParamFormatError)(nil)
-
 type InvalidParamFormatError struct {
 	ParamName string
 	Err       error
@@ -538,8 +528,6 @@ func (e *InvalidParamFormatError) Error() string {
 func (e *InvalidParamFormatError) Unwrap() error {
 	return e.Err
 }
-
-var _ error = (*TooManyValuesForParamError)(nil)
 
 type TooManyValuesForParamError struct {
 	ParamName string
