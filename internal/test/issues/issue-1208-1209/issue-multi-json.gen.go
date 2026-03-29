@@ -255,19 +255,19 @@ func ParseTestResponse(rsp *http.Response) (*TestResponse, error) {
 		}
 		response.ApplicationbarJSON200 = &dest
 
-	case rsp.Header.Get("Content-Type") == "application/bar+json" && rsp.StatusCode == 201:
-		var dest BazApplicationBarPlusJSON
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.ApplicationbarJSON201 = &dest
-
 	case rsp.Header.Get("Content-Type") == "application/foo+json" && rsp.StatusCode == 200:
 		var dest Foo
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationfooJSON200 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/bar+json" && rsp.StatusCode == 201:
+		var dest BazApplicationBarPlusJSON
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.ApplicationbarJSON201 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/foo+json" && rsp.StatusCode == 201:
 		var dest BazApplicationFooPlusJSON
