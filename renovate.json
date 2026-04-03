@@ -4,7 +4,10 @@
 		"local>oapi-codegen/renovate-config"
 	],
 	"gomod": {
-		"ignorePaths": []
+		"ignorePaths": [],
+		"constraints": {
+			"go": "1.24"
+		}
 	},
 	"vulnerabilityAlerts": {
 		"commitMessageSuffix": "{{#if isGroup }}{{ else }} ({{#if packageFileDir}}{{packageFileDir}}{{else}}{{packageFile}}{{/if}}){{/if}} [SECURITY]"
