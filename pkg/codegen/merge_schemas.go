@@ -40,7 +40,9 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 
 		seenSchemaRef := make(map[string]bool)
-		seenSchemaRef[allOf[i].Ref] = true
+		if allOf[i].Ref != "" {
+			seenSchemaRef[allOf[i].Ref] = true
+		}
 		schema, err = mergeOpenapiSchemas(schema, oneOfSchema, true, seenSchemaRef)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
@@ -78,10 +80,12 @@ func mergeAllOf(allOf []*openapi3.SchemaRef, seenSchemaRef map[string]bool) (ope
 	var schema openapi3.Schema
 	for _, schemaRef := range allOf {
 		var err error
-		if seenSchemaRef[schemaRef.Ref] {
+		if schemaRef.Ref != "" && seenSchemaRef[schemaRef.Ref] {
 			continue
 		}
-		seenSchemaRef[schemaRef.Ref] = true
+		if schemaRef.Ref != "" {
+			seenSchemaRef[schemaRef.Ref] = true
+		}
 		schema, err = mergeOpenapiSchemas(schema, *schemaRef.Value, true, seenSchemaRef)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
