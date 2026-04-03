@@ -448,18 +448,21 @@ To provide you a fully Test Driven Development style test harness to confirm you
 
 ### Supported Servers
 
-Right now, we support the following servers, and are supportive of adding new servers, too!
+Right now, we support the following servers, and are supportive of adding new servers, too! Each
+server lists a minimum require Go version to compile the generated code, which may
+be different from that of oapi-codegen itself. While the code may compile on an
+older version of Go, we don't promise that it'll work.
 
 | Server | `generate` flag | Go Version | Documentation |
-| --- | --- | --- | --- |
-| [Chi](https://github.com/go-chi/chi) | `chi-server` | 1.22+ | [Chi documentation](docs/chi-server.md) |
-| [Echo](https://github.com/labstack/echo) | `echo-server` | 1.22+ | [Echo documentation](docs/echo-server.md) |
-| [Echo v5](https://github.com/labstack/echo) | `echo5-server` | 1.22+ | [Echo v5 documentation](docs/echo5-server.md) |
-| [Fiber](https://github.com/gofiber/fiber) | `fiber-server` | 1.24+ | [Fiber documentation](docs/fiber-server.md) |
-| [Gin](https://github.com/gin-gonic/gin) | `gin-server` | 1.22+ | [Gin documentation](docs/gin-server.md) |
-| [gorilla/mux](https://github.com/gorilla/mux) | `gorilla-server` | 1.22+ | [gorilla/mux documentation](docs/gorilla-server.md) |
-| [Iris](https://github.com/kataras/iris) | `iris-server` | 1.22+ | [Iris documentation](docs/iris-server.md) |
-| [1.22+ `net/http`](https://pkg.go.dev/net/http) | `std-http-server` | 1.22+ | [`net/http` documentation](docs/stdhttp-server.md) |
+| --- | --- |------------| --- |
+| [Chi](https://github.com/go-chi/chi) | `chi-server` | 1.24+      | [Chi documentation](docs/chi-server.md) |
+| [Echo](https://github.com/labstack/echo) | `echo-server` | 1.24+      | [Echo documentation](docs/echo-server.md) |
+| [Echo v5](https://github.com/labstack/echo) | `echo5-server` | 1.24+      | [Echo v5 documentation](docs/echo5-server.md) |
+| [Fiber](https://github.com/gofiber/fiber) | `fiber-server` | 1.24+      | [Fiber documentation](docs/fiber-server.md) |
+| [Gin](https://github.com/gin-gonic/gin) | `gin-server` | 1.24+      | [Gin documentation](docs/gin-server.md) |
+| [gorilla/mux](https://github.com/gorilla/mux) | `gorilla-server` | 1.24+      | [gorilla/mux documentation](docs/gorilla-server.md) |
+| [Iris](https://github.com/kataras/iris) | `iris-server` | 1.24+      | [Iris documentation](docs/iris-server.md) |
+| [1.22+ `net/http`](https://pkg.go.dev/net/http) | `std-http-server` | 1.24+      | [`net/http` documentation](docs/stdhttp-server.md) |
 
 ### Strict server
 
