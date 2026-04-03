@@ -16,8 +16,10 @@ package codegen
 import (
 	"bufio"
 	"bytes"
+	"cmp"
 	"fmt"
-	"sort"
+	"maps"
+	"slices"
 	"strconv"
 	"strings"
 	"text/template"
@@ -180,7 +182,7 @@ func (pd ParameterDefinition) IndirectOptional() bool {
 // HasOptionalPointer indicates whether the generated property has an optional pointer associated with it.
 // This takes into account the `x-go-type-skip-optional-pointer` extension, allowing a parameter definition to control whether the pointer should be skipped.
 func (pd ParameterDefinition) HasOptionalPointer() bool {
-	return pd.Required == false && pd.Schema.SkipOptionalPointer == false //nolint:staticcheck
+	return !pd.Required && !pd.Schema.SkipOptionalPointer
 }
 
 type ParameterDefinitions []ParameterDefinition
@@ -198,7 +200,7 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 // descriptors into a flat list. This makes it a lot easier to traverse the
 // data in the template engine.
 func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterDefinition, error) {
-	outParams := make([]ParameterDefinition, 0)
+	outParams := make([]ParameterDefinition, 0, len(params))
 	for _, paramOrRef := range params {
 		param := paramOrRef.Value
 
@@ -373,21 +375,21 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 					switch {
 
 					// HAL+JSON:
-					case StringInArray(contentTypeName, contentTypesHalJSON):
+					case slices.Contains(contentTypesHalJSON, contentTypeName):
 						typeName = fmt.Sprintf("HALJSON%s", nameNormalizer(responseName))
 					case contentTypeName == "application/json":
 						// if it's the standard application/json
 						typeName = fmt.Sprintf("JSON%s", nameNormalizer(responseName))
 					// Vendored JSON
-					case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
+					case slices.Contains(contentTypesJSON, contentTypeName) || util.IsMediaTypeJson(contentTypeName):
 						baseTypeName := fmt.Sprintf("%s%s", nameNormalizer(contentTypeName), nameNormalizer(responseName))
 
 						typeName = strings.ReplaceAll(baseTypeName, "Json", "JSON")
 					// YAML:
-					case StringInArray(contentTypeName, contentTypesYAML):
+					case slices.Contains(contentTypesYAML, contentTypeName):
 						typeName = fmt.Sprintf("YAML%s", nameNormalizer(responseName))
 					// XML:
-					case StringInArray(contentTypeName, contentTypesXML):
+					case slices.Contains(contentTypesXML, contentTypeName):
 						typeName = fmt.Sprintf("XML%s", nameNormalizer(responseName))
 					default:
 						continue
@@ -424,13 +426,10 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 	return tds, nil
 }
 
-func (o OperationDefinition) HasMaskedRequestContentTypes() bool {
-	for _, body := range o.Bodies {
-		if !body.IsFixedContentType() {
-			return true
-		}
-	}
-	return false
+func (o *OperationDefinition) HasMaskedRequestContentTypes() bool {
+	return slices.ContainsFunc(o.Bodies, func(body RequestBodyDefinition) bool {
+		return !body.IsFixedContentType()
+	})
 }
 
 // RequestBodyDefinition describes a request body
@@ -602,15 +601,8 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]OperationDefinition, error) {
+func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
-
-	var toCamelCaseFunc func(string) string
-	if initialismOverrides {
-		toCamelCaseFunc = ToCamelCaseWithInitialism
-	} else {
-		toCamelCaseFunc = ToCamelCase
-	}
 
 	if swagger == nil || swagger.Paths == nil {
 		return operations, nil
@@ -639,7 +631,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 			operationId := op.OperationID
 			// We rely on OperationID to generate function names, it's required
 			if operationId == "" {
-				operationId, err = generateDefaultOperationID(opName, requestPath, toCamelCaseFunc)
+				operationId, err = generateDefaultOperationID(opName, requestPath)
 				if err != nil {
 					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
 						opName, requestPath, err)
@@ -736,24 +728,22 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 	return operations, nil
 }
 
-func generateDefaultOperationID(opName string, requestPath string, toCamelCaseFunc func(string) string) (string, error) {
-	var operationId = strings.ToLower(opName)
-
+func generateDefaultOperationID(opName string, requestPath string) (string, error) {
 	if opName == "" {
 		return "", fmt.Errorf("operation name cannot be an empty string")
 	}
-
 	if requestPath == "" {
 		return "", fmt.Errorf("request path cannot be an empty string")
 	}
 
-	for _, part := range strings.Split(requestPath, "/") {
+	operationID := strings.ToLower(opName)
+	for part := range strings.SplitSeq(requestPath, "/") {
 		if part != "" {
-			operationId = operationId + "-" + part
+			operationID = operationID + "-" + part
 		}
 	}
 
-	return nameNormalizer(operationId), nil
+	return nameNormalizer(operationID), nil
 }
 
 // GenerateBodyDefinitions turns the Swagger body definitions into a list of our body
@@ -842,7 +832,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 
 		if len(content.Encoding) != 0 {
-			bd.Encoding = make(map[string]RequestBodyEncoding)
+			bd.Encoding = make(map[string]RequestBodyEncoding, len(content.Encoding))
 			for k, v := range content.Encoding {
 				encoding := RequestBodyEncoding{ContentType: v.ContentType, Style: v.Style, Explode: v.Explode}
 				bd.Encoding[k] = encoding
@@ -851,8 +841,8 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 
 		bodyDefinitions = append(bodyDefinitions, bd)
 	}
-	sort.Slice(bodyDefinitions, func(i, j int) bool {
-		return bodyDefinitions[i].ContentType < bodyDefinitions[j].ContentType
+	slices.SortFunc(bodyDefinitions, func(a, b RequestBodyDefinition) int {
+		return cmp.Compare(a.ContentType, b.ContentType)
 	})
 	return bodyDefinitions, typeDefinitions, nil
 }
@@ -998,13 +988,9 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 		// Parameter-level extensions take precedence over schema-level ones.
 		extensions := make(map[string]any)
 		if param.Spec.Schema != nil && param.Spec.Schema.Value != nil {
-			for k, v := range param.Spec.Schema.Value.Extensions {
-				extensions[k] = v
-			}
+			maps.Copy(extensions, param.Spec.Schema.Value.Extensions)
 		}
-		for k, v := range param.Spec.Extensions {
-			extensions[k] = v
-		}
+		maps.Copy(extensions, param.Spec.Extensions)
 		prop := Property{
 			Description:   param.Spec.Description,
 			JsonFieldName: param.ParamName,
@@ -1089,6 +1075,12 @@ func GenerateEchoServer(t *template.Template, operations []OperationDefinition) 
 	return GenerateTemplates([]string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl", "echo/echo-register.tmpl"}, t, operations)
 }
 
+// GenerateEcho5Server generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateEcho5Server(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"echo/v5/echo-interface.tmpl", "echo/v5/echo-wrappers.tmpl", "echo/v5/echo-register.tmpl"}, t, operations)
+}
+
 // GenerateGinServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
@@ -1125,6 +1117,9 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 	}
 	if opts.Generate.IrisServer {
 		templates = append(templates, "strict/strict-iris-interface.tmpl", "strict/strict-iris.tmpl")
+	}
+	if opts.Generate.Echo5Server {
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-echo5.tmpl")
 	}
 
 	return GenerateTemplates(templates, t, operations)

@@ -3,6 +3,7 @@ package codegen
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -87,14 +88,10 @@ func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
 func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, error) {
 	var result openapi3.Schema
 
-	result.Extensions = make(map[string]any)
-	for k, v := range s1.Extensions {
-		result.Extensions[k] = v
-	}
-	for k, v := range s2.Extensions {
-		// TODO: Check for collisions
-		result.Extensions[k] = v
-	}
+	result.Extensions = make(map[string]any, len(s1.Extensions)+len(s2.Extensions))
+	maps.Copy(result.Extensions, s1.Extensions)
+	// TODO: Check for collisions
+	maps.Copy(result.Extensions, s2.Extensions)
 
 	result.OneOf = append(s1.OneOf, s2.OneOf...)
 
@@ -195,14 +192,10 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 	result.Required = append(s1.Required, s2.Required...)
 
 	// We merge all properties
-	result.Properties = make(map[string]*openapi3.SchemaRef)
-	for k, v := range s1.Properties {
-		result.Properties[k] = v
-	}
-	for k, v := range s2.Properties {
-		// TODO: detect conflicts
-		result.Properties[k] = v
-	}
+	result.Properties = make(map[string]*openapi3.SchemaRef, len(s1.Properties)+len(s2.Properties))
+	maps.Copy(result.Properties, s1.Properties)
+	// TODO: detect conflicts
+	maps.Copy(result.Properties, s2.Properties)
 
 	if isAdditionalPropertiesExplicitFalse(&s1) || isAdditionalPropertiesExplicitFalse(&s2) {
 		result.WithoutAdditionalProperties()
@@ -225,6 +218,17 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 	// Allow discriminators for allOf merges, but disallow for one/anyOfs.
 	if !allOf && (s1.Discriminator != nil || s2.Discriminator != nil) {
 		return openapi3.Schema{}, errors.New("merging two schemas with discriminators is not supported")
+	}
+
+	// For allOf merges, propagate a discriminator if only one schema has it.
+	// Merging two different discriminators is not supported.
+	if s1.Discriminator != nil && s2.Discriminator != nil {
+		return openapi3.Schema{}, errors.New("merging two schemas with discriminators is not supported")
+	}
+	if s1.Discriminator != nil {
+		result.Discriminator = s1.Discriminator
+	} else if s2.Discriminator != nil {
+		result.Discriminator = s2.Discriminator
 	}
 
 	return result, nil

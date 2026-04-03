@@ -58,7 +58,6 @@ var (
 	flagExcludeSchemas      string
 	flagResponseTypeSuffix  string
 	flagAliasTypes          bool
-	flagInitialismOverrides bool
 )
 
 type configuration struct {
@@ -112,7 +111,6 @@ func main() {
 	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation.")
 	flag.StringVar(&flagResponseTypeSuffix, "response-type-suffix", "", "The suffix used for responses types.")
 	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations if possible.")
-	flag.BoolVar(&flagInitialismOverrides, "initialism-overrides", false, "Use initialism overrides.")
 
 	flag.Parse()
 
@@ -459,8 +457,6 @@ func updateConfigFromFlags(cfg *configuration) error {
 		cfg.OutputFile = flagOutputFile
 	}
 
-	cfg.OutputOptions.InitialismOverrides = flagInitialismOverrides
-
 	return nil
 }
 
@@ -512,6 +508,8 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 			opts.FiberServer = true
 		case "server", "echo-server", "echo":
 			opts.EchoServer = true
+		case "echo5", "echo5-server":
+			opts.Echo5Server = true
 		case "gin", "gin-server":
 			opts.GinServer = true
 		case "gorilla", "gorilla-server":

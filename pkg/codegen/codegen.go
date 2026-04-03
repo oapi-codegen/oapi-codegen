@@ -24,9 +24,11 @@ import (
 	"go/scanner"
 	"io"
 	"io/fs"
+	"maps"
 	"net/http"
 	"os"
 	"runtime/debug"
+	"slices"
 	"sort"
 	"strings"
 	"text/template"
@@ -103,11 +105,8 @@ func constructImportMapping(importMapping map[string]string) importMap {
 	)
 
 	{
-		var packagePaths []string
-		for _, packageName := range importMapping {
-			packagePaths = append(packagePaths, packageName)
-		}
-		sort.Strings(packagePaths)
+		packagePaths := slices.Collect(maps.Values(importMapping))
+		slices.Sort(packagePaths)
 
 		for _, packagePath := range packagePaths {
 			if _, ok := pathToImport[packagePath]; !ok && packagePath != importMappingCurrentPackage {
@@ -229,7 +228,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
-	ops, err := OperationDefinitions(spec, opts.OutputOptions.InitialismOverrides)
+	ops, err := OperationDefinitions(spec)
 	if err != nil {
 		return "", fmt.Errorf("error creating operation definitions: %w", err)
 	}
@@ -255,7 +254,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error getting type definition imports: %w", err)
 		}
-		MergeImports(xGoTypeImports, imprts)
+		maps.Copy(xGoTypeImports, imprts)
 	}
 
 	var serverURLsDefinitions string
@@ -277,6 +276,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	var echoServerOut string
 	if opts.Generate.EchoServer {
 		echoServerOut, err = GenerateEchoServer(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
+		}
+	}
+
+	var echo5ServerOut string
+	if opts.Generate.Echo5Server {
+		echo5ServerOut, err = GenerateEcho5Server(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -426,6 +433,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	if opts.Generate.Echo5Server {
+		_, err = w.WriteString(echo5ServerOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+	}
+
 	if opts.Generate.ChiServer {
 		_, err = w.WriteString(chiServerOut)
 		if err != nil {
@@ -546,6 +560,12 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 			return "", fmt.Errorf("error generating Go types for component request bodies: %w", err)
 		}
 		allTypes = append(allTypes, bodyTypes...)
+
+		securitySchemeTypes, err := GenerateTypesForSecuritySchemes(t, swagger.Components.SecuritySchemes)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go types for component security schemes: %w", err)
+		}
+		allTypes = append(allTypes, securitySchemeTypes...)
 	}
 
 	// Go through all operations, and add their types to allTypes, so that we can
@@ -605,11 +625,7 @@ func GenerateConstants(t *template.Template, ops []OperationDefinition) (string,
 		}
 	}
 
-	var providerNames []string
-	for providerName := range providerNameMap {
-		providerNames = append(providerNames, providerName)
-	}
-
+	providerNames := slices.Collect(maps.Keys(providerNameMap))
 	sort.Strings(providerNames)
 
 	constants.SecuritySchemeProviderNames = append(constants.SecuritySchemeProviderNames, providerNames...)
@@ -832,6 +848,29 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 	return types, nil
 }
 
+// GenerateTypesForSecuritySchemes generates type definitions for any custom types defined in the
+// components/securitySchemes section of the Swagger spec.
+func GenerateTypesForSecuritySchemes(t *template.Template, schemes map[string]*openapi3.SecuritySchemeRef) ([]TypeDefinition, error) {
+	var types []TypeDefinition
+
+	for _, schemeName := range SortedSecuritySchemeKeys(schemes) {
+		// Generate a type to be used as a key in context.WithValue
+		goTypeName := LowercaseFirstCharacter(SchemaNameToTypeName(schemeName)) + "ContextKey"
+		goType := Schema{
+			GoType:      "string",
+			Description: fmt.Sprintf("is the context key for %s security scheme", schemeName),
+		}
+
+		types = append(types, TypeDefinition{
+			JsonName: schemeName,
+			TypeName: goTypeName,
+			Schema:   goType,
+		})
+	}
+
+	return types, nil
+}
+
 // GenerateTypes passes a bunch of types to the template engine, and buffers
 // its output into a string.
 func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error) {
@@ -900,7 +939,7 @@ func resolvedNameForComponent(section, name string, contentType ...string) strin
 	}
 	if len(matches) > 0 {
 		if len(matches) > 1 {
-			sort.Strings(matches)
+			slices.Sort(matches)
 		}
 		return globalState.resolvedNames[matches[0]]
 	}
@@ -1023,12 +1062,14 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 		ModuleName        string
 		Version           string
 		AdditionalImports []AdditionalImport
+		RouterImports     []AdditionalImport
 	}{
 		ExternalImports:   externalImports,
 		PackageName:       packageName,
 		ModuleName:        modulePath,
 		Version:           moduleVersion,
 		AdditionalImports: globalState.options.AdditionalImports,
+		RouterImports:     globalState.options.Generate.RouterImports(),
 	}
 
 	return GenerateTemplates([]string{"imports.tmpl"}, t, context)
@@ -1197,14 +1238,14 @@ func OperationSchemaImports(s *Schema) (map[string]goImport, error) {
 		if err != nil {
 			return nil, err
 		}
-		MergeImports(res, imprts)
+		maps.Copy(res, imprts)
 	}
 
 	imprts, err := GoSchemaImports(&openapi3.SchemaRef{Value: s.OAPISchema})
 	if err != nil {
 		return nil, err
 	}
-	MergeImports(res, imprts)
+	maps.Copy(res, imprts)
 	return res, nil
 }
 
@@ -1217,7 +1258,7 @@ func OperationImports(ops []OperationDefinition) (map[string]goImport, error) {
 				if err != nil {
 					return nil, err
 				}
-				MergeImports(res, imprts)
+				maps.Copy(res, imprts)
 			}
 		}
 
@@ -1226,7 +1267,7 @@ func OperationImports(ops []OperationDefinition) (map[string]goImport, error) {
 			if err != nil {
 				return nil, err
 			}
-			MergeImports(res, imprts)
+			maps.Copy(res, imprts)
 		}
 
 		for _, b := range op.Responses {
@@ -1235,7 +1276,7 @@ func OperationImports(ops []OperationDefinition) (map[string]goImport, error) {
 				if err != nil {
 					return nil, err
 				}
-				MergeImports(res, imprts)
+				maps.Copy(res, imprts)
 			}
 		}
 
@@ -1270,7 +1311,7 @@ func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (ma
 	}
 
 	for _, imprts := range []map[string]goImport{schemaImports, reqBodiesImports, responsesImports, parametersImports} {
-		MergeImports(res, imprts)
+		maps.Copy(res, imprts)
 	}
 	return res, nil
 }
@@ -1297,14 +1338,14 @@ func GoSchemaImports(schemas ...*openapi3.SchemaRef) (map[string]goImport, error
 				if err != nil {
 					return nil, err
 				}
-				MergeImports(res, imprts)
+				maps.Copy(res, imprts)
 			}
 		} else if t.Is("array") {
 			imprts, err := GoSchemaImports(schemaVal.Items)
 			if err != nil {
 				return nil, err
 			}
-			MergeImports(res, imprts)
+			maps.Copy(res, imprts)
 		}
 	}
 	return res, nil
@@ -1325,7 +1366,7 @@ func GetSchemaImports(schemas map[string]*openapi3.SchemaRef, excludeSchemas []s
 		if err != nil {
 			return nil, err
 		}
-		MergeImports(res, imprts)
+		maps.Copy(res, imprts)
 	}
 	return res, nil
 }
@@ -1343,7 +1384,7 @@ func GetRequestBodiesImports(bodies map[string]*openapi3.RequestBodyRef) (map[st
 			if err != nil {
 				return nil, err
 			}
-			MergeImports(res, imprts)
+			maps.Copy(res, imprts)
 		}
 	}
 	return res, nil
@@ -1362,7 +1403,7 @@ func GetResponsesImports(responses map[string]*openapi3.ResponseRef) (map[string
 			if err != nil {
 				return nil, err
 			}
-			MergeImports(res, imprts)
+			maps.Copy(res, imprts)
 		}
 	}
 	return res, nil
@@ -1378,7 +1419,7 @@ func GetParametersImports(params map[string]*openapi3.ParameterRef) (map[string]
 		if err != nil {
 			return nil, err
 		}
-		MergeImports(res, imprts)
+		maps.Copy(res, imprts)
 	}
 	return res, nil
 }

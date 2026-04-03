@@ -232,7 +232,7 @@ func NewGetHttpPetRequest(server string, petId string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -498,7 +498,7 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/api/pets/{petId}", wrapper.GetHttpPet).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/api/pets/{petId}", wrapper.GetHttpPet).Methods(http.MethodGet)
 
 	return r
 }

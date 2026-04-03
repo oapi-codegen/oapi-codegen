@@ -131,7 +131,7 @@ func NewTestRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -268,21 +268,36 @@ type ServerInterface interface {
 
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
-	Handler ServerInterface
+	Handler            ServerInterface
+	HandlerMiddlewares []HandlerMiddlewareFunc
 }
 
 type MiddlewareFunc fiber.Handler
+type HandlerMiddlewareFunc func(c *fiber.Ctx, next fiber.Handler) error
 
 // Test operation middleware
 func (siw *ServerInterfaceWrapper) Test(c *fiber.Ctx) error {
 
-	return siw.Handler.Test(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.Test(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // FiberServerOptions provides options for the Fiber server.
 type FiberServerOptions struct {
-	BaseURL     string
-	Middlewares []MiddlewareFunc
+	BaseURL            string
+	Middlewares        []MiddlewareFunc
+	HandlerMiddlewares []HandlerMiddlewareFunc
 }
 
 // RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
@@ -293,7 +308,8 @@ func RegisterHandlers(router fiber.Router, si ServerInterface) {
 // RegisterHandlersWithOptions creates http.Handler with additional options
 func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, options FiberServerOptions) {
 	wrapper := ServerInterfaceWrapper{
-		Handler: si,
+		Handler:            si,
+		HandlerMiddlewares: options.HandlerMiddlewares,
 	}
 
 	for _, m := range options.Middlewares {

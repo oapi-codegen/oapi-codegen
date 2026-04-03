@@ -131,7 +131,7 @@ func NewTestRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -302,6 +302,7 @@ type Test200MultipartResponse externalRef0.TestMultipartResponse
 
 func (response Test200MultipartResponse) VisitTestResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
+
 	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.WriteHeader(200)
 

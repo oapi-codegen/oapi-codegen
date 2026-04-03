@@ -449,33 +449,33 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/json", wrapper.JSONExample).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/json", wrapper.JSONExample).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/multipart", wrapper.MultipartExample).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/multipart", wrapper.MultipartExample).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/required-text-body", wrapper.RequiredTextBody).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/required-text-body", wrapper.RequiredTextBody).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/reserved-go-keyword-parameters/{type}", wrapper.ReservedGoKeywordParameters).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/reserved-go-keyword-parameters/{type}", wrapper.ReservedGoKeywordParameters).Methods(http.MethodGet)
 
-	r.HandleFunc(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/text", wrapper.TextExample).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/text", wrapper.TextExample).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/unknown", wrapper.UnknownExample).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/unknown", wrapper.UnknownExample).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/with-headers", wrapper.HeadersExample).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/with-headers", wrapper.HeadersExample).Methods(http.MethodPost)
 
-	r.HandleFunc(options.BaseURL+"/with-union", wrapper.UnionExample).Methods("POST")
+	r.HandleFunc(options.BaseURL+"/with-union", wrapper.UnionExample).Methods(http.MethodPost)
 
 	return r
 }
@@ -504,10 +504,15 @@ type JSONExampleResponseObject interface {
 type JSONExample200JSONResponse Example
 
 func (response JSONExample200JSONResponse) VisitJSONExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type JSONExample400Response = BadrequestResponse
@@ -538,6 +543,7 @@ type MultipartExample200MultipartResponse func(writer *multipart.Writer) error
 
 func (response MultipartExample200MultipartResponse) VisitMultipartExampleResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
+
 	w.Header().Set("Content-Type", writer.FormDataContentType())
 	w.WriteHeader(200)
 
@@ -573,6 +579,7 @@ type MultipartRelatedExample200MultipartResponse func(writer *multipart.Writer) 
 
 func (response MultipartRelatedExample200MultipartResponse) VisitMultipartRelatedExampleResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
+
 	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.WriteHeader(200)
 
@@ -611,24 +618,29 @@ type MultipleRequestAndResponseTypesResponseObject interface {
 type MultipleRequestAndResponseTypes200JSONResponse Example
 
 func (response MultipleRequestAndResponseTypes200JSONResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type MultipleRequestAndResponseTypes200FormdataResponse Example
 
 func (response MultipleRequestAndResponseTypes200FormdataResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.WriteHeader(200)
 
-	if form, err := runtime.MarshalForm(response, nil); err != nil {
-		return err
-	} else {
-		_, err := w.Write([]byte(form.Encode()))
+	form, err := runtime.MarshalForm(response, nil)
+	if err != nil {
 		return err
 	}
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	w.WriteHeader(200)
+	_, err = w.Write([]byte(form.Encode()))
+	return err
 }
 
 type MultipleRequestAndResponseTypes200ImagepngResponse struct {
@@ -637,6 +649,7 @@ type MultipleRequestAndResponseTypes200ImagepngResponse struct {
 }
 
 func (response MultipleRequestAndResponseTypes200ImagepngResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "image/png")
 	if response.ContentLength != 0 {
 		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
@@ -654,6 +667,7 @@ type MultipleRequestAndResponseTypes200MultipartResponse func(writer *multipart.
 
 func (response MultipleRequestAndResponseTypes200MultipartResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
+
 	w.Header().Set("Content-Type", writer.FormDataContentType())
 	w.WriteHeader(200)
 
@@ -664,6 +678,7 @@ func (response MultipleRequestAndResponseTypes200MultipartResponse) VisitMultipl
 type MultipleRequestAndResponseTypes200TextResponse string
 
 func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
@@ -689,10 +704,15 @@ type RequiredJSONBodyResponseObject interface {
 type RequiredJSONBody200JSONResponse Example
 
 func (response RequiredJSONBody200JSONResponse) VisitRequiredJSONBodyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type RequiredJSONBody400Response = BadrequestResponse
@@ -722,6 +742,7 @@ type RequiredTextBodyResponseObject interface {
 type RequiredTextBody200TextResponse string
 
 func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
@@ -756,6 +777,7 @@ type ReservedGoKeywordParametersResponseObject interface {
 type ReservedGoKeywordParameters200TextResponse string
 
 func (response ReservedGoKeywordParameters200TextResponse) VisitReservedGoKeywordParametersResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
@@ -774,12 +796,17 @@ type ReusableResponsesResponseObject interface {
 type ReusableResponses200JSONResponse struct{ ReusableresponseJSONResponse }
 
 func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response.Body)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type ReusableResponses400Response = BadrequestResponse
@@ -809,6 +836,7 @@ type TextExampleResponseObject interface {
 type TextExample200TextResponse string
 
 func (response TextExample200TextResponse) VisitTextExampleResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
@@ -846,6 +874,7 @@ type UnknownExample200Videomp4Response struct {
 }
 
 func (response UnknownExample200Videomp4Response) VisitUnknownExampleResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "video/mp4")
 	if response.ContentLength != 0 {
 		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
@@ -891,6 +920,7 @@ type UnspecifiedContentType200VideoResponse struct {
 }
 
 func (response UnspecifiedContentType200VideoResponse) VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", response.ContentType)
 	if response.ContentLength != 0 {
 		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
@@ -947,15 +977,15 @@ type URLEncodedExampleResponseObject interface {
 type URLEncodedExample200FormdataResponse Example
 
 func (response URLEncodedExample200FormdataResponse) VisitURLEncodedExampleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.WriteHeader(200)
 
-	if form, err := runtime.MarshalForm(response, nil); err != nil {
-		return err
-	} else {
-		_, err := w.Write([]byte(form.Encode()))
+	form, err := runtime.MarshalForm(response, nil)
+	if err != nil {
 		return err
 	}
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	w.WriteHeader(200)
+	_, err = w.Write([]byte(form.Encode()))
+	return err
 }
 
 type URLEncodedExample400Response = BadrequestResponse
@@ -994,12 +1024,17 @@ type HeadersExample200JSONResponse struct {
 }
 
 func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response.Body)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type HeadersExample400Response = BadrequestResponse
@@ -1037,12 +1072,17 @@ type UnionExample200ApplicationAlternativePlusJSONResponse struct {
 }
 
 func (response UnionExample200ApplicationAlternativePlusJSONResponse) VisitUnionExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/alternative+json")
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response.Body)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type UnionExample200JSONResponse struct {
@@ -1053,12 +1093,17 @@ type UnionExample200JSONResponse struct {
 }
 
 func (response UnionExample200JSONResponse) VisitUnionExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body.union); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response.Body.union)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type UnionExample400Response = BadrequestResponse

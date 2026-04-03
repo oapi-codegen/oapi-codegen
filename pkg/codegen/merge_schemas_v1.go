@@ -3,6 +3,7 @@ package codegen
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -100,7 +101,7 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 				}
 
 				additionalPropertiesPart := fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", addPropsType)
-				if !StringInArray(additionalPropertiesPart, objectParts) {
+				if !slices.Contains(objectParts, additionalPropertiesPart) {
 					objectParts = append(objectParts, additionalPropertiesPart)
 				}
 			}

@@ -1,0 +1,19 @@
+openapi: 3.0.3
+paths:
+  /pet:
+    post:
+      description: Ensure that the `text/plain` format correctly handles coercing a UUID type to a string.
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: string
+              format: uuid
+  /pet/1234:
+    post:
+      description: Ensure that the `text/plain` format correctly handles coercing a numerical type to a string.
+      requestBody:
+        content:
+          text/plain:
+            schema:
+              type: number
