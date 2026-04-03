@@ -259,10 +259,10 @@ func Handler(si ServerInterface) http.Handler {
 	return HandlerWithOptions(si, StdHTTPServerOptions{})
 }
 
-// ServeMux is an abstraction of http.ServeMux.
+// ServeMux is an abstraction of [http.ServeMux].
 type ServeMux interface {
 	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
-	ServeHTTP(w http.ResponseWriter, r *http.Request)
+	http.Handler
 }
 
 type StdHTTPServerOptions struct {
@@ -305,10 +305,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc("GET "+options.BaseURL+"/pets", wrapper.FindPets)
-	m.HandleFunc("POST "+options.BaseURL+"/pets", wrapper.AddPet)
-	m.HandleFunc("DELETE "+options.BaseURL+"/pets/{id}", wrapper.DeletePet)
-	m.HandleFunc("GET "+options.BaseURL+"/pets/{id}", wrapper.FindPetByID)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/pets", wrapper.FindPets)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/pets", wrapper.AddPet)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/pets/{id}", wrapper.DeletePet)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/pets/{id}", wrapper.FindPetByID)
 
 	return m
 }

@@ -181,10 +181,6 @@
           "type": "string",
           "description": "Override the default generated client type with the value"
         },
-        "initialism-overrides": {
-          "type": "boolean",
-          "description": "Whether to use the initialism overrides"
-        },
         "additional-initialisms": {
           "type": "array",
           "description": "AdditionalInitialisms defines additional initialisms to be used by the code generator. Has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`",
