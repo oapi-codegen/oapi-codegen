@@ -18,28 +18,57 @@ With `oapi-codegen`, there are a few [Key Design Decisions](#key-design-decision
 
 ## Table of Contents
 
+<!-- toc -->
 - [Installation](#installation)
+  - [Action Required: The repository for this project has changed](#action-required-the-repository-for-this-project-has-changed)
+  - [For Go 1.24+](#for-go-124)
+  - [Pinning to commits](#pinning-to-commits)
 - [Usage](#usage)
+  - [Backwards compatibility](#backwards-compatibility)
 - [Features](#features)
 - [What does it look like?](#what-does-it-look-like)
 - [Key design decisions](#key-design-decisions)
 - [Generating server-side boilerplate](#generating-server-side-boilerplate)
+  - [Supported Servers](#supported-servers)
+  - [Strict server](#strict-server)
 - [Generating API clients](#generating-api-clients)
+  - [With Server URLs](#with-server-urls)
+  - [Duplicate types generated for clients's response object types](#duplicate-types-generated-for-clientss-response-object-types)
 - [Generating API models](#generating-api-models)
-- [Splitting large OpenAPI specs across multiple packages](#splitting-large-openapi-specs-across-multiple-packages-aka-import-mapping-or-external-references)
+- [Splitting large OpenAPI specs across multiple packages (aka &quot;Import Mapping&quot; or &quot;external references&quot;)](#splitting-large-openapi-specs-across-multiple-packages-aka-import-mapping-or-external-references)
+  - [Using a single package with multiple OpenAPI specs](#using-a-single-package-with-multiple-openapi-specs)
+  - [Using multiple packages, with one OpenAPI spec per package](#using-multiple-packages-with-one-openapi-spec-per-package)
 - [Modifying the input OpenAPI Specification (with OpenAPI Overlay)](#modifying-the-input-openapi-specification-with-openapi-overlay)
 - [Generating Nullable types](#generating-nullable-types)
 - [OpenAPI extensions](#openapi-extensions)
 - [Request/response validation middleware](#requestresponse-validation-middleware)
 - [Implementing security](#implementing-security)
+  - [On the server](#on-the-server)
+  - [On the client](#on-the-client)
 - [Custom code generation](#custom-code-generation)
-- [Additional Properties (`additionalProperties`)](#additional-properties-additionalproperties)
-- [Globally skipping the "optional pointer"](#globally-skipping-the-optional-pointer)
+  - [Local paths](#local-paths)
+  - [HTTPS paths](#https-paths)
+  - [Inline template](#inline-template)
+  - [Using the Go package](#using-the-go-package)
+- [Additional Properties (<code>additionalProperties</code>)](#additional-properties-additionalproperties)
+  - [Implicit <code>additionalProperties: true</code> / no <code>additionalProperties</code> set](#implicit-additionalproperties-true--no-additionalproperties-set)
+  - [Explicit <code>additionalProperties: true</code>](#explicit-additionalproperties-true)
+  - [<code>additionalProperties</code> as <code>integer</code>s](#additionalproperties-as-integers)
+  - [<code>additionalProperties</code> with an object](#additionalproperties-with-an-object)
+- [Globally skipping the &quot;optional pointer&quot;](#globally-skipping-the-optional-pointer)
 - [Changing the names of generated types](#changing-the-names-of-generated-types)
 - [Examples](#examples)
+  - [Blog posts](#blog-posts)
 - [Frequently Asked Questions (FAQs)](#frequently-asked-questions-faqs)
+  - [Does <code>oapi-codegen</code> support OpenAPI 3.1?](#does-oapi-codegen-support-openapi-31)
+  - [How does <code>oapi-codegen</code> handle <code>anyOf</code>, <code>allOf</code> and <code>oneOf</code>?](#how-does-oapi-codegen-handle-anyof-allof-and-oneof)
+  - [How can I ignore parts of the spec I don't care about?](#how-can-i-ignore-parts-of-the-spec-i-dont-care-about)
+  - [Should I commit the generated code?](#should-i-commit-the-generated-code)
+  - [Should I lint the generated code?](#should-i-lint-the-generated-code)
+  - [I've just updated my version of <code>kin-openapi</code>, and now I can't build my code 😠](#ive-just-updated-my-version-of-kin-openapi-and-now-i-cant-build-my-code-)
 - [Contributors](#contributors)
 - [Sponsors](#sponsors)
+<!-- /toc -->
 
 ## Installation
 
@@ -133,6 +162,9 @@ index 44f29a4..436a780 100644
 ## Usage
 
 `oapi-codegen` is configured using a YAML configuration file, to simplify the number of flags that users need to remember, and to make reading the `go:generate` command less daunting.
+While some command line options are supported, they should be considered deprecated,
+we just maintain them for backward compatibility, but we're not extending
+them.
 
 For full details of what is supported, check out the [oapi-codegen configuration documentation](docs/configuration.md).
 
@@ -410,11 +442,11 @@ We can see that this provides the best means to focus on the implementation of t
 
 `oapi-codegen` shines by making it fairly straightforward (note that this is a purposeful choice of wording here - we want to avoid words like "easy") to generate the server-side boilerplate for a backend API.
 
-Below you can find the supported HTTP router packages, and more information about how to implement a server on top of each router.
+You can find the supported HTTP server backends below, and more information about how to implement a server on top of each router.
 
 To provide you a fully Test Driven Development style test harness to confirm you are following the specification, you could use a tool such as [openapi.tanna.dev/go/validator](https://openapi.tanna.dev/go/validator/), or craft your own.
 
-### Supported Routers
+### Supported Servers
 
 Right now, we support the following servers, and are supportive of adding new servers, too!
 
