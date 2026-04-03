@@ -1,13 +1,17 @@
 package codegen
 
 import (
+	"cmp"
 	"fmt"
-	"sort"
+	"slices"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
+
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
+
+var _ fmt.Stringer = (*SchemaPath)(nil)
 
 // SchemaPath represents the document location of a schema, e.g.
 // ["components", "schemas", "Pet", "properties", "name"].
@@ -17,6 +21,8 @@ type SchemaPath []string
 func (sp SchemaPath) String() string {
 	return strings.Join(sp, "/")
 }
+
+var _ fmt.Stringer = (*SchemaContext)(nil)
 
 // SchemaContext identifies where in the OpenAPI document a schema was found.
 type SchemaContext int
@@ -82,13 +88,13 @@ func (sc SchemaContext) Suffix() string {
 // GatheredSchema represents a schema discovered during the gather pass,
 // along with its document location and context metadata.
 type GatheredSchema struct {
-	Path        SchemaPath
-	Context     SchemaContext
-	Ref         string           // $ref string if this is a reference
-	Schema      *openapi3.Schema // The resolved schema value
-	OperationID string           // Enclosing operation's ID, if any
-	ContentType string           // Media type, if from request/response body
-	StatusCode  string           // HTTP status code, if from a response
+	Path           SchemaPath
+	Context        SchemaContext
+	Ref            string           // $ref string if this is a reference
+	Schema         *openapi3.Schema // The resolved schema value
+	OperationID    string           // Enclosing operation's ID, if any
+	ContentType    string           // Media type, if from request/response body
+	StatusCode     string           // HTTP status code, if from a response
 	ParamIndex     int              // Parameter index within an operation
 	ComponentName  string           // The component name (e.g., "Bar" for components/schemas/Bar)
 	GoNameOverride string           // x-go-name override from the component or its parent container
@@ -105,11 +111,13 @@ func GatherSchemas(spec *openapi3.T, opts Configuration) []*GatheredSchema {
 	var schemas []*GatheredSchema
 
 	if spec.Components != nil {
-		schemas = append(schemas, gatherComponentSchemas(spec.Components)...)
-		schemas = append(schemas, gatherComponentParameters(spec.Components)...)
-		schemas = append(schemas, gatherComponentResponses(spec.Components)...)
-		schemas = append(schemas, gatherComponentRequestBodies(spec.Components)...)
-		schemas = append(schemas, gatherComponentHeaders(spec.Components)...)
+		schemas = slices.Concat(
+			gatherComponentSchemas(spec.Components),
+			gatherComponentParameters(spec.Components),
+			gatherComponentResponses(spec.Components),
+			gatherComponentRequestBodies(spec.Components),
+			gatherComponentHeaders(spec.Components),
+		)
 	}
 
 	// Gather client response wrapper types for operations that will generate
@@ -268,10 +276,8 @@ func gatherComponentHeaders(components *openapi3.Components) []*GatheredSchema {
 // `<OperationId>Response`. These don't correspond to a real schema in the
 // spec but they need names that don't collide with real types.
 func gatherClientResponseWrappers(spec *openapi3.T) []*GatheredSchema {
-	var result []*GatheredSchema
-
 	if spec.Paths == nil {
-		return result
+		return nil
 	}
 
 	// Collect all operations sorted for determinism
@@ -296,10 +302,11 @@ func gatherClientResponseWrappers(spec *openapi3.T) []*GatheredSchema {
 	}
 
 	// Sort by operationID for determinism
-	sort.Slice(ops, func(i, j int) bool {
-		return ops[i].op.OperationID < ops[j].op.OperationID
+	slices.SortFunc(ops, func(a, b opEntry) int {
+		return cmp.Compare(a.op.OperationID, b.op.OperationID)
 	})
 
+	result := make([]*GatheredSchema, 0, len(ops))
 	for _, entry := range ops {
 		result = append(result, &GatheredSchema{
 			Path:        SchemaPath{"paths", entry.path, entry.method, "x-client-response-wrapper"},
