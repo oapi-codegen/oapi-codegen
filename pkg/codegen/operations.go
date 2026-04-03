@@ -672,8 +672,10 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				operationId = operationId + fmt.Sprintf("Alias%d", n)
 			}
 
-			if !globalState.options.Compatibility.PreserveOriginalOperationIdCasingInEmbeddedSpec {
-				// update the existing, shared, copy of the spec if we're not wanting to preserve it
+			if !globalState.options.Compatibility.PreserveOriginalOperationIdCasingInEmbeddedSpec && !isAlias {
+				// update the existing, shared, copy of the spec if we're not wanting to preserve it.
+				// Skip for aliases: they share the same *Operation as the canonical path,
+				// and writing the suffixed name back would corrupt the original.
 				op.OperationID = operationId
 			}
 
