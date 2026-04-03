@@ -15,12 +15,14 @@ package codegen
 
 import (
 	"bytes"
+	"cmp"
 	"fmt"
 	"go/token"
+	"maps"
 	"net/url"
 	"reflect"
 	"regexp"
-	"sort"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode"
@@ -81,7 +83,7 @@ func (m NameNormalizerMap) Options() []string {
 		options = append(options, string(key))
 	}
 
-	sort.Strings(options)
+	slices.Sort(options)
 
 	return options
 }
@@ -205,7 +207,7 @@ func LowercaseFirstCharacters(str string) string {
 
 	runes := []rune(str)
 
-	for i := 0; i < len(runes); i++ {
+	for i := range runes {
 		next := i + 1
 		if i != 0 && next < len(runes) && unicode.IsLower(runes[next]) {
 			break
@@ -224,25 +226,25 @@ func LowercaseFirstCharacters(str string) string {
 func ToCamelCase(str string) string {
 	s := strings.Trim(str, " ")
 
-	n := ""
+	var n strings.Builder
 	capNext := true
 	for _, v := range s {
 		if unicode.IsUpper(v) {
-			n += string(v)
+			n.WriteString(string(v))
 		}
 		if unicode.IsDigit(v) {
-			n += string(v)
+			n.WriteString(string(v))
 		}
 		if unicode.IsLower(v) {
 			if capNext {
-				n += strings.ToUpper(string(v))
+				n.WriteString(strings.ToUpper(string(v)))
 			} else {
-				n += string(v)
+				n.WriteString(string(v))
 			}
 		}
 		_, capNext = separatorSet[v]
 	}
-	return n
+	return n.String()
 }
 
 // ToCamelCaseWithDigits function will convert query-arg style strings to CamelCase. We will
@@ -283,7 +285,7 @@ func ToCamelCaseWithDigits(s string) string {
 func ToCamelCaseWithInitialisms(s string) string {
 	parts := camelCaseMatchParts.FindAllString(ToCamelCaseWithDigits(s), -1)
 	for i := range parts {
-		if v, ok := initialismsMap[strings.ToLower(parts[i])]; ok {
+		if v, ok := globalState.initialismsMap[strings.ToLower(parts[i])]; ok {
 			parts[i] = v
 		}
 	}
@@ -292,19 +294,26 @@ func ToCamelCaseWithInitialisms(s string) string {
 
 var camelCaseMatchParts = regexp.MustCompile(`[\p{Lu}\d]+([\p{Ll}\d]+|$)`)
 
-// initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
-// List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
-var initialismsMap = makeInitialismsMap([]string{
+var initialismsList = []string{
 	"ACL", "API", "ASCII", "CPU", "CSS", "DNS", "EOF", "GUID", "HTML", "HTTP", "HTTPS", "ID", "IP", "JSON",
 	"QPS", "RAM", "RPC", "SLA", "SMTP", "SQL", "SSH", "TCP", "TLS", "TTL", "UDP", "UI", "GID", "UID", "UUID",
 	"URI", "URL", "UTF8", "VM", "XML", "XMPP", "XSRF", "XSS", "SIP", "RTP", "AMQP", "DB", "TS",
-})
+}
 
-func makeInitialismsMap(l []string) map[string]string {
+// targetWordRegex is a regex that matches all initialisms.
+var targetWordRegex *regexp.Regexp
+
+func makeInitialismsMap(additionalInitialisms []string) map[string]string {
+	l := append(initialismsList, additionalInitialisms...)
+
 	m := make(map[string]string, len(l))
 	for i := range l {
 		m[strings.ToLower(l[i])] = l[i]
 	}
+
+	// Create a regex to match the initialisms
+	targetWordRegex = regexp.MustCompile(`(?i)(` + strings.Join(l, "|") + `)`)
+
 	return m
 }
 
@@ -315,8 +324,6 @@ func ToCamelCaseWithInitialism(str string) string {
 func replaceInitialism(s string) string {
 	// These strings do not apply CamelCase
 	// Do not do CamelCase when these characters match when the preceding character is lowercase
-	// ["Acl", "Api", "Ascii", "Cpu", "Css", "Dns", "Eof", "Guid", "Html", "Http", "Https", "Id", "Ip", "Json", "Qps", "Ram", "Rpc", "Sla", "Smtp", "Sql", "Ssh", "Tcp", "Tls", "Ttl", "Udp", "Ui", "Gid", "Uid", "Uuid", "Uri", "Url", "Utf8", "Vm", "Xml", "Xmpp", "Xsrf", "Xss", "Sip", "Rtp", "Amqp", "Db", "Ts"]
-	targetWordRegex := regexp.MustCompile(`(?i)(Acl|Api|Ascii|Cpu|Css|Dns|Eof|Guid|Html|Http|Https|Id|Ip|Json|Qps|Ram|Rpc|Sla|Smtp|Sql|Ssh|Tcp|Tls|Ttl|Udp|Ui|Gid|Uid|Uuid|Uri|Url|Utf8|Vm|Xml|Xmpp|Xsrf|Xss|Sip|Rtp|Amqp|Db|Ts)`)
 	return targetWordRegex.ReplaceAllStringFunc(s, func(s string) string {
 		// If the preceding character is lowercase, do not do CamelCase
 		if unicode.IsLower(rune(s[0])) {
@@ -344,7 +351,7 @@ func SortedMapKeys[T any](m map[string]T) []string {
 	for k := range m {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 	return keys
 }
 
@@ -366,11 +373,11 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 		}
 	}
 
-	sort.Slice(keys, func(i, j int) bool {
-		if i, j := orders[keys[i]], orders[keys[j]]; i != j {
-			return i < j
-		}
-		return keys[i] < keys[j]
+	slices.SortFunc(keys, func(a, b string) int {
+		return cmp.Or(
+			cmp.Compare(orders[a], orders[b]),
+			cmp.Compare(a, b),
+		)
 	})
 	return keys
 }
@@ -399,15 +406,11 @@ func schemaXOrder(v *openapi3.SchemaRef) (int64, bool) {
 	return 0, false
 }
 
-// StringInArray checks whether the specified string is present in an array
-// of strings
-func StringInArray(str string, array []string) bool {
-	for _, elt := range array {
-		if elt == str {
-			return true
-		}
-	}
-	return false
+// SortedSecuritySchemeKeys returns sorted keys for a SecuritySchemeRef dict
+func SortedSecuritySchemeKeys(dict map[string]*openapi3.SecuritySchemeRef) []string {
+	keys := slices.Collect(maps.Keys(dict))
+	slices.Sort(keys)
+	return keys
 }
 
 // RefPathToObjName returns the name of referenced object without changes.
@@ -471,6 +474,20 @@ func refPathToGoTypeSelf(refPath string, local bool) (string, error) {
 		}
 	} else if depth != 4 && depth != 2 {
 		return "", fmt.Errorf("unexpected reference depth: %d for ref: %s local: %t", depth, refPath, local)
+	}
+
+	// When multi-pass name resolution is active, the resolved name takes
+	// precedence over the spec-given name. For a $ref like
+	// #/components/schemas/Thing, we pass the section ("schemas") and
+	// name ("Thing") to resolvedNameForComponent, which looks up the
+	// final Go type name assigned by the collision resolver.
+	// Note: the resolver prioritizes component schemas — if a schema and
+	// a response both claim "Thing", the component schema keeps the original
+	// name and the response becomes "ThingResponse".
+	if depth == 4 && pathParts[0] == "#" && pathParts[1] == "components" {
+		if resolved := resolvedNameForComponent(pathParts[2], pathParts[3]); resolved != "" {
+			return resolved, nil
+		}
 	}
 
 	// Schemas may have been renamed locally, so look up the actual name in
@@ -623,6 +640,12 @@ func SwaggerUriToGorillaUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToStdHttpUri(uri string) string {
+	// https://pkg.go.dev/net/http#hdr-Patterns-ServeMux
+	// The special wildcard {$} matches only the end of the URL. For example, the pattern "/{$}" matches only the path "/", whereas the pattern "/" matches every path.
+	if uri == "/" {
+		return "/{$}"
+	}
+
 	return pathParamRE.ReplaceAllString(uri, "{$1}")
 }
 
@@ -643,15 +666,29 @@ func ReplacePathParamsWithStr(uri string) string {
 }
 
 // SortParamsByPath reorders the given parameter definitions to match those in the path URI.
+// If a parameter appears more than once in the path (e.g. Keycloak's
+// /clients/{client-uuid}/roles/{role-name}/composites/clients/{client-uuid}),
+// duplicates are removed and only the first occurrence determines the order.
 func SortParamsByPath(path string, in []ParameterDefinition) ([]ParameterDefinition, error) {
 	pathParams := OrderedParamsFromUri(path)
-	n := len(in)
-	if len(pathParams) != n {
-		return nil, fmt.Errorf("path '%s' has %d positional parameters, but spec has %d declared",
-			path, len(pathParams), n)
+
+	// Deduplicate, preserving first-occurrence order.
+	seen := make(map[string]struct{}, len(pathParams))
+	uniqueParams := make([]string, 0, len(pathParams))
+	for _, name := range pathParams {
+		if _, exists := seen[name]; !exists {
+			seen[name] = struct{}{}
+			uniqueParams = append(uniqueParams, name)
+		}
 	}
-	out := make([]ParameterDefinition, len(in))
-	for i, name := range pathParams {
+
+	n := len(in)
+	if len(uniqueParams) != n {
+		return nil, fmt.Errorf("path '%s' has %d positional parameters, but spec has %d declared",
+			path, len(uniqueParams), n)
+	}
+	out := make([]ParameterDefinition, n)
+	for i, name := range uniqueParams {
 		p := ParameterDefinitions(in).FindByName(name)
 		if p == nil {
 			return nil, fmt.Errorf("path '%s' refers to parameter '%s', which doesn't exist in specification",
@@ -853,6 +890,13 @@ func PathToTypeName(path []string) string {
 	return strings.Join(path, "_")
 }
 
+// StringToGoString takes an arbitrary string and converts it to a valid Go string literal,
+// including the quotes. For instance, `foo "bar"` would be converted to `"foo \"bar\""`
+func StringToGoString(in string) string {
+	esc := strings.ReplaceAll(in, "\"", "\\\"")
+	return fmt.Sprintf("\"%s\"", esc)
+}
+
 // StringToGoComment renders a possible multi-line string as a valid Go-Comment.
 // Each line is prefixed as a comment.
 func StringToGoComment(in string) string {
@@ -870,6 +914,8 @@ func DeprecationComment(reason string) string {
 	content := "Deprecated:" // The colon is required at the end even without reason
 	if reason != "" {
 		content += fmt.Sprintf(" %s", reason)
+	} else {
+		content += " this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set"
 	}
 
 	return stringToGoCommentWithPrefix(content, "")
@@ -1040,7 +1086,7 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 
 	goTypeImportExt := v.Value.Extensions[extPropGoImport]
 
-	importI, ok := goTypeImportExt.(map[string]interface{})
+	importI, ok := goTypeImportExt.(map[string]any)
 	if !ok {
 		return nil, fmt.Errorf("failed to convert type: %T", goTypeImportExt)
 	}
@@ -1066,12 +1112,6 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 	return &gi, nil
 }
 
-func MergeImports(dst, src map[string]goImport) {
-	for k, v := range src {
-		dst[k] = v
-	}
-}
-
 // TypeDefinitionsEquivalent checks for equality between two type definitions, but
 // not every field is considered. We only want to know if they are fundamentally
 // the same type.
@@ -1088,14 +1128,5 @@ func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
 		return false
 	}
 
-	return *s.AdditionalProperties.Has == false //nolint:gosimple
-}
-
-func sliceContains[E comparable](s []E, v E) bool {
-	for _, ss := range s {
-		if ss == v {
-			return true
-		}
-	}
-	return false
+	return !*s.AdditionalProperties.Has
 }

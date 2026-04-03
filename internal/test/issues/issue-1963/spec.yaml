@@ -1,0 +1,105 @@
+openapi: 3.0.3
+info:
+  title: issue-1963
+  version: 1.0.0
+paths:
+  /json:
+    post:
+      operationId: JsonEndpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Request"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Response"
+  /text:
+    post:
+      operationId: TextEndpoint
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+  /formdata:
+    post:
+      operationId: FormdataEndpoint
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/Request"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                $ref: "#/components/schemas/Response"
+  /multipart:
+    post:
+      operationId: MultipartEndpoint
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                field:
+                  type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            multipart/form-data:
+              schema:
+                type: object
+                properties:
+                  field:
+                    type: string
+  /binary:
+    post:
+      operationId: BinaryEndpoint
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        "200":
+          description: OK
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+components:
+  schemas:
+    Request:
+      type: object
+      properties:
+        value:
+          type: string
+    Response:
+      type: object
+      properties:
+        value:
+          type: string
