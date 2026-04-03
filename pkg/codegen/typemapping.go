@@ -1,5 +1,7 @@
 package codegen
 
+import "maps"
+
 // SimpleTypeSpec defines the Go type for an OpenAPI type/format combination,
 // along with any import required to use it.
 type SimpleTypeSpec struct {
@@ -16,10 +18,10 @@ type FormatMapping struct {
 
 // TypeMapping defines the mapping from OpenAPI types to Go types.
 type TypeMapping struct {
-	Integer FormatMapping `yaml:"integer,omitempty" json:"integer,omitempty"`
-	Number  FormatMapping `yaml:"number,omitempty" json:"number,omitempty"`
-	Boolean FormatMapping `yaml:"boolean,omitempty" json:"boolean,omitempty"`
-	String  FormatMapping `yaml:"string,omitempty" json:"string,omitempty"`
+	Integer FormatMapping `yaml:"integer,omitempty" json:"integer"`
+	Number  FormatMapping `yaml:"number,omitempty" json:"number"`
+	Boolean FormatMapping `yaml:"boolean,omitempty" json:"boolean"`
+	String  FormatMapping `yaml:"string,omitempty" json:"string"`
 }
 
 // Merge returns a new TypeMapping with user overrides applied on top of base.
@@ -39,9 +41,7 @@ func (base FormatMapping) merge(user FormatMapping) FormatMapping {
 	}
 
 	// Copy base formats
-	for k, v := range base.Formats {
-		result.Formats[k] = v
-	}
+	maps.Copy(result.Formats, base.Formats)
 
 	// Override with user default if specified
 	if user.Default.Type != "" {
@@ -49,9 +49,7 @@ func (base FormatMapping) merge(user FormatMapping) FormatMapping {
 	}
 
 	// Override/add user formats
-	for k, v := range user.Formats {
-		result.Formats[k] = v
-	}
+	maps.Copy(result.Formats, user.Formats)
 
 	return result
 }
