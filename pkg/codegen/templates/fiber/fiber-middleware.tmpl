@@ -8,7 +8,7 @@ type MiddlewareFunc fiber.Handler
 type HandlerMiddlewareFunc func(c *fiber.Ctx, next fiber.Handler) error
 
 {{range .}}{{$opid := .OperationId}}
-
+{{if not .IsAlias}}
 // {{$opid}} operation middleware
 func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
 
@@ -184,4 +184,4 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
 
   return handler(c)
 }
-{{end}}
+{{end}}{{end}}
