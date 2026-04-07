@@ -2,7 +2,7 @@ module github.com/oapi-codegen/oapi-codegen/v2
 
 go 1.24.3
 
-toolchain go1.24.4
+toolchain go1.26.2
 
 require (
 	github.com/getkin/kin-openapi v0.134.0
