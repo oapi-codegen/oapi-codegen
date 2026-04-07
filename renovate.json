@@ -3,11 +3,11 @@
 	"extends": [
 		"local>oapi-codegen/renovate-config"
 	],
+    "constraints": {
+      "go": "1.24"
+    },
 	"gomod": {
-		"ignorePaths": [],
-		"constraints": {
-			"go": "1.24"
-		}
+		"ignorePaths": []
 	},
 	"vulnerabilityAlerts": {
 		"commitMessageSuffix": "{{#if isGroup }}{{ else }} ({{#if packageFileDir}}{{packageFileDir}}{{else}}{{packageFile}}{{/if}}){{/if}} [SECURITY]"
