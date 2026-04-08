@@ -9,7 +9,7 @@ tool github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
 require (
 	github.com/getkin/kin-openapi v0.134.0
 	github.com/labstack/echo/v5 v5.0.4
-	github.com/oapi-codegen/runtime v1.3.1
+	github.com/oapi-codegen/runtime v1.4.0
 	github.com/stretchr/testify v1.11.1
 )
 
