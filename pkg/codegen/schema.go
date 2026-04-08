@@ -3,6 +3,7 @@ package codegen
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -39,7 +40,6 @@ type Schema struct {
 
 	// The original OpenAPIv3 Schema.
 	OAPISchema *openapi3.Schema
-
 }
 
 // IsPrimitive returns true if the schema represents a primitive OpenAPI type
@@ -149,7 +149,7 @@ func (p Property) RequiresNilCheck() bool {
 // HasOptionalPointer indicates whether the generated property has an optional pointer associated with it.
 // This takes into account the `x-go-type-skip-optional-pointer` extension, allowing a parameter definition to control whether the pointer should be skipped.
 func (p Property) HasOptionalPointer() bool {
-	return p.Required == false && p.Schema.SkipOptionalPointer == false //nolint:staticcheck
+	return !p.Required && !p.Schema.SkipOptionalPointer
 }
 
 // ZeroValueIsNil is a helper function to determine if the given Go type used for this property
@@ -269,7 +269,7 @@ func (u UnionElement) String() string {
 // Method generate union method name for template functions `As/From/Merge`.
 func (u UnionElement) Method() string {
 	var method strings.Builder
-	for _, part := range strings.Split(string(u), `.`) {
+	for part := range strings.SplitSeq(string(u), `.`) {
 		method.WriteString(UppercaseFirstCharacter(part))
 	}
 	return method.String()
@@ -440,7 +440,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					return Schema{}, fmt.Errorf("error generating Go schema for property '%s': %w", pName, err)
 				}
 
-				required := StringInArray(pName, schema.Required)
+				required := slices.Contains(schema.Required, pName)
 
 				if (pSchema.HasAdditionalProperties || len(pSchema.UnionElements) != 0) && pSchema.RefType == "" {
 					// If we have fields present which have additional properties or union values,
@@ -631,7 +631,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		outSchema.AdditionalTypes = arrayType.AdditionalTypes
 		outSchema.Properties = arrayType.Properties
 		outSchema.DefineViaAlias = true
-		if sliceContains(globalState.options.OutputOptions.DisableTypeAliasesForType, "array") {
+		if slices.Contains(globalState.options.OutputOptions.DisableTypeAliasesForType, "array") {
 			outSchema.DefineViaAlias = false
 		}
 		setSkipOptionalPointerForContainerType(outSchema)

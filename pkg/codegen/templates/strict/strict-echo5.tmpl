@@ -38,7 +38,7 @@ type strictHandler struct {
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else if eq .NameTag "Formdata" -}}
-                    if form, err := ctx.FormParams(); err == nil {
+                    if form, err := ctx.FormValues(); err == nil {
                         var body {{$opid}}{{.NameTag}}RequestBody
                         if err := runtime.BindForm(&body, form, nil, nil); err != nil {
                             return err
