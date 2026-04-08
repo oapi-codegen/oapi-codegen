@@ -24,9 +24,11 @@ import (
 	"go/scanner"
 	"io"
 	"io/fs"
+	"maps"
 	"net/http"
 	"os"
 	"runtime/debug"
+	"slices"
 	"sort"
 	"strings"
 	"text/template"
@@ -103,11 +105,8 @@ func constructImportMapping(importMapping map[string]string) importMap {
 	)
 
 	{
-		var packagePaths []string
-		for _, packageName := range importMapping {
-			packagePaths = append(packagePaths, packageName)
-		}
-		sort.Strings(packagePaths)
+		packagePaths := slices.Collect(maps.Values(importMapping))
+		slices.Sort(packagePaths)
 
 		for _, packagePath := range packagePaths {
 			if _, ok := pathToImport[packagePath]; !ok && packagePath != importMappingCurrentPackage {
@@ -255,7 +254,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error getting type definition imports: %w", err)
 		}
-		MergeImports(xGoTypeImports, imprts)
+		maps.Copy(xGoTypeImports, imprts)
 	}
 
 	var serverURLsDefinitions string
@@ -626,11 +625,7 @@ func GenerateConstants(t *template.Template, ops []OperationDefinition) (string,
 		}
 	}
 
-	var providerNames []string
-	for providerName := range providerNameMap {
-		providerNames = append(providerNames, providerName)
-	}
-
+	providerNames := slices.Collect(maps.Keys(providerNameMap))
 	sort.Strings(providerNames)
 
 	constants.SecuritySchemeProviderNames = append(constants.SecuritySchemeProviderNames, providerNames...)
@@ -944,7 +939,7 @@ func resolvedNameForComponent(section, name string, contentType ...string) strin
 	}
 	if len(matches) > 0 {
 		if len(matches) > 1 {
-			sort.Strings(matches)
+			slices.Sort(matches)
 		}
 		return globalState.resolvedNames[matches[0]]
 	}
@@ -1243,14 +1238,14 @@ func OperationSchemaImports(s *Schema) (map[string]goImport, error) {
 		if err != nil {
 			return nil, err
 		}
-		MergeImports(res, imprts)
+		maps.Copy(res, imprts)
 	}
 
 	imprts, err := GoSchemaImports(&openapi3.SchemaRef{Value: s.OAPISchema})
 	if err != nil {
 		return nil, err
 	}
-	MergeImports(res, imprts)
+	maps.Copy(res, imprts)
 	return res, nil
 }
 
@@ -1263,7 +1258,7 @@ func OperationImports(ops []OperationDefinition) (map[string]goImport, error) {
 				if err != nil {
 					return nil, err
 				}
-				MergeImports(res, imprts)
+				maps.Copy(res, imprts)
 			}
 		}
 
@@ -1272,7 +1267,7 @@ func OperationImports(ops []OperationDefinition) (map[string]goImport, error) {
 			if err != nil {
 				return nil, err
 			}
-			MergeImports(res, imprts)
+			maps.Copy(res, imprts)
 		}
 
 		for _, b := range op.Responses {
@@ -1281,7 +1276,7 @@ func OperationImports(ops []OperationDefinition) (map[string]goImport, error) {
 				if err != nil {
 					return nil, err
 				}
-				MergeImports(res, imprts)
+				maps.Copy(res, imprts)
 			}
 		}
 
@@ -1316,7 +1311,7 @@ func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (ma
 	}
 
 	for _, imprts := range []map[string]goImport{schemaImports, reqBodiesImports, responsesImports, parametersImports} {
-		MergeImports(res, imprts)
+		maps.Copy(res, imprts)
 	}
 	return res, nil
 }
@@ -1343,14 +1338,14 @@ func GoSchemaImports(schemas ...*openapi3.SchemaRef) (map[string]goImport, error
 				if err != nil {
 					return nil, err
 				}
-				MergeImports(res, imprts)
+				maps.Copy(res, imprts)
 			}
 		} else if t.Is("array") {
 			imprts, err := GoSchemaImports(schemaVal.Items)
 			if err != nil {
 				return nil, err
 			}
-			MergeImports(res, imprts)
+			maps.Copy(res, imprts)
 		}
 	}
 	return res, nil
@@ -1371,7 +1366,7 @@ func GetSchemaImports(schemas map[string]*openapi3.SchemaRef, excludeSchemas []s
 		if err != nil {
 			return nil, err
 		}
-		MergeImports(res, imprts)
+		maps.Copy(res, imprts)
 	}
 	return res, nil
 }
@@ -1389,7 +1384,7 @@ func GetRequestBodiesImports(bodies map[string]*openapi3.RequestBodyRef) (map[st
 			if err != nil {
 				return nil, err
 			}
-			MergeImports(res, imprts)
+			maps.Copy(res, imprts)
 		}
 	}
 	return res, nil
@@ -1408,7 +1403,7 @@ func GetResponsesImports(responses map[string]*openapi3.ResponseRef) (map[string
 			if err != nil {
 				return nil, err
 			}
-			MergeImports(res, imprts)
+			maps.Copy(res, imprts)
 		}
 	}
 	return res, nil
@@ -1424,7 +1419,7 @@ func GetParametersImports(params map[string]*openapi3.ParameterRef) (map[string]
 		if err != nil {
 			return nil, err
 		}
-		MergeImports(res, imprts)
+		maps.Copy(res, imprts)
 	}
 	return res, nil
 }

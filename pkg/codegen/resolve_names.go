@@ -113,7 +113,7 @@ func resolveCollisions(names []*ResolvedName) {
 	const maxIterations = 20
 
 	for _, strategy := range strategies {
-		for iter := 0; iter < maxIterations; iter++ {
+		for range maxIterations {
 			groups := groupByName(names)
 			anyCollision := false
 			anyProgress := false
@@ -261,7 +261,7 @@ func tryStatusCodeSuffix(group []*ResolvedName) bool {
 // Returns true if any name was modified, false if no progress was made.
 func tryParamIndexSuffix(group []*ResolvedName) bool {
 	hasMultipleParams := false
-	for i := 0; i < len(group); i++ {
+	for i := range group {
 		for j := i + 1; j < len(group); j++ {
 			if group[i].Schema.ParamIndex != group[j].Schema.ParamIndex {
 				hasMultipleParams = true
