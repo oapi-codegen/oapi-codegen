@@ -26,7 +26,11 @@ func GenerateServerURLs(t *template.Template, spec *openapi3.T) (string, error) 
 	for _, server := range spec.Servers {
 		var name string
 		if goNameExt, ok := server.Extensions[extGoName]; ok {
-			if customName, err := extParseGoFieldName(goNameExt); err == nil && customName != "" {
+			customName, err := extParseGoFieldName(goNameExt)
+			if err != nil {
+				return "", fmt.Errorf("invalid value for %q: %w", extGoName, err)
+			}
+			if customName != "" {
 				name = customName
 			}
 		}
