@@ -45,3 +45,7 @@ servers:
   description: some lowercase name
 # there may be URLs on their own, without a `description`
 - url: http://localhost:443
+# x-go-name overrides the auto-generated Go name
+- url: https://api.example.com/v2
+  description: Custom named server
+  x-go-name: MyCustomAPIServer
