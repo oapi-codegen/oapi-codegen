@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -99,7 +100,12 @@ func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Reque
 
 	err = runtime.BindQueryParameterWithOptions("form", true, false, "tags", r.URL.Query(), &params.Tags, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tags", Err: err})
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "tags"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tags", Err: err})
+		}
 		return
 	}
 
@@ -107,7 +113,12 @@ func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Reque
 
 	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
 		return
 	}
 

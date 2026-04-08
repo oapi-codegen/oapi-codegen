@@ -505,7 +505,6 @@ func TestParameterBinding(t *testing.T) {
 	// See https://github.com/oapi-codegen/runtime/issues/116
 
 	t.Run("spaceDelimited array", func(t *testing.T) {
-		t.Skip("spaceDelimited not yet supported in runtime (oapi-codegen/runtime#116)")
 		result = testutil.NewRequest().Get("/queryDelimited?sa=3%204%205").GoWithHTTPHandler(t, e)
 		assert.Equal(t, http.StatusOK, result.Code())
 		assert.EqualValues(t, expectedArray, ts.array)
@@ -513,7 +512,6 @@ func TestParameterBinding(t *testing.T) {
 	})
 
 	t.Run("pipeDelimited array", func(t *testing.T) {
-		t.Skip("pipeDelimited not yet supported in runtime (oapi-codegen/runtime#116)")
 		result = testutil.NewRequest().Get("/queryDelimited?pa=3|4|5").GoWithHTTPHandler(t, e)
 		assert.Equal(t, http.StatusOK, result.Code())
 		assert.EqualValues(t, expectedArray, ts.array)

@@ -106,10 +106,12 @@ type ServerInterface interface {
 
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
-	Handler ServerInterface
+	Handler            ServerInterface
+	HandlerMiddlewares []HandlerMiddlewareFunc
 }
 
 type MiddlewareFunc fiber.Handler
+type HandlerMiddlewareFunc func(c *fiber.Ctx, next fiber.Handler) error
 
 // GetContentObject operation middleware
 func (siw *ServerInterfaceWrapper) GetContentObject(c *fiber.Ctx) error {
@@ -131,7 +133,19 @@ func (siw *ServerInterfaceWrapper) GetContentObject(c *fiber.Ctx) error {
 		}
 	}
 
-	return siw.Handler.GetContentObject(c, param)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetContentObject(c, param)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetCookie operation middleware
@@ -262,7 +276,19 @@ func (siw *ServerInterfaceWrapper) GetCookie(c *fiber.Ctx) error {
 		}
 	}
 
-	return siw.Handler.GetCookie(c, params)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetCookie(c, params)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // EnumParams operation middleware
@@ -287,7 +313,19 @@ func (siw *ServerInterfaceWrapper) EnumParams(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter enumPathParam: %w", err).Error())
 	}
 
-	return siw.Handler.EnumParams(c, params)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.EnumParams(c, params)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetHeader operation middleware
@@ -437,7 +475,19 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 
 	}
 
-	return siw.Handler.GetHeader(c, params)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetHeader(c, params)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetLabelExplodeArray operation middleware
@@ -454,7 +504,19 @@ func (siw *ServerInterfaceWrapper) GetLabelExplodeArray(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
 
-	return siw.Handler.GetLabelExplodeArray(c, param)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetLabelExplodeArray(c, param)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetLabelExplodeObject operation middleware
@@ -471,7 +533,19 @@ func (siw *ServerInterfaceWrapper) GetLabelExplodeObject(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
 
-	return siw.Handler.GetLabelExplodeObject(c, param)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetLabelExplodeObject(c, param)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetLabelExplodePrimitive operation middleware
@@ -488,7 +562,19 @@ func (siw *ServerInterfaceWrapper) GetLabelExplodePrimitive(c *fiber.Ctx) error 
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
 
-	return siw.Handler.GetLabelExplodePrimitive(c, param)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetLabelExplodePrimitive(c, param)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetLabelNoExplodeArray operation middleware
@@ -505,7 +591,19 @@ func (siw *ServerInterfaceWrapper) GetLabelNoExplodeArray(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
 
-	return siw.Handler.GetLabelNoExplodeArray(c, param)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetLabelNoExplodeArray(c, param)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetLabelNoExplodeObject operation middleware
@@ -522,7 +620,19 @@ func (siw *ServerInterfaceWrapper) GetLabelNoExplodeObject(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
 
-	return siw.Handler.GetLabelNoExplodeObject(c, param)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetLabelNoExplodeObject(c, param)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetLabelPrimitive operation middleware
@@ -539,7 +649,19 @@ func (siw *ServerInterfaceWrapper) GetLabelPrimitive(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
 
-	return siw.Handler.GetLabelPrimitive(c, param)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetLabelPrimitive(c, param)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetMatrixExplodeArray operation middleware
@@ -556,7 +678,19 @@ func (siw *ServerInterfaceWrapper) GetMatrixExplodeArray(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
-	return siw.Handler.GetMatrixExplodeArray(c, id)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetMatrixExplodeArray(c, id)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetMatrixExplodeObject operation middleware
@@ -573,7 +707,19 @@ func (siw *ServerInterfaceWrapper) GetMatrixExplodeObject(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
-	return siw.Handler.GetMatrixExplodeObject(c, id)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetMatrixExplodeObject(c, id)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetMatrixExplodePrimitive operation middleware
@@ -590,7 +736,19 @@ func (siw *ServerInterfaceWrapper) GetMatrixExplodePrimitive(c *fiber.Ctx) error
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
-	return siw.Handler.GetMatrixExplodePrimitive(c, id)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetMatrixExplodePrimitive(c, id)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetMatrixNoExplodeArray operation middleware
@@ -607,7 +765,19 @@ func (siw *ServerInterfaceWrapper) GetMatrixNoExplodeArray(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
-	return siw.Handler.GetMatrixNoExplodeArray(c, id)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetMatrixNoExplodeArray(c, id)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetMatrixNoExplodeObject operation middleware
@@ -624,7 +794,19 @@ func (siw *ServerInterfaceWrapper) GetMatrixNoExplodeObject(c *fiber.Ctx) error 
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
-	return siw.Handler.GetMatrixNoExplodeObject(c, id)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetMatrixNoExplodeObject(c, id)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetMatrixPrimitive operation middleware
@@ -641,7 +823,19 @@ func (siw *ServerInterfaceWrapper) GetMatrixPrimitive(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
 
-	return siw.Handler.GetMatrixPrimitive(c, id)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetMatrixPrimitive(c, id)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetPassThrough operation middleware
@@ -658,7 +852,19 @@ func (siw *ServerInterfaceWrapper) GetPassThrough(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unescaping path parameter 'param': %w", err).Error())
 	}
 
-	return siw.Handler.GetPassThrough(c, param)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetPassThrough(c, param)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetDeepObject operation middleware
@@ -683,7 +889,19 @@ func (siw *ServerInterfaceWrapper) GetDeepObject(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter deepObj: %w", err).Error())
 	}
 
-	return siw.Handler.GetDeepObject(c, params)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetDeepObject(c, params)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetQueryDelimited operation middleware
@@ -715,7 +933,19 @@ func (siw *ServerInterfaceWrapper) GetQueryDelimited(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter pa: %w", err).Error())
 	}
 
-	return siw.Handler.GetQueryDelimited(c, params)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetQueryDelimited(c, params)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetQueryForm operation middleware
@@ -803,7 +1033,19 @@ func (siw *ServerInterfaceWrapper) GetQueryForm(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter 1s: %w", err).Error())
 	}
 
-	return siw.Handler.GetQueryForm(c, params)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetQueryForm(c, params)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetSimpleExplodeArray operation middleware
@@ -820,7 +1062,19 @@ func (siw *ServerInterfaceWrapper) GetSimpleExplodeArray(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
 
-	return siw.Handler.GetSimpleExplodeArray(c, param)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetSimpleExplodeArray(c, param)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetSimpleExplodeObject operation middleware
@@ -837,7 +1091,19 @@ func (siw *ServerInterfaceWrapper) GetSimpleExplodeObject(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
 
-	return siw.Handler.GetSimpleExplodeObject(c, param)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetSimpleExplodeObject(c, param)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetSimpleExplodePrimitive operation middleware
@@ -854,7 +1120,19 @@ func (siw *ServerInterfaceWrapper) GetSimpleExplodePrimitive(c *fiber.Ctx) error
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
 
-	return siw.Handler.GetSimpleExplodePrimitive(c, param)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetSimpleExplodePrimitive(c, param)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetSimpleNoExplodeArray operation middleware
@@ -871,7 +1149,19 @@ func (siw *ServerInterfaceWrapper) GetSimpleNoExplodeArray(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
 
-	return siw.Handler.GetSimpleNoExplodeArray(c, param)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetSimpleNoExplodeArray(c, param)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetSimpleNoExplodeObject operation middleware
@@ -888,7 +1178,19 @@ func (siw *ServerInterfaceWrapper) GetSimpleNoExplodeObject(c *fiber.Ctx) error 
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
 
-	return siw.Handler.GetSimpleNoExplodeObject(c, param)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetSimpleNoExplodeObject(c, param)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetSimplePrimitive operation middleware
@@ -905,7 +1207,19 @@ func (siw *ServerInterfaceWrapper) GetSimplePrimitive(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
 
-	return siw.Handler.GetSimplePrimitive(c, param)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetSimplePrimitive(c, param)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetStartingWithNumber operation middleware
@@ -922,13 +1236,26 @@ func (siw *ServerInterfaceWrapper) GetStartingWithNumber(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unescaping path parameter '1param': %w", err).Error())
 	}
 
-	return siw.Handler.GetStartingWithNumber(c, n1param)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetStartingWithNumber(c, n1param)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // FiberServerOptions provides options for the Fiber server.
 type FiberServerOptions struct {
-	BaseURL     string
-	Middlewares []MiddlewareFunc
+	BaseURL            string
+	Middlewares        []MiddlewareFunc
+	HandlerMiddlewares []HandlerMiddlewareFunc
 }
 
 // RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
@@ -939,7 +1266,8 @@ func RegisterHandlers(router fiber.Router, si ServerInterface) {
 // RegisterHandlersWithOptions creates http.Handler with additional options
 func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, options FiberServerOptions) {
 	wrapper := ServerInterfaceWrapper{
-		Handler: si,
+		Handler:            si,
+		HandlerMiddlewares: options.HandlerMiddlewares,
 	}
 
 	for _, m := range options.Middlewares {

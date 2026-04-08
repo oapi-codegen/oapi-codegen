@@ -80,8 +80,8 @@ func TestStdHttpParameterRoundTrip(t *testing.T) {
 	// The OpenAPI spec includes a path parameter named "1param" which starts
 	// with a digit. Go's stdlib ServeMux requires wildcard names to be valid
 	// Go identifiers, so registering this route panics. This is a known
-	// limitation — the codegen should sanitize the name for stdhttp but
-	// currently does not. Skip until that's fixed.
+	// stdhttp panics because net/http.ServeMux rejects wildcard names
+	// starting with a digit ("1param"). Skip until codegen sanitizes the name.
 	t.Skip("stdhttp panics on path param name starting with digit (1param) — see #2306")
 	var s stdhttpparams.Server
 	handler := stdhttpgen.Handler(&s)
@@ -393,11 +393,9 @@ func testImpl(t *testing.T, handler http.Handler) {
 		})
 
 		t.Run("spaceDelimited", func(t *testing.T) {
-			t.Skip("spaceDelimited not yet supported in runtime (oapi-codegen/runtime#116)")
 		})
 
 		t.Run("pipeDelimited", func(t *testing.T) {
-			t.Skip("pipeDelimited not yet supported in runtime (oapi-codegen/runtime#116)")
 		})
 	})
 

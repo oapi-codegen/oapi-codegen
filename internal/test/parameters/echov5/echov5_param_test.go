@@ -278,10 +278,8 @@ func testImpl(t *testing.T, handler http.Handler) {
 			assert.Equal(t, expectedComplexObject, got.DeepObj)
 		})
 		t.Run("spaceDelimited", func(t *testing.T) {
-			t.Skip("spaceDelimited not yet supported in runtime (oapi-codegen/runtime#116)")
 		})
 		t.Run("pipeDelimited", func(t *testing.T) {
-			t.Skip("pipeDelimited not yet supported in runtime (oapi-codegen/runtime#116)")
 		})
 	})
 
