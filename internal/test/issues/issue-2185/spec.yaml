@@ -1,0 +1,15 @@
+openapi: "3.0.3"
+info:
+  title: test
+  version: 1.0.0
+components:
+  schemas:
+    Container:
+      required:
+        - "may-be-null"
+      properties:
+        "may-be-null":
+          type: array
+          items:
+            type: string
+            nullable: true

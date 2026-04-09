@@ -72,45 +72,119 @@ type ServerInterface interface {
 
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
-	Handler ServerInterface
+	Handler            ServerInterface
+	HandlerMiddlewares []HandlerMiddlewareFunc
 }
 
 type MiddlewareFunc fiber.Handler
+type HandlerMiddlewareFunc func(c *fiber.Ctx, next fiber.Handler) error
 
 // JSONExample operation middleware
 func (siw *ServerInterfaceWrapper) JSONExample(c *fiber.Ctx) error {
 
-	return siw.Handler.JSONExample(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.JSONExample(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // MultipartExample operation middleware
 func (siw *ServerInterfaceWrapper) MultipartExample(c *fiber.Ctx) error {
 
-	return siw.Handler.MultipartExample(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.MultipartExample(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // MultipartRelatedExample operation middleware
 func (siw *ServerInterfaceWrapper) MultipartRelatedExample(c *fiber.Ctx) error {
 
-	return siw.Handler.MultipartRelatedExample(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.MultipartRelatedExample(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // MultipleRequestAndResponseTypes operation middleware
 func (siw *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(c *fiber.Ctx) error {
 
-	return siw.Handler.MultipleRequestAndResponseTypes(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.MultipleRequestAndResponseTypes(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // RequiredJSONBody operation middleware
 func (siw *ServerInterfaceWrapper) RequiredJSONBody(c *fiber.Ctx) error {
 
-	return siw.Handler.RequiredJSONBody(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.RequiredJSONBody(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // RequiredTextBody operation middleware
 func (siw *ServerInterfaceWrapper) RequiredTextBody(c *fiber.Ctx) error {
 
-	return siw.Handler.RequiredTextBody(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.RequiredTextBody(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // ReservedGoKeywordParameters operation middleware
@@ -121,42 +195,114 @@ func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(c *fiber.Ctx) err
 	// ------------- Path parameter "type" -------------
 	var pType string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "type", c.Params("type"), &pType, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "type", c.Params("type"), &pType, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter type: %w", err).Error())
 	}
 
-	return siw.Handler.ReservedGoKeywordParameters(c, pType)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.ReservedGoKeywordParameters(c, pType)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // ReusableResponses operation middleware
 func (siw *ServerInterfaceWrapper) ReusableResponses(c *fiber.Ctx) error {
 
-	return siw.Handler.ReusableResponses(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.ReusableResponses(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // TextExample operation middleware
 func (siw *ServerInterfaceWrapper) TextExample(c *fiber.Ctx) error {
 
-	return siw.Handler.TextExample(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.TextExample(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // UnknownExample operation middleware
 func (siw *ServerInterfaceWrapper) UnknownExample(c *fiber.Ctx) error {
 
-	return siw.Handler.UnknownExample(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.UnknownExample(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // UnspecifiedContentType operation middleware
 func (siw *ServerInterfaceWrapper) UnspecifiedContentType(c *fiber.Ctx) error {
 
-	return siw.Handler.UnspecifiedContentType(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.UnspecifiedContentType(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // URLEncodedExample operation middleware
 func (siw *ServerInterfaceWrapper) URLEncodedExample(c *fiber.Ctx) error {
 
-	return siw.Handler.URLEncodedExample(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.URLEncodedExample(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // HeadersExample operation middleware
@@ -177,7 +323,7 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName header1, 1 is required, but %d found", n))
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "header1", valueList[0], &Header1, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true})
+		err = runtime.BindStyledParameterWithOptions("simple", "header1", valueList[0], &Header1, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter header1: %w", err).Error())
 		}
@@ -197,7 +343,7 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName header2, 1 is required, but %d found", n))
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "header2", valueList[0], &Header2, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
+		err = runtime.BindStyledParameterWithOptions("simple", "header2", valueList[0], &Header2, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter header2: %w", err).Error())
 		}
@@ -206,19 +352,44 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c *fiber.Ctx) error {
 
 	}
 
-	return siw.Handler.HeadersExample(c, params)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.HeadersExample(c, params)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // UnionExample operation middleware
 func (siw *ServerInterfaceWrapper) UnionExample(c *fiber.Ctx) error {
 
-	return siw.Handler.UnionExample(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.UnionExample(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // FiberServerOptions provides options for the Fiber server.
 type FiberServerOptions struct {
-	BaseURL     string
-	Middlewares []MiddlewareFunc
+	BaseURL            string
+	Middlewares        []MiddlewareFunc
+	HandlerMiddlewares []HandlerMiddlewareFunc
 }
 
 // RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
@@ -229,7 +400,8 @@ func RegisterHandlers(router fiber.Router, si ServerInterface) {
 // RegisterHandlersWithOptions creates http.Handler with additional options
 func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, options FiberServerOptions) {
 	wrapper := ServerInterfaceWrapper{
-		Handler: si,
+		Handler:            si,
+		HandlerMiddlewares: options.HandlerMiddlewares,
 	}
 
 	for _, m := range options.Middlewares {

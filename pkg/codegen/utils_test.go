@@ -160,7 +160,7 @@ func TestSortedSchemaKeysWithXOrder(t *testing.T) {
 	withOrder := func(i float64) *openapi3.SchemaRef {
 		return &openapi3.SchemaRef{
 			Value: &openapi3.Schema{
-				Extensions: map[string]interface{}{"x-order": i},
+				Extensions: map[string]any{"x-order": i},
 			},
 		}
 	}

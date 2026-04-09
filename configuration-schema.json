@@ -29,6 +29,10 @@
           "type": "boolean",
           "description": "EchoServer specifies whether to generate echo server boilerplate"
         },
+        "echo5-server": {
+          "type": "boolean",
+          "description": "Echo5Server specifies whether to generate echo v5 server boilerplate"
+        },
         "gin-server": {
           "type": "boolean",
           "description": "GinServer specifies whether to generate gin server boilerplate"
@@ -177,10 +181,6 @@
           "type": "string",
           "description": "Override the default generated client type with the value"
         },
-        "initialism-overrides": {
-          "type": "boolean",
-          "description": "Whether to use the initialism overrides"
-        },
         "additional-initialisms": {
           "type": "array",
           "description": "AdditionalInitialisms defines additional initialisms to be used by the code generator. Has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`",
@@ -197,9 +197,7 @@
           "description": "DisableTypeAliasesForType allows defining which OpenAPI `type`s will explicitly not use type aliases",
           "items": {
             "type": "string",
-            "enum": [
-              "array"
-            ]
+            "enum": ["array"]
           }
         },
         "name-normalizer": {
@@ -226,9 +224,7 @@
               "default": true
             }
           },
-          "required": [
-            "path"
-          ]
+          "required": ["path"]
         },
         "yaml-tags": {
           "type": "boolean",
@@ -255,7 +251,7 @@
         },
         "resolve-type-name-collisions": {
           "type": "boolean",
-          "description": "When set to true, automatically renames types that collide across different OpenAPI component sections (schemas, parameters, requestBodies, responses, headers) by appending a suffix based on the component section (e.g., 'Parameter', 'Response', 'RequestBody'). Without this, the codegen will error on duplicate type names, requiring manual resolution via x-go-name.",
+          "description": "When set to true, automatically renames types that collide across different OpenAPI component sections (schemas, parameters, requestBodies, responses, headers) by appending a suffix based on the component section. Also detects collisions between component types and client response wrapper types. Without this, the codegen will error on duplicate type names, requiring manual resolution via x-go-name.",
           "default": false
         },
         "type-mapping": {
@@ -299,9 +295,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "package"
-        ]
+        "required": ["package"]
       },
       "description": "AdditionalImports defines any additional Go imports to add to the generated code"
     },

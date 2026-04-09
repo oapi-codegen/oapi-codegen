@@ -50,6 +50,9 @@ func (o Configuration) Validate() error {
 	if o.Generate.EchoServer {
 		nServers++
 	}
+	if o.Generate.Echo5Server {
+		nServers++
+	}
 	if o.Generate.GorillaServer {
 		nServers++
 	}
@@ -112,6 +115,8 @@ type GenerateOptions struct {
 	FiberServer bool `yaml:"fiber-server,omitempty"`
 	// EchoServer specifies whether to generate echo server boilerplate
 	EchoServer bool `yaml:"echo-server,omitempty"`
+	// Echo5Server specifies whether to generate echo v5 server boilerplate
+	Echo5Server bool `yaml:"echo5-server,omitempty"`
 	// GinServer specifies whether to generate gin server boilerplate
 	GinServer bool `yaml:"gin-server,omitempty"`
 	// GorillaServer specifies whether to generate Gorilla server boilerplate
@@ -128,6 +133,54 @@ type GenerateOptions struct {
 	EmbeddedSpec bool `yaml:"embedded-spec,omitempty"`
 	// ServerURLs generates types for the `Server` definitions' URLs, instead of needing to provide your own values
 	ServerURLs bool `yaml:"server-urls,omitempty"`
+}
+
+// RouterImports returns the framework-specific and strict middleware imports
+// needed based on which server type is selected.
+func (g GenerateOptions) RouterImports() []AdditionalImport {
+	var imports []AdditionalImport
+
+	switch {
+	case g.EchoServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/labstack/echo/v4"})
+		if g.Strict {
+			imports = append(imports, AdditionalImport{Alias: "strictecho", Package: "github.com/oapi-codegen/runtime/strictmiddleware/echo"})
+		}
+	case g.Echo5Server:
+		imports = append(imports, AdditionalImport{Package: "github.com/labstack/echo/v5"})
+		if g.Strict {
+			imports = append(imports, AdditionalImport{Alias: "strictecho5", Package: "github.com/oapi-codegen/runtime/strictmiddleware/echo-v5"})
+		}
+	case g.ChiServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/go-chi/chi/v5"})
+		if g.Strict {
+			imports = append(imports, AdditionalImport{Alias: "strictnethttp", Package: "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"})
+		}
+	case g.GinServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/gin-gonic/gin"})
+		if g.Strict {
+			imports = append(imports, AdditionalImport{Alias: "strictgin", Package: "github.com/oapi-codegen/runtime/strictmiddleware/gin"})
+		}
+	case g.GorillaServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/gorilla/mux"})
+		if g.Strict {
+			imports = append(imports, AdditionalImport{Alias: "strictnethttp", Package: "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"})
+		}
+	case g.FiberServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/gofiber/fiber/v2"})
+	case g.IrisServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/kataras/iris/v12"})
+		imports = append(imports, AdditionalImport{Package: "github.com/kataras/iris/v12/core/router"})
+		if g.Strict {
+			imports = append(imports, AdditionalImport{Alias: "strictiris", Package: "github.com/oapi-codegen/runtime/strictmiddleware/iris"})
+		}
+	case g.StdHTTPServer:
+		if g.Strict {
+			imports = append(imports, AdditionalImport{Alias: "strictnethttp", Package: "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"})
+		}
+	}
+
+	return imports
 }
 
 func (oo GenerateOptions) Validate() map[string]string {
@@ -263,8 +316,6 @@ type OutputOptions struct {
 	ResponseTypeSuffix string `yaml:"response-type-suffix,omitempty"`
 	// Override the default generated client type with the value
 	ClientTypeName string `yaml:"client-type-name,omitempty"`
-	// Whether to use the initialism overrides
-	InitialismOverrides bool `yaml:"initialism-overrides,omitempty"`
 	// AdditionalInitialisms is a list of additional initialisms to use when generating names.
 	// NOTE that this has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`
 	AdditionalInitialisms []string `yaml:"additional-initialisms,omitempty"`
@@ -305,8 +356,10 @@ type OutputOptions struct {
 	// types that collide across different OpenAPI component sections
 	// (schemas, parameters, requestBodies, responses, headers) by appending
 	// a suffix based on the component section (e.g., "Parameter", "Response",
-	// "RequestBody"). Without this, the codegen will error on duplicate type
-	// names, requiring manual resolution via x-go-name.
+	// "RequestBody"). It also detects collisions between component types and
+	// client response wrapper types (e.g., issue #1474). Without this, the
+	// codegen will error on duplicate type names, requiring manual resolution
+	// via x-go-name.
 	ResolveTypeNameCollisions bool `yaml:"resolve-type-name-collisions,omitempty"`
 
 	// TypeMapping allows customizing OpenAPI type/format to Go type mappings.

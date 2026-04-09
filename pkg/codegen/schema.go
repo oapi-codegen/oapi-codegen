@@ -3,6 +3,7 @@ package codegen
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -39,21 +40,18 @@ type Schema struct {
 
 	// The original OpenAPIv3 Schema.
 	OAPISchema *openapi3.Schema
-
-	DefinedComp ComponentType // Indicates which component section defined this type
 }
 
-// ComponentType is used to keep track of where a given schema came from, in order
-// to perform type name collision resolution.
-type ComponentType int
-
-const (
-	ComponentTypeSchema = iota
-	ComponentTypeParameter
-	ComponentTypeRequestBody
-	ComponentTypeResponse
-	ComponentTypeHeader
-)
+// IsPrimitive returns true if the schema represents a primitive OpenAPI type
+// (string, integer, number, or boolean) as opposed to an object, array, or
+// composed type.
+func (s Schema) IsPrimitive() bool {
+	if s.OAPISchema == nil {
+		return false
+	}
+	t := s.OAPISchema.Type
+	return t.Is("string") || t.Is("integer") || t.Is("number") || t.Is("boolean")
+}
 
 func (s Schema) IsRef() bool {
 	return s.RefType != ""
@@ -102,7 +100,7 @@ type Property struct {
 	ReadOnly      bool
 	WriteOnly     bool
 	NeedsFormTag  bool
-	Extensions    map[string]interface{}
+	Extensions    map[string]any
 	Deprecated    bool
 }
 
@@ -151,7 +149,7 @@ func (p Property) RequiresNilCheck() bool {
 // HasOptionalPointer indicates whether the generated property has an optional pointer associated with it.
 // This takes into account the `x-go-type-skip-optional-pointer` extension, allowing a parameter definition to control whether the pointer should be skipped.
 func (p Property) HasOptionalPointer() bool {
-	return p.Required == false && p.Schema.SkipOptionalPointer == false //nolint:staticcheck
+	return !p.Required && !p.Schema.SkipOptionalPointer
 }
 
 // ZeroValueIsNil is a helper function to determine if the given Go type used for this property
@@ -270,11 +268,11 @@ func (u UnionElement) String() string {
 
 // Method generate union method name for template functions `As/From/Merge`.
 func (u UnionElement) Method() string {
-	var method string
-	for _, part := range strings.Split(string(u), `.`) {
-		method += UppercaseFirstCharacter(part)
+	var method strings.Builder
+	for part := range strings.SplitSeq(string(u), `.`) {
+		method.WriteString(UppercaseFirstCharacter(part))
 	}
-	return method
+	return method.String()
 }
 
 func PropertiesEqual(a, b Property) bool {
@@ -325,7 +323,6 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		Description:         schema.Description,
 		OAPISchema:          schema,
 		SkipOptionalPointer: skipOptionalPointer,
-		DefinedComp:         ComponentTypeSchema,
 	}
 
 	// AllOf is interesting, and useful. It's the union of a number of other
@@ -443,7 +440,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					return Schema{}, fmt.Errorf("error generating Go schema for property '%s': %w", pName, err)
 				}
 
-				required := StringInArray(pName, schema.Required)
+				required := slices.Contains(schema.Required, pName)
 
 				if (pSchema.HasAdditionalProperties || len(pSchema.UnionElements) != 0) && pSchema.RefType == "" {
 					// If we have fields present which have additional properties or union values,
@@ -603,8 +600,6 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			return fmt.Errorf("error generating type for array: %w", err)
 		}
 
-		var itemPrefix string
-
 		if (arrayType.HasAdditionalProperties || len(arrayType.UnionElements) != 0) && arrayType.RefType == "" {
 			// If we have items which have additional properties or union values,
 			// but are not a pre-defined type, we need to define a type
@@ -622,16 +617,21 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			arrayType.RefType = typeName
 		}
 
+		typeDeclaration := arrayType.TypeDecl()
 		if arrayType.OAPISchema != nil && arrayType.OAPISchema.Nullable {
-			itemPrefix = "*"
+			if globalState.options.OutputOptions.NullableType {
+				typeDeclaration = "nullable.Nullable[" + typeDeclaration + "]"
+			} else {
+				typeDeclaration = "*" + typeDeclaration
+			}
 		}
 
 		outSchema.ArrayType = &arrayType
-		outSchema.GoType = "[]" + itemPrefix + arrayType.TypeDecl()
+		outSchema.GoType = "[]" + typeDeclaration
 		outSchema.AdditionalTypes = arrayType.AdditionalTypes
 		outSchema.Properties = arrayType.Properties
 		outSchema.DefineViaAlias = true
-		if sliceContains(globalState.options.OutputOptions.DisableTypeAliasesForType, "array") {
+		if slices.Contains(globalState.options.OutputOptions.DisableTypeAliasesForType, "array") {
 			outSchema.DefineViaAlias = false
 		}
 		setSkipOptionalPointerForContainerType(outSchema)
@@ -731,11 +731,7 @@ func GenFieldsFromProperties(props []Property) []string {
 		shouldOmitEmpty := (!p.Required || p.ReadOnly || p.WriteOnly) &&
 			(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
 
-		omitEmpty := !p.Nullable && shouldOmitEmpty
-
-		if p.Nullable && globalState.options.OutputOptions.NullableType {
-			omitEmpty = shouldOmitEmpty
-		}
+		omitEmpty := shouldOmitEmpty
 
 		omitZero := false
 
@@ -836,9 +832,7 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 
 	// We can process the schema through the generic schema processor
 	if param.Schema != nil {
-		schema, err := GenerateGoSchema(param.Schema, path)
-		schema.DefinedComp = ComponentTypeParameter
-		return schema, err
+		return GenerateGoSchema(param.Schema, path)
 	}
 
 	// At this point, we have a content type. We know how to deal with
@@ -848,7 +842,6 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 		return Schema{
 			GoType:      "string",
 			Description: StringToGoComment(param.Description),
-			DefinedComp: ComponentTypeParameter,
 		}, nil
 	}
 
@@ -859,14 +852,11 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 		return Schema{
 			GoType:      "string",
 			Description: StringToGoComment(param.Description),
-			DefinedComp: ComponentTypeParameter,
 		}, nil
 	}
 
 	// For json, we go through the standard schema mechanism
-	schema, err := GenerateGoSchema(mt.Schema, path)
-	schema.DefinedComp = ComponentTypeParameter
-	return schema, err
+	return GenerateGoSchema(mt.Schema, path)
 }
 
 func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string) error {
@@ -907,7 +897,7 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 			// Explicit mapping.
 			var mapped bool
 			for k, v := range discriminator.Mapping {
-				if v == element.Ref {
+				if v.Ref == element.Ref {
 					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
 					mapped = true
 				}
