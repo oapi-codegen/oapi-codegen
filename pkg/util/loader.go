@@ -74,7 +74,7 @@ func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (s
 	}
 
 	if opts.Strict {
-		err, vs := overlay.ApplyToStrict(&node)
+		vs, err := overlay.ApplyToStrict(&node)
 		if err != nil {
 			return nil, fmt.Errorf("failed to apply Overlay %#v to specification %#v: %v\nAdditionally, the following validation errors were found:\n- %s", opts.Path, filePath, err, strings.Join(vs, "\n- "))
 		}
