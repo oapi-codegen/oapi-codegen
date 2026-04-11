@@ -22,6 +22,6 @@ for _, m := range options.Middlewares {
 }
 {{end}}
 {{range .}}
-router.{{.Method | lower | title }}(options.BaseURL+"{{.Path | swaggerUriToFiberUri}}", wrapper.{{.OperationId}})
+router.{{.Method | lower | title }}(options.BaseURL+"{{.Path | swaggerUriToFiberUri}}", wrapper.{{.HandlerName}})
 {{end}}
 }

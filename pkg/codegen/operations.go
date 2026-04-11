@@ -270,6 +270,18 @@ type OperationDefinition struct {
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
 	Spec                *openapi3.Operation
+	IsAlias             bool                    // True when this path is a $ref alias of another path item
+	AliasTarget         string                  // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
+}
+
+// HandlerName returns the OperationId to use when referencing the server-side
+// wrapper function. For alias operations this is the canonical operation's ID,
+// since the alias doesn't generate its own wrapper.
+func (o *OperationDefinition) HandlerName() string {
+	if o.IsAlias {
+		return o.AliasTarget
+	}
+	return o.OperationId
 }
 
 // Params returns the list of all parameters except Path parameters. Path parameters
@@ -608,6 +620,10 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 		return operations, nil
 	}
 
+	// Track alias counters for generating unique client method names
+	// when multiple paths $ref the same path item.
+	aliasCounters := map[string]int{}
+
 	for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
 		pathItem := swagger.Paths.Value(requestPath)
 		// These are parameters defined for all methods on a given path. They
@@ -641,8 +657,25 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			}
 			operationId = typeNamePrefix(operationId) + operationId
 
-			if !globalState.options.Compatibility.PreserveOriginalOperationIdCasingInEmbeddedSpec {
-				// update the existing, shared, copy of the spec if we're not wanting to preserve it
+			// Detect path aliases: when a path item has an internal $ref
+			// pointing to another path in the same document (e.g.
+			// "#/paths/~1test"), it's a duplicate that would produce
+			// identical server methods. External $refs (pointing to other
+			// files) are not aliases — they're the sole definition of
+			// that path, just stored externally.
+			isAlias := strings.HasPrefix(pathItem.Ref, "#/paths/")
+			var aliasTarget string
+			if isAlias {
+				aliasTarget = nameNormalizer(operationId)
+				n := aliasCounters[operationId]
+				aliasCounters[operationId] = n + 1
+				operationId = operationId + fmt.Sprintf("Alias%d", n)
+			}
+
+			if !globalState.options.Compatibility.PreserveOriginalOperationIdCasingInEmbeddedSpec && !isAlias {
+				// update the existing, shared, copy of the spec if we're not wanting to preserve it.
+				// Skip for aliases: they share the same *Operation as the canonical path,
+				// and writing the suffixed name back would corrupt the original.
 				op.OperationID = operationId
 			}
 
@@ -699,6 +732,8 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				Bodies:          bodyDefinitions,
 				Responses:       responseDefinitions,
 				TypeDefinitions: typeDefinitions,
+				IsAlias:         isAlias,
+				AliasTarget:     aliasTarget,
 			}
 
 			// check for overrides of SecurityDefinitions.
