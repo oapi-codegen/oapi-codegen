@@ -192,11 +192,21 @@ paths:
           description: OK
           headers:
             header1:
+              required: true
               schema:
                 type: string
             header2:
+              required: true
               schema:
                 type: integer
+            optional-header:
+              required: false
+              schema:
+                type: string
+            nullable-header:
+              schema:
+                type: string
+                nullable: true
           content:
             application/json:
               schema:
@@ -320,9 +330,11 @@ paths:
           description: OK
           headers:
             header1:
+              required: true
               schema:
                 type: string
             header2:
+              required: true
               schema:
                 type: integer
           content:
@@ -346,9 +358,11 @@ components:
       description: OK
       headers:
         header1:
+          required: true
           schema:
             type: string
         header2:
+          required: true
           schema:
             type: integer
       content:

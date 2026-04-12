@@ -1,4 +1,4 @@
-{{range .}}
+{{range .}}{{if not .IsAlias}}
     {{$opid := .OperationId -}}
     type {{$opid | ucFirst}}RequestObject struct {
         {{range .PathParams -}}
@@ -32,7 +32,7 @@
         {{if (and $hasHeaders (not $isRef)) -}}
             type {{$opid}}{{$statusCode}}ResponseHeaders struct {
                 {{range .Headers -}}
-                    {{.GoName}} {{.Schema.TypeDecl}}
+                    {{.GoName}} {{.GoTypeDef}}
                 {{end -}}
             }
         {{end}}
@@ -83,7 +83,17 @@
                     }
                     w.Header().Set("Content-Type", {{if .HasFixedContentType }}{{.ContentType | toGoString}}{{else}}response.ContentType{{end}})
                     {{range $headers -}}
-                        w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                        {{if .IsNullable -}}
+                            if response.Headers.{{.GoName}}.IsSpecified() {
+                                w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
+                            }
+                        {{else if .IsOptional -}}
+                            if response.Headers.{{.GoName}} != nil {
+                                w.Header().Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
+                            }
+                        {{else -}}
+                            w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                        {{end -}}
                     {{end -}}
                     w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                     _, err := buf.WriteTo(w)
@@ -95,7 +105,17 @@
                     }
                     w.Header().Set("Content-Type", {{if .HasFixedContentType }}{{.ContentType | toGoString}}{{else}}response.ContentType{{end}})
                     {{range $headers -}}
-                        w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                        {{if .IsNullable -}}
+                            if response.Headers.{{.GoName}}.IsSpecified() {
+                                w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
+                            }
+                        {{else if .IsOptional -}}
+                            if response.Headers.{{.GoName}} != nil {
+                                w.Header().Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
+                            }
+                        {{else -}}
+                            w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                        {{end -}}
                     {{end -}}
                     w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                     _, err = w.Write([]byte(form.Encode()))
@@ -108,7 +128,17 @@
                         }
                     {{end -}}
                     {{range $headers -}}
-                        w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                        {{if .IsNullable -}}
+                            if response.Headers.{{.GoName}}.IsSpecified() {
+                                w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
+                            }
+                        {{else if .IsOptional -}}
+                            if response.Headers.{{.GoName}} != nil {
+                                w.Header().Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
+                            }
+                        {{else -}}
+                            w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                        {{end -}}
                     {{end -}}
                     w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
 
@@ -151,13 +181,13 @@
             }
         {{end}}
     {{end}}
-{{end}}
+{{end}}{{end}}
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-{{range .}}{{.SummaryAsComment }}
+{{range .}}{{if not .IsAlias}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
 {{$opid := .OperationId -}}
 {{$opid}}(ctx context.Context, request {{$opid | ucFirst}}RequestObject) ({{$opid | ucFirst}}ResponseObject, error)
-{{end}}{{/* range . */ -}}
+{{end}}{{end}}{{/* range . */ -}}
 }

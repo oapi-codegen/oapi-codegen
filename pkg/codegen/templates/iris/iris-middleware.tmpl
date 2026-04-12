@@ -5,7 +5,7 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc iris.Handler
 
-{{range .}}{{$opid := .OperationId}}// {{$opid}} converts iris context to params.
+{{range .}}{{$opid := .OperationId}}{{if not .IsAlias}}// {{$opid}} converts iris context to params.
 func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
 {{if or .RequiresParamObject (gt (len .PathParams) 0) }}
     var err error
@@ -159,4 +159,4 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     // Invoke the callback with all the unmarshaled arguments
     w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
 }
-{{end}}
+{{end}}{{end}}

@@ -32,6 +32,13 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 		return Schema{}, err
 	}
 
+	// Seed allOf[0]'s ref so that if s1's own AllOf contains a back-reference
+	// to itself, the cycle is detected during recursive merging.
+	seenTopLevel := make(map[string]bool)
+	if allOf[0].Ref != "" {
+		seenTopLevel[allOf[0].Ref] = true
+	}
+
 	for i := 1; i < n; i++ {
 		var err error
 		oneOfSchema, err := valueWithPropagatedRef(allOf[i])
@@ -40,8 +47,12 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 
 		seenSchemaRef := make(map[string]bool)
+		for k := range seenTopLevel {
+			seenSchemaRef[k] = true
+		}
 		if allOf[i].Ref != "" {
 			seenSchemaRef[allOf[i].Ref] = true
+			seenTopLevel[allOf[i].Ref] = true
 		}
 		schema, err = mergeOpenapiSchemas(schema, oneOfSchema, true, seenSchemaRef)
 		if err != nil {

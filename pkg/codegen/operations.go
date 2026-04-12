@@ -270,6 +270,18 @@ type OperationDefinition struct {
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
 	Spec                *openapi3.Operation
+	IsAlias             bool                    // True when this path is a $ref alias of another path item
+	AliasTarget         string                  // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
+}
+
+// HandlerName returns the OperationId to use when referencing the server-side
+// wrapper function. For alias operations this is the canonical operation's ID,
+// since the alias doesn't generate its own wrapper.
+func (o *OperationDefinition) HandlerName() string {
+	if o.IsAlias {
+		return o.AliasTarget
+	}
+	return o.OperationId
 }
 
 // Params returns the list of all parameters except Path parameters. Path parameters
@@ -583,9 +595,43 @@ func (r ResponseContentDefinition) IsJSON() bool {
 }
 
 type ResponseHeaderDefinition struct {
-	Name   string
-	GoName string
-	Schema Schema
+	Name     string
+	GoName   string
+	Schema   Schema
+	Required bool
+	Nullable bool
+}
+
+// GoTypeDef returns the Go type string for this header, applying pointer or
+// nullable wrapping based on the Required/Nullable fields and global config.
+func (h ResponseHeaderDefinition) GoTypeDef() string {
+	typeDef := h.Schema.TypeDecl()
+	if globalState.options.OutputOptions.NullableType && h.Nullable {
+		return "nullable.Nullable[" + typeDef + "]"
+	}
+	if !h.Schema.SkipOptionalPointer && (!h.Required || h.Nullable) {
+		typeDef = "*" + typeDef
+	}
+	return typeDef
+}
+
+// IsOptional returns true if this header's Go type is indirect (pointer or
+// nullable wrapper), meaning the template should guard before calling
+// w.Header().Set(). This must stay in sync with GoTypeDef().
+func (h ResponseHeaderDefinition) IsOptional() bool {
+	if h.IsNullable() {
+		return true
+	}
+	if h.Schema.SkipOptionalPointer {
+		return false
+	}
+	return !h.Required || h.Nullable
+}
+
+// IsNullable returns true if the header type uses nullable.Nullable[T]
+// rather than a pointer for optionality.
+func (h ResponseHeaderDefinition) IsNullable() bool {
+	return globalState.options.OutputOptions.NullableType && h.Nullable
 }
 
 // FilterParameterDefinitionByType returns the subset of the specified parameters which are of the
@@ -607,6 +653,10 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	if swagger == nil || swagger.Paths == nil {
 		return operations, nil
 	}
+
+	// Track alias counters for generating unique client method names
+	// when multiple paths $ref the same path item.
+	aliasCounters := map[string]int{}
 
 	for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
 		pathItem := swagger.Paths.Value(requestPath)
@@ -641,8 +691,25 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			}
 			operationId = typeNamePrefix(operationId) + operationId
 
-			if !globalState.options.Compatibility.PreserveOriginalOperationIdCasingInEmbeddedSpec {
-				// update the existing, shared, copy of the spec if we're not wanting to preserve it
+			// Detect path aliases: when a path item has an internal $ref
+			// pointing to another path in the same document (e.g.
+			// "#/paths/~1test"), it's a duplicate that would produce
+			// identical server methods. External $refs (pointing to other
+			// files) are not aliases — they're the sole definition of
+			// that path, just stored externally.
+			isAlias := strings.HasPrefix(pathItem.Ref, "#/paths/")
+			var aliasTarget string
+			if isAlias {
+				aliasTarget = nameNormalizer(operationId)
+				n := aliasCounters[operationId]
+				aliasCounters[operationId] = n + 1
+				operationId = operationId + fmt.Sprintf("Alias%d", n)
+			}
+
+			if !globalState.options.Compatibility.PreserveOriginalOperationIdCasingInEmbeddedSpec && !isAlias {
+				// update the existing, shared, copy of the spec if we're not wanting to preserve it.
+				// Skip for aliases: they share the same *Operation as the canonical path,
+				// and writing the suffixed name back would corrupt the original.
 				op.OperationID = operationId
 			}
 
@@ -699,6 +766,8 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				Bodies:          bodyDefinitions,
 				Responses:       responseDefinitions,
 				TypeDefinitions: typeDefinitions,
+				IsAlias:         isAlias,
+				AliasTarget:     aliasTarget,
 			}
 
 			// check for overrides of SecurityDefinitions.
@@ -905,7 +974,14 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			if err != nil {
 				return nil, fmt.Errorf("error generating response header definition: %w", err)
 			}
-			headerDefinition := ResponseHeaderDefinition{Name: headerName, GoName: SchemaNameToTypeName(headerName), Schema: contentSchema}
+			nullable := header.Value.Schema != nil && header.Value.Schema.Value != nil && header.Value.Schema.Value.Nullable
+			headerDefinition := ResponseHeaderDefinition{
+				Name:     headerName,
+				GoName:   SchemaNameToTypeName(headerName),
+				Schema:   contentSchema,
+				Required: header.Value.Required || globalState.options.Compatibility.HeadersImplicitlyRequired,
+				Nullable: nullable,
+			}
 			responseHeaderDefinitions = append(responseHeaderDefinitions, headerDefinition)
 		}
 
