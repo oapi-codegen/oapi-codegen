@@ -8,7 +8,7 @@ type ServerInterfaceWrapper struct {
 type MiddlewareFunc func(http.Handler) http.Handler
 
 {{range .}}{{$opid := .OperationId}}
-
+{{if not .IsAlias}}
 // {{$opid}} operation middleware
 func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Request) {
   {{if or .RequiresParamObject (gt (len .PathParams) 0) }}
@@ -194,7 +194,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
 
   handler.ServeHTTP(w, r)
 }
-{{end}}
+{{end}}{{end}}
 
 type UnescapedCookieParamError struct {
     ParamName string
