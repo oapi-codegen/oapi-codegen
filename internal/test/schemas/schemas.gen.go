@@ -389,7 +389,7 @@ func NewEnsureEverythingIsReferencedRequest(server string) (*http.Request, error
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/ensure-everything-is-referenced")
+	operationPath := "/ensure-everything-is-referenced"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -416,7 +416,7 @@ func NewIssue1051Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issues/1051")
+	operationPath := "/issues/1051"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -443,7 +443,7 @@ func NewIssue127Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issues/127")
+	operationPath := "/issues/127"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -481,7 +481,7 @@ func NewIssue185RequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issues/185")
+	operationPath := "/issues/185"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -517,7 +517,7 @@ func NewIssue209Request(server string, str StringInPath) (*http.Request, error) 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issues/209/$%s", pathParam0)
+	operationPath := "/issues/209/$" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -551,7 +551,7 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issues/30/%s", pathParam0)
+	operationPath := "/issues/30/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -578,7 +578,7 @@ func NewGetIssues375Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issues/375")
+	operationPath := "/issues/375"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -612,7 +612,7 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issues/41/%s", pathParam0)
+	operationPath := "/issues/41/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -650,7 +650,7 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issues/9")
+	operationPath := "/issues/9"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -702,7 +702,7 @@ func NewIssue975Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issues/975")
+	operationPath := "/issues/975"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
