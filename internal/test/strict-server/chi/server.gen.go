@@ -242,6 +242,7 @@ func (siw *ServerInterfaceWrapper) RequiredTextBody(w http.ResponseWriter, r *ht
 func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(w http.ResponseWriter, r *http.Request) {
 
 	var err error
+	_ = err
 
 	// ------------- Path parameter "type" -------------
 	var pType string
@@ -337,6 +338,7 @@ func (siw *ServerInterfaceWrapper) URLEncodedExample(w http.ResponseWriter, r *h
 func (siw *ServerInterfaceWrapper) HeadersExample(w http.ResponseWriter, r *http.Request) {
 
 	var err error
+	_ = err
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params HeadersExampleParams

@@ -191,11 +191,12 @@ func (siw *ServerInterfaceWrapper) RequiredTextBody(c *fiber.Ctx) error {
 func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(c *fiber.Ctx) error {
 
 	var err error
+	_ = err
 
 	// ------------- Path parameter "type" -------------
 	var pType string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "type", c.Params("type"), &pType, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "type", c.Params("type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter type: %w", err).Error())
 	}
@@ -309,6 +310,7 @@ func (siw *ServerInterfaceWrapper) URLEncodedExample(c *fiber.Ctx) error {
 func (siw *ServerInterfaceWrapper) HeadersExample(c *fiber.Ctx) error {
 
 	var err error
+	_ = err
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params HeadersExampleParams

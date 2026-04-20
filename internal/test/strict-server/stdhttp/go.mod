@@ -10,7 +10,7 @@ require (
 	github.com/getkin/kin-openapi v0.135.0
 	github.com/oapi-codegen/oapi-codegen/v2 v2.0.0-00010101000000-000000000000
 	github.com/oapi-codegen/oapi-codegen/v2/internal/test v0.0.0-00010101000000-000000000000
-	github.com/oapi-codegen/runtime v1.3.1
+	github.com/oapi-codegen/runtime v1.4.0
 	github.com/oapi-codegen/testutil v1.1.0
 	github.com/stretchr/testify v1.11.1
 )

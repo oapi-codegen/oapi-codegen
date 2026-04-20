@@ -6,6 +6,7 @@
 package issue2232
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -81,37 +82,34 @@ type MiddlewareFunc func(http.Handler) http.Handler
 func (siw *ServerInterfaceWrapper) GetEndpoint(w http.ResponseWriter, r *http.Request) {
 
 	var err error
+	_ = err
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetEndpointParams
 
 	// ------------- Required query parameter "env_param_level" -------------
 
-	if paramValue := r.URL.Query().Get("env_param_level"); paramValue != "" {
-
-	} else {
-		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "env_param_level"})
-		return
-	}
-
 	err = runtime.BindQueryParameterWithOptions("form", true, true, "env_param_level", r.URL.Query(), &params.EnvParamLevel, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "env_param_level", Err: err})
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "env_param_level"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "env_param_level", Err: err})
+		}
 		return
 	}
 
 	// ------------- Required query parameter "env_schema_level" -------------
 
-	if paramValue := r.URL.Query().Get("env_schema_level"); paramValue != "" {
-
-	} else {
-		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "env_schema_level"})
-		return
-	}
-
 	err = runtime.BindQueryParameterWithOptions("form", true, true, "env_schema_level", r.URL.Query(), &params.EnvSchemaLevel, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "env_schema_level", Err: err})
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "env_schema_level"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "env_schema_level", Err: err})
+		}
 		return
 	}
 
@@ -119,7 +117,12 @@ func (siw *ServerInterfaceWrapper) GetEndpoint(w http.ResponseWriter, r *http.Re
 
 	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
 		return
 	}
 
