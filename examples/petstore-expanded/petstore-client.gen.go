@@ -68,6 +68,17 @@ type HttpRequestDoer interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
+// operationIdKey is the context key for the operationId
+type operationIdKey int
+
+// GetOperationIdFromContext returns the operationId from the context
+func GetOperationIdFromContext(ctx context.Context) string {
+	if opid, ok := ctx.Value(operationIdKey(0)).(string); ok {
+		return opid
+	}
+	return ""
+}
+
 // Client which conforms to the OpenAPI3 specification for this service.
 type Client struct {
 	// The endpoint of the server conforming to this interface, with scheme,
@@ -147,6 +158,7 @@ type ClientInterface interface {
 }
 
 func (c *Client) FindPets(ctx context.Context, params *FindPetsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "FindPets")
 	req, err := NewFindPetsRequest(c.Server, params)
 	if err != nil {
 		return nil, err
@@ -159,6 +171,7 @@ func (c *Client) FindPets(ctx context.Context, params *FindPetsParams, reqEditor
 }
 
 func (c *Client) AddPetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "AddPetWithBody")
 	req, err := NewAddPetRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
@@ -171,6 +184,7 @@ func (c *Client) AddPetWithBody(ctx context.Context, contentType string, body io
 }
 
 func (c *Client) AddPet(ctx context.Context, body AddPetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "AddPet")
 	req, err := NewAddPetRequest(c.Server, body)
 	if err != nil {
 		return nil, err
@@ -183,6 +197,7 @@ func (c *Client) AddPet(ctx context.Context, body AddPetJSONRequestBody, reqEdit
 }
 
 func (c *Client) DeletePet(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "DeletePet")
 	req, err := NewDeletePetRequest(c.Server, id)
 	if err != nil {
 		return nil, err
@@ -195,6 +210,7 @@ func (c *Client) DeletePet(ctx context.Context, id int64, reqEditors ...RequestE
 }
 
 func (c *Client) FindPetByID(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	ctx = context.WithValue(ctx, operationIdKey(0), "FindPetByID")
 	req, err := NewFindPetByIDRequest(c.Server, id)
 	if err != nil {
 		return nil, err
