@@ -15,13 +15,13 @@ type Server struct {
 	httpServer *http.Server
 }
 
-func NewServer() *Server {
+func NewServer(port string) *Server {
 	s := &Server{}
 	strictHandler := NewStrictHandler(s, nil)
 	handler := Handler(strictHandler)
 	s.httpServer = &http.Server{
 		Handler: handler,
-		Addr:    ":8080",
+		Addr:    ":" + port,
 	}
 	return s
 }

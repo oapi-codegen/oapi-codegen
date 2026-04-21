@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"github.com/oapi-codegen/oapi-codegen/v2/examples/streaming/stdhttp/sse"
 	"log/slog"
 	"os"
@@ -10,7 +11,10 @@ import (
 )
 
 func main() {
-	server := sse.NewServer()
+	port := flag.String("port", "8080", "port to serve on")
+	flag.Parse()
+
+	server := sse.NewServer(*port)
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 	err := server.Run(ctx)
