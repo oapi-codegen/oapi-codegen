@@ -107,8 +107,36 @@
                     if closer, ok := response.Body.(io.ReadCloser); ok {
                         defer closer.Close()
                     }
-                    _, err := io.Copy(ctx.ResponseWriter(), response.Body)
-                    return err
+                    {{if .IsStreamingContentType -}}
+                        flusher, ok := ctx.ResponseWriter().(http.Flusher)
+                        if !ok {
+                            // Fall back to buffered copy when the response writer
+                            // doesn't support flushing.
+                            _, err := io.Copy(ctx.ResponseWriter(), response.Body)
+                            return err
+                        }
+                        // Flush after each chunk so streaming clients see data
+                        // immediately instead of waiting on buffering.
+                        buf := make([]byte, 4096)
+                        for {
+                            n, err := response.Body.Read(buf)
+                            if n > 0 {
+                                if _, writeErr := ctx.ResponseWriter().Write(buf[:n]); writeErr != nil {
+                                    return writeErr
+                                }
+                                flusher.Flush()
+                            }
+                            if err != nil {
+                                if err == io.EOF {
+                                    return nil
+                                }
+                                return err
+                            }
+                        }
+                    {{else -}}
+                        _, err := io.Copy(ctx.ResponseWriter(), response.Body)
+                        return err
+                    {{end}}{{/* if .IsStreamingContentType */ -}}
                 {{end}}{{/* if eq .NameTag "JSON" */ -}}
             }
         {{end}}
