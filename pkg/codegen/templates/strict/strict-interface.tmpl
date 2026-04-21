@@ -49,6 +49,16 @@
                 {{end}}
             {{else if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
                 type {{$receiverTypeName}} {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if and .Schema.IsRef (not .Schema.IsExternalRef)}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+                {{- if and .IsJSON .Schema.HasCustomMarshalJSON}}
+
+                func (t {{$receiverTypeName}}) MarshalJSON() ([]byte, error) {
+                    return {{.Schema.TypeDecl}}(t).MarshalJSON()
+                }
+
+                func (t *{{$receiverTypeName}}) UnmarshalJSON(b []byte) error {
+                    return (*{{.Schema.TypeDecl}})(t).UnmarshalJSON(b)
+                }
+                {{- end}}
             {{else -}}
                 type {{$receiverTypeName}} struct {
                     Body {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
