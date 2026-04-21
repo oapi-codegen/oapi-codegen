@@ -152,7 +152,7 @@
                         if closer, ok := response.Body.(io.ReadCloser); ok {
                             defer closer.Close()
                         }
-                        {{if eq .ContentType "text/event-stream" -}}
+                        {{if .IsStreamingContentType -}}
                             flusher, ok := w.(http.Flusher)
                             if !ok {
                                 // If w doesn't support flushing, fall back to io.Copy.
@@ -181,7 +181,7 @@
                         {{else -}}
                             _, err := io.Copy(w, response.Body)
                             return err
-                        {{end}}{{/* if eq .ContentType "text/event-stream" */ -}}
+                        {{end}}{{/* if .IsStreamingContentType */ -}}
                     {{end}}{{/* if eq .NameTag "Text" */ -}}
                 {{end}}{{/* if .IsJSON */ -}}
             }

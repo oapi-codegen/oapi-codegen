@@ -73,7 +73,7 @@ func (Server) GetStream(ctx context.Context, _ GetStreamRequestObject) (GetStrea
 			}
 		}
 	}()
-	return GetStream200TexteventStreamResponse{
+	return GetStream200ApplicationjsonlResponse{
 		Body:          r,
 		ContentLength: 0,
 	}, nil

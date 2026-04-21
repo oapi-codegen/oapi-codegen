@@ -1,18 +1,18 @@
 openapi: 3.0.0
 info:
-  title: Simple SSE Service
+  title: Simple JSONL Streaming Service
   version: 1.0.0
 paths:
   /:
     get:
-      summary: Server-Sent Events Stream
-      description: Provides a stream of JSON documents containing a timestamp and sequence number.
+      summary: JSON Lines Stream
+      description: Provides a stream of JSON documents (one per line, application/jsonl) containing a timestamp and sequence number.
       operationId: getStream
       responses:
         200:
-          description: SSE Stream
+          description: JSONL Stream
           content:
-            text/event-stream:
+            application/jsonl:
               schema:
                 type: object
                 properties:
