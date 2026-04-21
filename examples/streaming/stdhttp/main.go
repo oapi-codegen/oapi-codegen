@@ -19,7 +19,7 @@ func main() {
 	defer cancel()
 	err := server.Run(ctx)
 	if err != nil {
-		slog.Error("server run failed", "error:", err)
+		slog.Error("server run failed", "error", err)
 		os.Exit(1)
 	}
 }
