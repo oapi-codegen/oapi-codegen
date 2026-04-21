@@ -74,6 +74,13 @@ func (r {{genResponseTypeName $opid | ucFirst}}) StatusCode() int {
     }
     return 0
 }
+
+{{ if opts.OutputOptions.ClientResponseBytesFunction }}
+// Bytes is a convenience method to retrieve the raw bytes from the HTTP response
+func (r {{genResponseTypeName $opid | ucFirst}}) Bytes() []byte {
+    return r.Body
+}
+{{end}}
 {{end}}
 
 

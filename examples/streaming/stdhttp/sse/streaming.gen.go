@@ -125,10 +125,10 @@ func Handler(si ServerInterface) http.Handler {
 	return HandlerWithOptions(si, StdHTTPServerOptions{})
 }
 
-// ServeMux is an abstraction of http.ServeMux.
+// ServeMux is an abstraction of [http.ServeMux].
 type ServeMux interface {
 	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
-	ServeHTTP(w http.ResponseWriter, r *http.Request)
+	http.Handler
 }
 
 type StdHTTPServerOptions struct {
@@ -171,7 +171,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc("GET "+options.BaseURL+"/", wrapper.GetStream)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/{$}", wrapper.GetStream)
 
 	return m
 }
@@ -189,6 +189,7 @@ type GetStream200TexteventStreamResponse struct {
 }
 
 func (response GetStream200TexteventStreamResponse) VisitGetStreamResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "text/event-stream")
 	if response.ContentLength != 0 {
 		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
@@ -198,33 +199,31 @@ func (response GetStream200TexteventStreamResponse) VisitGetStreamResponse(w htt
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
 	}
-
 	flusher, ok := w.(http.Flusher)
 	if !ok {
-		// If w doesn't support flushing, might as well use io.Copy
+		// If w doesn't support flushing, fall back to io.Copy.
 		_, err := io.Copy(w, response.Body)
 		return err
 	}
-
-	// Use a buffer for efficient copying and flushing
-	buf := make([]byte, 4096) // text/event-stream are usually very small messages
+	// text/event-stream messages are typically small; use a
+	// modest buffer and flush after each chunk so clients see
+	// events immediately instead of waiting on OS buffering.
+	buf := make([]byte, 4096)
 	for {
 		n, err := response.Body.Read(buf)
 		if n > 0 {
-			_, writeErr := w.Write(buf[:n])
-			if writeErr != nil {
+			if _, writeErr := w.Write(buf[:n]); writeErr != nil {
 				return writeErr
 			}
-			flusher.Flush() // Flush after each write
+			flusher.Flush()
 		}
 		if err != nil {
 			if err == io.EOF {
-				return nil // End of file, no error
+				return nil
 			}
 			return err
 		}
 	}
-
 }
 
 // StrictServerInterface represents all server handlers.

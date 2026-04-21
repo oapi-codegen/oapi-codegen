@@ -22,17 +22,45 @@ import (
 
 // Defines values for Bar.
 const (
-	BarBar     Bar = "Bar"
-	BarEmpty   Bar = ""
-	BarFoo     Bar = "Foo"
-	BarFoo1    Bar = " Foo"
-	BarFoo2    Bar = " Foo "
-	BarFoo3    Bar = "_Foo_"
-	BarFooBar  Bar = "Foo Bar"
-	BarFooBar1 Bar = "Foo-Bar"
-	BarN1      Bar = "1"
-	BarN1Foo   Bar = "1Foo"
+	BarBar           Bar = "Bar"
+	BarEmpty         Bar = ""
+	BarFoo           Bar = "Foo"
+	BarFoo1          Bar = " Foo"
+	BarFoo2          Bar = " Foo "
+	BarFooBar        Bar = "Foo Bar"
+	BarFooBar1       Bar = "Foo-Bar"
+	BarN1            Bar = "1"
+	BarN1Foo         Bar = "1Foo"
+	BarUnderscoreFoo Bar = "_Foo_"
 )
+
+// Valid indicates whether the value is a known member of the Bar enum.
+func (e Bar) Valid() bool {
+	switch e {
+	case BarBar:
+		return true
+	case BarEmpty:
+		return true
+	case BarFoo:
+		return true
+	case BarFoo1:
+		return true
+	case BarFoo2:
+		return true
+	case BarFooBar:
+		return true
+	case BarFooBar1:
+		return true
+	case BarN1:
+		return true
+	case BarN1Foo:
+		return true
+	case BarUnderscoreFoo:
+		return true
+	default:
+		return false
+	}
+}
 
 // Bar defines model for Bar.
 type Bar string
@@ -145,7 +173,7 @@ func NewGetFooRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}

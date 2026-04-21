@@ -3,6 +3,7 @@ package codegen
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -31,13 +32,29 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 		return Schema{}, err
 	}
 
+	// Seed allOf[0]'s ref so that if s1's own AllOf contains a back-reference
+	// to itself, the cycle is detected during recursive merging.
+	seenTopLevel := make(map[string]bool)
+	if allOf[0].Ref != "" {
+		seenTopLevel[allOf[0].Ref] = true
+	}
+
 	for i := 1; i < n; i++ {
 		var err error
 		oneOfSchema, err := valueWithPropagatedRef(allOf[i])
 		if err != nil {
 			return Schema{}, err
 		}
-		schema, err = mergeOpenapiSchemas(schema, oneOfSchema, true)
+
+		seenSchemaRef := make(map[string]bool)
+		for k := range seenTopLevel {
+			seenSchemaRef[k] = true
+		}
+		if allOf[i].Ref != "" {
+			seenSchemaRef[allOf[i].Ref] = true
+			seenTopLevel[allOf[i].Ref] = true
+		}
+		schema, err = mergeOpenapiSchemas(schema, oneOfSchema, true, seenSchemaRef)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
@@ -70,11 +87,17 @@ func valueWithPropagatedRef(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
 	return schema, nil
 }
 
-func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
+func mergeAllOf(allOf []*openapi3.SchemaRef, seenSchemaRef map[string]bool) (openapi3.Schema, error) {
 	var schema openapi3.Schema
 	for _, schemaRef := range allOf {
 		var err error
-		schema, err = mergeOpenapiSchemas(schema, *schemaRef.Value, true)
+		if schemaRef.Ref != "" && seenSchemaRef[schemaRef.Ref] {
+			continue
+		}
+		if schemaRef.Ref != "" {
+			seenSchemaRef[schemaRef.Ref] = true
+		}
+		schema, err = mergeOpenapiSchemas(schema, *schemaRef.Value, true, seenSchemaRef)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
@@ -84,17 +107,13 @@ func mergeAllOf(allOf []*openapi3.SchemaRef) (openapi3.Schema, error) {
 
 // mergeOpenapiSchemas merges two openAPI schemas and returns the schema
 // all of whose fields are composed.
-func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, error) {
+func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[string]bool) (openapi3.Schema, error) {
 	var result openapi3.Schema
 
-	result.Extensions = make(map[string]interface{})
-	for k, v := range s1.Extensions {
-		result.Extensions[k] = v
-	}
-	for k, v := range s2.Extensions {
-		// TODO: Check for collisions
-		result.Extensions[k] = v
-	}
+	result.Extensions = make(map[string]any, len(s1.Extensions)+len(s2.Extensions))
+	maps.Copy(result.Extensions, s1.Extensions)
+	// TODO: Check for collisions
+	maps.Copy(result.Extensions, s2.Extensions)
 
 	result.OneOf = append(s1.OneOf, s2.OneOf...)
 
@@ -103,7 +122,7 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 	var err error
 	if s1.AllOf != nil {
 		var merged openapi3.Schema
-		merged, err = mergeAllOf(s1.AllOf)
+		merged, err = mergeAllOf(s1.AllOf, seenSchemaRef)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 1")
 		}
@@ -111,7 +130,7 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 	}
 	if s2.AllOf != nil {
 		var merged openapi3.Schema
-		merged, err = mergeAllOf(s2.AllOf)
+		merged, err = mergeAllOf(s2.AllOf, seenSchemaRef)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 2")
 		}
@@ -195,14 +214,10 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 	result.Required = append(s1.Required, s2.Required...)
 
 	// We merge all properties
-	result.Properties = make(map[string]*openapi3.SchemaRef)
-	for k, v := range s1.Properties {
-		result.Properties[k] = v
-	}
-	for k, v := range s2.Properties {
-		// TODO: detect conflicts
-		result.Properties[k] = v
-	}
+	result.Properties = make(map[string]*openapi3.SchemaRef, len(s1.Properties)+len(s2.Properties))
+	maps.Copy(result.Properties, s1.Properties)
+	// TODO: detect conflicts
+	maps.Copy(result.Properties, s2.Properties)
 
 	if isAdditionalPropertiesExplicitFalse(&s1) || isAdditionalPropertiesExplicitFalse(&s2) {
 		result.WithoutAdditionalProperties()
@@ -225,6 +240,17 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool) (openapi3.Schema, e
 	// Allow discriminators for allOf merges, but disallow for one/anyOfs.
 	if !allOf && (s1.Discriminator != nil || s2.Discriminator != nil) {
 		return openapi3.Schema{}, errors.New("merging two schemas with discriminators is not supported")
+	}
+
+	// For allOf merges, propagate a discriminator if only one schema has it.
+	// Merging two different discriminators is not supported.
+	if s1.Discriminator != nil && s2.Discriminator != nil {
+		return openapi3.Schema{}, errors.New("merging two schemas with discriminators is not supported")
+	}
+	if s1.Discriminator != nil {
+		result.Discriminator = s1.Discriminator
+	} else if s2.Discriminator != nil {
+		result.Discriminator = s2.Discriminator
 	}
 
 	return result, nil

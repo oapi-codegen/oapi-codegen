@@ -90,10 +90,15 @@ type GetPetsResponseObject interface {
 type GetPets200JSONResponse externalRef0.Pet
 
 func (response GetPets200JSONResponse) VisitGetPetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 // StrictServerInterface represents all server handlers.
@@ -188,9 +193,7 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 		res[pathToFile] = rawSpec
 	}
 
-	pathPrefix := path.Dir(pathToFile)
-
-	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(pathPrefix, "parent.api.yaml")) {
+	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(path.Dir(pathToFile), "parent.api.yaml")) {
 		if _, ok := res[rawPath]; ok {
 			// it is not possible to compare functions in golang, so always overwrite the old value
 		}

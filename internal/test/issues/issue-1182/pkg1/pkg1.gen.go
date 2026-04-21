@@ -129,7 +129,7 @@ func NewTestGetRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -386,9 +386,7 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 		res[pathToFile] = rawSpec
 	}
 
-	pathPrefix := path.Dir(pathToFile)
-
-	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(pathPrefix, "pkg2.yaml")) {
+	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(path.Dir(pathToFile), "pkg2.yaml")) {
 		if _, ok := res[rawPath]; ok {
 			// it is not possible to compare functions in golang, so always overwrite the old value
 		}

@@ -10,7 +10,7 @@ func TestLoader(t *testing.T) {
 
 	paths := []string{
 		"../../examples/petstore-expanded/petstore-expanded.yaml",
-		"https://petstore3.swagger.io/api/v3/openapi.json",
+		"https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.4.1/examples/petstore-expanded/petstore-expanded.yaml",
 	}
 
 	for _, v := range paths {

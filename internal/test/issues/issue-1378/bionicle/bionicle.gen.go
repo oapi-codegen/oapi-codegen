@@ -50,11 +50,12 @@ type MiddlewareFunc func(http.Handler) http.Handler
 func (siw *ServerInterfaceWrapper) GetBionicleName(w http.ResponseWriter, r *http.Request) {
 
 	var err error
+	_ = err
 
 	// ------------- Path parameter "name" -------------
 	var name BionicleName
 
-	err = runtime.BindStyledParameterWithOptions("simple", "name", mux.Vars(r)["name"], &name, runtime.BindStyledParameterOptions{Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "name", mux.Vars(r)["name"], &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
 		return
@@ -184,7 +185,7 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/bionicle/{name}", wrapper.GetBionicleName).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/bionicle/{name}", wrapper.GetBionicleName).Methods(http.MethodGet)
 
 	return r
 }
@@ -200,10 +201,15 @@ type GetBionicleNameResponseObject interface {
 type GetBionicleName200JSONResponse Bionicle
 
 func (response GetBionicleName200JSONResponse) VisitGetBionicleNameResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type GetBionicleName400JSONResponse struct {
@@ -211,10 +217,15 @@ type GetBionicleName400JSONResponse struct {
 }
 
 func (response GetBionicleName400JSONResponse) VisitGetBionicleNameResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.union); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
-
-	return json.NewEncoder(w).Encode(response.union)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 // StrictServerInterface represents all server handlers.
@@ -327,9 +338,7 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 		res[pathToFile] = rawSpec
 	}
 
-	pathPrefix := path.Dir(pathToFile)
-
-	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(pathPrefix, "common.yaml")) {
+	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(path.Dir(pathToFile), "common.yaml")) {
 		if _, ok := res[rawPath]; ok {
 			// it is not possible to compare functions in golang, so always overwrite the old value
 		}

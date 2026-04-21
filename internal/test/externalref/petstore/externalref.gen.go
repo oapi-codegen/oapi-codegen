@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	Api_keyScopes       = "api_key.Scopes"
-	Petstore_authScopes = "petstore_auth.Scopes"
+	Api_keyScopes       apiKeyContextKey       = "api_key.Scopes"
+	Petstore_authScopes petstoreAuthContextKey = "petstore_auth.Scopes"
 )
 
 // Defines values for OrderStatus.
@@ -29,6 +29,20 @@ const (
 	Placed    OrderStatus = "placed"
 )
 
+// Valid indicates whether the value is a known member of the OrderStatus enum.
+func (e OrderStatus) Valid() bool {
+	switch e {
+	case Approved:
+		return true
+	case Delivered:
+		return true
+	case Placed:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for PetStatus.
 const (
 	PetStatusAvailable PetStatus = "available"
@@ -36,12 +50,40 @@ const (
 	PetStatusSold      PetStatus = "sold"
 )
 
+// Valid indicates whether the value is a known member of the PetStatus enum.
+func (e PetStatus) Valid() bool {
+	switch e {
+	case PetStatusAvailable:
+		return true
+	case PetStatusPending:
+		return true
+	case PetStatusSold:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for FindPetsByStatusParamsStatus.
 const (
 	FindPetsByStatusParamsStatusAvailable FindPetsByStatusParamsStatus = "available"
 	FindPetsByStatusParamsStatusPending   FindPetsByStatusParamsStatus = "pending"
 	FindPetsByStatusParamsStatusSold      FindPetsByStatusParamsStatus = "sold"
 )
+
+// Valid indicates whether the value is a known member of the FindPetsByStatusParamsStatus enum.
+func (e FindPetsByStatusParamsStatus) Valid() bool {
+	switch e {
+	case FindPetsByStatusParamsStatusAvailable:
+		return true
+	case FindPetsByStatusParamsStatusPending:
+		return true
+	case FindPetsByStatusParamsStatusSold:
+		return true
+	default:
+		return false
+	}
+}
 
 // Address defines model for Address.
 type Address struct {
@@ -123,6 +165,12 @@ type User struct {
 
 // UserArray defines model for UserArray.
 type UserArray = []User
+
+// apiKeyContextKey is the context key for api_key security scheme
+type apiKeyContextKey string
+
+// petstoreAuthContextKey is the context key for petstore_auth security scheme
+type petstoreAuthContextKey string
 
 // FindPetsByStatusParams defines parameters for FindPetsByStatus.
 type FindPetsByStatusParams struct {
@@ -298,9 +346,7 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 		res[pathToFile] = rawSpec
 	}
 
-	pathPrefix := path.Dir(pathToFile)
-
-	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(pathPrefix, "../packageB/spec.yaml")) {
+	for rawPath, rawFunc := range externalRef0.PathToRawSpec(path.Join(path.Dir(pathToFile), "../packageB/spec.yaml")) {
 		if _, ok := res[rawPath]; ok {
 			// it is not possible to compare functions in golang, so always overwrite the old value
 		}
