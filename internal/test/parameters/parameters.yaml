@@ -207,6 +207,81 @@ paths:
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"
+  /simpleExplodePrimitive/{param}:
+    get:
+      operationId: getSimpleExplodePrimitive
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: simple
+          explode: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /labelPrimitive/{.param}:
+    get:
+      operationId: getLabelPrimitive
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: label
+          explode: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /labelExplodePrimitive/{.param*}:
+    get:
+      operationId: getLabelExplodePrimitive
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: label
+          explode: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /matrixPrimitive/{;id}:
+    get:
+      operationId: getMatrixPrimitive
+      parameters:
+        - name: id
+          in: path
+          required: true
+          style: matrix
+          explode: false
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /matrixExplodePrimitive/{;id*}:
+    get:
+      operationId: getMatrixExplodePrimitive
+      parameters:
+        - name: id
+          in: path
+          required: true
+          style: matrix
+          explode: true
+          schema:
+            type: integer
+            format: int32
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
   /contentObject/{param}:
     get:
       operationId: getContentObject
@@ -325,6 +400,35 @@ paths:
           required: false
           schema:
             type: string
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+  /queryDelimited:
+    get:
+      operationId: getQueryDelimited
+      parameters:
+        - name: sa
+          description: space delimited array
+          in: query
+          required: false
+          style: spaceDelimited
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
+        - name: pa
+          description: pipe delimited array
+          in: query
+          required: false
+          style: pipeDelimited
+          explode: false
+          schema:
+            type: array
+            items:
+              type: integer
+              format: int32
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"

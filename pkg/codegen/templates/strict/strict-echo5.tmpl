@@ -12,6 +12,7 @@ type strictHandler struct {
 
 {{range .}}
     {{$opid := .OperationId}}
+    {{if not .IsAlias}}
     // {{$opid}} operation middleware
     func (sh *strictHandler) {{.OperationId}}(ctx *echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error {
         var request {{$opid | ucFirst}}RequestObject
@@ -38,7 +39,7 @@ type strictHandler struct {
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else if eq .NameTag "Formdata" -}}
-                    if form, err := ctx.FormParams(); err == nil {
+                    if form, err := ctx.FormValues(); err == nil {
                         var body {{$opid}}{{.NameTag}}RequestBody
                         if err := runtime.BindForm(&body, form, nil, nil); err != nil {
                             return err
@@ -94,4 +95,5 @@ type strictHandler struct {
         }
         return nil
     }
+    {{end}}
 {{end}}

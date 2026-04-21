@@ -148,7 +148,15 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
         }
         bodyReader = strings.NewReader(bodyStr.Encode())
     {{else if eq .NameTag "Text" -}}
-        bodyReader = strings.NewReader(string(body))
+        if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+            bodyReader = strings.NewReader(stringer.String())
+        } else {
+        {{if .Schema.IsPrimitive -}}
+            bodyReader = strings.NewReader(fmt.Sprint(body))
+        {{else -}}
+            return nil, fmt.Errorf("text/plain is not supported for complex types, define a String() method on {{.Schema.TypeDecl}} to marshal it as text")
+        {{end -}}
+        }
     {{end -}}
     return New{{$opid}}RequestWithBody(server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, "{{.ContentType}}", bodyReader)
 }
@@ -195,7 +203,13 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
 
 {{if .QueryParams}}
     if params != nil {
+        // queryValues collects non-styled parameters (passthrough, JSON)
+        // that are safe to round-trip through url.Values.Encode().
         queryValues := queryURL.Query()
+        // rawQueryFragments collects pre-encoded query fragments from
+        // styled parameters, preserving literal commas as delimiters
+        // per the OpenAPI spec (e.g. "color=blue,black,brown").
+        var rawQueryFragments []string
             {{range $paramIdx, $param := .QueryParams}}
             {{if .RequiresNilCheck}} if params.{{.GoName}} != nil { {{end}}
             {{if .IsPassThrough}}
@@ -212,22 +226,21 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
             {{if .IsStyled}}
             if queryFrag, err := runtime.StyleParamWithOptions("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if and .RequiresNilCheck .HasOptionalPointer}}*{{end}}params.{{.GoName}}, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"}); err != nil {
                 return nil, err
-            } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-               return nil, err
             } else {
-               for k, v := range parsed {
-                   for _, v2 := range v {
-                       queryValues.Add(k, v2)
-                   }
-               }
+                for _, qp := range strings.Split(queryFrag, "&") {
+                    rawQueryFragments = append(rawQueryFragments, qp)
+                }
             }
             {{end}}
             {{if .RequiresNilCheck}}}{{end}}
         {{end}}
-        queryURL.RawQuery = queryValues.Encode()
+        if encoded := queryValues.Encode(); encoded != "" {
+            rawQueryFragments = append(rawQueryFragments, encoded)
+        }
+        queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
     }
 {{end}}{{/* if .QueryParams */}}
-    req, err := http.NewRequest("{{.Method}}", queryURL.String(), {{if .HasBody}}body{{else}}nil{{end}})
+    req, err := http.NewRequest({{.Method | httpMethodConstant}}, queryURL.String(), {{if .HasBody}}body{{else}}nil{{end}})
     if err != nil {
         return nil, err
     }

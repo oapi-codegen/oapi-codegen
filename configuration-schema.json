@@ -115,6 +115,10 @@
         "preserve-original-operation-id-casing-in-embedded-spec": {
           "type": "boolean",
           "description": "When `oapi-codegen` parses the original OpenAPI specification, it will apply the configured `output-options.name-normalizer` to each operation's `operationId` before that is used to generate code from.\nHowever, this is also applied to the copy of the `operationId`s in the `embedded-spec` generation, which means that the embedded OpenAPI specification is then out-of-sync with the input specificiation.\nTo ensure that the `operationId` in the embedded spec is preserved as-is from the input specification, set this. NOTE that this will not impact generated code.\nNOTE that if you're using `include-operation-ids` or `exclude-operation-ids` you may want to ensure that the `operationId`s used are correct."
+        },
+        "headers-implicitly-required": {
+          "type": "boolean",
+          "description": "Treats all response headers as required, ignoring the `required` property from the header definition. Prior to v2.6.0, oapi-codegen generated all response headers as direct values (implicitly required). The OpenAPI specification defaults headers to optional (required: false), so the corrected behavior generates optional headers as pointers. Set this to true to restore the old behavior where all headers are treated as required.\nPlease see https://github.com/oapi-codegen/oapi-codegen/issues/2267"
         }
       }
     },
@@ -181,13 +185,16 @@
           "type": "string",
           "description": "Override the default generated client type with the value"
         },
-        "initialism-overrides": {
-          "type": "boolean",
-          "description": "Whether to use the initialism overrides"
-        },
         "additional-initialisms": {
           "type": "array",
           "description": "AdditionalInitialisms defines additional initialisms to be used by the code generator. Has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`",
+          "items": {
+            "type": "string"
+          }
+        },
+        "streaming-content-types": {
+          "type": "array",
+          "description": "Additional regex patterns matched against response Content-Type to decide when the strict server should generate a flush-per-chunk streaming response. Merged with the defaults (text/event-stream, application/jsonl, application/x-ndjson). Invalid regexes fail configuration validation.",
           "items": {
             "type": "string"
           }

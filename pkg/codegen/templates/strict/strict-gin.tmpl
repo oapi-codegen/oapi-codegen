@@ -57,6 +57,7 @@ type strictHandler struct {
 
 {{range .}}
     {{$opid := .OperationId}}
+    {{if not .IsAlias}}
     // {{$opid}} operation middleware
     func (sh *strictHandler) {{.OperationId}}(ctx *gin.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) {
         var request {{$opid | ucFirst}}RequestObject
@@ -160,4 +161,5 @@ type strictHandler struct {
             sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
         }
     }
+    {{end}}
 {{end}}

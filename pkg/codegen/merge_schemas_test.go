@@ -17,7 +17,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Discriminator: disc}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, disc, result.Discriminator)
 	})
@@ -26,7 +26,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Discriminator: disc}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, disc, result.Discriminator)
 	})
@@ -36,7 +36,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Discriminator: disc}
 		s2 := openapi3.Schema{Discriminator: disc2}
 
-		_, err := mergeOpenapiSchemas(s1, s2, true)
+		_, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "discriminators")
 	})
@@ -45,7 +45,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Nil(t, result.Discriminator)
 	})
@@ -54,7 +54,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Discriminator: disc}
 		s2 := openapi3.Schema{}
 
-		_, err := mergeOpenapiSchemas(s1, s2, false)
+		_, err := mergeOpenapiSchemas(s1, s2, false, make(map[string]bool))
 		require.Error(t, err)
 	})
 
@@ -62,7 +62,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Discriminator: disc}
 
-		_, err := mergeOpenapiSchemas(s1, s2, false)
+		_, err := mergeOpenapiSchemas(s1, s2, false, make(map[string]bool))
 		require.Error(t, err)
 	})
 }

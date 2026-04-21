@@ -188,7 +188,7 @@ func NewListThingsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -226,7 +226,7 @@ func NewAddThingRequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -543,10 +543,10 @@ func Handler(si ServerInterface) http.Handler {
 	return HandlerWithOptions(si, StdHTTPServerOptions{})
 }
 
-// ServeMux is an abstraction of http.ServeMux.
+// ServeMux is an abstraction of [http.ServeMux].
 type ServeMux interface {
 	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
-	ServeHTTP(w http.ResponseWriter, r *http.Request)
+	http.Handler
 }
 
 type StdHTTPServerOptions struct {
@@ -589,8 +589,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc("GET "+options.BaseURL+"/things", wrapper.ListThings)
-	m.HandleFunc("POST "+options.BaseURL+"/things", wrapper.AddThing)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/things", wrapper.ListThings)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/things", wrapper.AddThing)
 
 	return m
 }
