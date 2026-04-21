@@ -594,6 +594,19 @@ func (r ResponseContentDefinition) IsJSON() bool {
 	return util.IsMediaTypeJson(r.ContentType)
 }
 
+// IsStreamingContentType reports whether this response's media type matches
+// any configured streaming-content-types pattern (defaults merged with
+// OutputOptions.StreamingContentTypes). Templates use this to emit a
+// flush-per-chunk streaming path instead of a buffered io.Copy.
+func (r ResponseContentDefinition) IsStreamingContentType() bool {
+	for _, re := range globalState.streamingContentTypeRegexes {
+		if re.MatchString(r.ContentType) {
+			return true
+		}
+	}
+	return false
+}
+
 type ResponseHeaderDefinition struct {
 	Name     string
 	GoName   string

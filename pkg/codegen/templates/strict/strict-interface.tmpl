@@ -152,8 +152,36 @@
                         if closer, ok := response.Body.(io.ReadCloser); ok {
                             defer closer.Close()
                         }
-                        _, err := io.Copy(w, response.Body)
-                        return err
+                        {{if .IsStreamingContentType -}}
+                            flusher, ok := w.(http.Flusher)
+                            if !ok {
+                                // If w doesn't support flushing, fall back to io.Copy.
+                                _, err := io.Copy(w, response.Body)
+                                return err
+                            }
+                            // text/event-stream messages are typically small; use a
+                            // modest buffer and flush after each chunk so clients see
+                            // events immediately instead of waiting on OS buffering.
+                            buf := make([]byte, 4096)
+                            for {
+                                n, err := response.Body.Read(buf)
+                                if n > 0 {
+                                    if _, writeErr := w.Write(buf[:n]); writeErr != nil {
+                                        return writeErr
+                                    }
+                                    flusher.Flush()
+                                }
+                                if err != nil {
+                                    if err == io.EOF {
+                                        return nil
+                                    }
+                                    return err
+                                }
+                            }
+                        {{else -}}
+                            _, err := io.Copy(w, response.Body)
+                            return err
+                        {{end}}{{/* if .IsStreamingContentType */ -}}
                     {{end}}{{/* if eq .NameTag "Text" */ -}}
                 {{end}}{{/* if .IsJSON */ -}}
             }

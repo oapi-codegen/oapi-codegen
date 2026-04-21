@@ -4,7 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 )
+
+// defaultStreamingContentTypes are the regex patterns matched against
+// response Content-Type to decide when the strict-server should emit a
+// flush-per-chunk streaming path. User-supplied patterns are merged on top.
+var defaultStreamingContentTypes = []string{
+	"text/event-stream",
+	"application/jsonl",
+	"application/x-ndjson",
+}
 
 type AdditionalImport struct {
 	Alias   string `yaml:"alias,omitempty"`
@@ -329,6 +339,12 @@ type OutputOptions struct {
 	// AdditionalInitialisms is a list of additional initialisms to use when generating names.
 	// NOTE that this has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`
 	AdditionalInitialisms []string `yaml:"additional-initialisms,omitempty"`
+	// StreamingContentTypes are regex patterns matched against response
+	// Content-Type to decide when to generate a flush-per-chunk streaming
+	// response path. User-provided patterns are merged with the defaults
+	// (text/event-stream, application/jsonl, application/x-ndjson); invalid
+	// regexes fail Validate().
+	StreamingContentTypes []string `yaml:"streaming-content-types,omitempty"`
 	// Whether to generate nullable type for nullable fields
 	NullableType bool `yaml:"nullable-type,omitempty"`
 
@@ -384,7 +400,31 @@ func (oo OutputOptions) Validate() map[string]string {
 		}
 	}
 
+	if _, err := compileStreamingContentTypes(oo.StreamingContentTypes); err != nil {
+		return map[string]string{
+			"streaming-content-types": err.Error(),
+		}
+	}
+
 	return nil
+}
+
+// compileStreamingContentTypes returns the merged default + user-provided
+// patterns compiled into regexes. The first compile error is returned
+// including the offending pattern.
+func compileStreamingContentTypes(user []string) ([]*regexp.Regexp, error) {
+	all := make([]string, 0, len(defaultStreamingContentTypes)+len(user))
+	all = append(all, defaultStreamingContentTypes...)
+	all = append(all, user...)
+	out := make([]*regexp.Regexp, 0, len(all))
+	for _, p := range all {
+		re, err := regexp.Compile(p)
+		if err != nil {
+			return nil, fmt.Errorf("invalid streaming-content-type pattern %q: %w", p, err)
+		}
+		out = append(out, re)
+	}
+	return out, nil
 }
 
 type OutputOptionsOverlay struct {
