@@ -1,0 +1,27 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Issue 2329
+paths:
+  /things:
+    get:
+      operationId: listThings
+      parameters:
+        - name: tags
+          in: query
+          style: deepObject
+          x-go-type-skip-optional-pointer: true
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+        - name: labels
+          in: query
+          x-go-type-skip-optional-pointer: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: OK
