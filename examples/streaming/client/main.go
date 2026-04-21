@@ -34,7 +34,7 @@ func main() {
 		slog.Error("GetStream failed", "error", err)
 		os.Exit(1)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		slog.Error("unexpected status", "status", resp.Status)

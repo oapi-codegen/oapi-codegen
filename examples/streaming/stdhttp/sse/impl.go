@@ -53,7 +53,7 @@ type SObject struct {
 func (Server) GetStream(ctx context.Context, _ GetStreamRequestObject) (GetStreamResponseObject, error) {
 	r, w := io.Pipe() // creates a pipe so that we can write to the response body asynchronously
 	go func() {
-		defer w.Close()
+		defer func() { _ = w.Close() }()
 		seq := 1
 		ticker := time.NewTicker(time.Second)
 		for {
