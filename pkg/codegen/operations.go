@@ -52,15 +52,21 @@ func (pd ParameterDefinition) RequiresNilCheck() bool {
 	return pd.ZeroValueIsNil() || pd.HasOptionalPointer()
 }
 
-// ZeroValueIsNil is a helper function to determine if the given Go type used for this property
-// Will return true if the OpenAPI `type` is:
-// - `array`
+// ZeroValueIsNil is a helper function to determine if the given Go type used
+// for this property has `nil` as its Go zero value. Slices (OpenAPI `array`)
+// and maps (OpenAPI `object` with only `additionalProperties`, rendered as
+// `map[K]V`) both satisfy this — templates use it to decide whether to emit a
+// nil-check before reading the field.
 func (pd ParameterDefinition) ZeroValueIsNil() bool {
 	if pd.Schema.OAPISchema == nil {
 		return false
 	}
 
-	return pd.Schema.OAPISchema.Type.Is("array")
+	if pd.Schema.OAPISchema.Type.Is("array") {
+		return true
+	}
+
+	return strings.HasPrefix(pd.Schema.GoType, "map[")
 }
 
 // JsonTag generates the JSON annotation to map GoType to json type name. If Parameter
@@ -256,6 +262,17 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 			Required:  param.Required,
 			Spec:      param,
 			Schema:    goType,
+		}
+
+		// A parameter-level `x-go-type-skip-optional-pointer` overrides the
+		// schema-level setting. `GenStructFromSchema` applies the same override
+		// when rendering the params struct; without mirroring it here, the
+		// client/server templates disagree with the struct definition and emit
+		// a dereference (`*params.Field`) on a field declared without a pointer.
+		if extension, ok := param.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+			if skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension); err == nil {
+				pd.Schema.SkipOptionalPointer = skipOptionalPointer
+			}
 		}
 
 		// If this is a reference to a predefined type, simply use the reference
