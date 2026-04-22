@@ -4,6 +4,7 @@
 package issue1277
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -124,7 +125,7 @@ func NewTestRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -409,11 +410,22 @@ type TestResponseObject interface {
 
 type Test200JSONResponse []Test200JSONResponse_Item
 
+type Test200JSONResponse_Item struct {
+	Field1               *string                `json:"field1,omitempty"`
+	Field2               *string                `json:"field2,omitempty"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
 func (response Test200JSONResponse) VisitTestResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 // StrictServerInterface represents all server handlers.

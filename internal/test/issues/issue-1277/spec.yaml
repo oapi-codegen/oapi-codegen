@@ -1,10 +1,14 @@
 openapi: "3.0.1"
+info:
+  title: a
+  version: 1.0.0
 paths:
   /test:
     get:
       operationId: test
       responses:
         "200":
+          description: desc
           content:
             application/json:
               schema:
