@@ -192,11 +192,21 @@ paths:
           description: OK
           headers:
             header1:
+              required: true
               schema:
                 type: string
             header2:
+              required: true
               schema:
                 type: integer
+            optional-header:
+              required: false
+              schema:
+                type: string
+            nullable-header:
+              schema:
+                type: string
+                nullable: true
           content:
             application/json:
               schema:
@@ -247,6 +257,48 @@ paths:
           $ref: "#/components/responses/badrequest"
         default:
           description: Unknown error
+  /required-json-body:
+    post:
+      operationId: RequiredJSONBody
+      description: Request body is required, so missing body should always error.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/example"
+      responses:
+        200:
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/example"
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
+  /required-text-body:
+    post:
+      operationId: RequiredTextBody
+      description: Request body is required, so missing body should always error.
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+      responses:
+        200:
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
   /reserved-go-keyword-parameters/{type}:
     get:
         operationId: ReservedGoKeywordParameters
@@ -278,9 +330,11 @@ paths:
           description: OK
           headers:
             header1:
+              required: true
               schema:
                 type: string
             header2:
+              required: true
               schema:
                 type: integer
           content:
@@ -304,9 +358,11 @@ components:
       description: OK
       headers:
         header1:
+          required: true
           schema:
             type: string
         header2:
+          required: true
           schema:
             type: integer
       content:

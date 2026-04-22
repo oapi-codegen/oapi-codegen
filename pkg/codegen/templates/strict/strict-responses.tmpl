@@ -4,7 +4,7 @@
     {{if $hasHeaders -}}
         type {{$name}}ResponseHeaders struct {
             {{range .Headers -}}
-                {{.GoName}} {{.Schema.TypeDecl}}
+                {{.GoName}} {{.GoTypeDef}}
             {{end -}}
         }
     {{end -}}

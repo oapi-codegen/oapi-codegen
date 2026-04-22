@@ -1,0 +1,46 @@
+openapi: "3.0.3"
+info:
+  title: test
+  version: 1.0.0
+paths:
+  /v1/endpoint:
+    get:
+      operationId: GetEndpoint
+      parameters:
+        - name: env_param_level
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - dev
+              - live
+          x-oapi-codegen-extra-tags:
+            validate: "required,oneof=dev live"
+        - name: env_schema_level
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - dev
+              - live
+            x-oapi-codegen-extra-tags:
+              validate: "required,oneof=dev live"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            x-oapi-codegen-extra-tags:
+              validate: "min=0,max=100"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
