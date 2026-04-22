@@ -1191,6 +1191,8 @@ type UnionExample200JSONResponse struct {
 	Headers UnionExample200ResponseHeaders
 }
 
+type UnionExample200JSONResponse0 = string
+
 func (response UnionExample200JSONResponse) VisitUnionExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
