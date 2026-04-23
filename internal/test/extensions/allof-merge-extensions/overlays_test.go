@@ -1,4 +1,4 @@
-package anyofallofoneof
+package allofmergeextensions
 
 import "testing"
 

@@ -1,4 +1,4 @@
-package anyofallofoneof
+package allofmergeextensions
 
 // OverlayClient defines model for OverlayClient.
 type OverlayClient struct {

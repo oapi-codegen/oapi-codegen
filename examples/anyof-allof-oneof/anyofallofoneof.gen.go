@@ -10,7 +10,9 @@ import (
 )
 
 // Client defines model for Client.
-type Client = OverlayClient
+type Client struct {
+	Name string `json:"name"`
+}
 
 // ClientAndMaybeIdentity defines model for ClientAndMaybeIdentity.
 type ClientAndMaybeIdentity struct {
@@ -23,7 +25,10 @@ type ClientOrIdentity struct {
 }
 
 // ClientWithId defines model for ClientWithId.
-type ClientWithId = OverlayClient
+type ClientWithId struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+}
 
 // Identity defines model for Identity.
 type Identity struct {

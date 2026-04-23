@@ -1,0 +1,21 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Regression test for allOf + x-go-type interaction (issue #2335)
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    ClientWithId:
+      allOf:
+        - $ref: '#/components/schemas/Client'
+        - properties:
+            id:
+              type: integer
+          required:
+            - id
