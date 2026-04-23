@@ -95,9 +95,18 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 		// (user-defined x-* metadata, etc.) are preserved — we only
 		// have concrete evidence that the identity-bound ones cause
 		// incorrect aliasing across composition.
-		delete(schema.Extensions, extPropGoType)
-		delete(schema.Extensions, extGoTypeName)
-		delete(schema.Extensions, extPropGoImport)
+		//
+		// Clone before mutating: the current merge path always
+		// reallocates schema.Extensions in mergeOpenapiSchemas before
+		// we reach here, so the delete is safe today — but the
+		// defensive copy keeps this correct if that invariant changes
+		// (e.g. an allocation-skipping optimization). Cost is a small
+		// map copy on a single code path.
+		ext := maps.Clone(schema.Extensions)
+		delete(ext, extPropGoType)
+		delete(ext, extGoTypeName)
+		delete(ext, extPropGoImport)
+		schema.Extensions = ext
 	}
 
 	return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path)
