@@ -253,6 +253,14 @@ func (r GetClientResponse) Bytes() []byte {
 	return r.Body
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetClientResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type UpdateClientResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -280,6 +288,14 @@ func (r UpdateClientResponse) StatusCode() int {
 // Bytes is a convenience method to retrieve the raw bytes from the HTTP response
 func (r UpdateClientResponse) Bytes() []byte {
 	return r.Body
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateClientResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 // GetClientWithResponse request returning *GetClientResponse
