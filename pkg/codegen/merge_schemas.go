@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"reflect"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -29,21 +30,28 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 
 	// Distinguish two uses of allOf:
 	//
-	//   1. Decorator idiom — at least one member is "extension-only" (carries
-	//      no structural content). This is a workaround for OpenAPI 3.0's
-	//      $ref-sibling restriction: users wrap a $ref in allOf to attach
-	//      extensions like x-go-type-skip-optional-pointer (see issue #1957).
-	//      Here extensions are meant to flow through to the result.
+	//   1. Decorator idiom — at least one INLINE member (Ref == "") is
+	//      "extension-only" (carries no structural content). This is a
+	//      workaround for OpenAPI 3.0's $ref-sibling restriction: users
+	//      wrap a $ref in allOf to attach extensions like
+	//      x-go-type-skip-optional-pointer (see issue #1957). Here
+	//      extensions are meant to flow through to the result.
 	//
-	//   2. Real composition — every member contributes structural content
-	//      (Type, Properties, Required, etc.). The result is a NEW distinct
-	//      type, and extensions like x-go-type on a source schema do NOT
-	//      transfer (see issue #2335: Client has x-go-type=OverlayClient, but
-	//      allOf[Client, {properties:{id}}] is ClientWithId — a different
-	//      shape, not OverlayClient).
+	//   2. Real composition — every member either contributes structural
+	//      content or is a $ref contributing the referenced schema. The
+	//      result is a NEW distinct type, and extensions like x-go-type on
+	//      a source schema do NOT transfer (see issue #2335: Client has
+	//      x-go-type=OverlayClient, but allOf[Client, {properties:{id}}]
+	//      is ClientWithId — a different shape, not OverlayClient).
+	//
+	// A $ref member is excluded from the decorator check because it is by
+	// construction delivering the referenced schema, not "decorating"
+	// siblings — even if the referenced schema happens to carry only
+	// extensions, that's a property of the target, not an intent on this
+	// composition.
 	decoratorIdiom := false
 	for _, m := range allOf {
-		if isExtensionOnlySchema(m.Value) {
+		if m.Ref == "" && isExtensionOnlySchema(m.Value) {
 			decoratorIdiom = true
 			break
 		}
@@ -83,33 +91,53 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	}
 
 	if !decoratorIdiom {
-		schema.Extensions = nil
+		// Drop only the type-identity directives. Other extensions
+		// (user-defined x-* metadata, etc.) are preserved — we only
+		// have concrete evidence that the identity-bound ones cause
+		// incorrect aliasing across composition.
+		delete(schema.Extensions, extPropGoType)
+		delete(schema.Extensions, extGoTypeName)
+		delete(schema.Extensions, extPropGoImport)
 	}
 
 	return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path)
 }
 
 // isExtensionOnlySchema reports whether a schema carries only extensions,
-// with no structural content. Used to detect the "$ref + sibling extension"
-// idiom: allOf wrappers whose purpose is attaching extensions to a $ref
-// (since OpenAPI 3.0 disallows sibling keys next to $ref).
+// with no structural or constraint-bearing content. Used to detect the
+// "$ref + sibling extension" idiom: allOf wrappers whose purpose is
+// attaching extensions to a $ref (since OpenAPI 3.0 disallows sibling
+// keys next to $ref).
+//
+// Implementation: zero out every field that doesn't affect the generated
+// Go type, then compare to the zero Schema. Anything left over — a Type,
+// Properties, Pattern, MinLength, etc. — disqualifies the schema from
+// being treated as a pure decorator. This formulation defaults to safe
+// behavior if kin-openapi gains new structural fields: they'd be non-zero
+// by default and correctly disqualify.
 func isExtensionOnlySchema(s *openapi3.Schema) bool {
-	if s == nil {
+	if s == nil || len(s.Extensions) == 0 {
 		return false
 	}
-	return len(s.Extensions) > 0 &&
-		s.Type.Slice() == nil &&
-		len(s.Properties) == 0 &&
-		len(s.Required) == 0 &&
-		len(s.AllOf) == 0 &&
-		len(s.AnyOf) == 0 &&
-		len(s.OneOf) == 0 &&
-		len(s.Enum) == 0 &&
-		s.Items == nil &&
-		s.AdditionalProperties.Has == nil &&
-		s.AdditionalProperties.Schema == nil &&
-		s.Discriminator == nil &&
-		s.Format == ""
+	tmp := *s
+	tmp.Extensions = nil
+	// Source-tracking metadata from kin-openapi; always non-nil for
+	// schemas parsed from a file.
+	tmp.Origin = nil
+	// Purely documentary / metadata fields. These don't affect the
+	// generated Go type, so a schema carrying only these plus extensions
+	// still behaves as a decorator.
+	tmp.Title = ""
+	tmp.Description = ""
+	tmp.Default = nil
+	tmp.Example = nil
+	tmp.ExternalDocs = nil
+	tmp.Deprecated = false
+	tmp.ReadOnly = false
+	tmp.WriteOnly = false
+	tmp.AllowEmptyValue = false
+	tmp.XML = nil
+	return reflect.DeepEqual(tmp, openapi3.Schema{})
 }
 
 // valueWithPropagatedRef returns a copy of ref schema with its Properties refs

@@ -19,3 +19,25 @@ components:
               type: integer
           required:
             - id
+
+    # Second scenario: only the BASE schema receives an x-go-type overlay;
+    # the derived allOf schema has no override of its own. It must still
+    # be emitted as a distinct struct (with both Name and Extra), not
+    # aliased to the base's overlay target. Regression test for the case
+    # where the codegen used to leak the base's x-go-type up through the
+    # allOf merge, silently dropping the derived schema's extra fields.
+    BaseOnly:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    DerivedNoOverride:
+      allOf:
+        - $ref: '#/components/schemas/BaseOnly'
+        - properties:
+            extra:
+              type: string
+          required:
+            - extra

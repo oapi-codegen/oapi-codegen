@@ -9,3 +9,6 @@ actions:
   - target: $.components.schemas.ClientWithId
     update:
       x-go-type: OverlayClientWithId
+  - target: $.components.schemas.BaseOnly
+    update:
+      x-go-type: OverlayBaseOnly
