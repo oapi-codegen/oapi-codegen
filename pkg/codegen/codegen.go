@@ -1045,7 +1045,10 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 
 	// Now see if enums conflict with any non-enum typenames
 
-	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{EnumDefinitions: enums})
+	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{
+		EnumDefinitions:  enums,
+		SkipEnumValidate: globalState.options.OutputOptions.SkipEnumValidate,
+	})
 }
 
 // GenerateImports generates our import statements and package definition.
