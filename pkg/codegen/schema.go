@@ -200,6 +200,9 @@ type Constants struct {
 	SecuritySchemeProviderNames []string
 	// EnumDefinitions holds type and value information for all enums
 	EnumDefinitions []EnumDefinition
+	// SkipEnumValidate suppresses generation of the `Valid()` method on
+	// enum types. Mirrors OutputOptions.SkipEnumValidate.
+	SkipEnumValidate bool
 }
 
 // TypeDefinition describes a Go type definition in generated code.

@@ -135,6 +135,10 @@
           "type": "boolean",
           "description": "Whether to skip pruning unused components on the generated code"
         },
+        "skip-enum-validate": {
+          "type": "boolean",
+          "description": "Whether to skip generation of the Valid() method on enum types"
+        },
         "include-tags": {
           "type": "array",
           "description": "Only include operations that have one of these tags. Ignored when empty.",

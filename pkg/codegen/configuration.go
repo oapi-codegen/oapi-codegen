@@ -319,6 +319,12 @@ type OutputOptions struct {
 	SkipFmt bool `yaml:"skip-fmt,omitempty"`
 	// Whether to skip pruning unused components on the generated code
 	SkipPrune bool `yaml:"skip-prune,omitempty"`
+	// SkipEnumValidate disables the generation of the `Valid()` method on
+	// enum types. By default each generated enum type includes a `Valid()
+	// bool` method which returns true when the value matches one of the
+	// defined constants; set this to true to suppress that method when it
+	// conflicts with user-defined methods of the same name.
+	SkipEnumValidate bool `yaml:"skip-enum-validate,omitempty"`
 	// Only include operations that have one of these tags. Ignored when empty.
 	IncludeTags []string `yaml:"include-tags,omitempty"`
 	// Exclude operations that have one of these tags. Ignored when empty.
