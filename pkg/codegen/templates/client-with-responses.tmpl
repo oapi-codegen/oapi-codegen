@@ -82,7 +82,7 @@ func (r {{genResponseTypeName $opid | ucFirst}}) Bytes() []byte {
 }
 {{end}}
 
-{{ if opts.OutputOptions.ClientResponseContentTypeFunction }}
+{{ if not opts.OutputOptions.SkipClientResponseContentType }}
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r {{genResponseTypeName $opid | ucFirst}}) ContentType() string {
     if r.HTTPResponse != nil {
