@@ -29,6 +29,10 @@
           "type": "boolean",
           "description": "EchoServer specifies whether to generate echo server boilerplate"
         },
+        "echo5-server": {
+          "type": "boolean",
+          "description": "Echo5Server specifies whether to generate echo v5 server boilerplate"
+        },
         "gin-server": {
           "type": "boolean",
           "description": "GinServer specifies whether to generate gin server boilerplate"
@@ -111,6 +115,10 @@
         "preserve-original-operation-id-casing-in-embedded-spec": {
           "type": "boolean",
           "description": "When `oapi-codegen` parses the original OpenAPI specification, it will apply the configured `output-options.name-normalizer` to each operation's `operationId` before that is used to generate code from.\nHowever, this is also applied to the copy of the `operationId`s in the `embedded-spec` generation, which means that the embedded OpenAPI specification is then out-of-sync with the input specificiation.\nTo ensure that the `operationId` in the embedded spec is preserved as-is from the input specification, set this. NOTE that this will not impact generated code.\nNOTE that if you're using `include-operation-ids` or `exclude-operation-ids` you may want to ensure that the `operationId`s used are correct."
+        },
+        "headers-implicitly-required": {
+          "type": "boolean",
+          "description": "Treats all response headers as required, ignoring the `required` property from the header definition. Prior to v2.6.0, oapi-codegen generated all response headers as direct values (implicitly required). The OpenAPI specification defaults headers to optional (required: false), so the corrected behavior generates optional headers as pointers. Set this to true to restore the old behavior where all headers are treated as required.\nPlease see https://github.com/oapi-codegen/oapi-codegen/issues/2267"
         }
       }
     },
@@ -126,6 +134,10 @@
         "skip-prune": {
           "type": "boolean",
           "description": "Whether to skip pruning unused components on the generated code"
+        },
+        "skip-enum-validate": {
+          "type": "boolean",
+          "description": "Whether to skip generation of the Valid() method on enum types"
         },
         "include-tags": {
           "type": "array",
@@ -177,13 +189,16 @@
           "type": "string",
           "description": "Override the default generated client type with the value"
         },
-        "initialism-overrides": {
-          "type": "boolean",
-          "description": "Whether to use the initialism overrides"
-        },
         "additional-initialisms": {
           "type": "array",
           "description": "AdditionalInitialisms defines additional initialisms to be used by the code generator. Has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`",
+          "items": {
+            "type": "string"
+          }
+        },
+        "streaming-content-types": {
+          "type": "array",
+          "description": "Additional regex patterns matched against response Content-Type to decide when the strict server should generate a flush-per-chunk streaming response. Merged with the defaults (text/event-stream, application/jsonl, application/x-ndjson). Invalid regexes fail configuration validation.",
           "items": {
             "type": "string"
           }
@@ -197,9 +212,7 @@
           "description": "DisableTypeAliasesForType allows defining which OpenAPI `type`s will explicitly not use type aliases",
           "items": {
             "type": "string",
-            "enum": [
-              "array"
-            ]
+            "enum": ["array"]
           }
         },
         "name-normalizer": {
@@ -226,9 +239,7 @@
               "default": true
             }
           },
-          "required": [
-            "path"
-          ]
+          "required": ["path"]
         },
         "yaml-tags": {
           "type": "boolean",
@@ -256,6 +267,30 @@
           "type": "boolean",
           "description": "Allows disabling the generation of an 'optional pointer' for an optional field that is a container type (such as a slice or a map), which ends up requiring an additional, unnecessary, `... != nil` check. A field can set `x-go-type-skip-optional-pointer: false` to still require the optional pointer.",
           "default": false
+        },
+        "resolve-type-name-collisions": {
+          "type": "boolean",
+          "description": "When set to true, automatically renames types that collide across different OpenAPI component sections (schemas, parameters, requestBodies, responses, headers) by appending a suffix based on the component section. Also detects collisions between component types and client response wrapper types. Without this, the codegen will error on duplicate type names, requiring manual resolution via x-go-name.",
+          "default": false
+        },
+        "type-mapping": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "TypeMapping allows customizing OpenAPI type/format to Go type mappings. User-specified mappings are merged on top of the defaults, so you only need to specify the types you want to override.",
+          "properties": {
+            "integer": {
+              "$ref": "#/$defs/format-mapping"
+            },
+            "number": {
+              "$ref": "#/$defs/format-mapping"
+            },
+            "boolean": {
+              "$ref": "#/$defs/format-mapping"
+            },
+            "string": {
+              "$ref": "#/$defs/format-mapping"
+            }
+          }
         }
       }
     },
@@ -279,9 +314,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "package"
-        ]
+        "required": ["package"]
       },
       "description": "AdditionalImports defines any additional Go imports to add to the generated code"
     },
@@ -293,5 +326,43 @@
   "required": [
     "package",
     "output"
-  ]
+  ],
+  "$defs": {
+    "simple-type-spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Specifies a Go type and optional import path",
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "The Go type to use (e.g. \"int64\", \"time.Time\", \"github.com/shopspring/decimal.Decimal\")"
+        },
+        "import": {
+          "type": "string",
+          "description": "The Go import path required for this type (e.g. \"time\", \"encoding/json\")"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    "format-mapping": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Maps an OpenAPI type's formats to Go types",
+      "properties": {
+        "default": {
+          "$ref": "#/$defs/simple-type-spec",
+          "description": "The default Go type when no format is specified or the format is unrecognized"
+        },
+        "formats": {
+          "type": "object",
+          "description": "Format-specific Go type overrides (e.g. \"int32\": {\"type\": \"int32\"}, \"double\": {\"type\": \"float64\"})",
+          "additionalProperties": {
+            "$ref": "#/$defs/simple-type-spec"
+          }
+        }
+      }
+    }
+  }
 }

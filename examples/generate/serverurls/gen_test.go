@@ -46,3 +46,9 @@ func TestServerUrlTheProductionAPIServer(t *testing.T) {
 		assert.Equal(t, "https://demo.gigantic-server.com:8443/v2", serverUrl)
 	})
 }
+
+func TestXGoName(t *testing.T) {
+	t.Run("x-go-name overrides the auto-generated server name", func(t *testing.T) {
+		assert.Equal(t, "https://api.example.com/v2", MyCustomAPIServer)
+	})
+}

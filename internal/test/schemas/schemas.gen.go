@@ -17,7 +17,7 @@ import (
 	"path"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	Access_tokenScopes = "access_token.Scopes"
+	Access_tokenScopes accessTokenContextKey = "access_token.Scopes"
 )
 
 // Defines values for EnumInObjInArrayVal.
@@ -33,6 +33,18 @@ const (
 	First  EnumInObjInArrayVal = "first"
 	Second EnumInObjInArrayVal = "second"
 )
+
+// Valid indicates whether the value is a known member of the EnumInObjInArrayVal enum.
+func (e EnumInObjInArrayVal) Valid() bool {
+	switch e {
+	case First:
+		return true
+	case Second:
+		return true
+	default:
+		return false
+	}
+}
 
 // N5StartsWithNumber This schema name starts with a number
 type N5StartsWithNumber = map[string]interface{}
@@ -80,7 +92,7 @@ type GenericObject = map[string]interface{}
 // NullableProperties defines model for NullableProperties.
 type NullableProperties struct {
 	Optional            *string `json:"optional,omitempty"`
-	OptionalAndNullable *string `json:"optionalAndNullable"`
+	OptionalAndNullable *string `json:"optionalAndNullable,omitempty"`
 	Required            string  `json:"required"`
 	RequiredAndNullable *string `json:"requiredAndNullable"`
 }
@@ -98,6 +110,9 @@ type InnerRenamedAnonymousObject struct {
 
 // StringInPath defines model for StringInPath.
 type StringInPath = string
+
+// accessTokenContextKey is the context key for access-token security scheme
+type accessTokenContextKey string
 
 // Issue9JSONBody defines parameters for Issue9.
 type Issue9JSONBody = interface{}
@@ -384,7 +399,7 @@ func NewEnsureEverythingIsReferencedRequest(server string) (*http.Request, error
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -411,7 +426,7 @@ func NewIssue1051Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -438,7 +453,7 @@ func NewIssue127Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -476,7 +491,7 @@ func NewIssue185RequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -492,7 +507,7 @@ func NewIssue209Request(server string, str StringInPath) (*http.Request, error) 
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "str", runtime.ParamLocationPath, str)
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "str", str, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
 	if err != nil {
 		return nil, err
 	}
@@ -512,7 +527,7 @@ func NewIssue209Request(server string, str StringInPath) (*http.Request, error) 
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -526,7 +541,7 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "fallthrough", runtime.ParamLocationPath, pFallthrough)
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "fallthrough", pFallthrough, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
 	if err != nil {
 		return nil, err
 	}
@@ -546,7 +561,7 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -573,7 +588,7 @@ func NewGetIssues375Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -587,7 +602,7 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "1param", runtime.ParamLocationPath, n1param)
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "1param", n1param, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "object", Format: ""})
 	if err != nil {
 		return nil, err
 	}
@@ -607,7 +622,7 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -646,24 +661,29 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 	}
 
 	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
 		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
 
-		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "foo", runtime.ParamLocationQuery, params.Foo); err != nil {
-			return nil, err
-		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "foo", params.Foo, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 			return nil, err
 		} else {
-			for k, v := range parsed {
-				for _, v2 := range v {
-					queryValues.Add(k, v2)
-				}
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
 			}
 		}
 
-		queryURL.RawQuery = queryValues.Encode()
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -692,7 +712,7 @@ func NewIssue975Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -1406,7 +1426,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.EnsureEverythingIsReferenced(ctx)
@@ -1417,7 +1437,7 @@ func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(ctx echo.Context) 
 func (w *ServerInterfaceWrapper) Issue1051(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue1051(ctx)
@@ -1428,7 +1448,7 @@ func (w *ServerInterfaceWrapper) Issue1051(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) Issue127(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue127(ctx)
@@ -1439,7 +1459,7 @@ func (w *ServerInterfaceWrapper) Issue127(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) Issue185(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue185(ctx)
@@ -1452,12 +1472,12 @@ func (w *ServerInterfaceWrapper) Issue209(ctx echo.Context) error {
 	// ------------- Path parameter "str" -------------
 	var str StringInPath
 
-	err = runtime.BindStyledParameterWithOptions("simple", "str", ctx.Param("str"), &str, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "str", ctx.Param("str"), &str, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter str: %s", err))
 	}
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue209(ctx, str)
@@ -1470,12 +1490,12 @@ func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 	// ------------- Path parameter "fallthrough" -------------
 	var pFallthrough string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "fallthrough", ctx.Param("fallthrough"), &pFallthrough, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "fallthrough", ctx.Param("fallthrough"), &pFallthrough, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err))
 	}
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue30(ctx, pFallthrough)
@@ -1486,7 +1506,7 @@ func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetIssues375(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetIssues375(ctx)
@@ -1499,12 +1519,12 @@ func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 	// ------------- Path parameter "1param" -------------
 	var n1param N5StartsWithNumber
 
-	err = runtime.BindStyledParameterWithOptions("simple", "1param", ctx.Param("1param"), &n1param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "1param", ctx.Param("1param"), &n1param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "object", Format: ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1param: %s", err))
 	}
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue41(ctx, n1param)
@@ -1515,13 +1535,13 @@ func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params Issue9Params
 	// ------------- Required query parameter "foo" -------------
 
-	err = runtime.BindQueryParameter("form", true, true, "foo", ctx.QueryParams(), &params.Foo)
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "foo", ctx.QueryParams(), &params.Foo, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter foo: %s", err))
 	}
@@ -1535,7 +1555,7 @@ func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) Issue975(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue975(ctx)

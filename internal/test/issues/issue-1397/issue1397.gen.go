@@ -26,6 +26,18 @@ const (
 	Option2 TestField1 = "option2"
 )
 
+// Valid indicates whether the value is a known member of the TestField1 enum.
+func (e TestField1) Valid() bool {
+	switch e {
+	case Option1:
+		return true
+	case Option2:
+		return true
+	default:
+		return false
+	}
+}
+
 // Test defines model for Test.
 type Test = MyTestRequest
 
@@ -189,7 +201,7 @@ func NewTestRequestWithBody(server string, contentType string, body io.Reader) (
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}

@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: echoparamsgen
+generate:
+  echo-server: true
+  embedded-spec: true
+output: gen/server.gen.go
