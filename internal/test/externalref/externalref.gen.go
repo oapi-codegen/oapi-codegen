@@ -14,16 +14,16 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/packageA"
-	externalRef1 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/packageB"
-	externalRef2 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/petstore"
+	package_b "github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/packageB"
+	externalRef1 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/petstore"
 )
 
 // Container defines model for Container.
 type Container struct {
 	ObjectA *externalRef0.ObjectA   `json:"object_a,omitempty"`
-	ObjectB *externalRef1.ObjectB   `json:"object_b,omitempty"`
+	ObjectB *package_b.ObjectB      `json:"object_b,omitempty"`
 	ObjectC *map[string]interface{} `json:"object_c,omitempty"`
-	Pet     *externalRef2.Pet       `json:"pet,omitempty"`
+	Pet     *externalRef1.Pet       `json:"pet,omitempty"`
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
@@ -82,13 +82,13 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 		}
 		res[rawPath] = rawFunc
 	}
-	for rawPath, rawFunc := range externalRef1.PathToRawSpec(path.Join(path.Dir(pathToFile), "./packageB/spec.yaml")) {
+	for rawPath, rawFunc := range package_b.PathToRawSpec(path.Join(path.Dir(pathToFile), "./packageB/spec.yaml")) {
 		if _, ok := res[rawPath]; ok {
 			// it is not possible to compare functions in golang, so always overwrite the old value
 		}
 		res[rawPath] = rawFunc
 	}
-	for rawPath, rawFunc := range externalRef2.PathToRawSpec(path.Join(path.Dir(pathToFile), "https://petstore3.swagger.io/api/v3/openapi.json")) {
+	for rawPath, rawFunc := range externalRef1.PathToRawSpec(path.Join(path.Dir(pathToFile), "https://petstore3.swagger.io/api/v3/openapi.json")) {
 		if _, ok := res[rawPath]; ok {
 			// it is not possible to compare functions in golang, so always overwrite the old value
 		}
