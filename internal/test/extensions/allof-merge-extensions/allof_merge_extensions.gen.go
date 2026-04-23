@@ -7,4 +7,4 @@ package allofmergeextensions
 type Client = OverlayClient
 
 // ClientWithId defines model for ClientWithId.
-type ClientWithId = OverlayClient
+type ClientWithId = OverlayClientWithId

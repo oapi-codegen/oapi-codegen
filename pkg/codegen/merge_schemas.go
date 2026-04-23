@@ -27,6 +27,28 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 		return GenerateGoSchema(allOf[0], path)
 	}
 
+	// Distinguish two uses of allOf:
+	//
+	//   1. Decorator idiom — at least one member is "extension-only" (carries
+	//      no structural content). This is a workaround for OpenAPI 3.0's
+	//      $ref-sibling restriction: users wrap a $ref in allOf to attach
+	//      extensions like x-go-type-skip-optional-pointer (see issue #1957).
+	//      Here extensions are meant to flow through to the result.
+	//
+	//   2. Real composition — every member contributes structural content
+	//      (Type, Properties, Required, etc.). The result is a NEW distinct
+	//      type, and extensions like x-go-type on a source schema do NOT
+	//      transfer (see issue #2335: Client has x-go-type=OverlayClient, but
+	//      allOf[Client, {properties:{id}}] is ClientWithId — a different
+	//      shape, not OverlayClient).
+	decoratorIdiom := false
+	for _, m := range allOf {
+		if isExtensionOnlySchema(m.Value) {
+			decoratorIdiom = true
+			break
+		}
+	}
+
 	schema, err := valueWithPropagatedRef(allOf[0])
 	if err != nil {
 		return Schema{}, err
@@ -59,7 +81,35 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
 	}
+
+	if !decoratorIdiom {
+		schema.Extensions = nil
+	}
+
 	return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path)
+}
+
+// isExtensionOnlySchema reports whether a schema carries only extensions,
+// with no structural content. Used to detect the "$ref + sibling extension"
+// idiom: allOf wrappers whose purpose is attaching extensions to a $ref
+// (since OpenAPI 3.0 disallows sibling keys next to $ref).
+func isExtensionOnlySchema(s *openapi3.Schema) bool {
+	if s == nil {
+		return false
+	}
+	return len(s.Extensions) > 0 &&
+		s.Type.Slice() == nil &&
+		len(s.Properties) == 0 &&
+		len(s.Required) == 0 &&
+		len(s.AllOf) == 0 &&
+		len(s.AnyOf) == 0 &&
+		len(s.OneOf) == 0 &&
+		len(s.Enum) == 0 &&
+		s.Items == nil &&
+		s.AdditionalProperties.Has == nil &&
+		s.AdditionalProperties.Schema == nil &&
+		s.Discriminator == nil &&
+		s.Format == ""
 }
 
 // valueWithPropagatedRef returns a copy of ref schema with its Properties refs
