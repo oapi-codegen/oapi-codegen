@@ -317,13 +317,13 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	}
 	result.UniqueItems = s1.UniqueItems
 
-	if s1.ExclusiveMin != s2.ExclusiveMin {
+	if !reflect.DeepEqual(s1.ExclusiveMin, s2.ExclusiveMin) {
 		return openapi3.Schema{}, errors.New("merging two schemas with different ExclusiveMin")
 
 	}
 	result.ExclusiveMin = s1.ExclusiveMin
 
-	if s1.ExclusiveMax != s2.ExclusiveMax {
+	if !reflect.DeepEqual(s1.ExclusiveMax, s2.ExclusiveMax) {
 		return openapi3.Schema{}, errors.New("merging two schemas with different ExclusiveMax")
 
 	}
