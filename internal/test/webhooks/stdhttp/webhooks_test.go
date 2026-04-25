@@ -34,7 +34,7 @@ func (f *fakeReceiver) HandlePetStatusChangedWebhook(w http.ResponseWriter, r *h
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 	if err := json.Unmarshal(body, &f.gotEvent); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -63,7 +63,7 @@ func TestWebhookRoundTrip(t *testing.T) {
 
 	resp, err := initiator.PetStatusChanged(context.Background(), srv.URL+"/hooks/pet-status", event)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	require.Equal(t, http.StatusNoContent, resp.StatusCode)
 	require.True(t, receiver.called, "webhook handler should have been called")
@@ -99,7 +99,7 @@ func TestWebhookInitiatorRequestEditor(t *testing.T) {
 		Status: Available,
 	})
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, sigValue, receiver.gotHeaders.Get(sigHeader),
 		"per-call editor was not applied to the outgoing request")
@@ -141,7 +141,7 @@ func TestWebhookReceiverMiddleware(t *testing.T) {
 		Id: "x", Status: Pending,
 	})
 	require.NoError(t, err)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 
 	// Middlewares are applied in order with the LAST argument becoming
 	// the OUTERMOST wrapper (each iteration assigns h = mw(h)). So we

@@ -23,11 +23,12 @@ import (
 )
 
 // TestStatusConstSchema verifies that a scalar `const` schema produces a
-// typed alias and a singleton constant. Compile-time check: assigning
-// the constant to a Status variable only succeeds if Status is a
-// distinct named type.
+// typed alias and a singleton constant. Compile-time check: `Active` is
+// declared as `const Active Status = "active"`, so type inference here
+// gives `s` the type `Status` -- if the codegen had emitted Active as
+// untyped, this would not compile.
 func TestStatusConstSchema(t *testing.T) {
-	var s Status = Active
+	s := Active
 	assert.Equal(t, "active", string(s))
 	assert.True(t, s.Valid(), "Active should be a valid Status enum member")
 }

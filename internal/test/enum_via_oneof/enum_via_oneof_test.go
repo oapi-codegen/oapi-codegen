@@ -61,8 +61,14 @@ func TestColorJSONRoundTrip(t *testing.T) {
 // detection were over-eager, MixedOneOf would become a newtype `type
 // MixedOneOf string` and the assignment below would fail to compile
 // (a string would not be directly assignable to a newtype value).
+//
+// The explicit `var m MixedOneOf = s` declaration is intentional:
+// staticcheck (ST1023) wants the type omitted because aliasing makes
+// it redundant, but that redundancy IS the test -- if we let inference
+// give `m` the type `string`, the alias-vs-newtype property isn't
+// exercised at compile time.
 func TestMixedOneOfFallsThrough(t *testing.T) {
 	var s = "anything"
-	var m MixedOneOf = s
+	var m MixedOneOf = s //nolint:staticcheck // ST1023: explicit type is the compile-time alias check
 	assert.Equal(t, "anything", string(m))
 }

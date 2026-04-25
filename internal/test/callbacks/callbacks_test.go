@@ -30,7 +30,7 @@ func (f *fakeReceiver) HandleTreePlantedCallback(w http.ResponseWriter, r *http.
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
+	defer func() { _ = r.Body.Close() }()
 	if err := json.Unmarshal(body, &f.gotResult); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
