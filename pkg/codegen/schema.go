@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
@@ -413,6 +414,60 @@ func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, bool) {
 	return items, true
 }
 
+// describeWithExamples folds a schema's example data into its
+// description string for use in generated Go doc comments. Version-aware:
+// in 3.0 it reads schema.Example (singular); in 3.1 it reads
+// schema.Examples (plural array). Cross-version misuse is documented as
+// invalid input -- this helper does not look at the off-version field.
+//
+// The output appends `Examples: <v1>, <v2>, ...` (or `Example: <v>` in
+// 3.0) on a new paragraph after any existing description text. Non-
+// string values are JSON-encoded so structured examples render
+// readably.
+func describeWithExamples(description string, schema *openapi3.Schema) string {
+	if schema == nil {
+		return description
+	}
+	var values []any
+	label := "Example"
+	if globalState.is31 {
+		if len(schema.Examples) == 0 {
+			return description
+		}
+		values = schema.Examples
+		label = "Examples"
+	} else {
+		if schema.Example == nil {
+			return description
+		}
+		values = []any{schema.Example}
+	}
+
+	formatted := make([]string, 0, len(values))
+	for _, v := range values {
+		formatted = append(formatted, formatExampleValue(v))
+	}
+
+	suffix := label + ": " + strings.Join(formatted, ", ")
+	if description == "" {
+		return suffix
+	}
+	return description + "\n\n" + suffix
+}
+
+// formatExampleValue renders an example value for inclusion in a Go doc
+// comment. Strings round-trip as themselves (no JSON quoting); other
+// values JSON-encode so structured examples remain readable.
+func formatExampleValue(v any) string {
+	if s, ok := v.(string); ok {
+		return s
+	}
+	if b, err := json.Marshal(v); err == nil {
+		return string(b)
+	}
+	return fmt.Sprintf("%v", v)
+}
+
 // schemaPrimaryType returns the type slice used for primitive-type dispatch
 // (`*Types.Is("string")` etc.). In OpenAPI 3.0 the type slice has at most
 // one entry and is returned unchanged. In OpenAPI 3.1 the "null" entry is
@@ -484,7 +539,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 		return Schema{
 			GoType:              refType,
-			Description:         schema.Description,
+			Description:         describeWithExamples(schema.Description, schema),
 			DefineViaAlias:      true,
 			SkipOptionalPointer: skipOptionalPointer,
 			OAPISchema:          schema,
@@ -492,7 +547,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	}
 
 	outSchema := Schema{
-		Description:         schema.Description,
+		Description:         describeWithExamples(schema.Description, schema),
 		OAPISchema:          schema,
 		SkipOptionalPointer: skipOptionalPointer,
 	}
@@ -719,7 +774,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				}
 				description := ""
 				if p.Value != nil {
-					description = p.Value.Description
+					description = describeWithExamples(p.Value.Description, p.Value)
 				}
 
 				prop := Property{
@@ -775,7 +830,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 
 		return outSchema, nil
-	} else if len(schema.Enum) > 0 {
+	} else if len(schema.Enum) > 0 || (globalState.is31 && schema.Const != nil) {
 		err := oapiSchemaToGoType(schema, path, &outSchema)
 		// Enums need to be typed, so that the values aren't interchangeable,
 		// so no matter what schema conversion thinks, we need to define a
@@ -785,8 +840,16 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		if err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
-		enumValues := make([]string, len(schema.Enum))
-		for i, enumValue := range schema.Enum {
+		// OpenAPI 3.1 `const: X` is shorthand for `enum: [X]`. Fold the
+		// two through the same enum-codegen path here so a top-level
+		// `const` schema becomes a typed alias plus a singleton constant,
+		// using the same name-derivation rules `enum` uses.
+		enumSource := schema.Enum
+		if len(enumSource) == 0 {
+			enumSource = []any{schema.Const}
+		}
+		enumValues := make([]string, len(enumSource))
+		for i, enumValue := range enumSource {
 			enumValues[i] = fmt.Sprintf("%v", enumValue)
 		}
 
