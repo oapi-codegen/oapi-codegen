@@ -451,6 +451,17 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	// Webhook receiver (chi) -- chi shares stdhttp's (w, r) handler
+	// signature, so the receiver shape is identical; only the template
+	// path differs. Emitted only when Generate.ChiServer is on.
+	var chiWebhookReceiverOut string
+	if opts.Generate.ChiServer && len(webhookOps) > 0 {
+		chiWebhookReceiverOut, err = GenerateChiReceiver(t, "Webhook", webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating chi webhook receiver: %w", err)
+		}
+	}
+
 	// Callback initiator pairs with the path Client. Emitted whenever
 	// Generate.Client is on and the spec declares any callbacks --
 	// callbacks predate 3.1 so this is not version-gated.
@@ -470,6 +481,15 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		stdHTTPCallbackReceiverOut, err = GenerateStdHTTPReceiver(t, "Callback", callbackOps)
 		if err != nil {
 			return "", fmt.Errorf("error generating stdhttp callback receiver: %w", err)
+		}
+	}
+
+	// Callback receiver (chi).
+	var chiCallbackReceiverOut string
+	if opts.Generate.ChiServer && len(callbackOps) > 0 {
+		chiCallbackReceiverOut, err = GenerateChiReceiver(t, "Callback", callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating chi callback receiver: %w", err)
 		}
 	}
 
@@ -564,6 +584,18 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		_, err = w.WriteString(chiServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+		if chiWebhookReceiverOut != "" {
+			_, err = w.WriteString(chiWebhookReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing chi webhook receiver: %w", err)
+			}
+		}
+		if chiCallbackReceiverOut != "" {
+			_, err = w.WriteString(chiCallbackReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing chi callback receiver: %w", err)
+			}
 		}
 	}
 

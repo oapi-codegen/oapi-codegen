@@ -1666,6 +1666,14 @@ func GenerateStdHTTPReceiver(t *template.Template, prefix string, ops []Operatio
 	return GenerateTemplates([]string{"stdhttp/std-http-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
 }
 
+// GenerateChiReceiver renders the chi receiver template. Chi shares
+// stdhttp's (w, r) handler signature, so the template is structurally
+// identical -- only the file path and (in the future, if needed)
+// framework-specific helpers differ.
+func GenerateChiReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"chi/chi-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+}
+
 // GenerateTemplates used to generate templates
 func GenerateTemplates(templates []string, t *template.Template, ops any) (string, error) {
 	var generatedTemplates []string

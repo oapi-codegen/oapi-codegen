@@ -1,0 +1,116 @@
+// {{.Prefix}}ReceiverInterface represents handlers for receiving inbound
+// {{.PrefixLower}} requests. Each {{.PrefixLower}} becomes a Handle*{{.Prefix}}
+// method that the implementation fills in. The caller mounts the per-
+// {{.PrefixLower}} http.Handler returned by {Op}{{.Prefix}}Handler at
+// whatever URL path they advertise to senders.
+type {{.Prefix}}ReceiverInterface interface {
+{{range .Operations -}}
+{{.SummaryAsComment}}
+// Handle{{.OperationId}}{{$.Prefix}} handles the {{.Method}} {{$.PrefixLower}} for {{.SourceName}}.
+Handle{{.OperationId}}{{$.Prefix}}(w http.ResponseWriter, r *http.Request{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
+{{end}}
+}
+
+// {{.Prefix}}ReceiverMiddlewareFunc wraps an http.Handler with cross-
+// cutting behavior (signature verification, logging, rate limiting, ...).
+type {{.Prefix}}ReceiverMiddlewareFunc func(http.Handler) http.Handler
+
+{{range .Operations -}}
+{{$opid := .OperationId -}}
+{{$srcName := .SourceName -}}
+// {{$opid}}{{$.Prefix}}Handler returns the http.Handler for the {{$srcName}} {{$.PrefixLower}}.
+// Mount this at the URL path advertised to {{$.PrefixLower}} senders. errHandler
+// may be nil; if so, parameter-binding errors return 400 with the error
+// message. Middlewares are applied in the order provided -- the last
+// argument becomes the outermost wrapper.
+func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface, errHandler func(w http.ResponseWriter, r *http.Request, err error), middlewares ...{{$.Prefix}}ReceiverMiddlewareFunc) http.Handler {
+    if errHandler == nil {
+        errHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+            http.Error(w, err.Error(), http.StatusBadRequest)
+        }
+    }
+    var h http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+{{- if .RequiresParamObject}}
+        var err error
+        _ = err
+
+        // Parameter object where we will unmarshal all parameters from the request.
+        var params {{$opid}}Params
+{{range $paramIdx, $param := .QueryParams}}
+        // ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
+        {{if (or .IsPassThrough .IsJson)}}
+        if paramValue := r.URL.Query().Get("{{.ParamName}}"); paramValue != "" {
+            {{if .IsPassThrough}}
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}paramValue
+            {{end}}
+            {{if .IsJson}}
+            var value {{.TypeDef}}
+            err = json.Unmarshal([]byte(paramValue), &value)
+            if err != nil {
+                errHandler(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
+                return
+            }
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
+            {{end}}
+        }{{if .Required}} else {
+            errHandler(w, r, &RequiredParamError{ParamName: "{{.ParamName}}"})
+            return
+        }{{end}}
+        {{end}}
+        {{if .IsStyled}}
+        err = runtime.BindQueryParameterWithOptions("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", r.URL.Query(), &params.{{.GoName}}, runtime.BindQueryParameterOptions{Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+        if err != nil {
+            var requiredError *runtime.RequiredParameterError
+            if errors.As(err, &requiredError) {
+                errHandler(w, r, &RequiredParamError{ParamName: "{{.ParamName}}"})
+            } else {
+                errHandler(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
+            }
+            return
+        }
+        {{end}}
+{{end}}
+{{range $paramIdx, $param := .HeaderParams}}
+        // ------------- {{if .Required}}Required{{else}}Optional{{end}} header parameter "{{.ParamName}}" -------------
+        if valueList, found := r.Header[http.CanonicalHeaderKey("{{.ParamName}}")]; found {
+            var {{.GoName}} {{.TypeDef}}
+            n := len(valueList)
+            if n != 1 {
+                errHandler(w, r, &TooManyValuesForParamError{ParamName: "{{.ParamName}}", Count: n})
+                return
+            }
+            {{if .IsPassThrough}}
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}valueList[0]
+            {{end}}
+            {{if .IsJson}}
+            err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+            if err != nil {
+                errHandler(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
+                return
+            }
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
+            {{end}}
+            {{if .IsStyled}}
+            err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+            if err != nil {
+                errHandler(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
+                return
+            }
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
+            {{end}}
+        }{{if .Required}} else {
+            err := fmt.Errorf("Header parameter {{.ParamName}} is required, but not found")
+            errHandler(w, r, &RequiredHeaderError{ParamName: "{{.ParamName}}", Err: err})
+            return
+        }{{end}}
+{{end}}
+{{- end}}
+        si.Handle{{$opid}}{{$.Prefix}}(w, r{{if .RequiresParamObject}}, params{{end}})
+    })
+    for _, mw := range middlewares {
+        h = mw(h)
+    }
+    return h
+}
+
+{{end}}
