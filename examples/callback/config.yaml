@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=../../configuration-schema.json
+package: treefarm
+generate:
+  models: true
+  client: true
+  std-http-server: true
+output-options:
+  skip-prune: true
+  # Use ToCamelCaseWithInitialisms so spec fields like `id` and
+  # `callbackUrl` generate as `ID` and `CallbackURL` (matching the
+  # example's Go code).
+  name-normalizer: ToCamelCaseWithInitialisms
+output: treefarm.gen.go

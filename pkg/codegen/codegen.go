@@ -265,7 +265,16 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("error creating webhook operation definitions: %w", err)
 	}
-	allOps := append(append([]OperationDefinition{}, ops...), webhookOps...)
+
+	// Callbacks (OpenAPI 3.0+) are nested under path operations. Like
+	// webhooks they render via initiator/receiver templates, but they
+	// are NOT version-gated -- callbacks have been part of the spec
+	// since 3.0. Gather is no-op for specs without any callbacks.
+	callbackOps, err := CallbackOperationDefinitions(spec)
+	if err != nil {
+		return "", fmt.Errorf("error creating callback operation definitions: %w", err)
+	}
+	allOps := append(append(append([]OperationDefinition{}, ops...), webhookOps...), callbackOps...)
 
 	xGoTypeImports, err := OperationImports(allOps)
 	if err != nil {
@@ -441,6 +450,27 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	// Callback initiator pairs with the path Client. Emitted whenever
+	// Generate.Client is on and the spec declares any callbacks --
+	// callbacks predate 3.1 so this is not version-gated.
+	var callbackInitiatorOut string
+	if opts.Generate.Client && len(callbackOps) > 0 {
+		callbackInitiatorOut, err = GenerateCallbackInitiator(t, callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating callback initiator: %w", err)
+		}
+	}
+
+	// Callback receiver (stdhttp) pairs with the path StdHTTPServer.
+	// Same reasoning as the initiator: not version-gated.
+	var stdHTTPCallbackReceiverOut string
+	if opts.Generate.StdHTTPServer && len(callbackOps) > 0 {
+		stdHTTPCallbackReceiverOut, err = GenerateStdHTTPCallbackReceiver(t, callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating stdhttp callback receiver: %w", err)
+		}
+	}
+
 	var inlinedSpec string
 	if opts.Generate.EmbeddedSpec {
 		inlinedSpec, err = GenerateInlinedSpec(t, globalState.importMapping, spec)
@@ -496,6 +526,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 			_, err = w.WriteString(webhookInitiatorOut)
 			if err != nil {
 				return "", fmt.Errorf("error writing webhook initiator: %w", err)
+			}
+		}
+		if callbackInitiatorOut != "" {
+			_, err = w.WriteString(callbackInitiatorOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing callback initiator: %w", err)
 			}
 		}
 	}
@@ -559,6 +595,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 			_, err = w.WriteString(stdHTTPWebhookReceiverOut)
 			if err != nil {
 				return "", fmt.Errorf("error writing stdhttp webhook receiver: %w", err)
+			}
+		}
+		if stdHTTPCallbackReceiverOut != "" {
+			_, err = w.WriteString(stdHTTPCallbackReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing stdhttp callback receiver: %w", err)
 			}
 		}
 	}

@@ -1,0 +1,34 @@
+// CallbackReceiverInterface represents handlers for receiving OpenAPI
+// callback requests. Each callback becomes a Handle*Callback method that
+// the implementation fills in to receive the inbound HTTP request. The
+// caller mounts the per-callback http.Handler returned by the
+// {{"Op"}}CallbackHandler factory below at whatever URL path the parent
+// operation's callback expression resolves to.
+type CallbackReceiverInterface interface {
+{{range . -}}
+{{.SummaryAsComment}}
+// Handle{{.OperationId}}Callback handles the {{.Method}} callback for {{.CallbackName}}.
+Handle{{.OperationId}}Callback(w http.ResponseWriter, r *http.Request)
+{{end}}
+}
+
+// CallbackReceiverMiddlewareFunc wraps an http.Handler with cross-cutting
+// behavior (signature verification, logging, rate limiting, ...).
+type CallbackReceiverMiddlewareFunc func(http.Handler) http.Handler
+
+{{range . -}}
+// {{.OperationId}}CallbackHandler returns the http.Handler for the {{.CallbackName}} callback.
+// Mount this at the URL path the parent operation's callback expression
+// resolves to. Middlewares are applied in the order provided (the last
+// argument becomes the outermost wrapper).
+func {{.OperationId}}CallbackHandler(si CallbackReceiverInterface, middlewares ...CallbackReceiverMiddlewareFunc) http.Handler {
+    var h http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        si.Handle{{.OperationId}}Callback(w, r)
+    })
+    for _, mw := range middlewares {
+        h = mw(h)
+    }
+    return h
+}
+
+{{end}}
