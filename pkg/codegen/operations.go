@@ -373,6 +373,40 @@ func (o *OperationDefinition) MiddlewareKey() string {
 	return o.OperationId
 }
 
+// SourceName returns WebhookName when IsWebhook, CallbackName when
+// IsCallback, or empty otherwise. Templates use this to label the
+// emitted handler uniformly without branching on which kind of source
+// the operation came from.
+func (o OperationDefinition) SourceName() string {
+	if o.IsWebhook {
+		return o.WebhookName
+	}
+	if o.IsCallback {
+		return o.CallbackName
+	}
+	return ""
+}
+
+// ReceiverTemplateData is the input to the per-framework webhook /
+// callback receiver template. Prefix selects between "Webhook" and
+// "Callback" (and the lowercase form for prose), so a single template
+// per framework handles both kinds.
+type ReceiverTemplateData struct {
+	Prefix      string // "Webhook" or "Callback"
+	PrefixLower string // lowercase form of Prefix, for prose
+	Operations  []OperationDefinition
+}
+
+// NewReceiverTemplateData builds the template input for the given
+// prefix ("Webhook" or "Callback") and operation list.
+func NewReceiverTemplateData(prefix string, ops []OperationDefinition) ReceiverTemplateData {
+	return ReceiverTemplateData{
+		Prefix:      prefix,
+		PrefixLower: strings.ToLower(prefix),
+		Operations:  ops,
+	}
+}
+
 // Params returns the list of all parameters except Path parameters. Path parameters
 // are handled differently from the rest, since they're mandatory.
 func (o *OperationDefinition) Params() []ParameterDefinition {
@@ -1612,14 +1646,6 @@ func GenerateWebhookInitiator(t *template.Template, webhookOps []OperationDefini
 	return GenerateTemplates([]string{"webhook-initiator.tmpl"}, t, webhookOps)
 }
 
-// GenerateStdHTTPWebhookReceiver generates the WebhookReceiver -- the
-// server-side analog for OpenAPI 3.1 webhooks. The caller mounts each
-// per-webhook http.Handler (returned by the generated <Op>WebhookHandler
-// factory) at the URL path of their choice.
-func GenerateStdHTTPWebhookReceiver(t *template.Template, webhookOps []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"stdhttp/std-http-webhook-receiver.tmpl"}, t, webhookOps)
-}
-
 // GenerateCallbackInitiator generates the CallbackInitiator -- the
 // client-side analog for OpenAPI callbacks. Structurally identical to
 // GenerateWebhookInitiator but takes the callback OperationDefinitions
@@ -1629,10 +1655,15 @@ func GenerateCallbackInitiator(t *template.Template, callbackOps []OperationDefi
 	return GenerateTemplates([]string{"callback-initiator.tmpl"}, t, callbackOps)
 }
 
-// GenerateStdHTTPCallbackReceiver generates the CallbackReceiver -- the
-// server-side analog for OpenAPI callbacks.
-func GenerateStdHTTPCallbackReceiver(t *template.Template, callbackOps []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"stdhttp/std-http-callback-receiver.tmpl"}, t, callbackOps)
+// GenerateStdHTTPReceiver renders the merged stdhttp receiver template
+// (used for both webhook and callback receivers). The caller selects
+// between them by passing prefix "Webhook" or "Callback" along with the
+// matching OperationDefinitions. The template emits a {Prefix}Receiver
+// interface plus per-operation {Op}{Prefix}Handler factories with
+// query/header parameter binding inline (matching the param-binding
+// machinery used by the path-server middleware).
+func GenerateStdHTTPReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"stdhttp/std-http-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
 }
 
 // GenerateTemplates used to generate templates

@@ -857,11 +857,11 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	return m
 }
 
-// WebhookReceiverInterface represents handlers for receiving OpenAPI 3.1
-// webhook requests. Each webhook becomes a Handle*Webhook method that the
-// implementation fills in to receive the inbound HTTP request. The caller
-// mounts the per-webhook http.Handler returned by the OpWebhookHandler
-// factory below at whatever URL path they advertise to subscribers.
+// WebhookReceiverInterface represents handlers for receiving inbound
+// webhook requests. Each webhook becomes a Handle*Webhook
+// method that the implementation fills in. The caller mounts the per-
+// webhook http.Handler returned by {Op}WebhookHandler at
+// whatever URL path they advertise to senders.
 type WebhookReceiverInterface interface {
 	// Person entered the building
 	// HandleEnterEventWebhook handles the POST webhook for enterEvent.
@@ -871,14 +871,21 @@ type WebhookReceiverInterface interface {
 	HandleExitEventWebhook(w http.ResponseWriter, r *http.Request)
 }
 
-// WebhookReceiverMiddlewareFunc wraps an http.Handler with cross-cutting
-// behavior (signature verification, logging, rate limiting, ...).
+// WebhookReceiverMiddlewareFunc wraps an http.Handler with cross-
+// cutting behavior (signature verification, logging, rate limiting, ...).
 type WebhookReceiverMiddlewareFunc func(http.Handler) http.Handler
 
 // EnterEventWebhookHandler returns the http.Handler for the enterEvent webhook.
-// Mount this at the URL path advertised to webhook subscribers. Middlewares
-// are applied in the order provided (outermost first).
-func EnterEventWebhookHandler(si WebhookReceiverInterface, middlewares ...WebhookReceiverMiddlewareFunc) http.Handler {
+// Mount this at the URL path advertised to webhook senders. errHandler
+// may be nil; if so, parameter-binding errors return 400 with the error
+// message. Middlewares are applied in the order provided -- the last
+// argument becomes the outermost wrapper.
+func EnterEventWebhookHandler(si WebhookReceiverInterface, errHandler func(w http.ResponseWriter, r *http.Request, err error), middlewares ...WebhookReceiverMiddlewareFunc) http.Handler {
+	if errHandler == nil {
+		errHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+	}
 	var h http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		si.HandleEnterEventWebhook(w, r)
 	})
@@ -889,9 +896,16 @@ func EnterEventWebhookHandler(si WebhookReceiverInterface, middlewares ...Webhoo
 }
 
 // ExitEventWebhookHandler returns the http.Handler for the exitEvent webhook.
-// Mount this at the URL path advertised to webhook subscribers. Middlewares
-// are applied in the order provided (outermost first).
-func ExitEventWebhookHandler(si WebhookReceiverInterface, middlewares ...WebhookReceiverMiddlewareFunc) http.Handler {
+// Mount this at the URL path advertised to webhook senders. errHandler
+// may be nil; if so, parameter-binding errors return 400 with the error
+// message. Middlewares are applied in the order provided -- the last
+// argument becomes the outermost wrapper.
+func ExitEventWebhookHandler(si WebhookReceiverInterface, errHandler func(w http.ResponseWriter, r *http.Request, err error), middlewares ...WebhookReceiverMiddlewareFunc) http.Handler {
+	if errHandler == nil {
+		errHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+	}
 	var h http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		si.HandleExitEventWebhook(w, r)
 	})

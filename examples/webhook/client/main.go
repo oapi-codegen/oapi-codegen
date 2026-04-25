@@ -92,8 +92,8 @@ func main() {
 	receiver := &WebhookReceiver{}
 
 	mux := http.NewServeMux()
-	mux.Handle("POST /enter", doorbadge.EnterEventWebhookHandler(receiver))
-	mux.Handle("POST /exit", doorbadge.ExitEventWebhookHandler(receiver))
+	mux.Handle("POST /enter", doorbadge.EnterEventWebhookHandler(receiver, nil))
+	mux.Handle("POST /exit", doorbadge.ExitEventWebhookHandler(receiver, nil))
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {

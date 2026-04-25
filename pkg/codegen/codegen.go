@@ -441,10 +441,11 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	// Webhook receiver (stdhttp) pairs with the path StdHTTPServer.
 	// Emitted only when Generate.StdHTTPServer is on AND the spec has
-	// webhooks (3.1+).
+	// webhooks (3.1+). Uses the unified stdhttp receiver template,
+	// parameterized with prefix "Webhook".
 	var stdHTTPWebhookReceiverOut string
 	if opts.Generate.StdHTTPServer && len(webhookOps) > 0 {
-		stdHTTPWebhookReceiverOut, err = GenerateStdHTTPWebhookReceiver(t, webhookOps)
+		stdHTTPWebhookReceiverOut, err = GenerateStdHTTPReceiver(t, "Webhook", webhookOps)
 		if err != nil {
 			return "", fmt.Errorf("error generating stdhttp webhook receiver: %w", err)
 		}
@@ -462,10 +463,11 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 
 	// Callback receiver (stdhttp) pairs with the path StdHTTPServer.
-	// Same reasoning as the initiator: not version-gated.
+	// Same reasoning as the initiator: not version-gated. Uses the
+	// unified stdhttp receiver template with prefix "Callback".
 	var stdHTTPCallbackReceiverOut string
 	if opts.Generate.StdHTTPServer && len(callbackOps) > 0 {
-		stdHTTPCallbackReceiverOut, err = GenerateStdHTTPCallbackReceiver(t, callbackOps)
+		stdHTTPCallbackReceiverOut, err = GenerateStdHTTPReceiver(t, "Callback", callbackOps)
 		if err != nil {
 			return "", fmt.Errorf("error generating stdhttp callback receiver: %w", err)
 		}

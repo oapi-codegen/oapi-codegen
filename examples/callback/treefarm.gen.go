@@ -641,27 +641,32 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	return m
 }
 
-// CallbackReceiverInterface represents handlers for receiving OpenAPI
-// callback requests. Each callback becomes a Handle*Callback method that
-// the implementation fills in to receive the inbound HTTP request. The
-// caller mounts the per-callback http.Handler returned by the
-// OpCallbackHandler factory below at whatever URL path the parent
-// operation's callback expression resolves to.
+// CallbackReceiverInterface represents handlers for receiving inbound
+// callback requests. Each callback becomes a Handle*Callback
+// method that the implementation fills in. The caller mounts the per-
+// callback http.Handler returned by {Op}CallbackHandler at
+// whatever URL path they advertise to senders.
 type CallbackReceiverInterface interface {
 	// Tree planting result notification
 	// HandleTreePlantedCallback handles the POST callback for treePlanted.
 	HandleTreePlantedCallback(w http.ResponseWriter, r *http.Request)
 }
 
-// CallbackReceiverMiddlewareFunc wraps an http.Handler with cross-cutting
-// behavior (signature verification, logging, rate limiting, ...).
+// CallbackReceiverMiddlewareFunc wraps an http.Handler with cross-
+// cutting behavior (signature verification, logging, rate limiting, ...).
 type CallbackReceiverMiddlewareFunc func(http.Handler) http.Handler
 
 // TreePlantedCallbackHandler returns the http.Handler for the treePlanted callback.
-// Mount this at the URL path the parent operation's callback expression
-// resolves to. Middlewares are applied in the order provided (the last
-// argument becomes the outermost wrapper).
-func TreePlantedCallbackHandler(si CallbackReceiverInterface, middlewares ...CallbackReceiverMiddlewareFunc) http.Handler {
+// Mount this at the URL path advertised to callback senders. errHandler
+// may be nil; if so, parameter-binding errors return 400 with the error
+// message. Middlewares are applied in the order provided -- the last
+// argument becomes the outermost wrapper.
+func TreePlantedCallbackHandler(si CallbackReceiverInterface, errHandler func(w http.ResponseWriter, r *http.Request, err error), middlewares ...CallbackReceiverMiddlewareFunc) http.Handler {
+	if errHandler == nil {
+		errHandler = func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+	}
 	var h http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		si.HandleTreePlantedCallback(w, r)
 	})

@@ -49,7 +49,7 @@ func TestWebhookRoundTrip(t *testing.T) {
 	// pick whatever URL they advertise to subscribers; the factory is
 	// path-agnostic so the test can pick anything.
 	mux := http.NewServeMux()
-	mux.Handle("POST /hooks/pet-status", PetStatusChangedWebhookHandler(receiver))
+	mux.Handle("POST /hooks/pet-status", PetStatusChangedWebhookHandler(receiver, nil))
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
@@ -82,7 +82,7 @@ func TestWebhookInitiatorRequestEditor(t *testing.T) {
 
 	receiver := &capturingReceiver{}
 	mux := http.NewServeMux()
-	mux.Handle("POST /hooks", PetStatusChangedWebhookHandler(receiver))
+	mux.Handle("POST /hooks", PetStatusChangedWebhookHandler(receiver, nil))
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
@@ -131,7 +131,7 @@ func TestWebhookReceiverMiddleware(t *testing.T) {
 
 	mux := http.NewServeMux()
 	mux.Handle("POST /hooks",
-		PetStatusChangedWebhookHandler(&capturingReceiver{}, mw("outer"), mw("inner")))
+		PetStatusChangedWebhookHandler(&capturingReceiver{}, nil, mw("outer"), mw("inner")))
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 

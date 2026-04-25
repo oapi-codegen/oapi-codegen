@@ -42,7 +42,7 @@ func TestCallbackRoundTrip(t *testing.T) {
 	receiver := &fakeReceiver{}
 
 	mux := http.NewServeMux()
-	mux.Handle("POST /tree-planted", TreePlantedCallbackHandler(receiver))
+	mux.Handle("POST /tree-planted", TreePlantedCallbackHandler(receiver, nil))
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
@@ -74,7 +74,7 @@ func TestCallbackInitiatorRequestEditor(t *testing.T) {
 
 	receiver := &capturingReceiver{}
 	mux := http.NewServeMux()
-	mux.Handle("POST /cb", TreePlantedCallbackHandler(receiver))
+	mux.Handle("POST /cb", TreePlantedCallbackHandler(receiver, nil))
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
