@@ -1697,6 +1697,14 @@ func GenerateEcho5Receiver(t *template.Template, prefix string, ops []OperationD
 	return GenerateTemplates([]string{"echo/v5/echo-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
 }
 
+// GenerateGinReceiver renders the gin receiver template. Gin's handler
+// shape is `(c *gin.Context)` (no error return); binding errors abort
+// with c.JSON(400, gin.H{"error": ...}). Per-handler middleware is not
+// generated here -- gin's idiom prefers engine .Use() composition.
+func GenerateGinReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"gin/gin-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+}
+
 // GenerateTemplates used to generate templates
 func GenerateTemplates(templates []string, t *template.Template, ops any) (string, error) {
 	var generatedTemplates []string

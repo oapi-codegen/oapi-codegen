@@ -490,6 +490,15 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	// Webhook receiver (gin) -- (c *gin.Context) signature.
+	var ginWebhookReceiverOut string
+	if opts.Generate.GinServer && len(webhookOps) > 0 {
+		ginWebhookReceiverOut, err = GenerateGinReceiver(t, "Webhook", webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating gin webhook receiver: %w", err)
+		}
+	}
+
 	// Callback initiator pairs with the path Client. Emitted whenever
 	// Generate.Client is on and the spec declares any callbacks --
 	// callbacks predate 3.1 so this is not version-gated.
@@ -545,6 +554,15 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		echo5CallbackReceiverOut, err = GenerateEcho5Receiver(t, "Callback", callbackOps)
 		if err != nil {
 			return "", fmt.Errorf("error generating echo5 callback receiver: %w", err)
+		}
+	}
+
+	// Callback receiver (gin).
+	var ginCallbackReceiverOut string
+	if opts.Generate.GinServer && len(callbackOps) > 0 {
+		ginCallbackReceiverOut, err = GenerateGinReceiver(t, "Callback", callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating gin callback receiver: %w", err)
 		}
 	}
 
@@ -689,6 +707,18 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		_, err = w.WriteString(ginServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+		if ginWebhookReceiverOut != "" {
+			_, err = w.WriteString(ginWebhookReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing gin webhook receiver: %w", err)
+			}
+		}
+		if ginCallbackReceiverOut != "" {
+			_, err = w.WriteString(ginCallbackReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing gin callback receiver: %w", err)
+			}
 		}
 	}
 
