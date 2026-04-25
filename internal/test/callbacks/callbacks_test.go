@@ -56,7 +56,7 @@ func TestCallbackRoundTrip(t *testing.T) {
 
 	resp, err := initiator.TreePlanted(context.Background(), srv.URL+"/tree-planted", result)
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	require.Equal(t, http.StatusNoContent, resp.StatusCode)
 	require.True(t, receiver.called, "callback handler should have been called")
@@ -91,7 +91,7 @@ func TestCallbackInitiatorRequestEditor(t *testing.T) {
 		Success: false,
 	})
 	require.NoError(t, err)
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	assert.Equal(t, sigValue, receiver.gotHeaders.Get(sigHeader))
 }
