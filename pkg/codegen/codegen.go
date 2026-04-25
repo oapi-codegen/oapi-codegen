@@ -499,6 +499,15 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	// Webhook receiver (fiber v2) -- (c *fiber.Ctx) error signature.
+	var fiberWebhookReceiverOut string
+	if opts.Generate.FiberServer && len(webhookOps) > 0 {
+		fiberWebhookReceiverOut, err = GenerateFiberReceiver(t, "Webhook", webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating fiber webhook receiver: %w", err)
+		}
+	}
+
 	// Callback initiator pairs with the path Client. Emitted whenever
 	// Generate.Client is on and the spec declares any callbacks --
 	// callbacks predate 3.1 so this is not version-gated.
@@ -563,6 +572,15 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		ginCallbackReceiverOut, err = GenerateGinReceiver(t, "Callback", callbackOps)
 		if err != nil {
 			return "", fmt.Errorf("error generating gin callback receiver: %w", err)
+		}
+	}
+
+	// Callback receiver (fiber v2).
+	var fiberCallbackReceiverOut string
+	if opts.Generate.FiberServer && len(callbackOps) > 0 {
+		fiberCallbackReceiverOut, err = GenerateFiberReceiver(t, "Callback", callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating fiber callback receiver: %w", err)
 		}
 	}
 
@@ -700,6 +718,18 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		_, err = w.WriteString(fiberServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+		if fiberWebhookReceiverOut != "" {
+			_, err = w.WriteString(fiberWebhookReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing fiber webhook receiver: %w", err)
+			}
+		}
+		if fiberCallbackReceiverOut != "" {
+			_, err = w.WriteString(fiberCallbackReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing fiber callback receiver: %w", err)
+			}
 		}
 	}
 

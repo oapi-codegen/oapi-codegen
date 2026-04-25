@@ -1705,6 +1705,14 @@ func GenerateGinReceiver(t *template.Template, prefix string, ops []OperationDef
 	return GenerateTemplates([]string{"gin/gin-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
 }
 
+// GenerateFiberReceiver renders the fiber (v2) receiver template.
+// Fiber's handler shape is `(c *fiber.Ctx) error`; binding errors are
+// returned via fiber.NewError so fiber's error chain reports them as
+// 400. Per-handler middleware is not generated; use fiber.App.Use().
+func GenerateFiberReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"fiber/fiber-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+}
+
 // GenerateTemplates used to generate templates
 func GenerateTemplates(templates []string, t *template.Template, ops any) (string, error) {
 	var generatedTemplates []string

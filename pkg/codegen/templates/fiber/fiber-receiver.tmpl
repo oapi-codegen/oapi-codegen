@@ -1,0 +1,99 @@
+// {{.Prefix}}ReceiverInterface represents handlers for receiving inbound
+// {{.PrefixLower}} requests. Each {{.PrefixLower}} becomes a Handle*{{.Prefix}}
+// method that the implementation fills in. The caller mounts the per-
+// {{.PrefixLower}} fiber.Handler returned by {Op}{{.Prefix}}Handler at
+// whatever URL path they advertise to senders.
+type {{.Prefix}}ReceiverInterface interface {
+{{range .Operations -}}
+{{.SummaryAsComment}}
+// Handle{{.OperationId}}{{$.Prefix}} handles the {{.Method}} {{$.PrefixLower}} for {{.SourceName}}.
+Handle{{.OperationId}}{{$.Prefix}}(c *fiber.Ctx{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
+{{end}}
+}
+
+{{range .Operations -}}
+{{$opid := .OperationId -}}
+{{$srcName := .SourceName -}}
+// {{$opid}}{{$.Prefix}}Handler returns the fiber.Handler for the {{$srcName}} {{$.PrefixLower}}.
+// Mount this at the URL path advertised to {{$.PrefixLower}} senders. Errors
+// during parameter binding are returned via fiber.NewError so fiber's
+// error chain reports them as 400. Per-handler middleware is not
+// generated here; use fiber.App.Use() for engine-level middleware.
+func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface) fiber.Handler {
+    return func(c *fiber.Ctx) error {
+{{- if .RequiresParamObject}}
+        var err error
+        _ = err
+
+        // Parameter object where we will unmarshal all parameters from the context.
+        var params {{$opid}}Params
+{{if .QueryParams}}
+        var query url.Values
+        query, err = url.ParseQuery(string(c.Request().URI().QueryString()))
+        if err != nil {
+            return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for query string: %w", err).Error())
+        }
+{{end}}
+{{range $paramIdx, $param := .QueryParams}}
+        // ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
+        {{if .IsStyled}}
+        err = runtime.BindQueryParameterWithOptions("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", query, &params.{{.GoName}}, runtime.BindQueryParameterOptions{Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+        if err != nil {
+            return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
+        }
+        {{else}}
+        if paramValue := c.Query("{{.ParamName}}"); paramValue != "" {
+            {{if .IsPassThrough}}
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}paramValue
+            {{end}}
+            {{if .IsJson}}
+            var value {{.TypeDef}}
+            err = json.Unmarshal([]byte(paramValue), &value)
+            if err != nil {
+                return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
+            }
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
+            {{end}}
+        }{{if .Required}} else {
+            return fiber.NewError(fiber.StatusBadRequest, "Query argument {{.ParamName}} is required, but not found")
+        }{{end}}
+        {{end}}
+{{end}}
+{{if .HeaderParams}}
+        headers := c.GetReqHeaders()
+{{range $paramIdx, $param := .HeaderParams}}
+        // ------------- {{if .Required}}Required{{else}}Optional{{end}} header parameter "{{.ParamName}}" -------------
+        if valueList, found := headers[http.CanonicalHeaderKey("{{.ParamName}}")]; found {
+            var {{.GoName}} {{.TypeDef}}
+            n := len(valueList)
+            if n != 1 {
+                return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for header {{.ParamName}}, 1 is required, but %d found", n))
+            }
+            {{if .IsPassThrough}}
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}valueList[0]
+            {{end}}
+            {{if .IsJson}}
+            err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+            if err != nil {
+                return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
+            }
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
+            {{end}}
+            {{if .IsStyled}}
+            err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+            if err != nil {
+                return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
+            }
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
+            {{end}}
+        }{{if .Required}} else {
+            return fiber.NewError(fiber.StatusBadRequest, "Header parameter {{.ParamName}} is required, but not found")
+        }{{end}}
+{{end}}
+{{end}}
+{{- end}}
+        return si.Handle{{$opid}}{{$.Prefix}}(c{{if .RequiresParamObject}}, params{{end}})
+    }
+}
+
+{{end}}
