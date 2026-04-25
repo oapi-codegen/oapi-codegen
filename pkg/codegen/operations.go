@@ -1073,11 +1073,14 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 				Schema:   param.Schema,
 			})
 		}
-		// Merge extensions from the schema level and the parameter level.
-		// Parameter-level extensions take precedence over schema-level ones.
+		// Merge extensions, in order of increasing precedence:
+		//   1. extensions on the referenced schema (param.Spec.Schema.Value)
+		//   2. extensions placed as siblings of a $ref inside the
+		//      parameter's schema (param.Spec.Schema.Extensions)
+		//   3. extensions on the Parameter object itself
 		extensions := make(map[string]any)
-		if param.Spec.Schema != nil && param.Spec.Schema.Value != nil {
-			maps.Copy(extensions, param.Spec.Schema.Value.Extensions)
+		if param.Spec.Schema != nil {
+			maps.Copy(extensions, combinedSchemaExtensions(param.Spec.Schema))
 		}
 		maps.Copy(extensions, param.Spec.Extensions)
 		prop := Property{

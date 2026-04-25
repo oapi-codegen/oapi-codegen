@@ -1,0 +1,25 @@
+components:
+  schemas:
+    SomeInteger:
+      type: integer
+      x-go-type-import:
+        name: rate
+        path: golang.org/x/time/rate
+    SomeObject:
+      type: object
+      required:
+        - int_as_string
+        - int_as_big_int
+      properties:
+        int_as_string:
+          $ref: '#/components/schemas/SomeInteger'
+          x-go-type: string
+        int_as_rate_limit:
+          $ref: '#/components/schemas/SomeInteger'
+          x-go-type: rate.Limit
+        int_as_uuid:
+          $ref: '#/components/schemas/SomeInteger'
+          x-go-type: googleuuid.UUID
+          x-go-type-import:
+            path: github.com/google/uuid
+            name: googleuuid
