@@ -508,6 +508,15 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	// Webhook receiver (iris) -- (ctx iris.Context) signature.
+	var irisWebhookReceiverOut string
+	if opts.Generate.IrisServer && len(webhookOps) > 0 {
+		irisWebhookReceiverOut, err = GenerateIrisReceiver(t, "Webhook", webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating iris webhook receiver: %w", err)
+		}
+	}
+
 	// Callback initiator pairs with the path Client. Emitted whenever
 	// Generate.Client is on and the spec declares any callbacks --
 	// callbacks predate 3.1 so this is not version-gated.
@@ -584,6 +593,15 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	// Callback receiver (iris).
+	var irisCallbackReceiverOut string
+	if opts.Generate.IrisServer && len(callbackOps) > 0 {
+		irisCallbackReceiverOut, err = GenerateIrisReceiver(t, "Callback", callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating iris callback receiver: %w", err)
+		}
+	}
+
 	var inlinedSpec string
 	if opts.Generate.EmbeddedSpec {
 		inlinedSpec, err = GenerateInlinedSpec(t, globalState.importMapping, spec)
@@ -654,7 +672,18 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}
-
+		if irisWebhookReceiverOut != "" {
+			_, err = w.WriteString(irisWebhookReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing iris webhook receiver: %w", err)
+			}
+		}
+		if irisCallbackReceiverOut != "" {
+			_, err = w.WriteString(irisCallbackReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing iris callback receiver: %w", err)
+			}
+		}
 	}
 
 	if opts.Generate.EchoServer {

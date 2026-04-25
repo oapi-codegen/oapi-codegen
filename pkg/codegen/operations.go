@@ -1713,6 +1713,15 @@ func GenerateFiberReceiver(t *template.Template, prefix string, ops []OperationD
 	return GenerateTemplates([]string{"fiber/fiber-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
 }
 
+// GenerateIrisReceiver renders the iris receiver template. Iris's
+// handler shape is `(ctx iris.Context)` (no error return); binding
+// errors set ctx.StatusCode(400) plus ctx.WriteString and return.
+// Per-handler middleware is not generated; use app.Use() at the
+// engine or Party level.
+func GenerateIrisReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"iris/iris-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+}
+
 // GenerateTemplates used to generate templates
 func GenerateTemplates(templates []string, t *template.Template, ops any) (string, error) {
 	var generatedTemplates []string
