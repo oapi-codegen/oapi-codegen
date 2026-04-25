@@ -18,15 +18,23 @@ import (
 // BaseError defines model for BaseError.
 type BaseError struct {
 	// Code The underlying http status code
+	//
+	// Example: 500
 	Code int32 `json:"code"`
 
 	// Domain The domain where the error is originating from as defined by the service
+	//
+	// Example:
 	Domain string `json:"domain"`
 
 	// Message A simple message in english describing the error and can be returned to the consumer
+	//
+	// Example: Age cannot be less than 18
 	Message string `json:"message"`
 
 	// Metadata Any additional details to be conveyed as determined by the service. If present, will return map of key value pairs
+	//
+	// Example: {"propertyName":"propertyName is required"}
 	Metadata *map[string]string `json:"metadata,omitempty"`
 }
 
