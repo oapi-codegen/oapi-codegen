@@ -1080,6 +1080,17 @@ func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
 }
 
 func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
+	// An x-go-type-import is only meaningful in concert with an x-go-type
+	// override. Without one, the imported package is never referenced in
+	// the generated code, producing an "imported and not used" compile
+	// error. Require at least one x-go-type to be in scope (either next to
+	// the $ref or on the referenced schema) before collecting an import.
+	hasGoType := v.Extensions[extPropGoType] != nil ||
+		(v.Value != nil && v.Value.Extensions[extPropGoType] != nil)
+	if !hasGoType {
+		return nil, nil
+	}
+
 	var goTypeImportExt any
 
 	// check extensions next to the $ref before checking the schema itself
