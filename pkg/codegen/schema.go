@@ -325,14 +325,18 @@ func PropertiesEqual(a, b Property) bool {
 }
 
 // schemaIsNullable reports whether an OpenAPI schema represents a nullable
-// type, branching on the spec version detected at Generate() entry. In
-// OpenAPI 3.0 nullability is the explicit `nullable: true` flag; in
-// OpenAPI 3.1 the `nullable` keyword was removed in favor of including
+// type. In OpenAPI 3.0 nullability is the explicit `nullable: true` flag;
+// in OpenAPI 3.1 the `nullable` keyword was removed in favor of including
 // "null" in the type array (e.g. `type: ["string","null"]`).
 //
+// Precondition: globalState.is31 must be set (Generate() does this at
+// entry from swagger.IsOpenAPI31OrLater()). This helper does not take
+// the version flag explicitly because every call site is reached
+// through Generate(); calling it before globalState is initialized
+// will silently take the wrong branch.
+//
 // Cross-version misuse (a 3.1 spec using `nullable: true`, or a 3.0 spec
-// using `type: [..., "null"]`) is rejected by spec validation at the start
-// of Generate() unless Compatibility.SkipSpecValidation is set, so this
+// using `type: [..., "null"]`) is documented as invalid input -- this
 // helper trusts its input to use the version-appropriate idiom.
 func schemaIsNullable(s *openapi3.Schema) bool {
 	if s == nil {
@@ -374,6 +378,9 @@ type enumViaOneOfValue struct {
 // Gated on globalState.is31 (the keyword `const` lands in OpenAPI 3.1)
 // AND !SkipEnumViaOneOf so users can fall through to the standard union
 // generator on demand.
+//
+// Precondition: globalState (both is31 and options) must be initialized
+// (see schemaIsNullable for context).
 func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, bool) {
 	if !globalState.is31 {
 		return nil, false
@@ -424,6 +431,9 @@ func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, bool) {
 // 3.0) on a new paragraph after any existing description text. Non-
 // string values are JSON-encoded so structured examples render
 // readably.
+//
+// Precondition: globalState.is31 must be set (see schemaIsNullable
+// for context).
 func describeWithExamples(description string, schema *openapi3.Schema) string {
 	if schema == nil {
 		return description
@@ -474,6 +484,11 @@ func formatExampleValue(v any) string {
 // the nullability indicator (handled separately by schemaIsNullable); we
 // strip it here so the rest of the codegen can keep dispatching with
 // `Is("...")` as it always has.
+//
+// Precondition: globalState.is31 must be set (see schemaIsNullable
+// for context). The early-return on `!globalState.is31` is correct only
+// when the global state has actually been initialized -- a call before
+// Generate() runs would silently use the 3.0 branch.
 func schemaPrimaryType(t *openapi3.Types) *openapi3.Types {
 	if t == nil || !globalState.is31 {
 		return t

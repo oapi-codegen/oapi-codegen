@@ -1083,7 +1083,12 @@ func CallbackOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, e
 		if pathItem == nil {
 			continue
 		}
-		for _, parentOp := range pathItem.Operations() {
+		// Iterate path-item operations in sorted method order for
+		// deterministic output across runs (Operations() returns a
+		// map; range order is randomized).
+		parentOps := pathItem.Operations()
+		for _, parentMethod := range SortedMapKeys(parentOps) {
+			parentOp := parentOps[parentMethod]
 			if len(parentOp.Callbacks) == 0 {
 				continue
 			}
