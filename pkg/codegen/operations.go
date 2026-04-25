@@ -1674,6 +1674,13 @@ func GenerateChiReceiver(t *template.Template, prefix string, ops []OperationDef
 	return GenerateTemplates([]string{"chi/chi-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
 }
 
+// GenerateGorillaReceiver renders the gorilla/mux receiver template.
+// Gorilla shares stdhttp's (w, r) handler signature, so the template
+// is structurally identical to stdhttp's.
+func GenerateGorillaReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"gorilla/gorilla-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+}
+
 // GenerateTemplates used to generate templates
 func GenerateTemplates(templates []string, t *template.Template, ops any) (string, error) {
 	var generatedTemplates []string
