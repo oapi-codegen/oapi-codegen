@@ -332,6 +332,13 @@ type OperationDefinition struct {
 	IsAlias             bool                    // True when this path is a $ref alias of another path item
 	AliasTarget         string                  // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
 	PathItemRef         string                  // The path item's $ref (if any); used to qualify externally-loaded schemas referenced from this operation's responses
+
+	// IsWebhook is true when this OperationDefinition was sourced from
+	// spec.Webhooks (OpenAPI 3.1+). Webhook operations have no path
+	// template; the target URL is supplied per-call by the initiator.
+	IsWebhook bool
+	// WebhookName is the spec.Webhooks map key when IsWebhook is true.
+	WebhookName string
 }
 
 // HandlerName returns the OperationId to use when referencing the server-side
@@ -895,6 +902,104 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	return operations, nil
 }
 
+// WebhookOperationDefinitions extracts OpenAPI 3.1+ webhook operations
+// from swagger.Webhooks into the same OperationDefinition shape used for
+// path operations, so they flow through the same downstream pipeline
+// (body / response generation, type definitions, etc.) but are routed
+// to webhook-specific templates.
+//
+// kin-openapi only populates the Webhooks field for OpenAPI 3.1+
+// documents, so a missing/empty map naturally short-circuits this for
+// 3.0 specs without an explicit version check.
+//
+// The result mirrors OperationDefinitions in structure, minus the
+// path-alias logic (webhooks have no path template) and the path-
+// parameter extraction (webhooks have no path params).
+func WebhookOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
+	var operations []OperationDefinition
+	if swagger == nil || len(swagger.Webhooks) == 0 {
+		return operations, nil
+	}
+
+	for _, webhookName := range SortedMapKeys(swagger.Webhooks) {
+		pathItem := swagger.Webhooks[webhookName]
+		if pathItem == nil {
+			continue
+		}
+
+		// Path-item-level parameters apply to every method on the
+		// webhook (rare for webhooks, but honored defensively).
+		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
+		if err != nil {
+			return nil, fmt.Errorf("error describing webhook %q parameters: %w", webhookName, err)
+		}
+
+		pathOps := pathItem.Operations()
+		for _, opName := range SortedMapKeys(pathOps) {
+			op := pathOps[opName]
+
+			// Prefer an explicit operationId on the webhook operation;
+			// otherwise derive from the webhook map key. Either way,
+			// run through the configured name normalizer.
+			operationId := op.OperationID
+			if operationId == "" {
+				operationId = webhookName
+			}
+			operationId = nameNormalizer(operationId)
+			operationId = typeNamePrefix(operationId) + operationId
+
+			localParams, err := DescribeParameters(op.Parameters, []string{operationId + "Params"})
+			if err != nil {
+				return nil, fmt.Errorf("error describing webhook %q operation params: %w", webhookName, err)
+			}
+			allParams, err := CombineOperationParameters(globalParams, localParams)
+			if err != nil {
+				return nil, err
+			}
+
+			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(operationId, op.RequestBody)
+			if err != nil {
+				return nil, fmt.Errorf("error generating body definitions for webhook %q: %w", webhookName, err)
+			}
+
+			responseDefinitions, err := GenerateResponseDefinitions(operationId, op.Responses.Map())
+			if err != nil {
+				return nil, fmt.Errorf("error generating response definitions for webhook %q: %w", webhookName, err)
+			}
+
+			opDef := OperationDefinition{
+				HeaderParams:    FilterParameterDefinitionByType(allParams, "header"),
+				QueryParams:     FilterParameterDefinitionByType(allParams, "query"),
+				CookieParams:    FilterParameterDefinitionByType(allParams, "cookie"),
+				OperationId:     nameNormalizer(operationId),
+				Summary:         op.Summary,
+				Method:          opName,
+				Path:            "",
+				Spec:            op,
+				Bodies:          bodyDefinitions,
+				Responses:       responseDefinitions,
+				TypeDefinitions: typeDefinitions,
+				IsWebhook:       true,
+				WebhookName:     webhookName,
+			}
+
+			if op.Security != nil {
+				opDef.SecurityDefinitions = DescribeSecurityDefinition(*op.Security)
+			} else {
+				opDef.SecurityDefinitions = DescribeSecurityDefinition(swagger.Security)
+			}
+
+			if op.RequestBody != nil {
+				opDef.BodyRequired = op.RequestBody.Value.Required
+			}
+
+			opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
+			operations = append(operations, opDef)
+		}
+	}
+	return operations, nil
+}
+
 func generateDefaultOperationID(opName string, requestPath string) (string, error) {
 	if opName == "" {
 		return "", fmt.Errorf("operation name cannot be an empty string")
@@ -1354,6 +1459,25 @@ func GenerateClient(t *template.Template, ops []OperationDefinition) (string, er
 // unmarshaling.
 func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"client-with-responses.tmpl"}, t, ops)
+}
+
+// GenerateWebhookInitiator generates the WebhookInitiator -- the
+// client-side analog for OpenAPI 3.1 webhooks. It mirrors the path
+// Client (struct + options + per-method calls + request builders) but
+// takes the target URL per-call instead of from a stored Server field.
+// The caller passes only the webhook OperationDefinitions (gathered via
+// WebhookOperationDefinitions); path operations are emitted by the
+// regular Client templates.
+func GenerateWebhookInitiator(t *template.Template, webhookOps []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"webhook-initiator.tmpl"}, t, webhookOps)
+}
+
+// GenerateStdHTTPWebhookReceiver generates the WebhookReceiver -- the
+// server-side analog for OpenAPI 3.1 webhooks. The caller mounts each
+// per-webhook http.Handler (returned by the generated <Op>WebhookHandler
+// factory) at the URL path of their choice.
+func GenerateStdHTTPWebhookReceiver(t *template.Template, webhookOps []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"stdhttp/std-http-webhook-receiver.tmpl"}, t, webhookOps)
 }
 
 // GenerateTemplates used to generate templates

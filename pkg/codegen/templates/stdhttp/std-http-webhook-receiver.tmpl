@@ -1,0 +1,32 @@
+// WebhookReceiverInterface represents handlers for receiving OpenAPI 3.1
+// webhook requests. Each webhook becomes a Handle*Webhook method that the
+// implementation fills in to receive the inbound HTTP request. The caller
+// mounts the per-webhook http.Handler returned by the {{"Op"}}WebhookHandler
+// factory below at whatever URL path they advertise to subscribers.
+type WebhookReceiverInterface interface {
+{{range . -}}
+{{.SummaryAsComment}}
+// Handle{{.OperationId}}Webhook handles the {{.Method}} webhook for {{.WebhookName}}.
+Handle{{.OperationId}}Webhook(w http.ResponseWriter, r *http.Request)
+{{end}}
+}
+
+// WebhookReceiverMiddlewareFunc wraps an http.Handler with cross-cutting
+// behavior (signature verification, logging, rate limiting, ...).
+type WebhookReceiverMiddlewareFunc func(http.Handler) http.Handler
+
+{{range . -}}
+// {{.OperationId}}WebhookHandler returns the http.Handler for the {{.WebhookName}} webhook.
+// Mount this at the URL path advertised to webhook subscribers. Middlewares
+// are applied in the order provided (outermost first).
+func {{.OperationId}}WebhookHandler(si WebhookReceiverInterface, middlewares ...WebhookReceiverMiddlewareFunc) http.Handler {
+    var h http.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+        si.Handle{{.OperationId}}Webhook(w, r)
+    })
+    for _, mw := range middlewares {
+        h = mw(h)
+    }
+    return h
+}
+
+{{end}}

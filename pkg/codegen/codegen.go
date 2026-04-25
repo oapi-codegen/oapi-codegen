@@ -254,14 +254,27 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", fmt.Errorf("error creating operation definitions: %w", err)
 	}
 
-	xGoTypeImports, err := OperationImports(ops)
+	// Webhooks (OpenAPI 3.1+) flow through the same OperationDefinition
+	// shape as paths but render via webhook-specific templates. The
+	// gather walks swagger.Webhooks unconditionally -- the map is only
+	// populated by kin-openapi for 3.1+ documents, so 3.0 specs return
+	// an empty slice naturally. allOps is used for cross-cutting passes
+	// (type defs, import gathering); ops and webhookOps are passed
+	// separately to path-vs-webhook template generators.
+	webhookOps, err := WebhookOperationDefinitions(spec)
+	if err != nil {
+		return "", fmt.Errorf("error creating webhook operation definitions: %w", err)
+	}
+	allOps := append(append([]OperationDefinition{}, ops...), webhookOps...)
+
+	xGoTypeImports, err := OperationImports(allOps)
 	if err != nil {
 		return "", fmt.Errorf("error getting operation imports: %w", err)
 	}
 
 	var typeDefinitions, constantDefinitions string
 	if opts.Generate.Models {
-		typeDefinitions, err = GenerateTypeDefinitions(t, spec, ops, opts.OutputOptions.ExcludeSchemas)
+		typeDefinitions, err = GenerateTypeDefinitions(t, spec, allOps, opts.OutputOptions.ExcludeSchemas)
 		if err != nil {
 			return "", fmt.Errorf("error generating type definitions: %w", err)
 		}
@@ -407,6 +420,27 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	// Webhook initiator pairs with the path Client. Emitted only when
+	// Generate.Client is on AND the spec has webhooks (3.1+).
+	var webhookInitiatorOut string
+	if opts.Generate.Client && len(webhookOps) > 0 {
+		webhookInitiatorOut, err = GenerateWebhookInitiator(t, webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating webhook initiator: %w", err)
+		}
+	}
+
+	// Webhook receiver (stdhttp) pairs with the path StdHTTPServer.
+	// Emitted only when Generate.StdHTTPServer is on AND the spec has
+	// webhooks (3.1+).
+	var stdHTTPWebhookReceiverOut string
+	if opts.Generate.StdHTTPServer && len(webhookOps) > 0 {
+		stdHTTPWebhookReceiverOut, err = GenerateStdHTTPWebhookReceiver(t, webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating stdhttp webhook receiver: %w", err)
+		}
+	}
+
 	var inlinedSpec string
 	if opts.Generate.EmbeddedSpec {
 		inlinedSpec, err = GenerateInlinedSpec(t, globalState.importMapping, spec)
@@ -457,6 +491,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		_, err = w.WriteString(clientWithResponsesOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing client: %w", err)
+		}
+		if webhookInitiatorOut != "" {
+			_, err = w.WriteString(webhookInitiatorOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing webhook initiator: %w", err)
+			}
 		}
 	}
 
@@ -514,6 +554,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		_, err = w.WriteString(stdHTTPServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+		if stdHTTPWebhookReceiverOut != "" {
+			_, err = w.WriteString(stdHTTPWebhookReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing stdhttp webhook receiver: %w", err)
+			}
 		}
 	}
 
