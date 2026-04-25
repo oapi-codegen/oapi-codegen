@@ -329,7 +329,24 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	}
 	result.ExclusiveMax = s1.ExclusiveMax
 
-	if s1.Nullable != s2.Nullable {
+	// Compare nullability via schemaIsNullable so this works the same way
+	// regardless of spec version: in 3.0 it reads s.Nullable, in 3.1 it
+	// reads "null" from the type array. Type merging itself is NOT version
+	// branched -- the equalTypes() check at result.Type assignment above
+	// uses the same slice-comparison code path in both modes:
+	//
+	//   3.0: ["string"] vs ["string"]                 -> equal -> merged
+	//   3.1: ["string","null"] vs ["string","null"]   -> equal -> merged
+	//   3.1 mismatch: ["string","null"] vs ["string"] -> length differs
+	//                                                    -> error from
+	//                                                       equalTypes
+	//
+	// Because result.Type was already assigned (line 232) and carries any
+	// "null" entry forward, the merged result is correctly nullable in 3.1
+	// without needing to touch result.Nullable. The result.Nullable copy
+	// below is a no-op in 3.1 (s1.Nullable is always false there) but kept
+	// for 3.0 correctness, where Nullable is the only nullability carrier.
+	if schemaIsNullable(&s1) != schemaIsNullable(&s2) {
 		return openapi3.Schema{}, errors.New("merging two schemas with different Nullable")
 
 	}

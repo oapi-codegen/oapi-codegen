@@ -49,8 +49,16 @@ var templates embed.FS
 // globalState stores all global state. Please don't put global state anywhere
 // else so that we can easily track it.
 var globalState struct {
-	options       Configuration
-	spec          *openapi3.T
+	options Configuration
+	spec    *openapi3.T
+	// is31 is true when the loaded spec declares OpenAPI version >=3.1.
+	// All version-aware behavior (e.g. nullable detection, webhook emission)
+	// reads from this field. Do NOT expose this field to templates --
+	// templates are version-blind and consume pre-computed derived fields
+	// (e.g. Schema.Nullable) populated by version-aware Go helpers.
+	// Adding `is31` to TemplateFunctions or branching on the OpenAPI
+	// version inside a template is a layering violation.
+	is31          bool
 	importMapping importMap
 	// initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
 	// List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
@@ -150,6 +158,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	// This is global state
 	globalState.options = opts
 	globalState.spec = spec
+	globalState.is31 = spec.IsOpenAPI31OrLater()
 	globalState.importMapping = constructImportMapping(opts.ImportMapping)
 	if opts.OutputOptions.TypeMapping != nil {
 		globalState.typeMapping = DefaultTypeMapping.Merge(*opts.OutputOptions.TypeMapping)

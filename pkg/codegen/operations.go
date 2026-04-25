@@ -1121,7 +1121,10 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			if err != nil {
 				return nil, fmt.Errorf("error generating response header definition: %w", err)
 			}
-			nullable := header.Value.Schema != nil && header.Value.Schema.Value != nil && header.Value.Schema.Value.Nullable
+			var nullable bool
+			if header.Value.Schema != nil {
+				nullable = schemaIsNullable(header.Value.Schema.Value)
+			}
 			headerDefinition := ResponseHeaderDefinition{
 				Name:     headerName,
 				GoName:   SchemaNameToTypeName(headerName),

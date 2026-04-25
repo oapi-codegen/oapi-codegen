@@ -323,6 +323,49 @@ func PropertiesEqual(a, b Property) bool {
 	return a.JsonFieldName == b.JsonFieldName && a.Schema.TypeDecl() == b.Schema.TypeDecl() && a.Required == b.Required
 }
 
+// schemaIsNullable reports whether an OpenAPI schema represents a nullable
+// type, branching on the spec version detected at Generate() entry. In
+// OpenAPI 3.0 nullability is the explicit `nullable: true` flag; in
+// OpenAPI 3.1 the `nullable` keyword was removed in favor of including
+// "null" in the type array (e.g. `type: ["string","null"]`).
+//
+// Cross-version misuse (a 3.1 spec using `nullable: true`, or a 3.0 spec
+// using `type: [..., "null"]`) is rejected by spec validation at the start
+// of Generate() unless Compatibility.SkipSpecValidation is set, so this
+// helper trusts its input to use the version-appropriate idiom.
+func schemaIsNullable(s *openapi3.Schema) bool {
+	if s == nil {
+		return false
+	}
+	if globalState.is31 {
+		return s.Type != nil && s.Type.Includes("null")
+	}
+	return s.Nullable
+}
+
+// schemaPrimaryType returns the type slice used for primitive-type dispatch
+// (`*Types.Is("string")` etc.). In OpenAPI 3.0 the type slice has at most
+// one entry and is returned unchanged. In OpenAPI 3.1 the "null" entry is
+// the nullability indicator (handled separately by schemaIsNullable); we
+// strip it here so the rest of the codegen can keep dispatching with
+// `Is("...")` as it always has.
+func schemaPrimaryType(t *openapi3.Types) *openapi3.Types {
+	if t == nil || !globalState.is31 {
+		return t
+	}
+	s := t.Slice()
+	if len(s) <= 1 {
+		return t
+	}
+	stripped := make(openapi3.Types, 0, len(s))
+	for _, name := range s {
+		if name != "null" {
+			stripped = append(stripped, name)
+		}
+	}
+	return &stripped
+}
+
 func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// Add a fallback value in case the sref is nil.
 	// i.e. the parent schema defines a type:array, but the array has
@@ -574,7 +617,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					Schema:        pSchema,
 					Required:      required,
 					Description:   description,
-					Nullable:      p.Value.Nullable,
+					Nullable:      schemaIsNullable(p.Value),
 					ReadOnly:      p.Value.ReadOnly,
 					WriteOnly:     p.Value.WriteOnly,
 					Extensions:    combinedSchemaExtensions(p),
@@ -697,7 +740,13 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 // all non-object types.
 func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schema) error {
 	f := schema.Format
-	t := schema.Type
+	// In OpenAPI 3.1, `type` may be a multi-element array including "null"
+	// to express nullability. The dispatch below uses `*Types.Is("...")`,
+	// which only matches single-element type slices. Strip "null" up front
+	// so the dispatch sees the underlying primitive type. Nullability
+	// itself was already captured by schemaIsNullable() at the call sites
+	// that wrap the result in a pointer.
+	t := schemaPrimaryType(schema.Type)
 
 	if t.Is("array") {
 		// For arrays, we'll get the type of the Items and throw a
@@ -725,7 +774,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		}
 
 		typeDeclaration := arrayType.TypeDecl()
-		if arrayType.OAPISchema != nil && arrayType.OAPISchema.Nullable {
+		if schemaIsNullable(arrayType.OAPISchema) {
 			if globalState.options.OutputOptions.NullableType {
 				typeDeclaration = "nullable.Nullable[" + typeDeclaration + "]"
 			} else {
@@ -906,7 +955,7 @@ func additionalPropertiesType(schema Schema) string {
 	if schema.AdditionalPropertiesType.RefType != "" {
 		addPropsType = schema.AdditionalPropertiesType.RefType
 	}
-	if schema.AdditionalPropertiesType.OAPISchema != nil && schema.AdditionalPropertiesType.OAPISchema.Nullable {
+	if schemaIsNullable(schema.AdditionalPropertiesType.OAPISchema) {
 		addPropsType = "*" + addPropsType
 	}
 	return addPropsType
