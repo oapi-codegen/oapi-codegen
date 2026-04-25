@@ -102,11 +102,38 @@
                     defer writer.Close()
                     return {{if $hasBodyVar}}response.Body{{else}}response{{end}}(writer);
                 {{else -}}
-                    if closer, ok := response.Body.(io.ReadCloser); ok {
-                        defer closer.Close()
-                    }
-                    _, err := io.Copy(ctx.Response().BodyWriter(), response.Body)
-                    return err
+                    {{if .IsStreamingContentType -}}
+                        // Fiber/fasthttp streams through a callback: fasthttp emits
+                        // a chunk each time we call w.Flush(), so clients see
+                        // streaming data immediately instead of waiting on buffering.
+                        ctx.Response().SetBodyStreamWriter(func(w *bufio.Writer) {
+                            if closer, ok := response.Body.(io.ReadCloser); ok {
+                                defer closer.Close()
+                            }
+                            buf := make([]byte, 4096)
+                            for {
+                                n, err := response.Body.Read(buf)
+                                if n > 0 {
+                                    if _, writeErr := w.Write(buf[:n]); writeErr != nil {
+                                        return
+                                    }
+                                    if flushErr := w.Flush(); flushErr != nil {
+                                        return
+                                    }
+                                }
+                                if err != nil {
+                                    return
+                                }
+                            }
+                        })
+                        return nil
+                    {{else -}}
+                        if closer, ok := response.Body.(io.ReadCloser); ok {
+                            defer closer.Close()
+                        }
+                        _, err := io.Copy(ctx.Response().BodyWriter(), response.Body)
+                        return err
+                    {{end}}{{/* if .IsStreamingContentType */ -}}
                 {{end}}{{/* if eq .NameTag "JSON" */ -}}
             }
         {{end}}

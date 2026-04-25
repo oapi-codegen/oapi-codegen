@@ -9,15 +9,16 @@ type MiddlewareFunc iris.Handler
 func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
 {{if or .RequiresParamObject (gt (len .PathParams) 0) }}
     var err error
+    _ = err
 {{end}}
 
 {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
     var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
 {{if .IsPassThrough}}
-    {{$varName}} = ctx.URLParam("{{.ParamName}}")
+    {{$varName}} = ctx.Params().Get("{{.ParamName}}")
 {{end}}
 {{if .IsJson}}
-    err = json.Unmarshal([]byte(ctx.URLParam("{{.ParamName}}")), &{{$varName}})
+    err = json.Unmarshal([]byte(ctx.Params().Get("{{.ParamName}}")), &{{$varName}})
     if err != nil {
     	ctx.StatusCode(http.StatusBadRequest)
         ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
@@ -53,7 +54,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
         return
     }
     {{else}}
-    if paramValue := ctx.QueryParam("{{.ParamName}}"); paramValue != "" {
+    if paramValue := ctx.URLParam("{{.ParamName}}"); paramValue != "" {
     {{if .IsPassThrough}}
     params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}paramValue
     {{end}}
@@ -115,14 +116,14 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
 {{end}}
 
 {{range .CookieParams}}
-    if cookie, err := ctx.Cookie("{{.ParamName}}"); err == nil {
+    if cookie := ctx.GetCookie("{{.ParamName}}"); cookie != "" {
     {{if .IsPassThrough}}
-    params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}cookie.Value
+    params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}cookie
     {{end}}
     {{if .IsJson}}
     var value {{.TypeDef}}
     var decoded string
-    decoded, err := url.QueryUnescape(cookie.Value)
+    decoded, err := url.QueryUnescape(cookie)
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.WriteString("Error unescaping cookie parameter '{{.ParamName}}'")
@@ -138,7 +139,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     {{end}}
     {{if .IsStyled}}
     var value {{.TypeDef}}
-    err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+    err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.Writef("Invalid format for parameter {{.ParamName}}: %s", err)

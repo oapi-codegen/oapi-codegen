@@ -124,6 +124,7 @@ func (w *ServerInterfaceWrapper) RequiredTextBody(ctx iris.Context) {
 func (w *ServerInterfaceWrapper) ReservedGoKeywordParameters(ctx iris.Context) {
 
 	var err error
+	_ = err
 
 	// ------------- Path parameter "type" -------------
 	var pType string
@@ -178,6 +179,7 @@ func (w *ServerInterfaceWrapper) URLEncodedExample(ctx iris.Context) {
 func (w *ServerInterfaceWrapper) HeadersExample(ctx iris.Context) {
 
 	var err error
+	_ = err
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params HeadersExampleParams

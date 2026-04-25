@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: echov5params
+generate:
+  client: true
+output: client.gen.go

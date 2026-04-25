@@ -309,6 +309,14 @@ func (r GetHTTPPetResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetHTTPPetResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // GetHTTPPetWithResponse request returning *GetHTTPPetResponse
 func (c *ClientWithResponses) GetHTTPPetWithResponse(ctx context.Context, petID string, reqEditors ...RequestEditorFn) (*GetHTTPPetResponse, error) {
 	rsp, err := c.GetHTTPPet(ctx, petID, reqEditors...)
@@ -364,11 +372,12 @@ type MiddlewareFunc func(http.Handler) http.Handler
 func (siw *ServerInterfaceWrapper) GetHTTPPet(w http.ResponseWriter, r *http.Request) {
 
 	var err error
+	_ = err
 
 	// ------------- Path parameter "petId" -------------
 	var petID string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "petId", mux.Vars(r)["petId"], &petID, runtime.BindStyledParameterOptions{Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "petId", mux.Vars(r)["petId"], &petID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "petId", Err: err})
 		return

@@ -594,6 +594,19 @@ func (r ResponseContentDefinition) IsJSON() bool {
 	return util.IsMediaTypeJson(r.ContentType)
 }
 
+// IsStreamingContentType reports whether this response's media type matches
+// any configured streaming-content-types pattern (defaults merged with
+// OutputOptions.StreamingContentTypes). Templates use this to emit a
+// flush-per-chunk streaming path instead of a buffered io.Copy.
+func (r ResponseContentDefinition) IsStreamingContentType() bool {
+	for _, re := range globalState.streamingContentTypeRegexes {
+		if re.MatchString(r.ContentType) {
+			return true
+		}
+	}
+	return false
+}
+
 type ResponseHeaderDefinition struct {
 	Name     string
 	GoName   string
@@ -1060,11 +1073,14 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 				Schema:   param.Schema,
 			})
 		}
-		// Merge extensions from the schema level and the parameter level.
-		// Parameter-level extensions take precedence over schema-level ones.
+		// Merge extensions, in order of increasing precedence:
+		//   1. extensions on the referenced schema (param.Spec.Schema.Value)
+		//   2. extensions placed as siblings of a $ref inside the
+		//      parameter's schema (param.Spec.Schema.Extensions)
+		//   3. extensions on the Parameter object itself
 		extensions := make(map[string]any)
-		if param.Spec.Schema != nil && param.Spec.Schema.Value != nil {
-			maps.Copy(extensions, param.Spec.Schema.Value.Extensions)
+		if param.Spec.Schema != nil {
+			maps.Copy(extensions, combinedSchemaExtensions(param.Spec.Schema))
 		}
 		maps.Copy(extensions, param.Spec.Extensions)
 		prop := Property{
