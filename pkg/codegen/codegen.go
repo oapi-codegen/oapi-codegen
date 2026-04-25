@@ -481,6 +481,15 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	// Webhook receiver (echo v5) -- (ctx *echo.Context) error signature.
+	var echo5WebhookReceiverOut string
+	if opts.Generate.Echo5Server && len(webhookOps) > 0 {
+		echo5WebhookReceiverOut, err = GenerateEcho5Receiver(t, "Webhook", webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating echo5 webhook receiver: %w", err)
+		}
+	}
+
 	// Callback initiator pairs with the path Client. Emitted whenever
 	// Generate.Client is on and the spec declares any callbacks --
 	// callbacks predate 3.1 so this is not version-gated.
@@ -527,6 +536,15 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		echoCallbackReceiverOut, err = GenerateEchoReceiver(t, "Callback", callbackOps)
 		if err != nil {
 			return "", fmt.Errorf("error generating echo callback receiver: %w", err)
+		}
+	}
+
+	// Callback receiver (echo v5).
+	var echo5CallbackReceiverOut string
+	if opts.Generate.Echo5Server && len(callbackOps) > 0 {
+		echo5CallbackReceiverOut, err = GenerateEcho5Receiver(t, "Callback", callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating echo5 callback receiver: %w", err)
 		}
 	}
 
@@ -626,6 +644,18 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		_, err = w.WriteString(echo5ServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+		if echo5WebhookReceiverOut != "" {
+			_, err = w.WriteString(echo5WebhookReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing echo5 webhook receiver: %w", err)
+			}
+		}
+		if echo5CallbackReceiverOut != "" {
+			_, err = w.WriteString(echo5CallbackReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing echo5 callback receiver: %w", err)
+			}
 		}
 	}
 

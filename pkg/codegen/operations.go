@@ -1690,6 +1690,13 @@ func GenerateEchoReceiver(t *template.Template, prefix string, ops []OperationDe
 	return GenerateTemplates([]string{"echo/echo-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
 }
 
+// GenerateEcho5Receiver renders the echo (v5) receiver template. Same
+// shape as v4 but with `*echo.Context` (pointer) -- the only API
+// difference between echo v4 and v5 that affects the receiver.
+func GenerateEcho5Receiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"echo/v5/echo-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+}
+
 // GenerateTemplates used to generate templates
 func GenerateTemplates(templates []string, t *template.Template, ops any) (string, error) {
 	var generatedTemplates []string
