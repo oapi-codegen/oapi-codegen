@@ -1,5 +1,5 @@
-# yaml-language-server: $schema=../../../configuration-schema.json
-package: webhooks
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: stdhttp
 generate:
   models: true
   client: true

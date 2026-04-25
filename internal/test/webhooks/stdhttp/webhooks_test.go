@@ -1,8 +1,8 @@
-// Package webhooks tests the OpenAPI 3.1 webhook codegen end-to-end:
+// Package stdhttp tests the OpenAPI 3.1 webhook codegen end-to-end:
 // the WebhookInitiator fires a webhook against an httptest.Server that
 // registers the WebhookReceiverInterface handler, and the test asserts
 // the payload round-trips intact.
-package webhooks
+package stdhttp
 
 import (
 	"context"

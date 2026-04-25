@@ -1,9 +1,0 @@
-# yaml-language-server: $schema=../../../configuration-schema.json
-package: webhooks_iris
-generate:
-  models: true
-  client: true
-  iris-server: true
-output-options:
-  skip-prune: true
-output: webhooks_iris.gen.go
