@@ -343,6 +343,76 @@ func schemaIsNullable(s *openapi3.Schema) bool {
 	return s.Nullable
 }
 
+// enumViaOneOfValue is one branch of an OpenAPI 3.1 enum-via-oneOf schema.
+// Title is the per-branch identifier (becomes the Go constant name); Value
+// is the stringified `const` (the Go literal, unquoted; the enum
+// generation pipeline applies the appropriate quoting via ValueWrapper).
+type enumViaOneOfValue struct {
+	Title string
+	Value string
+}
+
+// detectEnumViaOneOf reports whether the schema matches the OpenAPI 3.1
+// enum-via-oneOf idiom and, if so, returns the per-branch values in
+// declaration order.
+//
+// The idiom:
+//
+//	Severity:
+//	  type: integer        # or "string"
+//	  oneOf:
+//	    - title: HIGH
+//	      const: 2
+//	      description: An urgent problem    # optional
+//	    - ...
+//
+// All members must carry both `title` and `const`; no member may itself
+// be a composition (oneOf/allOf/anyOf) or declare properties. The outer
+// schema's primary type must be a scalar (string or integer).
+//
+// Gated on globalState.is31 (the keyword `const` lands in OpenAPI 3.1)
+// AND !SkipEnumViaOneOf so users can fall through to the standard union
+// generator on demand.
+func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, bool) {
+	if !globalState.is31 {
+		return nil, false
+	}
+	if globalState.options.OutputOptions.SkipEnumViaOneOf {
+		return nil, false
+	}
+	if schema == nil || len(schema.OneOf) == 0 {
+		return nil, false
+	}
+	primary := schemaPrimaryType(schema.Type)
+	if primary == nil {
+		return nil, false
+	}
+	if !primary.Is("string") && !primary.Is("integer") {
+		return nil, false
+	}
+	items := make([]enumViaOneOfValue, 0, len(schema.OneOf))
+	for _, ref := range schema.OneOf {
+		if ref == nil || ref.Value == nil {
+			return nil, false
+		}
+		m := ref.Value
+		if m.Title == "" || m.Const == nil {
+			return nil, false
+		}
+		if len(m.OneOf) > 0 || len(m.AllOf) > 0 || len(m.AnyOf) > 0 {
+			return nil, false
+		}
+		if len(m.Properties) > 0 {
+			return nil, false
+		}
+		items = append(items, enumViaOneOfValue{
+			Title: m.Title,
+			Value: fmt.Sprintf("%v", m.Const),
+		})
+	}
+	return items, true
+}
+
 // schemaPrimaryType returns the type slice used for primitive-type dispatch
 // (`*Types.Is("string")` etc.). In OpenAPI 3.0 the type slice has at most
 // one entry and is returned unchanged. In OpenAPI 3.1 the "null" entry is
@@ -498,6 +568,46 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			mergedSchema.SkipOptionalPointer = skipOptionalPointer
 		}
 		return mergedSchema, nil
+	}
+
+	// OpenAPI 3.1 enum-via-oneOf: a scalar schema whose oneOf branches
+	// each carry `title` + `const` is rendered as a Go typed enum, not as
+	// a union. Detection is gated by version + the SkipEnumViaOneOf flag;
+	// when the idiom does not match, fall through to standard handling
+	// (which routes oneOf into generateUnion further below).
+	if items, ok := detectEnumViaOneOf(schema); ok {
+		if err := oapiSchemaToGoType(schema, path, &outSchema); err != nil {
+			return Schema{}, fmt.Errorf("error resolving primitive type for enum-via-oneOf: %w", err)
+		}
+		// Force a typed declaration -- enums must not be aliased.
+		outSchema.DefineViaAlias = false
+		outSchema.EnumValues = make(map[string]string, len(items))
+		for _, it := range items {
+			outSchema.EnumValues[SchemaNameToTypeName(it.Title)] = it.Value
+		}
+		// Non-toplevel schemas need an explicit AdditionalType so the
+		// downstream EnumDefinition collector picks them up; toplevel
+		// schemas are already collected via the components walk.
+		if len(path) > 1 {
+			var typeName string
+			if extension, ok := schema.Extensions[extGoTypeName]; ok {
+				tn, err := extString(extension)
+				if err != nil {
+					return outSchema, fmt.Errorf("invalid value for %q: %w", extGoTypeName, err)
+				}
+				typeName = tn
+			} else {
+				typeName = SchemaNameToTypeName(PathToTypeName(path))
+			}
+			typeDef := TypeDefinition{
+				TypeName: typeName,
+				JsonName: strings.Join(path, "."),
+				Schema:   outSchema,
+			}
+			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, typeDef)
+			outSchema.RefType = typeName
+		}
+		return outSchema, nil
 	}
 
 	// Schema type and format, eg. string / binary
