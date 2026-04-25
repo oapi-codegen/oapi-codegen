@@ -149,11 +149,17 @@ func isExtensionOnlySchema(s *openapi3.Schema) bool {
 	return reflect.DeepEqual(tmp, openapi3.Schema{})
 }
 
-// valueWithPropagatedRef returns a copy of ref schema with its Properties refs
-// updated if ref itself is external. Otherwise, return ref.Value as-is.
+// valueWithPropagatedRef returns a copy of ref's schema with its Properties
+// refs rewritten when ref itself is external, and with extensions placed
+// next to the $ref folded in (ref-side wins over value-side). This is what
+// allows allOf members to carry per-use sibling directives without
+// mutating the referenced schema.
 func valueWithPropagatedRef(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
+	schema := *ref.Value
+	schema.Extensions = combinedSchemaExtensions(ref)
+
 	if len(ref.Ref) == 0 || ref.Ref[0] == '#' {
-		return *ref.Value, nil
+		return schema, nil
 	}
 
 	pathParts := strings.Split(ref.Ref, "#")
@@ -162,8 +168,6 @@ func valueWithPropagatedRef(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
 	}
 	remoteComponent := pathParts[0]
 
-	// remote ref
-	schema := *ref.Value
 	for _, value := range schema.Properties {
 		if len(value.Ref) > 0 && value.Ref[0] == '#' {
 			// local reference, should propagate remote
@@ -184,7 +188,14 @@ func mergeAllOf(allOf []*openapi3.SchemaRef, seenSchemaRef map[string]bool) (ope
 		if schemaRef.Ref != "" {
 			seenSchemaRef[schemaRef.Ref] = true
 		}
-		schema, err = mergeOpenapiSchemas(schema, *schemaRef.Value, true, seenSchemaRef)
+		// Use valueWithPropagatedRef so sibling extensions on a $ref
+		// member of a transitively-flattened allOf reach the merged
+		// schema, matching mergeSchemas' top-level handling.
+		member, err := valueWithPropagatedRef(schemaRef)
+		if err != nil {
+			return openapi3.Schema{}, err
+		}
+		schema, err = mergeOpenapiSchemas(schema, member, true, seenSchemaRef)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
