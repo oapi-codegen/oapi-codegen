@@ -1681,6 +1681,15 @@ func GenerateGorillaReceiver(t *template.Template, prefix string, ops []Operatio
 	return GenerateTemplates([]string{"gorilla/gorilla-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
 }
 
+// GenerateEchoReceiver renders the echo (v4) receiver template. Echo's
+// handler shape is `(ctx echo.Context) error`, and binding errors are
+// returned via echo.NewHTTPError so echo's framework error chain
+// reports them as 400 -- there's no errHandler argument like the
+// stdhttp receiver factory has.
+func GenerateEchoReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"echo/echo-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+}
+
 // GenerateTemplates used to generate templates
 func GenerateTemplates(templates []string, t *template.Template, ops any) (string, error) {
 	var generatedTemplates []string

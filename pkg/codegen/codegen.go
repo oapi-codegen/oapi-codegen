@@ -472,6 +472,15 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	// Webhook receiver (echo v4) -- (ctx echo.Context) error signature.
+	var echoWebhookReceiverOut string
+	if opts.Generate.EchoServer && len(webhookOps) > 0 {
+		echoWebhookReceiverOut, err = GenerateEchoReceiver(t, "Webhook", webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating echo webhook receiver: %w", err)
+		}
+	}
+
 	// Callback initiator pairs with the path Client. Emitted whenever
 	// Generate.Client is on and the spec declares any callbacks --
 	// callbacks predate 3.1 so this is not version-gated.
@@ -509,6 +518,15 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		gorillaCallbackReceiverOut, err = GenerateGorillaReceiver(t, "Callback", callbackOps)
 		if err != nil {
 			return "", fmt.Errorf("error generating gorilla callback receiver: %w", err)
+		}
+	}
+
+	// Callback receiver (echo v4).
+	var echoCallbackReceiverOut string
+	if opts.Generate.EchoServer && len(callbackOps) > 0 {
+		echoCallbackReceiverOut, err = GenerateEchoReceiver(t, "Callback", callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating echo callback receiver: %w", err)
 		}
 	}
 
@@ -589,6 +607,18 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		_, err = w.WriteString(echoServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+		if echoWebhookReceiverOut != "" {
+			_, err = w.WriteString(echoWebhookReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing echo webhook receiver: %w", err)
+			}
+		}
+		if echoCallbackReceiverOut != "" {
+			_, err = w.WriteString(echoCallbackReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing echo callback receiver: %w", err)
+			}
 		}
 	}
 
