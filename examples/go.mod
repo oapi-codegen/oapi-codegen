@@ -1,6 +1,6 @@
 module github.com/oapi-codegen/oapi-codegen/v2/examples
 
-go 1.24.3
+go 1.26.2
 
 replace github.com/oapi-codegen/oapi-codegen/v2 => ../
 
@@ -13,6 +13,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/kataras/iris/v12 v12.2.11
 	github.com/labstack/echo/v4 v4.15.1
+	github.com/labstack/echo/v5 v5.1.0
 	github.com/lestrrat-go/jwx/v3 v3.0.13
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/fiber-middleware v1.0.2
