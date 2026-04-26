@@ -10,6 +10,9 @@ jobs:
     uses: oapi-codegen/actions/.github/workflows/ci.yml@6cf35d4f044f2663dae54547ff6d426e565beb48 # v0.6.0
     with:
       lint_versions: '["1.26"]'
+      # Until actions are modified to default to 1.26, exclude versions we don't
+      # support.
+      excluding_versions: '["1.24", "1.25", "oldstable"]'
 
   build-binaries:
     runs-on: ubuntu-latest
@@ -17,8 +20,7 @@ jobs:
       fail-fast: true
       matrix:
         version:
-          - "stable"
-          - "oldstable"
+          - "1.26"
     steps:
       - name: Check out source code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
