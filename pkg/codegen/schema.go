@@ -394,27 +394,13 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			return Schema{}, fmt.Errorf("error merging schemas: %w", err)
 		}
 		mergedSchema.OAPISchema = schema
-
-		// Check x-go-type, which will completely override the definition of this
-		// schema with the provided type.
-		if extension, ok := schema.Extensions[extPropGoType]; ok {
-			typeName, err := extTypeName(extension)
-			if err != nil {
-				return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
-			}
-			mergedSchema.GoType = typeName
-			mergedSchema.DefineViaAlias = true
-
-			return mergedSchema, nil
-		}
-
-		// Check x-go-type-skip-optional-pointer, which will override if the type
-		// should be a pointer or not when the field is optional.
-		if extension, ok := schema.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
-			skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension)
-			if err != nil {
-				return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
-			}
+		// x-go-type on the parent is handled by the early return above
+		// (combined extensions). For x-go-type-skip-optional-pointer, only
+		// override the merged value when the parent sets it explicitly —
+		// otherwise we would clobber the value MergeSchemas computed from
+		// the decorator idiom (an inline allOf member that carries the
+		// extension; see merge_schemas.go and issue #1957).
+		if _, ok := extensions[extPropGoTypeSkipOptionalPointer]; ok {
 			mergedSchema.SkipOptionalPointer = skipOptionalPointer
 		}
 		return mergedSchema, nil
