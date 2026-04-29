@@ -1090,9 +1090,7 @@ func (response UnionExample200ApplicationAlternativePlusJSONResponse) VisitUnion
 }
 
 type UnionExample200JSONResponse struct {
-	Body struct {
-		union json.RawMessage
-	}
+	Body    UnionExample200JSONResponseBody
 	Headers UnionExample200ResponseHeaders
 }
 

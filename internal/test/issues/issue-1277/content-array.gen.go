@@ -16,32 +16,32 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// Test200JSONResponse_Item defines parameters for Test.
-type Test200JSONResponse_Item struct {
+// Test200JSONResponseBody_Item defines parameters for Test.
+type Test200JSONResponseBody_Item struct {
 	Field1               *string                `json:"field1,omitempty"`
 	Field2               *string                `json:"field2,omitempty"`
 	AdditionalProperties map[string]interface{} `json:"-"`
 }
 
-// Getter for additional properties for Test200JSONResponse_Item. Returns the specified
+// Getter for additional properties for Test200JSONResponseBody_Item. Returns the specified
 // element and whether it was found
-func (a Test200JSONResponse_Item) Get(fieldName string) (value interface{}, found bool) {
+func (a Test200JSONResponseBody_Item) Get(fieldName string) (value interface{}, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
 	return
 }
 
-// Setter for additional properties for Test200JSONResponse_Item
-func (a *Test200JSONResponse_Item) Set(fieldName string, value interface{}) {
+// Setter for additional properties for Test200JSONResponseBody_Item
+func (a *Test200JSONResponseBody_Item) Set(fieldName string, value interface{}) {
 	if a.AdditionalProperties == nil {
 		a.AdditionalProperties = make(map[string]interface{})
 	}
 	a.AdditionalProperties[fieldName] = value
 }
 
-// Override default JSON handling for Test200JSONResponse_Item to handle AdditionalProperties
-func (a *Test200JSONResponse_Item) UnmarshalJSON(b []byte) error {
+// Override default JSON handling for Test200JSONResponseBody_Item to handle AdditionalProperties
+func (a *Test200JSONResponseBody_Item) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
 	err := json.Unmarshal(b, &object)
 	if err != nil {
@@ -78,8 +78,8 @@ func (a *Test200JSONResponse_Item) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// Override default JSON handling for Test200JSONResponse_Item to handle AdditionalProperties
-func (a Test200JSONResponse_Item) MarshalJSON() ([]byte, error) {
+// Override default JSON handling for Test200JSONResponseBody_Item to handle AdditionalProperties
+func (a Test200JSONResponseBody_Item) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
@@ -272,12 +272,7 @@ type ClientWithResponsesInterface interface {
 type TestResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]Test_200_Item
-}
-type Test_200_Item struct {
-	Field1               *string                `json:"field1,omitempty"`
-	Field2               *string                `json:"field2,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	JSON200      *[]Test200JSONResponseBody_Item
 }
 
 // Status returns HTTPResponse.Status
@@ -328,7 +323,7 @@ func ParseTestResponse(rsp *http.Response) (*TestResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []Test_200_Item
+		var dest []Test200JSONResponseBody_Item
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -505,7 +500,7 @@ type TestResponseObject interface {
 	VisitTestResponse(w http.ResponseWriter) error
 }
 
-type Test200JSONResponse []Test200JSONResponse_Item
+type Test200JSONResponse []Test200JSONResponseBody_Item
 
 func (response Test200JSONResponse) VisitTestResponse(w http.ResponseWriter) error {
 

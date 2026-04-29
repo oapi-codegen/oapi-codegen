@@ -99,7 +99,7 @@
                 {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
                 {{if .IsJSON -}}
                     {{$hasUnionElements := ne 0 (len .Schema.UnionElements)}}
-                    return ctx.JSON(&{{if $hasBodyVar}}response.Body{{else}}response{{end}}{{if $hasUnionElements}}.union{{end}})
+                    return ctx.JSON(&{{if $hasBodyVar}}response.Body{{else}}response{{end}}{{if and $hasUnionElements (not .Schema.IsExternalRef)}}.union{{end}})
                 {{else if eq .NameTag "Text" -}}
                     _, err := ctx.WriteString(string({{if $hasBodyVar}}response.Body{{else}}response{{end}}))
                     return err

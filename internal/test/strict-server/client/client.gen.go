@@ -39,8 +39,13 @@ type HeadersExampleParams struct {
 	Header2 *int   `json:"header2,omitempty"`
 }
 
-// UnionExample200JSONResponse0 defines parameters for UnionExample.
-type UnionExample200JSONResponse0 = string
+// UnionExample200JSONResponseBody0 defines parameters for UnionExample.
+type UnionExample200JSONResponseBody0 = string
+
+// UnionExample200JSONResponseBody defines parameters for UnionExample.
+type UnionExample200JSONResponseBody struct {
+	union json.RawMessage
+}
 
 // JSONExampleJSONRequestBody defines body for JSONExample for application/json ContentType.
 type JSONExampleJSONRequestBody = Example
@@ -83,6 +88,68 @@ type HeadersExampleJSONRequestBody = Example
 
 // UnionExampleJSONRequestBody defines body for UnionExample for application/json ContentType.
 type UnionExampleJSONRequestBody = Example
+
+// AsUnionExample200JSONResponseBody0 returns the union data inside the UnionExample200JSONResponseBody as a UnionExample200JSONResponseBody0
+func (t UnionExample200JSONResponseBody) AsUnionExample200JSONResponseBody0() (UnionExample200JSONResponseBody0, error) {
+	var body UnionExample200JSONResponseBody0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromUnionExample200JSONResponseBody0 overwrites any union data inside the UnionExample200JSONResponseBody as the provided UnionExample200JSONResponseBody0
+func (t *UnionExample200JSONResponseBody) FromUnionExample200JSONResponseBody0(v UnionExample200JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeUnionExample200JSONResponseBody0 performs a merge with any union data inside the UnionExample200JSONResponseBody, using the provided UnionExample200JSONResponseBody0
+func (t *UnionExample200JSONResponseBody) MergeUnionExample200JSONResponseBody0(v UnionExample200JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsExample returns the union data inside the UnionExample200JSONResponseBody as a Example
+func (t UnionExample200JSONResponseBody) AsExample() (Example, error) {
+	var body Example
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromExample overwrites any union data inside the UnionExample200JSONResponseBody as the provided Example
+func (t *UnionExample200JSONResponseBody) FromExample(v Example) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeExample performs a merge with any union data inside the UnionExample200JSONResponseBody, using the provided Example
+func (t *UnionExample200JSONResponseBody) MergeExample(v Example) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t UnionExample200JSONResponseBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *UnionExample200JSONResponseBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -1572,11 +1639,8 @@ type UnionExampleResponse struct {
 	Body                          []byte
 	HTTPResponse                  *http.Response
 	ApplicationalternativeJSON200 *Example
-	JSON200                       *struct {
-		union json.RawMessage
-	}
+	JSON200                       *UnionExample200JSONResponseBody
 }
-type UnionExample2000 = string
 
 // Status returns HTTPResponse.Status
 func (r UnionExampleResponse) Status() string {
@@ -2099,9 +2163,7 @@ func ParseUnionExampleResponse(rsp *http.Response) (*UnionExampleResponse, error
 		response.ApplicationalternativeJSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
-		var dest struct {
-			union json.RawMessage
-		}
+		var dest UnionExample200JSONResponseBody
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

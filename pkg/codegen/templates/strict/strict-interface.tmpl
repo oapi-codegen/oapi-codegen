@@ -88,7 +88,7 @@
                 {{if .IsJSON -}}
                     {{$hasUnionElements := ne 0 (len .Schema.UnionElements) -}}
                     var buf bytes.Buffer
-                    if err := json.NewEncoder(&buf).Encode(response{{if $hasBodyVar}}.Body{{end}}{{if $hasUnionElements}}.union{{end}}); err != nil {
+                    if err := json.NewEncoder(&buf).Encode(response{{if $hasBodyVar}}.Body{{end}}{{if and $hasUnionElements (not .Schema.IsExternalRef)}}.union{{end}}); err != nil {
                         return err
                     }
                     w.Header().Set("Content-Type", {{if .HasFixedContentType }}{{.ContentType | toGoString}}{{else}}response.ContentType{{end}})
