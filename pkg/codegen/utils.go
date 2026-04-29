@@ -628,8 +628,9 @@ func SwaggerUriToGorillaUri(uri string) string {
 }
 
 // SwaggerUriToStdHttpUri converts a swagger style path URI with parameters to a
-// Chi compatible path URI. We need to replace all Swagger parameters with
-// "{param}". Valid input parameters are:
+// net/http ServeMux compatible path URI. Parameter names are sanitized to be
+// valid Go identifiers, as required by ServeMux wildcard segments. Valid input
+// parameters are:
 //
 //	{param}
 //	{param*}
@@ -646,7 +647,10 @@ func SwaggerUriToStdHttpUri(uri string) string {
 		return "/{$}"
 	}
 
-	return pathParamRE.ReplaceAllString(uri, "{$1}")
+	return pathParamRE.ReplaceAllStringFunc(uri, func(match string) string {
+		sub := pathParamRE.FindStringSubmatch(match)
+		return "{" + SanitizeGoIdentifier(sub[1]) + "}"
+	})
 }
 
 // OrderedParamsFromUri returns the argument names, in order, in a given URI string, so for
@@ -745,9 +749,12 @@ func IsValidGoIdentity(str string) bool {
 	return !IsPredeclaredGoIdentifier(str)
 }
 
-// SanitizeGoIdentity deletes and replaces the illegal runes in the given
-// string to use the string as a valid identity.
-func SanitizeGoIdentity(str string) string {
+// SanitizeGoIdentifier replaces illegal runes in the given string so that
+// it is a valid Go identifier. Unlike SanitizeGoIdentity, it does not
+// prefix reserved keywords or predeclared identifiers. This is useful for
+// contexts where the name must be a valid identifier but is not used as a
+// Go symbol (e.g. net/http ServeMux wildcard names).
+func SanitizeGoIdentifier(str string) string {
 	sanitized := []rune(str)
 
 	for i, c := range sanitized {
@@ -758,7 +765,14 @@ func SanitizeGoIdentity(str string) string {
 		}
 	}
 
-	str = string(sanitized)
+	return string(sanitized)
+}
+
+// SanitizeGoIdentity deletes and replaces the illegal runes in the given
+// string to use the string as a valid identity. It also prefixes reserved
+// keywords and predeclared identifiers with an underscore.
+func SanitizeGoIdentity(str string) string {
+	str = SanitizeGoIdentifier(str)
 
 	if IsGoKeyword(str) || IsPredeclaredGoIdentifier(str) {
 		str = "_" + str
@@ -1080,11 +1094,28 @@ func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
 }
 
 func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
-	if v.Value.Extensions[extPropGoImport] == nil || v.Value.Extensions[extPropGoType] == nil {
+	// An x-go-type-import is only meaningful in concert with an x-go-type
+	// override. Without one, the imported package is never referenced in
+	// the generated code, producing an "imported and not used" compile
+	// error. Require at least one x-go-type to be in scope (either next to
+	// the $ref or on the referenced schema) before collecting an import.
+	hasGoType := v.Extensions[extPropGoType] != nil ||
+		(v.Value != nil && v.Value.Extensions[extPropGoType] != nil)
+	if !hasGoType {
 		return nil, nil
 	}
 
-	goTypeImportExt := v.Value.Extensions[extPropGoImport]
+	var goTypeImportExt any
+
+	// check extensions next to the $ref before checking the schema itself
+	// values next to $ref will be used before those in the actual schema
+	if v.Extensions[extPropGoImport] != nil {
+		goTypeImportExt = v.Extensions[extPropGoImport]
+	} else if v.Value != nil && v.Value.Extensions[extPropGoImport] != nil {
+		goTypeImportExt = v.Value.Extensions[extPropGoImport]
+	} else {
+		return nil, nil
+	}
 
 	importI, ok := goTypeImportExt.(map[string]any)
 	if !ok {

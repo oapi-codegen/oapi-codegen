@@ -18,6 +18,7 @@ import (
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestIsJson(t *testing.T) {
@@ -145,4 +146,85 @@ func TestGenerateDefaultOperationID(t *testing.T) {
 			t.Fatalf("Operation ID generation error. Want [%v] Got [%v]", test.want, got)
 		}
 	}
+}
+
+func TestJsonTag(t *testing.T) {
+	t.Run("required param with no extra tags", func(t *testing.T) {
+		pd := ParameterDefinition{
+			ParamName: "foo",
+			Required:  true,
+			Spec:      &openapi3.Parameter{},
+		}
+		assert.Equal(t, "`json:\"foo\"`", pd.JsonTag())
+	})
+
+	t.Run("optional param with no extra tags", func(t *testing.T) {
+		pd := ParameterDefinition{
+			ParamName: "foo",
+			Required:  false,
+			Spec:      &openapi3.Parameter{},
+		}
+		assert.Equal(t, "`json:\"foo,omitempty\"`", pd.JsonTag())
+	})
+
+	t.Run("extra tags at parameter level", func(t *testing.T) {
+		pd := ParameterDefinition{
+			ParamName: "foo",
+			Required:  true,
+			Spec: &openapi3.Parameter{
+				Extensions: map[string]any{
+					"x-oapi-codegen-extra-tags": map[string]any{
+						"validate": "required",
+						"db":       "foo_col",
+					},
+				},
+			},
+		}
+		assert.Equal(t, "`db:\"foo_col\" json:\"foo\" validate:\"required\"`", pd.JsonTag())
+	})
+
+	t.Run("extra tags at schema level", func(t *testing.T) {
+		pd := ParameterDefinition{
+			ParamName: "foo",
+			Required:  true,
+			Spec: &openapi3.Parameter{
+				Schema: &openapi3.SchemaRef{
+					Value: &openapi3.Schema{
+						Extensions: map[string]any{
+							"x-oapi-codegen-extra-tags": map[string]any{
+								"validate": "required",
+							},
+						},
+					},
+				},
+			},
+		}
+		assert.Equal(t, "`json:\"foo\" validate:\"required\"`", pd.JsonTag())
+	})
+
+	t.Run("parameter level takes precedence over schema level", func(t *testing.T) {
+		pd := ParameterDefinition{
+			ParamName: "foo",
+			Required:  true,
+			Spec: &openapi3.Parameter{
+				Extensions: map[string]any{
+					"x-oapi-codegen-extra-tags": map[string]any{
+						"validate": "param-level",
+					},
+				},
+				Schema: &openapi3.SchemaRef{
+					Value: &openapi3.Schema{
+						Extensions: map[string]any{
+							"x-oapi-codegen-extra-tags": map[string]any{
+								"validate": "schema-level",
+								"db":       "foo_col",
+							},
+						},
+					},
+				},
+			},
+		}
+		// Parameter-level "validate" wins, schema-level "db" is kept
+		assert.Equal(t, "`db:\"foo_col\" json:\"foo\" validate:\"param-level\"`", pd.JsonTag())
+	})
 }

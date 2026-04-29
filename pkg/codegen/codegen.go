@@ -27,6 +27,7 @@ import (
 	"maps"
 	"net/http"
 	"os"
+	"regexp"
 	"runtime/debug"
 	"slices"
 	"sort"
@@ -62,6 +63,9 @@ var globalState struct {
 	// resolvedClientWrapperNames maps operationID to the resolved Go type name
 	// for client response wrapper types (e.g., "createChatCompletion" -> "CreateChatCompletionResponseWrapper").
 	resolvedClientWrapperNames map[string]string
+	// streamingContentTypeRegexes are the compiled regexes (defaults + user)
+	// used by ResponseContentDefinition.IsStreamingContentType.
+	streamingContentTypeRegexes []*regexp.Regexp
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -181,6 +185,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	globalState.initialismsMap = makeInitialismsMap(opts.OutputOptions.AdditionalInitialisms)
 
+	// Compile streaming-content-type patterns (defaults merged with user-supplied).
+	// Validate() already caught syntax errors, but surface any regression here too.
+	streamingRegexes, err := compileStreamingContentTypes(opts.OutputOptions.StreamingContentTypes)
+	if err != nil {
+		return "", err
+	}
+	globalState.streamingContentTypeRegexes = streamingRegexes
+
 	// Multi-pass name resolution: gather all schemas, then resolve names globally.
 	// Only enabled when resolve-type-name-collisions is set.
 	if opts.OutputOptions.ResolveTypeNameCollisions {
@@ -208,7 +220,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above
-	err := LoadTemplates(templates, t)
+	err = LoadTemplates(templates, t)
 	if err != nil {
 		return "", fmt.Errorf("error parsing oapi-codegen templates: %w", err)
 	}
@@ -1033,7 +1045,10 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 
 	// Now see if enums conflict with any non-enum typenames
 
-	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{EnumDefinitions: enums})
+	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{
+		EnumDefinitions:  enums,
+		SkipEnumValidate: globalState.options.OutputOptions.SkipEnumValidate,
+	})
 }
 
 // GenerateImports generates our import statements and package definition.
@@ -1319,15 +1334,18 @@ func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (ma
 func GoSchemaImports(schemas ...*openapi3.SchemaRef) (map[string]goImport, error) {
 	res := map[string]goImport{}
 	for _, sref := range schemas {
-		if sref == nil || sref.Value == nil || IsGoTypeReference(sref.Ref) {
+		if sref == nil {
 			return nil, nil
 		}
+
 		if gi, err := ParseGoImportExtension(sref); err != nil {
 			return nil, err
-		} else {
-			if gi != nil {
-				res[gi.String()] = *gi
-			}
+		} else if gi != nil {
+			res[gi.String()] = *gi
+		}
+
+		if sref.Value == nil || IsGoTypeReference(sref.Ref) {
+			continue
 		}
 		schemaVal := sref.Value
 

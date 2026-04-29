@@ -1940,6 +1940,14 @@ func (r GetContentObjectResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetContentObjectResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetCookieResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1959,6 +1967,14 @@ func (r GetCookieResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetCookieResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type EnumParamsResponse struct {
@@ -1982,6 +1998,14 @@ func (r EnumParamsResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r EnumParamsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetHeaderResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2001,6 +2025,14 @@ func (r GetHeaderResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetHeaderResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type GetLabelExplodeArrayResponse struct {
@@ -2024,6 +2056,14 @@ func (r GetLabelExplodeArrayResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetLabelExplodeArrayResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetLabelExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2043,6 +2083,14 @@ func (r GetLabelExplodeObjectResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetLabelExplodeObjectResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type GetLabelExplodePrimitiveResponse struct {
@@ -2066,6 +2114,14 @@ func (r GetLabelExplodePrimitiveResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetLabelExplodePrimitiveResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetLabelNoExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2085,6 +2141,14 @@ func (r GetLabelNoExplodeArrayResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetLabelNoExplodeArrayResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type GetLabelNoExplodeObjectResponse struct {
@@ -2108,6 +2172,14 @@ func (r GetLabelNoExplodeObjectResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetLabelNoExplodeObjectResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetLabelPrimitiveResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2127,6 +2199,14 @@ func (r GetLabelPrimitiveResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetLabelPrimitiveResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type GetMatrixExplodeArrayResponse struct {
@@ -2150,6 +2230,14 @@ func (r GetMatrixExplodeArrayResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetMatrixExplodeArrayResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetMatrixExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2169,6 +2257,14 @@ func (r GetMatrixExplodeObjectResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetMatrixExplodeObjectResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type GetMatrixExplodePrimitiveResponse struct {
@@ -2192,6 +2288,14 @@ func (r GetMatrixExplodePrimitiveResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetMatrixExplodePrimitiveResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetMatrixNoExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2211,6 +2315,14 @@ func (r GetMatrixNoExplodeArrayResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetMatrixNoExplodeArrayResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type GetMatrixNoExplodeObjectResponse struct {
@@ -2234,6 +2346,14 @@ func (r GetMatrixNoExplodeObjectResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetMatrixNoExplodeObjectResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetMatrixPrimitiveResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2253,6 +2373,14 @@ func (r GetMatrixPrimitiveResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetMatrixPrimitiveResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type GetPassThroughResponse struct {
@@ -2276,6 +2404,14 @@ func (r GetPassThroughResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetPassThroughResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetDeepObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2295,6 +2431,14 @@ func (r GetDeepObjectResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetDeepObjectResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type GetQueryDelimitedResponse struct {
@@ -2318,6 +2462,14 @@ func (r GetQueryDelimitedResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetQueryDelimitedResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetQueryFormResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2337,6 +2489,14 @@ func (r GetQueryFormResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetQueryFormResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type GetSimpleExplodeArrayResponse struct {
@@ -2360,6 +2520,14 @@ func (r GetSimpleExplodeArrayResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetSimpleExplodeArrayResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetSimpleExplodeObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2379,6 +2547,14 @@ func (r GetSimpleExplodeObjectResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetSimpleExplodeObjectResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type GetSimpleExplodePrimitiveResponse struct {
@@ -2402,6 +2578,14 @@ func (r GetSimpleExplodePrimitiveResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetSimpleExplodePrimitiveResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetSimpleNoExplodeArrayResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2421,6 +2605,14 @@ func (r GetSimpleNoExplodeArrayResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetSimpleNoExplodeArrayResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type GetSimpleNoExplodeObjectResponse struct {
@@ -2444,6 +2636,14 @@ func (r GetSimpleNoExplodeObjectResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetSimpleNoExplodeObjectResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetSimplePrimitiveResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2465,6 +2665,14 @@ func (r GetSimplePrimitiveResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetSimplePrimitiveResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetStartingWithNumberResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2484,6 +2692,14 @@ func (r GetStartingWithNumberResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetStartingWithNumberResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 // GetContentObjectWithResponse request returning *GetContentObjectResponse

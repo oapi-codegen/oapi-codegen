@@ -72,12 +72,44 @@ func (pd ParameterDefinition) ZeroValueIsNil() bool {
 // JsonTag generates the JSON annotation to map GoType to json type name. If Parameter
 // Foo is marshaled to json as "foo", this will create the annotation
 // 'json:"foo"'
+// It also includes any additional struct tags from x-oapi-codegen-extra-tags
+// at the parameter or schema level (parameter-level takes precedence).
 func (pd *ParameterDefinition) JsonTag() string {
+	fieldTags := make(map[string]string)
+
 	if pd.Required {
-		return fmt.Sprintf("`json:\"%s\"`", pd.ParamName)
+		fieldTags["json"] = pd.ParamName
 	} else {
-		return fmt.Sprintf("`json:\"%s,omitempty\"`", pd.ParamName)
+		fieldTags["json"] = pd.ParamName + ",omitempty"
 	}
+
+	// Merge x-oapi-codegen-extra-tags from schema level first, then parameter level
+	// so that parameter-level takes precedence.
+	if pd.Spec != nil && pd.Spec.Schema != nil && pd.Spec.Schema.Value != nil {
+		if extension, ok := pd.Spec.Schema.Value.Extensions[extPropExtraTags]; ok {
+			if tags, err := extExtraTags(extension); err == nil {
+				for k, v := range tags {
+					fieldTags[k] = v
+				}
+			}
+		}
+	}
+	if pd.Spec != nil {
+		if extension, ok := pd.Spec.Extensions[extPropExtraTags]; ok {
+			if tags, err := extExtraTags(extension); err == nil {
+				for k, v := range tags {
+					fieldTags[k] = v
+				}
+			}
+		}
+	}
+
+	keys := SortedMapKeys(fieldTags)
+	tags := make([]string, len(keys))
+	for i, k := range keys {
+		tags[i] = fmt.Sprintf(`%s:"%s"`, k, fieldTags[k])
+	}
+	return "`" + strings.Join(tags, " ") + "`"
 }
 
 func (pd *ParameterDefinition) IsJson() bool {
@@ -157,6 +189,14 @@ func (pd *ParameterDefinition) SchemaFormat() string {
 		return pd.Spec.Schema.Value.Format
 	}
 	return ""
+}
+
+// SanitizedParamName returns the parameter name sanitized to be a valid Go
+// identifier. This is needed for routers like net/http's ServeMux where path
+// wildcards (e.g. {name}) must be valid Go identifiers. For the original
+// OpenAPI parameter name (e.g. for error messages or JSON tags), use ParamName.
+func (pd ParameterDefinition) SanitizedParamName() string {
+	return SanitizeGoIdentifier(pd.ParamName)
 }
 
 func (pd ParameterDefinition) GoVariableName() string {
@@ -609,6 +649,19 @@ func (r ResponseContentDefinition) NameTagOrContentType() string {
 // - application/*+json
 func (r ResponseContentDefinition) IsJSON() bool {
 	return util.IsMediaTypeJson(r.ContentType)
+}
+
+// IsStreamingContentType reports whether this response's media type matches
+// any configured streaming-content-types pattern (defaults merged with
+// OutputOptions.StreamingContentTypes). Templates use this to emit a
+// flush-per-chunk streaming path instead of a buffered io.Copy.
+func (r ResponseContentDefinition) IsStreamingContentType() bool {
+	for _, re := range globalState.streamingContentTypeRegexes {
+		if re.MatchString(r.ContentType) {
+			return true
+		}
+	}
+	return false
 }
 
 type ResponseHeaderDefinition struct {
@@ -1077,11 +1130,14 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 				Schema:   param.Schema,
 			})
 		}
-		// Merge extensions from the schema level and the parameter level.
-		// Parameter-level extensions take precedence over schema-level ones.
+		// Merge extensions, in order of increasing precedence:
+		//   1. extensions on the referenced schema (param.Spec.Schema.Value)
+		//   2. extensions placed as siblings of a $ref inside the
+		//      parameter's schema (param.Spec.Schema.Extensions)
+		//   3. extensions on the Parameter object itself
 		extensions := make(map[string]any)
-		if param.Spec.Schema != nil && param.Spec.Schema.Value != nil {
-			maps.Copy(extensions, param.Spec.Schema.Value.Extensions)
+		if param.Spec.Schema != nil {
+			maps.Copy(extensions, combinedSchemaExtensions(param.Spec.Schema))
 		}
 		maps.Copy(extensions, param.Spec.Extensions)
 		prop := Property{
