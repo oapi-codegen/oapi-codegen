@@ -16,8 +16,10 @@ package codegen
 import (
 	"bufio"
 	"bytes"
+	"cmp"
 	"fmt"
-	"sort"
+	"maps"
+	"slices"
 	"strconv"
 	"strings"
 	"text/template"
@@ -188,7 +190,7 @@ func (pd ParameterDefinition) IndirectOptional() bool {
 // HasOptionalPointer indicates whether the generated property has an optional pointer associated with it.
 // This takes into account the `x-go-type-skip-optional-pointer` extension, allowing a parameter definition to control whether the pointer should be skipped.
 func (pd ParameterDefinition) HasOptionalPointer() bool {
-	return pd.Required == false && pd.Schema.SkipOptionalPointer == false //nolint:staticcheck
+	return !pd.Required && !pd.Schema.SkipOptionalPointer
 }
 
 type ParameterDefinitions []ParameterDefinition
@@ -206,7 +208,7 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 // descriptors into a flat list. This makes it a lot easier to traverse the
 // data in the template engine.
 func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterDefinition, error) {
-	outParams := make([]ParameterDefinition, 0)
+	outParams := make([]ParameterDefinition, 0, len(params))
 	for _, paramOrRef := range params {
 		param := paramOrRef.Value
 
@@ -276,6 +278,18 @@ type OperationDefinition struct {
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
 	Spec                *openapi3.Operation
+	IsAlias             bool                    // True when this path is a $ref alias of another path item
+	AliasTarget         string                  // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
+}
+
+// HandlerName returns the OperationId to use when referencing the server-side
+// wrapper function. For alias operations this is the canonical operation's ID,
+// since the alias doesn't generate its own wrapper.
+func (o *OperationDefinition) HandlerName() string {
+	if o.IsAlias {
+		return o.AliasTarget
+	}
+	return o.OperationId
 }
 
 // Params returns the list of all parameters except Path parameters. Path parameters
@@ -381,21 +395,21 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 					switch {
 
 					// HAL+JSON:
-					case StringInArray(contentTypeName, contentTypesHalJSON):
+					case slices.Contains(contentTypesHalJSON, contentTypeName):
 						typeName = fmt.Sprintf("HALJSON%s", nameNormalizer(responseName))
 					case contentTypeName == "application/json":
 						// if it's the standard application/json
 						typeName = fmt.Sprintf("JSON%s", nameNormalizer(responseName))
 					// Vendored JSON
-					case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
+					case slices.Contains(contentTypesJSON, contentTypeName) || util.IsMediaTypeJson(contentTypeName):
 						baseTypeName := fmt.Sprintf("%s%s", nameNormalizer(contentTypeName), nameNormalizer(responseName))
 
 						typeName = strings.ReplaceAll(baseTypeName, "Json", "JSON")
 					// YAML:
-					case StringInArray(contentTypeName, contentTypesYAML):
+					case slices.Contains(contentTypesYAML, contentTypeName):
 						typeName = fmt.Sprintf("YAML%s", nameNormalizer(responseName))
 					// XML:
-					case StringInArray(contentTypeName, contentTypesXML):
+					case slices.Contains(contentTypesXML, contentTypeName):
 						typeName = fmt.Sprintf("XML%s", nameNormalizer(responseName))
 					default:
 						continue
@@ -432,13 +446,10 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 	return tds, nil
 }
 
-func (o OperationDefinition) HasMaskedRequestContentTypes() bool {
-	for _, body := range o.Bodies {
-		if !body.IsFixedContentType() {
-			return true
-		}
-	}
-	return false
+func (o *OperationDefinition) HasMaskedRequestContentTypes() bool {
+	return slices.ContainsFunc(o.Bodies, func(body RequestBodyDefinition) bool {
+		return !body.IsFixedContentType()
+	})
 }
 
 // RequestBodyDefinition describes a request body
@@ -591,10 +602,57 @@ func (r ResponseContentDefinition) IsJSON() bool {
 	return util.IsMediaTypeJson(r.ContentType)
 }
 
+// IsStreamingContentType reports whether this response's media type matches
+// any configured streaming-content-types pattern (defaults merged with
+// OutputOptions.StreamingContentTypes). Templates use this to emit a
+// flush-per-chunk streaming path instead of a buffered io.Copy.
+func (r ResponseContentDefinition) IsStreamingContentType() bool {
+	for _, re := range globalState.streamingContentTypeRegexes {
+		if re.MatchString(r.ContentType) {
+			return true
+		}
+	}
+	return false
+}
+
 type ResponseHeaderDefinition struct {
-	Name   string
-	GoName string
-	Schema Schema
+	Name     string
+	GoName   string
+	Schema   Schema
+	Required bool
+	Nullable bool
+}
+
+// GoTypeDef returns the Go type string for this header, applying pointer or
+// nullable wrapping based on the Required/Nullable fields and global config.
+func (h ResponseHeaderDefinition) GoTypeDef() string {
+	typeDef := h.Schema.TypeDecl()
+	if globalState.options.OutputOptions.NullableType && h.Nullable {
+		return "nullable.Nullable[" + typeDef + "]"
+	}
+	if !h.Schema.SkipOptionalPointer && (!h.Required || h.Nullable) {
+		typeDef = "*" + typeDef
+	}
+	return typeDef
+}
+
+// IsOptional returns true if this header's Go type is indirect (pointer or
+// nullable wrapper), meaning the template should guard before calling
+// w.Header().Set(). This must stay in sync with GoTypeDef().
+func (h ResponseHeaderDefinition) IsOptional() bool {
+	if h.IsNullable() {
+		return true
+	}
+	if h.Schema.SkipOptionalPointer {
+		return false
+	}
+	return !h.Required || h.Nullable
+}
+
+// IsNullable returns true if the header type uses nullable.Nullable[T]
+// rather than a pointer for optionality.
+func (h ResponseHeaderDefinition) IsNullable() bool {
+	return globalState.options.OutputOptions.NullableType && h.Nullable
 }
 
 // FilterParameterDefinitionByType returns the subset of the specified parameters which are of the
@@ -610,19 +668,16 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]OperationDefinition, error) {
+func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
-
-	var toCamelCaseFunc func(string) string
-	if initialismOverrides {
-		toCamelCaseFunc = ToCamelCaseWithInitialism
-	} else {
-		toCamelCaseFunc = ToCamelCase
-	}
 
 	if swagger == nil || swagger.Paths == nil {
 		return operations, nil
 	}
+
+	// Track alias counters for generating unique client method names
+	// when multiple paths $ref the same path item.
+	aliasCounters := map[string]int{}
 
 	for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
 		pathItem := swagger.Paths.Value(requestPath)
@@ -647,7 +702,7 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 			operationId := op.OperationID
 			// We rely on OperationID to generate function names, it's required
 			if operationId == "" {
-				operationId, err = generateDefaultOperationID(opName, requestPath, toCamelCaseFunc)
+				operationId, err = generateDefaultOperationID(opName, requestPath)
 				if err != nil {
 					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
 						opName, requestPath, err)
@@ -657,8 +712,25 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 			}
 			operationId = typeNamePrefix(operationId) + operationId
 
-			if !globalState.options.Compatibility.PreserveOriginalOperationIdCasingInEmbeddedSpec {
-				// update the existing, shared, copy of the spec if we're not wanting to preserve it
+			// Detect path aliases: when a path item has an internal $ref
+			// pointing to another path in the same document (e.g.
+			// "#/paths/~1test"), it's a duplicate that would produce
+			// identical server methods. External $refs (pointing to other
+			// files) are not aliases — they're the sole definition of
+			// that path, just stored externally.
+			isAlias := strings.HasPrefix(pathItem.Ref, "#/paths/")
+			var aliasTarget string
+			if isAlias {
+				aliasTarget = nameNormalizer(operationId)
+				n := aliasCounters[operationId]
+				aliasCounters[operationId] = n + 1
+				operationId = operationId + fmt.Sprintf("Alias%d", n)
+			}
+
+			if !globalState.options.Compatibility.PreserveOriginalOperationIdCasingInEmbeddedSpec && !isAlias {
+				// update the existing, shared, copy of the spec if we're not wanting to preserve it.
+				// Skip for aliases: they share the same *Operation as the canonical path,
+				// and writing the suffixed name back would corrupt the original.
 				op.OperationID = operationId
 			}
 
@@ -715,6 +787,8 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 				Bodies:          bodyDefinitions,
 				Responses:       responseDefinitions,
 				TypeDefinitions: typeDefinitions,
+				IsAlias:         isAlias,
+				AliasTarget:     aliasTarget,
 			}
 
 			// check for overrides of SecurityDefinitions.
@@ -744,24 +818,22 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 	return operations, nil
 }
 
-func generateDefaultOperationID(opName string, requestPath string, toCamelCaseFunc func(string) string) (string, error) {
-	var operationId = strings.ToLower(opName)
-
+func generateDefaultOperationID(opName string, requestPath string) (string, error) {
 	if opName == "" {
 		return "", fmt.Errorf("operation name cannot be an empty string")
 	}
-
 	if requestPath == "" {
 		return "", fmt.Errorf("request path cannot be an empty string")
 	}
 
-	for _, part := range strings.Split(requestPath, "/") {
+	operationID := strings.ToLower(opName)
+	for part := range strings.SplitSeq(requestPath, "/") {
 		if part != "" {
-			operationId = operationId + "-" + part
+			operationID = operationID + "-" + part
 		}
 	}
 
-	return nameNormalizer(operationId), nil
+	return nameNormalizer(operationID), nil
 }
 
 // GenerateBodyDefinitions turns the Swagger body definitions into a list of our body
@@ -850,7 +922,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 
 		if len(content.Encoding) != 0 {
-			bd.Encoding = make(map[string]RequestBodyEncoding)
+			bd.Encoding = make(map[string]RequestBodyEncoding, len(content.Encoding))
 			for k, v := range content.Encoding {
 				encoding := RequestBodyEncoding{ContentType: v.ContentType, Style: v.Style, Explode: v.Explode}
 				bd.Encoding[k] = encoding
@@ -859,8 +931,8 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 
 		bodyDefinitions = append(bodyDefinitions, bd)
 	}
-	sort.Slice(bodyDefinitions, func(i, j int) bool {
-		return bodyDefinitions[i].ContentType < bodyDefinitions[j].ContentType
+	slices.SortFunc(bodyDefinitions, func(a, b RequestBodyDefinition) int {
+		return cmp.Compare(a.ContentType, b.ContentType)
 	})
 	return bodyDefinitions, typeDefinitions, nil
 }
@@ -923,7 +995,14 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			if err != nil {
 				return nil, fmt.Errorf("error generating response header definition: %w", err)
 			}
-			headerDefinition := ResponseHeaderDefinition{Name: headerName, GoName: SchemaNameToTypeName(headerName), Schema: contentSchema}
+			nullable := header.Value.Schema != nil && header.Value.Schema.Value != nil && header.Value.Schema.Value.Nullable
+			headerDefinition := ResponseHeaderDefinition{
+				Name:     headerName,
+				GoName:   SchemaNameToTypeName(headerName),
+				Schema:   contentSchema,
+				Required: header.Value.Required || globalState.options.Compatibility.HeadersImplicitlyRequired,
+				Nullable: nullable,
+			}
 			responseHeaderDefinitions = append(responseHeaderDefinitions, headerDefinition)
 		}
 
@@ -1002,17 +1081,16 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 				Schema:   param.Schema,
 			})
 		}
-		// Merge extensions from the schema level and the parameter level.
-		// Parameter-level extensions take precedence over schema-level ones.
+		// Merge extensions, in order of increasing precedence:
+		//   1. extensions on the referenced schema (param.Spec.Schema.Value)
+		//   2. extensions placed as siblings of a $ref inside the
+		//      parameter's schema (param.Spec.Schema.Extensions)
+		//   3. extensions on the Parameter object itself
 		extensions := make(map[string]any)
-		if param.Spec.Schema != nil && param.Spec.Schema.Value != nil {
-			for k, v := range param.Spec.Schema.Value.Extensions {
-				extensions[k] = v
-			}
+		if param.Spec.Schema != nil {
+			maps.Copy(extensions, combinedSchemaExtensions(param.Spec.Schema))
 		}
-		for k, v := range param.Spec.Extensions {
-			extensions[k] = v
-		}
+		maps.Copy(extensions, param.Spec.Extensions)
 		prop := Property{
 			Description:   param.Spec.Description,
 			JsonFieldName: param.ParamName,

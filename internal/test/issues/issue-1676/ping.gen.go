@@ -155,7 +155,7 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/ping", wrapper.GetPing).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/ping", wrapper.GetPing).Methods(http.MethodGet)
 
 	return r
 }
@@ -168,7 +168,7 @@ type GetPingResponseObject interface {
 }
 
 type GetPing200ResponseHeaders struct {
-	MyHeader string
+	MyHeader *string
 }
 
 type GetPing200TextResponse struct {
@@ -177,8 +177,11 @@ type GetPing200TextResponse struct {
 }
 
 func (response GetPing200TextResponse) VisitGetPingResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "text/plain")
-	w.Header().Set("MyHeader", fmt.Sprint(response.Headers.MyHeader))
+	if response.Headers.MyHeader != nil {
+		w.Header().Set("MyHeader", fmt.Sprint(*response.Headers.MyHeader))
+	}
 	w.WriteHeader(200)
 
 	_, err := w.Write([]byte(response.Body))

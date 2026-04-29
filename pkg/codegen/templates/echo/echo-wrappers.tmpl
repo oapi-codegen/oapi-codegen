@@ -3,7 +3,7 @@ type ServerInterfaceWrapper struct {
     Handler ServerInterface
 }
 
-{{range .}}{{$opid := .OperationId}}// {{$opid}} converts echo context to params.
+{{range .}}{{$opid := .OperationId}}{{if not .IsAlias}}// {{$opid}} converts echo context to params.
 func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     var err error
 {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
@@ -128,4 +128,4 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx echo.Context) error {
     err = w.Handler.{{.OperationId}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
     return err
 }
-{{end}}
+{{end}}{{end}}

@@ -1,0 +1,22 @@
+components:
+  schemas:
+    Port:
+      type: integer
+      x-oapi-codegen-extra-tags:
+        bson: port
+    SomeObject:
+      type: object
+      properties:
+        port:
+          $ref: '#/components/schemas/Port'
+          x-order: 1
+        start_port:
+          $ref: '#/components/schemas/Port'
+          x-order: 2
+          x-oapi-codegen-extra-tags:
+            bson: start_port
+        end_port:
+          $ref: '#/components/schemas/Port'
+          x-order: 3
+          x-oapi-codegen-extra-tags:
+            bson: end_port

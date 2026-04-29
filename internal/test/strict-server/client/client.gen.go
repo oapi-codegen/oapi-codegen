@@ -549,7 +549,7 @@ func NewJSONExampleRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -578,7 +578,7 @@ func NewMultipartExampleRequestWithBody(server string, contentType string, body 
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -607,7 +607,7 @@ func NewMultipartRelatedExampleRequestWithBody(server string, contentType string
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -642,7 +642,11 @@ func NewMultipleRequestAndResponseTypesRequestWithFormdataBody(server string, bo
 // NewMultipleRequestAndResponseTypesRequestWithTextBody calls the generic MultipleRequestAndResponseTypes builder with text/plain body
 func NewMultipleRequestAndResponseTypesRequestWithTextBody(server string, body MultipleRequestAndResponseTypesTextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	bodyReader = strings.NewReader(string(body))
+	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+		bodyReader = strings.NewReader(stringer.String())
+	} else {
+		bodyReader = strings.NewReader(fmt.Sprint(body))
+	}
 	return NewMultipleRequestAndResponseTypesRequestWithBody(server, "text/plain", bodyReader)
 }
 
@@ -665,7 +669,7 @@ func NewMultipleRequestAndResponseTypesRequestWithBody(server string, contentTyp
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -705,7 +709,7 @@ func NewRequiredJSONBodyRequestWithBody(server string, contentType string, body 
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -718,7 +722,11 @@ func NewRequiredJSONBodyRequestWithBody(server string, contentType string, body 
 // NewRequiredTextBodyRequestWithTextBody calls the generic RequiredTextBody builder with text/plain body
 func NewRequiredTextBodyRequestWithTextBody(server string, body RequiredTextBodyTextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	bodyReader = strings.NewReader(string(body))
+	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+		bodyReader = strings.NewReader(stringer.String())
+	} else {
+		bodyReader = strings.NewReader(fmt.Sprint(body))
+	}
 	return NewRequiredTextBodyRequestWithBody(server, "text/plain", bodyReader)
 }
 
@@ -741,7 +749,7 @@ func NewRequiredTextBodyRequestWithBody(server string, contentType string, body 
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -777,7 +785,7 @@ func NewReservedGoKeywordParametersRequest(server string, pType string) (*http.R
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -815,7 +823,7 @@ func NewReusableResponsesRequestWithBody(server string, contentType string, body
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -828,7 +836,11 @@ func NewReusableResponsesRequestWithBody(server string, contentType string, body
 // NewTextExampleRequestWithTextBody calls the generic TextExample builder with text/plain body
 func NewTextExampleRequestWithTextBody(server string, body TextExampleTextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	bodyReader = strings.NewReader(string(body))
+	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+		bodyReader = strings.NewReader(stringer.String())
+	} else {
+		bodyReader = strings.NewReader(fmt.Sprint(body))
+	}
 	return NewTextExampleRequestWithBody(server, "text/plain", bodyReader)
 }
 
@@ -851,7 +863,7 @@ func NewTextExampleRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -880,7 +892,7 @@ func NewUnknownExampleRequestWithBody(server string, contentType string, body io
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -909,7 +921,7 @@ func NewUnspecifiedContentTypeRequestWithBody(server string, contentType string,
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -949,7 +961,7 @@ func NewURLEncodedExampleRequestWithBody(server string, contentType string, body
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -989,7 +1001,7 @@ func NewHeadersExampleRequestWithBody(server string, params *HeadersExampleParam
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -1053,7 +1065,7 @@ func NewUnionExampleRequestWithBody(server string, contentType string, body io.R
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -1193,6 +1205,14 @@ func (r JSONExampleResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r JSONExampleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type MultipartExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1214,6 +1234,14 @@ func (r MultipartExampleResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r MultipartExampleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type MultipartRelatedExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1233,6 +1261,14 @@ func (r MultipartRelatedExampleResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r MultipartRelatedExampleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type MultipleRequestAndResponseTypesResponse struct {
@@ -1257,6 +1293,14 @@ func (r MultipleRequestAndResponseTypesResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r MultipleRequestAndResponseTypesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type RequiredJSONBodyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1277,6 +1321,14 @@ func (r RequiredJSONBodyResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RequiredJSONBodyResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type RequiredTextBodyResponse struct {
@@ -1300,6 +1352,14 @@ func (r RequiredTextBodyResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RequiredTextBodyResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ReservedGoKeywordParametersResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1319,6 +1379,14 @@ func (r ReservedGoKeywordParametersResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ReservedGoKeywordParametersResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type ReusableResponsesResponse struct {
@@ -1343,6 +1411,14 @@ func (r ReusableResponsesResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ReusableResponsesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type TextExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1362,6 +1438,14 @@ func (r TextExampleResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r TextExampleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type UnknownExampleResponse struct {
@@ -1385,6 +1469,14 @@ func (r UnknownExampleResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UnknownExampleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type UnspecifiedContentTypeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1404,6 +1496,14 @@ func (r UnspecifiedContentTypeResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UnspecifiedContentTypeResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type URLEncodedExampleResponse struct {
@@ -1427,6 +1527,14 @@ func (r URLEncodedExampleResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r URLEncodedExampleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type HeadersExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1447,6 +1555,14 @@ func (r HeadersExampleResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r HeadersExampleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type UnionExampleResponse struct {
@@ -1473,6 +1589,14 @@ func (r UnionExampleResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UnionExampleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 // JSONExampleWithBodyWithResponse request with arbitrary body returning *JSONExampleResponse

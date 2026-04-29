@@ -14,6 +14,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"os"
@@ -23,7 +24,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
@@ -58,7 +59,6 @@ var (
 	flagExcludeSchemas      string
 	flagResponseTypeSuffix  string
 	flagAliasTypes          bool
-	flagInitialismOverrides bool
 )
 
 type configuration struct {
@@ -112,7 +112,6 @@ func main() {
 	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation.")
 	flag.StringVar(&flagResponseTypeSuffix, "response-type-suffix", "", "The suffix used for responses types.")
 	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations if possible.")
-	flag.BoolVar(&flagInitialismOverrides, "initialism-overrides", false, "Use initialism overrides.")
 
 	flag.Parse()
 
@@ -158,10 +157,14 @@ func main() {
 			errExit("error reading config file '%s': %v\n", flagConfigFile, err)
 		}
 		var oldConfig oldConfiguration
-		oldErr := yaml.UnmarshalStrict(configFile, &oldConfig)
+		oldDec := yaml.NewDecoder(bytes.NewReader(configFile))
+		oldDec.KnownFields(true)
+		oldErr := oldDec.Decode(&oldConfig)
 
 		var newConfig configuration
-		newErr := yaml.UnmarshalStrict(configFile, &newConfig)
+		newDec := yaml.NewDecoder(bytes.NewReader(configFile))
+		newDec.KnownFields(true)
+		newErr := newDec.Decode(&newConfig)
 
 		// If one of the two files parses, but the other fails, we know the
 		// answer.
@@ -283,11 +286,14 @@ func main() {
 
 	// If the user asked to output configuration, output it to stdout and exit
 	if flagOutputConfig {
-		buf, err := yaml.Marshal(opts)
-		if err != nil {
+		var buf bytes.Buffer
+		enc := yaml.NewEncoder(&buf)
+		enc.SetIndent(2)
+		if err := enc.Encode(opts); err != nil {
 			errExit("error YAML marshaling configuration: %v\n", err)
 		}
-		fmt.Print(string(buf))
+		_ = enc.Close()
+		fmt.Print(buf.String())
 		return
 	}
 
@@ -458,8 +464,6 @@ func updateConfigFromFlags(cfg *configuration) error {
 	if cfg.OutputFile == "" {
 		cfg.OutputFile = flagOutputFile
 	}
-
-	cfg.OutputOptions.InitialismOverrides = flagInitialismOverrides
 
 	return nil
 }

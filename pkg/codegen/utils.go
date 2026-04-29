@@ -15,13 +15,14 @@ package codegen
 
 import (
 	"bytes"
+	"cmp"
 	"fmt"
 	"go/token"
+	"maps"
 	"net/url"
 	"reflect"
 	"regexp"
 	"slices"
-	"sort"
 	"strconv"
 	"strings"
 	"unicode"
@@ -82,7 +83,7 @@ func (m NameNormalizerMap) Options() []string {
 		options = append(options, string(key))
 	}
 
-	sort.Strings(options)
+	slices.Sort(options)
 
 	return options
 }
@@ -350,7 +351,7 @@ func SortedMapKeys[T any](m map[string]T) []string {
 	for k := range m {
 		keys = append(keys, k)
 	}
-	sort.Strings(keys)
+	slices.Sort(keys)
 	return keys
 }
 
@@ -372,11 +373,11 @@ func SortedSchemaKeys(dict map[string]*openapi3.SchemaRef) []string {
 		}
 	}
 
-	sort.Slice(keys, func(i, j int) bool {
-		if i, j := orders[keys[i]], orders[keys[j]]; i != j {
-			return i < j
-		}
-		return keys[i] < keys[j]
+	slices.SortFunc(keys, func(a, b string) int {
+		return cmp.Or(
+			cmp.Compare(orders[a], orders[b]),
+			cmp.Compare(a, b),
+		)
 	})
 	return keys
 }
@@ -405,22 +406,11 @@ func schemaXOrder(v *openapi3.SchemaRef) (int64, bool) {
 	return 0, false
 }
 
-// SortedParameterKeys returns sorted keys for a SecuritySchemeRef dict
+// SortedSecuritySchemeKeys returns sorted keys for a SecuritySchemeRef dict
 func SortedSecuritySchemeKeys(dict map[string]*openapi3.SecuritySchemeRef) []string {
-	keys := make([]string, len(dict))
-	i := 0
-	for key := range dict {
-		keys[i] = key
-		i++
-	}
-	sort.Strings(keys)
+	keys := slices.Collect(maps.Keys(dict))
+	slices.Sort(keys)
 	return keys
-}
-
-// StringInArray checks whether the specified string is present in an array
-// of strings
-func StringInArray(str string, array []string) bool {
-	return slices.Contains(array, str)
 }
 
 // RefPathToObjName returns the name of referenced object without changes.
@@ -1104,11 +1094,28 @@ func findSchemaNameByRefPath(refPath string, spec *openapi3.T) (string, error) {
 }
 
 func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
-	if v.Value.Extensions[extPropGoImport] == nil || v.Value.Extensions[extPropGoType] == nil {
+	// An x-go-type-import is only meaningful in concert with an x-go-type
+	// override. Without one, the imported package is never referenced in
+	// the generated code, producing an "imported and not used" compile
+	// error. Require at least one x-go-type to be in scope (either next to
+	// the $ref or on the referenced schema) before collecting an import.
+	hasGoType := v.Extensions[extPropGoType] != nil ||
+		(v.Value != nil && v.Value.Extensions[extPropGoType] != nil)
+	if !hasGoType {
 		return nil, nil
 	}
 
-	goTypeImportExt := v.Value.Extensions[extPropGoImport]
+	var goTypeImportExt any
+
+	// check extensions next to the $ref before checking the schema itself
+	// values next to $ref will be used before those in the actual schema
+	if v.Extensions[extPropGoImport] != nil {
+		goTypeImportExt = v.Extensions[extPropGoImport]
+	} else if v.Value != nil && v.Value.Extensions[extPropGoImport] != nil {
+		goTypeImportExt = v.Value.Extensions[extPropGoImport]
+	} else {
+		return nil, nil
+	}
 
 	importI, ok := goTypeImportExt.(map[string]any)
 	if !ok {
@@ -1136,12 +1143,6 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 	return &gi, nil
 }
 
-func MergeImports(dst, src map[string]goImport) {
-	for k, v := range src {
-		dst[k] = v
-	}
-}
-
 // TypeDefinitionsEquivalent checks for equality between two type definitions, but
 // not every field is considered. We only want to know if they are fundamentally
 // the same type.
@@ -1158,9 +1159,5 @@ func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
 		return false
 	}
 
-	return *s.AdditionalProperties.Has == false //nolint:staticcheck
-}
-
-func sliceContains[E comparable](s []E, v E) bool {
-	return slices.Contains(s, v)
+	return !*s.AdditionalProperties.Has
 }

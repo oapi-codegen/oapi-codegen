@@ -1,29 +1,30 @@
-package parameters
+package echoparams
 
 import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/oapi-codegen/testutil"
 	"github.com/labstack/echo/v4"
+	"github.com/oapi-codegen/testutil"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+
+	. "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/echo/gen"
 )
 
 type testServer struct {
-	array           []int32
-	object          *Object
-	complexObject   *ComplexObject
-	passThrough     *string
-	n1param         *string
-	primitive       *int32
-	primitiveString *string
-	cookieParams    *GetCookieParams
-	queryParams     *GetQueryFormParams
-	headerParams    *GetHeaderParams
+	array                []int32
+	object               *Object
+	complexObject        *ComplexObject
+	passThrough          *string
+	n1param              *string
+	primitive            *int32
+	primitiveString      *string
+	cookieParams         *GetCookieParams
+	queryParams          *GetQueryFormParams
+	queryDelimitedParams *GetQueryDelimitedParams
+	headerParams         *GetHeaderParams
 }
 
 func (t *testServer) reset() {
@@ -36,6 +37,7 @@ func (t *testServer) reset() {
 	t.primitiveString = nil
 	t.cookieParams = nil
 	t.queryParams = nil
+	t.queryDelimitedParams = nil
 	t.headerParams = nil
 }
 
@@ -138,6 +140,48 @@ func (t *testServer) GetDeepObject(ctx echo.Context, params GetDeepObjectParams)
 // (GET /simplePrimitive/{param})
 func (t *testServer) GetSimplePrimitive(ctx echo.Context, param int32) error {
 	t.primitive = &param
+	return nil
+}
+
+// (GET /simpleExplodePrimitive/{param})
+func (t *testServer) GetSimpleExplodePrimitive(ctx echo.Context, param int32) error {
+	t.primitive = &param
+	return nil
+}
+
+// (GET /labelPrimitive/{.param})
+func (t *testServer) GetLabelPrimitive(ctx echo.Context, param int32) error {
+	t.primitive = &param
+	return nil
+}
+
+// (GET /labelExplodePrimitive/{.param*})
+func (t *testServer) GetLabelExplodePrimitive(ctx echo.Context, param int32) error {
+	t.primitive = &param
+	return nil
+}
+
+// (GET /matrixPrimitive/{;id})
+func (t *testServer) GetMatrixPrimitive(ctx echo.Context, id int32) error {
+	t.primitive = &id
+	return nil
+}
+
+// (GET /matrixExplodePrimitive/{;id*})
+func (t *testServer) GetMatrixExplodePrimitive(ctx echo.Context, id int32) error {
+	t.primitive = &id
+	return nil
+}
+
+// (GET /queryDelimited)
+func (t *testServer) GetQueryDelimited(ctx echo.Context, params GetQueryDelimitedParams) error {
+	t.queryDelimitedParams = &params
+	if params.Sa != nil {
+		t.array = *params.Sa
+	}
+	if params.Pa != nil {
+		t.array = *params.Pa
+	}
 	return nil
 }
 
@@ -267,7 +311,7 @@ func TestParameterBinding(t *testing.T) {
 	//  (GET /passThrough/{param})
 	result := testutil.NewRequest().Get("/passThrough/some%20string").GoWithHTTPHandler(t, e)
 	assert.Equal(t, http.StatusOK, result.Code())
-	require.NotNil(t, ts.passThrough)
+	assert.NotNil(t, ts.passThrough)
 	assert.EqualValues(t, "some string", *ts.passThrough)
 	ts.reset()
 
@@ -367,6 +411,36 @@ func TestParameterBinding(t *testing.T) {
 	assert.EqualValues(t, &expectedN1Param, ts.n1param)
 	ts.reset()
 
+	//  (GET /simpleExplodePrimitive/{param})
+	result = testutil.NewRequest().Get("/simpleExplodePrimitive/5").GoWithHTTPHandler(t, e)
+	assert.Equal(t, http.StatusOK, result.Code())
+	assert.EqualValues(t, &expectedPrimitive, ts.primitive)
+	ts.reset()
+
+	//  (GET /labelPrimitive/{.param})
+	result = testutil.NewRequest().Get("/labelPrimitive/.5").GoWithHTTPHandler(t, e)
+	assert.Equal(t, http.StatusOK, result.Code())
+	assert.EqualValues(t, &expectedPrimitive, ts.primitive)
+	ts.reset()
+
+	//  (GET /labelExplodePrimitive/{.param*})
+	result = testutil.NewRequest().Get("/labelExplodePrimitive/.5").GoWithHTTPHandler(t, e)
+	assert.Equal(t, http.StatusOK, result.Code())
+	assert.EqualValues(t, &expectedPrimitive, ts.primitive)
+	ts.reset()
+
+	//  (GET /matrixPrimitive/{;id})
+	result = testutil.NewRequest().Get("/matrixPrimitive/;id=5").GoWithHTTPHandler(t, e)
+	assert.Equal(t, http.StatusOK, result.Code())
+	assert.EqualValues(t, &expectedPrimitive, ts.primitive)
+	ts.reset()
+
+	//  (GET /matrixExplodePrimitive/{;id*})
+	result = testutil.NewRequest().Get("/matrixExplodePrimitive/;id=5").GoWithHTTPHandler(t, e)
+	assert.Equal(t, http.StatusOK, result.Code())
+	assert.EqualValues(t, &expectedPrimitive, ts.primitive)
+	ts.reset()
+
 	// ---------------------- Test Form Query Parameters ----------------------
 	//  (GET /queryForm)
 
@@ -424,6 +498,25 @@ func TestParameterBinding(t *testing.T) {
 	assert.Equal(t, http.StatusOK, result.Code())
 	assert.EqualValues(t, &expectedN1Param, ts.n1param)
 	ts.reset()
+
+	// -------------------- Test Delimited Query Parameters --------------------
+	//  (GET /queryDelimited)
+	// These styles are not yet supported by the runtime binding layer.
+	// See https://github.com/oapi-codegen/runtime/issues/116
+
+	t.Run("spaceDelimited array", func(t *testing.T) {
+		result = testutil.NewRequest().Get("/queryDelimited?sa=3%204%205").GoWithHTTPHandler(t, e)
+		assert.Equal(t, http.StatusOK, result.Code())
+		assert.EqualValues(t, expectedArray, ts.array)
+		ts.reset()
+	})
+
+	t.Run("pipeDelimited array", func(t *testing.T) {
+		result = testutil.NewRequest().Get("/queryDelimited?pa=3|4|5").GoWithHTTPHandler(t, e)
+		assert.Equal(t, http.StatusOK, result.Code())
+		assert.EqualValues(t, expectedArray, ts.array)
+		ts.reset()
+	})
 
 	// complex object via deepObject
 	do := `deepObj[Id]=12345&deepObj[IsAdmin]=true&deepObj[Object][firstName]=Alex&deepObj[Object][role]=admin`
@@ -515,219 +608,5 @@ func TestParameterBinding(t *testing.T) {
 	ts.reset()
 }
 
-func doRequest(t *testing.T, e *echo.Echo, code int, req *http.Request) *httptest.ResponseRecorder {
-	rec := httptest.NewRecorder()
-	e.ServeHTTP(rec, req)
-	assert.Equal(t, code, rec.Code)
-	return rec
-}
-
-func TestClientPathParams(t *testing.T) {
-	var ts testServer
-	e := echo.New()
-	RegisterHandlers(e, &ts)
-	server := "http://example.com"
-
-	expectedObject := Object{
-		FirstName: "Alex",
-		Role:      "admin",
-	}
-
-	expectedComplexObject := ComplexObject{
-		Object:  expectedObject,
-		Id:      12345,
-		IsAdmin: true,
-	}
-
-	expectedArray := []int32{3, 4, 5}
-
-	var expectedPrimitive int32 = 5
-
-	req, err := NewGetPassThroughRequest(server, "some string")
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	require.NotNil(t, ts.passThrough)
-	assert.Equal(t, "some string", *ts.passThrough)
-	ts.reset()
-
-	req, err = NewGetStartingWithNumberRequest(server, "some string")
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	require.NotNil(t, ts.n1param)
-	assert.Equal(t, "some string", *ts.n1param)
-	ts.reset()
-
-	req, err = NewGetContentObjectRequest(server, expectedComplexObject)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	assert.EqualValues(t, &expectedComplexObject, ts.complexObject)
-	ts.reset()
-
-	// Label style
-	req, err = NewGetLabelExplodeArrayRequest(server, expectedArray)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	assert.EqualValues(t, expectedArray, ts.array)
-	ts.reset()
-
-	req, err = NewGetLabelNoExplodeArrayRequest(server, expectedArray)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	assert.EqualValues(t, expectedArray, ts.array)
-	ts.reset()
-
-	req, err = NewGetLabelExplodeObjectRequest(server, expectedObject)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	assert.EqualValues(t, &expectedObject, ts.object)
-	ts.reset()
-
-	req, err = NewGetLabelNoExplodeObjectRequest(server, expectedObject)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	assert.EqualValues(t, &expectedObject, ts.object)
-	ts.reset()
-
-	// Matrix style
-	req, err = NewGetMatrixExplodeArrayRequest(server, expectedArray)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	assert.EqualValues(t, expectedArray, ts.array)
-	ts.reset()
-
-	req, err = NewGetMatrixNoExplodeArrayRequest(server, expectedArray)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	assert.EqualValues(t, expectedArray, ts.array)
-	ts.reset()
-
-	req, err = NewGetMatrixExplodeObjectRequest(server, expectedObject)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	assert.EqualValues(t, &expectedObject, ts.object)
-	ts.reset()
-
-	req, err = NewGetMatrixNoExplodeObjectRequest(server, expectedObject)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	assert.EqualValues(t, &expectedObject, ts.object)
-	ts.reset()
-
-	// Simple style
-	req, err = NewGetSimpleExplodeArrayRequest(server, expectedArray)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	assert.EqualValues(t, expectedArray, ts.array)
-	ts.reset()
-
-	req, err = NewGetSimpleNoExplodeArrayRequest(server, expectedArray)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	assert.EqualValues(t, expectedArray, ts.array)
-	ts.reset()
-
-	req, err = NewGetSimpleExplodeObjectRequest(server, expectedObject)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	assert.EqualValues(t, &expectedObject, ts.object)
-	ts.reset()
-
-	req, err = NewGetSimpleNoExplodeObjectRequest(server, expectedObject)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	assert.EqualValues(t, &expectedObject, ts.object)
-	ts.reset()
-
-	req, err = NewGetSimplePrimitiveRequest(server, expectedPrimitive)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	assert.EqualValues(t, &expectedPrimitive, ts.primitive)
-	ts.reset()
-}
-
-func TestClientQueryParams(t *testing.T) {
-	var ts testServer
-	e := echo.New()
-	RegisterHandlers(e, &ts)
-	server := "http://example.com"
-
-	expectedObject1 := Object{
-		FirstName: "Alex",
-		Role:      "admin",
-	}
-	expectedObject2 := Object{
-		FirstName: "Marcin",
-		Role:      "annoyed_at_swagger",
-	}
-
-	expectedComplexObject := ComplexObject{
-		Object:  expectedObject2,
-		Id:      12345,
-		IsAdmin: true,
-	}
-
-	expectedArray1 := []int32{3, 4, 5}
-	expectedArray2 := []int32{6, 7, 8}
-
-	var expectedPrimitive1 int32 = 5
-	var expectedPrimitive2 int32 = 100
-	var expectedPrimitiveString = "123;456"
-
-	var expectedStartingWithNumber = "111"
-
-	// Check query params
-	qParams := GetQueryFormParams{
-		Ea:  &expectedArray1,
-		A:   &expectedArray2,
-		Eo:  &expectedObject1,
-		O:   &expectedObject2,
-		Ep:  &expectedPrimitive1,
-		P:   &expectedPrimitive2,
-		Ps:  &expectedPrimitiveString,
-		Co:  &expectedComplexObject,
-		N1s: &expectedStartingWithNumber,
-	}
-
-	req, err := NewGetQueryFormRequest(server, &qParams)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	require.NotNil(t, ts.queryParams)
-	assert.EqualValues(t, qParams, *ts.queryParams)
-	ts.reset()
-
-	// Check cookie params
-	cParams := GetCookieParams{
-		Ea:  &expectedArray1,
-		A:   &expectedArray2,
-		Eo:  &expectedObject1,
-		O:   &expectedObject2,
-		Ep:  &expectedPrimitive1,
-		P:   &expectedPrimitive2,
-		Co:  &expectedComplexObject,
-		N1s: &expectedStartingWithNumber,
-	}
-	req, err = NewGetCookieRequest(server, &cParams)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	require.NotNil(t, ts.cookieParams)
-	assert.EqualValues(t, cParams, *ts.cookieParams)
-	ts.reset()
-
-	// Check Header parameters
-	hParams := GetHeaderParams{
-		XArrayExploded:       &expectedArray1,
-		XArray:               &expectedArray2,
-		XObjectExploded:      &expectedObject1,
-		XObject:              &expectedObject2,
-		XPrimitiveExploded:   &expectedPrimitive1,
-		XPrimitive:           &expectedPrimitive2,
-		XComplexObject:       &expectedComplexObject,
-		N1StartingWithNumber: &expectedStartingWithNumber,
-	}
-	req, err = NewGetHeaderRequest(server, &hParams)
-	assert.NoError(t, err)
-	doRequest(t, e, http.StatusOK, req)
-	require.NotNil(t, ts.headerParams)
-	assert.EqualValues(t, hParams, *ts.headerParams)
-	ts.reset()
-}
+// TestClientPathParams, TestClientQueryParams, and the doRequest helper have been
+// superseded by the multi-router TestParameterRoundTrip in param_roundtrip_test.go.

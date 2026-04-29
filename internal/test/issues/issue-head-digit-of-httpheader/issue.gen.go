@@ -4,7 +4,7 @@
 package headdigitofhttpheader
 
 type N200ResponseHeaders struct {
-	N000Foo string
+	N000Foo *string
 }
 type N200Response struct {
 	Headers N200ResponseHeaders

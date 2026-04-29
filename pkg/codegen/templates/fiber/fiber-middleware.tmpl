@@ -1,33 +1,45 @@
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
     Handler ServerInterface
+    HandlerMiddlewares []HandlerMiddlewareFunc
 }
 
 type MiddlewareFunc fiber.Handler
+type HandlerMiddlewareFunc func(c *fiber.Ctx, next fiber.Handler) error
 
 {{range .}}{{$opid := .OperationId}}
-
+{{if not .IsAlias}}
 // {{$opid}} operation middleware
 func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
 
   {{if or .RequiresParamObject (gt (len .PathParams) 0) }}
   var err error
+  _ = err
   {{end}}
 
   {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
   var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
 
   {{if .IsPassThrough}}
-  {{$varName}} = c.Query("{{.ParamName}}")
+  {{$varName}}, err = url.PathUnescape(c.Params("{{.ParamName}}"))
+  if err != nil {
+    return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unescaping path parameter '{{.ParamName}}': %w", err).Error())
+  }
   {{end}}
   {{if .IsJson}}
-  err = json.Unmarshal([]byte(c.Query("{{.ParamName}}")), &{{$varName}})
-  if err != nil {
-    return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
+  {
+    paramValue, decErr := url.PathUnescape(c.Params("{{.ParamName}}"))
+    if decErr != nil {
+      return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unescaping path parameter '{{.ParamName}}': %w", decErr).Error())
+    }
+    err = json.Unmarshal([]byte(paramValue), &{{$varName}})
+    if err != nil {
+      return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
+    }
   }
   {{end}}
   {{if .IsStyled}}
-  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", c.Params("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", c.Params("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
   if err != nil {
     return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
   }
@@ -36,7 +48,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
   {{end}}
 
 {{range .SecurityDefinitions}}
-  c.Context().SetUserValue(({{.ProviderName | ucFirst}}Scopes), {{toStringArray .Scopes}})
+  c.Context().SetUserValue(({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes), {{toStringArray .Scopes}})
 {{end}}
 
   {{if .RequiresParamObject}}
@@ -55,7 +67,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
       {{- if (or (or .Required .IsPassThrough) (or .IsJson .IsStyled)) -}}
         // ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
       {{ end }}
-      {{ if (or (or .Required .IsPassThrough) .IsJson) }}
+      {{ if (or .IsPassThrough .IsJson) }}
         if paramValue := c.Query("{{.ParamName}}"); paramValue != "" {
 
         {{if .IsPassThrough}}
@@ -125,9 +137,10 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
     {{end}}
 
     {{range .CookieParams}}
-      var cookie string
+      {
+      cookie := c.Cookies("{{.ParamName}}")
 
-      if cookie = c.Cookies("{{.ParamName}}"); cookie == "" {
+      if cookie != "" {
 
       {{- if .IsPassThrough}}
         params.{{.GoName}} = {{if .HasOptionalPointer}}}&{{end}}cookie
@@ -151,7 +164,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
 
       {{- if .IsStyled}}
         var value {{.TypeDef}}
-        err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie, &value, runtime.BindStyledParameterOptions{Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+        err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
         if err != nil {
           return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
         }
@@ -165,9 +178,22 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
         return fiber.NewError(fiber.StatusBadRequest, err.Error())
       }
       {{- end}}
+      }
     {{end}}
   {{end}}
 
-  return siw.Handler.{{.OperationId}}(c{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+  handler := func(c *fiber.Ctx) error {
+    return siw.Handler.{{.OperationId}}(c{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
+  }
+
+  for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+    m := siw.HandlerMiddlewares[i]
+    next := handler
+    handler = func(c *fiber.Ctx) error {
+      return m(c, next)
+    }
+  }
+
+  return handler(c)
 }
-{{end}}
+{{end}}{{end}}
