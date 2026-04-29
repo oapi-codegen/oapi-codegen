@@ -4,7 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 )
+
+// defaultStreamingContentTypes are the regex patterns matched against
+// response Content-Type to decide when the strict-server should emit a
+// flush-per-chunk streaming path. User-supplied patterns are merged on top.
+var defaultStreamingContentTypes = []string{
+	"text/event-stream",
+	"application/jsonl",
+	"application/x-ndjson",
+}
 
 type AdditionalImport struct {
 	Alias   string `yaml:"alias,omitempty"`
@@ -143,41 +153,20 @@ func (g GenerateOptions) RouterImports() []AdditionalImport {
 	switch {
 	case g.EchoServer:
 		imports = append(imports, AdditionalImport{Package: "github.com/labstack/echo/v4"})
-		if g.Strict {
-			imports = append(imports, AdditionalImport{Alias: "strictecho", Package: "github.com/oapi-codegen/runtime/strictmiddleware/echo"})
-		}
 	case g.Echo5Server:
 		imports = append(imports, AdditionalImport{Package: "github.com/labstack/echo/v5"})
-		if g.Strict {
-			imports = append(imports, AdditionalImport{Alias: "strictecho5", Package: "github.com/oapi-codegen/runtime/strictmiddleware/echo/v5"})
-		}
 	case g.ChiServer:
 		imports = append(imports, AdditionalImport{Package: "github.com/go-chi/chi/v5"})
-		if g.Strict {
-			imports = append(imports, AdditionalImport{Alias: "strictnethttp", Package: "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"})
-		}
 	case g.GinServer:
 		imports = append(imports, AdditionalImport{Package: "github.com/gin-gonic/gin"})
-		if g.Strict {
-			imports = append(imports, AdditionalImport{Alias: "strictgin", Package: "github.com/oapi-codegen/runtime/strictmiddleware/gin"})
-		}
 	case g.GorillaServer:
 		imports = append(imports, AdditionalImport{Package: "github.com/gorilla/mux"})
-		if g.Strict {
-			imports = append(imports, AdditionalImport{Alias: "strictnethttp", Package: "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"})
-		}
 	case g.FiberServer:
 		imports = append(imports, AdditionalImport{Package: "github.com/gofiber/fiber/v2"})
 	case g.IrisServer:
 		imports = append(imports, AdditionalImport{Package: "github.com/kataras/iris/v12"})
 		imports = append(imports, AdditionalImport{Package: "github.com/kataras/iris/v12/core/router"})
-		if g.Strict {
-			imports = append(imports, AdditionalImport{Alias: "strictiris", Package: "github.com/oapi-codegen/runtime/strictmiddleware/iris"})
-		}
 	case g.StdHTTPServer:
-		if g.Strict {
-			imports = append(imports, AdditionalImport{Alias: "strictnethttp", Package: "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"})
-		}
 	}
 
 	return imports
@@ -287,6 +276,16 @@ type CompatibilityOptions struct {
 	// NOTE that this will not impact generated code.
 	// NOTE that if you're using `include-operation-ids` or `exclude-operation-ids` you may want to ensure that the `operationId`s used are correct.
 	PreserveOriginalOperationIdCasingInEmbeddedSpec bool `yaml:"preserve-original-operation-id-casing-in-embedded-spec"`
+
+	// HeadersImplicitlyRequired treats all response headers as required, ignoring
+	// the `required` property from the header definition. Prior to v2.6.0,
+	// oapi-codegen generated all response headers as direct values (implicitly
+	// required). The OpenAPI specification defaults headers to optional
+	// (required: false), so the corrected behavior generates optional headers as
+	// pointers. Set this to true to restore the old behavior where all headers
+	// are treated as required.
+	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/2267
+	HeadersImplicitlyRequired bool `yaml:"headers-implicitly-required,omitempty"`
 }
 
 func (co CompatibilityOptions) Validate() map[string]string {
@@ -299,6 +298,12 @@ type OutputOptions struct {
 	SkipFmt bool `yaml:"skip-fmt,omitempty"`
 	// Whether to skip pruning unused components on the generated code
 	SkipPrune bool `yaml:"skip-prune,omitempty"`
+	// SkipEnumValidate disables the generation of the `Valid()` method on
+	// enum types. By default each generated enum type includes a `Valid()
+	// bool` method which returns true when the value matches one of the
+	// defined constants; set this to true to suppress that method when it
+	// conflicts with user-defined methods of the same name.
+	SkipEnumValidate bool `yaml:"skip-enum-validate,omitempty"`
 	// Only include operations that have one of these tags. Ignored when empty.
 	IncludeTags []string `yaml:"include-tags,omitempty"`
 	// Exclude operations that have one of these tags. Ignored when empty.
@@ -316,11 +321,15 @@ type OutputOptions struct {
 	ResponseTypeSuffix string `yaml:"response-type-suffix,omitempty"`
 	// Override the default generated client type with the value
 	ClientTypeName string `yaml:"client-type-name,omitempty"`
-	// Whether to use the initialism overrides
-	InitialismOverrides bool `yaml:"initialism-overrides,omitempty"`
 	// AdditionalInitialisms is a list of additional initialisms to use when generating names.
 	// NOTE that this has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`
 	AdditionalInitialisms []string `yaml:"additional-initialisms,omitempty"`
+	// StreamingContentTypes are regex patterns matched against response
+	// Content-Type to decide when to generate a flush-per-chunk streaming
+	// response path. User-provided patterns are merged with the defaults
+	// (text/event-stream, application/jsonl, application/x-ndjson); invalid
+	// regexes fail Validate().
+	StreamingContentTypes []string `yaml:"streaming-content-types,omitempty"`
 	// Whether to generate nullable type for nullable fields
 	NullableType bool `yaml:"nullable-type,omitempty"`
 
@@ -340,6 +349,9 @@ type OutputOptions struct {
 
 	// ClientResponseBytesFunction decides whether to enable the generation of a `Bytes()` method on response objects for `ClientWithResponses`
 	ClientResponseBytesFunction bool `yaml:"client-response-bytes-function,omitempty"`
+
+	// SkipClientResponseContentType disables the generation of a `ContentType()` method on response objects for `ClientWithResponses`, which is otherwise generated by default.
+	SkipClientResponseContentType bool `yaml:"skip-client-response-content-type,omitempty"`
 
 	// PreferSkipOptionalPointer allows defining at a global level whether to omit the pointer for a type to indicate that the field/type is optional.
 	// This is the same as adding `x-go-type-skip-optional-pointer` to each field (manually, or using an OpenAPI Overlay)
@@ -376,7 +388,31 @@ func (oo OutputOptions) Validate() map[string]string {
 		}
 	}
 
+	if _, err := compileStreamingContentTypes(oo.StreamingContentTypes); err != nil {
+		return map[string]string{
+			"streaming-content-types": err.Error(),
+		}
+	}
+
 	return nil
+}
+
+// compileStreamingContentTypes returns the merged default + user-provided
+// patterns compiled into regexes. The first compile error is returned
+// including the offending pattern.
+func compileStreamingContentTypes(user []string) ([]*regexp.Regexp, error) {
+	all := make([]string, 0, len(defaultStreamingContentTypes)+len(user))
+	all = append(all, defaultStreamingContentTypes...)
+	all = append(all, user...)
+	out := make([]*regexp.Regexp, 0, len(all))
+	for _, p := range all {
+		re, err := regexp.Compile(p)
+		if err != nil {
+			return nil, fmt.Errorf("invalid streaming-content-type pattern %q: %w", p, err)
+		}
+		out = append(out, re)
+	}
+	return out, nil
 }
 
 type OutputOptionsOverlay struct {

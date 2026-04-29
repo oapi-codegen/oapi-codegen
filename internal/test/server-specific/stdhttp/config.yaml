@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: stdhttp
+generate:
+  std-http-server: true
+  models: true
+output: server.gen.go

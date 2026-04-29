@@ -647,9 +647,11 @@ func (a BodyWithAddPropsJSONBody) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["inner"], err = json.Marshal(a.Inner)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'inner': %w", err)
+	if a.Inner != nil {
+		object["inner"], err = json.Marshal(a.Inner)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'inner': %w", err)
+		}
 	}
 
 	object["name"], err = json.Marshal(a.Name)

@@ -465,6 +465,7 @@ func TestProperty_ZeroValueIsNil(t *testing.T) {
 	tests := []struct {
 		name        string
 		oapiSchema  *openapi3.Schema
+		goType      string
 		expectIsNil bool
 	}{
 		{
@@ -476,6 +477,12 @@ func TestProperty_ZeroValueIsNil(t *testing.T) {
 			name:        "when an object, returns false",
 			oapiSchema:  &openapi3.Schema{Type: newType("object")},
 			expectIsNil: false,
+		},
+		{
+			name:        "when an object rendered as a map, returns true",
+			oapiSchema:  &openapi3.Schema{Type: newType("object")},
+			goType:      "map[string]string",
+			expectIsNil: true,
 		},
 		{
 			name:        "when a string, returns false",
@@ -509,6 +516,7 @@ func TestProperty_ZeroValueIsNil(t *testing.T) {
 			prop := Property{
 				Schema: Schema{
 					OAPISchema: tt.oapiSchema,
+					GoType:     tt.goType,
 				},
 			}
 			if tt.expectIsNil {

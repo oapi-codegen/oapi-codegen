@@ -8,19 +8,29 @@ import (
 	"strings"
 )
 
+// MyCustomAPIServer defines the Server URL for Custom named server
+const MyCustomAPIServer = "https://api.example.com/v2"
+
 // ServerUrlDevelopmentServer defines the Server URL for Development server
+const ServerUrlDevelopmentServer = "https://development.gigantic-server.com/v1"
 
 // ServerUrlDevelopmentServer1 defines the Server URL for Development server
+const ServerUrlDevelopmentServer1 = "http://localhost:80"
 
 // ServerUrlDevelopmentServer2 defines the Server URL for Development server
+const ServerUrlDevelopmentServer2 = "http://localhost:80"
 
 // ServerUrlHttplocalhost443 defines the Server URL for http://localhost:443
+const ServerUrlHttplocalhost443 = "http://localhost:443"
 
 // ServerUrlProductionServer defines the Server URL for Production server
+const ServerUrlProductionServer = "https://api.gigantic-server.com/v1"
 
 // ServerUrlSomeLowercaseName defines the Server URL for some lowercase name
+const ServerUrlSomeLowercaseName = "http://localhost:80"
 
 // ServerUrlStagingServer defines the Server URL for Staging server
+const ServerUrlStagingServer = "https://staging.gigantic-server.com/v1"
 
 // ServerUrlTheProductionAPIServerBasePathVariable is the `basePath` variable for ServerUrlTheProductionAPIServer
 type ServerUrlTheProductionAPIServerBasePathVariable string
@@ -55,6 +65,7 @@ func NewServerUrlTheProductionAPIServer(basePath ServerUrlTheProductionAPIServer
 
 	u = strings.ReplaceAll(u, "{basePath}", string(basePath))
 	u = strings.ReplaceAll(u, "{noDefault}", string(noDefault))
+
 	// TODO in the future, this will validate that the value is part of the ServerUrlTheProductionAPIServerPortVariable enum
 	u = strings.ReplaceAll(u, "{port}", string(port))
 	u = strings.ReplaceAll(u, "{username}", string(username))

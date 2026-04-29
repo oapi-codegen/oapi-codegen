@@ -2134,11 +2134,11 @@ To get `oapi-codegen`'s multi-package support working, we need to set up our dir
 
 ```
 ├── admin
-│   ├── cfg.yaml
-│   └── generate.go
+│   ├── cfg.yaml
+│   └── generate.go
 └── common
     ├── cfg.yaml
-    └── generate.go
+    └── generate.go
 ```
 
 We could start with our configuration file for our admin API spec:

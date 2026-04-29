@@ -6,3 +6,22 @@ components:
           type: string
         object_b:
           $ref: ../packageB/spec.yaml#/components/schemas/ObjectB
+    # Reproduces https://github.com/oapi-codegen/oapi-codegen/issues/2288
+    # allOf extending a cross-file schema should qualify nested type refs
+    EnrichedUser:
+      allOf:
+        - $ref: '../packageB/spec.yaml#/components/schemas/User'
+        - type: object
+          properties:
+            extra_field:
+              type: string
+    # Reproduces https://github.com/oapi-codegen/oapi-codegen/issues/2288 (comment)
+    # allOf extending a cross-file schema whose own definition uses allOf
+    # with local refs — those inner refs must also be qualified.
+    StatusPostPayload:
+      allOf:
+        - $ref: '../packageB/spec.yaml#/components/schemas/StatusV1'
+        - type: object
+          properties:
+            reason:
+              type: string

@@ -1,4 +1,4 @@
-{{range .}}
+{{range .}}{{if not .IsAlias}}
     {{$opid := .OperationId -}}
     type {{$opid | ucFirst}}RequestObject struct {
         {{range .PathParams -}}
@@ -49,6 +49,16 @@
                 {{end}}
             {{else if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
                 type {{$receiverTypeName}} {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if and .Schema.IsRef (not .Schema.IsExternalRef)}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+                {{- if and .IsJSON .Schema.HasCustomMarshalJSON}}
+
+                func (t {{$receiverTypeName}}) MarshalJSON() ([]byte, error) {
+                    return {{.Schema.TypeDecl}}(t).MarshalJSON()
+                }
+
+                func (t *{{$receiverTypeName}}) UnmarshalJSON(b []byte) error {
+                    return (*{{.Schema.TypeDecl}})(t).UnmarshalJSON(b)
+                }
+                {{- end}}
             {{else -}}
                 type {{$receiverTypeName}} struct {
                     Body {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
@@ -102,11 +112,38 @@
                     defer writer.Close()
                     return {{if $hasBodyVar}}response.Body{{else}}response{{end}}(writer);
                 {{else -}}
-                    if closer, ok := response.Body.(io.ReadCloser); ok {
-                        defer closer.Close()
-                    }
-                    _, err := io.Copy(ctx.Response().BodyWriter(), response.Body)
-                    return err
+                    {{if .IsStreamingContentType -}}
+                        // Fiber/fasthttp streams through a callback: fasthttp emits
+                        // a chunk each time we call w.Flush(), so clients see
+                        // streaming data immediately instead of waiting on buffering.
+                        ctx.Response().SetBodyStreamWriter(func(w *bufio.Writer) {
+                            if closer, ok := response.Body.(io.ReadCloser); ok {
+                                defer closer.Close()
+                            }
+                            buf := make([]byte, 4096)
+                            for {
+                                n, err := response.Body.Read(buf)
+                                if n > 0 {
+                                    if _, writeErr := w.Write(buf[:n]); writeErr != nil {
+                                        return
+                                    }
+                                    if flushErr := w.Flush(); flushErr != nil {
+                                        return
+                                    }
+                                }
+                                if err != nil {
+                                    return
+                                }
+                            }
+                        })
+                        return nil
+                    {{else -}}
+                        if closer, ok := response.Body.(io.ReadCloser); ok {
+                            defer closer.Close()
+                        }
+                        _, err := io.Copy(ctx.Response().BodyWriter(), response.Body)
+                        return err
+                    {{end}}{{/* if .IsStreamingContentType */ -}}
                 {{end}}{{/* if eq .NameTag "JSON" */ -}}
             }
         {{end}}
@@ -133,13 +170,13 @@
             }
         {{end}}
     {{end}}
-{{end}}
+{{end}}{{end}}
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-{{range .}}{{.SummaryAsComment }}
+{{range .}}{{if not .IsAlias}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
 {{$opid := .OperationId -}}
 {{$opid}}(ctx context.Context, request {{$opid | ucFirst}}RequestObject) ({{$opid | ucFirst}}ResponseObject, error)
-{{end}}{{/* range . */ -}}
+{{end}}{{end}}{{/* range . */ -}}
 }

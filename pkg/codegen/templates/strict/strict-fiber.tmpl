@@ -1,5 +1,4 @@
-type StrictHandlerFunc func(ctx *fiber.Ctx, args interface{}) (interface{}, error)
-
+type StrictHandlerFunc func(ctx *fiber.Ctx, args any) (any, error)
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
@@ -13,6 +12,7 @@ type strictHandler struct {
 
 {{range .}}
     {{$opid := .OperationId}}
+    {{if not .IsAlias}}
     // {{$opid}} operation middleware
     func (sh *strictHandler) {{.OperationId}}(ctx *fiber.Ctx{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error {
         var request {{$opid | ucFirst}}RequestObject
@@ -100,4 +100,5 @@ type strictHandler struct {
         }
         return nil
     }
+    {{end}}
 {{end}}

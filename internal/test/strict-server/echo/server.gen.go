@@ -22,7 +22,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
 	"github.com/oapi-codegen/runtime"
-	strictecho "github.com/oapi-codegen/runtime/strictmiddleware/echo"
 )
 
 // ServerInterface represents all server handlers.
@@ -315,10 +314,15 @@ type JSONExampleResponseObject interface {
 type JSONExample200JSONResponse Example
 
 func (response JSONExample200JSONResponse) VisitJSONExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type JSONExample400Response = BadrequestResponse
@@ -349,6 +353,7 @@ type MultipartExample200MultipartResponse func(writer *multipart.Writer) error
 
 func (response MultipartExample200MultipartResponse) VisitMultipartExampleResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
+
 	w.Header().Set("Content-Type", writer.FormDataContentType())
 	w.WriteHeader(200)
 
@@ -384,6 +389,7 @@ type MultipartRelatedExample200MultipartResponse func(writer *multipart.Writer) 
 
 func (response MultipartRelatedExample200MultipartResponse) VisitMultipartRelatedExampleResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
+
 	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.WriteHeader(200)
 
@@ -422,24 +428,29 @@ type MultipleRequestAndResponseTypesResponseObject interface {
 type MultipleRequestAndResponseTypes200JSONResponse Example
 
 func (response MultipleRequestAndResponseTypes200JSONResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type MultipleRequestAndResponseTypes200FormdataResponse Example
 
 func (response MultipleRequestAndResponseTypes200FormdataResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.WriteHeader(200)
 
-	if form, err := runtime.MarshalForm(response, nil); err != nil {
-		return err
-	} else {
-		_, err := w.Write([]byte(form.Encode()))
+	form, err := runtime.MarshalForm(response, nil)
+	if err != nil {
 		return err
 	}
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	w.WriteHeader(200)
+	_, err = w.Write([]byte(form.Encode()))
+	return err
 }
 
 type MultipleRequestAndResponseTypes200ImagepngResponse struct {
@@ -448,6 +459,7 @@ type MultipleRequestAndResponseTypes200ImagepngResponse struct {
 }
 
 func (response MultipleRequestAndResponseTypes200ImagepngResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "image/png")
 	if response.ContentLength != 0 {
 		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
@@ -465,6 +477,7 @@ type MultipleRequestAndResponseTypes200MultipartResponse func(writer *multipart.
 
 func (response MultipleRequestAndResponseTypes200MultipartResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
+
 	w.Header().Set("Content-Type", writer.FormDataContentType())
 	w.WriteHeader(200)
 
@@ -475,6 +488,7 @@ func (response MultipleRequestAndResponseTypes200MultipartResponse) VisitMultipl
 type MultipleRequestAndResponseTypes200TextResponse string
 
 func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
@@ -500,10 +514,15 @@ type RequiredJSONBodyResponseObject interface {
 type RequiredJSONBody200JSONResponse Example
 
 func (response RequiredJSONBody200JSONResponse) VisitRequiredJSONBodyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type RequiredJSONBody400Response = BadrequestResponse
@@ -533,6 +552,7 @@ type RequiredTextBodyResponseObject interface {
 type RequiredTextBody200TextResponse string
 
 func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
@@ -567,6 +587,7 @@ type ReservedGoKeywordParametersResponseObject interface {
 type ReservedGoKeywordParameters200TextResponse string
 
 func (response ReservedGoKeywordParameters200TextResponse) VisitReservedGoKeywordParametersResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
@@ -585,12 +606,17 @@ type ReusableResponsesResponseObject interface {
 type ReusableResponses200JSONResponse struct{ ReusableresponseJSONResponse }
 
 func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response.Body)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type ReusableResponses400Response = BadrequestResponse
@@ -620,6 +646,7 @@ type TextExampleResponseObject interface {
 type TextExample200TextResponse string
 
 func (response TextExample200TextResponse) VisitTextExampleResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
@@ -657,6 +684,7 @@ type UnknownExample200Videomp4Response struct {
 }
 
 func (response UnknownExample200Videomp4Response) VisitUnknownExampleResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", "video/mp4")
 	if response.ContentLength != 0 {
 		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
@@ -702,6 +730,7 @@ type UnspecifiedContentType200VideoResponse struct {
 }
 
 func (response UnspecifiedContentType200VideoResponse) VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error {
+
 	w.Header().Set("Content-Type", response.ContentType)
 	if response.ContentLength != 0 {
 		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
@@ -758,15 +787,15 @@ type URLEncodedExampleResponseObject interface {
 type URLEncodedExample200FormdataResponse Example
 
 func (response URLEncodedExample200FormdataResponse) VisitURLEncodedExampleResponse(w http.ResponseWriter) error {
-	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.WriteHeader(200)
 
-	if form, err := runtime.MarshalForm(response, nil); err != nil {
-		return err
-	} else {
-		_, err := w.Write([]byte(form.Encode()))
+	form, err := runtime.MarshalForm(response, nil)
+	if err != nil {
 		return err
 	}
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	w.WriteHeader(200)
+	_, err = w.Write([]byte(form.Encode()))
+	return err
 }
 
 type URLEncodedExample400Response = BadrequestResponse
@@ -795,8 +824,10 @@ type HeadersExampleResponseObject interface {
 }
 
 type HeadersExample200ResponseHeaders struct {
-	Header1 string
-	Header2 int
+	Header1        string
+	Header2        int
+	NullableHeader *string
+	OptionalHeader *string
 }
 
 type HeadersExample200JSONResponse struct {
@@ -805,12 +836,23 @@ type HeadersExample200JSONResponse struct {
 }
 
 func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	if response.Headers.NullableHeader != nil {
+		w.Header().Set("nullable-header", fmt.Sprint(*response.Headers.NullableHeader))
+	}
+	if response.Headers.OptionalHeader != nil {
+		w.Header().Set("optional-header", fmt.Sprint(*response.Headers.OptionalHeader))
+	}
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response.Body)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type HeadersExample400Response = BadrequestResponse
@@ -848,12 +890,17 @@ type UnionExample200ApplicationAlternativePlusJSONResponse struct {
 }
 
 func (response UnionExample200ApplicationAlternativePlusJSONResponse) VisitUnionExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/alternative+json")
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response.Body)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type UnionExample200JSONResponse struct {
@@ -864,12 +911,17 @@ type UnionExample200JSONResponse struct {
 }
 
 func (response UnionExample200JSONResponse) VisitUnionExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body.union); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response.Body.union)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type UnionExample400Response = BadrequestResponse
@@ -934,8 +986,8 @@ type StrictServerInterface interface {
 	UnionExample(ctx context.Context, request UnionExampleRequestObject) (UnionExampleResponseObject, error)
 }
 
-type StrictHandlerFunc = strictecho.StrictEchoHandlerFunc
-type StrictMiddlewareFunc = strictecho.StrictEchoMiddlewareFunc
+type StrictHandlerFunc func(ctx echo.Context, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
 	return &strictHandler{ssi: ssi, middlewares: middlewares}
@@ -1405,25 +1457,26 @@ func (sh *strictHandler) UnionExample(ctx echo.Context) error {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"AAD//ysZ4qQMHQAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

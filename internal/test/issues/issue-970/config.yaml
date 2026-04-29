@@ -1,0 +1,6 @@
+package: issue970
+output: issue970.gen.go
+generate:
+  std-http-server: true
+  strict-server: true
+  models: true

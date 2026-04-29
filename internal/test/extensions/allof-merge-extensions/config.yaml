@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: allofmergeextensions
+generate:
+  models: true
+output: allof_merge_extensions.gen.go
+output-options:
+  skip-prune: true
+  overlay:
+    path: overlay.yaml

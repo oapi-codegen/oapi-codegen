@@ -15,16 +15,73 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
+// Defines values for Role.
+const (
+	RoleAdmin Role = "admin"
+	RoleUser  Role = "user"
+)
+
+// Valid indicates whether the value is a known member of the Role enum.
+func (e Role) Valid() bool {
+	switch e {
+	case RoleAdmin:
+		return true
+	case RoleUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StatusEnum.
+const (
+	Active   StatusEnum = "active"
+	Inactive StatusEnum = "inactive"
+)
+
+// Valid indicates whether the value is a known member of the StatusEnum enum.
+func (e StatusEnum) Valid() bool {
+	switch e {
+	case Active:
+		return true
+	case Inactive:
+		return true
+	default:
+		return false
+	}
+}
+
 // ObjectB defines model for ObjectB.
 type ObjectB struct {
 	Name *string `json:"name,omitempty"`
 }
 
+// Role defines model for Role.
+type Role string
+
+// StatusEnum defines model for StatusEnum.
+type StatusEnum string
+
+// StatusV1 defines model for StatusV1.
+type StatusV1 struct {
+	Status StatusEnum `json:"status"`
+}
+
+// User defines model for User.
+type User struct {
+	Id       string  `json:"id"`
+	Roles    *[]Role `json:"roles,omitempty"`
+	Username string  `json:"username"`
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/yTJwQ0CMQxE0V7mnApypAFqCNHAGm1sKzYHtNreUZa5zJfegW7DTakZqAeibxztyvvj",
-	"zZ63lT7NOVN4gbbB9fl1oiJyir5wrhWIPg1VP/teYE5tLqhAgbfc4i/nLwAA//8neaWPdgAAAA==",
+	"H4sIAAAAAAAC/4RRTUvDQBT8L6PHheB1j4LngqKX0sOavNiV/XL3rVDK/nd5a7CxtXjKhJnJm5kcMUaf",
+	"YqDABfqIMu7Jmw43r+808r3AlGOizJY6EYwnefIhETQKZxve0FpTeIyuUxSqh97CTN4GKNRCGTt1blF4",
+	"YsO1PHT5yjay/SQo2LDA696XO3Ea5zYz9PY8a+kaQbeZZmjcDKfCw9J2WKWQFpk+qs00SZTlA6f7sc+C",
+	"tmsKz1LrYh87/bGOQo5u4Zn8v5H6ku3nqsnZHORdlrz2A34ntxNW8ssCordhjtChOqcQEwWTLDSgkAzv",
+	"yzfTvgIAAP//mT+m2CQCAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
