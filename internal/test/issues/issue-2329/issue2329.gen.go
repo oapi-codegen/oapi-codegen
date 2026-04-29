@@ -4,7 +4,9 @@
 package issue2329
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,10 +16,103 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+// Thing defines model for Thing.
+type Thing struct {
+	Labels               []string          `json:"labels,omitempty"`
+	Tags                 map[string]string `json:"tags,omitempty"`
+	AdditionalProperties map[string]string `json:"-"`
+}
+
 // ListThingsParams defines parameters for ListThings.
 type ListThingsParams struct {
 	Tags   map[string]string `json:"tags,omitempty"`
 	Labels []string          `form:"labels,omitempty" json:"labels,omitempty"`
+}
+
+// CreateThingJSONRequestBody defines body for CreateThing for application/json ContentType.
+type CreateThingJSONRequestBody = Thing
+
+// Getter for additional properties for Thing. Returns the specified
+// element and whether it was found
+func (a Thing) Get(fieldName string) (value string, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Thing
+func (a *Thing) Set(fieldName string, value string) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]string)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Thing to handle AdditionalProperties
+func (a *Thing) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["labels"]; found {
+		err = json.Unmarshal(raw, &a.Labels)
+		if err != nil {
+			return fmt.Errorf("error reading 'labels': %w", err)
+		}
+		delete(object, "labels")
+	}
+
+	if raw, found := object["tags"]; found {
+		err = json.Unmarshal(raw, &a.Tags)
+		if err != nil {
+			return fmt.Errorf("error reading 'tags': %w", err)
+		}
+		delete(object, "tags")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]string)
+		for fieldName, fieldBuf := range object {
+			var fieldVal string
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Thing to handle AdditionalProperties
+func (a Thing) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.Labels != nil {
+		object["labels"], err = json.Marshal(a.Labels)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'labels': %w", err)
+		}
+	}
+
+	if a.Tags != nil {
+		object["tags"], err = json.Marshal(a.Tags)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'tags': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -95,10 +190,39 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 type ClientInterface interface {
 	// ListThings request
 	ListThings(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CreateThingWithBody request with any body
+	CreateThingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CreateThing(ctx context.Context, body CreateThingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) ListThings(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListThingsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateThingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateThingRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) CreateThing(ctx context.Context, body CreateThingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCreateThingRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -175,6 +299,46 @@ func NewListThingsRequest(server string, params *ListThingsParams) (*http.Reques
 	return req, nil
 }
 
+// NewCreateThingRequest calls the generic CreateThing builder with application/json body
+func NewCreateThingRequest(server string, body CreateThingJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCreateThingRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewCreateThingRequestWithBody generates requests for CreateThing with any type of body
+func NewCreateThingRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/things")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
 	for _, r := range c.RequestEditors {
 		if err := r(ctx, req); err != nil {
@@ -220,6 +384,11 @@ func WithBaseURL(baseURL string) ClientOption {
 type ClientWithResponsesInterface interface {
 	// ListThingsWithResponse request
 	ListThingsWithResponse(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*ListThingsResponse, error)
+
+	// CreateThingWithBodyWithResponse request with any body
+	CreateThingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateThingResponse, error)
+
+	CreateThingWithResponse(ctx context.Context, body CreateThingJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateThingResponse, error)
 }
 
 type ListThingsResponse struct {
@@ -251,6 +420,35 @@ func (r ListThingsResponse) ContentType() string {
 	return ""
 }
 
+type CreateThingResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r CreateThingResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CreateThingResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r CreateThingResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListThingsWithResponse request returning *ListThingsResponse
 func (c *ClientWithResponses) ListThingsWithResponse(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*ListThingsResponse, error) {
 	rsp, err := c.ListThings(ctx, params, reqEditors...)
@@ -258,6 +456,23 @@ func (c *ClientWithResponses) ListThingsWithResponse(ctx context.Context, params
 		return nil, err
 	}
 	return ParseListThingsResponse(rsp)
+}
+
+// CreateThingWithBodyWithResponse request with arbitrary body returning *CreateThingResponse
+func (c *ClientWithResponses) CreateThingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateThingResponse, error) {
+	rsp, err := c.CreateThingWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateThingResponse(rsp)
+}
+
+func (c *ClientWithResponses) CreateThingWithResponse(ctx context.Context, body CreateThingJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateThingResponse, error) {
+	rsp, err := c.CreateThing(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCreateThingResponse(rsp)
 }
 
 // ParseListThingsResponse parses an HTTP response from a ListThingsWithResponse call
@@ -269,6 +484,22 @@ func ParseListThingsResponse(rsp *http.Response) (*ListThingsResponse, error) {
 	}
 
 	response := &ListThingsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseCreateThingResponse parses an HTTP response from a CreateThingWithResponse call
+func ParseCreateThingResponse(rsp *http.Response) (*CreateThingResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CreateThingResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

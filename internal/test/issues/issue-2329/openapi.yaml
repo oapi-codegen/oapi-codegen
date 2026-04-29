@@ -25,3 +25,30 @@ paths:
       responses:
         "200":
           description: OK
+    post:
+      operationId: createThing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Thing'
+      responses:
+        "200":
+          description: OK
+components:
+  schemas:
+    Thing:
+      type: object
+      additionalProperties:
+        type: string
+      properties:
+        tags:
+          x-go-type-skip-optional-pointer: true
+          type: object
+          additionalProperties:
+            type: string
+        labels:
+          x-go-type-skip-optional-pointer: true
+          type: array
+          items:
+            type: string

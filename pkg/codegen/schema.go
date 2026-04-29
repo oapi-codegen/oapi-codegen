@@ -153,15 +153,21 @@ func (p Property) HasOptionalPointer() bool {
 	return !p.Required && !p.Schema.SkipOptionalPointer
 }
 
-// ZeroValueIsNil is a helper function to determine if the given Go type used for this property
-// Will return true if the OpenAPI `type` is:
-// - `array`
+// ZeroValueIsNil is a helper function to determine if the given Go type used
+// for this property has `nil` as its Go zero value. Slices (OpenAPI `array`)
+// and maps (OpenAPI `object` with only `additionalProperties`, rendered as
+// `map[K]V`) both satisfy this — the custom-marshal templates use it to decide
+// whether to emit a nil-check before reading the field.
 func (p Property) ZeroValueIsNil() bool {
 	if p.Schema.OAPISchema == nil {
 		return false
 	}
 
-	return p.Schema.OAPISchema.Type.Is("array")
+	if p.Schema.OAPISchema.Type.Is("array") {
+		return true
+	}
+
+	return strings.HasPrefix(p.Schema.GoType, "map[")
 }
 
 // EnumDefinition holds type information for enum
