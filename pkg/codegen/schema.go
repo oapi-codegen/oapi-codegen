@@ -394,6 +394,15 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			return Schema{}, fmt.Errorf("error merging schemas: %w", err)
 		}
 		mergedSchema.OAPISchema = schema
+		// x-go-type on the parent is handled by the early return above
+		// (combined extensions). For x-go-type-skip-optional-pointer, only
+		// override the merged value when the parent sets it explicitly —
+		// otherwise we would clobber the value MergeSchemas computed from
+		// the decorator idiom (an inline allOf member that carries the
+		// extension; see merge_schemas.go and issue #1957).
+		if _, ok := extensions[extPropGoTypeSkipOptionalPointer]; ok {
+			mergedSchema.SkipOptionalPointer = skipOptionalPointer
+		}
 		return mergedSchema, nil
 	}
 
