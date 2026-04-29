@@ -243,6 +243,14 @@ func (r ListThingsResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListThingsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // ListThingsWithResponse request returning *ListThingsResponse
 func (c *ClientWithResponses) ListThingsWithResponse(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*ListThingsResponse, error) {
 	rsp, err := c.ListThings(ctx, params, reqEditors...)
