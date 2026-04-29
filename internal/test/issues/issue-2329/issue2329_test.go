@@ -1,6 +1,7 @@
 package issue2329
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -43,5 +44,37 @@ func TestNewListThingsRequest(t *testing.T) {
 
 		assert.Contains(t, req.URL.RawQuery, "labels=a")
 		assert.Contains(t, req.URL.RawQuery, "labels=b")
+	})
+}
+
+// TestThingMarshalJSON verifies the body-schema custom-marshal path. The
+// Thing schema has additionalProperties, so codegen emits a custom
+// MarshalJSON that walks named properties one at a time. Map- and
+// slice-typed properties marked with `x-go-type-skip-optional-pointer: true`
+// must both be guarded by a nil-check there — otherwise an unset map
+// property serialises as `"tags":null` while an unset slice property is
+// omitted, producing inconsistent output for the same OpenAPI flag.
+func TestThingMarshalJSON(t *testing.T) {
+	t.Run("zero-value Thing omits both nil map and nil slice properties", func(t *testing.T) {
+		b, err := json.Marshal(Thing{})
+		require.NoError(t, err)
+
+		var got map[string]json.RawMessage
+		require.NoError(t, json.Unmarshal(b, &got))
+
+		assert.NotContains(t, got, "tags", "nil map property must be omitted, not serialised as null")
+		assert.NotContains(t, got, "labels", "nil slice property must be omitted, not serialised as null")
+	})
+
+	t.Run("populated Thing serialises both map and slice properties", func(t *testing.T) {
+		thing := Thing{
+			Tags:   map[string]string{"color": "blue"},
+			Labels: []string{"a", "b"},
+		}
+		b, err := json.Marshal(thing)
+		require.NoError(t, err)
+
+		assert.Contains(t, string(b), `"tags":{"color":"blue"}`)
+		assert.Contains(t, string(b), `"labels":["a","b"]`)
 	})
 }
