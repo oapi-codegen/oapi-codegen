@@ -1214,7 +1214,7 @@ func (siw *ServerInterfaceWrapper) GetStartingWithNumber(w http.ResponseWriter, 
 	// ------------- Path parameter "1param" -------------
 	var n1param string
 
-	n1param = r.PathValue("1param")
+	n1param = r.PathValue("_param")
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetStartingWithNumber(w, r, n1param)
@@ -1373,7 +1373,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/simpleNoExplodeArray/{param}", wrapper.GetSimpleNoExplodeArray)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/simpleNoExplodeObject/{param}", wrapper.GetSimpleNoExplodeObject)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/simplePrimitive/{param}", wrapper.GetSimplePrimitive)
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/startingWithNumber/{1param}", wrapper.GetStartingWithNumber)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/startingWithNumber/{_param}", wrapper.GetStartingWithNumber)
 
 	return m
 }
