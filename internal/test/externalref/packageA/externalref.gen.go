@@ -16,18 +16,35 @@ import (
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/externalref/packageB"
 )
 
+// EnrichedUser defines model for EnrichedUser.
+type EnrichedUser struct {
+	ExtraField *string              `json:"extra_field,omitempty"`
+	Id         string               `json:"id"`
+	Roles      *[]externalRef0.Role `json:"roles,omitempty"`
+	Username   string               `json:"username"`
+}
+
 // ObjectA defines model for ObjectA.
 type ObjectA struct {
 	Name    *string               `json:"name,omitempty"`
 	ObjectB *externalRef0.ObjectB `json:"object_b,omitempty"`
 }
 
+// StatusPostPayload defines model for StatusPostPayload.
+type StatusPostPayload struct {
+	Reason *string                 `json:"reason,omitempty"`
+	Status externalRef0.StatusEnum `json:"status"`
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/4yOMcrDMAxG7/L9/xjI7q25QI8QHKMkbhNZ2OpQgu5e7BS6dOikBw896UBIuyQm1gJ3",
-	"oISVdt/wOt0o6KWi5CSUNVIT7HeqU59CcCiaIy+wDqltjFOV/5lmOPz1n37/jvfiw90vNIxFKIznnQFm",
-	"1uG7+vUFa43Ic4Ljx7Z1SELsJcIBNa5rOY29AgAA//84dUj5+QAAAA==",
+	"H4sIAAAAAAAC/5xTzW7CMAx+F2/HSIhrbkPiDNo0LghVJnEhW5pkSToNVXn3KaEIKjqp7GbX9tfvp+1A",
+	"2MZZQyYG4B0EcaQGS7k0XokjyfdAPveo9aoGvu3g2VMNHJ5m19tZfzhzKD7xQIsqOBJVuU2sA+etIx8V",
+	"FWj6iR6rWpGWuY0nR8AhRK/MAVJilyd2/0EiQtolBqtSv+T9IZjBhkZQWH9d7fNwOuXzexaQMo+3iLEN",
+	"axviGk/aovyvEWegzXzEDE8YrJnswzjbqa6kO4RXq8simbYBvgWUjTLAoM3R7di9rWPCluX4BkRE9U3A",
+	"QJm+nIq0mQ8tHqoKZeexQG8YZvWevlrlSWaaPdxugtGXv2DIR8nRL89b3c8jNQ/SLXlco0fv8ZT7nMdf",
+	"oQ5VKQk36/fi8r4ytQVuWq0ZWEcGnQIOkFXHYzhP0m8AAAD//1KVtScdBAAA",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
