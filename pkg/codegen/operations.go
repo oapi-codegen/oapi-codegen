@@ -329,6 +329,7 @@ type OperationDefinition struct {
 	Spec                *openapi3.Operation
 	IsAlias             bool                    // True when this path is a $ref alias of another path item
 	AliasTarget         string                  // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
+	PathItemRef         string                  // The path item's $ref (if any); used to qualify externally-loaded schemas referenced from this operation's responses
 }
 
 // HandlerName returns the OperationId to use when referencing the server-side
@@ -401,10 +402,10 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 
 		// We can only generate a type if we have a value:
 		if responseRef.Value != nil {
-			jsonCount := 0
+			supportedCount := 0
 			for mediaType := range responseRef.Value.Content {
-				if util.IsMediaTypeJson(mediaType) {
-					jsonCount++
+				if isMediaTypeSupported(mediaType) {
+					supportedCount++
 				}
 			}
 
@@ -413,55 +414,62 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
 				if contentType.Schema != nil {
-					// When a response has multiple JSON content types (e.g.,
-					// application/json, application/json-patch+json, and
-					// application/merge-patch+json), we include a content-type-derived
-					// segment in the schema path. This is necessary because
-					// GenerateGoSchema uses the path to name any inline types it
-					// creates (e.g., oneOf union members). Without the content type
-					// in the path, all content types for the same response produce
-					// identically-named inline types. If those content types have
-					// different schemas, the result is conflicting type declarations;
-					// if they have the same schema, the result is duplicate
-					// declarations. Both cases produce code that won't compile.
-					//
-					// We only add the content type segment when collision resolution
-					// is enabled (resolve-type-name-collisions) and jsonCount > 1,
-					// to avoid changing type names for existing users. Ideally the
-					// media type would always be part of the path for consistency.
-					// TODO: revisit this at the next major version change —
-					// always include the media type in the schema path.
-					schemaPath := []string{o.OperationId, responseName}
-					if jsonCount > 1 && util.IsMediaTypeJson(contentTypeName) && globalState.options.OutputOptions.ResolveTypeNameCollisions {
-						schemaPath = append(schemaPath, mediaTypeToCamelCase(contentTypeName))
-					}
-					responseSchema, err := GenerateGoSchema(contentType.Schema, schemaPath)
-					if err != nil {
-						return nil, fmt.Errorf("unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
-					}
-
-					var typeName string
+					var typeName, tag string
 					switch {
 
 					// HAL+JSON:
 					case slices.Contains(contentTypesHalJSON, contentTypeName):
 						typeName = fmt.Sprintf("HALJSON%s", nameNormalizer(responseName))
+						tag = "HALJSON"
 					case contentTypeName == "application/json":
 						// if it's the standard application/json
 						typeName = fmt.Sprintf("JSON%s", nameNormalizer(responseName))
+						tag = "JSON"
 					// Vendored JSON
 					case slices.Contains(contentTypesJSON, contentTypeName) || util.IsMediaTypeJson(contentTypeName):
 						baseTypeName := fmt.Sprintf("%s%s", nameNormalizer(contentTypeName), nameNormalizer(responseName))
 
 						typeName = strings.ReplaceAll(baseTypeName, "Json", "JSON")
+						tag = strings.ReplaceAll(nameNormalizer(contentTypeName), "Json", "JSON")
 					// YAML:
 					case slices.Contains(contentTypesYAML, contentTypeName):
 						typeName = fmt.Sprintf("YAML%s", nameNormalizer(responseName))
+						tag = "YAML"
 					// XML:
 					case slices.Contains(contentTypesXML, contentTypeName):
 						typeName = fmt.Sprintf("XML%s", nameNormalizer(responseName))
+						tag = "XML"
 					default:
 						continue
+					}
+
+					// Use the same body-type name as the server-side
+					// GenerateResponseDefinitions ("Body" suffixed so it
+					// doesn't collide with the strict envelope's struct
+					// wrapper) as the schema-path root. The canonical
+					// declaration happens server-side; here we just point
+					// RefType at the same name so the JSON<status> field
+					// renders as a pointer to it.
+					responseBodyTypeName := o.OperationId + responseName + tag + "ResponseBody"
+					schemaPath := []string{responseBodyTypeName}
+					responseSchema, err := GenerateGoSchema(contentType.Schema, schemaPath)
+					if err != nil {
+						return nil, fmt.Errorf("unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
+					}
+
+					// Hoist inline response-root schemas that need
+					// method-emitting boilerplate (UnionElements /
+					// AdditionalProperties). For external path items,
+					// qualify with the imported package — see the
+					// equivalent block in GenerateResponseDefinitions for
+					// rationale.
+					if !IsGoTypeReference(responseRef.Ref) && responseSchema.RefType == "" &&
+						(len(responseSchema.UnionElements) != 0 || responseSchema.HasAdditionalProperties) {
+						if externalPkg := externalPackageFor(o.PathItemRef); externalPkg != "" {
+							responseSchema.RefType = fmt.Sprintf("%s.%s", externalPkg, responseBodyTypeName)
+						} else {
+							responseSchema.RefType = responseBodyTypeName
+						}
 					}
 
 					td := ResponseTypeDefinition{
@@ -478,7 +486,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 						if err != nil {
 							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
 						}
-						if jsonCount > 1 && util.IsMediaTypeJson(contentTypeName) {
+						if supportedCount > 1 {
 							if resolved := resolvedNameForRefPath(responseRef.Ref, contentTypeName); resolved != "" {
 								refType = resolved + mediaTypeToCamelCase(contentTypeName)
 							} else {
@@ -808,14 +816,14 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				return nil, err
 			}
 
-			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(operationId, op.RequestBody)
+			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(operationId, op.RequestBody, pathItem.Ref)
 			if err != nil {
 				return nil, fmt.Errorf("error generating body definitions: %w", err)
 			}
 
 			ensureExternalRefsInRequestBodyDefinitions(&bodyDefinitions, pathItem.Ref)
 
-			responseDefinitions, err := GenerateResponseDefinitions(operationId, op.Responses.Map())
+			responseDefinitions, err := GenerateResponseDefinitions(operationId, op.Responses.Map(), pathItem.Ref)
 			if err != nil {
 				return nil, fmt.Errorf("error generating response definitions: %w", err)
 			}
@@ -838,6 +846,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				TypeDefinitions: typeDefinitions,
 				IsAlias:         isAlias,
 				AliasTarget:     aliasTarget,
+				PathItemRef:     pathItem.Ref,
 			}
 
 			// check for overrides of SecurityDefinitions.
@@ -887,7 +896,14 @@ func generateDefaultOperationID(opName string, requestPath string) (string, erro
 
 // GenerateBodyDefinitions turns the Swagger body definitions into a list of our body
 // definitions which will be used for code generation.
-func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBodyRef) ([]RequestBodyDefinition, []TypeDefinition, error) {
+//
+// pathItemRef is the path item's $ref (if any). When non-empty and pointing at
+// an external file, the body type that would otherwise be hoisted locally is
+// replaced by a reference to the imported package's same-named type — the
+// imported package already declares it (with any As/From/Merge methods), so
+// redeclaring locally would just produce an awkward duplicate with
+// package-qualified union elements.
+func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBodyRef, pathItemRef string) ([]RequestBodyDefinition, []TypeDefinition, error) {
 	if bodyOrRef == nil {
 		return nil, nil, nil
 	}
@@ -942,24 +958,31 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		// type under #/components, we'll define a type for it, so
 		// that we have an easy to use type for marshaling.
 		if bodySchema.RefType == "" {
-			if contentType == "application/x-www-form-urlencoded" {
-				// Apply the appropriate structure tag if the request
-				// schema was defined under the operations' section.
-				for i := range bodySchema.Properties {
-					bodySchema.Properties[i].NeedsFormTag = true
+			if externalPkg := externalPackageFor(pathItemRef); externalPkg != "" {
+				// The operation's path item came from an external file; the
+				// imported package already declares this body type with the
+				// matching name. Reference it instead of redeclaring.
+				bodySchema.RefType = fmt.Sprintf("%s.%s", externalPkg, bodyTypeName)
+			} else {
+				if contentType == "application/x-www-form-urlencoded" {
+					// Apply the appropriate structure tag if the request
+					// schema was defined under the operations' section.
+					for i := range bodySchema.Properties {
+						bodySchema.Properties[i].NeedsFormTag = true
+					}
+
+					// Regenerate the Golang struct adding the new form tag.
+					bodySchema.GoType = GenStructFromSchema(bodySchema)
 				}
 
-				// Regenerate the Golang struct adding the new form tag.
-				bodySchema.GoType = GenStructFromSchema(bodySchema)
+				td := TypeDefinition{
+					TypeName: bodyTypeName,
+					Schema:   bodySchema,
+				}
+				typeDefinitions = append(typeDefinitions, td)
+				// The body schema now is a reference to a type
+				bodySchema.RefType = bodyTypeName
 			}
-
-			td := TypeDefinition{
-				TypeName: bodyTypeName,
-				Schema:   bodySchema,
-			}
-			typeDefinitions = append(typeDefinitions, td)
-			// The body schema now is a reference to a type
-			bodySchema.RefType = bodyTypeName
 		}
 
 		bd := RequestBodyDefinition{
@@ -986,7 +1009,9 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 	return bodyDefinitions, typeDefinitions, nil
 }
 
-func GenerateResponseDefinitions(operationID string, responses map[string]*openapi3.ResponseRef) ([]ResponseDefinition, error) {
+func GenerateResponseDefinitions(operationID string, responses map[string]*openapi3.ResponseRef, pathItemRef string) ([]ResponseDefinition, error) {
+	externalPkg := externalPackageFor(pathItemRef)
+
 	var responseDefinitions []ResponseDefinition
 	// do not let multiple status codes ref to same response, it will break the type switch
 	refSet := make(map[string]struct{})
@@ -1023,9 +1048,42 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			}
 
 			responseTypeName := operationID + statusCode + tag + "Response"
-			contentSchema, err := GenerateGoSchema(content.Schema, []string{responseTypeName})
+			// The strict-server envelope keeps the bare ...Response name
+			// (e.g. "GetPing200JSONResponse"); the hoisted body type is
+			// suffixed so the envelope can reference it without colliding
+			// (the strict envelope is sometimes a struct that wraps the
+			// body in a Body field, which would self-reference if the
+			// names matched).
+			responseBodyTypeName := responseTypeName + "Body"
+			contentSchema, err := GenerateGoSchema(content.Schema, []string{responseBodyTypeName})
 			if err != nil {
 				return nil, fmt.Errorf("error generating request body definition: %w", err)
+			}
+
+			// Hoist inline response-root schemas that need method-emitting
+			// boilerplate (UnionElements / AdditionalProperties) to a
+			// synthetic top-level TypeDefinition. The hoisted typedef flows
+			// via op.TypeDefinitions (collected in
+			// GenerateTypeDefsForOperation) and gets declared once via
+			// typedef.tmpl with full union/additionalProperties methods.
+			// The strict-server template references it as the body type
+			// from the envelope.
+			//
+			// When the operation came from an externally-ref'd path item,
+			// the imported package generated the same hoisted name, so we
+			// reference it instead of redeclaring locally.
+			if !IsGoTypeReference(responseOrRef.Ref) && contentSchema.RefType == "" &&
+				(len(contentSchema.UnionElements) != 0 || contentSchema.HasAdditionalProperties) {
+				if externalPkg != "" {
+					contentSchema.RefType = fmt.Sprintf("%s.%s", externalPkg, responseBodyTypeName)
+				} else {
+					contentSchema.AdditionalTypes = append(contentSchema.AdditionalTypes, TypeDefinition{
+						TypeName: responseBodyTypeName,
+						JsonName: responseBodyTypeName,
+						Schema:   contentSchema,
+					})
+					contentSchema.RefType = responseBodyTypeName
+				}
 			}
 
 			rcd := ResponseContentDefinition{
@@ -1157,7 +1215,6 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 		s.Properties = append(s.Properties, prop)
 	}
 
-	s.Description = op.Spec.Description
 	s.GoType = GenStructFromSchema(s)
 
 	td := TypeDefinition{
@@ -1178,25 +1235,6 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	}
 	if _, err := w.WriteString(addTypes); err != nil {
 		return "", fmt.Errorf("error writing boilerplate to buffer: %w", err)
-	}
-
-	// Generate boiler plate for all additional types.
-	var td []TypeDefinition
-	for _, op := range ops {
-		td = append(td, op.TypeDefinitions...)
-	}
-
-	addProps, err := GenerateAdditionalPropertyBoilerplate(t, td)
-	if err != nil {
-		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
-	}
-
-	if _, err := w.WriteString("\n"); err != nil {
-		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
-	}
-
-	if _, err := w.WriteString(addProps); err != nil {
-		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
 	if err = w.Flush(); err != nil {

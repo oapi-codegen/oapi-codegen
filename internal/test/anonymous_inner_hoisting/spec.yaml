@@ -1,0 +1,132 @@
+openapi: 3.0.3
+info:
+  version: 1.0.0
+  title: Anonymous Inner Hoisting
+  description: |
+    Exercises inline oneOf / anyOf schemas at every operation root and at
+    nested positions. Each generated wrapper type should receive
+    As<Branch>() / From<Branch>() / Merge<Branch>() accessor methods.
+paths:
+
+  /response-root-oneof:
+    get:
+      operationId: getResponseRootOneOf
+      responses:
+        '200':
+          description: inline oneOf as the response body root
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Cat'
+                  - $ref: '#/components/schemas/Dog'
+
+  /response-root-anyof:
+    get:
+      operationId: getResponseRootAnyOf
+      responses:
+        '200':
+          description: inline anyOf as the response body root
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/Cat'
+                  - $ref: '#/components/schemas/Dog'
+
+  /response-items-oneof:
+    get:
+      operationId: getResponseItemsOneOf
+      responses:
+        '200':
+          description: inline oneOf as items of an array property
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: '#/components/schemas/Cat'
+                        - $ref: '#/components/schemas/Dog'
+
+  /response-deep-nested:
+    get:
+      operationId: getResponseDeepNested
+      responses:
+        '200':
+          description: inline oneOf nested inside a property of a property
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  wrapper:
+                    type: object
+                    properties:
+                      inner:
+                        oneOf:
+                          - $ref: '#/components/schemas/Cat'
+                          - $ref: '#/components/schemas/Dog'
+
+  /body-root-oneof:
+    post:
+      operationId: postBodyRootOneOf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/Cat'
+                - $ref: '#/components/schemas/Dog'
+      responses:
+        '200':
+          description: ok
+
+  /body-property-oneof:
+    post:
+      operationId: postBodyPropertyOneOf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pet:
+                  oneOf:
+                    - $ref: '#/components/schemas/Cat'
+                    - $ref: '#/components/schemas/Dog'
+      responses:
+        '200':
+          description: ok
+
+components:
+  schemas:
+    Cat:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+          enum:
+            - cat
+        name:
+          type: string
+    Dog:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+          enum:
+            - dog
+        name:
+          type: string

@@ -47,6 +47,28 @@ var (
 	titleCaser = cases.Title(language.English)
 )
 
+// isMediaTypeSupported reports whether code generation produces a typed
+// body for this media type. Today this is the closed set of JSON / YAML /
+// XML variants the response and request templates know how to handle —
+// see the typeName switch in GetResponseTypeDefinitions and the body
+// definition switch in GenerateBodyDefinitions. A future configuration
+// option is intended to let users extend this list.
+func isMediaTypeSupported(mediaType string) bool {
+	switch {
+	case slices.Contains(contentTypesHalJSON, mediaType):
+		return true
+	case slices.Contains(contentTypesJSON, mediaType):
+		return true
+	case util.IsMediaTypeJson(mediaType):
+		return true
+	case slices.Contains(contentTypesYAML, mediaType):
+		return true
+	case slices.Contains(contentTypesXML, mediaType):
+		return true
+	}
+	return false
+}
+
 // genParamArgs takes an array of Parameter definition, and generates a valid
 // Go parameter declaration from them, eg:
 // ", foo int, bar string, baz float32". The preceding comma is there to save

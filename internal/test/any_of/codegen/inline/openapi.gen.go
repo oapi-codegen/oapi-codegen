@@ -13,6 +13,7 @@ import (
 	"strings"
 
 	"github.com/labstack/echo/v4"
+	"github.com/oapi-codegen/runtime"
 )
 
 const (
@@ -48,9 +49,97 @@ type Rat struct {
 // apiKeyAuthContextKey is the context key for ApiKeyAuth security scheme
 type apiKeyAuthContextKey string
 
-// GetPets200JSONResponse_Data_Item defines parameters for GetPets.
-type GetPets200JSONResponse_Data_Item struct {
+// GetPets200JSONResponseBody_Data_Item defines parameters for GetPets.
+type GetPets200JSONResponseBody_Data_Item struct {
 	union json.RawMessage
+}
+
+// AsCat returns the union data inside the GetPets200JSONResponseBody_Data_Item as a Cat
+func (t GetPets200JSONResponseBody_Data_Item) AsCat() (Cat, error) {
+	var body Cat
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCat overwrites any union data inside the GetPets200JSONResponseBody_Data_Item as the provided Cat
+func (t *GetPets200JSONResponseBody_Data_Item) FromCat(v Cat) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCat performs a merge with any union data inside the GetPets200JSONResponseBody_Data_Item, using the provided Cat
+func (t *GetPets200JSONResponseBody_Data_Item) MergeCat(v Cat) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDog returns the union data inside the GetPets200JSONResponseBody_Data_Item as a Dog
+func (t GetPets200JSONResponseBody_Data_Item) AsDog() (Dog, error) {
+	var body Dog
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDog overwrites any union data inside the GetPets200JSONResponseBody_Data_Item as the provided Dog
+func (t *GetPets200JSONResponseBody_Data_Item) FromDog(v Dog) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDog performs a merge with any union data inside the GetPets200JSONResponseBody_Data_Item, using the provided Dog
+func (t *GetPets200JSONResponseBody_Data_Item) MergeDog(v Dog) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRat returns the union data inside the GetPets200JSONResponseBody_Data_Item as a Rat
+func (t GetPets200JSONResponseBody_Data_Item) AsRat() (Rat, error) {
+	var body Rat
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRat overwrites any union data inside the GetPets200JSONResponseBody_Data_Item as the provided Rat
+func (t *GetPets200JSONResponseBody_Data_Item) FromRat(v Rat) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRat performs a merge with any union data inside the GetPets200JSONResponseBody_Data_Item, using the provided Rat
+func (t *GetPets200JSONResponseBody_Data_Item) MergeRat(v Rat) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t GetPets200JSONResponseBody_Data_Item) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *GetPets200JSONResponseBody_Data_Item) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -220,11 +309,8 @@ type GetPetsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-		Data *[]GetPets_200_Data_Item `json:"data,omitempty"`
+		Data *[]GetPets200JSONResponseBody_Data_Item `json:"data,omitempty"`
 	}
-}
-type GetPets_200_Data_Item struct {
-	union json.RawMessage
 }
 
 // Status returns HTTPResponse.Status
@@ -276,7 +362,7 @@ func ParseGetPetsResponse(rsp *http.Response) (*GetPetsResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-			Data *[]GetPets_200_Data_Item `json:"data,omitempty"`
+			Data *[]GetPets200JSONResponseBody_Data_Item `json:"data,omitempty"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

@@ -29,6 +29,47 @@ type Bionicle struct {
 // BionicleName defines model for bionicleName.
 type BionicleName = string
 
+// GetBionicleName400JSONResponseBody defines parameters for GetBionicleName.
+type GetBionicleName400JSONResponseBody struct {
+	union json.RawMessage
+}
+
+// AsBionicle returns the union data inside the GetBionicleName400JSONResponseBody as a Bionicle
+func (t GetBionicleName400JSONResponseBody) AsBionicle() (Bionicle, error) {
+	var body Bionicle
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromBionicle overwrites any union data inside the GetBionicleName400JSONResponseBody as the provided Bionicle
+func (t *GetBionicleName400JSONResponseBody) FromBionicle(v Bionicle) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeBionicle performs a merge with any union data inside the GetBionicleName400JSONResponseBody, using the provided Bionicle
+func (t *GetBionicleName400JSONResponseBody) MergeBionicle(v Bionicle) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t GetBionicleName400JSONResponseBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *GetBionicleName400JSONResponseBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
@@ -211,9 +252,7 @@ func (response GetBionicleName200JSONResponse) VisitGetBionicleNameResponse(w ht
 	return err
 }
 
-type GetBionicleName400JSONResponse struct {
-	union json.RawMessage
-}
+type GetBionicleName400JSONResponse = GetBionicleName400JSONResponseBody
 
 func (response GetBionicleName400JSONResponse) VisitGetBionicleNameResponse(w http.ResponseWriter) error {
 
