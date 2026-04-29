@@ -32,6 +32,7 @@ type MiddlewareFunc func(http.Handler) http.Handler
 func (siw *ServerInterfaceWrapper) GetResource(w http.ResponseWriter, r *http.Request) {
 
 	var err error
+	_ = err
 
 	// ------------- Path parameter "addressing-identifier" -------------
 	var addressingIdentifier string
@@ -127,10 +128,10 @@ func Handler(si ServerInterface) http.Handler {
 	return HandlerWithOptions(si, StdHTTPServerOptions{})
 }
 
-// ServeMux is an abstraction of http.ServeMux.
+// ServeMux is an abstraction of [http.ServeMux].
 type ServeMux interface {
 	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
-	ServeHTTP(w http.ResponseWriter, r *http.Request)
+	http.Handler
 }
 
 type StdHTTPServerOptions struct {
@@ -173,7 +174,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc("GET "+options.BaseURL+"/resources/{addressing_identifier}", wrapper.GetResource)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/resources/{addressing_identifier}", wrapper.GetResource)
 
 	return m
 }
