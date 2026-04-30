@@ -272,34 +272,53 @@ type EchoRouter interface {
 	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 }
 
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
-	RegisterHandlersWithBaseURL(router, si, "")
+// RegisterHandlersOptions configures RegisterHandlersWithOptions.
+type RegisterHandlersOptions struct {
+	// BaseURL is prepended to every registered path so the API can be served
+	// under a prefix.
+	BaseURL string
+	// OperationMiddlewares lets the caller attach per-operation middleware at
+	// registration time. The map key is the OpenAPI `operationId` value as it
+	// appears in the spec (the raw, un-normalized form). Operations that have
+	// no entry are registered with no extra middleware. A nil map disables
+	// per-operation middleware entirely.
+	OperationMiddlewares map[string][]echo.MiddlewareFunc
 }
 
-// Registers handlers, and prepends BaseURL to the paths, so that the paths
-// can be served under a prefix.
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
+	RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{})
+}
+
+// RegisterHandlersWithBaseURL registers handlers and prepends BaseURL to the
+// paths so the API can be served under a prefix.
 func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
+	RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{BaseURL: baseURL})
+}
+
+// RegisterHandlersWithOptions registers handlers using the supplied options,
+// including any per-operation middleware.
+func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options RegisterHandlersOptions) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.POST(baseURL+"/json", wrapper.JSONExample)
-	router.POST(baseURL+"/multipart", wrapper.MultipartExample)
-	router.POST(baseURL+"/multipart-related", wrapper.MultipartRelatedExample)
-	router.POST(baseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
-	router.POST(baseURL+"/no-content-headers", wrapper.NoContentHeaders)
-	router.POST(baseURL+"/required-json-body", wrapper.RequiredJSONBody)
-	router.POST(baseURL+"/required-text-body", wrapper.RequiredTextBody)
-	router.GET(baseURL+"/reserved-go-keyword-parameters/:type", wrapper.ReservedGoKeywordParameters)
-	router.POST(baseURL+"/reusable-responses", wrapper.ReusableResponses)
-	router.POST(baseURL+"/text", wrapper.TextExample)
-	router.POST(baseURL+"/unknown", wrapper.UnknownExample)
-	router.POST(baseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
-	router.POST(baseURL+"/urlencoded", wrapper.URLEncodedExample)
-	router.POST(baseURL+"/with-headers", wrapper.HeadersExample)
-	router.POST(baseURL+"/with-union", wrapper.UnionExample)
+	router.POST(options.BaseURL+"/json", wrapper.JSONExample, options.OperationMiddlewares["JSONExample"]...)
+	router.POST(options.BaseURL+"/multipart", wrapper.MultipartExample, options.OperationMiddlewares["MultipartExample"]...)
+	router.POST(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample, options.OperationMiddlewares["MultipartRelatedExample"]...)
+	router.POST(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes, options.OperationMiddlewares["MultipleRequestAndResponseTypes"]...)
+	router.POST(options.BaseURL+"/no-content-headers", wrapper.NoContentHeaders, options.OperationMiddlewares["NoContentHeaders"]...)
+	router.POST(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody, options.OperationMiddlewares["RequiredJSONBody"]...)
+	router.POST(options.BaseURL+"/required-text-body", wrapper.RequiredTextBody, options.OperationMiddlewares["RequiredTextBody"]...)
+	router.GET(options.BaseURL+"/reserved-go-keyword-parameters/:type", wrapper.ReservedGoKeywordParameters, options.OperationMiddlewares["ReservedGoKeywordParameters"]...)
+	router.POST(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses, options.OperationMiddlewares["ReusableResponses"]...)
+	router.POST(options.BaseURL+"/text", wrapper.TextExample, options.OperationMiddlewares["TextExample"]...)
+	router.POST(options.BaseURL+"/unknown", wrapper.UnknownExample, options.OperationMiddlewares["UnknownExample"]...)
+	router.POST(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType, options.OperationMiddlewares["UnspecifiedContentType"]...)
+	router.POST(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample, options.OperationMiddlewares["URLEncodedExample"]...)
+	router.POST(options.BaseURL+"/with-headers", wrapper.HeadersExample, options.OperationMiddlewares["HeadersExample"]...)
+	router.POST(options.BaseURL+"/with-union", wrapper.UnionExample, options.OperationMiddlewares["UnionExample"]...)
 
 }
 

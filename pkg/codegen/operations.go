@@ -313,6 +313,8 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 type OperationDefinition struct {
 	// OperationId is the `operationId` field from the OpenAPI Specification, after going through a `nameNormalizer`, and will be used to generate function names
 	OperationId string
+	// SpecOperationId is the raw `operationId` value as it appears in the OpenAPI spec, before normalization to a Go identifier. Empty when the spec didn't supply one (in which case the codegen-generated ID is the only available identifier and is exposed via OperationId).
+	SpecOperationId string
 
 	PathParams          []ParameterDefinition // Parameters in the path, eg, /path/:param
 	HeaderParams        []ParameterDefinition // Parameters in HTTP headers
@@ -338,6 +340,17 @@ type OperationDefinition struct {
 func (o *OperationDefinition) HandlerName() string {
 	if o.IsAlias {
 		return o.AliasTarget
+	}
+	return o.OperationId
+}
+
+// MiddlewareKey returns the identifier to use as the key in per-operation
+// middleware maps. The raw spec OperationId is preferred so map keys mirror
+// the OpenAPI spec verbatim; falls back to the normalized OperationId when
+// the spec didn't supply one.
+func (o *OperationDefinition) MiddlewareKey() string {
+	if o.SpecOperationId != "" {
+		return o.SpecOperationId
 	}
 	return o.OperationId
 }
@@ -757,6 +770,11 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			}
 			// take a copy of operationId, so we don't modify the underlying spec
 			operationId := op.OperationID
+			// Preserve the raw spec value (pre-normalization, pre-prefix, pre-alias-suffix)
+			// so templates that need to mirror the OpenAPI spec verbatim — e.g. echo's
+			// per-operation middleware map key — can do so without seeing the
+			// Go-identifier-friendly transformations applied below.
+			specOperationId := op.OperationID
 			// We rely on OperationID to generate function names, it's required
 			if operationId == "" {
 				operationId, err = generateDefaultOperationID(opName, requestPath)
@@ -831,11 +849,12 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			ensureExternalRefsInResponseDefinitions(&responseDefinitions, pathItem.Ref)
 
 			opDef := OperationDefinition{
-				PathParams:   pathParams,
-				HeaderParams: FilterParameterDefinitionByType(allParams, "header"),
-				QueryParams:  FilterParameterDefinitionByType(allParams, "query"),
-				CookieParams: FilterParameterDefinitionByType(allParams, "cookie"),
-				OperationId:  nameNormalizer(operationId),
+				PathParams:      pathParams,
+				HeaderParams:    FilterParameterDefinitionByType(allParams, "header"),
+				QueryParams:     FilterParameterDefinitionByType(allParams, "query"),
+				CookieParams:    FilterParameterDefinitionByType(allParams, "cookie"),
+				OperationId:     nameNormalizer(operationId),
+				SpecOperationId: specOperationId,
 				// Replace newlines in summary.
 				Summary:         op.Summary,
 				Method:          opName,
