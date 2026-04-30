@@ -68,6 +68,13 @@
 				],
 				"executionMode": "branch"
 			}
+		},
+		{
+			"description": "TODO",
+			"matchManagers": [
+				"gomod"
+			],
+			"constraintsFiltering": "strict"
 		}
 	],
 	"customManagers": [
