@@ -1,0 +1,8 @@
+openapi: "3.0.0"
+components:
+  schemas:
+    Id:
+      $ref: "id/spec.yaml#/components/schemas/Id"
+  parameters:
+    IdParam:
+      $ref: "idparam/spec.yaml#/components/parameters/IdParam"
