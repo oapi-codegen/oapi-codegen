@@ -1002,12 +1002,12 @@ func WebhookOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, er
 				return nil, err
 			}
 
-			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(operationId, op.RequestBody)
+			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(operationId, op.RequestBody, pathItem.Ref)
 			if err != nil {
 				return nil, fmt.Errorf("error generating body definitions for webhook %q: %w", webhookName, err)
 			}
 
-			responseDefinitions, err := GenerateResponseDefinitions(operationId, op.Responses.Map())
+			responseDefinitions, err := GenerateResponseDefinitions(operationId, op.Responses.Map(), pathItem.Ref)
 			if err != nil {
 				return nil, fmt.Errorf("error generating response definitions for webhook %q: %w", webhookName, err)
 			}
@@ -1133,12 +1133,12 @@ func CallbackOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, e
 							return nil, err
 						}
 
-						bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(operationId, op.RequestBody)
+						bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(operationId, op.RequestBody, cbPathItem.Ref)
 						if err != nil {
 							return nil, fmt.Errorf("error generating body definitions for callback %q: %w", callbackName, err)
 						}
 
-						responseDefinitions, err := GenerateResponseDefinitions(operationId, op.Responses.Map())
+						responseDefinitions, err := GenerateResponseDefinitions(operationId, op.Responses.Map(), cbPathItem.Ref)
 						if err != nil {
 							return nil, fmt.Errorf("error generating response definitions for callback %q: %w", callbackName, err)
 						}
