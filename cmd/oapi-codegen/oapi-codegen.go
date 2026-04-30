@@ -320,21 +320,27 @@ func main() {
 		opts.NoVCSVersionOverride = &noVCSVersionOverride
 	}
 
-	code, err := codegen.Generate(swagger, opts.Configuration)
-	if err != nil {
-		errExit("error generating code: %s\n", err)
+	code, genErr := codegen.Generate(swagger, opts.Configuration)
+
+	// Always emit any generated code to the requested destination, even when
+	// generation returned an error (e.g. the formatter rejected the output).
+	// Writing to the output file lets the user inspect the broken source
+	// directly instead of having it interleaved with stderr.
+	if code != "" {
+		if opts.OutputFile != "" {
+			if err := os.MkdirAll(filepath.Dir(opts.OutputFile), 0o755); err != nil {
+				errExit("error unable to create directory: %s\n", err)
+			}
+			if err := os.WriteFile(opts.OutputFile, []byte(code), 0o644); err != nil {
+				errExit("error writing generated code to file: %s\n", err)
+			}
+		} else {
+			fmt.Print(code)
+		}
 	}
 
-	if opts.OutputFile != "" {
-		if err := os.MkdirAll(filepath.Dir(opts.OutputFile), 0o755); err != nil {
-			errExit("error unable to create directory: %s\n", err)
-		}
-		err = os.WriteFile(opts.OutputFile, []byte(code), 0o644)
-		if err != nil {
-			errExit("error writing generated code to file: %s\n", err)
-		}
-	} else {
-		fmt.Print(code)
+	if genErr != nil {
+		errExit("error generating code: %s\n", genErr)
 	}
 }
 
