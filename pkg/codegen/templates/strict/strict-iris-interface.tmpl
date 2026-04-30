@@ -174,7 +174,17 @@
             {{end -}}
             func (response {{$opid}}{{$statusCode}}Response) Visit{{$opid}}Response(ctx iris.Context) error {
                 {{range $headers -}}
-                    ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{if .IsNullable -}}
+                        if response.Headers.{{.GoName}}.IsSpecified() {
+                            ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
+                        }
+                    {{else if .IsOptional -}}
+                        if response.Headers.{{.GoName}} != nil {
+                            ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
+                        }
+                    {{else -}}
+                        ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{end -}}
                 {{end -}}
                 ctx.StatusCode({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 return nil

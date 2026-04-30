@@ -244,6 +244,9 @@ type ClientInterface interface {
 
 	MultipleRequestAndResponseTypesWithTextBody(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// NoContentHeaders request
+	NoContentHeaders(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// RequiredJSONBodyWithBody request with any body
 	RequiredJSONBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -375,6 +378,18 @@ func (c *Client) MultipleRequestAndResponseTypesWithFormdataBody(ctx context.Con
 
 func (c *Client) MultipleRequestAndResponseTypesWithTextBody(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewMultipleRequestAndResponseTypesRequestWithTextBody(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) NoContentHeaders(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewNoContentHeadersRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -745,6 +760,33 @@ func NewMultipleRequestAndResponseTypesRequestWithBody(server string, contentTyp
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewNoContentHeadersRequest generates requests for NoContentHeaders
+func NewNoContentHeadersRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/no-content-headers")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -1208,6 +1250,9 @@ type ClientWithResponsesInterface interface {
 
 	MultipleRequestAndResponseTypesWithTextBodyWithResponse(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error)
 
+	// NoContentHeadersWithResponse request
+	NoContentHeadersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*NoContentHeadersResponse, error)
+
 	// RequiredJSONBodyWithBodyWithResponse request with any body
 	RequiredJSONBodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequiredJSONBodyResponse, error)
 
@@ -1365,6 +1410,35 @@ func (r MultipleRequestAndResponseTypesResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r MultipleRequestAndResponseTypesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type NoContentHeadersResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r NoContentHeadersResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r NoContentHeadersResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r NoContentHeadersResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -1734,6 +1808,15 @@ func (c *ClientWithResponses) MultipleRequestAndResponseTypesWithTextBodyWithRes
 	return ParseMultipleRequestAndResponseTypesResponse(rsp)
 }
 
+// NoContentHeadersWithResponse request returning *NoContentHeadersResponse
+func (c *ClientWithResponses) NoContentHeadersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*NoContentHeadersResponse, error) {
+	rsp, err := c.NoContentHeaders(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseNoContentHeadersResponse(rsp)
+}
+
 // RequiredJSONBodyWithBodyWithResponse request with arbitrary body returning *RequiredJSONBodyResponse
 func (c *ClientWithResponses) RequiredJSONBodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequiredJSONBodyResponse, error) {
 	rsp, err := c.RequiredJSONBodyWithBody(ctx, contentType, body, reqEditors...)
@@ -1962,6 +2045,22 @@ func ParseMultipleRequestAndResponseTypesResponse(rsp *http.Response) (*Multiple
 	case rsp.StatusCode == 200:
 		// Content-type (text/plain) unsupported
 
+	}
+
+	return response, nil
+}
+
+// ParseNoContentHeadersResponse parses an HTTP response from a NoContentHeadersWithResponse call
+func ParseNoContentHeadersResponse(rsp *http.Response) (*NoContentHeadersResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &NoContentHeadersResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
 	}
 
 	return response, nil
