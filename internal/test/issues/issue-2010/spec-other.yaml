@@ -1,0 +1,14 @@
+openapi: 3.0.1
+info:
+  description: Another example schema
+  title: OtherAPI
+  version: 1.0.0
+paths:
+  /example:
+    get:
+      operationId: getOtherExample
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: "./spec-base.yaml#/components/responses/400"

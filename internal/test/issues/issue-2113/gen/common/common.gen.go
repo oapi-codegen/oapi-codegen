@@ -11,3 +11,5 @@ type ProblemDetails struct {
 
 // StandardError defines model for StandardError.
 type StandardError = ProblemDetails
+
+type StandardErrorJSONResponse ProblemDetails

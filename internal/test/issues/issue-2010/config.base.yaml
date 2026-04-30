@@ -1,8 +1,10 @@
+---
 # yaml-language-server: $schema=../../../../configuration-schema.json
-package: common
+package: spec_base
 generate:
-  models: true
+  chi-server: true
   strict-server: true
-output: gen/common/common.gen.go
+  models: true
+output: gen/spec_base/issue.gen.go
 output-options:
   skip-prune: true

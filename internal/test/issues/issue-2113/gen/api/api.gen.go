@@ -194,7 +194,9 @@ func (response ListThings200JSONResponse) VisitListThingsResponse(w http.Respons
 	return err
 }
 
-type ListThings400JSONResponse struct{ externalRef0.StandardError }
+type ListThings400JSONResponse struct {
+	externalRef0.StandardErrorJSONResponse
+}
 
 func (response ListThings400JSONResponse) VisitListThingsResponse(w http.ResponseWriter) error {
 

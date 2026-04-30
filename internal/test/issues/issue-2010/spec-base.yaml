@@ -1,0 +1,27 @@
+openapi: 3.0.1
+info:
+  description: An example schema
+  title: ExampleAPI
+  version: 1.0.0
+paths:
+  /example:
+    get:
+      operationId: getExample
+      responses:
+        '200':
+          description: OK
+        '400':
+          $ref: "#/components/responses/400"
+components:
+  responses:
+    "400":
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - message
+            properties:
+              message:
+                type: string
