@@ -32,7 +32,10 @@
             {{end -}}
             b, err := json.Marshal(v)
             t.union = b
-            return err
+            if err != nil {
+                return err
+            }
+            return json.Unmarshal(b, t)
         }
 
         // Merge{{ .Method }} performs a merge with any union data inside the {{$typeName}}, using the provided {{.}}
@@ -55,7 +58,7 @@
             {{end -}}
             b, err := json.Marshal(v)
             if err != nil {
-              return err
+                return err
             }
 
             merged, err := runtime.JSONMerge(t.union, b)
@@ -101,10 +104,10 @@
             }
             object := make(map[string]json.RawMessage)
             if t.union != nil {
-              err = json.Unmarshal(b, &object)
-              if err != nil {
-                return nil, err
-              }
+                err = json.Unmarshal(b, &object)
+                if err != nil {
+                    return nil, err
+                }
             }
             {{range .Schema.Properties}}
             {{if .RequiresNilCheck}}if t.{{.GoFieldName}} != nil { {{end}}
