@@ -11,40 +11,26 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-removed-external-ref/gen/spec_ext"
 )
 
-// DirectBar defines model for DirectBar.
-type DirectBar = externalRef0.Foo
-
-// PackedBar defines model for PackedBar.
-type PackedBar struct {
-	Core    *externalRef0.Foo `json:"core,omitempty"`
-	Directd *DirectBar        `json:"directd,omitempty"`
-	Id      *string           `json:"id,omitempty"`
+// N400 defines model for 400.
+type N400 struct {
+	Message string `json:"message"`
 }
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
-	// (POST /invalidExtRefTrouble)
-	PostInvalidExtRefTrouble(w http.ResponseWriter, r *http.Request)
-
-	// (POST /noTrouble)
-	PostNoTrouble(w http.ResponseWriter, r *http.Request)
+	// (GET /example)
+	GetExample(w http.ResponseWriter, r *http.Request)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
 
 type Unimplemented struct{}
 
-// (POST /invalidExtRefTrouble)
-func (_ Unimplemented) PostInvalidExtRefTrouble(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusNotImplemented)
-}
-
-// (POST /noTrouble)
-func (_ Unimplemented) PostNoTrouble(w http.ResponseWriter, r *http.Request) {
+// (GET /example)
+func (_ Unimplemented) GetExample(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -57,25 +43,11 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
-// PostInvalidExtRefTrouble operation middleware
-func (siw *ServerInterfaceWrapper) PostInvalidExtRefTrouble(w http.ResponseWriter, r *http.Request) {
+// GetExample operation middleware
+func (siw *ServerInterfaceWrapper) GetExample(w http.ResponseWriter, r *http.Request) {
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PostInvalidExtRefTrouble(w, r)
-	}))
-
-	for _, middleware := range siw.HandlerMiddlewares {
-		handler = middleware(handler)
-	}
-
-	handler.ServeHTTP(w, r)
-}
-
-// PostNoTrouble operation middleware
-func (siw *ServerInterfaceWrapper) PostNoTrouble(w http.ResponseWriter, r *http.Request) {
-
-	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.PostNoTrouble(w, r)
+		siw.Handler.GetExample(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -199,60 +171,41 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/invalidExtRefTrouble", wrapper.PostInvalidExtRefTrouble)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/noTrouble", wrapper.PostNoTrouble)
+		r.Get(options.BaseURL+"/example", wrapper.GetExample)
 	})
 
 	return r
 }
 
-type PostInvalidExtRefTroubleRequestObject struct {
+type N400JSONResponse struct {
+	Message string `json:"message"`
 }
 
-type PostInvalidExtRefTroubleResponseObject interface {
-	VisitPostInvalidExtRefTroubleResponse(w http.ResponseWriter) error
+type GetExampleRequestObject struct {
 }
 
-type PostInvalidExtRefTrouble300JSONResponse struct {
-	externalRef0.PascalJSONResponse
+type GetExampleResponseObject interface {
+	VisitGetExampleResponse(w http.ResponseWriter) error
 }
 
-func (response PostInvalidExtRefTrouble300JSONResponse) VisitPostInvalidExtRefTroubleResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(300)
-	_, err := buf.WriteTo(w)
-	return err
+type GetExample200Response struct {
 }
 
-type PostNoTroubleRequestObject struct {
-}
-
-type PostNoTroubleResponseObject interface {
-	VisitPostNoTroubleResponse(w http.ResponseWriter) error
-}
-
-type PostNoTrouble200JSONResponse struct {
-	DirectBar   *DirectBar        `json:"directBar,omitempty"`
-	DirectFoo   *externalRef0.Foo `json:"directFoo,omitempty"`
-	IndirectFoo *PackedBar        `json:"indirectFoo,omitempty"`
-	Name        *string           `json:"name,omitempty"`
-}
-
-func (response PostNoTrouble200JSONResponse) VisitPostNoTroubleResponse(w http.ResponseWriter) error {
-
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
-		return err
-	}
-	w.Header().Set("Content-Type", "application/json")
+func (response GetExample200Response) VisitGetExampleResponse(w http.ResponseWriter) error {
 	w.WriteHeader(200)
+	return nil
+}
+
+type GetExample400JSONResponse struct{ N400JSONResponse }
+
+func (response GetExample400JSONResponse) VisitGetExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(400)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -260,11 +213,8 @@ func (response PostNoTrouble200JSONResponse) VisitPostNoTroubleResponse(w http.R
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
-	// (POST /invalidExtRefTrouble)
-	PostInvalidExtRefTrouble(ctx context.Context, request PostInvalidExtRefTroubleRequestObject) (PostInvalidExtRefTroubleResponseObject, error)
-
-	// (POST /noTrouble)
-	PostNoTrouble(ctx context.Context, request PostNoTroubleRequestObject) (PostNoTroubleResponseObject, error)
+	// (GET /example)
+	GetExample(ctx context.Context, request GetExampleRequestObject) (GetExampleResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -296,47 +246,23 @@ type strictHandler struct {
 	options     StrictHTTPServerOptions
 }
 
-// PostInvalidExtRefTrouble operation middleware
-func (sh *strictHandler) PostInvalidExtRefTrouble(w http.ResponseWriter, r *http.Request) {
-	var request PostInvalidExtRefTroubleRequestObject
+// GetExample operation middleware
+func (sh *strictHandler) GetExample(w http.ResponseWriter, r *http.Request) {
+	var request GetExampleRequestObject
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.PostInvalidExtRefTrouble(ctx, request.(PostInvalidExtRefTroubleRequestObject))
+		return sh.ssi.GetExample(ctx, request.(GetExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "PostInvalidExtRefTrouble")
+		handler = middleware(handler, "GetExample")
 	}
 
 	response, err := handler(r.Context(), w, r, request)
 
 	if err != nil {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(PostInvalidExtRefTroubleResponseObject); ok {
-		if err := validResponse.VisitPostInvalidExtRefTroubleResponse(w); err != nil {
-			sh.options.ResponseErrorHandlerFunc(w, r, err)
-		}
-	} else if response != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
-	}
-}
-
-// PostNoTrouble operation middleware
-func (sh *strictHandler) PostNoTrouble(w http.ResponseWriter, r *http.Request) {
-	var request PostNoTroubleRequestObject
-
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
-		return sh.ssi.PostNoTrouble(ctx, request.(PostNoTroubleRequestObject))
-	}
-	for _, middleware := range sh.middlewares {
-		handler = middleware(handler, "PostNoTrouble")
-	}
-
-	response, err := handler(r.Context(), w, r, request)
-
-	if err != nil {
-		sh.options.ResponseErrorHandlerFunc(w, r, err)
-	} else if validResponse, ok := response.(PostNoTroubleResponseObject); ok {
-		if err := validResponse.VisitPostNoTroubleResponse(w); err != nil {
+	} else if validResponse, ok := response.(GetExampleResponseObject); ok {
+		if err := validResponse.VisitGetExampleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

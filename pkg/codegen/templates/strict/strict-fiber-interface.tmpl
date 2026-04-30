@@ -42,8 +42,6 @@
             {{if and $fixedStatusCode $isRef -}}
                 {{ if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (or (eq .NameTag "Multipart") (eq .NameTag "Text")) -}}
                 type {{$receiverTypeName}} {{$ref}}{{.NameTagOrContentType}}Response
-                {{else if $isExternalRef -}}
-                type {{$receiverTypeName}} struct { {{$ref}} }
                 {{else -}}
                 type {{$receiverTypeName}} struct{ {{$ref}}{{.NameTagOrContentType}}Response }
                 {{end}}
