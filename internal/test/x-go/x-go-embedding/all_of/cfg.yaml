@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=../../configuration-schema.json
+package: x_go_embedding_all_of
+output: x_go_embedding_all_of.gen.go
+generate:
+  models: true
