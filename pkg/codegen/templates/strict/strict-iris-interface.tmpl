@@ -32,17 +32,15 @@
         {{if (and $hasHeaders (not $isRef)) -}}
             type {{$opid}}{{$statusCode}}ResponseHeaders struct {
                 {{range .Headers -}}
-                    {{.GoName}} {{.Schema.TypeDecl}}
+                    {{.GoName}} {{.GoTypeDef}}
                 {{end -}}
             }
         {{end}}
 
         {{range .Contents}}
             {{$receiverTypeName := printf "%s%s%s%s" $opid $statusCode .NameTagOrContentType "Response"}}
-            {{if eq .NameTag "Text" -}}
-                type {{$receiverTypeName}} string
-            {{else if and $fixedStatusCode $isRef -}}
-                {{ if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (eq .NameTag "Multipart") -}}
+            {{if and $fixedStatusCode $isRef -}}
+                {{ if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (or (eq .NameTag "Multipart") (eq .NameTag "Text")) -}}
                 type {{$receiverTypeName}} {{$ref}}{{.NameTagOrContentType}}Response
                 {{else if $isExternalRef -}}
                 type {{$receiverTypeName}} struct { {{$ref}} }
@@ -84,7 +82,17 @@
 
             func (response {{$receiverTypeName}}) Visit{{$opid}}Response(ctx iris.Context) error {
                 {{range $headers -}}
-                    ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{if .IsNullable -}}
+                        if response.Headers.{{.GoName}}.IsSpecified() {
+                            ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
+                        }
+                    {{else if .IsOptional -}}
+                        if response.Headers.{{.GoName}} != nil {
+                            ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
+                        }
+                    {{else -}}
+                        ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{end -}}
                 {{end -}}
                 {{if eq .NameTag "Multipart" -}}
                     writer := multipart.NewWriter(ctx.ResponseWriter())

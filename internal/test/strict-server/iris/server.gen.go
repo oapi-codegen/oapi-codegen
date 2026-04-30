@@ -779,8 +779,8 @@ type HeadersExampleResponseObject interface {
 type HeadersExample200ResponseHeaders struct {
 	Header1        string
 	Header2        int
-	NullableHeader string
-	OptionalHeader string
+	NullableHeader *string
+	OptionalHeader *string
 }
 
 type HeadersExample200JSONResponse struct {
@@ -791,8 +791,12 @@ type HeadersExample200JSONResponse struct {
 func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(ctx iris.Context) error {
 	ctx.ResponseWriter().Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	ctx.ResponseWriter().Header().Set("header2", fmt.Sprint(response.Headers.Header2))
-	ctx.ResponseWriter().Header().Set("nullable-header", fmt.Sprint(response.Headers.NullableHeader))
-	ctx.ResponseWriter().Header().Set("optional-header", fmt.Sprint(response.Headers.OptionalHeader))
+	if response.Headers.NullableHeader != nil {
+		ctx.ResponseWriter().Header().Set("nullable-header", fmt.Sprint(*response.Headers.NullableHeader))
+	}
+	if response.Headers.OptionalHeader != nil {
+		ctx.ResponseWriter().Header().Set("optional-header", fmt.Sprint(*response.Headers.OptionalHeader))
+	}
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
 	ctx.StatusCode(200)
 

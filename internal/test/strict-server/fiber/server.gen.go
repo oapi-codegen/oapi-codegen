@@ -945,8 +945,8 @@ type HeadersExampleResponseObject interface {
 type HeadersExample200ResponseHeaders struct {
 	Header1        string
 	Header2        int
-	NullableHeader string
-	OptionalHeader string
+	NullableHeader *string
+	OptionalHeader *string
 }
 
 type HeadersExample200JSONResponse struct {
@@ -957,8 +957,12 @@ type HeadersExample200JSONResponse struct {
 func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("header1", fmt.Sprint(response.Headers.Header1))
 	ctx.Response().Header.Set("header2", fmt.Sprint(response.Headers.Header2))
-	ctx.Response().Header.Set("nullable-header", fmt.Sprint(response.Headers.NullableHeader))
-	ctx.Response().Header.Set("optional-header", fmt.Sprint(response.Headers.OptionalHeader))
+	if response.Headers.NullableHeader != nil {
+		ctx.Response().Header.Set("nullable-header", fmt.Sprint(*response.Headers.NullableHeader))
+	}
+	if response.Headers.OptionalHeader != nil {
+		ctx.Response().Header.Set("optional-header", fmt.Sprint(*response.Headers.OptionalHeader))
+	}
 	ctx.Response().Header.Set("Content-Type", "application/json")
 	ctx.Status(200)
 
