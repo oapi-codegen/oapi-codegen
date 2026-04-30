@@ -187,7 +187,7 @@ func NewListThingsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +225,7 @@ func NewAddThingRequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -309,6 +309,14 @@ func (r ListThingsResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListThingsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type AddThingResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -329,6 +337,14 @@ func (r AddThingResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r AddThingResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 // ListThingsWithResponse request returning *ListThingsResponse
@@ -461,21 +477,40 @@ type EchoRouter interface {
 	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 }
 
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
-	RegisterHandlersWithBaseURL(router, si, "")
+// RegisterHandlersOptions configures RegisterHandlersWithOptions.
+type RegisterHandlersOptions struct {
+	// BaseURL is prepended to every registered path so the API can be served
+	// under a prefix.
+	BaseURL string
+	// OperationMiddlewares lets the caller attach per-operation middleware at
+	// registration time. The map key is the OpenAPI `operationId` value as it
+	// appears in the spec (the raw, un-normalized form). Operations that have
+	// no entry are registered with no extra middleware. A nil map disables
+	// per-operation middleware entirely.
+	OperationMiddlewares map[string][]echo.MiddlewareFunc
 }
 
-// Registers handlers, and prepends BaseURL to the paths, so that the paths
-// can be served under a prefix.
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
+	RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{})
+}
+
+// RegisterHandlersWithBaseURL registers handlers and prepends BaseURL to the
+// paths so the API can be served under a prefix.
 func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
+	RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{BaseURL: baseURL})
+}
+
+// RegisterHandlersWithOptions registers handlers using the supplied options,
+// including any per-operation middleware.
+func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options RegisterHandlersOptions) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/things", wrapper.ListThings)
-	router.POST(baseURL+"/things", wrapper.AddThing)
+	router.GET(options.BaseURL+"/things", wrapper.ListThings, options.OperationMiddlewares["listThings"]...)
+	router.POST(options.BaseURL+"/things", wrapper.AddThing, options.OperationMiddlewares["addThing"]...)
 
 }
 
