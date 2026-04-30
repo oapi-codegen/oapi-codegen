@@ -228,6 +228,12 @@ func testImpl(t *testing.T, handler http.Handler) {
 		assert.Equal(t, header1, rr.Header().Get("header1"))
 		assert.Equal(t, header2, rr.Header().Get("header2"))
 	})
+	t.Run("NoContentHeadersOmitUnset", func(t *testing.T) {
+		rr := testutil.NewRequest().Post("/no-content-headers").GoWithHTTPHandler(t, handler).Recorder
+		assert.Equal(t, http.StatusNoContent, rr.Code)
+		assert.Empty(t, rr.Header().Values("optional-header"), "optional-header should be omitted when the response field is nil")
+		assert.Empty(t, rr.Header().Values("nullable-header"), "nullable-header should be omitted when the response field is unspecified")
+	})
 	t.Run("UnspecifiedContentType", func(t *testing.T) {
 		data := []byte("image data")
 		contentType := "image/jpeg"

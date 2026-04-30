@@ -215,6 +215,22 @@ paths:
           $ref: "#/components/responses/badrequest"
         default:
           description: Unknown error
+  /no-content-headers:
+    post:
+      operationId: NoContentHeaders
+      description: No-content (204) response with optional and nullable response headers — exercises that unset headers are omitted from the response
+      responses:
+        204:
+          description: No Content
+          headers:
+            optional-header:
+              required: false
+              schema:
+                type: string
+            nullable-header:
+              schema:
+                type: string
+                nullable: true
   /reusable-responses:
     post:
       operationId: ReusableResponses

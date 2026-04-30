@@ -173,7 +173,17 @@
             {{end -}}
             func (response {{$opid}}{{$statusCode}}Response) Visit{{$opid}}Response(ctx *fiber.Ctx) error {
                 {{range $headers -}}
-                    ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{if .IsNullable -}}
+                        if response.Headers.{{.GoName}}.IsSpecified() {
+                            ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
+                        }
+                    {{else if .IsOptional -}}
+                        if response.Headers.{{.GoName}} != nil {
+                            ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
+                        }
+                    {{else -}}
+                        ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{end -}}
                 {{end -}}
                 ctx.Status({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 return nil

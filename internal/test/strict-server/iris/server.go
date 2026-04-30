@@ -121,6 +121,10 @@ func (s StrictServer) HeadersExample(ctx context.Context, request HeadersExample
 	return HeadersExample200JSONResponse{Body: *request.Body, Headers: HeadersExample200ResponseHeaders{Header1: request.Params.Header1, Header2: *request.Params.Header2}}, nil
 }
 
+func (s StrictServer) NoContentHeaders(ctx context.Context, request NoContentHeadersRequestObject) (NoContentHeadersResponseObject, error) {
+	return NoContentHeaders204Response{}, nil
+}
+
 func (s StrictServer) ReusableResponses(ctx context.Context, request ReusableResponsesRequestObject) (ReusableResponsesResponseObject, error) {
 	return ReusableResponses200JSONResponse{ReusableresponseJSONResponse: ReusableresponseJSONResponse{Body: *request.Body}}, nil
 }
