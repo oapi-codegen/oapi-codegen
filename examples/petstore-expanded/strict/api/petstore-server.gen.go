@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -17,7 +18,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/runtime"
-	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 )
 
 // ServerInterface represents all server handlers.
@@ -77,23 +77,34 @@ type MiddlewareFunc func(http.Handler) http.Handler
 func (siw *ServerInterfaceWrapper) FindPets(w http.ResponseWriter, r *http.Request) {
 
 	var err error
+	_ = err
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params FindPetsParams
 
 	// ------------- Optional query parameter "tags" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "tags", r.URL.Query(), &params.Tags)
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "tags", r.URL.Query(), &params.Tags, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tags", Err: err})
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "tags"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tags", Err: err})
+		}
 		return
 	}
 
 	// ------------- Optional query parameter "limit" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
 	if err != nil {
-		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
 		return
 	}
 
@@ -126,11 +137,12 @@ func (siw *ServerInterfaceWrapper) AddPet(w http.ResponseWriter, r *http.Request
 func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Request) {
 
 	var err error
+	_ = err
 
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64"})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -151,11 +163,12 @@ func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Requ
 func (siw *ServerInterfaceWrapper) FindPetByID(w http.ResponseWriter, r *http.Request) {
 
 	var err error
+	_ = err
 
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", chi.URLParam(r, "id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64"})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -312,10 +325,15 @@ type FindPetsResponseObject interface {
 type FindPets200JSONResponse []Pet
 
 func (response FindPets200JSONResponse) VisitFindPetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type FindPetsdefaultJSONResponse struct {
@@ -324,10 +342,15 @@ type FindPetsdefaultJSONResponse struct {
 }
 
 func (response FindPetsdefaultJSONResponse) VisitFindPetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
-
-	return json.NewEncoder(w).Encode(response.Body)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type AddPetRequestObject struct {
@@ -341,10 +364,15 @@ type AddPetResponseObject interface {
 type AddPet200JSONResponse Pet
 
 func (response AddPet200JSONResponse) VisitAddPetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type AddPetdefaultJSONResponse struct {
@@ -353,10 +381,15 @@ type AddPetdefaultJSONResponse struct {
 }
 
 func (response AddPetdefaultJSONResponse) VisitAddPetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
-
-	return json.NewEncoder(w).Encode(response.Body)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type DeletePetRequestObject struct {
@@ -381,10 +414,15 @@ type DeletePetdefaultJSONResponse struct {
 }
 
 func (response DeletePetdefaultJSONResponse) VisitDeletePetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
-
-	return json.NewEncoder(w).Encode(response.Body)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type FindPetByIDRequestObject struct {
@@ -398,10 +436,15 @@ type FindPetByIDResponseObject interface {
 type FindPetByID200JSONResponse Pet
 
 func (response FindPetByID200JSONResponse) VisitFindPetByIDResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type FindPetByIDdefaultJSONResponse struct {
@@ -410,10 +453,15 @@ type FindPetByIDdefaultJSONResponse struct {
 }
 
 func (response FindPetByIDdefaultJSONResponse) VisitFindPetByIDResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(response.StatusCode)
-
-	return json.NewEncoder(w).Encode(response.Body)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 // StrictServerInterface represents all server handlers.
@@ -432,8 +480,8 @@ type StrictServerInterface interface {
 	FindPetByID(ctx context.Context, request FindPetByIDRequestObject) (FindPetByIDResponseObject, error)
 }
 
-type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
-type StrictMiddlewareFunc = strictnethttp.StrictHTTPMiddlewareFunc
+type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)

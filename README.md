@@ -1534,6 +1534,9 @@ output: server.gen.go
 > [!NOTE]
 > This doesn't include [validation of incoming requests](#requestresponse-validation-middleware).
 
+> [!IMPORTANT]
+> When a strict-server spec uses `$ref` to point at a `components/responses/...` (or `components/requestBodies/...`) defined in another spec via `import-mapping`, the destination spec **must also be generated with `strict-server: true`**. The strict envelope embeds the `<Name>JSONResponse` type from the destination package; that type only exists when the destination generates a strict server. Without it the generated code will fail to compile with an "undefined" error. See [issue #2010](https://github.com/oapi-codegen/oapi-codegen/issues/2010).
+
 ## Generating API clients
 
 As well as generating the server-side boilerplate, `oapi-codegen` can also generate API clients.

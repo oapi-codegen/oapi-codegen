@@ -369,8 +369,7 @@ type StrictServerInterface interface {
 	Test(ctx context.Context, request TestRequestObject) (TestResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx *fiber.Ctx, args interface{}) (interface{}, error)
-
+type StrictHandlerFunc func(ctx *fiber.Ctx, args any) (any, error)
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {

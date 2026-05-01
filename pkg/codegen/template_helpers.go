@@ -47,6 +47,28 @@ var (
 	titleCaser = cases.Title(language.English)
 )
 
+// isMediaTypeSupported reports whether code generation produces a typed
+// body for this media type. Today this is the closed set of JSON / YAML /
+// XML variants the response and request templates know how to handle —
+// see the typeName switch in GetResponseTypeDefinitions and the body
+// definition switch in GenerateBodyDefinitions. A future configuration
+// option is intended to let users extend this list.
+func isMediaTypeSupported(mediaType string) bool {
+	switch {
+	case slices.Contains(contentTypesHalJSON, mediaType):
+		return true
+	case slices.Contains(contentTypesJSON, mediaType):
+		return true
+	case util.IsMediaTypeJson(mediaType):
+		return true
+	case slices.Contains(contentTypesYAML, mediaType):
+		return true
+	case slices.Contains(contentTypesXML, mediaType):
+		return true
+	}
+	return false
+}
+
 // genParamArgs takes an array of Parameter definition, and generates a valid
 // Go parameter declaration from them, eg:
 // ", foo int, bar string, baz float32". The preceding comma is there to save
@@ -309,6 +331,13 @@ func stripNewLines(s string) string {
 //
 // goTypePrefix is the prefix being used to create underlying types in the template (likely the `ServerObjectDefinition.GoName`)
 // variables are this `ServerObjectDefinition`'s variables for the Server object (likely the `ServerObjectDefinition.OAPISchema`)
+//
+// Undeclared `{name}` placeholders that appear in the URL but have no
+// entry in `variables` are NOT handled here; they're emitted as plain
+// `string` parameters by `ServerObjectDefinition.NewFunctionParams`,
+// which the template calls instead of this helper. Custom
+// `server-urls.tmpl` overrides that still call this helper directly
+// keep their pre-existing two-argument signature.
 func genServerURLWithVariablesFunctionParams(goTypePrefix string, variables map[string]*openapi3.ServerVariable) string {
 	keys := SortedMapKeys(variables)
 

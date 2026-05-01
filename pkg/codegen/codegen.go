@@ -271,10 +271,31 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var serverURLsDefinitions string
 	if opts.Generate.ServerURLs {
-		serverURLsDefinitions, err = GenerateServerURLs(t, spec)
+		// Server-URL enum-typed variables are routed through the same
+		// typedef.tmpl + constants.tmpl pipelines as any other
+		// enum-bearing schema, so they get matching `type X string`,
+		// `const ( … )` block, and `Valid()` method. We do this here
+		// (rather than in GenerateTypeDefinitions) so the types are
+		// emitted even when `generate.models` is disabled.
+		serverURLEnumTypes, err := BuildServerURLTypeDefinitions(spec)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go types for server URL variables: %w", err)
+		}
+		serverURLEnumTypeDecls, err := GenerateTypes(t, serverURLEnumTypes)
+		if err != nil {
+			return "", fmt.Errorf("error generating type declarations for server URL variables: %w", err)
+		}
+		serverURLEnumConstants, err := GenerateEnums(t, serverURLEnumTypes)
+		if err != nil {
+			return "", fmt.Errorf("error generating enums for server URL variables: %w", err)
+		}
+
+		serverURLsBody, err := GenerateServerURLs(t, spec)
 		if err != nil {
 			return "", fmt.Errorf("error generating Server URLs: %w", err)
 		}
+
+		serverURLsDefinitions = serverURLEnumTypeDecls + serverURLEnumConstants + serverURLsBody
 	}
 
 	var irisServerOut string
@@ -345,7 +366,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	if opts.Generate.Strict {
 		var responses []ResponseDefinition
 		if spec.Components != nil {
-			responses, err = GenerateResponseDefinitions("", spec.Components.Responses)
+			responses, err = GenerateResponseDefinitions("", spec.Components.Responses, "")
 			if err != nil {
 				return "", fmt.Errorf("error generation response definitions for schema: %w", err)
 			}
@@ -517,34 +538,17 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	outBytes, err := imports.Process(opts.PackageName+".go", []byte(goCode), nil)
 	if err != nil {
-		// if we don't get a line number
 		errLine := -1
 		var scanErr scanner.ErrorList
 		if errors.As(err, &scanErr) && scanErr.Len() > 0 {
-			// for now, only return the first error's information
 			errLine = scanErr[0].Pos.Line
 		}
-		return "", fmt.Errorf("error formatting Go code:\n%s\nerror was: %w", addLineNumbers(goCode, errLine), err)
+		if errLine > 0 {
+			return goCode, fmt.Errorf("error formatting Go code at line %d: %w", errLine, err)
+		}
+		return goCode, fmt.Errorf("error formatting Go code: %w", err)
 	}
 	return string(outBytes), nil
-}
-
-func addLineNumbers(goCode string, lineWithError int) string {
-	var out []string
-	lines := strings.Split(goCode, "\n")
-	for i, line := range lines {
-		// lines for humans start at 1
-		lineNumber := i + 1
-
-		errLine := "  "
-		if lineNumber == lineWithError {
-			errLine = "❗"
-		}
-
-		out = append(out, fmt.Sprintf("%s%5d: %s", errLine, lineNumber, line))
-	}
-
-	return strings.Join(out, "\n")
 }
 
 func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []OperationDefinition, excludeSchemas []string) (string, error) {
@@ -580,13 +584,28 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 		allTypes = append(allTypes, securitySchemeTypes...)
 	}
 
-	// Go through all operations, and add their types to allTypes, so that we can
-	// scan all of them for enums. Operation definitions are handled differently
-	// from the rest, so let's keep track of enumTypes separately, which will contain
-	// all types needed to be scanned for enums, which includes those within operations.
-	enumTypes := allTypes
+	// allTypes stays components-only — it's the slice passed to
+	// GenerateTypes (typedef.tmpl) for top-level type declarations.
+	// Op-derived types are declared by their per-context templates
+	// (param-types.tmpl, request-bodies.tmpl, client-with-responses.tmpl).
+	//
+	// boilerplateTypes is the wider universe for the method-emitting
+	// passes (enum scanning, additionalProperties marshalers, union
+	// accessors). Inline union/additionalProperties types living
+	// inside operations (params, request bodies, response schemas
+	// and any nested AdditionalTypeDefinitions) historically never
+	// reached these passes, so accessor methods were silently
+	// missing. Folding them in here is what fixes that.
+	boilerplateTypes := slices.Clone(allTypes)
 	for _, op := range ops {
-		enumTypes = append(enumTypes, op.TypeDefinitions...)
+		boilerplateTypes = append(boilerplateTypes, op.TypeDefinitions...)
+		respDefs, err := op.GetResponseTypeDefinitions()
+		if err != nil {
+			return "", fmt.Errorf("error collecting response type definitions for %s: %w", op.OperationId, err)
+		}
+		for _, rd := range respDefs {
+			boilerplateTypes = append(boilerplateTypes, rd.AdditionalTypeDefinitions...)
+		}
 	}
 
 	operationsOut, err := GenerateTypesForOperations(t, ops)
@@ -594,7 +613,7 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 		return "", fmt.Errorf("error generating Go types for component request bodies: %w", err)
 	}
 
-	enumsOut, err := GenerateEnums(t, enumTypes)
+	enumsOut, err := GenerateEnums(t, boilerplateTypes)
 	if err != nil {
 		return "", fmt.Errorf("error generating code for type enums: %w", err)
 	}
@@ -604,17 +623,17 @@ func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []Op
 		return "", fmt.Errorf("error generating code for type definitions: %w", err)
 	}
 
-	allOfBoilerplate, err := GenerateAdditionalPropertyBoilerplate(t, allTypes)
+	allOfBoilerplate, err := GenerateAdditionalPropertyBoilerplate(t, boilerplateTypes)
 	if err != nil {
 		return "", fmt.Errorf("error generating allOf boilerplate: %w", err)
 	}
 
-	unionBoilerplate, err := GenerateUnionBoilerplate(t, allTypes)
+	unionBoilerplate, err := GenerateUnionBoilerplate(t, boilerplateTypes)
 	if err != nil {
 		return "", fmt.Errorf("error generating union boilerplate: %w", err)
 	}
 
-	unionAndAdditionalBoilerplate, err := GenerateUnionAndAdditionalProopertiesBoilerplate(t, allTypes)
+	unionAndAdditionalBoilerplate, err := GenerateUnionAndAdditionalProopertiesBoilerplate(t, boilerplateTypes)
 	if err != nil {
 		return "", fmt.Errorf("error generating boilerplate for union types with additionalProperties: %w", err)
 	}
@@ -995,7 +1014,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 				Schema:         tp.Schema,
 				TypeName:       tp.TypeName,
 				ValueWrapper:   wrapper,
-				PrefixTypeName: globalState.options.Compatibility.AlwaysPrefixEnumValues,
+				PrefixTypeName: globalState.options.Compatibility.AlwaysPrefixEnumValues || tp.ForceEnumPrefix,
 			})
 		}
 	}
@@ -1120,7 +1139,12 @@ func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []Type
 
 func GenerateUnionBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
 	var filteredTypes []TypeDefinition
+	seen := map[string]bool{}
 	for _, t := range typeDefs {
+		if seen[t.TypeName] {
+			continue
+		}
+		seen[t.TypeName] = true
 		if len(t.Schema.UnionElements) != 0 {
 			filteredTypes = append(filteredTypes, t)
 		}
@@ -1141,7 +1165,12 @@ func GenerateUnionBoilerplate(t *template.Template, typeDefs []TypeDefinition) (
 
 func GenerateUnionAndAdditionalProopertiesBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
 	var filteredTypes []TypeDefinition
+	seen := map[string]bool{}
 	for _, t := range typeDefs {
+		if seen[t.TypeName] {
+			continue
+		}
+		seen[t.TypeName] = true
 		if len(t.Schema.UnionElements) != 0 && t.Schema.HasAdditionalProperties {
 			filteredTypes = append(filteredTypes, t)
 		}

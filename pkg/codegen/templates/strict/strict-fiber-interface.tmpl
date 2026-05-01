@@ -26,13 +26,13 @@
         {{$fixedStatusCode := .HasFixedStatusCode -}}
         {{$isRef := .IsRef -}}
         {{$isExternalRef := .IsExternalRef -}}
-        {{$ref := .Ref  | ucFirst -}}
+        {{$ref := .Ref  | ucFirstWithPkgName -}}
         {{$headers := .Headers -}}
 
         {{if (and $hasHeaders (not $isRef)) -}}
             type {{$opid}}{{$statusCode}}ResponseHeaders struct {
                 {{range .Headers -}}
-                    {{.GoName}} {{.Schema.TypeDecl}}
+                    {{.GoName}} {{.GoTypeDef}}
                 {{end -}}
             }
         {{end}}
@@ -40,15 +40,23 @@
         {{range .Contents}}
             {{$receiverTypeName := printf "%s%s%s%s" $opid $statusCode .NameTagOrContentType "Response"}}
             {{if and $fixedStatusCode $isRef -}}
-                {{ if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (eq .NameTag "Multipart") -}}
+                {{ if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (or (eq .NameTag "Multipart") (eq .NameTag "Text")) -}}
                 type {{$receiverTypeName}} {{$ref}}{{.NameTagOrContentType}}Response
-                {{else if $isExternalRef -}}
-                type {{$receiverTypeName}} struct { {{$ref}} }
                 {{else -}}
                 type {{$receiverTypeName}} struct{ {{$ref}}{{.NameTagOrContentType}}Response }
                 {{end}}
             {{else if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
                 type {{$receiverTypeName}} {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if and .Schema.IsRef (not .Schema.IsExternalRef)}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+                {{- if and .IsJSON .Schema.HasCustomMarshalJSON}}
+
+                func (t {{$receiverTypeName}}) MarshalJSON() ([]byte, error) {
+                    return {{.Schema.TypeDecl}}(t).MarshalJSON()
+                }
+
+                func (t *{{$receiverTypeName}}) UnmarshalJSON(b []byte) error {
+                    return (*{{.Schema.TypeDecl}})(t).UnmarshalJSON(b)
+                }
+                {{- end}}
             {{else -}}
                 type {{$receiverTypeName}} struct {
                     Body {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
@@ -72,7 +80,17 @@
 
             func (response {{$receiverTypeName}}) Visit{{$opid}}Response(ctx *fiber.Ctx) error {
                 {{range $headers -}}
-                    ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{if .IsNullable -}}
+                        if response.Headers.{{.GoName}}.IsSpecified() {
+                            ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
+                        }
+                    {{else if .IsOptional -}}
+                        if response.Headers.{{.GoName}} != nil {
+                            ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
+                        }
+                    {{else -}}
+                        ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{end -}}
                 {{end -}}
                 {{if eq .NameTag "Multipart" -}}
                     writer := multipart.NewWriter(ctx.Response().BodyWriter())
@@ -87,7 +105,7 @@
                 {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
                 {{if .IsJSON }}
                     {{$hasUnionElements := ne 0 (len .Schema.UnionElements)}}
-                    return ctx.JSON(&{{if $hasBodyVar}}response.Body{{else}}response{{end}}{{if $hasUnionElements}}.union{{end}})
+                    return ctx.JSON(&{{if $hasBodyVar}}response.Body{{else}}response{{end}}{{if and $hasUnionElements (not .Schema.IsExternalRef)}}.union{{end}})
                 {{else if eq .NameTag "Text" -}}
                     _, err := ctx.WriteString(string({{if $hasBodyVar}}response.Body{{else}}response{{end}}))
                     return err
@@ -153,7 +171,17 @@
             {{end -}}
             func (response {{$opid}}{{$statusCode}}Response) Visit{{$opid}}Response(ctx *fiber.Ctx) error {
                 {{range $headers -}}
-                    ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{if .IsNullable -}}
+                        if response.Headers.{{.GoName}}.IsSpecified() {
+                            ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
+                        }
+                    {{else if .IsOptional -}}
+                        if response.Headers.{{.GoName}} != nil {
+                            ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
+                        }
+                    {{else -}}
+                        ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{end -}}
                 {{end -}}
                 ctx.Status({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 return nil

@@ -42,13 +42,21 @@
             {{if and $fixedStatusCode $isRef -}}
                 {{ if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (or (eq .NameTag "Multipart") (eq .NameTag "Text")) -}}
                 type {{$receiverTypeName}} {{$ref}}{{.NameTagOrContentType}}Response
-                {{else if $isExternalRef -}}
-                type {{$receiverTypeName}} struct { {{$ref}} }
                 {{else -}}
                 type {{$receiverTypeName}} struct{ {{$ref}}{{.NameTagOrContentType}}Response }
                 {{end}}
             {{else if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
                 type {{$receiverTypeName}} {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if and .Schema.IsRef (not .Schema.IsExternalRef)}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+                {{- if and .IsJSON .Schema.HasCustomMarshalJSON}}
+
+                func (t {{$receiverTypeName}}) MarshalJSON() ([]byte, error) {
+                    return {{.Schema.TypeDecl}}(t).MarshalJSON()
+                }
+
+                func (t *{{$receiverTypeName}}) UnmarshalJSON(b []byte) error {
+                    return (*{{.Schema.TypeDecl}})(t).UnmarshalJSON(b)
+                }
+                {{- end}}
             {{else -}}
                 type {{$receiverTypeName}} struct {
                     Body {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
@@ -70,10 +78,6 @@
                 }
             {{end}}
 
-            {{- range .Schema.AdditionalTypes}}
-            type {{.TypeName}} {{if .IsAlias }}={{end}} {{.Schema.TypeDecl}}
-            {{- end}}
-
             func (response {{$receiverTypeName}}) Visit{{$opid}}Response(w http.ResponseWriter) error {
                 {{if eq .NameTag "Multipart" -}}
                     writer := multipart.NewWriter(w)
@@ -82,7 +86,7 @@
                 {{if .IsJSON -}}
                     {{$hasUnionElements := ne 0 (len .Schema.UnionElements) -}}
                     var buf bytes.Buffer
-                    if err := json.NewEncoder(&buf).Encode(response{{if $hasBodyVar}}.Body{{end}}{{if $hasUnionElements}}.union{{end}}); err != nil {
+                    if err := json.NewEncoder(&buf).Encode(response{{if $hasBodyVar}}.Body{{end}}{{if and $hasUnionElements (not .Schema.IsExternalRef)}}.union{{end}}); err != nil {
                         return err
                     }
                     w.Header().Set("Content-Type", {{if .HasFixedContentType }}{{.ContentType | toGoString}}{{else}}response.ContentType{{end}})
@@ -206,7 +210,17 @@
             {{end -}}
             func (response {{$opid}}{{$statusCode}}Response) Visit{{$opid}}Response(w http.ResponseWriter) error {
                 {{range $headers -}}
-                    w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{if .IsNullable -}}
+                        if response.Headers.{{.GoName}}.IsSpecified() {
+                            w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
+                        }
+                    {{else if .IsOptional -}}
+                        if response.Headers.{{.GoName}} != nil {
+                            w.Header().Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
+                        }
+                    {{else -}}
+                        w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{end -}}
                 {{end -}}
                 w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 return nil

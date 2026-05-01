@@ -23,7 +23,6 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/oapi-codegen/runtime"
-	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 )
 
 // ServerInterface represents all server handlers.
@@ -40,6 +39,9 @@ type ServerInterface interface {
 
 	// (POST /multiple)
 	MultipleRequestAndResponseTypes(w http.ResponseWriter, r *http.Request)
+
+	// (POST /no-content-headers)
+	NoContentHeaders(w http.ResponseWriter, r *http.Request)
 
 	// (POST /required-json-body)
 	RequiredJSONBody(w http.ResponseWriter, r *http.Request)
@@ -128,6 +130,20 @@ func (siw *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(w http.Respon
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.MultipleRequestAndResponseTypes(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// NoContentHeaders operation middleware
+func (siw *ServerInterfaceWrapper) NoContentHeaders(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.NoContentHeaders(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -463,6 +479,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/multipart", wrapper.MultipartExample)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/no-content-headers", wrapper.NoContentHeaders)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/required-text-body", wrapper.RequiredTextBody)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/reserved-go-keyword-parameters/{type}", wrapper.ReservedGoKeywordParameters)
@@ -687,6 +704,33 @@ type MultipleRequestAndResponseTypes400Response = BadrequestResponse
 
 func (response MultipleRequestAndResponseTypes400Response) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
 	w.WriteHeader(400)
+	return nil
+}
+
+type NoContentHeadersRequestObject struct {
+}
+
+type NoContentHeadersResponseObject interface {
+	VisitNoContentHeadersResponse(w http.ResponseWriter) error
+}
+
+type NoContentHeaders204ResponseHeaders struct {
+	NullableHeader *string
+	OptionalHeader *string
+}
+
+type NoContentHeaders204Response struct {
+	Headers NoContentHeaders204ResponseHeaders
+}
+
+func (response NoContentHeaders204Response) VisitNoContentHeadersResponse(w http.ResponseWriter) error {
+	if response.Headers.NullableHeader != nil {
+		w.Header().Set("nullable-header", fmt.Sprint(*response.Headers.NullableHeader))
+	}
+	if response.Headers.OptionalHeader != nil {
+		w.Header().Set("optional-header", fmt.Sprint(*response.Headers.OptionalHeader))
+	}
+	w.WriteHeader(204)
 	return nil
 }
 
@@ -1091,13 +1135,9 @@ func (response UnionExample200ApplicationAlternativePlusJSONResponse) VisitUnion
 }
 
 type UnionExample200JSONResponse struct {
-	Body struct {
-		union json.RawMessage
-	}
+	Body    UnionExample200JSONResponseBody
 	Headers UnionExample200ResponseHeaders
 }
-
-type UnionExample200JSONResponse0 = string
 
 func (response UnionExample200JSONResponse) VisitUnionExampleResponse(w http.ResponseWriter) error {
 
@@ -1144,6 +1184,9 @@ type StrictServerInterface interface {
 	// (POST /multiple)
 	MultipleRequestAndResponseTypes(ctx context.Context, request MultipleRequestAndResponseTypesRequestObject) (MultipleRequestAndResponseTypesResponseObject, error)
 
+	// (POST /no-content-headers)
+	NoContentHeaders(ctx context.Context, request NoContentHeadersRequestObject) (NoContentHeadersResponseObject, error)
+
 	// (POST /required-json-body)
 	RequiredJSONBody(ctx context.Context, request RequiredJSONBodyRequestObject) (RequiredJSONBodyResponseObject, error)
 
@@ -1175,8 +1218,8 @@ type StrictServerInterface interface {
 	UnionExample(ctx context.Context, request UnionExampleRequestObject) (UnionExampleResponseObject, error)
 }
 
-type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
-type StrictMiddlewareFunc = strictnethttp.StrictHTTPMiddlewareFunc
+type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -1367,6 +1410,30 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(MultipleRequestAndResponseTypesResponseObject); ok {
 		if err := validResponse.VisitMultipleRequestAndResponseTypesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// NoContentHeaders operation middleware
+func (sh *strictHandler) NoContentHeaders(w http.ResponseWriter, r *http.Request) {
+	var request NoContentHeadersRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.NoContentHeaders(ctx, request.(NoContentHeadersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "NoContentHeaders")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(NoContentHeadersResponseObject); ok {
+		if err := validResponse.VisitNoContentHeadersResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -1692,25 +1759,27 @@ func (sh *strictHandler) UnionExample(w http.ResponseWriter, r *http.Request) {
 
 // Base64 encoded, compressed with deflate, json marshaled Swagger object
 const swaggerSpec = "" +
-	"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"
+	"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"
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode

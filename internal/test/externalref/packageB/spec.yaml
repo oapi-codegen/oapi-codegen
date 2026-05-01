@@ -4,3 +4,31 @@ components:
       properties:
         name:
           type: string
+    Role:
+      type: string
+      enum: [admin, user]
+    User:
+      type: object
+      required: [id, username]
+      properties:
+        id:
+          type: string
+        username:
+          type: string
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+    StatusEnum:
+      type: string
+      enum: [active, inactive]
+    # StatusV1 uses allOf internally with a local ref to StatusEnum.
+    # This exercises the case where an external schema's own allOf
+    # sub-schemas contain local refs that must be rewritten.
+    StatusV1:
+      allOf:
+        - type: object
+          required: [status]
+          properties:
+            status:
+              $ref: '#/components/schemas/StatusEnum'

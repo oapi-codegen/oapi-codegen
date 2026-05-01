@@ -258,6 +258,18 @@ type QueryJSONBody struct {
 	Q *string `json:"q,omitempty"`
 }
 
+// PatchResource200ApplicationJSONPatchPlusJSONResponseBody1 defines parameters for PatchResource.
+type PatchResource200ApplicationJSONPatchPlusJSONResponseBody1 = []Resource
+
+// PatchResource200ApplicationJSONPatchPlusJSONResponseBody2 defines parameters for PatchResource.
+type PatchResource200ApplicationJSONPatchPlusJSONResponseBody2 = string
+
+// PatchResource200ApplicationJSONPatchQueryPlusJSONResponseBody1 defines parameters for PatchResource.
+type PatchResource200ApplicationJSONPatchQueryPlusJSONResponseBody1 = []Resource
+
+// PatchResource200ApplicationJSONPatchQueryPlusJSONResponseBody2 defines parameters for PatchResource.
+type PatchResource200ApplicationJSONPatchQueryPlusJSONResponseBody2 = string
+
 // PostFooJSONRequestBody defines body for PostFoo for application/json ContentType.
 type PostFooJSONRequestBody PostFooJSONBody
 
@@ -2296,10 +2308,6 @@ type PatchResourceResponse struct {
 	ApplicationjsonPatchQueryJSON200 *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON
 	ApplicationmergePatchJSON200     *N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON
 }
-type PatchResource200ApplicationJSONPatchPlusJSON1 = []Resource
-type PatchResource200ApplicationJSONPatchPlusJSON2 = string
-type PatchResource200ApplicationJSONPatchQueryPlusJSON1 = []Resource
-type PatchResource200ApplicationJSONPatchQueryPlusJSON2 = string
 
 // Status returns HTTPResponse.Status
 func (r PatchResourceResponse) Status() string {

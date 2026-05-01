@@ -7,7 +7,7 @@ package sse
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -15,10 +15,8 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 )
 
 // ServerInterface represents all server handlers.
@@ -233,8 +231,8 @@ type StrictServerInterface interface {
 	GetStream(ctx context.Context, request GetStreamRequestObject) (GetStreamResponseObject, error)
 }
 
-type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
-type StrictMiddlewareFunc = strictnethttp.StrictHTTPMiddlewareFunc
+type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -286,33 +284,29 @@ func (sh *strictHandler) GetStream(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
-var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/2SSQW/bMAyF/wrB0wY4qZzc9AeGDcU2wD3tptpMwsKiNIkJVhT+7wPlLV2yi2VQeO97",
-	"fNAbshwS+jdU1pnQ48AxzwRfhm9fH2HQQiGyHGGgcuGRsMMLlcpJ0GO/dVuHS4cpk4TM6HHfRh3moKdq",
-	"tg/2OZLaMVEdC2dd1d9LuvBEFQLUhoF0aFiY0niOJFrhQxKCTAVmFuog5DzzGMzg4aUmmT/CmEQDi0UM",
-	"oBypaogZgkxQ6eeZZCSQc3ymssUWtDT55wk9fiJdF8QOC9WcpFILvXPODvMmadH/I9uQfgXryn7/stD3",
-	"HVoM9Lhzu/2m7zc799Q7v3feuR/WVh1PFIOpcrFAyiv13eO+quF2EytKTwR0IVFbS1+zAVmUjlSMsUa4",
-	"93m69nPvcEglBkWPU1DaNPXVtmphOeKyXCfp+YVGxcVGt4R/n01T1HOMobz+uYJHFqrv98vyOwAA///z",
-	"FQ4NgQIAAA==",
-}
+// Base64 encoded, compressed with deflate, json marshaled Swagger object
+const swaggerSpec = "" +
+	"ZJJBb9swDIX/CsHTBjipnNz0B4YNxTbAPe2m2kzCwqI0iQlWFP7vA+UtXbKLZVB473t80BuyHBL6N1TW" +
+	"mdDjwDHPBF+Gb18fYdBCIbIcYaBy4ZGwwwuVyknQY791W4dLhymThMzocd9GHeagp2q2D/Y5ktoxUR0L" +
+	"Z13V30u68EQVAtSGgXRoWJjSeI4kWuFDEoJMBWYW6iDkPPMYzODhpSaZP8KYRAOLRQygHKlqiBmCTFDp" +
+	"55lkJJBzfKayxRa0NPnnCT1+Il0XxA4L1ZykUgu9c84O8yZp0f8j25B+BevKfv+y0PcdWgz0uHO7/abv" +
+	"Nzv31Du/d965H9ZWHU8Ug6lysUDKK/Xd476q4XYTK0pPBHQhUVtLX7MBWZSOVIyxRrj3ebr2c+9wSCUG" +
+	"RY9TUNo09dW2amE54rJcJ+n5hUbFxUa3hH+fTVPUc4yhvP65gkcWqu/3y/I7AAD//w=="
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	compressed, err := base64.StdEncoding.DecodeString(swaggerSpec)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil

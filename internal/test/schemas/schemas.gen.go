@@ -1657,29 +1657,48 @@ type EchoRouter interface {
 	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 }
 
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
-	RegisterHandlersWithBaseURL(router, si, "")
+// RegisterHandlersOptions configures RegisterHandlersWithOptions.
+type RegisterHandlersOptions struct {
+	// BaseURL is prepended to every registered path so the API can be served
+	// under a prefix.
+	BaseURL string
+	// OperationMiddlewares lets the caller attach per-operation middleware at
+	// registration time. The map key is the OpenAPI `operationId` value as it
+	// appears in the spec (the raw, un-normalized form). Operations that have
+	// no entry are registered with no extra middleware. A nil map disables
+	// per-operation middleware entirely.
+	OperationMiddlewares map[string][]echo.MiddlewareFunc
 }
 
-// Registers handlers, and prepends BaseURL to the paths, so that the paths
-// can be served under a prefix.
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
+	RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{})
+}
+
+// RegisterHandlersWithBaseURL registers handlers and prepends BaseURL to the
+// paths so the API can be served under a prefix.
 func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
+	RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{BaseURL: baseURL})
+}
+
+// RegisterHandlersWithOptions registers handlers using the supplied options,
+// including any per-operation middleware.
+func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options RegisterHandlersOptions) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced)
-	router.GET(baseURL+"/issues/1051", wrapper.Issue1051)
-	router.GET(baseURL+"/issues/127", wrapper.Issue127)
-	router.GET(baseURL+"/issues/185", wrapper.Issue185)
-	router.GET(baseURL+"/issues/209/$:str", wrapper.Issue209)
-	router.GET(baseURL+"/issues/30/:fallthrough", wrapper.Issue30)
-	router.GET(baseURL+"/issues/375", wrapper.GetIssues375)
-	router.GET(baseURL+"/issues/41/:1param", wrapper.Issue41)
-	router.GET(baseURL+"/issues/9", wrapper.Issue9)
-	router.GET(baseURL+"/issues/975", wrapper.Issue975)
+	router.GET(options.BaseURL+"/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced, options.OperationMiddlewares["ensureEverythingIsReferenced"]...)
+	router.GET(options.BaseURL+"/issues/1051", wrapper.Issue1051, options.OperationMiddlewares["Issue1051"]...)
+	router.GET(options.BaseURL+"/issues/127", wrapper.Issue127, options.OperationMiddlewares["Issue127"]...)
+	router.GET(options.BaseURL+"/issues/185", wrapper.Issue185, options.OperationMiddlewares["Issue185"]...)
+	router.GET(options.BaseURL+"/issues/209/$:str", wrapper.Issue209, options.OperationMiddlewares["Issue209"]...)
+	router.GET(options.BaseURL+"/issues/30/:fallthrough", wrapper.Issue30, options.OperationMiddlewares["Issue30"]...)
+	router.GET(options.BaseURL+"/issues/375", wrapper.GetIssues375, options.OperationMiddlewares["GetIssues375"]...)
+	router.GET(options.BaseURL+"/issues/41/:1param", wrapper.Issue41, options.OperationMiddlewares["Issue41"]...)
+	router.GET(options.BaseURL+"/issues/9", wrapper.Issue9, options.OperationMiddlewares["Issue9"]...)
+	router.GET(options.BaseURL+"/issues/975", wrapper.Issue975, options.OperationMiddlewares["Issue975"]...)
 
 }
 

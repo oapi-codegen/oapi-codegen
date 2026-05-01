@@ -1,5 +1,5 @@
-type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
-type StrictMiddlewareFunc = strictgin.StrictGinMiddlewareFunc
+type StrictHandlerFunc func(ctx *gin.Context, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictGinServerOptions struct {
     // RequestErrorHandlerFunc is called when a request cannot be parsed or

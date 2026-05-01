@@ -19,7 +19,6 @@ import (
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1378/bionicle"
 	externalRef1 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1378/common"
 	"github.com/oapi-codegen/runtime"
-	strictnethttp "github.com/oapi-codegen/runtime/strictmiddleware/nethttp"
 )
 
 // ServerInterface represents all server handlers.
@@ -204,14 +203,20 @@ func (response GetBionicleName200JSONResponse) VisitGetBionicleNameResponse(w ht
 	return err
 }
 
-type GetBionicleName400JSONResponse struct {
-	union json.RawMessage
+type GetBionicleName400JSONResponse externalRef0.GetBionicleName400JSONResponseBody
+
+func (t GetBionicleName400JSONResponse) MarshalJSON() ([]byte, error) {
+	return externalRef0.GetBionicleName400JSONResponseBody(t).MarshalJSON()
+}
+
+func (t *GetBionicleName400JSONResponse) UnmarshalJSON(b []byte) error {
+	return (*externalRef0.GetBionicleName400JSONResponseBody)(t).UnmarshalJSON(b)
 }
 
 func (response GetBionicleName400JSONResponse) VisitGetBionicleNameResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.union); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -227,8 +232,8 @@ type StrictServerInterface interface {
 	GetBionicleName(ctx context.Context, request GetBionicleNameRequestObject) (GetBionicleNameResponseObject, error)
 }
 
-type StrictHandlerFunc = strictnethttp.StrictHTTPHandlerFunc
-type StrictMiddlewareFunc = strictnethttp.StrictHTTPMiddlewareFunc
+type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
