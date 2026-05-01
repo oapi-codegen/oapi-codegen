@@ -38,15 +38,25 @@ const {{ .GoName}} = "{{ .OAPISchema.URL }}"
    // {{ $prefix }}Default is the default value for the `{{ $k }}` variable for {{ $goName }}
    const {{ $prefix }}Default = "{{ $v.Default }}"
    {{ end }}
-   {{ else if $v.Default }}
-   // {{ $prefix }}DefaultValue is the default choice, for the accepted values for the `{{ $k }}` variable for {{ $goName }}
-   const {{ $prefix }}DefaultValue {{ $prefix }} = {{ $prefix }}{{ $v.Default | schemaNameToTypeName | sanitizeGoIdentity }}
    {{ end }}
+{{ end }}
+
+{{/*
+    Enum-typed default-pointer constants. Their identifier names are
+    pre-computed in Go (ServerObjectDefinition.EnumDefaultPointers) so
+    that the pointer's reference to the enum-value constant always
+    matches the post-dedup name actually emitted by constants.tmpl,
+    and the pointer itself is renamed `…DefaultValue` only for specs
+    that would have collided under the old codegen anyway.
+*/}}
+{{ range .EnumDefaultPointers }}
+   // {{ .PointerName }} is the default choice, for the accepted values for the `{{ .VariableName }}` variable
+   const {{ .PointerName }} {{ .TypeName }} = {{ .TargetName }}
 {{ end }}
 
 
 // New{{ .GoName }} constructs the Server URL for {{ .OAPISchema.Description }}, with the provided variables.
-func New{{ .GoName }}({{ genServerURLWithVariablesFunctionParams .GoName $usedVars $undeclared }}) (string, error) {
+func New{{ .GoName }}({{ .NewServerFunctionParams }}) (string, error) {
     {{ range $k, $v := $usedVars }}
         {{- if gt (len $v.Enum) 0 -}}
     if !{{ $k }}.Valid() {

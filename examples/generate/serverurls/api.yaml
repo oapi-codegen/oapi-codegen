@@ -54,6 +54,21 @@ servers:
 # callers can fill it in.
 - url: https://{tenant}.api.example.com
   description: Undeclared placeholder server
+# A server whose enum has two values that fold to the same Go
+# identifier suffix (`foo` and `Foo` both `ucFirst` to `Foo`). The
+# previous codegen would have emitted two `const ...VariableFoo`
+# declarations and failed to compile; the synthesizer now appends a
+# numeric suffix to disambiguate, and the typed default-pointer
+# references the correct (post-suffix) enum constant — addressing the
+# concern raised in PR #2358 review.
+- url: https://api.example.com/{mode}
+  description: Case-only enum collision
+  variables:
+    mode:
+      enum:
+        - 'foo'
+        - 'Foo'
+      default: 'Foo'
 # clash with the previous definition of `Development server` to trigger a new name
 - url: http://localhost:80
   description: Development server

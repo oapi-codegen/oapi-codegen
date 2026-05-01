@@ -28,9 +28,13 @@ func TestServerUrlTheProductionAPIServer(t *testing.T) {
 	})
 
 	t.Run("when default values are provided, it does not error", func(t *testing.T) {
+		// The default-pointer keeps its historical name on this server
+		// because the enum doesn't collide (no enum value folds to
+		// "Default") — the asymmetric rename for #2003 only kicks in
+		// when collision is detected.
 		serverUrl, err := NewServerUrlTheProductionAPIServer(
 			ServerUrlTheProductionAPIServerBasePathVariableDefault,
-			ServerUrlTheProductionAPIServerPortVariableDefaultValue,
+			ServerUrlTheProductionAPIServerPortVariableDefault,
 			ServerUrlTheProductionAPIServerUsernameVariableDefault,
 		)
 		require.NoError(t, err)
@@ -44,7 +48,7 @@ func TestServerUrlTheProductionAPIServer(t *testing.T) {
 	t.Run("a valid non-default enum value is accepted", func(t *testing.T) {
 		serverUrl, err := NewServerUrlTheProductionAPIServer(
 			ServerUrlTheProductionAPIServerBasePathVariableDefault,
-			ServerUrlTheProductionAPIServerPortVariableN443,
+			ServerUrlTheProductionAPIServerPortVariable443,
 			ServerUrlTheProductionAPIServerUsernameVariableDefault,
 		)
 		require.NoError(t, err)
@@ -75,7 +79,7 @@ func TestServerUrlConflictingDefaultEnum(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "https://api.example.com/default", got)
 
-		got, err = NewServerUrlConflictingDefaultEnum(ServerUrlConflictingDefaultEnumPortVariableN443)
+		got, err = NewServerUrlConflictingDefaultEnum(ServerUrlConflictingDefaultEnumPortVariable443)
 		require.NoError(t, err)
 		assert.Equal(t, "https://api.example.com/443", got)
 
@@ -92,4 +96,37 @@ func TestServerUrlUndeclaredPlaceholderServer(t *testing.T) {
 	got, err := NewServerUrlUndeclaredPlaceholderServer("acme")
 	require.NoError(t, err)
 	assert.Equal(t, "https://acme.api.example.com", got)
+}
+
+// Regression test for the case-only-different-enum scenario raised in
+// PR #2358 review: `enum: [foo, Foo]` produces two values that
+// `ucFirst`-fold to the same identifier `Foo`. The synthesizer dedups
+// with a numeric suffix (`Foo` and `Foo1`) and the typed default-pointer
+// references the post-suffix const that actually exists. Under the old
+// codegen this would have emitted two `const ...VariableFoo`
+// declarations and failed to compile.
+func TestServerUrlCaseOnlyEnumCollision(t *testing.T) {
+	t.Run("default-pointer references the post-dedup constant", func(t *testing.T) {
+		// The spec sets default: "Foo"; the post-dedup const is
+		// ...VariableFoo1, which is exactly what the pointer must
+		// resolve to.
+		assert.Equal(t,
+			ServerUrlCaseOnlyEnumCollisionModeVariable("Foo"),
+			ServerUrlCaseOnlyEnumCollisionModeVariableDefault,
+		)
+		assert.Equal(t,
+			ServerUrlCaseOnlyEnumCollisionModeVariableDefault,
+			ServerUrlCaseOnlyEnumCollisionModeVariableFoo1,
+		)
+	})
+
+	t.Run("both case-variant constants are distinct and accepted", func(t *testing.T) {
+		got, err := NewServerUrlCaseOnlyEnumCollision(ServerUrlCaseOnlyEnumCollisionModeVariableFoo)
+		require.NoError(t, err)
+		assert.Equal(t, "https://api.example.com/foo", got)
+
+		got, err = NewServerUrlCaseOnlyEnumCollision(ServerUrlCaseOnlyEnumCollisionModeVariableFoo1)
+		require.NoError(t, err)
+		assert.Equal(t, "https://api.example.com/Foo", got)
+	})
 }

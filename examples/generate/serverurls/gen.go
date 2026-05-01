@@ -8,24 +8,45 @@ import (
 	"strings"
 )
 
+// ServerUrlCaseOnlyEnumCollisionModeVariable defines model for mode.
+type ServerUrlCaseOnlyEnumCollisionModeVariable string
+
 // ServerUrlConflictingDefaultEnumPortVariable defines model for port.
 type ServerUrlConflictingDefaultEnumPortVariable string
 
 // ServerUrlTheProductionAPIServerPortVariable defines model for port.
 type ServerUrlTheProductionAPIServerPortVariable string
 
+// Defines values for ServerUrlCaseOnlyEnumCollisionModeVariable.
+const (
+	ServerUrlCaseOnlyEnumCollisionModeVariableFoo  ServerUrlCaseOnlyEnumCollisionModeVariable = "foo"
+	ServerUrlCaseOnlyEnumCollisionModeVariableFoo1 ServerUrlCaseOnlyEnumCollisionModeVariable = "Foo"
+)
+
+// Valid indicates whether the value is a known member of the ServerUrlCaseOnlyEnumCollisionModeVariable enum.
+func (e ServerUrlCaseOnlyEnumCollisionModeVariable) Valid() bool {
+	switch e {
+	case ServerUrlCaseOnlyEnumCollisionModeVariableFoo:
+		return true
+	case ServerUrlCaseOnlyEnumCollisionModeVariableFoo1:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ServerUrlConflictingDefaultEnumPortVariable.
 const (
+	ServerUrlConflictingDefaultEnumPortVariable443     ServerUrlConflictingDefaultEnumPortVariable = "443"
 	ServerUrlConflictingDefaultEnumPortVariableDefault ServerUrlConflictingDefaultEnumPortVariable = "default"
-	ServerUrlConflictingDefaultEnumPortVariableN443    ServerUrlConflictingDefaultEnumPortVariable = "443"
 )
 
 // Valid indicates whether the value is a known member of the ServerUrlConflictingDefaultEnumPortVariable enum.
 func (e ServerUrlConflictingDefaultEnumPortVariable) Valid() bool {
 	switch e {
-	case ServerUrlConflictingDefaultEnumPortVariableDefault:
+	case ServerUrlConflictingDefaultEnumPortVariable443:
 		return true
-	case ServerUrlConflictingDefaultEnumPortVariableN443:
+	case ServerUrlConflictingDefaultEnumPortVariableDefault:
 		return true
 	default:
 		return false
@@ -34,16 +55,16 @@ func (e ServerUrlConflictingDefaultEnumPortVariable) Valid() bool {
 
 // Defines values for ServerUrlTheProductionAPIServerPortVariable.
 const (
-	ServerUrlTheProductionAPIServerPortVariableN443  ServerUrlTheProductionAPIServerPortVariable = "443"
-	ServerUrlTheProductionAPIServerPortVariableN8443 ServerUrlTheProductionAPIServerPortVariable = "8443"
+	ServerUrlTheProductionAPIServerPortVariable443  ServerUrlTheProductionAPIServerPortVariable = "443"
+	ServerUrlTheProductionAPIServerPortVariable8443 ServerUrlTheProductionAPIServerPortVariable = "8443"
 )
 
 // Valid indicates whether the value is a known member of the ServerUrlTheProductionAPIServerPortVariable enum.
 func (e ServerUrlTheProductionAPIServerPortVariable) Valid() bool {
 	switch e {
-	case ServerUrlTheProductionAPIServerPortVariableN443:
+	case ServerUrlTheProductionAPIServerPortVariable443:
 		return true
-	case ServerUrlTheProductionAPIServerPortVariableN8443:
+	case ServerUrlTheProductionAPIServerPortVariable8443:
 		return true
 	default:
 		return false
@@ -53,7 +74,27 @@ func (e ServerUrlTheProductionAPIServerPortVariable) Valid() bool {
 // MyCustomAPIServer defines the Server URL for Custom named server
 const MyCustomAPIServer = "https://api.example.com/v2"
 
-// ServerUrlConflictingDefaultEnumPortVariableDefaultValue is the default choice, for the accepted values for the `port` variable for ServerUrlConflictingDefaultEnum
+// ServerUrlCaseOnlyEnumCollisionModeVariableDefault is the default choice, for the accepted values for the `mode` variable
+const ServerUrlCaseOnlyEnumCollisionModeVariableDefault ServerUrlCaseOnlyEnumCollisionModeVariable = ServerUrlCaseOnlyEnumCollisionModeVariableFoo1
+
+// NewServerUrlCaseOnlyEnumCollision constructs the Server URL for Case-only enum collision, with the provided variables.
+func NewServerUrlCaseOnlyEnumCollision(mode ServerUrlCaseOnlyEnumCollisionModeVariable) (string, error) {
+	if !mode.Valid() {
+		return "", fmt.Errorf("`%v` is not one of the accepted values for the `mode` variable", mode)
+	}
+
+	u := "https://api.example.com/{mode}"
+
+	u = strings.ReplaceAll(u, "{mode}", string(mode))
+
+	if strings.Contains(u, "{") || strings.Contains(u, "}") {
+		return "", fmt.Errorf("after mapping variables, there were still `{` or `}` characters in the string: %#v", u)
+	}
+
+	return u, nil
+}
+
+// ServerUrlConflictingDefaultEnumPortVariableDefaultValue is the default choice, for the accepted values for the `port` variable
 const ServerUrlConflictingDefaultEnumPortVariableDefaultValue ServerUrlConflictingDefaultEnumPortVariable = ServerUrlConflictingDefaultEnumPortVariableDefault
 
 // NewServerUrlConflictingDefaultEnum constructs the Server URL for Conflicting default enum, with the provided variables.
@@ -100,14 +141,14 @@ type ServerUrlTheProductionAPIServerBasePathVariable string
 // ServerUrlTheProductionAPIServerBasePathVariableDefault is the default value for the `basePath` variable for ServerUrlTheProductionAPIServer
 const ServerUrlTheProductionAPIServerBasePathVariableDefault = "v2"
 
-// ServerUrlTheProductionAPIServerPortVariableDefaultValue is the default choice, for the accepted values for the `port` variable for ServerUrlTheProductionAPIServer
-const ServerUrlTheProductionAPIServerPortVariableDefaultValue ServerUrlTheProductionAPIServerPortVariable = ServerUrlTheProductionAPIServerPortVariableN8443
-
 // ServerUrlTheProductionAPIServerUsernameVariable is the `username` variable for ServerUrlTheProductionAPIServer
 type ServerUrlTheProductionAPIServerUsernameVariable string
 
 // ServerUrlTheProductionAPIServerUsernameVariableDefault is the default value for the `username` variable for ServerUrlTheProductionAPIServer
 const ServerUrlTheProductionAPIServerUsernameVariableDefault = "demo"
+
+// ServerUrlTheProductionAPIServerPortVariableDefault is the default choice, for the accepted values for the `port` variable
+const ServerUrlTheProductionAPIServerPortVariableDefault ServerUrlTheProductionAPIServerPortVariable = ServerUrlTheProductionAPIServerPortVariable8443
 
 // NewServerUrlTheProductionAPIServer constructs the Server URL for The production API server, with the provided variables.
 func NewServerUrlTheProductionAPIServer(basePath ServerUrlTheProductionAPIServerBasePathVariable, port ServerUrlTheProductionAPIServerPortVariable, username ServerUrlTheProductionAPIServerUsernameVariable) (string, error) {

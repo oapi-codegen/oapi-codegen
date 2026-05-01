@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
+	"strings"
 	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -169,6 +170,162 @@ func serverURLVariableTypeName(serverGoName, varName string) string {
 	return serverGoName + UppercaseFirstCharacter(varName) + "Variable"
 }
 
+// serverURLEnumKeys returns deterministic identifier suffixes for each
+// enum value of `v`, in `v.Enum` order. Each suffix is just the value
+// with its first character upper-cased — matching what the previous
+// template-only path produced for happy-path specs (`<Prefix><Value | ucFirst>`),
+// so adopters with non-colliding enums keep their existing identifiers.
+//
+// When two values fold to the same suffix (e.g. `enum: ["foo", "FOO"]`,
+// both → `Foo`), later occurrences get a numeric suffix (`Foo`, `Foo1`,
+// `Foo2`, …) — same scheme as `SanitizeEnumNames`. The previous
+// template path didn't dedup at all and would have produced a
+// duplicate-const compile error for these specs; this is purely a
+// correctness improvement, not a naming change for any spec that
+// actually compiled before.
+func serverURLEnumKeys(v *openapi3.ServerVariable) []string {
+	keys := make([]string, len(v.Enum))
+	seen := make(map[string]int, len(v.Enum))
+	for i, val := range v.Enum {
+		base := UppercaseFirstCharacter(val)
+		if n, dup := seen[base]; dup {
+			keys[i] = base + strconv.Itoa(n)
+			seen[base] = n + 1
+		} else {
+			keys[i] = base
+			seen[base] = 1
+		}
+	}
+	return keys
+}
+
+// serverURLEnumValues returns the EnumValues map handed to GenerateEnums
+// for variable `v`: key is the deduplicated identifier suffix from
+// serverURLEnumKeys, value is the original enum string.
+func serverURLEnumValues(v *openapi3.ServerVariable) map[string]string {
+	keys := serverURLEnumKeys(v)
+	out := make(map[string]string, len(keys))
+	for i, k := range keys {
+		out[k] = v.Enum[i]
+	}
+	return out
+}
+
+// ServerURLDefaultPointer carries the pre-computed identifier names
+// needed to emit a typed default-pointer constant for an enum-typed
+// server-URL variable. Computed in Go (not the template) so that the
+// pointer's reference to the enum-value constant always agrees with
+// the identifier the const-block actually emitted, including in
+// dedup-suffix cases (e.g. `enum: ["foo", "FOO"]` with `default: "FOO"`
+// → enum const is `<Prefix>Foo1`, pointer must reference exactly that).
+type ServerURLDefaultPointer struct {
+	// VariableName is the OpenAPI variable name (for doc comments).
+	VariableName string
+	// TypeName is the enum's Go type, e.g. `ServerUrlFooBarVariable`.
+	TypeName string
+	// PointerName is the constant being declared. Normally it is
+	// `<TypeName>Default` (matching the historical naming). Switches
+	// to `<TypeName>DefaultValue` only when the variable's enum
+	// contains a value whose identifier suffix is the literal string
+	// "Default" — i.e. exactly the case that produced #2003's
+	// duplicate-const compile error under the old codegen. Specs that
+	// compiled cleanly before keep their `Default` name.
+	PointerName string
+	// TargetName is the fully-qualified enum-value constant that the
+	// pointer references, e.g. `<TypeName>N443` or `<TypeName>Foo1`.
+	TargetName string
+	// Description is the variable's OpenAPI description (doc comment).
+	Description string
+}
+
+// NewServerFunctionParams returns the formatted parameter list for
+// the generated `New<ServerName>(...)` function — one typed parameter
+// per declared-and-used variable, plus one `string` parameter per
+// `{name}` placeholder that appears in the URL but isn't in
+// `variables` (#2005). The two groups are sorted together
+// alphabetically so the generated signature is deterministic.
+//
+// Equivalent to calling `genServerURLWithVariablesFunctionParams` for
+// the typed half and concatenating the undeclared half — but exposing
+// it as a method keeps server-urls.tmpl free of that combination
+// logic and means the template helper itself stayed at its
+// pre-existing two-argument shape (so any user-supplied custom
+// `server-urls.tmpl` override that calls the helper directly is
+// unaffected).
+func (s ServerObjectDefinition) NewServerFunctionParams() string {
+	used := s.UsedVariables()
+	undeclared := s.UndeclaredPlaceholders()
+	if len(used) == 0 && len(undeclared) == 0 {
+		return ""
+	}
+
+	type param struct {
+		name string
+		typ  string
+	}
+	parts := make([]param, 0, len(used)+len(undeclared))
+	for _, k := range SortedMapKeys(used) {
+		parts = append(parts, param{
+			name: k,
+			typ:  serverURLVariableTypeName(s.GoName, k),
+		})
+	}
+	for _, k := range undeclared {
+		parts = append(parts, param{name: k, typ: "string"})
+	}
+	sort.Slice(parts, func(i, j int) bool { return parts[i].name < parts[j].name })
+
+	out := make([]string, len(parts))
+	for i, p := range parts {
+		out[i] = p.name + " " + p.typ
+	}
+	return strings.Join(out, ", ")
+}
+
+// EnumDefaultPointers returns one entry per enum-typed used variable
+// with a `default` set. The template iterates this directly rather
+// than recomputing identifier names from `$v.Default`.
+func (s ServerObjectDefinition) EnumDefaultPointers() []ServerURLDefaultPointer {
+	used := s.UsedVariables()
+	var out []ServerURLDefaultPointer
+	for _, varName := range SortedMapKeys(used) {
+		v := used[varName]
+		if v == nil || len(v.Enum) == 0 || v.Default == "" {
+			continue
+		}
+		keys := serverURLEnumKeys(v)
+		var targetKey string
+		for i, val := range v.Enum {
+			if val == v.Default {
+				targetKey = keys[i]
+				break
+			}
+		}
+		if targetKey == "" {
+			// `default` not in `enum`; BuildServerURLTypeDefinitions
+			// already errors on this at codegen time, so we'd never
+			// actually reach the template emission. Skip defensively.
+			continue
+		}
+		prefix := serverURLVariableTypeName(s.GoName, varName)
+		pointerName := prefix + "Default"
+		for _, k := range keys {
+			if k == "Default" {
+				pointerName = prefix + "DefaultValue"
+				break
+			}
+		}
+		out = append(out, ServerURLDefaultPointer{
+			VariableName: varName,
+			TypeName:     prefix,
+			PointerName:  pointerName,
+			TargetName:   prefix + targetKey,
+			Description:  v.Description,
+		})
+	}
+	return out
+}
+
 // BuildServerURLTypeDefinitions synthesizes a TypeDefinition for every
 // server-URL variable that defines an `enum`. These are appended into
 // the same TypeDefinition slices used by GenerateTypes (typedef.tmpl)
@@ -221,7 +378,7 @@ func BuildServerURLTypeDefinitions(spec *openapi3.T) ([]TypeDefinition, error) {
 				}
 			}
 			typeName := serverURLVariableTypeName(srv.GoName, varName)
-			enumValues := SanitizeEnumNames(nil, v.Enum)
+			enumValues := serverURLEnumValues(v)
 			defs = append(defs, TypeDefinition{
 				TypeName: typeName,
 				JsonName: varName,
