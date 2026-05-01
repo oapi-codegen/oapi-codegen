@@ -331,6 +331,13 @@ func stripNewLines(s string) string {
 //
 // goTypePrefix is the prefix being used to create underlying types in the template (likely the `ServerObjectDefinition.GoName`)
 // variables are this `ServerObjectDefinition`'s variables for the Server object (likely the `ServerObjectDefinition.OAPISchema`)
+//
+// Undeclared `{name}` placeholders that appear in the URL but have no
+// entry in `variables` are NOT handled here; they're emitted as plain
+// `string` parameters by `ServerObjectDefinition.NewFunctionParams`,
+// which the template calls instead of this helper. Custom
+// `server-urls.tmpl` overrides that still call this helper directly
+// keep their pre-existing two-argument signature.
 func genServerURLWithVariablesFunctionParams(goTypePrefix string, variables map[string]*openapi3.ServerVariable) string {
 	keys := SortedMapKeys(variables)
 
