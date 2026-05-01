@@ -59,7 +59,12 @@ When a PR modifies a template, ask:
 
 Be pragmatic: do not demand identical changes in seven places. Do your best to assess whether a change is conceptually backend-agnostic (most template changes are) or genuinely backend-specific (some are), and flag missing parity only when the change looks generally applicable.
 
-## 5. General
+## 5. Dependencies
+
+- Watch out for users making `go.mod` changes which advance the Go version to a new minor release. We want these to be explicitly justified in the commit message. Maintenance version bumps are ok. Mention that the maintainers would prefer to do a minor version bump themselves.
+- Watch out for unnecessary dependency changes that creep into code reviews, just because people tend to do it out of habit. Every dependency update should have a reason if it's bundled with codegen changes.
+
+## 6. General
 
 - The repo is a multi-module monorepo. Cross-module changes (e.g., to `runtime/` consumers) deserve extra scrutiny.
 - `internal/test/` contains regression tests keyed to GitHub issues. New bug fixes should generally include a regression test there.
