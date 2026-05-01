@@ -20,11 +20,32 @@ func doGet(t *testing.T, mux *chi.Mux, url string) *httptest.ResponseRecorder {
 	return response.Recorder
 }
 
+// TestSpecAccess covers the public spec accessors emitted by inline.tmpl:
+//   - GetSpec returns a parsed *openapi3.T
+//   - GetSpecJSON returns the raw JSON bytes (decompressed but unparsed),
+//     which must be valid JSON.
+//
+// GetSwagger is intentionally not exercised here: it's marked
+// `// Deprecated:` and the repo's lint rule rejects in-tree calls to
+// deprecated functions. Its body is `return GetSpec()`, so its behaviour
+// is covered transitively.
+func TestSpecAccess(t *testing.T) {
+	spec, err := api.GetSpec()
+	require.NoError(t, err)
+	require.NotNil(t, spec)
+	assert.NotEmpty(t, spec.OpenAPI, "OpenAPI version field must be populated")
+
+	raw, err := api.GetSpecJSON()
+	require.NoError(t, err)
+	require.NotEmpty(t, raw, "raw spec bytes must be non-empty")
+	assert.True(t, json.Valid(raw), "GetSpecJSON must return valid JSON")
+}
+
 func TestPetStore(t *testing.T) {
 	var err error
 
 	// Get the swagger description of our API
-	swagger, err := api.GetSwagger()
+	swagger, err := api.GetSpec()
 	require.NoError(t, err)
 
 	// Clear out the servers array in the swagger spec, that skips validating

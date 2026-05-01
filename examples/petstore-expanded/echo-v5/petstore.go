@@ -21,7 +21,7 @@ func main() {
 	port := flag.String("port", "8080", "Port for test HTTP server")
 	flag.Parse()
 
-	swagger, err := api.GetSwagger()
+	swagger, err := api.GetSpec()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
 		os.Exit(1)

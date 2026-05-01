@@ -37,7 +37,7 @@ func TestPetStore(t *testing.T) {
 	store := api.NewPetStore()
 
 	// Get the swagger description of our API
-	swagger, err := api.GetSwagger()
+	swagger, err := api.GetSpec()
 	require.NoError(t, err)
 
 	// This disables swagger server name validation. It seems to work poorly,

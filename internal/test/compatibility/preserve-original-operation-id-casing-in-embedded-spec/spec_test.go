@@ -9,7 +9,7 @@ import (
 )
 
 func TestSpecReturnsOperationIdAsOriginallySpecified(t *testing.T) {
-	spec, err := GetSwagger()
+	spec, err := GetSpec()
 	require.NoError(t, err)
 
 	path := spec.Paths.Find("/pet")

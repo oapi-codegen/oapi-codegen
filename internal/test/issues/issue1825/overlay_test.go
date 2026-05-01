@@ -7,7 +7,7 @@ import (
 )
 
 func TestOverlayApply(t *testing.T) {
-	spec, err := GetSwagger()
+	spec, err := GetSpec()
 	require.NoError(t, err)
 
 	require.Equal(t, spec.Info.Extensions["x-overlay-applied"], "structured-overlay")

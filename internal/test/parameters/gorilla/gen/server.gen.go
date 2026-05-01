@@ -5,7 +5,7 @@ package gorillaparamsgen
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -1396,48 +1396,50 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	return r
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
+// Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
+// Stored as a slice of fixed-width chunks rather than one concatenated
+// const string: with thousands of chunks the chained `+` fold is several
+// times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-
-	"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",
+	"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",
+	"R4QvCIXkLvk3AAD//w==",
 }
 
-// GetSwagger returns the content of the embedded swagger specification file
-// or error if failed to decode
+// decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
+// after base64-decoding and flate-decompressing the embedded blob.
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	encoded := strings.Join(swaggerSpec, "")
+	compressed, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil
@@ -1445,7 +1447,7 @@ func decodeSpec() ([]byte, error) {
 
 var rawSpec = decodeSpecCached()
 
-// a naive cached of a decoded swagger spec
+// a naive cache of the decoded OpenAPI spec
 func decodeSpecCached() func() ([]byte, error) {
 	data, err := decodeSpec()
 	return func() ([]byte, error) {
@@ -1463,12 +1465,12 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 	return res
 }
 
-// GetSwagger returns the Swagger specification corresponding to the generated code
-// in this file. The external references of Swagger specification are resolved.
-// The logic of resolving external references is tightly connected to "import-mapping" feature.
-// Externally referenced files must be embedded in the corresponding golang packages.
-// Urls can be supported but this task was out of the scope.
-func GetSwagger() (swagger *openapi3.T, err error) {
+// GetSpec returns the OpenAPI specification corresponding to the generated
+// code in this file. External references in the spec are resolved through
+// PathToRawSpec; externally-referenced files must be embedded in their
+// corresponding Go packages (via the import-mapping feature). URL-based
+// external refs are not supported.
+func GetSpec() (swagger *openapi3.T, err error) {
 	resolvePath := PathToRawSpec("")
 
 	loader := openapi3.NewLoader()
@@ -1493,4 +1495,23 @@ func GetSwagger() (swagger *openapi3.T, err error) {
 		return
 	}
 	return
+}
+
+// GetSpecJSON returns the raw JSON bytes of the embedded OpenAPI
+// specification: decompressed but not unmarshaled. External references
+// are not resolved here; the bytes are the spec exactly as embedded by
+// codegen. The result is cached at package init time, so repeated calls
+// are cheap.
+func GetSpecJSON() ([]byte, error) {
+	return rawSpec()
+}
+
+// GetSwagger returns the OpenAPI specification corresponding to the
+// generated code in this file.
+//
+// Deprecated: GetSwagger predates kin-openapi renaming openapi3.Swagger
+// to openapi3.T. Use [GetSpec] instead. This wrapper is retained for
+// backwards compatibility.
+func GetSwagger() (*openapi3.T, error) {
+	return GetSpec()
 }
