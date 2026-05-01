@@ -259,6 +259,14 @@ type TypeDefinition struct {
 
 	// This is the Schema wrapper is used to populate the type description
 	Schema Schema
+
+	// ForceEnumPrefix, when true, forces the enum-value constants generated
+	// from this TypeDefinition to be prefixed with the type name, regardless
+	// of whether GenerateEnums detects a cross-enum conflict. Used for
+	// synthesised enum types (e.g. server-URL variable enums) whose
+	// generated identifiers must remain stable to avoid colliding with
+	// other constants emitted alongside them.
+	ForceEnumPrefix bool
 }
 
 // ResponseTypeDefinition is an extension of TypeDefinition, specifically for

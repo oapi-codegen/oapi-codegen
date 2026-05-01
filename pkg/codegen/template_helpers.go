@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"sort"
 	"strings"
 	"text/template"
 
@@ -327,24 +328,56 @@ func stripNewLines(s string) string {
 	return r.Replace(s)
 }
 
-// genServerURLWithVariablesFunctionParams is a template helper method to generate the function parameters for the generated function for a Server object that contains `variables` (https://spec.openapis.org/oas/v3.0.3#server-object)
+// genServerURLWithVariablesFunctionParams is a template helper method
+// to generate the function parameters for the generated function for
+// a Server object that contains `variables`
+// (https://spec.openapis.org/oas/v3.0.3#server-object).
 //
-// goTypePrefix is the prefix being used to create underlying types in the template (likely the `ServerObjectDefinition.GoName`)
-// variables are this `ServerObjectDefinition`'s variables for the Server object (likely the `ServerObjectDefinition.OAPISchema`)
-func genServerURLWithVariablesFunctionParams(goTypePrefix string, variables map[string]*openapi3.ServerVariable) string {
-	keys := SortedMapKeys(variables)
-
-	if len(variables) == 0 {
+// goTypePrefix is the prefix being used to create underlying types in
+// the template (likely the `ServerObjectDefinition.GoName`).
+//
+// variables are the declared-and-used variables (typed parameters,
+// each backed by a generated `<prefix><Var>Variable` type).
+//
+// undeclaredPlaceholders are URL `{name}` placeholders that have no
+// corresponding entry in the Server object's `variables` map; they
+// are emitted as plain `string` parameters so the caller can supply
+// values for them. Without this the URL substitution would leave
+// `{name}` in the result, tripping the trailing `{`/`}` runtime check
+// on every call (https://github.com/oapi-codegen/oapi-codegen/issues/2005).
+//
+// The two groups are ordered together alphabetically for stable
+// output regardless of how each set is enumerated.
+func genServerURLWithVariablesFunctionParams(goTypePrefix string, variables map[string]*openapi3.ServerVariable, undeclaredPlaceholders []string) string {
+	if len(variables) == 0 && len(undeclaredPlaceholders) == 0 {
 		return ""
 	}
-	parts := make([]string, len(variables))
 
-	for i := range keys {
-		k := keys[i]
-		variableDefinitionPrefix := goTypePrefix + UppercaseFirstCharacter(k) + "Variable"
-		parts[i] = k + " " + variableDefinitionPrefix
+	type param struct {
+		name string
+		typ  string
 	}
-	return strings.Join(parts, ", ")
+	parts := make([]param, 0, len(variables)+len(undeclaredPlaceholders))
+	for _, k := range SortedMapKeys(variables) {
+		parts = append(parts, param{
+			name: k,
+			typ:  goTypePrefix + UppercaseFirstCharacter(k) + "Variable",
+		})
+	}
+	for _, k := range undeclaredPlaceholders {
+		parts = append(parts, param{name: k, typ: "string"})
+	}
+
+	// Stable, alphabetical ordering across both groups so the
+	// generated function signature is deterministic and reads in a
+	// predictable order regardless of declared/undeclared status.
+	sort.Slice(parts, func(i, j int) bool { return parts[i].name < parts[j].name })
+
+	out := make([]string, len(parts))
+	for i, p := range parts {
+		out[i] = p.name + " " + p.typ
+	}
+	return strings.Join(out, ", ")
 }
 
 // httpMethodConstant converts an HTTP method string (e.g. "GET") to the

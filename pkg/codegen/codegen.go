@@ -271,10 +271,31 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var serverURLsDefinitions string
 	if opts.Generate.ServerURLs {
-		serverURLsDefinitions, err = GenerateServerURLs(t, spec)
+		// Server-URL enum-typed variables are routed through the same
+		// typedef.tmpl + constants.tmpl pipelines as any other
+		// enum-bearing schema, so they get matching `type X string`,
+		// `const ( … )` block, and `Valid()` method. We do this here
+		// (rather than in GenerateTypeDefinitions) so the types are
+		// emitted even when `generate.models` is disabled.
+		serverURLEnumTypes, err := BuildServerURLTypeDefinitions(spec)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go types for server URL variables: %w", err)
+		}
+		serverURLEnumTypeDecls, err := GenerateTypes(t, serverURLEnumTypes)
+		if err != nil {
+			return "", fmt.Errorf("error generating type declarations for server URL variables: %w", err)
+		}
+		serverURLEnumConstants, err := GenerateEnums(t, serverURLEnumTypes)
+		if err != nil {
+			return "", fmt.Errorf("error generating enums for server URL variables: %w", err)
+		}
+
+		serverURLsBody, err := GenerateServerURLs(t, spec)
 		if err != nil {
 			return "", fmt.Errorf("error generating Server URLs: %w", err)
 		}
+
+		serverURLsDefinitions = serverURLEnumTypeDecls + serverURLEnumConstants + serverURLsBody
 	}
 
 	var irisServerOut string
@@ -993,7 +1014,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 				Schema:         tp.Schema,
 				TypeName:       tp.TypeName,
 				ValueWrapper:   wrapper,
-				PrefixTypeName: globalState.options.Compatibility.AlwaysPrefixEnumValues,
+				PrefixTypeName: globalState.options.Compatibility.AlwaysPrefixEnumValues || tp.ForceEnumPrefix,
 			})
 		}
 	}

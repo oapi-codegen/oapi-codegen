@@ -8,8 +8,70 @@ import (
 	"strings"
 )
 
+// ServerUrlConflictingDefaultEnumPortVariable defines model for port.
+type ServerUrlConflictingDefaultEnumPortVariable string
+
+// ServerUrlTheProductionAPIServerPortVariable defines model for port.
+type ServerUrlTheProductionAPIServerPortVariable string
+
+// Defines values for ServerUrlConflictingDefaultEnumPortVariable.
+const (
+	ServerUrlConflictingDefaultEnumPortVariableDefault ServerUrlConflictingDefaultEnumPortVariable = "default"
+	ServerUrlConflictingDefaultEnumPortVariableN443    ServerUrlConflictingDefaultEnumPortVariable = "443"
+)
+
+// Valid indicates whether the value is a known member of the ServerUrlConflictingDefaultEnumPortVariable enum.
+func (e ServerUrlConflictingDefaultEnumPortVariable) Valid() bool {
+	switch e {
+	case ServerUrlConflictingDefaultEnumPortVariableDefault:
+		return true
+	case ServerUrlConflictingDefaultEnumPortVariableN443:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ServerUrlTheProductionAPIServerPortVariable.
+const (
+	ServerUrlTheProductionAPIServerPortVariableN443  ServerUrlTheProductionAPIServerPortVariable = "443"
+	ServerUrlTheProductionAPIServerPortVariableN8443 ServerUrlTheProductionAPIServerPortVariable = "8443"
+)
+
+// Valid indicates whether the value is a known member of the ServerUrlTheProductionAPIServerPortVariable enum.
+func (e ServerUrlTheProductionAPIServerPortVariable) Valid() bool {
+	switch e {
+	case ServerUrlTheProductionAPIServerPortVariableN443:
+		return true
+	case ServerUrlTheProductionAPIServerPortVariableN8443:
+		return true
+	default:
+		return false
+	}
+}
+
 // MyCustomAPIServer defines the Server URL for Custom named server
 const MyCustomAPIServer = "https://api.example.com/v2"
+
+// ServerUrlConflictingDefaultEnumPortVariableDefaultValue is the default choice, for the accepted values for the `port` variable for ServerUrlConflictingDefaultEnum
+const ServerUrlConflictingDefaultEnumPortVariableDefaultValue ServerUrlConflictingDefaultEnumPortVariable = ServerUrlConflictingDefaultEnumPortVariableDefault
+
+// NewServerUrlConflictingDefaultEnum constructs the Server URL for Conflicting default enum, with the provided variables.
+func NewServerUrlConflictingDefaultEnum(port ServerUrlConflictingDefaultEnumPortVariable) (string, error) {
+	if !port.Valid() {
+		return "", fmt.Errorf("`%v` is not one of the accepted values for the `port` variable", port)
+	}
+
+	u := "https://api.example.com/{port}"
+
+	u = strings.ReplaceAll(u, "{port}", string(port))
+
+	if strings.Contains(u, "{") || strings.Contains(u, "}") {
+		return "", fmt.Errorf("after mapping variables, there were still `{` or `}` characters in the string: %#v", u)
+	}
+
+	return u, nil
+}
 
 // ServerUrlDevelopmentServer defines the Server URL for Development server
 const ServerUrlDevelopmentServer = "https://development.gigantic-server.com/v1"
@@ -18,7 +80,7 @@ const ServerUrlDevelopmentServer = "https://development.gigantic-server.com/v1"
 const ServerUrlDevelopmentServer1 = "http://localhost:80"
 
 // ServerUrlDevelopmentServer2 defines the Server URL for Development server
-const ServerUrlDevelopmentServer2 = "http://localhost:80"
+const ServerUrlDevelopmentServer2 = "http://localhost:81"
 
 // ServerUrlHttplocalhost443 defines the Server URL for http://localhost:443
 const ServerUrlHttplocalhost443 = "http://localhost:443"
@@ -27,7 +89,7 @@ const ServerUrlHttplocalhost443 = "http://localhost:443"
 const ServerUrlProductionServer = "https://api.gigantic-server.com/v1"
 
 // ServerUrlSomeLowercaseName defines the Server URL for some lowercase name
-const ServerUrlSomeLowercaseName = "http://localhost:80"
+const ServerUrlSomeLowercaseName = "http://localhost:82"
 
 // ServerUrlStagingServer defines the Server URL for Staging server
 const ServerUrlStagingServer = "https://staging.gigantic-server.com/v1"
@@ -38,20 +100,8 @@ type ServerUrlTheProductionAPIServerBasePathVariable string
 // ServerUrlTheProductionAPIServerBasePathVariableDefault is the default value for the `basePath` variable for ServerUrlTheProductionAPIServer
 const ServerUrlTheProductionAPIServerBasePathVariableDefault = "v2"
 
-// ServerUrlTheProductionAPIServerNoDefaultVariable is the `noDefault` variable for ServerUrlTheProductionAPIServer
-type ServerUrlTheProductionAPIServerNoDefaultVariable string
-
-// ServerUrlTheProductionAPIServerPortVariable is the `port` variable for ServerUrlTheProductionAPIServer
-type ServerUrlTheProductionAPIServerPortVariable string
-
-// ServerUrlTheProductionAPIServerPortVariable8443 is one of the accepted values for the `port` variable for ServerUrlTheProductionAPIServer
-const ServerUrlTheProductionAPIServerPortVariable8443 ServerUrlTheProductionAPIServerPortVariable = "8443"
-
-// ServerUrlTheProductionAPIServerPortVariable443 is one of the accepted values for the `port` variable for ServerUrlTheProductionAPIServer
-const ServerUrlTheProductionAPIServerPortVariable443 ServerUrlTheProductionAPIServerPortVariable = "443"
-
-// ServerUrlTheProductionAPIServerPortVariableDefault is the default choice, for the accepted values for the `port` variable for ServerUrlTheProductionAPIServer
-const ServerUrlTheProductionAPIServerPortVariableDefault ServerUrlTheProductionAPIServerPortVariable = ServerUrlTheProductionAPIServerPortVariable8443
+// ServerUrlTheProductionAPIServerPortVariableDefaultValue is the default choice, for the accepted values for the `port` variable for ServerUrlTheProductionAPIServer
+const ServerUrlTheProductionAPIServerPortVariableDefaultValue ServerUrlTheProductionAPIServerPortVariable = ServerUrlTheProductionAPIServerPortVariableN8443
 
 // ServerUrlTheProductionAPIServerUsernameVariable is the `username` variable for ServerUrlTheProductionAPIServer
 type ServerUrlTheProductionAPIServerUsernameVariable string
@@ -60,15 +110,30 @@ type ServerUrlTheProductionAPIServerUsernameVariable string
 const ServerUrlTheProductionAPIServerUsernameVariableDefault = "demo"
 
 // NewServerUrlTheProductionAPIServer constructs the Server URL for The production API server, with the provided variables.
-func NewServerUrlTheProductionAPIServer(basePath ServerUrlTheProductionAPIServerBasePathVariable, noDefault ServerUrlTheProductionAPIServerNoDefaultVariable, port ServerUrlTheProductionAPIServerPortVariable, username ServerUrlTheProductionAPIServerUsernameVariable) (string, error) {
+func NewServerUrlTheProductionAPIServer(basePath ServerUrlTheProductionAPIServerBasePathVariable, port ServerUrlTheProductionAPIServerPortVariable, username ServerUrlTheProductionAPIServerUsernameVariable) (string, error) {
+	if !port.Valid() {
+		return "", fmt.Errorf("`%v` is not one of the accepted values for the `port` variable", port)
+	}
+
 	u := "https://{username}.gigantic-server.com:{port}/{basePath}"
 
 	u = strings.ReplaceAll(u, "{basePath}", string(basePath))
-	u = strings.ReplaceAll(u, "{noDefault}", string(noDefault))
-
-	// TODO in the future, this will validate that the value is part of the ServerUrlTheProductionAPIServerPortVariable enum
 	u = strings.ReplaceAll(u, "{port}", string(port))
 	u = strings.ReplaceAll(u, "{username}", string(username))
+
+	if strings.Contains(u, "{") || strings.Contains(u, "}") {
+		return "", fmt.Errorf("after mapping variables, there were still `{` or `}` characters in the string: %#v", u)
+	}
+
+	return u, nil
+}
+
+// NewServerUrlUndeclaredPlaceholderServer constructs the Server URL for Undeclared placeholder server, with the provided variables.
+func NewServerUrlUndeclaredPlaceholderServer(tenant string) (string, error) {
+
+	u := "https://{tenant}.api.example.com"
+
+	u = strings.ReplaceAll(u, "{tenant}", tenant)
 
 	if strings.Contains(u, "{") || strings.Contains(u, "}") {
 		return "", fmt.Errorf("after mapping variables, there were still `{` or `}` characters in the string: %#v", u)
