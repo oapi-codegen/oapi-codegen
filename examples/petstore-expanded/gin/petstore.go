@@ -19,7 +19,7 @@ import (
 )
 
 func NewGinPetServer(petStore *api.PetStore, port string) *http.Server {
-	swagger, err := api.GetSwagger()
+	swagger, err := api.GetSpec()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
 		os.Exit(1)
