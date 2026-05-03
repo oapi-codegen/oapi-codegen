@@ -215,6 +215,19 @@ type CompatibilityOptions struct {
 	// than we have in the past. Set OldMergeSchemas to true for the old behavior.
 	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/531
 	OldMergeSchemas bool `yaml:"old-merge-schemas,omitempty"`
+	// In the past, when a schema combined `allOf` with sibling fields at the
+	// same level (`properties`, `required`, `additionalProperties`,
+	// `description`), those siblings were silently discarded and the schema
+	// was emitted as a Go type alias to its sole `allOf` target. New behavior
+	// merges the parent's siblings with the `allOf` members so the generated
+	// type carries every field declared in the spec. This is a more accurate
+	// translation of OpenAPI semantics, but it changes the shape of generated
+	// types: a schema that previously produced `type X = Y` may now produce
+	// a distinct struct embedding Y with extra fields, which is not
+	// interchangeable with Y in downstream Go code. Set OldAllOfSiblingMerging
+	// to true to restore the prior behavior.
+	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/697
+	OldAllOfSiblingMerging bool `yaml:"old-allof-sibling-merging,omitempty"`
 	// Enum values can generate conflicting typenames, so we've updated the
 	// code for enum generation to avoid these conflicts, but it will result
 	// in some enum types being renamed in existing code. Set OldEnumConflicts to true

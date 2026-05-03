@@ -319,10 +319,10 @@ type Enum4 string
 // Enum5 Numerical enum
 type Enum5 int
 
-// EnumUnion defines model for EnumUnion.
+// EnumUnion Two enums of the same type combined with allOf.
 type EnumUnion string
 
-// EnumUnion2 defines model for EnumUnion2.
+// EnumUnion2 Two enums of the same type combined with allOf.
 type EnumUnion2 string
 
 // FunnyValues Edge cases for enum names
@@ -371,7 +371,7 @@ type OneOfObject11_AdditionalProperties struct {
 	union json.RawMessage
 }
 
-// OneOfObject12 defines model for OneOfObject12.
+// OneOfObject12 allOf of oneOfs
 type OneOfObject12 struct {
 	union json.RawMessage
 }

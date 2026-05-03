@@ -403,11 +403,48 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// so that in a RESTful paradigm, the Create operation can return
 	// (object, id), so that other operations can refer to (id)
 	if schema.AllOf != nil {
-		mergedSchema, err := MergeSchemas(schema.AllOf, path)
+		var mergedSchema Schema
+		var err error
+		// Behavior is gated on Compatibility.OldAllOfSiblingMerging:
+		// when set, the parent's structural siblings and Description are
+		// silently discarded (the historical behavior). When unset
+		// (default), they are merged into the result.
+		mergeSiblings := !globalState.options.Compatibility.OldAllOfSiblingMerging
+		if mergeSiblings && hasStructuralSiblings(schema) {
+			// Inject the parent (with AllOf cleared) as the final allOf
+			// member so its structural siblings — Properties, Required,
+			// AdditionalProperties — are merged with the allOf members
+			// rather than discarded. Issues #697, #931, #1710, #2102.
+			//
+			// Allocate a fresh slice rather than appending to schema.AllOf
+			// directly: if kin-openapi gave us a slice with spare capacity,
+			// `append` would write the new element into the shared backing
+			// array, mutating any other view that has been extended past
+			// len(schema.AllOf).
+			s := *schema
+			s.AllOf = nil
+			allOfRefs := make([]*openapi3.SchemaRef, 0, len(schema.AllOf)+1)
+			allOfRefs = append(allOfRefs, schema.AllOf...)
+			allOfRefs = append(allOfRefs, &openapi3.SchemaRef{Value: &s})
+			mergedSchema, err = MergeSchemas(allOfRefs, path)
+		} else {
+			// Either the user opted into legacy behavior, or the parent is
+			// a pure wrapper with no structural siblings. In the wrapper
+			// case, MergeSchemas' single-element fast path returns the
+			// referenced type unchanged, preserving named-type identity.
+			mergedSchema, err = MergeSchemas(schema.AllOf, path)
+		}
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas: %w", err)
 		}
 		mergedSchema.OAPISchema = schema
+		// Description is metadata, not a structural constraint, so it
+		// doesn't go through the merge. Copy it from the parent when set.
+		// Issue #1960. Gated on the same compatibility flag as the
+		// sibling-merge above.
+		if mergeSiblings && schema.Description != "" {
+			mergedSchema.Description = schema.Description
+		}
 		// x-go-type on the parent is handled by the early return above
 		// (combined extensions). For x-go-type-skip-optional-pointer, only
 		// override the merged value when the parent sets it explicitly —
@@ -1011,4 +1048,23 @@ func combinedSchemaExtensions(r *openapi3.SchemaRef) map[string]any {
 	maps.Copy(combined, r.Extensions)
 
 	return combined
+}
+
+// hasStructuralSiblings reports whether a schema with allOf also carries
+// fields outside allOf that materially affect the generated Go type.
+// Such fields must be merged with the allOf members rather than discarded.
+//
+// Description and Title are excluded — they are metadata, not structural,
+// and the caller propagates them separately. Nullable/ReadOnly/WriteOnly
+// are also excluded for now: their strict-equality check in
+// mergeOpenapiSchemas conflates the bool zero value with "unset" and would
+// regress simple wrappers like {allOf: [X-with-nullable:true]}.
+func hasStructuralSiblings(s *openapi3.Schema) bool {
+	if s == nil {
+		return false
+	}
+	return len(s.Properties) > 0 ||
+		len(s.Required) > 0 ||
+		s.AdditionalProperties.Has != nil ||
+		s.AdditionalProperties.Schema != nil
 }

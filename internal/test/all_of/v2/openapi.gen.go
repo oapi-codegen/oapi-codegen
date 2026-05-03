@@ -15,7 +15,9 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// Person defines model for Person.
+// Person This is a person, with mandatory first and last name, but optional ID
+// number. This would be returned by a `Get` style API. We merge the person
+// properties with another Schema which only provides required fields.
 type Person struct {
 	FirstName          string `json:"FirstName"`
 	GovernmentIDNumber *int64 `json:"GovernmentIDNumber,omitempty"`
@@ -30,7 +32,8 @@ type PersonProperties struct {
 	LastName           *string `json:"LastName,omitempty"`
 }
 
-// PersonWithID defines model for PersonWithID.
+// PersonWithID This is a person record as returned from a Create endpoint. It contains
+// all the fields of a Person, with an additional resource UUID.
 type PersonWithID struct {
 	FirstName          string `json:"FirstName"`
 	GovernmentIDNumber *int64 `json:"GovernmentIDNumber,omitempty"`
@@ -38,22 +41,32 @@ type PersonWithID struct {
 	LastName           string `json:"LastName"`
 }
 
+// PersonWithMorePropertiesOutsideOfAllOf This is a person record as returned from a Create endpoint. It contains
+// all the fields of a Person, with an additional property outside of allOf directives.
+type PersonWithMorePropertiesOutsideOfAllOf struct {
+	FirstName          string `json:"FirstName"`
+	GovernmentIDNumber *int64 `json:"GovernmentIDNumber,omitempty"`
+	LastName           string `json:"LastName"`
+	AdditionalProperty string `json:"additionalProperty"`
+}
+
 // Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
 // Stored as a slice of fixed-width chunks rather than one concatenated
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"lJRPb9s4EMW/yoC7R0FOsIs96Bas20BAkRpo0hziABlLI4spNWTJUQzB8HcvSMn/4BZpfRrA5OO8N7/R",
-	"VlW2c5aJJahiq0LVUoepXJAPlmOFxnxuVPG0VX97alSh/podb82mK7Px/MJbR140BbXLtsrT9157qlXx",
-	"pD5qH+QOO1KZ+oRT+bx7zlRNofLaiY7vqftWB9ABEFySzGCjpYUOuUaxfoAmCgFyDQaDAGNHGax6AZsk",
-	"0EA5XzL33Yp8DkluY3tTw4rAk/SeqYbVAAgvtyQvEGQwBDeLModHgo78mkBamp5fsjt4GjtBttKShy/J",
-	"OWxaXbVg2QzgvH3TNQXY+4ZGk6lDvmSVKRkcqULZ1StVonaZuois2F5kQYEAPU1CIC0KBEeVboZDQtEk",
-	"DekYGnOIIYsZLfngvQ+Tb4aXD7U+dQ7EtbOaJYNNS56AsGrjEPZaowN31upxoMV2by6I17yO5m7tG3nu",
-	"iKWc36VZxGON9R2KKpRm+e/fYyiahdbk48UDG5equ1+G+KilLed/Smti9NzUKPJum7vsjO1y/jskg6fK",
-	"+howHDlsvO0A4X9PKHQYQw6lQGVZUHNYcpxqJHKCwDaAsDhdDmTAutYT/p6C7X1F8PBQzn/KXuxfc2NT",
-	"xlpM/O+eggS4ifFBSiwkPZWpN/JhdHSdX+VXMXXriNFpVah/8qv8OrKB0qYEZ85gRa019TjyNckl2F/R",
-	"6LTOATbIAihgKG6zZYIolUGwIDHADr9RBJ86aNG5YTQUZ4ZRrKxVoRYnT8bJBGc57Beqwd6kFmKgxKlE",
-	"54yuksDsdfrOjWzE6n1yJt5SkOfOTt3v0u9HAAAA//8=",
+	"zFXNjts2EH6VAdujIG/QogfdgroNBLRZA02aQ7zAjsWRxZQasuTIhmD43QtS8h+8bbq3+DSAOR/n++Ho",
+	"oBrXe8fEElV1ULHpqMdcrihEx6lCax9bVX0+qO8DtapS3y0uXYu5ZTGdXwXnKYihqI7FQQX6ezCBtKo+",
+	"q19NiPIee1KF+g3n8un4VChNsQnGi0n3qQ+diWAiIPgMWcDeSAc9skZxYYQ2AQGyBotRgLGnAjaDgMsQ",
+	"aKFerpmHfkOhhAy3d4PVsCEIJENg0rAZAeH5HckzRBktwdtVXcIngp7ClkA6mq9fsz9zmiZBdtJRgD8y",
+	"c9h3punAsR3BB7czmiKceENryOpYrlkVSkZPqlJu84UaUcdC3UlWHe60oEiAgWYgkA4FoqfGtONZoUSS",
+	"xnwMrT3LUCSN1nzmPsSZN8PzL9pcMwdi7Z1hKWDfUSAgbLpkwglrYuBvRr0YWh1O5KIEw9tE7p3bUeCe",
+	"WOrl++xFOta60KOoShmWn368iGJYaEshNZ6zcY96/FcRPxnp6uVr05ozektqAvnqmMfiJtv18v8kGQI1",
+	"LmjAeMlhG1wPCD8HQqGzDSXUAo1jQcNxzcnVlMg5BK4FhNX140AG1NrM8Q8U3RAago8f6+V/Zi/J9rsL",
+	"dMng4yDRaHps3046vlbQb0aE2dYR3MQoNyQqoE2gRsyO4kupvkDMoowvB/Ha/hd6nu40T02GW5fhjNj0",
+	"3weKEiFLDVnUmHFUoXYU4iTgm/KhfEiWOU+M3qhK/VA+lG/S5ChdHnrhLTbUOaunZ7YluV8mf6I1eYVG",
+	"2CMLoICltEEdEySoAqIDSX71+BelZUM9dOj9OAmVqGECq7Wq1OrqyiRH9I7jaYm1ONg8QvKPOJfovTVN",
+	"Blh8mb8tU3xS9fVwzW88C3nL7Jr9Mf/+CQAA//8=",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
