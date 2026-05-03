@@ -403,18 +403,34 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// so that in a RESTful paradigm, the Create operation can return
 	// (object, id), so that other operations can refer to (id)
 	if schema.AllOf != nil {
-		// deepcopy and clear allOf to avoid circular references
-		s := *schema
-		s.AllOf = nil
-
-		// merge parent schema with allOf schemas to include parent properties (Issue #697)
-		allOfRefs := append(schema.AllOf, &openapi3.SchemaRef{Value: &s})
-
-		mergedSchema, err := MergeSchemas(allOfRefs, path)
+		var mergedSchema Schema
+		var err error
+		if hasStructuralSiblings(schema) {
+			// Inject the parent (with AllOf cleared) as the final allOf
+			// member so its structural siblings — Properties, Required,
+			// AdditionalProperties — are merged with the allOf members
+			// rather than discarded. Issues #697, #931, #1710, #2102.
+			s := *schema
+			s.AllOf = nil
+			allOfRefs := append(schema.AllOf, &openapi3.SchemaRef{Value: &s})
+			mergedSchema, err = MergeSchemas(allOfRefs, path)
+		} else {
+			// Pure wrapper around allOf with no structural siblings.
+			// Preserve named-type identity by skipping the injection:
+			// MergeSchemas' single-element fast path returns the
+			// referenced type unchanged.
+			mergedSchema, err = MergeSchemas(schema.AllOf, path)
+		}
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas: %w", err)
 		}
 		mergedSchema.OAPISchema = schema
+		// Description is metadata, not a structural constraint, so it
+		// doesn't go through the merge. Copy it from the parent when set.
+		// Issue #1960.
+		if schema.Description != "" {
+			mergedSchema.Description = schema.Description
+		}
 		// x-go-type on the parent is handled by the early return above
 		// (combined extensions). For x-go-type-skip-optional-pointer, only
 		// override the merged value when the parent sets it explicitly —
@@ -1018,4 +1034,23 @@ func combinedSchemaExtensions(r *openapi3.SchemaRef) map[string]any {
 	maps.Copy(combined, r.Extensions)
 
 	return combined
+}
+
+// hasStructuralSiblings reports whether a schema with allOf also carries
+// fields outside allOf that materially affect the generated Go type.
+// Such fields must be merged with the allOf members rather than discarded.
+//
+// Description and Title are excluded — they are metadata, not structural,
+// and the caller propagates them separately. Nullable/ReadOnly/WriteOnly
+// are also excluded for now: their strict-equality check in
+// mergeOpenapiSchemas conflates the bool zero value with "unset" and would
+// regress simple wrappers like {allOf: [X-with-nullable:true]}.
+func hasStructuralSiblings(s *openapi3.Schema) bool {
+	if s == nil {
+		return false
+	}
+	return len(s.Properties) > 0 ||
+		len(s.Required) > 0 ||
+		s.AdditionalProperties.Has != nil ||
+		s.AdditionalProperties.Schema != nil
 }
