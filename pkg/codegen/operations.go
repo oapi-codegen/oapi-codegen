@@ -16,8 +16,10 @@ package codegen
 import (
 	"bufio"
 	"bytes"
+	"cmp"
 	"fmt"
-	"sort"
+	"maps"
+	"slices"
 	"strconv"
 	"strings"
 	"text/template"
@@ -44,15 +46,70 @@ func (pd ParameterDefinition) TypeDef() string {
 	return typeDecl
 }
 
+// RequiresNilCheck indicates whether the generated property should have a nil check performed on it before other checks.
+// This should be used in templates when performing `nil` checks, but NOT when i.e. determining if there should be an optional pointer given to the type - in that case, use `HasOptionalPointer`
+func (pd ParameterDefinition) RequiresNilCheck() bool {
+	return pd.ZeroValueIsNil() || pd.HasOptionalPointer()
+}
+
+// ZeroValueIsNil is a helper function to determine if the given Go type used
+// for this property has `nil` as its Go zero value. Slices (OpenAPI `array`)
+// and maps (OpenAPI `object` with only `additionalProperties`, rendered as
+// `map[K]V`) both satisfy this — templates use it to decide whether to emit a
+// nil-check before reading the field.
+func (pd ParameterDefinition) ZeroValueIsNil() bool {
+	if pd.Schema.OAPISchema == nil {
+		return false
+	}
+
+	if pd.Schema.OAPISchema.Type.Is("array") {
+		return true
+	}
+
+	return strings.HasPrefix(pd.Schema.GoType, "map[")
+}
+
 // JsonTag generates the JSON annotation to map GoType to json type name. If Parameter
 // Foo is marshaled to json as "foo", this will create the annotation
 // 'json:"foo"'
+// It also includes any additional struct tags from x-oapi-codegen-extra-tags
+// at the parameter or schema level (parameter-level takes precedence).
 func (pd *ParameterDefinition) JsonTag() string {
+	fieldTags := make(map[string]string)
+
 	if pd.Required {
-		return fmt.Sprintf("`json:\"%s\"`", pd.ParamName)
+		fieldTags["json"] = pd.ParamName
 	} else {
-		return fmt.Sprintf("`json:\"%s,omitempty\"`", pd.ParamName)
+		fieldTags["json"] = pd.ParamName + ",omitempty"
 	}
+
+	// Merge x-oapi-codegen-extra-tags from schema level first, then parameter level
+	// so that parameter-level takes precedence.
+	if pd.Spec != nil && pd.Spec.Schema != nil && pd.Spec.Schema.Value != nil {
+		if extension, ok := pd.Spec.Schema.Value.Extensions[extPropExtraTags]; ok {
+			if tags, err := extExtraTags(extension); err == nil {
+				for k, v := range tags {
+					fieldTags[k] = v
+				}
+			}
+		}
+	}
+	if pd.Spec != nil {
+		if extension, ok := pd.Spec.Extensions[extPropExtraTags]; ok {
+			if tags, err := extExtraTags(extension); err == nil {
+				for k, v := range tags {
+					fieldTags[k] = v
+				}
+			}
+		}
+	}
+
+	keys := SortedMapKeys(fieldTags)
+	tags := make([]string, len(keys))
+	for i, k := range keys {
+		tags[i] = fmt.Sprintf(`%s:"%s"`, k, fieldTags[k])
+	}
+	return "`" + strings.Join(tags, " ") + "`"
 }
 
 func (pd *ParameterDefinition) IsJson() bool {
@@ -114,6 +171,34 @@ func (pd *ParameterDefinition) Explode() bool {
 	return *pd.Spec.Explode
 }
 
+// SchemaType returns the first OpenAPI type string for this parameter's schema (e.g. "string", "integer"),
+// or empty string if unavailable.
+func (pd *ParameterDefinition) SchemaType() string {
+	if pd.Spec.Schema != nil && pd.Spec.Schema.Value != nil && pd.Spec.Schema.Value.Type != nil {
+		if s := pd.Spec.Schema.Value.Type.Slice(); len(s) > 0 {
+			return s[0]
+		}
+	}
+	return ""
+}
+
+// SchemaFormat returns the OpenAPI format string for this parameter's schema (e.g. "byte", "date-time"),
+// or empty string if unavailable.
+func (pd *ParameterDefinition) SchemaFormat() string {
+	if pd.Spec.Schema != nil && pd.Spec.Schema.Value != nil {
+		return pd.Spec.Schema.Value.Format
+	}
+	return ""
+}
+
+// SanitizedParamName returns the parameter name sanitized to be a valid Go
+// identifier. This is needed for routers like net/http's ServeMux where path
+// wildcards (e.g. {name}) must be valid Go identifiers. For the original
+// OpenAPI parameter name (e.g. for error messages or JSON tags), use ParamName.
+func (pd ParameterDefinition) SanitizedParamName() string {
+	return SanitizeGoIdentifier(pd.ParamName)
+}
+
 func (pd ParameterDefinition) GoVariableName() string {
 	name := LowercaseFirstCharacters(pd.GoName())
 	if IsGoKeyword(name) {
@@ -135,7 +220,14 @@ func (pd ParameterDefinition) GoName() string {
 	return SchemaNameToTypeName(goName)
 }
 
+// Deprecated: Use HasOptionalPointer, as it is clearer what the intent is.
 func (pd ParameterDefinition) IndirectOptional() bool {
+	return !pd.Required && !pd.Schema.SkipOptionalPointer
+}
+
+// HasOptionalPointer indicates whether the generated property has an optional pointer associated with it.
+// This takes into account the `x-go-type-skip-optional-pointer` extension, allowing a parameter definition to control whether the pointer should be skipped.
+func (pd ParameterDefinition) HasOptionalPointer() bool {
 	return !pd.Required && !pd.Schema.SkipOptionalPointer
 }
 
@@ -154,7 +246,7 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 // descriptors into a flat list. This makes it a lot easier to traverse the
 // data in the template engine.
 func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterDefinition, error) {
-	outParams := make([]ParameterDefinition, 0)
+	outParams := make([]ParameterDefinition, 0, len(params))
 	for _, paramOrRef := range params {
 		param := paramOrRef.Value
 
@@ -170,6 +262,17 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 			Required:  param.Required,
 			Spec:      param,
 			Schema:    goType,
+		}
+
+		// A parameter-level `x-go-type-skip-optional-pointer` overrides the
+		// schema-level setting. `GenStructFromSchema` applies the same override
+		// when rendering the params struct; without mirroring it here, the
+		// client/server templates disagree with the struct definition and emit
+		// a dereference (`*params.Field`) on a field declared without a pointer.
+		if extension, ok := param.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+			if skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension); err == nil {
+				pd.Schema.SkipOptionalPointer = skipOptionalPointer
+			}
 		}
 
 		// If this is a reference to a predefined type, simply use the reference
@@ -210,6 +313,8 @@ func DescribeSecurityDefinition(securityRequirements openapi3.SecurityRequiremen
 type OperationDefinition struct {
 	// OperationId is the `operationId` field from the OpenAPI Specification, after going through a `nameNormalizer`, and will be used to generate function names
 	OperationId string
+	// SpecOperationId is the raw `operationId` value as it appears in the OpenAPI spec, before normalization to a Go identifier. Empty when the spec didn't supply one (in which case the codegen-generated ID is the only available identifier and is exposed via OperationId).
+	SpecOperationId string
 
 	PathParams          []ParameterDefinition // Parameters in the path, eg, /path/:param
 	HeaderParams        []ParameterDefinition // Parameters in HTTP headers
@@ -224,6 +329,30 @@ type OperationDefinition struct {
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
 	Spec                *openapi3.Operation
+	IsAlias             bool                    // True when this path is a $ref alias of another path item
+	AliasTarget         string                  // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
+	PathItemRef         string                  // The path item's $ref (if any); used to qualify externally-loaded schemas referenced from this operation's responses
+}
+
+// HandlerName returns the OperationId to use when referencing the server-side
+// wrapper function. For alias operations this is the canonical operation's ID,
+// since the alias doesn't generate its own wrapper.
+func (o *OperationDefinition) HandlerName() string {
+	if o.IsAlias {
+		return o.AliasTarget
+	}
+	return o.OperationId
+}
+
+// MiddlewareKey returns the identifier to use as the key in per-operation
+// middleware maps. The raw spec OperationId is preferred so map keys mirror
+// the OpenAPI spec verbatim; falls back to the normalized OperationId when
+// the spec didn't supply one.
+func (o *OperationDefinition) MiddlewareKey() string {
+	if o.SpecOperationId != "" {
+		return o.SpecOperationId
+	}
+	return o.OperationId
 }
 
 // Params returns the list of all parameters except Path parameters. Path parameters
@@ -286,10 +415,10 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 
 		// We can only generate a type if we have a value:
 		if responseRef.Value != nil {
-			jsonCount := 0
+			supportedCount := 0
 			for mediaType := range responseRef.Value.Content {
-				if util.IsMediaTypeJson(mediaType) {
-					jsonCount++
+				if isMediaTypeSupported(mediaType) {
+					supportedCount++
 				}
 			}
 
@@ -298,33 +427,62 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
 				if contentType.Schema != nil {
-					responseSchema, err := GenerateGoSchema(contentType.Schema, []string{o.OperationId, responseName})
-					if err != nil {
-						return nil, fmt.Errorf("Unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
-					}
-
-					var typeName string
+					var typeName, tag string
 					switch {
 
 					// HAL+JSON:
-					case StringInArray(contentTypeName, contentTypesHalJSON):
+					case slices.Contains(contentTypesHalJSON, contentTypeName):
 						typeName = fmt.Sprintf("HALJSON%s", nameNormalizer(responseName))
-					case "application/json" == contentTypeName:
+						tag = "HALJSON"
+					case contentTypeName == "application/json":
 						// if it's the standard application/json
 						typeName = fmt.Sprintf("JSON%s", nameNormalizer(responseName))
+						tag = "JSON"
 					// Vendored JSON
-					case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
+					case slices.Contains(contentTypesJSON, contentTypeName) || util.IsMediaTypeJson(contentTypeName):
 						baseTypeName := fmt.Sprintf("%s%s", nameNormalizer(contentTypeName), nameNormalizer(responseName))
 
 						typeName = strings.ReplaceAll(baseTypeName, "Json", "JSON")
+						tag = strings.ReplaceAll(nameNormalizer(contentTypeName), "Json", "JSON")
 					// YAML:
-					case StringInArray(contentTypeName, contentTypesYAML):
+					case slices.Contains(contentTypesYAML, contentTypeName):
 						typeName = fmt.Sprintf("YAML%s", nameNormalizer(responseName))
+						tag = "YAML"
 					// XML:
-					case StringInArray(contentTypeName, contentTypesXML):
+					case slices.Contains(contentTypesXML, contentTypeName):
 						typeName = fmt.Sprintf("XML%s", nameNormalizer(responseName))
+						tag = "XML"
 					default:
 						continue
+					}
+
+					// Use the same body-type name as the server-side
+					// GenerateResponseDefinitions ("Body" suffixed so it
+					// doesn't collide with the strict envelope's struct
+					// wrapper) as the schema-path root. The canonical
+					// declaration happens server-side; here we just point
+					// RefType at the same name so the JSON<status> field
+					// renders as a pointer to it.
+					responseBodyTypeName := o.OperationId + responseName + tag + "ResponseBody"
+					schemaPath := []string{responseBodyTypeName}
+					responseSchema, err := GenerateGoSchema(contentType.Schema, schemaPath)
+					if err != nil {
+						return nil, fmt.Errorf("unable to determine Go type for %s.%s: %w", o.OperationId, contentTypeName, err)
+					}
+
+					// Hoist inline response-root schemas that need
+					// method-emitting boilerplate (UnionElements /
+					// AdditionalProperties). For external path items,
+					// qualify with the imported package — see the
+					// equivalent block in GenerateResponseDefinitions for
+					// rationale.
+					if !IsGoTypeReference(responseRef.Ref) && responseSchema.RefType == "" &&
+						(len(responseSchema.UnionElements) != 0 || responseSchema.HasAdditionalProperties) {
+						if externalPkg := externalPackageFor(o.PathItemRef); externalPkg != "" {
+							responseSchema.RefType = fmt.Sprintf("%s.%s", externalPkg, responseBodyTypeName)
+						} else {
+							responseSchema.RefType = responseBodyTypeName
+						}
 					}
 
 					td := ResponseTypeDefinition{
@@ -341,8 +499,12 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 						if err != nil {
 							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
 						}
-						if jsonCount > 1 && util.IsMediaTypeJson(contentTypeName) {
-							refType += mediaTypeToCamelCase(contentTypeName)
+						if supportedCount > 1 {
+							if resolved := resolvedNameForRefPath(responseRef.Ref, contentTypeName); resolved != "" {
+								refType = resolved + mediaTypeToCamelCase(contentTypeName)
+							} else {
+								refType += mediaTypeToCamelCase(contentTypeName)
+							}
 						}
 						td.Schema.RefType = refType
 					}
@@ -354,13 +516,10 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 	return tds, nil
 }
 
-func (o OperationDefinition) HasMaskedRequestContentTypes() bool {
-	for _, body := range o.Bodies {
-		if !body.IsFixedContentType() {
-			return true
-		}
-	}
-	return false
+func (o *OperationDefinition) HasMaskedRequestContentTypes() bool {
+	return slices.ContainsFunc(o.Bodies, func(body RequestBodyDefinition) bool {
+		return !body.IsFixedContentType()
+	})
 }
 
 // RequestBodyDefinition describes a request body
@@ -513,10 +672,57 @@ func (r ResponseContentDefinition) IsJSON() bool {
 	return util.IsMediaTypeJson(r.ContentType)
 }
 
+// IsStreamingContentType reports whether this response's media type matches
+// any configured streaming-content-types pattern (defaults merged with
+// OutputOptions.StreamingContentTypes). Templates use this to emit a
+// flush-per-chunk streaming path instead of a buffered io.Copy.
+func (r ResponseContentDefinition) IsStreamingContentType() bool {
+	for _, re := range globalState.streamingContentTypeRegexes {
+		if re.MatchString(r.ContentType) {
+			return true
+		}
+	}
+	return false
+}
+
 type ResponseHeaderDefinition struct {
-	Name   string
-	GoName string
-	Schema Schema
+	Name     string
+	GoName   string
+	Schema   Schema
+	Required bool
+	Nullable bool
+}
+
+// GoTypeDef returns the Go type string for this header, applying pointer or
+// nullable wrapping based on the Required/Nullable fields and global config.
+func (h ResponseHeaderDefinition) GoTypeDef() string {
+	typeDef := h.Schema.TypeDecl()
+	if globalState.options.OutputOptions.NullableType && h.Nullable {
+		return "nullable.Nullable[" + typeDef + "]"
+	}
+	if !h.Schema.SkipOptionalPointer && (!h.Required || h.Nullable) {
+		typeDef = "*" + typeDef
+	}
+	return typeDef
+}
+
+// IsOptional returns true if this header's Go type is indirect (pointer or
+// nullable wrapper), meaning the template should guard before calling
+// w.Header().Set(). This must stay in sync with GoTypeDef().
+func (h ResponseHeaderDefinition) IsOptional() bool {
+	if h.IsNullable() {
+		return true
+	}
+	if h.Schema.SkipOptionalPointer {
+		return false
+	}
+	return !h.Required || h.Nullable
+}
+
+// IsNullable returns true if the header type uses nullable.Nullable[T]
+// rather than a pointer for optionality.
+func (h ResponseHeaderDefinition) IsNullable() bool {
+	return globalState.options.OutputOptions.NullableType && h.Nullable
 }
 
 // FilterParameterDefinitionByType returns the subset of the specified parameters which are of the
@@ -532,19 +738,16 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
-func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]OperationDefinition, error) {
+func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
-
-	var toCamelCaseFunc func(string) string
-	if initialismOverrides {
-		toCamelCaseFunc = ToCamelCaseWithInitialism
-	} else {
-		toCamelCaseFunc = ToCamelCase
-	}
 
 	if swagger == nil || swagger.Paths == nil {
 		return operations, nil
 	}
+
+	// Track alias counters for generating unique client method names
+	// when multiple paths $ref the same path item.
+	aliasCounters := map[string]int{}
 
 	for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
 		pathItem := swagger.Paths.Value(requestPath)
@@ -567,9 +770,14 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 			}
 			// take a copy of operationId, so we don't modify the underlying spec
 			operationId := op.OperationID
+			// Preserve the raw spec value (pre-normalization, pre-prefix, pre-alias-suffix)
+			// so templates that need to mirror the OpenAPI spec verbatim — e.g. echo's
+			// per-operation middleware map key — can do so without seeing the
+			// Go-identifier-friendly transformations applied below.
+			specOperationId := op.OperationID
 			// We rely on OperationID to generate function names, it's required
 			if operationId == "" {
-				operationId, err = generateDefaultOperationID(opName, requestPath, toCamelCaseFunc)
+				operationId, err = generateDefaultOperationID(opName, requestPath)
 				if err != nil {
 					return nil, fmt.Errorf("error generating default OperationID for %s/%s: %s",
 						opName, requestPath, err)
@@ -579,8 +787,25 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 			}
 			operationId = typeNamePrefix(operationId) + operationId
 
-			if !globalState.options.Compatibility.PreserveOriginalOperationIdCasingInEmbeddedSpec {
-				// update the existing, shared, copy of the spec if we're not wanting to preserve it
+			// Detect path aliases: when a path item has an internal $ref
+			// pointing to another path in the same document (e.g.
+			// "#/paths/~1test"), it's a duplicate that would produce
+			// identical server methods. External $refs (pointing to other
+			// files) are not aliases — they're the sole definition of
+			// that path, just stored externally.
+			isAlias := strings.HasPrefix(pathItem.Ref, "#/paths/")
+			var aliasTarget string
+			if isAlias {
+				aliasTarget = nameNormalizer(operationId)
+				n := aliasCounters[operationId]
+				aliasCounters[operationId] = n + 1
+				operationId = operationId + fmt.Sprintf("Alias%d", n)
+			}
+
+			if !globalState.options.Compatibility.PreserveOriginalOperationIdCasingInEmbeddedSpec && !isAlias {
+				// update the existing, shared, copy of the spec if we're not wanting to preserve it.
+				// Skip for aliases: they share the same *Operation as the canonical path,
+				// and writing the suffixed name back would corrupt the original.
 				op.OperationID = operationId
 			}
 
@@ -609,14 +834,14 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 				return nil, err
 			}
 
-			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(operationId, op.RequestBody)
+			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(operationId, op.RequestBody, pathItem.Ref)
 			if err != nil {
 				return nil, fmt.Errorf("error generating body definitions: %w", err)
 			}
 
 			ensureExternalRefsInRequestBodyDefinitions(&bodyDefinitions, pathItem.Ref)
 
-			responseDefinitions, err := GenerateResponseDefinitions(operationId, op.Responses.Map())
+			responseDefinitions, err := GenerateResponseDefinitions(operationId, op.Responses.Map(), pathItem.Ref)
 			if err != nil {
 				return nil, fmt.Errorf("error generating response definitions: %w", err)
 			}
@@ -624,11 +849,12 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 			ensureExternalRefsInResponseDefinitions(&responseDefinitions, pathItem.Ref)
 
 			opDef := OperationDefinition{
-				PathParams:   pathParams,
-				HeaderParams: FilterParameterDefinitionByType(allParams, "header"),
-				QueryParams:  FilterParameterDefinitionByType(allParams, "query"),
-				CookieParams: FilterParameterDefinitionByType(allParams, "cookie"),
-				OperationId:  nameNormalizer(operationId),
+				PathParams:      pathParams,
+				HeaderParams:    FilterParameterDefinitionByType(allParams, "header"),
+				QueryParams:     FilterParameterDefinitionByType(allParams, "query"),
+				CookieParams:    FilterParameterDefinitionByType(allParams, "cookie"),
+				OperationId:     nameNormalizer(operationId),
+				SpecOperationId: specOperationId,
 				// Replace newlines in summary.
 				Summary:         op.Summary,
 				Method:          opName,
@@ -637,6 +863,9 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 				Bodies:          bodyDefinitions,
 				Responses:       responseDefinitions,
 				TypeDefinitions: typeDefinitions,
+				IsAlias:         isAlias,
+				AliasTarget:     aliasTarget,
+				PathItemRef:     pathItem.Ref,
 			}
 
 			// check for overrides of SecurityDefinitions.
@@ -666,29 +895,34 @@ func OperationDefinitions(swagger *openapi3.T, initialismOverrides bool) ([]Oper
 	return operations, nil
 }
 
-func generateDefaultOperationID(opName string, requestPath string, toCamelCaseFunc func(string) string) (string, error) {
-	var operationId = strings.ToLower(opName)
-
+func generateDefaultOperationID(opName string, requestPath string) (string, error) {
 	if opName == "" {
 		return "", fmt.Errorf("operation name cannot be an empty string")
 	}
-
 	if requestPath == "" {
 		return "", fmt.Errorf("request path cannot be an empty string")
 	}
 
-	for _, part := range strings.Split(requestPath, "/") {
+	operationID := strings.ToLower(opName)
+	for part := range strings.SplitSeq(requestPath, "/") {
 		if part != "" {
-			operationId = operationId + "-" + part
+			operationID = operationID + "-" + part
 		}
 	}
 
-	return nameNormalizer(operationId), nil
+	return nameNormalizer(operationID), nil
 }
 
 // GenerateBodyDefinitions turns the Swagger body definitions into a list of our body
 // definitions which will be used for code generation.
-func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBodyRef) ([]RequestBodyDefinition, []TypeDefinition, error) {
+//
+// pathItemRef is the path item's $ref (if any). When non-empty and pointing at
+// an external file, the body type that would otherwise be hoisted locally is
+// replaced by a reference to the imported package's same-named type — the
+// imported package already declares it (with any As/From/Merge methods), so
+// redeclaring locally would just produce an awkward duplicate with
+// package-qualified union elements.
+func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBodyRef, pathItemRef string) ([]RequestBodyDefinition, []TypeDefinition, error) {
 	if bodyOrRef == nil {
 		return nil, nil, nil
 	}
@@ -743,24 +977,31 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		// type under #/components, we'll define a type for it, so
 		// that we have an easy to use type for marshaling.
 		if bodySchema.RefType == "" {
-			if contentType == "application/x-www-form-urlencoded" {
-				// Apply the appropriate structure tag if the request
-				// schema was defined under the operations' section.
-				for i := range bodySchema.Properties {
-					bodySchema.Properties[i].NeedsFormTag = true
+			if externalPkg := externalPackageFor(pathItemRef); externalPkg != "" {
+				// The operation's path item came from an external file; the
+				// imported package already declares this body type with the
+				// matching name. Reference it instead of redeclaring.
+				bodySchema.RefType = fmt.Sprintf("%s.%s", externalPkg, bodyTypeName)
+			} else {
+				if contentType == "application/x-www-form-urlencoded" {
+					// Apply the appropriate structure tag if the request
+					// schema was defined under the operations' section.
+					for i := range bodySchema.Properties {
+						bodySchema.Properties[i].NeedsFormTag = true
+					}
+
+					// Regenerate the Golang struct adding the new form tag.
+					bodySchema.GoType = GenStructFromSchema(bodySchema)
 				}
 
-				// Regenerate the Golang struct adding the new form tag.
-				bodySchema.GoType = GenStructFromSchema(bodySchema)
+				td := TypeDefinition{
+					TypeName: bodyTypeName,
+					Schema:   bodySchema,
+				}
+				typeDefinitions = append(typeDefinitions, td)
+				// The body schema now is a reference to a type
+				bodySchema.RefType = bodyTypeName
 			}
-
-			td := TypeDefinition{
-				TypeName: bodyTypeName,
-				Schema:   bodySchema,
-			}
-			typeDefinitions = append(typeDefinitions, td)
-			// The body schema now is a reference to a type
-			bodySchema.RefType = bodyTypeName
 		}
 
 		bd := RequestBodyDefinition{
@@ -772,7 +1013,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		}
 
 		if len(content.Encoding) != 0 {
-			bd.Encoding = make(map[string]RequestBodyEncoding)
+			bd.Encoding = make(map[string]RequestBodyEncoding, len(content.Encoding))
 			for k, v := range content.Encoding {
 				encoding := RequestBodyEncoding{ContentType: v.ContentType, Style: v.Style, Explode: v.Explode}
 				bd.Encoding[k] = encoding
@@ -781,13 +1022,15 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 
 		bodyDefinitions = append(bodyDefinitions, bd)
 	}
-	sort.Slice(bodyDefinitions, func(i, j int) bool {
-		return bodyDefinitions[i].ContentType < bodyDefinitions[j].ContentType
+	slices.SortFunc(bodyDefinitions, func(a, b RequestBodyDefinition) int {
+		return cmp.Compare(a.ContentType, b.ContentType)
 	})
 	return bodyDefinitions, typeDefinitions, nil
 }
 
-func GenerateResponseDefinitions(operationID string, responses map[string]*openapi3.ResponseRef) ([]ResponseDefinition, error) {
+func GenerateResponseDefinitions(operationID string, responses map[string]*openapi3.ResponseRef, pathItemRef string) ([]ResponseDefinition, error) {
+	externalPkg := externalPackageFor(pathItemRef)
+
 	var responseDefinitions []ResponseDefinition
 	// do not let multiple status codes ref to same response, it will break the type switch
 	refSet := make(map[string]struct{})
@@ -824,9 +1067,42 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			}
 
 			responseTypeName := operationID + statusCode + tag + "Response"
-			contentSchema, err := GenerateGoSchema(content.Schema, []string{responseTypeName})
+			// The strict-server envelope keeps the bare ...Response name
+			// (e.g. "GetPing200JSONResponse"); the hoisted body type is
+			// suffixed so the envelope can reference it without colliding
+			// (the strict envelope is sometimes a struct that wraps the
+			// body in a Body field, which would self-reference if the
+			// names matched).
+			responseBodyTypeName := responseTypeName + "Body"
+			contentSchema, err := GenerateGoSchema(content.Schema, []string{responseBodyTypeName})
 			if err != nil {
 				return nil, fmt.Errorf("error generating request body definition: %w", err)
+			}
+
+			// Hoist inline response-root schemas that need method-emitting
+			// boilerplate (UnionElements / AdditionalProperties) to a
+			// synthetic top-level TypeDefinition. The hoisted typedef flows
+			// via op.TypeDefinitions (collected in
+			// GenerateTypeDefsForOperation) and gets declared once via
+			// typedef.tmpl with full union/additionalProperties methods.
+			// The strict-server template references it as the body type
+			// from the envelope.
+			//
+			// When the operation came from an externally-ref'd path item,
+			// the imported package generated the same hoisted name, so we
+			// reference it instead of redeclaring locally.
+			if !IsGoTypeReference(responseOrRef.Ref) && contentSchema.RefType == "" &&
+				(len(contentSchema.UnionElements) != 0 || contentSchema.HasAdditionalProperties) {
+				if externalPkg != "" {
+					contentSchema.RefType = fmt.Sprintf("%s.%s", externalPkg, responseBodyTypeName)
+				} else {
+					contentSchema.AdditionalTypes = append(contentSchema.AdditionalTypes, TypeDefinition{
+						TypeName: responseBodyTypeName,
+						JsonName: responseBodyTypeName,
+						Schema:   contentSchema,
+					})
+					contentSchema.RefType = responseBodyTypeName
+				}
 			}
 
 			rcd := ResponseContentDefinition{
@@ -845,7 +1121,14 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			if err != nil {
 				return nil, fmt.Errorf("error generating response header definition: %w", err)
 			}
-			headerDefinition := ResponseHeaderDefinition{Name: headerName, GoName: SchemaNameToTypeName(headerName), Schema: contentSchema}
+			nullable := header.Value.Schema != nil && header.Value.Schema.Value != nil && header.Value.Schema.Value.Nullable
+			headerDefinition := ResponseHeaderDefinition{
+				Name:     headerName,
+				GoName:   SchemaNameToTypeName(headerName),
+				Schema:   contentSchema,
+				Required: header.Value.Required || globalState.options.Compatibility.HeadersImplicitlyRequired,
+				Nullable: nullable,
+			}
 			responseHeaderDefinitions = append(responseHeaderDefinitions, headerDefinition)
 		}
 
@@ -870,6 +1153,12 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 				rd.Ref = refType
 				refSet[refType] = struct{}{}
 			}
+			// Ensure content schemas get the external ref qualifier so that
+			// non-fixed status code paths (e.g. "default") emit the qualified type.
+			for i, rcd := range rd.Contents {
+				ensureExternalRefsInSchema(&rcd.Schema, responseOrRef.Ref)
+				rd.Contents[i] = rcd
+			}
 		}
 		responseDefinitions = append(responseDefinitions, rd)
 	}
@@ -891,6 +1180,12 @@ func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 
 	for _, body := range op.Bodies {
 		typeDefs = append(typeDefs, body.Schema.AdditionalTypes...)
+	}
+
+	for _, resp := range op.Responses {
+		for _, content := range resp.Contents {
+			typeDefs = append(typeDefs, content.Schema.AdditionalTypes...)
+		}
 	}
 	return typeDefs
 }
@@ -918,18 +1213,27 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 				Schema:   param.Schema,
 			})
 		}
+		// Merge extensions, in order of increasing precedence:
+		//   1. extensions on the referenced schema (param.Spec.Schema.Value)
+		//   2. extensions placed as siblings of a $ref inside the
+		//      parameter's schema (param.Spec.Schema.Extensions)
+		//   3. extensions on the Parameter object itself
+		extensions := make(map[string]any)
+		if param.Spec.Schema != nil {
+			maps.Copy(extensions, combinedSchemaExtensions(param.Spec.Schema))
+		}
+		maps.Copy(extensions, param.Spec.Extensions)
 		prop := Property{
 			Description:   param.Spec.Description,
 			JsonFieldName: param.ParamName,
 			Required:      param.Required,
 			Schema:        pSchema,
 			NeedsFormTag:  param.Style() == "form",
-			Extensions:    param.Spec.Extensions,
+			Extensions:    extensions,
 		}
 		s.Properties = append(s.Properties, prop)
 	}
 
-	s.Description = op.Spec.Description
 	s.GoType = GenStructFromSchema(s)
 
 	td := TypeDefinition{
@@ -950,25 +1254,6 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	}
 	if _, err := w.WriteString(addTypes); err != nil {
 		return "", fmt.Errorf("error writing boilerplate to buffer: %w", err)
-	}
-
-	// Generate boiler plate for all additional types.
-	var td []TypeDefinition
-	for _, op := range ops {
-		td = append(td, op.TypeDefinitions...)
-	}
-
-	addProps, err := GenerateAdditionalPropertyBoilerplate(t, td)
-	if err != nil {
-		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
-	}
-
-	if _, err := w.WriteString("\n"); err != nil {
-		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
-	}
-
-	if _, err := w.WriteString(addProps); err != nil {
-		return "", fmt.Errorf("error generating additional properties boilerplate for operations: %w", err)
 	}
 
 	if err = w.Flush(); err != nil {
@@ -1000,6 +1285,12 @@ func GenerateFiberServer(t *template.Template, operations []OperationDefinition)
 // all the wrapper functions around our handlers.
 func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl", "echo/echo-register.tmpl"}, t, operations)
+}
+
+// GenerateEcho5Server generates all the go code for the ServerInterface as well as
+// all the wrapper functions around our handlers.
+func GenerateEcho5Server(t *template.Template, operations []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"echo/v5/echo-interface.tmpl", "echo/v5/echo-wrappers.tmpl", "echo/v5/echo-register.tmpl"}, t, operations)
 }
 
 // GenerateGinServer generates all the go code for the ServerInterface as well as
@@ -1039,6 +1330,9 @@ func GenerateStrictServer(t *template.Template, operations []OperationDefinition
 	if opts.Generate.IrisServer {
 		templates = append(templates, "strict/strict-iris-interface.tmpl", "strict/strict-iris.tmpl")
 	}
+	if opts.Generate.Echo5Server {
+		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-echo5.tmpl")
+	}
 
 	return GenerateTemplates(templates, t, operations)
 }
@@ -1060,7 +1354,7 @@ func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition
 }
 
 // GenerateTemplates used to generate templates
-func GenerateTemplates(templates []string, t *template.Template, ops interface{}) (string, error) {
+func GenerateTemplates(templates []string, t *template.Template, ops any) (string, error) {
 	var generatedTemplates []string
 	for _, tmpl := range templates {
 		var buf bytes.Buffer

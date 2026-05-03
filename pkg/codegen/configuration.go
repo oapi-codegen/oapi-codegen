@@ -4,7 +4,17 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 )
+
+// defaultStreamingContentTypes are the regex patterns matched against
+// response Content-Type to decide when the strict-server should emit a
+// flush-per-chunk streaming path. User-supplied patterns are merged on top.
+var defaultStreamingContentTypes = []string{
+	"text/event-stream",
+	"application/jsonl",
+	"application/x-ndjson",
+}
 
 type AdditionalImport struct {
 	Alias   string `yaml:"alias,omitempty"`
@@ -48,6 +58,9 @@ func (o Configuration) Validate() error {
 		nServers++
 	}
 	if o.Generate.EchoServer {
+		nServers++
+	}
+	if o.Generate.Echo5Server {
 		nServers++
 	}
 	if o.Generate.GorillaServer {
@@ -112,6 +125,8 @@ type GenerateOptions struct {
 	FiberServer bool `yaml:"fiber-server,omitempty"`
 	// EchoServer specifies whether to generate echo server boilerplate
 	EchoServer bool `yaml:"echo-server,omitempty"`
+	// Echo5Server specifies whether to generate echo v5 server boilerplate
+	Echo5Server bool `yaml:"echo5-server,omitempty"`
 	// GinServer specifies whether to generate gin server boilerplate
 	GinServer bool `yaml:"gin-server,omitempty"`
 	// GorillaServer specifies whether to generate Gorilla server boilerplate
@@ -126,10 +141,68 @@ type GenerateOptions struct {
 	Models bool `yaml:"models,omitempty"`
 	// EmbeddedSpec indicates whether to embed the swagger spec in the generated code
 	EmbeddedSpec bool `yaml:"embedded-spec,omitempty"`
+	// ServerURLs generates types for the `Server` definitions' URLs, instead of needing to provide your own values
+	ServerURLs bool `yaml:"server-urls,omitempty"`
+}
+
+// RouterImports returns the framework-specific and strict middleware imports
+// needed based on which server type is selected.
+func (g GenerateOptions) RouterImports() []AdditionalImport {
+	var imports []AdditionalImport
+
+	switch {
+	case g.EchoServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/labstack/echo/v4"})
+	case g.Echo5Server:
+		imports = append(imports, AdditionalImport{Package: "github.com/labstack/echo/v5"})
+	case g.ChiServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/go-chi/chi/v5"})
+	case g.GinServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/gin-gonic/gin"})
+	case g.GorillaServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/gorilla/mux"})
+	case g.FiberServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/gofiber/fiber/v2"})
+	case g.IrisServer:
+		imports = append(imports, AdditionalImport{Package: "github.com/kataras/iris/v12"})
+		imports = append(imports, AdditionalImport{Package: "github.com/kataras/iris/v12/core/router"})
+	case g.StdHTTPServer:
+	}
+
+	return imports
 }
 
 func (oo GenerateOptions) Validate() map[string]string {
 	return nil
+}
+
+func (oo GenerateOptions) Warnings() map[string]string {
+	warnings := make(map[string]string)
+
+	if oo.StdHTTPServer {
+		if warning := oo.warningForStdHTTP(); warning != "" {
+			warnings["std-http-server"] = warning
+		}
+	}
+
+	return warnings
+}
+
+func (oo GenerateOptions) warningForStdHTTP() string {
+	pathToGoMod, mod, err := findAndParseGoModuleForDepth(".", maximumDepthToSearchForGoMod)
+	if err != nil {
+		return fmt.Sprintf("Encountered an error while trying to find a `go.mod` or a `tools.mod` in this directory, or %d levels above it: %v", maximumDepthToSearchForGoMod, err)
+	}
+
+	if mod == nil {
+		return fmt.Sprintf("Failed to find a `go.mod` or a `tools.mod` in this directory, or %d levels above it, so unable to validate that you're using Go 1.22+. If you start seeing API interactions resulting in a `404 page not found`, the Go directive (implying source compatibility for this module) needs to be bumped. See also: https://www.jvt.me/posts/2024/03/04/go-net-http-why-404/", maximumDepthToSearchForGoMod)
+	}
+
+	if !hasMinimalMinorGoDirective(minimumGoVersionForGenerateStdHTTPServer, mod) {
+		return fmt.Sprintf("Found a `go.mod` or a `tools.mod` at path %v, but it only had a version of %v, whereas the minimum required is 1.%d. It's very likely API interactions will result in a `404 page not found`. The Go directive (implying source compatibility for this module) needs to be bumped. See also: https://www.jvt.me/posts/2024/03/04/go-net-http-why-404/", pathToGoMod, mod.Go.Version, minimumGoVersionForGenerateStdHTTPServer)
+	}
+
+	return ""
 }
 
 // CompatibilityOptions specifies backward compatibility settings for the
@@ -203,6 +276,16 @@ type CompatibilityOptions struct {
 	// NOTE that this will not impact generated code.
 	// NOTE that if you're using `include-operation-ids` or `exclude-operation-ids` you may want to ensure that the `operationId`s used are correct.
 	PreserveOriginalOperationIdCasingInEmbeddedSpec bool `yaml:"preserve-original-operation-id-casing-in-embedded-spec"`
+
+	// HeadersImplicitlyRequired treats all response headers as required, ignoring
+	// the `required` property from the header definition. Prior to v2.6.0,
+	// oapi-codegen generated all response headers as direct values (implicitly
+	// required). The OpenAPI specification defaults headers to optional
+	// (required: false), so the corrected behavior generates optional headers as
+	// pointers. Set this to true to restore the old behavior where all headers
+	// are treated as required.
+	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/2267
+	HeadersImplicitlyRequired bool `yaml:"headers-implicitly-required,omitempty"`
 }
 
 func (co CompatibilityOptions) Validate() map[string]string {
@@ -215,6 +298,12 @@ type OutputOptions struct {
 	SkipFmt bool `yaml:"skip-fmt,omitempty"`
 	// Whether to skip pruning unused components on the generated code
 	SkipPrune bool `yaml:"skip-prune,omitempty"`
+	// SkipEnumValidate disables the generation of the `Valid()` method on
+	// enum types. By default each generated enum type includes a `Valid()
+	// bool` method which returns true when the value matches one of the
+	// defined constants; set this to true to suppress that method when it
+	// conflicts with user-defined methods of the same name.
+	SkipEnumValidate bool `yaml:"skip-enum-validate,omitempty"`
 	// Only include operations that have one of these tags. Ignored when empty.
 	IncludeTags []string `yaml:"include-tags,omitempty"`
 	// Exclude operations that have one of these tags. Ignored when empty.
@@ -232,11 +321,15 @@ type OutputOptions struct {
 	ResponseTypeSuffix string `yaml:"response-type-suffix,omitempty"`
 	// Override the default generated client type with the value
 	ClientTypeName string `yaml:"client-type-name,omitempty"`
-	// Whether to use the initialism overrides
-	InitialismOverrides bool `yaml:"initialism-overrides,omitempty"`
 	// AdditionalInitialisms is a list of additional initialisms to use when generating names.
 	// NOTE that this has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`
 	AdditionalInitialisms []string `yaml:"additional-initialisms,omitempty"`
+	// StreamingContentTypes are regex patterns matched against response
+	// Content-Type to decide when to generate a flush-per-chunk streaming
+	// response path. User-provided patterns are merged with the defaults
+	// (text/event-stream, application/jsonl, application/x-ndjson); invalid
+	// regexes fail Validate().
+	StreamingContentTypes []string `yaml:"streaming-content-types,omitempty"`
 	// Whether to generate nullable type for nullable fields
 	NullableType bool `yaml:"nullable-type,omitempty"`
 
@@ -256,6 +349,36 @@ type OutputOptions struct {
 
 	// ClientResponseBytesFunction decides whether to enable the generation of a `Bytes()` method on response objects for `ClientWithResponses`
 	ClientResponseBytesFunction bool `yaml:"client-response-bytes-function,omitempty"`
+
+	// SkipClientResponseContentType disables the generation of a `ContentType()` method on response objects for `ClientWithResponses`, which is otherwise generated by default.
+	SkipClientResponseContentType bool `yaml:"skip-client-response-content-type,omitempty"`
+
+	// PreferSkipOptionalPointer allows defining at a global level whether to omit the pointer for a type to indicate that the field/type is optional.
+	// This is the same as adding `x-go-type-skip-optional-pointer` to each field (manually, or using an OpenAPI Overlay)
+	PreferSkipOptionalPointer bool `yaml:"prefer-skip-optional-pointer,omitempty"`
+
+	// PreferSkipOptionalPointerWithOmitzero allows generating the `omitzero` JSON tag types that would have had an optional pointer.
+	// This is the same as adding `x-omitzero` to each field (manually, or using an OpenAPI Overlay).
+	// A field can set `x-omitzero: false` to disable the `omitzero` JSON tag.
+	// NOTE that this must be used alongside `prefer-skip-optional-pointer`, otherwise makes no difference.
+	PreferSkipOptionalPointerWithOmitzero bool `yaml:"prefer-skip-optional-pointer-with-omitzero,omitempty"`
+
+	// PreferSkipOptionalPointerOnContainerTypes allows disabling the generation of an "optional pointer" for an optional field that is a container type (such as a slice or a map), which ends up requiring an additional, unnecessary, `... != nil` check
+	PreferSkipOptionalPointerOnContainerTypes bool `yaml:"prefer-skip-optional-pointer-on-container-types,omitempty"`
+
+	// ResolveTypeNameCollisions, when set to true, automatically renames
+	// types that collide across different OpenAPI component sections
+	// (schemas, parameters, requestBodies, responses, headers) by appending
+	// a suffix based on the component section (e.g., "Parameter", "Response",
+	// "RequestBody"). It also detects collisions between component types and
+	// client response wrapper types (e.g., issue #1474). Without this, the
+	// codegen will error on duplicate type names, requiring manual resolution
+	// via x-go-name.
+	ResolveTypeNameCollisions bool `yaml:"resolve-type-name-collisions,omitempty"`
+
+	// TypeMapping allows customizing OpenAPI type/format to Go type mappings.
+	// User-specified mappings are merged on top of the defaults.
+	TypeMapping *TypeMapping `yaml:"type-mapping,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {
@@ -265,7 +388,31 @@ func (oo OutputOptions) Validate() map[string]string {
 		}
 	}
 
+	if _, err := compileStreamingContentTypes(oo.StreamingContentTypes); err != nil {
+		return map[string]string{
+			"streaming-content-types": err.Error(),
+		}
+	}
+
 	return nil
+}
+
+// compileStreamingContentTypes returns the merged default + user-provided
+// patterns compiled into regexes. The first compile error is returned
+// including the offending pattern.
+func compileStreamingContentTypes(user []string) ([]*regexp.Regexp, error) {
+	all := make([]string, 0, len(defaultStreamingContentTypes)+len(user))
+	all = append(all, defaultStreamingContentTypes...)
+	all = append(all, user...)
+	out := make([]*regexp.Regexp, 0, len(all))
+	for _, p := range all {
+		re, err := regexp.Compile(p)
+		if err != nil {
+			return nil, fmt.Errorf("invalid streaming-content-type pattern %q: %w", p, err)
+		}
+		out = append(out, re)
+	}
+	return out, nil
 }
 
 type OutputOptionsOverlay struct {

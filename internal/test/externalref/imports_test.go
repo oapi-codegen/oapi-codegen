@@ -18,15 +18,15 @@ func TestParameters(t *testing.T) {
 }
 
 func TestGetSwagger(t *testing.T) {
-	_, err := packageB.GetSwagger()
+	_, err := packageB.GetSpec()
 	require.Nil(t, err)
 
-	_, err = packageA.GetSwagger()
+	_, err = packageA.GetSpec()
 	require.Nil(t, err)
 
-	_, err = petstore.GetSwagger()
+	_, err = petstore.GetSpec()
 	require.Nil(t, err)
 
-	_, err = GetSwagger()
+	_, err = GetSpec()
 	require.Nil(t, err)
 }

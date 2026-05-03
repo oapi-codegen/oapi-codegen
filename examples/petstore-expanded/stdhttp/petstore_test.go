@@ -25,7 +25,7 @@ func TestPetStore(t *testing.T) {
 	var err error
 
 	// Get the swagger description of our API
-	swagger, err := api.GetSwagger()
+	swagger, err := api.GetSpec()
 	require.NoError(t, err)
 
 	// Clear out the servers array in the swagger spec, that skips validating

@@ -147,7 +147,7 @@ func NewExamplePatchRequestWithBody(server string, contentType string, body io.R
 		return nil, err
 	}
 
-	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPatch, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -225,6 +225,14 @@ func (r ExamplePatchResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ExamplePatchResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 // ExamplePatchWithBodyWithResponse request with arbitrary body returning *ExamplePatchResponse

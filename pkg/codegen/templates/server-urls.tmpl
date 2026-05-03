@@ -1,0 +1,86 @@
+{{ range . }}
+{{ $usedVars := .UsedVariables }}
+{{ $undeclared := .UndeclaredPlaceholders }}
+{{ if and (eq 0 (len $usedVars)) (eq 0 (len $undeclared)) }}
+{{/* URLs without variables (declared or used) are straightforward, so we'll create them a constant */}}
+// {{ .GoName }} defines the Server URL for {{ if len .OAPISchema.Description }}{{ .OAPISchema.Description }}{{ else }}{{ .OAPISchema.URL }}{{ end }}
+const {{ .GoName}} = "{{ .OAPISchema.URL }}"
+{{ else }}
+{{/* URLs with variables are not straightforward, as we may need multiple types, and so will model them as a function */}}
+
+{{ $goName := .GoName }}
+
+{{/*
+    For each USED variable, emit any inline declarations server-urls.tmpl
+    is still responsible for. Variables declared but not referenced by
+    a `{name}` placeholder in the URL are filtered out earlier
+    (https://github.com/oapi-codegen/oapi-codegen/issues/2004) so we
+    don't generate types/consts/params that the function would never
+    use.
+
+    * Variables with `enum` get their `type` declaration and `const`
+      block (and a `Valid()` method) from typedef.tmpl + constants.tmpl
+      via GenerateEnums; here we only emit the optional default-pointer
+      constant — and we name it `…VariableDefaultValue` so it can never
+      collide with an enum value whose Go identifier is `Default` (e.g.
+      OpenAPI `enum: [default]`).
+
+    * Variables without `enum` need their `type Foo string` and any
+      `const FooDefault = "…"` emitted here, since the generic enum
+      path has nothing to contribute for a non-enum string.
+*/}}
+{{ range $k, $v := $usedVars }}
+   {{ $prefix := printf "%s%sVariable" $goName ($k | ucFirst) }}
+   {{ if eq (len $v.Enum) 0 }}
+   // {{ $prefix }} is the `{{ $k }}` variable for {{ $goName }}
+   type {{ $prefix }} string
+   {{ if $v.Default }}
+   // {{ $prefix }}Default is the default value for the `{{ $k }}` variable for {{ $goName }}
+   const {{ $prefix }}Default = "{{ $v.Default }}"
+   {{ end }}
+   {{ end }}
+{{ end }}
+
+{{/*
+    Enum-typed default-pointer constants. Their identifier names are
+    pre-computed in Go (ServerObjectDefinition.EnumDefaultPointers) so
+    that the pointer's reference to the enum-value constant always
+    matches the post-dedup name actually emitted by constants.tmpl,
+    and the pointer itself is renamed `…DefaultValue` only for specs
+    that would have collided under the old codegen anyway.
+*/}}
+{{ range .EnumDefaultPointers }}
+   // {{ .PointerName }} is the default choice, for the accepted values for the `{{ .VariableName }}` variable
+   const {{ .PointerName }} {{ .TypeName }} = {{ .TargetName }}
+{{ end }}
+
+
+// New{{ .GoName }} constructs the Server URL for {{ .OAPISchema.Description }}, with the provided variables.
+func New{{ .GoName }}({{ .NewServerFunctionParams }}) (string, error) {
+    {{ range $k, $v := $usedVars }}
+        {{- if gt (len $v.Enum) 0 -}}
+    if !{{ $k }}.Valid() {
+        return "", fmt.Errorf("`%v` is not one of the accepted values for the `{{ $k }}` variable", {{ $k }})
+    }
+        {{ end -}}
+    {{ end }}
+    u := "{{ .OAPISchema.URL }}"
+
+    {{ range $k, $v := $usedVars }}
+        {{- $placeholder := printf "{%s}" $k -}}
+        u = strings.ReplaceAll(u, "{{ $placeholder }}", string({{ $k }}))
+    {{ end }}
+    {{ range $k := $undeclared }}
+        {{- $placeholder := printf "{%s}" $k -}}
+        u = strings.ReplaceAll(u, "{{ $placeholder }}", {{ $k }})
+    {{ end }}
+
+    if strings.Contains(u, "{") || strings.Contains(u, "}") {
+            return "", fmt.Errorf("after mapping variables, there were still `{` or `}` characters in the string: %#v", u)
+    }
+
+    return u, nil
+}
+
+{{ end }}
+{{ end }}

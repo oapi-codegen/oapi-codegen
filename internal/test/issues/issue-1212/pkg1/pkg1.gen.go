@@ -5,7 +5,7 @@ package pkg1
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -20,7 +20,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1212/pkg2"
-	strictgin "github.com/oapi-codegen/runtime/strictmiddleware/gin"
 )
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
@@ -131,7 +130,7 @@ func NewTestRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -205,6 +204,14 @@ func (r TestResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r TestResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 // TestWithResponse request returning *TestResponse
@@ -302,6 +309,7 @@ type Test200MultipartResponse externalRef0.TestMultipartResponse
 
 func (response Test200MultipartResponse) VisitTestResponse(w http.ResponseWriter) error {
 	writer := multipart.NewWriter(w)
+
 	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
 	w.WriteHeader(200)
 
@@ -316,16 +324,61 @@ type StrictServerInterface interface {
 	Test(ctx context.Context, request TestRequestObject) (TestResponseObject, error)
 }
 
-type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
-type StrictMiddlewareFunc = strictgin.StrictGinMiddlewareFunc
+type StrictHandlerFunc func(ctx *gin.Context, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+
+type StrictGinServerOptions struct {
+	// RequestErrorHandlerFunc is called when a request cannot be parsed or
+	// decoded. It is invoked for JSON bind failures, form parse/bind errors,
+	// multipart reader errors, media type parse errors, missing multipart
+	// boundaries, and request body read errors. The default returns 400.
+	RequestErrorHandlerFunc func(ctx *gin.Context, err error)
+	// HandlerErrorFunc is called when the application handler (or any
+	// middleware wrapping it) returns a non-nil error. The default returns 500.
+	HandlerErrorFunc func(ctx *gin.Context, err error)
+	// ResponseErrorHandlerFunc is called when the response object fails to
+	// serialize (Visit*Response returns an error) or when the handler returns
+	// an unexpected response type. The default returns 500.
+	ResponseErrorHandlerFunc func(ctx *gin.Context, err error)
+}
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
-	return &strictHandler{ssi: ssi, middlewares: middlewares}
+	return &strictHandler{ssi: ssi, middlewares: middlewares, options: StrictGinServerOptions{
+		RequestErrorHandlerFunc: func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
+		},
+		HandlerErrorFunc: func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		},
+		ResponseErrorHandlerFunc: func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		},
+	}}
+}
+
+func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc, options StrictGinServerOptions) ServerInterface {
+	if options.RequestErrorHandlerFunc == nil {
+		options.RequestErrorHandlerFunc = func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
+		}
+	}
+	if options.HandlerErrorFunc == nil {
+		options.HandlerErrorFunc = func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		}
+	}
+	if options.ResponseErrorHandlerFunc == nil {
+		options.ResponseErrorHandlerFunc = func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		}
+	}
+	return &strictHandler{ssi: ssi, middlewares: middlewares, options: options}
 }
 
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+	options     StrictGinServerOptions
 }
 
 // Test operation middleware
@@ -342,41 +395,42 @@ func (sh *strictHandler) Test(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(TestResponseObject); ok {
 		if err := validResponse.VisitTestResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
+// Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
+// Stored as a slice of fixed-width chunks rather than one concatenated
+// const string: with thousands of chunks the chained `+` fold is several
+// times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/4yRMU/DMBCF/8uDMapD2DwyILGzIze5pAbnzrKvA6r635FtaFSpSM2SO9vfe6d3J4yy",
-	"RmFizbAnJMpROFNt4tcyfChlLc0orMS1XI9BfXRJTaLglKZymMcDra5iSSIl9U3kMwu/uFTKx0QzLB7M",
-	"5mkalk312ruEc1eRV5G7kFkE5/Z1vzNss++b7/VAs6cwDaXS70iwyJo8L6gKF83b2NNNrICeZ4HlYwgd",
-	"JBK76GHxvOt3PTpEp4eqYv7iXKj+ioNTL/w2weK9XHbXSxj6/r8gLu/MtqkWxU8AAAD//+WESHLXAQAA",
+	"jJExT8MwEIX/y4MxqkPYPDIgsbMjN7mkBufOsq8DqvrfkW1oVKlIzZI72997p3cnjLJGYWLNsCckylE4",
+	"U23i1zJ8KGUtzSisxLVcj0F9dElNouCUpnKYxwOtrmJJIiX1TeQzC7+4VMrHRDMsHszmaRqWTfXau4Rz",
+	"V5FXkbuQWQTn9nW/M2yz75vv9UCzpzANpdLvSLDImjwvqAoXzdvY002sgJ5ngeVjCB0kErvoYfG863c9",
+	"OkSnh6pi/uJcqP6Kg1Mv/DbB4r1cdtdLGPr+vyAu78y2qRbFTwAAAP//",
 }
 
-// GetSwagger returns the content of the embedded swagger specification file
-// or error if failed to decode
+// decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
+// after base64-decoding and flate-decompressing the embedded blob.
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	encoded := strings.Join(swaggerSpec, "")
+	compressed, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil
@@ -384,7 +438,7 @@ func decodeSpec() ([]byte, error) {
 
 var rawSpec = decodeSpecCached()
 
-// a naive cached of a decoded swagger spec
+// a naive cache of the decoded OpenAPI spec
 func decodeSpecCached() func() ([]byte, error) {
 	data, err := decodeSpec()
 	return func() ([]byte, error) {
@@ -408,12 +462,12 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 	return res
 }
 
-// GetSwagger returns the Swagger specification corresponding to the generated code
-// in this file. The external references of Swagger specification are resolved.
-// The logic of resolving external references is tightly connected to "import-mapping" feature.
-// Externally referenced files must be embedded in the corresponding golang packages.
-// Urls can be supported but this task was out of the scope.
-func GetSwagger() (swagger *openapi3.T, err error) {
+// GetSpec returns the OpenAPI specification corresponding to the generated
+// code in this file. External references in the spec are resolved through
+// PathToRawSpec; externally-referenced files must be embedded in their
+// corresponding Go packages (via the import-mapping feature). URL-based
+// external refs are not supported.
+func GetSpec() (swagger *openapi3.T, err error) {
 	resolvePath := PathToRawSpec("")
 
 	loader := openapi3.NewLoader()
@@ -438,4 +492,23 @@ func GetSwagger() (swagger *openapi3.T, err error) {
 		return
 	}
 	return
+}
+
+// GetSpecJSON returns the raw JSON bytes of the embedded OpenAPI
+// specification: decompressed but not unmarshaled. External references
+// are not resolved here; the bytes are the spec exactly as embedded by
+// codegen. The result is cached at package init time, so repeated calls
+// are cheap.
+func GetSpecJSON() ([]byte, error) {
+	return rawSpec()
+}
+
+// GetSwagger returns the OpenAPI specification corresponding to the
+// generated code in this file.
+//
+// Deprecated: GetSwagger predates kin-openapi renaming openapi3.Swagger
+// to openapi3.T. Use [GetSpec] instead. This wrapper is retained for
+// backwards compatibility.
+func GetSwagger() (*openapi3.T, error) {
+	return GetSpec()
 }

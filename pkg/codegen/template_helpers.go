@@ -17,11 +17,14 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"text/template"
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+
+	"github.com/getkin/kin-openapi/openapi3"
 
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
@@ -43,6 +46,28 @@ var (
 
 	titleCaser = cases.Title(language.English)
 )
+
+// isMediaTypeSupported reports whether code generation produces a typed
+// body for this media type. Today this is the closed set of JSON / YAML /
+// XML variants the response and request templates know how to handle —
+// see the typeName switch in GetResponseTypeDefinitions and the body
+// definition switch in GenerateBodyDefinitions. A future configuration
+// option is intended to let users extend this list.
+func isMediaTypeSupported(mediaType string) bool {
+	switch {
+	case slices.Contains(contentTypesHalJSON, mediaType):
+		return true
+	case slices.Contains(contentTypesJSON, mediaType):
+		return true
+	case util.IsMediaTypeJson(mediaType):
+		return true
+	case slices.Contains(contentTypesYAML, mediaType):
+		return true
+	case slices.Contains(contentTypesXML, mediaType):
+		return true
+	}
+	return false
+}
 
 // genParamArgs takes an array of Parameter definition, and generates a valid
 // Go parameter declaration from them, eg:
@@ -146,7 +171,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		SortedMapKeys := SortedMapKeys(responseRef.Value.Content)
 		jsonCount := 0
 		for _, contentTypeName := range SortedMapKeys {
-			if StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName) {
+			if slices.Contains(contentTypesJSON, contentTypeName) || util.IsMediaTypeJson(contentTypeName) {
 				jsonCount++
 			}
 		}
@@ -163,7 +188,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			switch {
 
 			// JSON:
-			case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
+			case slices.Contains(contentTypesJSON, contentTypeName) || util.IsMediaTypeJson(contentTypeName):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
@@ -183,7 +208,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 				}
 
 			// YAML:
-			case StringInArray(contentTypeName, contentTypesYAML):
+			case slices.Contains(contentTypesYAML, contentTypeName):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := yaml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
@@ -197,7 +222,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 				}
 
 			// XML:
-			case StringInArray(contentTypeName, contentTypesXML):
+			case slices.Contains(contentTypesXML, contentTypeName):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := xml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
@@ -245,19 +270,26 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 func buildUnmarshalCase(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
 	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
 	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
-	caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"%s\") && %s:\n%s\n", "Content-Type", contentType, caseClauseKey, caseAction)
+	contentTypeLiteral := StringToGoString(contentType)
+	caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), %s) && %s:\n%s\n", "Content-Type", contentTypeLiteral, caseClauseKey, caseAction)
 	return caseKey, caseClause
 }
 
 func buildUnmarshalCaseStrict(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
 	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
 	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
-	caseClause = fmt.Sprintf("case rsp.Header.Get(\"%s\") == \"%s\" && %s:\n%s\n", "Content-Type", contentType, caseClauseKey, caseAction)
+	contentTypeLiteral := StringToGoString(contentType)
+	caseClause = fmt.Sprintf("case rsp.Header.Get(\"%s\") == %s && %s:\n%s\n", "Content-Type", contentTypeLiteral, caseClauseKey, caseAction)
 	return caseKey, caseClause
 }
 
-// genResponseTypeName creates the name of generated response types (given the operationID):
+// genResponseTypeName creates the name of generated response types (given the operationID).
+// It first checks if the multi-pass name resolver has assigned a name for this
+// wrapper type (which would happen if the default name collides with a schema type).
 func genResponseTypeName(operationID string) string {
+	if name, ok := globalState.resolvedClientWrapperNames[operationID]; ok {
+		return name
+	}
 	return fmt.Sprintf("%s%s", UppercaseFirstCharacter(operationID), responseTypeSuffix)
 }
 
@@ -295,6 +327,58 @@ func stripNewLines(s string) string {
 	return r.Replace(s)
 }
 
+// genServerURLWithVariablesFunctionParams is a template helper method to generate the function parameters for the generated function for a Server object that contains `variables` (https://spec.openapis.org/oas/v3.0.3#server-object)
+//
+// goTypePrefix is the prefix being used to create underlying types in the template (likely the `ServerObjectDefinition.GoName`)
+// variables are this `ServerObjectDefinition`'s variables for the Server object (likely the `ServerObjectDefinition.OAPISchema`)
+//
+// Undeclared `{name}` placeholders that appear in the URL but have no
+// entry in `variables` are NOT handled here; they're emitted as plain
+// `string` parameters by `ServerObjectDefinition.NewFunctionParams`,
+// which the template calls instead of this helper. Custom
+// `server-urls.tmpl` overrides that still call this helper directly
+// keep their pre-existing two-argument signature.
+func genServerURLWithVariablesFunctionParams(goTypePrefix string, variables map[string]*openapi3.ServerVariable) string {
+	keys := SortedMapKeys(variables)
+
+	if len(variables) == 0 {
+		return ""
+	}
+	parts := make([]string, len(variables))
+
+	for i := range keys {
+		k := keys[i]
+		variableDefinitionPrefix := goTypePrefix + UppercaseFirstCharacter(k) + "Variable"
+		parts[i] = k + " " + variableDefinitionPrefix
+	}
+	return strings.Join(parts, ", ")
+}
+
+// httpMethodConstant converts an HTTP method string (e.g. "GET") to the
+// corresponding Go net/http constant (e.g. "http.MethodGet").
+func httpMethodConstant(method string) string {
+	switch method {
+	case "GET":
+		return "http.MethodGet"
+	case "POST":
+		return "http.MethodPost"
+	case "PUT":
+		return "http.MethodPut"
+	case "DELETE":
+		return "http.MethodDelete"
+	case "PATCH":
+		return "http.MethodPatch"
+	case "HEAD":
+		return "http.MethodHead"
+	case "OPTIONS":
+		return "http.MethodOptions"
+	case "TRACE":
+		return "http.MethodTrace"
+	default:
+		return fmt.Sprintf("%q", method)
+	}
+}
+
 // TemplateFunctions is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
@@ -322,5 +406,10 @@ var TemplateFunctions = template.FuncMap{
 	"title":                      titleCaser.String,
 	"stripNewLines":              stripNewLines,
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
+	"schemaNameToTypeName":       SchemaNameToTypeName,
+	"toGoString":                 StringToGoString,
 	"toGoComment":                StringWithTypeNameToGoComment,
+
+	"genServerURLWithVariablesFunctionParams": genServerURLWithVariablesFunctionParams,
+	"httpMethodConstant":                      httpMethodConstant,
 }

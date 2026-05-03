@@ -18,12 +18,40 @@ const (
 	Enum1Two   Enum1 = "Two"
 )
 
+// Valid indicates whether the value is a known member of the Enum1 enum.
+func (e Enum1) Valid() bool {
+	switch e {
+	case Enum1One:
+		return true
+	case Enum1Three:
+		return true
+	case Enum1Two:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Enum2.
 const (
 	Enum2Four  Enum2 = "Four"
 	Enum2Three Enum2 = "Three"
 	Enum2Two   Enum2 = "Two"
 )
+
+// Valid indicates whether the value is a known member of the Enum2 enum.
+func (e Enum2) Valid() bool {
+	switch e {
+	case Enum2Four:
+		return true
+	case Enum2Three:
+		return true
+	case Enum2Two:
+		return true
+	default:
+		return false
+	}
+}
 
 // Defines values for Enum3.
 const (
@@ -32,6 +60,20 @@ const (
 	Enum3Foo      Enum3 = "Foo"
 )
 
+// Valid indicates whether the value is a known member of the Enum3 enum.
+func (e Enum3) Valid() bool {
+	switch e {
+	case Enum3Bar:
+		return true
+	case Enum3Enum1One:
+		return true
+	case Enum3Foo:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Enum4.
 const (
 	Cat   Enum4 = "Cat"
@@ -39,12 +81,40 @@ const (
 	Mouse Enum4 = "Mouse"
 )
 
+// Valid indicates whether the value is a known member of the Enum4 enum.
+func (e Enum4) Valid() bool {
+	switch e {
+	case Cat:
+		return true
+	case Dog:
+		return true
+	case Mouse:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Enum5.
 const (
 	Enum5N5 Enum5 = 5
 	Enum5N6 Enum5 = 6
 	Enum5N7 Enum5 = 7
 )
+
+// Valid indicates whether the value is a known member of the Enum5 enum.
+func (e Enum5) Valid() bool {
+	switch e {
+	case Enum5N5:
+		return true
+	case Enum5N6:
+		return true
+	case Enum5N7:
+		return true
+	default:
+		return false
+	}
+}
 
 // Defines values for EnumUnion.
 const (
@@ -54,6 +124,22 @@ const (
 	EnumUnionTwo   EnumUnion = "Two"
 )
 
+// Valid indicates whether the value is a known member of the EnumUnion enum.
+func (e EnumUnion) Valid() bool {
+	switch e {
+	case EnumUnionFour:
+		return true
+	case EnumUnionOne:
+		return true
+	case EnumUnionThree:
+		return true
+	case EnumUnionTwo:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for EnumUnion2.
 const (
 	EnumUnion2One   EnumUnion2 = "One"
@@ -61,6 +147,22 @@ const (
 	EnumUnion2Three EnumUnion2 = "Three"
 	EnumUnion2Two   EnumUnion2 = "Two"
 )
+
+// Valid indicates whether the value is a known member of the EnumUnion2 enum.
+func (e EnumUnion2) Valid() bool {
+	switch e {
+	case EnumUnion2One:
+		return true
+	case EnumUnion2Seven:
+		return true
+	case EnumUnion2Three:
+		return true
+	case EnumUnion2Two:
+		return true
+	default:
+		return false
+	}
+}
 
 // Defines values for FunnyValues.
 const (
@@ -71,12 +173,44 @@ const (
 	FunnyValuesPercent  FunnyValues = "%"
 )
 
+// Valid indicates whether the value is a known member of the FunnyValues enum.
+func (e FunnyValues) Valid() bool {
+	switch e {
+	case FunnyValuesAnd:
+		return true
+	case FunnyValuesAsterisk:
+		return true
+	case FunnyValuesEmpty:
+		return true
+	case FunnyValuesN5:
+		return true
+	case FunnyValuesPercent:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for EnumParam1.
 const (
 	EnumParam1Both EnumParam1 = "both"
 	EnumParam1Off  EnumParam1 = "off"
 	EnumParam1On   EnumParam1 = "on"
 )
+
+// Valid indicates whether the value is a known member of the EnumParam1 enum.
+func (e EnumParam1) Valid() bool {
+	switch e {
+	case EnumParam1Both:
+		return true
+	case EnumParam1Off:
+		return true
+	case EnumParam1On:
+		return true
+	default:
+		return false
+	}
+}
 
 // Defines values for EnumParam2.
 const (
@@ -85,12 +219,40 @@ const (
 	EnumParam2On   EnumParam2 = "on"
 )
 
+// Valid indicates whether the value is a known member of the EnumParam2 enum.
+func (e EnumParam2) Valid() bool {
+	switch e {
+	case EnumParam2Both:
+		return true
+	case EnumParam2Off:
+		return true
+	case EnumParam2On:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for EnumParam3.
 const (
 	Alice EnumParam3 = "alice"
 	Bob   EnumParam3 = "bob"
 	Eve   EnumParam3 = "eve"
 )
+
+// Valid indicates whether the value is a known member of the EnumParam3 enum.
+func (e EnumParam3) Valid() bool {
+	switch e {
+	case Alice:
+		return true
+	case Bob:
+		return true
+	case Eve:
+		return true
+	default:
+		return false
+	}
+}
 
 // AdditionalPropertiesObject1 Has additional properties of type int
 type AdditionalPropertiesObject1 struct {
@@ -425,85 +587,6 @@ type EnsureEverythingIsReferencedTextRequestBody = EnsureEverythingIsReferencedT
 // BodyWithAddPropsJSONRequestBody defines body for BodyWithAddProps for application/json ContentType.
 type BodyWithAddPropsJSONRequestBody BodyWithAddPropsJSONBody
 
-// Getter for additional properties for BodyWithAddPropsJSONBody. Returns the specified
-// element and whether it was found
-func (a BodyWithAddPropsJSONBody) Get(fieldName string) (value interface{}, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for BodyWithAddPropsJSONBody
-func (a *BodyWithAddPropsJSONBody) Set(fieldName string, value interface{}) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for BodyWithAddPropsJSONBody to handle AdditionalProperties
-func (a *BodyWithAddPropsJSONBody) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["inner"]; found {
-		err = json.Unmarshal(raw, &a.Inner)
-		if err != nil {
-			return fmt.Errorf("error reading 'inner': %w", err)
-		}
-		delete(object, "inner")
-	}
-
-	if raw, found := object["name"]; found {
-		err = json.Unmarshal(raw, &a.Name)
-		if err != nil {
-			return fmt.Errorf("error reading 'name': %w", err)
-		}
-		delete(object, "name")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
-		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for BodyWithAddPropsJSONBody to handle AdditionalProperties
-func (a BodyWithAddPropsJSONBody) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	object["inner"], err = json.Marshal(a.Inner)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'inner': %w", err)
-	}
-
-	object["name"], err = json.Marshal(a.Name)
-	if err != nil {
-		return nil, fmt.Errorf("error marshaling 'name': %w", err)
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
-		}
-	}
-	return json.Marshal(object)
-}
-
 // Getter for additional properties for AdditionalPropertiesObject1. Returns the specified
 // element and whether it was found
 func (a AdditionalPropertiesObject1) Get(fieldName string) (value int, found bool) {
@@ -824,6 +907,87 @@ func (a *OneOfObject13) Set(fieldName string, value interface{}) {
 		a.AdditionalProperties = make(map[string]interface{})
 	}
 	a.AdditionalProperties[fieldName] = value
+}
+
+// Getter for additional properties for BodyWithAddPropsJSONBody. Returns the specified
+// element and whether it was found
+func (a BodyWithAddPropsJSONBody) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for BodyWithAddPropsJSONBody
+func (a *BodyWithAddPropsJSONBody) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for BodyWithAddPropsJSONBody to handle AdditionalProperties
+func (a *BodyWithAddPropsJSONBody) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["inner"]; found {
+		err = json.Unmarshal(raw, &a.Inner)
+		if err != nil {
+			return fmt.Errorf("error reading 'inner': %w", err)
+		}
+		delete(object, "inner")
+	}
+
+	if raw, found := object["name"]; found {
+		err = json.Unmarshal(raw, &a.Name)
+		if err != nil {
+			return fmt.Errorf("error reading 'name': %w", err)
+		}
+		delete(object, "name")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for BodyWithAddPropsJSONBody to handle AdditionalProperties
+func (a BodyWithAddPropsJSONBody) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.Inner != nil {
+		object["inner"], err = json.Marshal(a.Inner)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'inner': %w", err)
+		}
+	}
+
+	object["name"], err = json.Marshal(a.Name)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'name': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
 }
 
 // AsOneOfVariant4 returns the union data inside the AnyOfObject1 as a OneOfVariant4

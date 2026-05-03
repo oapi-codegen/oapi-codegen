@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	ApiKeyAuthScopes = "ApiKeyAuth.Scopes"
+	ApiKeyAuthScopes apiKeyAuthContextKey = "ApiKeyAuth.Scopes"
 )
 
 // Cat This is a cat
@@ -55,6 +55,9 @@ type Rat struct {
 	Name    *string `json:"name,omitempty"`
 	Squeaks *bool   `json:"squeaks,omitempty"`
 }
+
+// apiKeyAuthContextKey is the context key for ApiKeyAuth security scheme
+type apiKeyAuthContextKey string
 
 // AsCat returns the union data inside the GetPetsDto_Data as a Cat
 func (t GetPetsDto_Data) AsCat() (Cat, error) {
@@ -252,7 +255,7 @@ func NewGetPetsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -329,6 +332,14 @@ func (r GetPetsResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetPetsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 // GetPetsWithResponse request returning *GetPetsResponse
 func (c *ClientWithResponses) GetPetsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetPetsResponse, error) {
 	rsp, err := c.GetPets(ctx, reqEditors...)
@@ -380,7 +391,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) GetPets(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(ApiKeyAuthScopes, []string{})
+	ctx.Set(string(ApiKeyAuthScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetPets(ctx)
@@ -402,19 +413,38 @@ type EchoRouter interface {
 	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 }
 
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
-	RegisterHandlersWithBaseURL(router, si, "")
+// RegisterHandlersOptions configures RegisterHandlersWithOptions.
+type RegisterHandlersOptions struct {
+	// BaseURL is prepended to every registered path so the API can be served
+	// under a prefix.
+	BaseURL string
+	// OperationMiddlewares lets the caller attach per-operation middleware at
+	// registration time. The map key is the OpenAPI `operationId` value as it
+	// appears in the spec (the raw, un-normalized form). Operations that have
+	// no entry are registered with no extra middleware. A nil map disables
+	// per-operation middleware entirely.
+	OperationMiddlewares map[string][]echo.MiddlewareFunc
 }
 
-// Registers handlers, and prepends BaseURL to the paths, so that the paths
-// can be served under a prefix.
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
+	RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{})
+}
+
+// RegisterHandlersWithBaseURL registers handlers and prepends BaseURL to the
+// paths so the API can be served under a prefix.
 func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
+	RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{BaseURL: baseURL})
+}
+
+// RegisterHandlersWithOptions registers handlers using the supplied options,
+// including any per-operation middleware.
+func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options RegisterHandlersOptions) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/pets", wrapper.GetPets)
+	router.GET(options.BaseURL+"/pets", wrapper.GetPets, options.OperationMiddlewares["getPets"]...)
 
 }

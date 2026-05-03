@@ -2,8 +2,9 @@ lint:
 	$(GOBIN)/golangci-lint run ./...
 
 lint-ci:
-	$(GOBIN)/golangci-lint run ./... --out-format=colored-line-number --timeout=5m
+	$(GOBIN)/golangci-lint run ./... --output.text.path=stdout --timeout=5m
 
+.PHONY: generate
 generate:
 	go generate ./...
 

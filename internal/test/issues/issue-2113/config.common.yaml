@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: common
+generate:
+  models: true
+  strict-server: true
+output: gen/common/common.gen.go
+output-options:
+  skip-prune: true

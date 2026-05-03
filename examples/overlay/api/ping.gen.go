@@ -5,7 +5,7 @@ package api
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"encoding/base64"
 	"fmt"
 	"net/http"
@@ -165,39 +165,40 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/ping", wrapper.GetPing).Methods("GET")
+	r.HandleFunc(options.BaseURL+"/ping", wrapper.GetPing).Methods(http.MethodGet)
 
 	return r
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
+// Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
+// Stored as a slice of fixed-width chunks rather than one concatenated
+// const string: with thousands of chunks the chained `+` fold is several
+// times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/1xSwW7UMBD9FWvgAFJ2ve2Ki28VQmjFYVeCW9WD60xil8Rj7ElpVfnf0Ti7FHqaePLs",
-	"997MewFHc6KIkQuYFyjO42zb54niKDVlSpg5YOumsHbxyc5pQjCQBNcBPyc5Fc6CqLWDjL+WkLEHc7te",
-	"u/uLovsHdAwdPG1G2kQ7S/P4iDmHvsfYqKu8EeJAQseBG9mXlVYxqRD74Cyj8vRbzktBxR7VMWG8OR2U",
-	"PDfZZ1USujAINFBUHzxzKkbrMbBf7reOZn28OegzevP9X/RH6OARcwkUwcDVdrfdNc10BtuUpiAGxfbi",
-	"eMnYX35C7YASRpsCGNif7ybLvs1R234OUduFqTg7rVOtHejLgEdkKT0Wl0PiVcJnj+6nYm+5WRWboai8",
-	"xBjiqI7foHHmJv4gur4in0LbT8aSKJZ1i9e7nRRHkTE2nmZlda0fipBdwiBf7zMOYOCdfk2LPkdFvy7r",
-	"f60nzAPlWVkllpSkAQu3ZBTMMlYwt28N/vCoehzsMrFaUVvoYMkTGJDNGa0ncnbyVNjsP11d76He1Vrr",
-	"nwAAAP//QsRK0MkCAAA=",
+	"XFLBbtQwEP0Va+AAUna97YqLbxVCaMVhV4Jb1YPrTGKXxGPsSWlV+d/ROLsUepp48uz33sx7AUdzooiR",
+	"C5gXKM7jbNvnieIoNWVKmDlg66awdvHJzmlCMJAE1wE/JzkVzoKotYOMv5aQsQdzu167+4ui+wd0DB08",
+	"bUbaRDtL8/iIOYe+x9ioq7wR4kBCx4Eb2ZeVVjGpEPvgLKPy9FvOS0HFHtUxYbw5HZQ8N9lnVRK6MAg0",
+	"UFQfPHMqRusxsF/ut45mfbw56DN68/1f9Efo4BFzCRTBwNV2t901zXQG25SmIAbF9uJ4ydhffkLtgBJG",
+	"mwIY2J/vJsu+zVHbfg5R24WpODutU60d6MuAR2QpPRaXQ+JVwmeP7qdib7lZFZuhqLzEGOKojt+gceYm",
+	"/iC6viKfQttPxpIolnWL17udFEeRMTaeZmV1rR+KkF3CIF/vMw5g4J1+TYs+R0W/Lut/rSfMA+VZWSWW",
+	"lKQBC7dkFMwyVjC3bw3+8Kh6HOwysVpRW+hgyRMYkM0ZrSdydvJU2Ow/XV3vod7VWuufAAAA//8=",
 }
 
-// GetSwagger returns the content of the embedded swagger specification file
-// or error if failed to decode
+// decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
+// after base64-decoding and flate-decompressing the embedded blob.
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	encoded := strings.Join(swaggerSpec, "")
+	compressed, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil
@@ -205,7 +206,7 @@ func decodeSpec() ([]byte, error) {
 
 var rawSpec = decodeSpecCached()
 
-// a naive cached of a decoded swagger spec
+// a naive cache of the decoded OpenAPI spec
 func decodeSpecCached() func() ([]byte, error) {
 	data, err := decodeSpec()
 	return func() ([]byte, error) {
@@ -223,12 +224,12 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 	return res
 }
 
-// GetSwagger returns the Swagger specification corresponding to the generated code
-// in this file. The external references of Swagger specification are resolved.
-// The logic of resolving external references is tightly connected to "import-mapping" feature.
-// Externally referenced files must be embedded in the corresponding golang packages.
-// Urls can be supported but this task was out of the scope.
-func GetSwagger() (swagger *openapi3.T, err error) {
+// GetSpec returns the OpenAPI specification corresponding to the generated
+// code in this file. External references in the spec are resolved through
+// PathToRawSpec; externally-referenced files must be embedded in their
+// corresponding Go packages (via the import-mapping feature). URL-based
+// external refs are not supported.
+func GetSpec() (swagger *openapi3.T, err error) {
 	resolvePath := PathToRawSpec("")
 
 	loader := openapi3.NewLoader()
@@ -253,4 +254,23 @@ func GetSwagger() (swagger *openapi3.T, err error) {
 		return
 	}
 	return
+}
+
+// GetSpecJSON returns the raw JSON bytes of the embedded OpenAPI
+// specification: decompressed but not unmarshaled. External references
+// are not resolved here; the bytes are the spec exactly as embedded by
+// codegen. The result is cached at package init time, so repeated calls
+// are cheap.
+func GetSpecJSON() ([]byte, error) {
+	return rawSpec()
+}
+
+// GetSwagger returns the OpenAPI specification corresponding to the
+// generated code in this file.
+//
+// Deprecated: GetSwagger predates kin-openapi renaming openapi3.Swagger
+// to openapi3.T. Use [GetSpec] instead. This wrapper is retained for
+// backwards compatibility.
+func GetSwagger() (*openapi3.T, error) {
+	return GetSpec()
 }

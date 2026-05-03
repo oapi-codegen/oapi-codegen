@@ -5,7 +5,7 @@ package api
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -21,7 +21,7 @@ import (
 )
 
 const (
-	BearerAuthScopes = "BearerAuth.Scopes"
+	BearerAuthScopes bearerAuthContextKey = "BearerAuth.Scopes"
 )
 
 // Error defines model for Error.
@@ -43,6 +43,9 @@ type ThingWithID struct {
 	Id   int64  `json:"id"`
 	Name string `json:"name"`
 }
+
+// bearerAuthContextKey is the context key for BearerAuth security scheme
+type bearerAuthContextKey string
 
 // AddThingJSONRequestBody defines body for AddThing for application/json ContentType.
 type AddThingJSONRequestBody = Thing
@@ -184,7 +187,7 @@ func NewListThingsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -222,7 +225,7 @@ func NewAddThingRequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -306,6 +309,14 @@ func (r ListThingsResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ListThingsResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type AddThingResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -326,6 +337,14 @@ func (r AddThingResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r AddThingResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 // ListThingsWithResponse request returning *ListThingsResponse
@@ -425,7 +444,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) ListThings(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(BearerAuthScopes, []string{})
+	ctx.Set(string(BearerAuthScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ListThings(ctx)
@@ -436,7 +455,7 @@ func (w *ServerInterfaceWrapper) ListThings(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) AddThing(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(BearerAuthScopes, []string{"things:w"})
+	ctx.Set(string(BearerAuthScopes), []string{"things:w"})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.AddThing(ctx)
@@ -458,55 +477,76 @@ type EchoRouter interface {
 	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 }
 
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
-	RegisterHandlersWithBaseURL(router, si, "")
+// RegisterHandlersOptions configures RegisterHandlersWithOptions.
+type RegisterHandlersOptions struct {
+	// BaseURL is prepended to every registered path so the API can be served
+	// under a prefix.
+	BaseURL string
+	// OperationMiddlewares lets the caller attach per-operation middleware at
+	// registration time. The map key is the OpenAPI `operationId` value as it
+	// appears in the spec (the raw, un-normalized form). Operations that have
+	// no entry are registered with no extra middleware. A nil map disables
+	// per-operation middleware entirely.
+	OperationMiddlewares map[string][]echo.MiddlewareFunc
 }
 
-// Registers handlers, and prepends BaseURL to the paths, so that the paths
-// can be served under a prefix.
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
+	RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{})
+}
+
+// RegisterHandlersWithBaseURL registers handlers and prepends BaseURL to the
+// paths so the API can be served under a prefix.
 func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
+	RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{BaseURL: baseURL})
+}
+
+// RegisterHandlersWithOptions registers handlers using the supplied options,
+// including any per-operation middleware.
+func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options RegisterHandlersOptions) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/things", wrapper.ListThings)
-	router.POST(baseURL+"/things", wrapper.AddThing)
+	router.GET(options.BaseURL+"/things", wrapper.ListThings, options.OperationMiddlewares["listThings"]...)
+	router.POST(options.BaseURL+"/things", wrapper.AddThing, options.OperationMiddlewares["addThing"]...)
 
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
+// Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
+// Stored as a slice of fixed-width chunks rather than one concatenated
+// const string: with thousands of chunks the chained `+` fold is several
+// times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/8RUwW7bOBD9lcHsAnsRbCdZ7EE3B8kCDgq0aA3kEAcII44ttjLJDEdxjUD/XpCUHDVO",
-	"0/bUiy2Swzfz3rzhE1Zu650lKwHLJwxVTVuVPi+ZHccPz84Ti6G0XTlN8V9TqNh4Mc5imYMhnRW4drxV",
-	"giUaK2enWKDsPeUlbYixK3BLIajND4GG48PVIGzsBruuQKaH1jBpLG+wTziE33YFLusYeFS2VduU7W28",
-	"FHVAuTZSLy7iLdU079dY3jzh30xrLPGv6bNu0160aU7dFS9zGx1/x6r89+8rqryoxWi87W7jbqCqZSP7",
-	"TzFPhjwnxcTzVuq4uk+r/4cEV9dLLHIrY4J8+pywFvHYRWBj1+64BXML9FVtfUMw/7CAXW2qGtpAATIS",
-	"iPtCFkLlPAVQVsPV9RJUrKVAMdLEJLE0smIqJaQTzmXGxAIfiUNOdTKZTWbRD86TVd5giWdpq0CvpE5U",
-	"pxJlTZ8bkuNyP5K0bAMoaEwQcGvIFyZwTpVqA8V1ALLaO2MFtKNg/xFwj8RsdDymld007l41MEhdgBHo",
-	"uxGhI8O148Syp2Wcnawspto5LRcaS3xngixzxbGfwTsbcs9OZ7M8QFbIJiLK+6aHmn4Okc0wgck2Qtt0",
-	"8aee643aHVqsmNU+9/h7sV6KlGO8C68IO9c6Uk+BIC7qdCTxcixtOGgaUnDWdGUHUSFbMllmpO1dBit3",
-	"d9lTYCw41slo4Inj4IBa2R0bodckn2udRy8PEAU5d3r/W1r/wlgfizl/1sbYQCwTGMwY6ec90n3UzkgN",
-	"ysLiAseDLtxSd+SUkz/ulOWYwXLEAFprHlqKPMaPU3odx8/SDQ59ze/Ym7Ex4lsAAAD//9UBNUSMBgAA",
+	"xFTBbts4EP2VwewCexFsJ1nsQTcHyQIOCrRoDeQQBwgjji22MskMR3GNQP9ekJQcNU7T9tSLLZLDN/Pe",
+	"vOETVm7rnSUrAcsnDFVNW5U+L5kdxw/PzhOLobRdOU3xX1Oo2HgxzmKZgyGdFbh2vFWCJRorZ6dYoOw9",
+	"5SVtiLErcEshqM0PgYbjw9UgbOwGu65ApofWMGksb7BPOITfdgUu6xh4VLZV25TtbbwUdUC5NlIvLuIt",
+	"1TTv11jePOHfTGss8a/ps27TXrRpTt0VL3MbHX/Hqvz37yuqvKjFaLztbuNuoKplI/tPMU+GPCfFxPNW",
+	"6ri6T6v/hwRX10sscitjgnz6nLAW8dhFYGPX7rgFcwv0VW19QzD/sIBdbaoa2kABMhKI+0IWQuU8BVBW",
+	"w9X1ElSspUAx0sQksTSyYiolpBPOZcbEAh+JQ051MplNZtEPzpNV3mCJZ2mrQK+kTlSnEmVNnxuS43I/",
+	"krRsAyhoTBBwa8gXJnBOlWoDxXUAsto7YwW0o2D/EXCPxGx0PKaV3TTuXjUwSF2AEei7EaEjw7XjxLKn",
+	"ZZydrCym2jktFxpLfGeCLHPFsZ/BOxtyz05nszxAVsgmIsr7poeafg6RzTCByTZC23Txp57rjdodWqyY",
+	"1T73+HuxXoqUY7wLrwg71zpST4EgLup0JPFyLG04aBpScNZ0ZQdRIVsyWWak7V0GK3d32VNgLDjWyWjg",
+	"iePggFrZHRuh1ySfa51HLw8QBTl3ev9bWv/CWB+LOX/WxthALBMYzBjp5z3SfdTOSA3KwuICx4Mu3FJ3",
+	"5JSTP+6U5ZjBcsQAWmseWoo8xo9Teh3Hz9INDn3N79ibsTHiWwAAAP//",
 }
 
-// GetSwagger returns the content of the embedded swagger specification file
-// or error if failed to decode
+// decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
+// after base64-decoding and flate-decompressing the embedded blob.
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	encoded := strings.Join(swaggerSpec, "")
+	compressed, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil
@@ -514,7 +554,7 @@ func decodeSpec() ([]byte, error) {
 
 var rawSpec = decodeSpecCached()
 
-// a naive cached of a decoded swagger spec
+// a naive cache of the decoded OpenAPI spec
 func decodeSpecCached() func() ([]byte, error) {
 	data, err := decodeSpec()
 	return func() ([]byte, error) {
@@ -532,12 +572,12 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 	return res
 }
 
-// GetSwagger returns the Swagger specification corresponding to the generated code
-// in this file. The external references of Swagger specification are resolved.
-// The logic of resolving external references is tightly connected to "import-mapping" feature.
-// Externally referenced files must be embedded in the corresponding golang packages.
-// Urls can be supported but this task was out of the scope.
-func GetSwagger() (swagger *openapi3.T, err error) {
+// GetSpec returns the OpenAPI specification corresponding to the generated
+// code in this file. External references in the spec are resolved through
+// PathToRawSpec; externally-referenced files must be embedded in their
+// corresponding Go packages (via the import-mapping feature). URL-based
+// external refs are not supported.
+func GetSpec() (swagger *openapi3.T, err error) {
 	resolvePath := PathToRawSpec("")
 
 	loader := openapi3.NewLoader()
@@ -562,4 +602,23 @@ func GetSwagger() (swagger *openapi3.T, err error) {
 		return
 	}
 	return
+}
+
+// GetSpecJSON returns the raw JSON bytes of the embedded OpenAPI
+// specification: decompressed but not unmarshaled. External references
+// are not resolved here; the bytes are the spec exactly as embedded by
+// codegen. The result is cached at package init time, so repeated calls
+// are cheap.
+func GetSpecJSON() ([]byte, error) {
+	return rawSpec()
+}
+
+// GetSwagger returns the OpenAPI specification corresponding to the
+// generated code in this file.
+//
+// Deprecated: GetSwagger predates kin-openapi renaming openapi3.Swagger
+// to openapi3.T. Use [GetSpec] instead. This wrapper is retained for
+// backwards compatibility.
+func GetSwagger() (*openapi3.T, error) {
+	return GetSpec()
 }

@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	OpenIdScopes = "OpenId.Scopes"
+	OpenIdScopes openIdContextKey = "OpenId.Scopes"
 )
 
 // SchemaObject defines model for SchemaObject.
@@ -23,6 +23,9 @@ type SchemaObject struct {
 	FirstName string `json:"firstName"`
 	Role      string `json:"role"`
 }
+
+// openIdContextKey is the context key for OpenId security scheme
+type openIdContextKey string
 
 // PostVendorJsonApplicationVndAPIPlusJSONBody defines parameters for PostVendorJson.
 type PostVendorJsonApplicationVndAPIPlusJSONBody = map[string]interface{}
@@ -302,7 +305,7 @@ func NewPostBothRequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -331,7 +334,7 @@ func NewGetBothRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -369,7 +372,7 @@ func NewPostJsonRequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -398,7 +401,7 @@ func NewGetJsonRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -425,7 +428,7 @@ func NewPostOtherRequestWithBody(server string, contentType string, body io.Read
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -454,7 +457,7 @@ func NewGetOtherRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -481,7 +484,7 @@ func NewGetJsonWithTrailingSlashRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -519,7 +522,7 @@ func NewPostVendorJsonRequestWithBody(server string, contentType string, body io
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -624,6 +627,14 @@ func (r PostBothResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r PostBothResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetBothResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -643,6 +654,14 @@ func (r GetBothResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetBothResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type PostJsonResponse struct {
@@ -666,6 +685,14 @@ func (r PostJsonResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r PostJsonResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetJsonResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -685,6 +712,14 @@ func (r GetJsonResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetJsonResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type PostOtherResponse struct {
@@ -708,6 +743,14 @@ func (r PostOtherResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r PostOtherResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetOtherResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -727,6 +770,14 @@ func (r GetOtherResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetOtherResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type GetJsonWithTrailingSlashResponse struct {
@@ -750,6 +801,14 @@ func (r GetJsonWithTrailingSlashResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetJsonWithTrailingSlashResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type PostVendorJsonResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -769,6 +828,14 @@ func (r PostVendorJsonResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r PostVendorJsonResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 // PostBothWithBodyWithResponse request with arbitrary body returning *PostBothResponse
