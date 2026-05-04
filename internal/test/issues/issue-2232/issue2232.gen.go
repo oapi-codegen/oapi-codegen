@@ -51,9 +51,9 @@ func (e GetEndpointParamsEnvSchemaLevel) Valid() bool {
 
 // GetEndpointParams defines parameters for GetEndpoint.
 type GetEndpointParams struct {
-	EnvParamLevel  GetEndpointParamsEnvParamLevel  `form:"env_param_level" json:"env_param_level" validate:"required,oneof=dev live"`
-	EnvSchemaLevel GetEndpointParamsEnvSchemaLevel `form:"env_schema_level" json:"env_schema_level" validate:"required,oneof=dev live"`
-	Limit          *int                            `form:"limit,omitempty" json:"limit,omitempty" validate:"min=0,max=100"`
+	EnvParamLevel  GetEndpointParamsEnvParamLevel  `json:"env_param_level" validate:"required,oneof=dev live"`
+	EnvSchemaLevel GetEndpointParamsEnvSchemaLevel `json:"env_schema_level" validate:"required,oneof=dev live"`
+	Limit          *int                            `json:"limit,omitempty" validate:"min=0,max=100"`
 }
 
 // GetEndpointParamsEnvParamLevel defines parameters for GetEndpoint.

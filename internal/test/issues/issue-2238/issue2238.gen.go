@@ -17,7 +17,7 @@ import (
 // GetTestParams defines parameters for GetTest.
 type GetTestParams struct {
 	XTags []string `json:"X-Tags,omitempty"`
-	Tags  []string `form:"tags,omitempty" json:"tags,omitempty"`
+	Tags  []string `json:"tags,omitempty"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function

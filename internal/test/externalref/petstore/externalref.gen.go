@@ -175,7 +175,7 @@ type petstoreAuthContextKey string
 // FindPetsByStatusParams defines parameters for FindPetsByStatus.
 type FindPetsByStatusParams struct {
 	// Status Status values that need to be considered for filter
-	Status *FindPetsByStatusParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+	Status *FindPetsByStatusParamsStatus `json:"status,omitempty"`
 }
 
 // FindPetsByStatusParamsStatus defines parameters for FindPetsByStatus.
@@ -184,7 +184,7 @@ type FindPetsByStatusParamsStatus string
 // FindPetsByTagsParams defines parameters for FindPetsByTags.
 type FindPetsByTagsParams struct {
 	// Tags Tags to filter by
-	Tags *[]string `form:"tags,omitempty" json:"tags,omitempty"`
+	Tags *[]string `json:"tags,omitempty"`
 }
 
 // DeletePetParams defines parameters for DeletePet.
@@ -195,16 +195,16 @@ type DeletePetParams struct {
 // UpdatePetWithFormParams defines parameters for UpdatePetWithForm.
 type UpdatePetWithFormParams struct {
 	// Name Name of pet that needs to be updated
-	Name *string `form:"name,omitempty" json:"name,omitempty"`
+	Name *string `json:"name,omitempty"`
 
 	// Status Status of pet that needs to be updated
-	Status *string `form:"status,omitempty" json:"status,omitempty"`
+	Status *string `json:"status,omitempty"`
 }
 
 // UploadFileParams defines parameters for UploadFile.
 type UploadFileParams struct {
 	// AdditionalMetadata Additional Metadata
-	AdditionalMetadata *string `form:"additionalMetadata,omitempty" json:"additionalMetadata,omitempty"`
+	AdditionalMetadata *string `json:"additionalMetadata,omitempty"`
 }
 
 // CreateUsersWithListInputJSONBody defines parameters for CreateUsersWithListInput.
@@ -213,10 +213,10 @@ type CreateUsersWithListInputJSONBody = []User
 // LoginUserParams defines parameters for LoginUser.
 type LoginUserParams struct {
 	// Username The user name for login
-	Username *string `form:"username,omitempty" json:"username,omitempty"`
+	Username *string `json:"username,omitempty"`
 
 	// Password The password for login in clear text
-	Password *string `form:"password,omitempty" json:"password,omitempty"`
+	Password *string `json:"password,omitempty"`
 }
 
 // AddPetJSONRequestBody defines body for AddPet for application/json ContentType.

@@ -26,7 +26,7 @@ type Thing struct {
 // ListThingsParams defines parameters for ListThings.
 type ListThingsParams struct {
 	Tags   map[string]string `json:"tags,omitempty"`
-	Labels []string          `form:"labels,omitempty" json:"labels,omitempty"`
+	Labels []string          `json:"labels,omitempty"`
 }
 
 // CreateThingJSONRequestBody defines body for CreateThing for application/json ContentType.

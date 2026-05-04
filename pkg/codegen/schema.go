@@ -870,7 +870,7 @@ func GenFieldsFromProperties(props []Property) []string {
 			fieldTags["yaml"] = p.JsonFieldName + stringOrEmpty(omitEmpty, ",omitempty")
 		}
 		if p.NeedsFormTag {
-			fieldTags["form"] = p.JsonFieldName + stringOrEmpty(omitEmpty, ",omitempty")
+			fieldTags["form"] = p.JsonFieldName
 		}
 
 		// Support x-go-json-ignore

@@ -983,7 +983,8 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 				// matching name. Reference it instead of redeclaring.
 				bodySchema.RefType = fmt.Sprintf("%s.%s", externalPkg, bodyTypeName)
 			} else {
-				if contentType == "application/x-www-form-urlencoded" {
+				if contentType == "application/x-www-form-urlencoded" ||
+					strings.HasPrefix(contentType, "multipart/form-data") {
 					// Apply the appropriate structure tag if the request
 					// schema was defined under the operations' section.
 					for i := range bodySchema.Properties {
@@ -1228,7 +1229,6 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			JsonFieldName: param.ParamName,
 			Required:      param.Required,
 			Schema:        pSchema,
-			NeedsFormTag:  param.Style() == "form",
 			Extensions:    extensions,
 		}
 		s.Properties = append(s.Properties, prop)
