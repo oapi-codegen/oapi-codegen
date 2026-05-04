@@ -5,7 +5,7 @@ package schemas
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -17,7 +17,7 @@ import (
 	"path"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
@@ -25,7 +25,7 @@ import (
 )
 
 const (
-	Access_tokenScopes = "access_token.Scopes"
+	Access_tokenScopes accessTokenContextKey = "access_token.Scopes"
 )
 
 // Defines values for EnumInObjInArrayVal.
@@ -33,6 +33,18 @@ const (
 	First  EnumInObjInArrayVal = "first"
 	Second EnumInObjInArrayVal = "second"
 )
+
+// Valid indicates whether the value is a known member of the EnumInObjInArrayVal enum.
+func (e EnumInObjInArrayVal) Valid() bool {
+	switch e {
+	case First:
+		return true
+	case Second:
+		return true
+	default:
+		return false
+	}
+}
 
 // N5StartsWithNumber This schema name starts with a number
 type N5StartsWithNumber = map[string]interface{}
@@ -52,11 +64,11 @@ type CustomStringType = string
 type DeprecatedProperty struct {
 	// NewProp Use this now!
 	NewProp string `json:"newProp"`
-	// Deprecated:
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	OldProp1 *string `json:"oldProp1,omitempty"`
 
 	// OldProp2 It used to do this and that
-	// Deprecated:
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	OldProp2 *string `json:"oldProp2,omitempty"`
 	// Deprecated: Use NewProp instead!
 	OldProp3 *string `json:"oldProp3,omitempty"`
@@ -80,7 +92,7 @@ type GenericObject = map[string]interface{}
 // NullableProperties defines model for NullableProperties.
 type NullableProperties struct {
 	Optional            *string `json:"optional,omitempty"`
-	OptionalAndNullable *string `json:"optionalAndNullable"`
+	OptionalAndNullable *string `json:"optionalAndNullable,omitempty"`
 	Required            string  `json:"required"`
 	RequiredAndNullable *string `json:"requiredAndNullable"`
 }
@@ -98,6 +110,9 @@ type InnerRenamedAnonymousObject struct {
 
 // StringInPath defines model for StringInPath.
 type StringInPath = string
+
+// accessTokenContextKey is the context key for access-token security scheme
+type accessTokenContextKey string
 
 // Issue9JSONBody defines parameters for Issue9.
 type Issue9JSONBody = interface{}
@@ -384,7 +399,7 @@ func NewEnsureEverythingIsReferencedRequest(server string) (*http.Request, error
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -411,7 +426,7 @@ func NewIssue1051Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -438,7 +453,7 @@ func NewIssue127Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -476,7 +491,7 @@ func NewIssue185RequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -492,7 +507,7 @@ func NewIssue209Request(server string, str StringInPath) (*http.Request, error) 
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "str", runtime.ParamLocationPath, str)
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "str", str, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
 	if err != nil {
 		return nil, err
 	}
@@ -512,7 +527,7 @@ func NewIssue209Request(server string, str StringInPath) (*http.Request, error) 
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -526,7 +541,7 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "fallthrough", runtime.ParamLocationPath, pFallthrough)
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "fallthrough", pFallthrough, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
 	if err != nil {
 		return nil, err
 	}
@@ -546,7 +561,7 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -573,7 +588,7 @@ func NewGetIssues375Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -587,7 +602,7 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "1param", runtime.ParamLocationPath, n1param)
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "1param", n1param, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "object", Format: ""})
 	if err != nil {
 		return nil, err
 	}
@@ -607,7 +622,7 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -646,24 +661,29 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 	}
 
 	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
 		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
 
-		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "foo", runtime.ParamLocationQuery, params.Foo); err != nil {
-			return nil, err
-		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+		if queryFrag, err := runtime.StyleParamWithOptions("form", true, "foo", params.Foo, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 			return nil, err
 		} else {
-			for k, v := range parsed {
-				for _, v2 := range v {
-					queryValues.Add(k, v2)
-				}
+			for _, qp := range strings.Split(queryFrag, "&") {
+				rawQueryFragments = append(rawQueryFragments, qp)
 			}
 		}
 
-		queryURL.RawQuery = queryValues.Encode()
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -692,7 +712,7 @@ func NewIssue975Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -808,6 +828,14 @@ func (r EnsureEverythingIsReferencedResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r EnsureEverythingIsReferencedResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type Issue1051Response struct {
 	Body                             []byte
 	HTTPResponse                     *http.Response
@@ -829,6 +857,14 @@ func (r Issue1051Response) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r Issue1051Response) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type Issue127Response struct {
@@ -856,6 +892,14 @@ func (r Issue127Response) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r Issue127Response) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type Issue185Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -875,6 +919,14 @@ func (r Issue185Response) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r Issue185Response) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type Issue209Response struct {
@@ -898,6 +950,14 @@ func (r Issue209Response) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r Issue209Response) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type Issue30Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -917,6 +977,14 @@ func (r Issue30Response) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r Issue30Response) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type GetIssues375Response struct {
@@ -941,6 +1009,14 @@ func (r GetIssues375Response) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetIssues375Response) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type Issue41Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -960,6 +1036,14 @@ func (r Issue41Response) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r Issue41Response) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type Issue9Response struct {
@@ -983,6 +1067,14 @@ func (r Issue9Response) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r Issue9Response) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type Issue975Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1003,6 +1095,14 @@ func (r Issue975Response) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r Issue975Response) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 // EnsureEverythingIsReferencedWithResponse request returning *EnsureEverythingIsReferencedResponse
@@ -1406,7 +1506,7 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.EnsureEverythingIsReferenced(ctx)
@@ -1417,7 +1517,7 @@ func (w *ServerInterfaceWrapper) EnsureEverythingIsReferenced(ctx echo.Context) 
 func (w *ServerInterfaceWrapper) Issue1051(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue1051(ctx)
@@ -1428,7 +1528,7 @@ func (w *ServerInterfaceWrapper) Issue1051(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) Issue127(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue127(ctx)
@@ -1439,7 +1539,7 @@ func (w *ServerInterfaceWrapper) Issue127(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) Issue185(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue185(ctx)
@@ -1452,12 +1552,12 @@ func (w *ServerInterfaceWrapper) Issue209(ctx echo.Context) error {
 	// ------------- Path parameter "str" -------------
 	var str StringInPath
 
-	err = runtime.BindStyledParameterWithOptions("simple", "str", ctx.Param("str"), &str, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "str", ctx.Param("str"), &str, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter str: %s", err))
 	}
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue209(ctx, str)
@@ -1470,12 +1570,12 @@ func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 	// ------------- Path parameter "fallthrough" -------------
 	var pFallthrough string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "fallthrough", ctx.Param("fallthrough"), &pFallthrough, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "fallthrough", ctx.Param("fallthrough"), &pFallthrough, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err))
 	}
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue30(ctx, pFallthrough)
@@ -1486,7 +1586,7 @@ func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetIssues375(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetIssues375(ctx)
@@ -1499,12 +1599,12 @@ func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 	// ------------- Path parameter "1param" -------------
 	var n1param N5StartsWithNumber
 
-	err = runtime.BindStyledParameterWithOptions("simple", "1param", ctx.Param("1param"), &n1param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "1param", ctx.Param("1param"), &n1param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "object", Format: ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1param: %s", err))
 	}
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue41(ctx, n1param)
@@ -1515,13 +1615,13 @@ func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params Issue9Params
 	// ------------- Required query parameter "foo" -------------
 
-	err = runtime.BindQueryParameter("form", true, true, "foo", ctx.QueryParams(), &params.Foo)
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "foo", ctx.QueryParams(), &params.Foo, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter foo: %s", err))
 	}
@@ -1535,7 +1635,7 @@ func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) Issue975(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(Access_tokenScopes, []string{})
+	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue975(ctx)
@@ -1557,78 +1657,99 @@ type EchoRouter interface {
 	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 }
 
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
-	RegisterHandlersWithBaseURL(router, si, "")
+// RegisterHandlersOptions configures RegisterHandlersWithOptions.
+type RegisterHandlersOptions struct {
+	// BaseURL is prepended to every registered path so the API can be served
+	// under a prefix.
+	BaseURL string
+	// OperationMiddlewares lets the caller attach per-operation middleware at
+	// registration time. The map key is the OpenAPI `operationId` value as it
+	// appears in the spec (the raw, un-normalized form). Operations that have
+	// no entry are registered with no extra middleware. A nil map disables
+	// per-operation middleware entirely.
+	OperationMiddlewares map[string][]echo.MiddlewareFunc
 }
 
-// Registers handlers, and prepends BaseURL to the paths, so that the paths
-// can be served under a prefix.
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
+	RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{})
+}
+
+// RegisterHandlersWithBaseURL registers handlers and prepends BaseURL to the
+// paths so the API can be served under a prefix.
 func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
+	RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{BaseURL: baseURL})
+}
+
+// RegisterHandlersWithOptions registers handlers using the supplied options,
+// including any per-operation middleware.
+func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options RegisterHandlersOptions) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced)
-	router.GET(baseURL+"/issues/1051", wrapper.Issue1051)
-	router.GET(baseURL+"/issues/127", wrapper.Issue127)
-	router.GET(baseURL+"/issues/185", wrapper.Issue185)
-	router.GET(baseURL+"/issues/209/$:str", wrapper.Issue209)
-	router.GET(baseURL+"/issues/30/:fallthrough", wrapper.Issue30)
-	router.GET(baseURL+"/issues/375", wrapper.GetIssues375)
-	router.GET(baseURL+"/issues/41/:1param", wrapper.Issue41)
-	router.GET(baseURL+"/issues/9", wrapper.Issue9)
-	router.GET(baseURL+"/issues/975", wrapper.Issue975)
+	router.GET(options.BaseURL+"/ensure-everything-is-referenced", wrapper.EnsureEverythingIsReferenced, options.OperationMiddlewares["ensureEverythingIsReferenced"]...)
+	router.GET(options.BaseURL+"/issues/1051", wrapper.Issue1051, options.OperationMiddlewares["Issue1051"]...)
+	router.GET(options.BaseURL+"/issues/127", wrapper.Issue127, options.OperationMiddlewares["Issue127"]...)
+	router.GET(options.BaseURL+"/issues/185", wrapper.Issue185, options.OperationMiddlewares["Issue185"]...)
+	router.GET(options.BaseURL+"/issues/209/$:str", wrapper.Issue209, options.OperationMiddlewares["Issue209"]...)
+	router.GET(options.BaseURL+"/issues/30/:fallthrough", wrapper.Issue30, options.OperationMiddlewares["Issue30"]...)
+	router.GET(options.BaseURL+"/issues/375", wrapper.GetIssues375, options.OperationMiddlewares["GetIssues375"]...)
+	router.GET(options.BaseURL+"/issues/41/:1param", wrapper.Issue41, options.OperationMiddlewares["Issue41"]...)
+	router.GET(options.BaseURL+"/issues/9", wrapper.Issue9, options.OperationMiddlewares["Issue9"]...)
+	router.GET(options.BaseURL+"/issues/975", wrapper.Issue975, options.OperationMiddlewares["Issue975"]...)
 
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
+// Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
+// Stored as a slice of fixed-width chunks rather than one concatenated
+// const string: with thousands of chunks the chained `+` fold is several
+// times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-
-	"H4sIAAAAAAAC/7RYXW/buBL9Kyxvgftw/Z0GbfyW2+0WLrBJ0GTRhzoPtDi22EhDlaTsCIb++2JI2bIj",
-	"yW02bV5iiZzhmTPDM6S2PNJpphHQWT7d8kwYkYID459unVG4muGNcDE9S7CRUZlTGvmUXzLrx1kmXMz2",
-	"lrzHFQ3TW97jKFLgU24dDRj4nisDkk+dyaHHbRRDKsi1K7JqmsIVL8tyN+iBnN86YZz9olx8lacLME00",
-	"d7GyLJgwWpNZb8I2ysVMMAxmvd1CevENIsfLHr/E4q7IYMyn2/pp0hJuNcIMZAYsMcYEFowcDuY4x4Ag",
-	"1nki2QKYQKbQgVmKCLblHGmt97l1Og203nkgW77UJhWOT3nkB2uIFRc9/tjXIlP9SEtYAfbh0RnRd2Jl",
-	"g7nmU74QhhNnfxC2SDiQN0ZnYFzhsxp+K/AWCBsabEb4twXmKAjUm1cNHGWP68S7HQfT3Uq7ZHZNn7RP",
-	"P1575lhuQTKnmdQBhUDJXCzcCSRnP4OECKzn9A0Iuw/3KnDBFFoHQr468P3mV8N+Ho7ycLd83SdtD4/f",
-	"t9TyB8zTGV4vvs3w0hjhk68cpLZZBWuR0D/APCX/S2UsQbYQaZQHzvc7smW56oXwS5U9/hEQjIquw4R6",
-	"V9cWV3mSiEUCN0dYjpFpT26A10x8NXiJcufL1/T+d0ct1lxuuwef5/RJhva/2/21pes6d2BIB0jYLlFj",
-	"kerczhCDwB3TojpeH4ZEgrMC08CmZHN9KseV7tPLfiXSfuXPQE9yD+d6DzfM2v6ABz+rV8FtRl36GsuN",
-	"csUtqXWIQkQRWNt3+gGQnhcgDJg/d9L46ctdP+gkCzOZnzmYI6/6BC0RjOp9FzuXhVaicKlbWgZYxyJh",
-	"wbKlNmwtjNK5Zcra3L/KUTK9BsOcSmHAbhIQFpiQkgnmdrZkOkdqBIt8xZbqEWSA5ZSj0gmr3IJZe2hr",
-	"MDasPh6MBqNQ0oAiU3zKzwajwZj3fOv0tAwBbW6gD2swhYsVrvrK9g0swQBGoZpX4Dq6IaDMtELH4FFZ",
-	"Z5nVXphY3fJZJJB6VWSANIkp9Bo2R5tB5JUMtaMJmckRpI+Lik/QMjPJp/yDB/hhj29mP9foqDBsptGG",
-	"JE9GI/oXaXSAHrTIskRF3tvwm1fD7cGZ4LjQRd2n+WsDSz7l/xnWoQyr48Jw38/L3s5m8pM2E7KJWnr0",
-	"KdtGT2+RyvDX48NQW8Px6Hzcmbu/8sSpLAGWglTCny8sI9KEQvbp9vqqJQ0z8uu9vpDz5m49nL9GObA6",
-	"BZ/qwXr8vx87eBr55G134OIBGJUTy9HmWaYN1aSH/ugqHqTG/zqWGYA0c6ye5UcHncxM3r6UmFMlcNz3",
-	"npL2mCYvcUXBD1NhHqTe4IsdFeIlaMiNhKXIE/cbyftFET+tvHfn3XJZZMBWZO8jYJsYkO2OGsNdd2O1",
-	"IDFhgO3OB91l9+68Og2Adf/XsvhlpLWco0K0BzVO8A4JmIwuhq+31pmyk4f3MUQPlqllfZ0LoUqIElFT",
-	"kBTtAU9GF7yJoXd0rfzaHlk9ZXh07SzvD0I4Gw23S5EkLjY6X8VlM4LPYKnVSvYAxUYbeXgjywz4/kxt",
-	"jpo9EejvipVwVJS0xHU2+pmwWq69B2Cfdf09Cvptd+HSgb9KTlW5wu4KmVRxoyKgdLoYGB31/bhCupwG",
-	"hZ7jJlZRXL23SgLTSxr2h/q2yv4IznNiCddvFNXGXaaxo9+Mh9uxz0F3Rd/sUnTwUUDhKnwW2H8UaEn5",
-	"m3AQ+1GCw/onc3sqyOaHjbK8P7mLL7o3b6IAXdi51jdEpjDSxkDkkoJ+J7kE6c+6lSYFGhZaFnTYm2Md",
-	"b6emXXTQ8j0HUxwUvtbPK/h/rZNVUzpk4rpSbh8ZP62KFyd2V/01hS0VJLWYrMAxUWkhHadTQNdJ2O/d",
-	"Ji1ffFoY8d/q8qhKuGzE5V+vhSlobySwhoRkQOoop9A8Ll7tvt3tzaf++N729Z7y6AW4Ko3cJNVFbDoc",
-	"VhcdujoNJECWimwgFCn8PwEAAP//WUiKvIcUAAA=",
+	"tFhdb9u4Ev0rLG+B+3D9nQZt/Jbb7RYusEnQZNGHOg+0OLbYSEOVpOwIhv77YkjZsiPJbTZtXmKJnOGZ",
+	"M8MzpLY80mmmEdBZPt3yTBiRggPjn26dUbia4Y1wMT1LsJFRmVMa+ZRfMuvHWSZczPaWvMcVDdNb3uMo",
+	"UuBTbh0NGPieKwOST53JocdtFEMqyLUrsmqawhUvy3I36IGc3zphnP2iXHyVpwswTTR3sbIsmDBak1lv",
+	"wjbKxUwwDGa93UJ68Q0ix8sev8TirshgzKfb+mnSEm41wgxkBiwxxgQWjBwO5jjHgCDWeSLZAphAptCB",
+	"WYoItuUcaa33uXU6DbTeeSBbvtQmFY5PeeQHa4gVFz3+2NciU/1IS1gB9uHRGdF3YmWDueZTvhCGE2d/",
+	"ELZIOJA3RmdgXOGzGn4r8BYIGxpsRvi3BeYoCNSbVw0cZY/rxLsdB9PdSrtkdk2ftE8/XnvmWG5BMqeZ",
+	"1AGFQMlcLNwJJGc/g4QIrOf0DQi7D/cqcMEUWgdCvjrw/eZXw34ejvJwt3zdJ20Pj9+31PIHzNMZXi++",
+	"zfDSGOGTrxyktlkFa5HQP8A8Jf9LZSxBthBplAfO9zuyZbnqhfBLlT3+ERCMiq7DhHpX1xZXeZKIRQI3",
+	"R1iOkWlPboDXTHw1eIly58vX9P53Ry3WXG67B5/n9EmG9r/b/bWl6zp3YEgHSNguUWOR6tzOEIPAHdOi",
+	"Ol4fhkSCswLTwKZkc30qx5Xu08t+JdJ+5c9AT3IP53oPN8za/oAHP6tXwW1GXfoay41yxS2pdYhCRBFY",
+	"23f6AZCeFyAMmD930vjpy10/6CQLM5mfOZgjr/oELRGM6n0XO5eFVqJwqVtaBljHImHBsqU2bC2M0rll",
+	"ytrcv8pRMr0Gw5xKYcBuEhAWmJCSCeZ2tmQ6R2oEi3zFluoRZIDllKPSCavcgll7aGswNqw+HowGo1DS",
+	"gCJTfMrPBqPBmPd86/S0DAFtbqAPazCFixWu+sr2DSzBAEahmlfgOrohoMy0QsfgUVlnmdVemFjd8lkk",
+	"kHpVZIA0iSn0GjZHm0HklQy1owmZyRGkj4uKT9AyM8mn/IMH+GGPb2Y/1+ioMGym0YYkT0Yj+hdpdIAe",
+	"tMiyREXe2/CbV8PtwZnguNBF3af5awNLPuX/GdahDKvjwnDfz8vezmbykzYTsolaevQp20ZPb5HK8Nfj",
+	"w1Bbw/HofNyZu7/yxKksAZaCVMKfLywj0oRC9un2+qolDTPy672+kPPmbj2cv0Y5sDoFn+rBevy/Hzt4",
+	"GvnkbXfg4gEYlRPL0eZZpg3VpIf+6CoepMb/OpYZgDRzrJ7lRwedzEzevpSYUyVw3PeekvaYJi9xRcEP",
+	"U2EepN7gix0V4iVoyI2EpcgT9xvJ+0URP628d+fdcllkwFZk7yNgmxiQ7Y4aw113Y7UgMWGA7c4H3WX3",
+	"7rw6DYB1/9ey+GWktZyjQrQHNU7wDgmYjC6Gr7fWmbKTh/cxRA+WqWV9nQuhSogSUVOQFO0BT0YXvImh",
+	"d3St/NoeWT1leHTtLO8PQjgbDbdLkSQuNjpfxWUzgs9gqdVK9gDFRht5eCPLDPj+TG2Omj0R6O+KlXBU",
+	"lLTEdTb6mbBarr0HYJ91/T0K+m134dKBv0pOVbnC7gqZVHGjIqB0uhgYHfX9uEK6nAaFnuMmVlFcvbdK",
+	"AtNLGvaH+rbK/gjOc2IJ128U1cZdprGj34yH27HPQXdF3+xSdPBRQOEqfBbYfxRoSfmbcBD7UYLD+idz",
+	"eyrI5oeNsrw/uYsvujdvogBd2LnWN0SmMNLGQOSSgn4nuQTpz7qVJgUaFloWdNibYx1vp6ZddNDyPQdT",
+	"HBS+1s8r+H+tk1VTOmTiulJuHxk/rYoXJ3ZX/TWFLRUktZiswDFRaSEdp1NA10nY790mLV98Whjx3+ry",
+	"qEq4bMTlX6+FKWhvJLCGhGRA6iin0DwuXu2+3e3Np/743vb1nvLoBbgqjdwk1UVsOhxWFx26Og0kQJaK",
+	"bCAUKfw/AQAA//8=",
 }
 
-// GetSwagger returns the content of the embedded swagger specification file
-// or error if failed to decode
+// decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
+// after base64-decoding and flate-decompressing the embedded blob.
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	encoded := strings.Join(swaggerSpec, "")
+	compressed, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil
@@ -1636,7 +1757,7 @@ func decodeSpec() ([]byte, error) {
 
 var rawSpec = decodeSpecCached()
 
-// a naive cached of a decoded swagger spec
+// a naive cache of the decoded OpenAPI spec
 func decodeSpecCached() func() ([]byte, error) {
 	data, err := decodeSpec()
 	return func() ([]byte, error) {
@@ -1654,12 +1775,12 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 	return res
 }
 
-// GetSwagger returns the Swagger specification corresponding to the generated code
-// in this file. The external references of Swagger specification are resolved.
-// The logic of resolving external references is tightly connected to "import-mapping" feature.
-// Externally referenced files must be embedded in the corresponding golang packages.
-// Urls can be supported but this task was out of the scope.
-func GetSwagger() (swagger *openapi3.T, err error) {
+// GetSpec returns the OpenAPI specification corresponding to the generated
+// code in this file. External references in the spec are resolved through
+// PathToRawSpec; externally-referenced files must be embedded in their
+// corresponding Go packages (via the import-mapping feature). URL-based
+// external refs are not supported.
+func GetSpec() (swagger *openapi3.T, err error) {
 	resolvePath := PathToRawSpec("")
 
 	loader := openapi3.NewLoader()
@@ -1684,4 +1805,23 @@ func GetSwagger() (swagger *openapi3.T, err error) {
 		return
 	}
 	return
+}
+
+// GetSpecJSON returns the raw JSON bytes of the embedded OpenAPI
+// specification: decompressed but not unmarshaled. External references
+// are not resolved here; the bytes are the spec exactly as embedded by
+// codegen. The result is cached at package init time, so repeated calls
+// are cheap.
+func GetSpecJSON() ([]byte, error) {
+	return rawSpec()
+}
+
+// GetSwagger returns the OpenAPI specification corresponding to the
+// generated code in this file.
+//
+// Deprecated: GetSwagger predates kin-openapi renaming openapi3.Swagger
+// to openapi3.T. Use [GetSpec] instead. This wrapper is retained for
+// backwards compatibility.
+func GetSwagger() (*openapi3.T, error) {
+	return GetSpec()
 }

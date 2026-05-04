@@ -1,0 +1,18 @@
+components:
+  schemas:
+    Default:
+      type: integer
+    SkipOptionalTrue:
+      type: integer
+      x-go-type-skip-optional-pointer: true
+    SomeObject:
+      type: object
+      properties:
+        skip_optional:
+          $ref: '#/components/schemas/SkipOptionalTrue'
+        skip_optional_override_to_false:
+          $ref: '#/components/schemas/SkipOptionalTrue'
+          x-go-type-skip-optional-pointer: false
+        skip_optional_next_to_ref:
+          $ref: '#/components/schemas/Default'
+          x-go-type-skip-optional-pointer: true

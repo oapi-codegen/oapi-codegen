@@ -1,0 +1,86 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Server URLs can be optionally generated
+servers:
+# adapted from https://spec.openapis.org/oas/v3.0.3#server-object
+- url: https://development.gigantic-server.com/v1
+  description: Development server
+- url: https://staging.gigantic-server.com/v1
+  description: Staging server
+- url: https://api.gigantic-server.com/v1
+  description: Production server
+# adapted from https://spec.openapis.org/oas/v3.0.3#server-object
+- url: https://{username}.gigantic-server.com:{port}/{basePath}
+  description: The production API server
+  variables:
+    username:
+      # note! no enum here means it is an open value
+      default: demo
+      description: this value is assigned by the service provider, in this example `gigantic-server.com`
+    port:
+      enum:
+        - '8443'
+        - '443'
+      default: '8443'
+    basePath:
+      # open meaning there is the opportunity to use special base paths as assigned by the provider, default is `v2`
+      default: v2
+    # an example of a variable declared but NOT referenced in the URL.
+    # `oapi-codegen` filters these out so they don't pollute the
+    # generated function signature with no-op parameters
+    # (https://github.com/oapi-codegen/oapi-codegen/issues/2004).
+    noDefault: {}
+# A server whose `port` enum literally includes the string `default`.
+# The previous codegen tripped over this because the enum constant for
+# the value `default` collided with the named default-pointer constant
+# (https://github.com/oapi-codegen/oapi-codegen/issues/2003); the fix
+# routes server-URL enums through the generic enum path and renames
+# the default-pointer constant to `…VariableDefaultValue`.
+- url: https://api.example.com/{port}
+  description: Conflicting default enum
+  variables:
+    port:
+      enum:
+        - 'default'
+        - '443'
+      default: 'default'
+# A server whose URL contains a `{token}` placeholder for which there
+# is no entry in `variables`. The previous codegen happily emitted a
+# function that left `{token}` in the URL, which then tripped the
+# trailing `{`/`}` runtime check on every call
+# (https://github.com/oapi-codegen/oapi-codegen/issues/2005). The fix
+# emits the undeclared placeholder as a plain `string` parameter so
+# callers can fill it in.
+- url: https://{tenant}.api.example.com
+  description: Undeclared placeholder server
+# A server whose enum has two values that fold to the same Go
+# identifier suffix (`foo` and `Foo` both `ucFirst` to `Foo`). The
+# previous codegen would have emitted two `const ...VariableFoo`
+# declarations and failed to compile; the synthesizer now appends a
+# numeric suffix to disambiguate, and the typed default-pointer
+# references the correct (post-suffix) enum constant — addressing the
+# concern raised in PR #2358 review.
+- url: https://api.example.com/{mode}
+  description: Case-only enum collision
+  variables:
+    mode:
+      enum:
+        - 'foo'
+        - 'Foo'
+      default: 'Foo'
+# clash with the previous definition of `Development server` to trigger a new name
+- url: http://localhost:80
+  description: Development server
+# clash with the previous definition of `Development server` to trigger a new name (again)
+- url: http://localhost:81
+  description: Development server
+# make sure that the lowercase `description` gets converted to an uppercase
+- url: http://localhost:82
+  description: some lowercase name
+# there may be URLs on their own, without a `description`
+- url: http://localhost:443
+# x-go-name overrides the auto-generated Go name
+- url: https://api.example.com/v2
+  description: Custom named server
+  x-go-name: MyCustomAPIServer

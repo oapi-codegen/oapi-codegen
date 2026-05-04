@@ -33,15 +33,19 @@ func TestIllegalEnumNames(t *testing.T) {
 
 	constDefs := make(map[string]string)
 	for _, d := range f.Decls {
-		switch decl := d.(type) {
-		case *ast.GenDecl:
-			if token.CONST == decl.Tok {
-				for _, s := range decl.Specs {
-					switch spec := s.(type) {
-					case *ast.ValueSpec:
-						constDefs[spec.Names[0].Name] = spec.Names[0].Obj.Decl.(*ast.ValueSpec).Values[0].(*ast.BasicLit).Value
-					}
-				}
+		decl, ok := d.(*ast.GenDecl)
+		if !ok || decl.Tok != token.CONST {
+			continue
+		}
+
+		for _, s := range decl.Specs {
+			spec, ok := s.(*ast.ValueSpec)
+			if !ok {
+				continue
+			}
+
+			if v, ok := spec.Names[0].Obj.Decl.(*ast.ValueSpec).Values[0].(*ast.BasicLit); ok {
+				constDefs[spec.Names[0].Name] = v.Value
 			}
 		}
 	}

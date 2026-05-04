@@ -24,7 +24,7 @@ func doGet(t *testing.T, app *fiber.App, rawURL string) (*http.Response, error) 
 
 	req := httptest.NewRequest("GET", u.RequestURI(), nil)
 	req.Header.Add("Accept", "application/json")
-	req.Host = u.Host
+	req.Host = "example.com"
 
 	return app.Test(req)
 }
@@ -42,7 +42,7 @@ func doPost(t *testing.T, app *fiber.App, rawURL string, jsonBody interface{}) (
 	req := httptest.NewRequest("POST", u.RequestURI(), bytes.NewReader(buf))
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
-	req.Host = u.Host
+	req.Host = "example.com"
 	return app.Test(req)
 }
 
@@ -54,7 +54,7 @@ func doDelete(t *testing.T, app *fiber.App, rawURL string) (*http.Response, erro
 
 	req := httptest.NewRequest("DELETE", u.RequestURI(), nil)
 	req.Header.Add("Accept", "application/json")
-	req.Host = u.Host
+	req.Host = "example.com"
 	return app.Test(req)
 }
 

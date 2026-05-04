@@ -1,0 +1,5 @@
+package: anonymous_inner_hoisting
+output: client.gen.go
+generate:
+  models: true
+  client: true

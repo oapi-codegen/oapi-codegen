@@ -27,6 +27,9 @@ type Reusableresponse = Example
 // MultipleRequestAndResponseTypesTextBody defines parameters for MultipleRequestAndResponseTypes.
 type MultipleRequestAndResponseTypesTextBody = string
 
+// RequiredTextBodyTextBody defines parameters for RequiredTextBody.
+type RequiredTextBodyTextBody = string
+
 // TextExampleTextBody defines parameters for TextExample.
 type TextExampleTextBody = string
 
@@ -34,6 +37,14 @@ type TextExampleTextBody = string
 type HeadersExampleParams struct {
 	Header1 string `json:"header1"`
 	Header2 *int   `json:"header2,omitempty"`
+}
+
+// UnionExample200JSONResponseBody0 defines parameters for UnionExample.
+type UnionExample200JSONResponseBody0 = string
+
+// UnionExample200JSONResponseBody defines parameters for UnionExample.
+type UnionExample200JSONResponseBody struct {
+	union json.RawMessage
 }
 
 // JSONExampleJSONRequestBody defines body for JSONExample for application/json ContentType.
@@ -57,6 +68,12 @@ type MultipleRequestAndResponseTypesMultipartRequestBody = Example
 // MultipleRequestAndResponseTypesTextRequestBody defines body for MultipleRequestAndResponseTypes for text/plain ContentType.
 type MultipleRequestAndResponseTypesTextRequestBody = MultipleRequestAndResponseTypesTextBody
 
+// RequiredJSONBodyJSONRequestBody defines body for RequiredJSONBody for application/json ContentType.
+type RequiredJSONBodyJSONRequestBody = Example
+
+// RequiredTextBodyTextRequestBody defines body for RequiredTextBody for text/plain ContentType.
+type RequiredTextBodyTextRequestBody = RequiredTextBodyTextBody
+
 // ReusableResponsesJSONRequestBody defines body for ReusableResponses for application/json ContentType.
 type ReusableResponsesJSONRequestBody = Example
 
@@ -71,6 +88,68 @@ type HeadersExampleJSONRequestBody = Example
 
 // UnionExampleJSONRequestBody defines body for UnionExample for application/json ContentType.
 type UnionExampleJSONRequestBody = Example
+
+// AsUnionExample200JSONResponseBody0 returns the union data inside the UnionExample200JSONResponseBody as a UnionExample200JSONResponseBody0
+func (t UnionExample200JSONResponseBody) AsUnionExample200JSONResponseBody0() (UnionExample200JSONResponseBody0, error) {
+	var body UnionExample200JSONResponseBody0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromUnionExample200JSONResponseBody0 overwrites any union data inside the UnionExample200JSONResponseBody as the provided UnionExample200JSONResponseBody0
+func (t *UnionExample200JSONResponseBody) FromUnionExample200JSONResponseBody0(v UnionExample200JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeUnionExample200JSONResponseBody0 performs a merge with any union data inside the UnionExample200JSONResponseBody, using the provided UnionExample200JSONResponseBody0
+func (t *UnionExample200JSONResponseBody) MergeUnionExample200JSONResponseBody0(v UnionExample200JSONResponseBody0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsExample returns the union data inside the UnionExample200JSONResponseBody as a Example
+func (t UnionExample200JSONResponseBody) AsExample() (Example, error) {
+	var body Example
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromExample overwrites any union data inside the UnionExample200JSONResponseBody as the provided Example
+func (t *UnionExample200JSONResponseBody) FromExample(v Example) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeExample performs a merge with any union data inside the UnionExample200JSONResponseBody, using the provided Example
+func (t *UnionExample200JSONResponseBody) MergeExample(v Example) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t UnionExample200JSONResponseBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *UnionExample200JSONResponseBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -164,6 +243,19 @@ type ClientInterface interface {
 	MultipleRequestAndResponseTypesWithFormdataBody(ctx context.Context, body MultipleRequestAndResponseTypesFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	MultipleRequestAndResponseTypesWithTextBody(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// NoContentHeaders request
+	NoContentHeaders(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RequiredJSONBodyWithBody request with any body
+	RequiredJSONBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RequiredJSONBody(ctx context.Context, body RequiredJSONBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RequiredTextBodyWithBody request with any body
+	RequiredTextBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RequiredTextBodyWithTextBody(ctx context.Context, body RequiredTextBodyTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ReservedGoKeywordParameters request
 	ReservedGoKeywordParameters(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -286,6 +378,66 @@ func (c *Client) MultipleRequestAndResponseTypesWithFormdataBody(ctx context.Con
 
 func (c *Client) MultipleRequestAndResponseTypesWithTextBody(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewMultipleRequestAndResponseTypesRequestWithTextBody(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) NoContentHeaders(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewNoContentHeadersRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequiredJSONBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequiredJSONBodyRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequiredJSONBody(ctx context.Context, body RequiredJSONBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequiredJSONBodyRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequiredTextBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequiredTextBodyRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) RequiredTextBodyWithTextBody(ctx context.Context, body RequiredTextBodyTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequiredTextBodyRequestWithTextBody(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -482,7 +634,7 @@ func NewJSONExampleRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -511,7 +663,7 @@ func NewMultipartExampleRequestWithBody(server string, contentType string, body 
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -540,7 +692,7 @@ func NewMultipartRelatedExampleRequestWithBody(server string, contentType string
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -575,7 +727,11 @@ func NewMultipleRequestAndResponseTypesRequestWithFormdataBody(server string, bo
 // NewMultipleRequestAndResponseTypesRequestWithTextBody calls the generic MultipleRequestAndResponseTypes builder with text/plain body
 func NewMultipleRequestAndResponseTypesRequestWithTextBody(server string, body MultipleRequestAndResponseTypesTextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	bodyReader = strings.NewReader(string(body))
+	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+		bodyReader = strings.NewReader(stringer.String())
+	} else {
+		bodyReader = strings.NewReader(fmt.Sprint(body))
+	}
 	return NewMultipleRequestAndResponseTypesRequestWithBody(server, "text/plain", bodyReader)
 }
 
@@ -598,7 +754,114 @@ func NewMultipleRequestAndResponseTypesRequestWithBody(server string, contentTyp
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewNoContentHeadersRequest generates requests for NoContentHeaders
+func NewNoContentHeadersRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/no-content-headers")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewRequiredJSONBodyRequest calls the generic RequiredJSONBody builder with application/json body
+func NewRequiredJSONBodyRequest(server string, body RequiredJSONBodyJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRequiredJSONBodyRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewRequiredJSONBodyRequestWithBody generates requests for RequiredJSONBody with any type of body
+func NewRequiredJSONBodyRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/required-json-body")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewRequiredTextBodyRequestWithTextBody calls the generic RequiredTextBody builder with text/plain body
+func NewRequiredTextBodyRequestWithTextBody(server string, body RequiredTextBodyTextRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+		bodyReader = strings.NewReader(stringer.String())
+	} else {
+		bodyReader = strings.NewReader(fmt.Sprint(body))
+	}
+	return NewRequiredTextBodyRequestWithBody(server, "text/plain", bodyReader)
+}
+
+// NewRequiredTextBodyRequestWithBody generates requests for RequiredTextBody with any type of body
+func NewRequiredTextBodyRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/required-text-body")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -614,7 +877,7 @@ func NewReservedGoKeywordParametersRequest(server string, pType string) (*http.R
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "type", runtime.ParamLocationPath, pType)
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "type", pType, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
 	if err != nil {
 		return nil, err
 	}
@@ -634,7 +897,7 @@ func NewReservedGoKeywordParametersRequest(server string, pType string) (*http.R
 		return nil, err
 	}
 
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -672,7 +935,7 @@ func NewReusableResponsesRequestWithBody(server string, contentType string, body
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -685,7 +948,11 @@ func NewReusableResponsesRequestWithBody(server string, contentType string, body
 // NewTextExampleRequestWithTextBody calls the generic TextExample builder with text/plain body
 func NewTextExampleRequestWithTextBody(server string, body TextExampleTextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	bodyReader = strings.NewReader(string(body))
+	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+		bodyReader = strings.NewReader(stringer.String())
+	} else {
+		bodyReader = strings.NewReader(fmt.Sprint(body))
+	}
 	return NewTextExampleRequestWithBody(server, "text/plain", bodyReader)
 }
 
@@ -708,7 +975,7 @@ func NewTextExampleRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -737,7 +1004,7 @@ func NewUnknownExampleRequestWithBody(server string, contentType string, body io
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -766,7 +1033,7 @@ func NewUnspecifiedContentTypeRequestWithBody(server string, contentType string,
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -806,7 +1073,7 @@ func NewURLEncodedExampleRequestWithBody(server string, contentType string, body
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -846,7 +1113,7 @@ func NewHeadersExampleRequestWithBody(server string, params *HeadersExampleParam
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -857,7 +1124,7 @@ func NewHeadersExampleRequestWithBody(server string, params *HeadersExampleParam
 
 		var headerParam0 string
 
-		headerParam0, err = runtime.StyleParamWithLocation("simple", false, "header1", runtime.ParamLocationHeader, params.Header1)
+		headerParam0, err = runtime.StyleParamWithOptions("simple", false, "header1", params.Header1, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
 		if err != nil {
 			return nil, err
 		}
@@ -867,7 +1134,7 @@ func NewHeadersExampleRequestWithBody(server string, params *HeadersExampleParam
 		if params.Header2 != nil {
 			var headerParam1 string
 
-			headerParam1, err = runtime.StyleParamWithLocation("simple", false, "header2", runtime.ParamLocationHeader, *params.Header2)
+			headerParam1, err = runtime.StyleParamWithOptions("simple", false, "header2", *params.Header2, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "integer", Format: ""})
 			if err != nil {
 				return nil, err
 			}
@@ -910,7 +1177,7 @@ func NewUnionExampleRequestWithBody(server string, contentType string, body io.R
 		return nil, err
 	}
 
-	req, err := http.NewRequest("POST", queryURL.String(), body)
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -983,6 +1250,19 @@ type ClientWithResponsesInterface interface {
 
 	MultipleRequestAndResponseTypesWithTextBodyWithResponse(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error)
 
+	// NoContentHeadersWithResponse request
+	NoContentHeadersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*NoContentHeadersResponse, error)
+
+	// RequiredJSONBodyWithBodyWithResponse request with any body
+	RequiredJSONBodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequiredJSONBodyResponse, error)
+
+	RequiredJSONBodyWithResponse(ctx context.Context, body RequiredJSONBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*RequiredJSONBodyResponse, error)
+
+	// RequiredTextBodyWithBodyWithResponse request with any body
+	RequiredTextBodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequiredTextBodyResponse, error)
+
+	RequiredTextBodyWithTextBodyWithResponse(ctx context.Context, body RequiredTextBodyTextRequestBody, reqEditors ...RequestEditorFn) (*RequiredTextBodyResponse, error)
+
 	// ReservedGoKeywordParametersWithResponse request
 	ReservedGoKeywordParametersWithResponse(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*ReservedGoKeywordParametersResponse, error)
 
@@ -1040,6 +1320,14 @@ func (r JSONExampleResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r JSONExampleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type MultipartExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1061,6 +1349,14 @@ func (r MultipartExampleResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r MultipartExampleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type MultipartRelatedExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1080,6 +1376,14 @@ func (r MultipartRelatedExampleResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r MultipartRelatedExampleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type MultipleRequestAndResponseTypesResponse struct {
@@ -1104,6 +1408,102 @@ func (r MultipleRequestAndResponseTypesResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r MultipleRequestAndResponseTypesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type NoContentHeadersResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r NoContentHeadersResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r NoContentHeadersResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r NoContentHeadersResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type RequiredJSONBodyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Example
+}
+
+// Status returns HTTPResponse.Status
+func (r RequiredJSONBodyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RequiredJSONBodyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RequiredJSONBodyResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type RequiredTextBodyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r RequiredTextBodyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RequiredTextBodyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r RequiredTextBodyResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type ReservedGoKeywordParametersResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1123,6 +1523,14 @@ func (r ReservedGoKeywordParametersResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ReservedGoKeywordParametersResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type ReusableResponsesResponse struct {
@@ -1147,6 +1555,14 @@ func (r ReusableResponsesResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ReusableResponsesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type TextExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1166,6 +1582,14 @@ func (r TextExampleResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r TextExampleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type UnknownExampleResponse struct {
@@ -1189,6 +1613,14 @@ func (r UnknownExampleResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UnknownExampleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type UnspecifiedContentTypeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1210,6 +1642,14 @@ func (r UnspecifiedContentTypeResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UnspecifiedContentTypeResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type URLEncodedExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -1229,6 +1669,14 @@ func (r URLEncodedExampleResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r URLEncodedExampleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type HeadersExampleResponse struct {
@@ -1253,15 +1701,20 @@ func (r HeadersExampleResponse) StatusCode() int {
 	return 0
 }
 
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r HeadersExampleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type UnionExampleResponse struct {
 	Body                          []byte
 	HTTPResponse                  *http.Response
 	ApplicationalternativeJSON200 *Example
-	JSON200                       *struct {
-		union json.RawMessage
-	}
+	JSON200                       *UnionExample200JSONResponseBody
 }
-type UnionExample2000 = string
 
 // Status returns HTTPResponse.Status
 func (r UnionExampleResponse) Status() string {
@@ -1277,6 +1730,14 @@ func (r UnionExampleResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UnionExampleResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 // JSONExampleWithBodyWithResponse request with arbitrary body returning *JSONExampleResponse
@@ -1345,6 +1806,49 @@ func (c *ClientWithResponses) MultipleRequestAndResponseTypesWithTextBodyWithRes
 		return nil, err
 	}
 	return ParseMultipleRequestAndResponseTypesResponse(rsp)
+}
+
+// NoContentHeadersWithResponse request returning *NoContentHeadersResponse
+func (c *ClientWithResponses) NoContentHeadersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*NoContentHeadersResponse, error) {
+	rsp, err := c.NoContentHeaders(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseNoContentHeadersResponse(rsp)
+}
+
+// RequiredJSONBodyWithBodyWithResponse request with arbitrary body returning *RequiredJSONBodyResponse
+func (c *ClientWithResponses) RequiredJSONBodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequiredJSONBodyResponse, error) {
+	rsp, err := c.RequiredJSONBodyWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequiredJSONBodyResponse(rsp)
+}
+
+func (c *ClientWithResponses) RequiredJSONBodyWithResponse(ctx context.Context, body RequiredJSONBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*RequiredJSONBodyResponse, error) {
+	rsp, err := c.RequiredJSONBody(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequiredJSONBodyResponse(rsp)
+}
+
+// RequiredTextBodyWithBodyWithResponse request with arbitrary body returning *RequiredTextBodyResponse
+func (c *ClientWithResponses) RequiredTextBodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequiredTextBodyResponse, error) {
+	rsp, err := c.RequiredTextBodyWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequiredTextBodyResponse(rsp)
+}
+
+func (c *ClientWithResponses) RequiredTextBodyWithTextBodyWithResponse(ctx context.Context, body RequiredTextBodyTextRequestBody, reqEditors ...RequestEditorFn) (*RequiredTextBodyResponse, error) {
+	rsp, err := c.RequiredTextBodyWithTextBody(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequiredTextBodyResponse(rsp)
 }
 
 // ReservedGoKeywordParametersWithResponse request returning *ReservedGoKeywordParametersResponse
@@ -1546,6 +2050,64 @@ func ParseMultipleRequestAndResponseTypesResponse(rsp *http.Response) (*Multiple
 	return response, nil
 }
 
+// ParseNoContentHeadersResponse parses an HTTP response from a NoContentHeadersWithResponse call
+func ParseNoContentHeadersResponse(rsp *http.Response) (*NoContentHeadersResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &NoContentHeadersResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseRequiredJSONBodyResponse parses an HTTP response from a RequiredJSONBodyWithResponse call
+func ParseRequiredJSONBodyResponse(rsp *http.Response) (*RequiredJSONBodyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RequiredJSONBodyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Example
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRequiredTextBodyResponse parses an HTTP response from a RequiredTextBodyWithResponse call
+func ParseRequiredTextBodyResponse(rsp *http.Response) (*RequiredTextBodyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RequiredTextBodyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ParseReservedGoKeywordParametersResponse parses an HTTP response from a ReservedGoKeywordParametersWithResponse call
 func ParseReservedGoKeywordParametersResponse(rsp *http.Response) (*ReservedGoKeywordParametersResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -1700,9 +2262,7 @@ func ParseUnionExampleResponse(rsp *http.Response) (*UnionExampleResponse, error
 		response.ApplicationalternativeJSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
-		var dest struct {
-			union json.RawMessage
-		}
+		var dest UnionExample200JSONResponseBody
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
