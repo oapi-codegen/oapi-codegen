@@ -277,6 +277,11 @@
           "description": "When set to true, automatically renames types that collide across different OpenAPI component sections (schemas, parameters, requestBodies, responses, headers) by appending a suffix based on the component section. Also detects collisions between component types and client response wrapper types. Without this, the codegen will error on duplicate type names, requiring manual resolution via x-go-name.",
           "default": false
         },
+        "generate-types-for-anonymous-schemas": {
+          "type": "boolean",
+          "description": "When true, every inline schema that would otherwise generate as an anonymous Go struct is instead emitted as a named type with a path-derived name (e.g. `GetRolesIdResponseBody_Data`). Equivalent to adding `x-go-type-name` to every inline schema; when both are present at the same site, `x-go-type-name` wins. Default false. See https://github.com/oapi-codegen/oapi-codegen/issues/1139",
+          "default": false
+        },
         "type-mapping": {
           "type": "object",
           "additionalProperties": false,

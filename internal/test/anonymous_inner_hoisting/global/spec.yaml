@@ -1,0 +1,59 @@
+openapi: "3.0.0"
+info:
+  title: Test inline struct hoisting
+  version: "1.0"
+paths:
+  /roles/{id}:
+    summary: Get role by id
+    get:
+      operationId: GetRolesId
+      tags:
+      - role
+      parameters:
+        - name: id
+          in: path
+          description: Role ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Role
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessfulResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          role:
+                            $ref: '#/components/schemas/Role'
+                        required: [ role ]
+
+components:
+  schemas:
+    SuccessfulResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          default: true
+          description: Indicated whether the response is successful.
+        data:
+          type: object
+          description: If successful, response from api
+      required:
+        - ok
+        - data
+    Role:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      required:
+        - id
+        - name
