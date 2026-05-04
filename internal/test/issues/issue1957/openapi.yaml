@@ -1,0 +1,55 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: "x-go-type and x-go-type-skip-optional-pointer should be possible to use together"
+paths:
+  /root:
+    get:
+      operationId: getRoot
+      parameters:
+        - in: query
+          name: at
+          schema:
+            type: string
+            format: date-time
+            x-go-type-skip-optional-pointer: true
+            x-go-type: googleuuid.UUID
+            x-go-type-import:
+              path: github.com/google/uuid
+              name: googleuuid
+      responses:
+        "200":
+          description: Some data
+components:
+  schemas:
+    TypeWithOptionalField:
+      type: object
+      properties:
+        at:
+          type: string
+          x-go-type-skip-optional-pointer: true
+          x-go-type: googleuuid.UUID
+          x-go-type-import:
+            path: github.com/google/uuid
+            name: googleuuid
+        at_required:
+          type: string
+          x-go-type: googleuuid.UUID
+          x-go-type-import:
+            path: github.com/google/uuid
+            name: googleuuid
+      required:
+        - at_required
+    ID:
+      type: string
+      x-go-type: googleuuid.UUID
+      x-go-type-import:
+        path: github.com/google/uuid
+        name: googleuuid
+    TypeWithAllOf:
+      type: object
+      properties:
+        id:
+          allOf:
+            - $ref: '#/components/schemas/ID'
+            - x-go-type-skip-optional-pointer: true

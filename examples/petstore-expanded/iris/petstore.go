@@ -17,7 +17,7 @@ import (
 )
 
 func NewIrisPetServer(petStore *api.PetStore, port int) *iris.Application {
-	swagger, err := api.GetSwagger()
+	swagger, err := api.GetSpec()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
 		os.Exit(1)

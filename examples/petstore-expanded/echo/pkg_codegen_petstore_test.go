@@ -38,7 +38,7 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 	}
 
 	// Get a spec from the example PetStore definition:
-	swagger, err := examplePetstore.GetSwagger()
+	swagger, err := examplePetstore.GetSpec()
 	assert.NoError(t, err)
 
 	// Run our code generation:
@@ -85,7 +85,7 @@ func TestExamplePetStoreCodeGenerationWithUserTemplates(t *testing.T) {
 	}
 
 	// Get a spec from the example PetStore definition:
-	swagger, err := examplePetstore.GetSwagger()
+	swagger, err := examplePetstore.GetSpec()
 	assert.NoError(t, err)
 
 	// Run our code generation:
@@ -121,7 +121,7 @@ func TestExamplePetStoreCodeGenerationWithFileUserTemplates(t *testing.T) {
 	}
 
 	// Get a spec from the example PetStore definition:
-	swagger, err := examplePetstore.GetSwagger()
+	swagger, err := examplePetstore.GetSpec()
 	assert.NoError(t, err)
 
 	// Run our code generation:
@@ -162,7 +162,7 @@ func TestExamplePetStoreCodeGenerationWithHTTPUserTemplates(t *testing.T) {
 	}
 
 	// Get a spec from the example PetStore definition:
-	swagger, err := examplePetstore.GetSwagger()
+	swagger, err := examplePetstore.GetSpec()
 	assert.NoError(t, err)
 
 	// Run our code generation:

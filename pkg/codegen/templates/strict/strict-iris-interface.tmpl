@@ -1,4 +1,4 @@
-{{range .}}
+{{range .}}{{if not .IsAlias}}
     {{$opid := .OperationId -}}
     type {{$opid | ucFirst}}RequestObject struct {
         {{range .PathParams -}}
@@ -32,25 +32,31 @@
         {{if (and $hasHeaders (not $isRef)) -}}
             type {{$opid}}{{$statusCode}}ResponseHeaders struct {
                 {{range .Headers -}}
-                    {{.GoName}} {{.Schema.TypeDecl}}
+                    {{.GoName}} {{.GoTypeDef}}
                 {{end -}}
             }
         {{end}}
 
         {{range .Contents}}
             {{$receiverTypeName := printf "%s%s%s%s" $opid $statusCode .NameTagOrContentType "Response"}}
-            {{if eq .NameTag "Text" -}}
-                type {{$receiverTypeName}} string
-            {{else if and $fixedStatusCode $isRef -}}
-                {{ if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (eq .NameTag "Multipart") -}}
+            {{if and $fixedStatusCode $isRef -}}
+                {{ if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) (or (eq .NameTag "Multipart") (eq .NameTag "Text")) -}}
                 type {{$receiverTypeName}} {{$ref}}{{.NameTagOrContentType}}Response
-                {{else if $isExternalRef -}}
-                type {{$receiverTypeName}} struct { {{$ref}} }
                 {{else -}}
                 type {{$receiverTypeName}} struct{ {{$ref}}{{.NameTagOrContentType}}Response }
                 {{end}}
             {{else if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
                 type {{$receiverTypeName}} {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if and .Schema.IsRef (not .Schema.IsExternalRef)}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+                {{- if and .IsJSON .Schema.HasCustomMarshalJSON}}
+
+                func (t {{$receiverTypeName}}) MarshalJSON() ([]byte, error) {
+                    return {{.Schema.TypeDecl}}(t).MarshalJSON()
+                }
+
+                func (t *{{$receiverTypeName}}) UnmarshalJSON(b []byte) error {
+                    return (*{{.Schema.TypeDecl}})(t).UnmarshalJSON(b)
+                }
+                {{- end}}
             {{else -}}
                 type {{$receiverTypeName}} struct {
                     Body {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
@@ -74,12 +80,22 @@
 
             func (response {{$receiverTypeName}}) Visit{{$opid}}Response(ctx iris.Context) error {
                 {{range $headers -}}
-                    ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{if .IsNullable -}}
+                        if response.Headers.{{.GoName}}.IsSpecified() {
+                            ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
+                        }
+                    {{else if .IsOptional -}}
+                        if response.Headers.{{.GoName}} != nil {
+                            ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
+                        }
+                    {{else -}}
+                        ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{end -}}
                 {{end -}}
                 {{if eq .NameTag "Multipart" -}}
                     writer := multipart.NewWriter(ctx.ResponseWriter())
                 {{end -}}
-                ctx.ResponseWriter().Header().Set("Content-Type", {{if eq .NameTag "Multipart"}}{{if eq .ContentType "multipart/form-data"}}writer.FormDataContentType(){{else}}mime.FormatMediaType({{.ContentType | quote }}, map[string]string{"boundary": writer.Boundary()}){{end}}{{else if .HasFixedContentType }}{{.ContentType | quote}}{{else}}response.ContentType{{end}})
+                ctx.ResponseWriter().Header().Set("Content-Type", {{if eq .NameTag "Multipart"}}{{if eq .ContentType "multipart/form-data"}}writer.FormDataContentType(){{else}}mime.FormatMediaType({{.ContentType | toGoString}}, map[string]string{"boundary": writer.Boundary()}){{end}}{{else if .HasFixedContentType }}{{.ContentType | toGoString}}{{else}}response.ContentType{{end}})
                 {{if not .IsSupported -}}
                     if response.ContentLength != 0 {
                         ctx.ResponseWriter().Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
@@ -89,7 +105,7 @@
                 {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
                 {{if .IsJSON -}}
                     {{$hasUnionElements := ne 0 (len .Schema.UnionElements)}}
-                    return ctx.JSON(&{{if $hasBodyVar}}response.Body{{else}}response{{end}}{{if $hasUnionElements}}.union{{end}})
+                    return ctx.JSON(&{{if $hasBodyVar}}response.Body{{else}}response{{end}}{{if and $hasUnionElements (not .Schema.IsExternalRef)}}.union{{end}})
                 {{else if eq .NameTag "Text" -}}
                     _, err := ctx.WriteString(string({{if $hasBodyVar}}response.Body{{else}}response{{end}}))
                     return err
@@ -107,8 +123,36 @@
                     if closer, ok := response.Body.(io.ReadCloser); ok {
                         defer closer.Close()
                     }
-                    _, err := io.Copy(ctx.ResponseWriter(), response.Body)
-                    return err
+                    {{if .IsStreamingContentType -}}
+                        flusher, ok := ctx.ResponseWriter().(http.Flusher)
+                        if !ok {
+                            // Fall back to buffered copy when the response writer
+                            // doesn't support flushing.
+                            _, err := io.Copy(ctx.ResponseWriter(), response.Body)
+                            return err
+                        }
+                        // Flush after each chunk so streaming clients see data
+                        // immediately instead of waiting on buffering.
+                        buf := make([]byte, 4096)
+                        for {
+                            n, err := response.Body.Read(buf)
+                            if n > 0 {
+                                if _, writeErr := ctx.ResponseWriter().Write(buf[:n]); writeErr != nil {
+                                    return writeErr
+                                }
+                                flusher.Flush()
+                            }
+                            if err != nil {
+                                if err == io.EOF {
+                                    return nil
+                                }
+                                return err
+                            }
+                        }
+                    {{else -}}
+                        _, err := io.Copy(ctx.ResponseWriter(), response.Body)
+                        return err
+                    {{end}}{{/* if .IsStreamingContentType */ -}}
                 {{end}}{{/* if eq .NameTag "JSON" */ -}}
             }
         {{end}}
@@ -128,20 +172,30 @@
             {{end -}}
             func (response {{$opid}}{{$statusCode}}Response) Visit{{$opid}}Response(ctx iris.Context) error {
                 {{range $headers -}}
-                    ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{if .IsNullable -}}
+                        if response.Headers.{{.GoName}}.IsSpecified() {
+                            ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
+                        }
+                    {{else if .IsOptional -}}
+                        if response.Headers.{{.GoName}} != nil {
+                            ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
+                        }
+                    {{else -}}
+                        ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+                    {{end -}}
                 {{end -}}
                 ctx.StatusCode({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 return nil
             }
         {{end}}
     {{end}}
-{{end}}
+{{end}}{{end}}
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-{{range .}}{{.SummaryAsComment }}
+{{range .}}{{if not .IsAlias}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
 {{$opid := .OperationId -}}
 {{$opid}}(ctx context.Context, request {{$opid | ucFirst}}RequestObject) ({{$opid | ucFirst}}ResponseObject, error)
-{{end}}{{/* range . */ -}}
+{{end}}{{end}}{{/* range . */ -}}
 }

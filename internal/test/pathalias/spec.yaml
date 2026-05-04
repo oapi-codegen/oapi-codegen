@@ -1,0 +1,28 @@
+openapi: "3.0.1"
+info:
+  title: test
+  description: API description.
+  version: 0.1.0
+servers: []
+paths:
+  /test:
+    get:
+      summary: test
+      operationId: getTest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/B"
+  /test2:
+    $ref: "#/paths/~1test"
+
+components:
+  schemas:
+    B:
+      type: object
+      properties:
+        A:
+          type: string
