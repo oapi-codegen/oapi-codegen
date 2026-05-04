@@ -48,7 +48,7 @@ type strictHandler struct {
 
         {{$multipleBodies := gt (len .Bodies) 1 -}}
         {{range .Bodies -}}
-            {{if $multipleBodies}}if strings.HasPrefix(r.Header.Get("Content-Type"), "{{.ContentType}}") { {{end}}
+            {{if $multipleBodies}}if strings.HasPrefix(r.Header.Get("Content-Type"), {{.ContentType | toGoString}}) { {{end}}
                 {{if .IsJSON }}
                     var body {{$opid}}{{.NameTag}}RequestBody
                     if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
