@@ -36,7 +36,8 @@ type Tree struct {
 	Location string `json:"location"`
 }
 
-// TreePlantingRequest defines model for TreePlantingRequest.
+// TreePlantingRequest A tree planting request, combining the tree details with a callback URL
+// for completion notification.
 type TreePlantingRequest struct {
 	// CallbackURL URL to receive the planting result callback
 	CallbackURL string `json:"callbackUrl"`
@@ -48,7 +49,7 @@ type TreePlantingRequest struct {
 	Location string `json:"location"`
 }
 
-// TreePlantingResult defines model for TreePlantingResult.
+// TreePlantingResult The result of a tree planting operation, sent via callback
 type TreePlantingResult struct {
 	// ID Unique identifier for this planting request
 	ID openapi_types.UUID `json:"id"`
@@ -63,7 +64,7 @@ type TreePlantingResult struct {
 	Success bool `json:"success"`
 }
 
-// TreeWithID defines model for TreeWithId.
+// TreeWithID A tree with a server-assigned identifier
 type TreeWithID struct {
 	// ID Unique identifier for this planting request
 	ID openapi_types.UUID `json:"id"`
