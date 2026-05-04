@@ -286,17 +286,6 @@ func (t *TypeDefinition) IsAlias() bool {
 	return !globalState.options.Compatibility.OldAliasing && t.Schema.DefineViaAlias
 }
 
-// SchemaSourceForComment helps us build comments above each type definition, so
-// that we can say where it came from. We could be hoisting an inline schema into
-// a top level type, or generating one from a direct schema declaration, and it's
-// nicer to keep this logic out of templates.
-func (t *TypeDefinition) SchemaSourceForComment(operationID string) string {
-	if t.JsonName != "" && t.JsonName != t.TypeName {
-		return t.JsonName
-	}
-	return operationID
-}
-
 type Discriminator struct {
 	// maps discriminator value to go type
 	Mapping map[string]string
