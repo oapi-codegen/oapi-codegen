@@ -7,7 +7,8 @@ paths:
     summary: Get role by id
     get:
       operationId: GetRolesId
-      tags: [ role ]
+      tags:
+      - role
       parameters:
         - name: id
           in: path
