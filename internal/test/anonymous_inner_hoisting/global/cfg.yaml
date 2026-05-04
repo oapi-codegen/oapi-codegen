@@ -1,0 +1,7 @@
+package: global
+output: client.gen.go
+generate:
+  models: true
+  client: true
+output-options:
+  generate-types-for-anonymous-schemas: true

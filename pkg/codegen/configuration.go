@@ -389,6 +389,15 @@ type OutputOptions struct {
 	// via x-go-name.
 	ResolveTypeNameCollisions bool `yaml:"resolve-type-name-collisions,omitempty"`
 
+	// GenerateTypesForAnonymousSchemas, when true, causes oapi-codegen to
+	// emit a named Go type for every inline schema that would otherwise
+	// generate as an anonymous `struct { ... }`. The type's name is derived
+	// from the schema path (e.g. `GetRolesIdResponseBody_Data`). Default
+	// false. Equivalent to adding `x-go-type-name` to every inline schema;
+	// when both are present at the same site, `x-go-type-name` wins.
+	// See https://github.com/oapi-codegen/oapi-codegen/issues/1139
+	GenerateTypesForAnonymousSchemas bool `yaml:"generate-types-for-anonymous-schemas,omitempty"`
+
 	// TypeMapping allows customizing OpenAPI type/format to Go type mappings.
 	// User-specified mappings are merged on top of the defaults.
 	TypeMapping *TypeMapping `yaml:"type-mapping,omitempty"`

@@ -1,4 +1,4 @@
-package: anonymous_inner_hoisting
+package: implicit
 output: client.gen.go
 generate:
   models: true

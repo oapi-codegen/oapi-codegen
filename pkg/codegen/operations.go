@@ -477,7 +477,8 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 					// equivalent block in GenerateResponseDefinitions for
 					// rationale.
 					if !IsGoTypeReference(responseRef.Ref) && responseSchema.RefType == "" &&
-						(len(responseSchema.UnionElements) != 0 || responseSchema.HasAdditionalProperties) {
+						(len(responseSchema.UnionElements) != 0 || responseSchema.HasAdditionalProperties ||
+							(globalState.options.OutputOptions.GenerateTypesForAnonymousSchemas && len(responseSchema.Properties) > 0)) {
 						if externalPkg := externalPackageFor(o.PathItemRef); externalPkg != "" {
 							responseSchema.RefType = fmt.Sprintf("%s.%s", externalPkg, responseBodyTypeName)
 						} else {
@@ -1092,7 +1093,8 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			// the imported package generated the same hoisted name, so we
 			// reference it instead of redeclaring locally.
 			if !IsGoTypeReference(responseOrRef.Ref) && contentSchema.RefType == "" &&
-				(len(contentSchema.UnionElements) != 0 || contentSchema.HasAdditionalProperties) {
+				(len(contentSchema.UnionElements) != 0 || contentSchema.HasAdditionalProperties ||
+					(globalState.options.OutputOptions.GenerateTypesForAnonymousSchemas && len(contentSchema.Properties) > 0)) {
 				if externalPkg != "" {
 					contentSchema.RefType = fmt.Sprintf("%s.%s", externalPkg, responseBodyTypeName)
 				} else {
