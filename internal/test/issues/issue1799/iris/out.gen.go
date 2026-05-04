@@ -5,11 +5,12 @@ package iris
 
 import (
 	"context"
+	"errors"
+	"io"
 	"net/http"
 	"strings"
 
 	"github.com/kataras/iris/v12"
-	strictiris "github.com/oapi-codegen/runtime/strictmiddleware/iris"
 )
 
 // PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody defines parameters for PostPostMultibody.
@@ -181,8 +182,8 @@ type StrictServerInterface interface {
 	PostPostObject(ctx context.Context, request PostPostObjectRequestObject) (PostPostObjectResponseObject, error)
 }
 
-type StrictHandlerFunc = strictiris.StrictIrisHandlerFunc
-type StrictMiddlewareFunc = strictiris.StrictIrisMiddlewareFunc
+type StrictHandlerFunc func(ctx iris.Context, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
 	return &strictHandler{ssi: ssi, middlewares: middlewares}
@@ -255,19 +256,25 @@ func (sh *strictHandler) PostPostMultibody(ctx iris.Context) {
 
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
 		if err := ctx.ReadJSON(&body); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
-			return
+			if !errors.Is(err, io.EOF) {
+				ctx.StopWithError(http.StatusBadRequest, err)
+				return
+			}
+		} else {
+			request.ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody = &body
 		}
-		request.ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody = &body
 	}
 	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"") {
 
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody
 		if err := ctx.ReadJSON(&body); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
-			return
+			if !errors.Is(err, io.EOF) {
+				ctx.StopWithError(http.StatusBadRequest, err)
+				return
+			}
+		} else {
+			request.ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body = &body
 		}
-		request.ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body = &body
 	}
 
 	handler := func(ctx iris.Context, request interface{}) (interface{}, error) {
@@ -299,10 +306,13 @@ func (sh *strictHandler) PostPostObject(ctx iris.Context) {
 
 	var body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
 	if err := ctx.ReadJSON(&body); err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
-		return
+		if !errors.Is(err, io.EOF) {
+			ctx.StopWithError(http.StatusBadRequest, err)
+			return
+		}
+	} else {
+		request.Body = &body
 	}
-	request.Body = &body
 
 	handler := func(ctx iris.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.PostPostObject(ctx, request.(PostPostObjectRequestObject))

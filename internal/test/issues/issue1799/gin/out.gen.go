@@ -4,14 +4,16 @@
 package gin
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	strictgin "github.com/oapi-codegen/runtime/strictmiddleware/gin"
 )
 
 // PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody defines parameters for PostPostMultibody.
@@ -152,19 +154,29 @@ type GetGetMultibodyResponseObject interface {
 type GetGetMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse string
 
 func (response GetGetMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitGetGetMultibodyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type GetGetMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response string
 
 func (response GetGetMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response) VisitGetGetMultibodyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type GetObjectRequestObject struct {
@@ -177,10 +189,15 @@ type GetObjectResponseObject interface {
 type GetObject200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse string
 
 func (response GetObject200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitGetObjectResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type PostPostMultibodyRequestObject struct {
@@ -216,16 +233,61 @@ type StrictServerInterface interface {
 	PostPostObject(ctx context.Context, request PostPostObjectRequestObject) (PostPostObjectResponseObject, error)
 }
 
-type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
-type StrictMiddlewareFunc = strictgin.StrictGinMiddlewareFunc
+type StrictHandlerFunc func(ctx *gin.Context, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+
+type StrictGinServerOptions struct {
+	// RequestErrorHandlerFunc is called when a request cannot be parsed or
+	// decoded. It is invoked for JSON bind failures, form parse/bind errors,
+	// multipart reader errors, media type parse errors, missing multipart
+	// boundaries, and request body read errors. The default returns 400.
+	RequestErrorHandlerFunc func(ctx *gin.Context, err error)
+	// HandlerErrorFunc is called when the application handler (or any
+	// middleware wrapping it) returns a non-nil error. The default returns 500.
+	HandlerErrorFunc func(ctx *gin.Context, err error)
+	// ResponseErrorHandlerFunc is called when the response object fails to
+	// serialize (Visit*Response returns an error) or when the handler returns
+	// an unexpected response type. The default returns 500.
+	ResponseErrorHandlerFunc func(ctx *gin.Context, err error)
+}
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
-	return &strictHandler{ssi: ssi, middlewares: middlewares}
+	return &strictHandler{ssi: ssi, middlewares: middlewares, options: StrictGinServerOptions{
+		RequestErrorHandlerFunc: func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
+		},
+		HandlerErrorFunc: func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		},
+		ResponseErrorHandlerFunc: func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		},
+	}}
+}
+
+func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc, options StrictGinServerOptions) ServerInterface {
+	if options.RequestErrorHandlerFunc == nil {
+		options.RequestErrorHandlerFunc = func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
+		}
+	}
+	if options.HandlerErrorFunc == nil {
+		options.HandlerErrorFunc = func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		}
+	}
+	if options.ResponseErrorHandlerFunc == nil {
+		options.ResponseErrorHandlerFunc = func(ctx *gin.Context, err error) {
+			ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
+		}
+	}
+	return &strictHandler{ssi: ssi, middlewares: middlewares, options: options}
 }
 
 type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
+	options     StrictGinServerOptions
 }
 
 // GetGetMultibody operation middleware
@@ -242,14 +304,13 @@ func (sh *strictHandler) GetGetMultibody(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(GetGetMultibodyResponseObject); ok {
 		if err := validResponse.VisitGetGetMultibodyResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -267,14 +328,13 @@ func (sh *strictHandler) GetObject(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(GetObjectResponseObject); ok {
 		if err := validResponse.VisitGetObjectResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -286,21 +346,25 @@ func (sh *strictHandler) PostPostMultibody(ctx *gin.Context) {
 
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
 		if err := ctx.ShouldBindJSON(&body); err != nil {
-			ctx.Status(http.StatusBadRequest)
-			ctx.Error(err)
-			return
+			if !errors.Is(err, io.EOF) {
+				sh.options.RequestErrorHandlerFunc(ctx, err)
+				return
+			}
+		} else {
+			request.ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody = &body
 		}
-		request.ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody = &body
 	}
 	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"") {
 
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody
 		if err := ctx.ShouldBindJSON(&body); err != nil {
-			ctx.Status(http.StatusBadRequest)
-			ctx.Error(err)
-			return
+			if !errors.Is(err, io.EOF) {
+				sh.options.RequestErrorHandlerFunc(ctx, err)
+				return
+			}
+		} else {
+			request.ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body = &body
 		}
-		request.ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body = &body
 	}
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
@@ -313,14 +377,13 @@ func (sh *strictHandler) PostPostMultibody(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(PostPostMultibodyResponseObject); ok {
 		if err := validResponse.VisitPostPostMultibodyResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }
 
@@ -330,11 +393,13 @@ func (sh *strictHandler) PostPostObject(ctx *gin.Context) {
 
 	var body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
 	if err := ctx.ShouldBindJSON(&body); err != nil {
-		ctx.Status(http.StatusBadRequest)
-		ctx.Error(err)
-		return
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(ctx, err)
+			return
+		}
+	} else {
+		request.Body = &body
 	}
-	request.Body = &body
 
 	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.PostPostObject(ctx, request.(PostPostObjectRequestObject))
@@ -346,13 +411,12 @@ func (sh *strictHandler) PostPostObject(ctx *gin.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.Error(err)
-		ctx.Status(http.StatusInternalServerError)
+		sh.options.HandlerErrorFunc(ctx, err)
 	} else if validResponse, ok := response.(PostPostObjectResponseObject); ok {
 		if err := validResponse.VisitPostPostObjectResponse(ctx.Writer); err != nil {
-			ctx.Error(err)
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
 		}
 	} else if response != nil {
-		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
 	}
 }

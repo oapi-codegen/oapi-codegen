@@ -5,7 +5,9 @@ package fiber
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -47,39 +49,90 @@ type ServerInterface interface {
 
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
-	Handler ServerInterface
+	Handler            ServerInterface
+	HandlerMiddlewares []HandlerMiddlewareFunc
 }
 
 type MiddlewareFunc fiber.Handler
+type HandlerMiddlewareFunc func(c *fiber.Ctx, next fiber.Handler) error
 
 // GetGetMultibody operation middleware
 func (siw *ServerInterfaceWrapper) GetGetMultibody(c *fiber.Ctx) error {
 
-	return siw.Handler.GetGetMultibody(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetGetMultibody(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // GetObject operation middleware
 func (siw *ServerInterfaceWrapper) GetObject(c *fiber.Ctx) error {
 
-	return siw.Handler.GetObject(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetObject(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // PostPostMultibody operation middleware
 func (siw *ServerInterfaceWrapper) PostPostMultibody(c *fiber.Ctx) error {
 
-	return siw.Handler.PostPostMultibody(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.PostPostMultibody(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // PostPostObject operation middleware
 func (siw *ServerInterfaceWrapper) PostPostObject(c *fiber.Ctx) error {
 
-	return siw.Handler.PostPostObject(c)
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.PostPostObject(c)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
 }
 
 // FiberServerOptions provides options for the Fiber server.
 type FiberServerOptions struct {
-	BaseURL     string
-	Middlewares []MiddlewareFunc
+	BaseURL            string
+	Middlewares        []MiddlewareFunc
+	HandlerMiddlewares []HandlerMiddlewareFunc
 }
 
 // RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
@@ -90,7 +143,8 @@ func RegisterHandlers(router fiber.Router, si ServerInterface) {
 // RegisterHandlersWithOptions creates http.Handler with additional options
 func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, options FiberServerOptions) {
 	wrapper := ServerInterfaceWrapper{
-		Handler: si,
+		Handler:            si,
+		HandlerMiddlewares: options.HandlerMiddlewares,
 	}
 
 	for _, m := range options.Middlewares {
@@ -181,8 +235,7 @@ type StrictServerInterface interface {
 	PostPostObject(ctx context.Context, request PostPostObjectRequestObject) (PostPostObjectResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx *fiber.Ctx, args interface{}) (interface{}, error)
-
+type StrictHandlerFunc func(ctx *fiber.Ctx, args any) (any, error)
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
@@ -252,17 +305,23 @@ func (sh *strictHandler) PostPostMultibody(ctx *fiber.Ctx) error {
 
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
 		if err := ctx.BodyParser(&body); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+			if !errors.Is(err, io.EOF) {
+				return fiber.NewError(fiber.StatusBadRequest, err.Error())
+			}
+		} else {
+			request.ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody = &body
 		}
-		request.ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody = &body
 	}
 	if strings.HasPrefix(string(ctx.Request().Header.ContentType()), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"") {
 
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody
 		if err := ctx.BodyParser(&body); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+			if !errors.Is(err, io.EOF) {
+				return fiber.NewError(fiber.StatusBadRequest, err.Error())
+			}
+		} else {
+			request.ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body = &body
 		}
-		request.ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body = &body
 	}
 
 	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
@@ -292,9 +351,12 @@ func (sh *strictHandler) PostPostObject(ctx *fiber.Ctx) error {
 
 	var body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
 	if err := ctx.BodyParser(&body); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		if !errors.Is(err, io.EOF) {
+			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		}
+	} else {
+		request.Body = &body
 	}
-	request.Body = &body
 
 	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
 		return sh.ssi.PostPostObject(ctx.UserContext(), request.(PostPostObjectRequestObject))

@@ -4,14 +4,16 @@
 package echo
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 
 	"github.com/labstack/echo/v4"
-	strictecho "github.com/oapi-codegen/runtime/strictmiddleware/echo"
 )
 
 // PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody defines parameters for PostPostMultibody.
@@ -104,23 +106,42 @@ type EchoRouter interface {
 	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
 }
 
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
-	RegisterHandlersWithBaseURL(router, si, "")
+// RegisterHandlersOptions configures RegisterHandlersWithOptions.
+type RegisterHandlersOptions struct {
+	// BaseURL is prepended to every registered path so the API can be served
+	// under a prefix.
+	BaseURL string
+	// OperationMiddlewares lets the caller attach per-operation middleware at
+	// registration time. The map key is the OpenAPI `operationId` value as it
+	// appears in the spec (the raw, un-normalized form). Operations that have
+	// no entry are registered with no extra middleware. A nil map disables
+	// per-operation middleware entirely.
+	OperationMiddlewares map[string][]echo.MiddlewareFunc
 }
 
-// Registers handlers, and prepends BaseURL to the paths, so that the paths
-// can be served under a prefix.
+// RegisterHandlers adds each server route to the EchoRouter.
+func RegisterHandlers(router EchoRouter, si ServerInterface) {
+	RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{})
+}
+
+// RegisterHandlersWithBaseURL registers handlers and prepends BaseURL to the
+// paths so the API can be served under a prefix.
 func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
+	RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{BaseURL: baseURL})
+}
+
+// RegisterHandlersWithOptions registers handlers using the supplied options,
+// including any per-operation middleware.
+func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options RegisterHandlersOptions) {
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
 	}
 
-	router.GET(baseURL+"/get-multibody", wrapper.GetGetMultibody)
-	router.GET(baseURL+"/object", wrapper.GetObject)
-	router.POST(baseURL+"/post-multibody", wrapper.PostPostMultibody)
-	router.POST(baseURL+"/post-object", wrapper.PostPostObject)
+	router.GET(options.BaseURL+"/get-multibody", wrapper.GetGetMultibody, options.OperationMiddlewares["GetGetMultibody"]...)
+	router.GET(options.BaseURL+"/object", wrapper.GetObject, options.OperationMiddlewares["GetObject"]...)
+	router.POST(options.BaseURL+"/post-multibody", wrapper.PostPostMultibody, options.OperationMiddlewares["PostPostMultibody"]...)
+	router.POST(options.BaseURL+"/post-object", wrapper.PostPostObject, options.OperationMiddlewares["PostPostObject"]...)
 
 }
 
@@ -134,19 +155,29 @@ type GetGetMultibodyResponseObject interface {
 type GetGetMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse string
 
 func (response GetGetMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitGetGetMultibodyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type GetGetMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response string
 
 func (response GetGetMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response) VisitGetGetMultibodyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type GetObjectRequestObject struct {
@@ -159,10 +190,15 @@ type GetObjectResponseObject interface {
 type GetObject200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse string
 
 func (response GetObject200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitGetObjectResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
 	w.Header().Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
 	w.WriteHeader(200)
-
-	return json.NewEncoder(w).Encode(response)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type PostPostMultibodyRequestObject struct {
@@ -198,8 +234,8 @@ type StrictServerInterface interface {
 	PostPostObject(ctx context.Context, request PostPostObjectRequestObject) (PostPostObjectResponseObject, error)
 }
 
-type StrictHandlerFunc = strictecho.StrictEchoHandlerFunc
-type StrictMiddlewareFunc = strictecho.StrictEchoMiddlewareFunc
+type StrictHandlerFunc func(ctx echo.Context, request any) (any, error)
+type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
 	return &strictHandler{ssi: ssi, middlewares: middlewares}
@@ -263,16 +299,22 @@ func (sh *strictHandler) PostPostMultibody(ctx echo.Context) error {
 	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"") {
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
 		if err := ctx.Bind(&body); err != nil {
-			return err
+			if !errors.Is(err, io.EOF) {
+				return err
+			}
+		} else {
+			request.ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody = &body
 		}
-		request.ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody = &body
 	}
 	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"") {
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody
 		if err := ctx.Bind(&body); err != nil {
-			return err
+			if !errors.Is(err, io.EOF) {
+				return err
+			}
+		} else {
+			request.ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body = &body
 		}
-		request.ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body = &body
 	}
 
 	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
@@ -300,9 +342,12 @@ func (sh *strictHandler) PostPostObject(ctx echo.Context) error {
 
 	var body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
 	if err := ctx.Bind(&body); err != nil {
-		return err
+		if !errors.Is(err, io.EOF) {
+			return err
+		}
+	} else {
+		request.Body = &body
 	}
-	request.Body = &body
 
 	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.PostPostObject(ctx.Request().Context(), request.(PostPostObjectRequestObject))
