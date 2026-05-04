@@ -216,7 +216,7 @@ type PostFooJSONBody struct {
 
 // PostFooParams defines parameters for PostFoo.
 type PostFooParams struct {
-	Bar *BarParameter `form:"bar,omitempty" json:"bar,omitempty"`
+	Bar *BarParameter `json:"bar,omitempty"`
 }
 
 // CreateItemJSONBody defines parameters for CreateItem.

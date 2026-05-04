@@ -1229,7 +1229,6 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			JsonFieldName: param.ParamName,
 			Required:      param.Required,
 			Schema:        pSchema,
-			NeedsFormTag:  param.Style() == "form",
 			Extensions:    extensions,
 		}
 		s.Properties = append(s.Properties, prop)

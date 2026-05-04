@@ -19,7 +19,7 @@ type FilterValue = string
 
 // ListThingsParams defines parameters for ListThings.
 type ListThingsParams struct {
-	Filter *FilterValue `form:"filter" json:"filter"`
+	Filter *FilterValue `json:"filter"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function

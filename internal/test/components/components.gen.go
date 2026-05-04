@@ -568,7 +568,7 @@ type ParamsWithAddPropsParams struct {
 	// turned into a proper type for additionalProperties to work
 	P2 struct {
 		Inner map[string]string `json:"inner"`
-	} `form:"p2" json:"p2"`
+	} `json:"p2"`
 }
 
 // BodyWithAddPropsJSONBody defines parameters for BodyWithAddProps.

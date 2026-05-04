@@ -29,7 +29,7 @@ type Response struct {
 
 // MultipartEndpointMultipartBody defines parameters for MultipartEndpoint.
 type MultipartEndpointMultipartBody struct {
-	Field *string `json:"field,omitempty"`
+	Field *string `form:"field" json:"field,omitempty"`
 }
 
 // TextEndpointTextBody defines parameters for TextEndpoint.

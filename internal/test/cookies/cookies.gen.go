@@ -14,10 +14,10 @@ import (
 // CookieParamsParams defines parameters for CookieParams.
 type CookieParamsParams struct {
 	// AuthId Cookie parameter
-	AuthId *string `form:"authId" json:"authId,omitempty"`
+	AuthId *string `json:"authId,omitempty"`
 
 	// ServerId Another cookie parameter
-	ServerId *string `form:"serverId" json:"serverId,omitempty"`
+	ServerId *string `json:"serverId,omitempty"`
 }
 
 // ServerInterface represents all server handlers.

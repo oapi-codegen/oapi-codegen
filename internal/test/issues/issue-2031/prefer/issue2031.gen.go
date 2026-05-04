@@ -16,7 +16,7 @@ import (
 
 // GetTestParams defines parameters for GetTest.
 type GetTestParams struct {
-	UserIds []int `form:"user_ids[],omitempty" json:"user_ids[],omitempty"`
+	UserIds []int `json:"user_ids[],omitempty"`
 }
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
