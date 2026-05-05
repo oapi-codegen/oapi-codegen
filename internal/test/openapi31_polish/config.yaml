@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: openapi31_polish
+generate:
+  models: true
+output-options:
+  skip-prune: true
+output: openapi31_polish.gen.go

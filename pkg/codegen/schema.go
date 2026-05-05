@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
@@ -323,6 +324,188 @@ func PropertiesEqual(a, b Property) bool {
 	return a.JsonFieldName == b.JsonFieldName && a.Schema.TypeDecl() == b.Schema.TypeDecl() && a.Required == b.Required
 }
 
+// schemaIsNullable reports whether an OpenAPI schema represents a nullable
+// type. In OpenAPI 3.0 nullability is the explicit `nullable: true` flag;
+// in OpenAPI 3.1 the `nullable` keyword was removed in favor of including
+// "null" in the type array (e.g. `type: ["string","null"]`).
+//
+// Precondition: globalState.is31 must be set (Generate() does this at
+// entry from swagger.IsOpenAPI31OrLater()). This helper does not take
+// the version flag explicitly because every call site is reached
+// through Generate(); calling it before globalState is initialized
+// will silently take the wrong branch.
+//
+// Cross-version misuse (a 3.1 spec using `nullable: true`, or a 3.0 spec
+// using `type: [..., "null"]`) is documented as invalid input -- this
+// helper trusts its input to use the version-appropriate idiom.
+func schemaIsNullable(s *openapi3.Schema) bool {
+	if s == nil {
+		return false
+	}
+	if globalState.is31 {
+		return s.Type != nil && s.Type.Includes("null")
+	}
+	return s.Nullable
+}
+
+// enumViaOneOfValue is one branch of an OpenAPI 3.1 enum-via-oneOf schema.
+// Title is the per-branch identifier (becomes the Go constant name); Value
+// is the stringified `const` (the Go literal, unquoted; the enum
+// generation pipeline applies the appropriate quoting via ValueWrapper).
+type enumViaOneOfValue struct {
+	Title string
+	Value string
+}
+
+// detectEnumViaOneOf reports whether the schema matches the OpenAPI 3.1
+// enum-via-oneOf idiom and, if so, returns the per-branch values in
+// declaration order.
+//
+// The idiom:
+//
+//	Severity:
+//	  type: integer        # or "string"
+//	  oneOf:
+//	    - title: HIGH
+//	      const: 2
+//	      description: An urgent problem    # optional
+//	    - ...
+//
+// All members must carry both `title` and `const`; no member may itself
+// be a composition (oneOf/allOf/anyOf) or declare properties. The outer
+// schema's primary type must be a scalar (string or integer).
+//
+// Gated on globalState.is31 (the keyword `const` lands in OpenAPI 3.1)
+// AND !SkipEnumViaOneOf so users can fall through to the standard union
+// generator on demand.
+//
+// Precondition: globalState (both is31 and options) must be initialized
+// (see schemaIsNullable for context).
+func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, bool) {
+	if !globalState.is31 {
+		return nil, false
+	}
+	if globalState.options.OutputOptions.SkipEnumViaOneOf {
+		return nil, false
+	}
+	if schema == nil || len(schema.OneOf) == 0 {
+		return nil, false
+	}
+	primary := schemaPrimaryType(schema.Type)
+	if primary == nil {
+		return nil, false
+	}
+	if !primary.Is("string") && !primary.Is("integer") {
+		return nil, false
+	}
+	items := make([]enumViaOneOfValue, 0, len(schema.OneOf))
+	for _, ref := range schema.OneOf {
+		if ref == nil || ref.Value == nil {
+			return nil, false
+		}
+		m := ref.Value
+		if m.Title == "" || m.Const == nil {
+			return nil, false
+		}
+		if len(m.OneOf) > 0 || len(m.AllOf) > 0 || len(m.AnyOf) > 0 {
+			return nil, false
+		}
+		if len(m.Properties) > 0 {
+			return nil, false
+		}
+		items = append(items, enumViaOneOfValue{
+			Title: m.Title,
+			Value: fmt.Sprintf("%v", m.Const),
+		})
+	}
+	return items, true
+}
+
+// describeWithExamples folds a schema's example data into its
+// description string for use in generated Go doc comments. Version-aware:
+// in 3.0 it reads schema.Example (singular); in 3.1 it reads
+// schema.Examples (plural array). Cross-version misuse is documented as
+// invalid input -- this helper does not look at the off-version field.
+//
+// The output appends `Examples: <v1>, <v2>, ...` (or `Example: <v>` in
+// 3.0) on a new paragraph after any existing description text. Non-
+// string values are JSON-encoded so structured examples render
+// readably.
+//
+// Precondition: globalState.is31 must be set (see schemaIsNullable
+// for context).
+func describeWithExamples(description string, schema *openapi3.Schema) string {
+	if schema == nil {
+		return description
+	}
+	var values []any
+	label := "Example"
+	if globalState.is31 {
+		if len(schema.Examples) == 0 {
+			return description
+		}
+		values = schema.Examples
+		label = "Examples"
+	} else {
+		if schema.Example == nil {
+			return description
+		}
+		values = []any{schema.Example}
+	}
+
+	formatted := make([]string, 0, len(values))
+	for _, v := range values {
+		formatted = append(formatted, formatExampleValue(v))
+	}
+
+	suffix := label + ": " + strings.Join(formatted, ", ")
+	if description == "" {
+		return suffix
+	}
+	return description + "\n\n" + suffix
+}
+
+// formatExampleValue renders an example value for inclusion in a Go doc
+// comment. Strings round-trip as themselves (no JSON quoting); other
+// values JSON-encode so structured examples remain readable.
+func formatExampleValue(v any) string {
+	if s, ok := v.(string); ok {
+		return s
+	}
+	if b, err := json.Marshal(v); err == nil {
+		return string(b)
+	}
+	return fmt.Sprintf("%v", v)
+}
+
+// schemaPrimaryType returns the type slice used for primitive-type dispatch
+// (`*Types.Is("string")` etc.). In OpenAPI 3.0 the type slice has at most
+// one entry and is returned unchanged. In OpenAPI 3.1 the "null" entry is
+// the nullability indicator (handled separately by schemaIsNullable); we
+// strip it here so the rest of the codegen can keep dispatching with
+// `Is("...")` as it always has.
+//
+// Precondition: globalState.is31 must be set (see schemaIsNullable
+// for context). The early-return on `!globalState.is31` is correct only
+// when the global state has actually been initialized -- a call before
+// Generate() runs would silently use the 3.0 branch.
+func schemaPrimaryType(t *openapi3.Types) *openapi3.Types {
+	if t == nil || !globalState.is31 {
+		return t
+	}
+	s := t.Slice()
+	if len(s) <= 1 {
+		return t
+	}
+	stripped := make(openapi3.Types, 0, len(s))
+	for _, name := range s {
+		if name != "null" {
+			stripped = append(stripped, name)
+		}
+	}
+	return &stripped
+}
+
 func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// Add a fallback value in case the sref is nil.
 	// i.e. the parent schema defines a type:array, but the array has
@@ -371,7 +554,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 		return Schema{
 			GoType:              refType,
-			Description:         schema.Description,
+			Description:         describeWithExamples(schema.Description, schema),
 			DefineViaAlias:      true,
 			SkipOptionalPointer: skipOptionalPointer,
 			OAPISchema:          schema,
@@ -379,7 +562,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	}
 
 	outSchema := Schema{
-		Description:         schema.Description,
+		Description:         describeWithExamples(schema.Description, schema),
 		OAPISchema:          schema,
 		SkipOptionalPointer: skipOptionalPointer,
 	}
@@ -455,6 +638,46 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			mergedSchema.SkipOptionalPointer = skipOptionalPointer
 		}
 		return mergedSchema, nil
+	}
+
+	// OpenAPI 3.1 enum-via-oneOf: a scalar schema whose oneOf branches
+	// each carry `title` + `const` is rendered as a Go typed enum, not as
+	// a union. Detection is gated by version + the SkipEnumViaOneOf flag;
+	// when the idiom does not match, fall through to standard handling
+	// (which routes oneOf into generateUnion further below).
+	if items, ok := detectEnumViaOneOf(schema); ok {
+		if err := oapiSchemaToGoType(schema, path, &outSchema); err != nil {
+			return Schema{}, fmt.Errorf("error resolving primitive type for enum-via-oneOf: %w", err)
+		}
+		// Force a typed declaration -- enums must not be aliased.
+		outSchema.DefineViaAlias = false
+		outSchema.EnumValues = make(map[string]string, len(items))
+		for _, it := range items {
+			outSchema.EnumValues[SchemaNameToTypeName(it.Title)] = it.Value
+		}
+		// Non-toplevel schemas need an explicit AdditionalType so the
+		// downstream EnumDefinition collector picks them up; toplevel
+		// schemas are already collected via the components walk.
+		if len(path) > 1 {
+			var typeName string
+			if extension, ok := schema.Extensions[extGoTypeName]; ok {
+				tn, err := extString(extension)
+				if err != nil {
+					return outSchema, fmt.Errorf("invalid value for %q: %w", extGoTypeName, err)
+				}
+				typeName = tn
+			} else {
+				typeName = SchemaNameToTypeName(PathToTypeName(path))
+			}
+			typeDef := TypeDefinition{
+				TypeName: typeName,
+				JsonName: strings.Join(path, "."),
+				Schema:   outSchema,
+			}
+			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, typeDef)
+			outSchema.RefType = typeName
+		}
+		return outSchema, nil
 	}
 
 	// Schema type and format, eg. string / binary
@@ -566,7 +789,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				}
 				description := ""
 				if p.Value != nil {
-					description = p.Value.Description
+					description = describeWithExamples(p.Value.Description, p.Value)
 				}
 
 				prop := Property{
@@ -574,7 +797,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 					Schema:        pSchema,
 					Required:      required,
 					Description:   description,
-					Nullable:      p.Value.Nullable,
+					Nullable:      schemaIsNullable(p.Value),
 					ReadOnly:      p.Value.ReadOnly,
 					WriteOnly:     p.Value.WriteOnly,
 					Extensions:    combinedSchemaExtensions(p),
@@ -622,7 +845,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 
 		return outSchema, nil
-	} else if len(schema.Enum) > 0 {
+	} else if len(schema.Enum) > 0 || (globalState.is31 && schema.Const != nil) {
 		err := oapiSchemaToGoType(schema, path, &outSchema)
 		// Enums need to be typed, so that the values aren't interchangeable,
 		// so no matter what schema conversion thinks, we need to define a
@@ -632,8 +855,16 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		if err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
-		enumValues := make([]string, len(schema.Enum))
-		for i, enumValue := range schema.Enum {
+		// OpenAPI 3.1 `const: X` is shorthand for `enum: [X]`. Fold the
+		// two through the same enum-codegen path here so a top-level
+		// `const` schema becomes a typed alias plus a singleton constant,
+		// using the same name-derivation rules `enum` uses.
+		enumSource := schema.Enum
+		if len(enumSource) == 0 {
+			enumSource = []any{schema.Const}
+		}
+		enumValues := make([]string, len(enumSource))
+		for i, enumValue := range enumSource {
 			enumValues[i] = fmt.Sprintf("%v", enumValue)
 		}
 
@@ -697,7 +928,13 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 // all non-object types.
 func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schema) error {
 	f := schema.Format
-	t := schema.Type
+	// In OpenAPI 3.1, `type` may be a multi-element array including "null"
+	// to express nullability. The dispatch below uses `*Types.Is("...")`,
+	// which only matches single-element type slices. Strip "null" up front
+	// so the dispatch sees the underlying primitive type. Nullability
+	// itself was already captured by schemaIsNullable() at the call sites
+	// that wrap the result in a pointer.
+	t := schemaPrimaryType(schema.Type)
 
 	if t.Is("array") {
 		// For arrays, we'll get the type of the Items and throw a
@@ -725,7 +962,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		}
 
 		typeDeclaration := arrayType.TypeDecl()
-		if arrayType.OAPISchema != nil && arrayType.OAPISchema.Nullable {
+		if schemaIsNullable(arrayType.OAPISchema) {
 			if globalState.options.OutputOptions.NullableType {
 				typeDeclaration = "nullable.Nullable[" + typeDeclaration + "]"
 			} else {
@@ -906,7 +1143,7 @@ func additionalPropertiesType(schema Schema) string {
 	if schema.AdditionalPropertiesType.RefType != "" {
 		addPropsType = schema.AdditionalPropertiesType.RefType
 	}
-	if schema.AdditionalPropertiesType.OAPISchema != nil && schema.AdditionalPropertiesType.OAPISchema.Nullable {
+	if schemaIsNullable(schema.AdditionalPropertiesType.OAPISchema) {
 		addPropsType = "*" + addPropsType
 	}
 	return addPropsType

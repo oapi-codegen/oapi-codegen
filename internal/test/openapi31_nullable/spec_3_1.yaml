@@ -1,0 +1,22 @@
+openapi: 3.1.0
+info:
+  title: Nullable test (OpenAPI 3.1)
+  version: 1.0.0
+  description: |
+    The Nickname field is nullable via the 3.1 idiom (the type array
+    containing "null"). The generated Go must match the 3.0 control case
+    so callers see no behavioral difference between spec versions.
+paths: {}
+components:
+  schemas:
+    Pet:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Required, non-nullable.
+        nickname:
+          type: ["string", "null"]
+          description: Optional, nullable via 3.1 type-array idiom.

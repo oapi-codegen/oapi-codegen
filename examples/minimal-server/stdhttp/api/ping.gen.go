@@ -12,6 +12,7 @@ import (
 
 // Pong defines model for Pong.
 type Pong struct {
+	// Ping Example: pong
 	Ping string `json:"ping"`
 }
 

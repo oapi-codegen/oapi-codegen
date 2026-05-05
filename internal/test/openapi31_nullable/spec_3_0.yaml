@@ -1,0 +1,22 @@
+openapi: 3.0.3
+info:
+  title: Nullable test (OpenAPI 3.0)
+  version: 1.0.0
+  description: |
+    Control case for the OpenAPI 3.1 nullable backport. The Nickname field
+    is nullable via the 3.0 idiom (the explicit `nullable: true` flag).
+paths: {}
+components:
+  schemas:
+    Pet:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Required, non-nullable.
+        nickname:
+          type: string
+          nullable: true
+          description: "Optional, nullable via 3.0 `nullable: true`."

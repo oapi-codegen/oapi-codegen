@@ -1,0 +1,103 @@
+// {{.Prefix}}ReceiverInterface represents handlers for receiving inbound
+// {{.PrefixLower}} requests. Each {{.PrefixLower}} becomes a Handle*{{.Prefix}}
+// method that the implementation fills in. The caller mounts the per-
+// {{.PrefixLower}} iris.Handler returned by {Op}{{.Prefix}}Handler at
+// whatever URL path they advertise to senders.
+type {{.Prefix}}ReceiverInterface interface {
+{{range .Operations -}}
+{{.SummaryAsComment}}
+// Handle{{.OperationId}}{{$.Prefix}} handles the {{.Method}} {{$.PrefixLower}} for {{.SourceName}}.
+Handle{{.OperationId}}{{$.Prefix}}(ctx iris.Context{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
+{{end}}
+}
+
+{{range .Operations -}}
+{{$opid := .OperationId -}}
+{{$srcName := .SourceName -}}
+// {{$opid}}{{$.Prefix}}Handler returns the iris.Handler for the {{$srcName}} {{$.PrefixLower}}.
+// Mount this at the URL path advertised to {{$.PrefixLower}} senders.
+// Parameter-binding errors set status 400 with a plain-text reason.
+// Per-handler middleware is not generated; iris's idiom prefers
+// app.Use() / Party-level middleware.
+func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface) iris.Handler {
+    return func(ctx iris.Context) {
+{{- if .RequiresParamObject}}
+        var err error
+        _ = err
+
+        // Parameter object where we will unmarshal all parameters from the context.
+        var params {{$opid}}Params
+{{range $paramIdx, $param := .QueryParams}}
+        // ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
+        {{if .IsStyled}}
+        err = runtime.BindQueryParameterWithOptions("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.Request().URL.Query(), &params.{{.GoName}}, runtime.BindQueryParameterOptions{Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+        if err != nil {
+            ctx.StatusCode(http.StatusBadRequest)
+            _, _ = ctx.WriteString(fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+            return
+        }
+        {{else}}
+        if paramValue := ctx.URLParam("{{.ParamName}}"); paramValue != "" {
+            {{if .IsPassThrough}}
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}paramValue
+            {{end}}
+            {{if .IsJson}}
+            var value {{.TypeDef}}
+            err = json.Unmarshal([]byte(paramValue), &value)
+            if err != nil {
+                ctx.StatusCode(http.StatusBadRequest)
+                _, _ = ctx.WriteString(fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+                return
+            }
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
+            {{end}}
+        }{{if .Required}} else {
+            ctx.StatusCode(http.StatusBadRequest)
+            _, _ = ctx.WriteString("Query parameter {{.ParamName}} is required, but not found")
+            return
+        }{{end}}
+        {{end}}
+{{end}}
+{{range $paramIdx, $param := .HeaderParams}}
+        // ------------- {{if .Required}}Required{{else}}Optional{{end}} header parameter "{{.ParamName}}" -------------
+        if valueList, found := ctx.Request().Header[http.CanonicalHeaderKey("{{.ParamName}}")]; found {
+            var {{.GoName}} {{.TypeDef}}
+            n := len(valueList)
+            if n != 1 {
+                ctx.StatusCode(http.StatusBadRequest)
+                _, _ = ctx.WriteString(fmt.Sprintf("Expected one value for {{.ParamName}}, got %d", n))
+                return
+            }
+            {{if .IsPassThrough}}
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}valueList[0]
+            {{end}}
+            {{if .IsJson}}
+            err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+            if err != nil {
+                ctx.StatusCode(http.StatusBadRequest)
+                _, _ = ctx.WriteString(fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+                return
+            }
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
+            {{end}}
+            {{if .IsStyled}}
+            err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+            if err != nil {
+                ctx.StatusCode(http.StatusBadRequest)
+                _, _ = ctx.WriteString(fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+                return
+            }
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
+            {{end}}
+        }{{if .Required}} else {
+            ctx.StatusCode(http.StatusBadRequest)
+            _, _ = ctx.WriteString("Header parameter {{.ParamName}} is required, but not found")
+            return
+        }{{end}}
+{{end}}
+{{- end}}
+        si.Handle{{$opid}}{{$.Prefix}}(ctx{{if .RequiresParamObject}}, params{{end}})
+    }
+}
+
+{{end}}

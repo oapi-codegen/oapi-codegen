@@ -79,6 +79,11 @@ type PostBodyRootOneOfJSONBody struct {
 	union json.RawMessage
 }
 
+// TriggerCallbackJSONBody defines parameters for TriggerCallback.
+type TriggerCallbackJSONBody struct {
+	CallbackUrl string `json:"callbackUrl"`
+}
+
 // GetResponseDeepNested200JSONResponseBody_Wrapper_Inner defines parameters for GetResponseDeepNested.
 type GetResponseDeepNested200JSONResponseBody_Wrapper_Inner struct {
 	union json.RawMessage
@@ -99,11 +104,56 @@ type GetResponseRootOneOf200JSONResponseBody struct {
 	union json.RawMessage
 }
 
+// WebhookBodyPropertyOneOfJSONBody defines parameters for WebhookBodyPropertyOneOf.
+type WebhookBodyPropertyOneOfJSONBody struct {
+	Pet *WebhookBodyPropertyOneOfJSONBody_Pet `json:"pet,omitempty"`
+}
+
+// WebhookBodyPropertyOneOfJSONBody_Pet defines parameters for WebhookBodyPropertyOneOf.
+type WebhookBodyPropertyOneOfJSONBody_Pet struct {
+	union json.RawMessage
+}
+
+// WebhookBodyRootOneOfJSONBody defines parameters for WebhookBodyRootOneOf.
+type WebhookBodyRootOneOfJSONBody struct {
+	union json.RawMessage
+}
+
+// CallbackBodyPropertyOneOfJSONBody defines parameters for CallbackBodyPropertyOneOf.
+type CallbackBodyPropertyOneOfJSONBody struct {
+	Pet *CallbackBodyPropertyOneOfJSONBody_Pet `json:"pet,omitempty"`
+}
+
+// CallbackBodyPropertyOneOfJSONBody_Pet defines parameters for CallbackBodyPropertyOneOf.
+type CallbackBodyPropertyOneOfJSONBody_Pet struct {
+	union json.RawMessage
+}
+
+// CallbackBodyRootOneOfJSONBody defines parameters for CallbackBodyRootOneOf.
+type CallbackBodyRootOneOfJSONBody struct {
+	union json.RawMessage
+}
+
 // PostBodyPropertyOneOfJSONRequestBody defines body for PostBodyPropertyOneOf for application/json ContentType.
 type PostBodyPropertyOneOfJSONRequestBody PostBodyPropertyOneOfJSONBody
 
 // PostBodyRootOneOfJSONRequestBody defines body for PostBodyRootOneOf for application/json ContentType.
 type PostBodyRootOneOfJSONRequestBody PostBodyRootOneOfJSONBody
+
+// TriggerCallbackJSONRequestBody defines body for TriggerCallback for application/json ContentType.
+type TriggerCallbackJSONRequestBody TriggerCallbackJSONBody
+
+// WebhookBodyPropertyOneOfJSONRequestBody defines body for WebhookBodyPropertyOneOf for application/json ContentType.
+type WebhookBodyPropertyOneOfJSONRequestBody WebhookBodyPropertyOneOfJSONBody
+
+// WebhookBodyRootOneOfJSONRequestBody defines body for WebhookBodyRootOneOf for application/json ContentType.
+type WebhookBodyRootOneOfJSONRequestBody WebhookBodyRootOneOfJSONBody
+
+// CallbackBodyPropertyOneOfJSONRequestBody defines body for CallbackBodyPropertyOneOf for application/json ContentType.
+type CallbackBodyPropertyOneOfJSONRequestBody CallbackBodyPropertyOneOfJSONBody
+
+// CallbackBodyRootOneOfJSONRequestBody defines body for CallbackBodyRootOneOf for application/json ContentType.
+type CallbackBodyRootOneOfJSONRequestBody CallbackBodyRootOneOfJSONBody
 
 // AsCat returns the union data inside the PostBodyPropertyOneOfJSONBody_Pet as a Cat
 func (t PostBodyPropertyOneOfJSONBody_Pet) AsCat() (Cat, error) {
@@ -477,6 +527,254 @@ func (t *GetResponseRootOneOf200JSONResponseBody) UnmarshalJSON(b []byte) error 
 	return err
 }
 
+// AsCat returns the union data inside the WebhookBodyPropertyOneOfJSONBody_Pet as a Cat
+func (t WebhookBodyPropertyOneOfJSONBody_Pet) AsCat() (Cat, error) {
+	var body Cat
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCat overwrites any union data inside the WebhookBodyPropertyOneOfJSONBody_Pet as the provided Cat
+func (t *WebhookBodyPropertyOneOfJSONBody_Pet) FromCat(v Cat) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCat performs a merge with any union data inside the WebhookBodyPropertyOneOfJSONBody_Pet, using the provided Cat
+func (t *WebhookBodyPropertyOneOfJSONBody_Pet) MergeCat(v Cat) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDog returns the union data inside the WebhookBodyPropertyOneOfJSONBody_Pet as a Dog
+func (t WebhookBodyPropertyOneOfJSONBody_Pet) AsDog() (Dog, error) {
+	var body Dog
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDog overwrites any union data inside the WebhookBodyPropertyOneOfJSONBody_Pet as the provided Dog
+func (t *WebhookBodyPropertyOneOfJSONBody_Pet) FromDog(v Dog) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDog performs a merge with any union data inside the WebhookBodyPropertyOneOfJSONBody_Pet, using the provided Dog
+func (t *WebhookBodyPropertyOneOfJSONBody_Pet) MergeDog(v Dog) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t WebhookBodyPropertyOneOfJSONBody_Pet) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *WebhookBodyPropertyOneOfJSONBody_Pet) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsCat returns the union data inside the WebhookBodyRootOneOfJSONBody as a Cat
+func (t WebhookBodyRootOneOfJSONBody) AsCat() (Cat, error) {
+	var body Cat
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCat overwrites any union data inside the WebhookBodyRootOneOfJSONBody as the provided Cat
+func (t *WebhookBodyRootOneOfJSONBody) FromCat(v Cat) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCat performs a merge with any union data inside the WebhookBodyRootOneOfJSONBody, using the provided Cat
+func (t *WebhookBodyRootOneOfJSONBody) MergeCat(v Cat) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDog returns the union data inside the WebhookBodyRootOneOfJSONBody as a Dog
+func (t WebhookBodyRootOneOfJSONBody) AsDog() (Dog, error) {
+	var body Dog
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDog overwrites any union data inside the WebhookBodyRootOneOfJSONBody as the provided Dog
+func (t *WebhookBodyRootOneOfJSONBody) FromDog(v Dog) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDog performs a merge with any union data inside the WebhookBodyRootOneOfJSONBody, using the provided Dog
+func (t *WebhookBodyRootOneOfJSONBody) MergeDog(v Dog) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t WebhookBodyRootOneOfJSONBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *WebhookBodyRootOneOfJSONBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsCat returns the union data inside the CallbackBodyPropertyOneOfJSONBody_Pet as a Cat
+func (t CallbackBodyPropertyOneOfJSONBody_Pet) AsCat() (Cat, error) {
+	var body Cat
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCat overwrites any union data inside the CallbackBodyPropertyOneOfJSONBody_Pet as the provided Cat
+func (t *CallbackBodyPropertyOneOfJSONBody_Pet) FromCat(v Cat) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCat performs a merge with any union data inside the CallbackBodyPropertyOneOfJSONBody_Pet, using the provided Cat
+func (t *CallbackBodyPropertyOneOfJSONBody_Pet) MergeCat(v Cat) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDog returns the union data inside the CallbackBodyPropertyOneOfJSONBody_Pet as a Dog
+func (t CallbackBodyPropertyOneOfJSONBody_Pet) AsDog() (Dog, error) {
+	var body Dog
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDog overwrites any union data inside the CallbackBodyPropertyOneOfJSONBody_Pet as the provided Dog
+func (t *CallbackBodyPropertyOneOfJSONBody_Pet) FromDog(v Dog) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDog performs a merge with any union data inside the CallbackBodyPropertyOneOfJSONBody_Pet, using the provided Dog
+func (t *CallbackBodyPropertyOneOfJSONBody_Pet) MergeDog(v Dog) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t CallbackBodyPropertyOneOfJSONBody_Pet) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *CallbackBodyPropertyOneOfJSONBody_Pet) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsCat returns the union data inside the CallbackBodyRootOneOfJSONBody as a Cat
+func (t CallbackBodyRootOneOfJSONBody) AsCat() (Cat, error) {
+	var body Cat
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCat overwrites any union data inside the CallbackBodyRootOneOfJSONBody as the provided Cat
+func (t *CallbackBodyRootOneOfJSONBody) FromCat(v Cat) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCat performs a merge with any union data inside the CallbackBodyRootOneOfJSONBody, using the provided Cat
+func (t *CallbackBodyRootOneOfJSONBody) MergeCat(v Cat) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDog returns the union data inside the CallbackBodyRootOneOfJSONBody as a Dog
+func (t CallbackBodyRootOneOfJSONBody) AsDog() (Dog, error) {
+	var body Dog
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDog overwrites any union data inside the CallbackBodyRootOneOfJSONBody as the provided Dog
+func (t *CallbackBodyRootOneOfJSONBody) FromDog(v Dog) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDog performs a merge with any union data inside the CallbackBodyRootOneOfJSONBody, using the provided Dog
+func (t *CallbackBodyRootOneOfJSONBody) MergeDog(v Dog) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t CallbackBodyRootOneOfJSONBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *CallbackBodyRootOneOfJSONBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
@@ -560,6 +858,11 @@ type ClientInterface interface {
 
 	PostBodyRootOneOf(ctx context.Context, body PostBodyRootOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TriggerCallbackWithBody request with any body
+	TriggerCallbackWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	TriggerCallback(ctx context.Context, body TriggerCallbackJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetResponseDeepNested request
 	GetResponseDeepNested(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -611,6 +914,30 @@ func (c *Client) PostBodyRootOneOfWithBody(ctx context.Context, contentType stri
 
 func (c *Client) PostBodyRootOneOf(ctx context.Context, body PostBodyRootOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostBodyRootOneOfRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TriggerCallbackWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTriggerCallbackRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *Client) TriggerCallback(ctx context.Context, body TriggerCallbackJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewTriggerCallbackRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -730,6 +1057,46 @@ func NewPostBodyRootOneOfRequestWithBody(server string, contentType string, body
 	}
 
 	operationPath := fmt.Sprintf("/body-root-oneof")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewTriggerCallbackRequest calls the generic TriggerCallback builder with application/json body
+func NewTriggerCallbackRequest(server string, body TriggerCallbackJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewTriggerCallbackRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewTriggerCallbackRequestWithBody generates requests for TriggerCallback with any type of body
+func NewTriggerCallbackRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/callback-trigger")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -910,6 +1277,11 @@ type ClientWithResponsesInterface interface {
 
 	PostBodyRootOneOfWithResponse(ctx context.Context, body PostBodyRootOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBodyRootOneOfResponse, error)
 
+	// TriggerCallbackWithBodyWithResponse request with any body
+	TriggerCallbackWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TriggerCallbackResponse, error)
+
+	TriggerCallbackWithResponse(ctx context.Context, body TriggerCallbackJSONRequestBody, reqEditors ...RequestEditorFn) (*TriggerCallbackResponse, error)
+
 	// GetResponseDeepNestedWithResponse request
 	GetResponseDeepNestedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetResponseDeepNestedResponse, error)
 
@@ -975,6 +1347,35 @@ func (r PostBodyRootOneOfResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r PostBodyRootOneOfResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type TriggerCallbackResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// Status returns HTTPResponse.Status
+func (r TriggerCallbackResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r TriggerCallbackResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r TriggerCallbackResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -1141,6 +1542,23 @@ func (c *ClientWithResponses) PostBodyRootOneOfWithResponse(ctx context.Context,
 	return ParsePostBodyRootOneOfResponse(rsp)
 }
 
+// TriggerCallbackWithBodyWithResponse request with arbitrary body returning *TriggerCallbackResponse
+func (c *ClientWithResponses) TriggerCallbackWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TriggerCallbackResponse, error) {
+	rsp, err := c.TriggerCallbackWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTriggerCallbackResponse(rsp)
+}
+
+func (c *ClientWithResponses) TriggerCallbackWithResponse(ctx context.Context, body TriggerCallbackJSONRequestBody, reqEditors ...RequestEditorFn) (*TriggerCallbackResponse, error) {
+	rsp, err := c.TriggerCallback(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseTriggerCallbackResponse(rsp)
+}
+
 // GetResponseDeepNestedWithResponse request returning *GetResponseDeepNestedResponse
 func (c *ClientWithResponses) GetResponseDeepNestedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetResponseDeepNestedResponse, error) {
 	rsp, err := c.GetResponseDeepNested(ctx, reqEditors...)
@@ -1202,6 +1620,22 @@ func ParsePostBodyRootOneOfResponse(rsp *http.Response) (*PostBodyRootOneOfRespo
 	}
 
 	response := &PostBodyRootOneOfResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseTriggerCallbackResponse parses an HTTP response from a TriggerCallbackWithResponse call
+func ParseTriggerCallbackResponse(rsp *http.Response) (*TriggerCallbackResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &TriggerCallbackResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -1317,4 +1751,379 @@ func ParseGetResponseRootOneOfResponse(rsp *http.Response) (*GetResponseRootOneO
 	}
 
 	return response, nil
+}
+
+// WebhookInitiator sends OpenAPI 3.1 webhook requests to target URLs.
+// Modeled on the generated Client, but with no stored Server -- the full
+// target URL is provided per-call by the caller (typically discovered
+// from a subscription registration).
+type WebhookInitiator struct {
+	// Doer for performing requests, typically a *http.Client with any
+	// customized settings, such as certificate chains.
+	Client HttpRequestDoer
+
+	// A list of callbacks for modifying requests which are generated before sending over
+	// the network.
+	RequestEditors []RequestEditorFn
+}
+
+// WebhookInitiatorOption allows setting custom parameters during construction.
+type WebhookInitiatorOption func(*WebhookInitiator) error
+
+// NewWebhookInitiator creates a new WebhookInitiator with reasonable defaults.
+func NewWebhookInitiator(opts ...WebhookInitiatorOption) (*WebhookInitiator, error) {
+	initiator := WebhookInitiator{}
+	for _, o := range opts {
+		if err := o(&initiator); err != nil {
+			return nil, err
+		}
+	}
+	if initiator.Client == nil {
+		initiator.Client = &http.Client{}
+	}
+	return &initiator, nil
+}
+
+// WithWebhookHTTPClient allows overriding the default Doer, which is
+// automatically created using http.Client. This is useful for tests.
+func WithWebhookHTTPClient(doer HttpRequestDoer) WebhookInitiatorOption {
+	return func(p *WebhookInitiator) error {
+		p.Client = doer
+		return nil
+	}
+}
+
+// WithWebhookRequestEditorFn allows setting up a callback function, which
+// will be called right before sending the webhook request. This can be
+// used to mutate the request, e.g. to add signature headers.
+func WithWebhookRequestEditorFn(fn RequestEditorFn) WebhookInitiatorOption {
+	return func(p *WebhookInitiator) error {
+		p.RequestEditors = append(p.RequestEditors, fn)
+		return nil
+	}
+}
+
+func (p *WebhookInitiator) applyWebhookEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
+	for _, r := range p.RequestEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	for _, r := range additionalEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// WebhookInitiatorInterface is the interface specification for the webhook initiator.
+type WebhookInitiatorInterface interface {
+	// WebhookBodyPropertyOneOfWithBody fires the webhookBodyPropertyOneOf webhook with any body
+	WebhookBodyPropertyOneOfWithBody(ctx context.Context, targetURL string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	WebhookBodyPropertyOneOf(ctx context.Context, targetURL string, body WebhookBodyPropertyOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// WebhookBodyRootOneOfWithBody fires the webhookBodyRootOneOf webhook with any body
+	WebhookBodyRootOneOfWithBody(ctx context.Context, targetURL string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	WebhookBodyRootOneOf(ctx context.Context, targetURL string, body WebhookBodyRootOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (p *WebhookInitiator) WebhookBodyPropertyOneOfWithBody(ctx context.Context, targetURL string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWebhookBodyPropertyOneOfWebhookRequestWithBody(targetURL, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := p.applyWebhookEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return p.Client.Do(req)
+}
+
+func (p *WebhookInitiator) WebhookBodyPropertyOneOf(ctx context.Context, targetURL string, body WebhookBodyPropertyOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWebhookBodyPropertyOneOfWebhookRequest(targetURL, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := p.applyWebhookEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return p.Client.Do(req)
+}
+
+func (p *WebhookInitiator) WebhookBodyRootOneOfWithBody(ctx context.Context, targetURL string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWebhookBodyRootOneOfWebhookRequestWithBody(targetURL, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := p.applyWebhookEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return p.Client.Do(req)
+}
+
+func (p *WebhookInitiator) WebhookBodyRootOneOf(ctx context.Context, targetURL string, body WebhookBodyRootOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewWebhookBodyRootOneOfWebhookRequest(targetURL, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := p.applyWebhookEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return p.Client.Do(req)
+}
+
+// NewWebhookBodyPropertyOneOfWebhookRequest builds a application/json POST request for the webhookBodyPropertyOneOf webhook
+func NewWebhookBodyPropertyOneOfWebhookRequest(targetURL string, body WebhookBodyPropertyOneOfJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewWebhookBodyPropertyOneOfWebhookRequestWithBody(targetURL, "application/json", bodyReader)
+}
+
+// NewWebhookBodyPropertyOneOfWebhookRequestWithBody builds a POST request for the webhookBodyPropertyOneOf webhook with any body
+func NewWebhookBodyPropertyOneOfWebhookRequestWithBody(targetURL string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+	_ = err
+
+	reqURL, err := url.Parse(targetURL)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, reqURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewWebhookBodyRootOneOfWebhookRequest builds a application/json POST request for the webhookBodyRootOneOf webhook
+func NewWebhookBodyRootOneOfWebhookRequest(targetURL string, body WebhookBodyRootOneOfJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewWebhookBodyRootOneOfWebhookRequestWithBody(targetURL, "application/json", bodyReader)
+}
+
+// NewWebhookBodyRootOneOfWebhookRequestWithBody builds a POST request for the webhookBodyRootOneOf webhook with any body
+func NewWebhookBodyRootOneOfWebhookRequestWithBody(targetURL string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+	_ = err
+
+	reqURL, err := url.Parse(targetURL)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, reqURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// CallbackInitiator sends OpenAPI callback requests to target URLs.
+// Modeled on the generated Client, but with no stored Server -- the full
+// target URL is provided per-call by the caller (typically discovered
+// from a callback expression on the parent operation's request body,
+// e.g. `{$request.body#/callbackUrl}`).
+type CallbackInitiator struct {
+	// Doer for performing requests, typically a *http.Client with any
+	// customized settings, such as certificate chains.
+	Client HttpRequestDoer
+
+	// A list of callbacks for modifying requests which are generated before sending over
+	// the network.
+	RequestEditors []RequestEditorFn
+}
+
+// CallbackInitiatorOption allows setting custom parameters during construction.
+type CallbackInitiatorOption func(*CallbackInitiator) error
+
+// NewCallbackInitiator creates a new CallbackInitiator with reasonable defaults.
+func NewCallbackInitiator(opts ...CallbackInitiatorOption) (*CallbackInitiator, error) {
+	initiator := CallbackInitiator{}
+	for _, o := range opts {
+		if err := o(&initiator); err != nil {
+			return nil, err
+		}
+	}
+	if initiator.Client == nil {
+		initiator.Client = &http.Client{}
+	}
+	return &initiator, nil
+}
+
+// WithCallbackHTTPClient allows overriding the default Doer, which is
+// automatically created using http.Client. This is useful for tests.
+func WithCallbackHTTPClient(doer HttpRequestDoer) CallbackInitiatorOption {
+	return func(p *CallbackInitiator) error {
+		p.Client = doer
+		return nil
+	}
+}
+
+// WithCallbackRequestEditorFn allows setting up a callback function, which
+// will be called right before sending the callback request. This can be
+// used to mutate the request, e.g. to add signature headers.
+func WithCallbackRequestEditorFn(fn RequestEditorFn) CallbackInitiatorOption {
+	return func(p *CallbackInitiator) error {
+		p.RequestEditors = append(p.RequestEditors, fn)
+		return nil
+	}
+}
+
+func (p *CallbackInitiator) applyCallbackEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
+	for _, r := range p.RequestEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	for _, r := range additionalEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// CallbackInitiatorInterface is the interface specification for the callback initiator.
+type CallbackInitiatorInterface interface {
+	// CallbackBodyPropertyOneOfWithBody fires the callbackBodyPropertyOneOf callback with any body
+	CallbackBodyPropertyOneOfWithBody(ctx context.Context, targetURL string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CallbackBodyPropertyOneOf(ctx context.Context, targetURL string, body CallbackBodyPropertyOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CallbackBodyRootOneOfWithBody fires the callbackBodyRootOneOf callback with any body
+	CallbackBodyRootOneOfWithBody(ctx context.Context, targetURL string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CallbackBodyRootOneOf(ctx context.Context, targetURL string, body CallbackBodyRootOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (p *CallbackInitiator) CallbackBodyPropertyOneOfWithBody(ctx context.Context, targetURL string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCallbackBodyPropertyOneOfCallbackRequestWithBody(targetURL, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := p.applyCallbackEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return p.Client.Do(req)
+}
+
+func (p *CallbackInitiator) CallbackBodyPropertyOneOf(ctx context.Context, targetURL string, body CallbackBodyPropertyOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCallbackBodyPropertyOneOfCallbackRequest(targetURL, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := p.applyCallbackEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return p.Client.Do(req)
+}
+
+func (p *CallbackInitiator) CallbackBodyRootOneOfWithBody(ctx context.Context, targetURL string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCallbackBodyRootOneOfCallbackRequestWithBody(targetURL, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := p.applyCallbackEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return p.Client.Do(req)
+}
+
+func (p *CallbackInitiator) CallbackBodyRootOneOf(ctx context.Context, targetURL string, body CallbackBodyRootOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCallbackBodyRootOneOfCallbackRequest(targetURL, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := p.applyCallbackEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return p.Client.Do(req)
+}
+
+// NewCallbackBodyPropertyOneOfCallbackRequest builds a application/json POST request for the callbackBodyPropertyOneOf callback
+func NewCallbackBodyPropertyOneOfCallbackRequest(targetURL string, body CallbackBodyPropertyOneOfJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCallbackBodyPropertyOneOfCallbackRequestWithBody(targetURL, "application/json", bodyReader)
+}
+
+// NewCallbackBodyPropertyOneOfCallbackRequestWithBody builds a POST request for the callbackBodyPropertyOneOf callback with any body
+func NewCallbackBodyPropertyOneOfCallbackRequestWithBody(targetURL string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+	_ = err
+
+	reqURL, err := url.Parse(targetURL)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, reqURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewCallbackBodyRootOneOfCallbackRequest builds a application/json POST request for the callbackBodyRootOneOf callback
+func NewCallbackBodyRootOneOfCallbackRequest(targetURL string, body CallbackBodyRootOneOfJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCallbackBodyRootOneOfCallbackRequestWithBody(targetURL, "application/json", bodyReader)
+}
+
+// NewCallbackBodyRootOneOfCallbackRequestWithBody builds a POST request for the callbackBodyRootOneOf callback with any body
+func NewCallbackBodyRootOneOfCallbackRequestWithBody(targetURL string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+	_ = err
+
+	reqURL, err := url.Parse(targetURL)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, reqURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
 }

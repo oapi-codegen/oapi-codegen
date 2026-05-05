@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: enum_via_oneof
+generate:
+  models: true
+output-options:
+  skip-prune: true
+output: enum_via_oneof.gen.go

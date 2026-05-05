@@ -312,10 +312,6 @@ func main() {
 		errExit("error loading swagger spec in %s\n: %s\n", flag.Arg(0), err)
 	}
 
-	if strings.HasPrefix(swagger.OpenAPI, "3.1.") {
-		fmt.Fprintln(os.Stderr, "WARNING: You are using an OpenAPI 3.1.x specification, which is not yet supported by oapi-codegen (https://github.com/oapi-codegen/oapi-codegen/issues/373) and so some functionality may not be available. Until oapi-codegen supports OpenAPI 3.1, it is recommended to downgrade your spec to 3.0.x")
-	}
-
 	if len(noVCSVersionOverride) > 0 {
 		opts.NoVCSVersionOverride = &noVCSVersionOverride
 	}

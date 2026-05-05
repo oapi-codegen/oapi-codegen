@@ -121,6 +121,74 @@ func TestBodyPropertyOneOf_RoundTripDog(t *testing.T) {
 	require.Equal(t, dog, got)
 }
 
+func TestWebhookBodyRootOneOf_RoundTripCat(t *testing.T) {
+	cat := Cat{Kind: CatKindCat, Name: ptr("whiskers")}
+
+	var body WebhookBodyRootOneOfJSONBody
+	require.NoError(t, body.FromCat(cat))
+
+	b, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	var decoded WebhookBodyRootOneOfJSONBody
+	require.NoError(t, json.Unmarshal(b, &decoded))
+
+	got, err := decoded.AsCat()
+	require.NoError(t, err)
+	require.Equal(t, cat, got)
+}
+
+func TestWebhookBodyPropertyOneOf_RoundTripDog(t *testing.T) {
+	dog := Dog{Kind: DogKindDog, Name: ptr("rex")}
+
+	var pet WebhookBodyPropertyOneOfJSONBody_Pet
+	require.NoError(t, pet.FromDog(dog))
+
+	b, err := json.Marshal(pet)
+	require.NoError(t, err)
+
+	var decoded WebhookBodyPropertyOneOfJSONBody_Pet
+	require.NoError(t, json.Unmarshal(b, &decoded))
+
+	got, err := decoded.AsDog()
+	require.NoError(t, err)
+	require.Equal(t, dog, got)
+}
+
+func TestCallbackBodyRootOneOf_RoundTripCat(t *testing.T) {
+	cat := Cat{Kind: CatKindCat, Name: ptr("whiskers")}
+
+	var body CallbackBodyRootOneOfJSONBody
+	require.NoError(t, body.FromCat(cat))
+
+	b, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	var decoded CallbackBodyRootOneOfJSONBody
+	require.NoError(t, json.Unmarshal(b, &decoded))
+
+	got, err := decoded.AsCat()
+	require.NoError(t, err)
+	require.Equal(t, cat, got)
+}
+
+func TestCallbackBodyPropertyOneOf_RoundTripDog(t *testing.T) {
+	dog := Dog{Kind: DogKindDog, Name: ptr("rex")}
+
+	var pet CallbackBodyPropertyOneOfJSONBody_Pet
+	require.NoError(t, pet.FromDog(dog))
+
+	b, err := json.Marshal(pet)
+	require.NoError(t, err)
+
+	var decoded CallbackBodyPropertyOneOfJSONBody_Pet
+	require.NoError(t, json.Unmarshal(b, &decoded))
+
+	got, err := decoded.AsDog()
+	require.NoError(t, err)
+	require.Equal(t, dog, got)
+}
+
 func TestMergeOverwritesPriorBranch(t *testing.T) {
 	cat := Cat{Kind: CatKindCat, Name: ptr("whiskers")}
 	dog := Dog{Kind: DogKindDog, Name: ptr("rex")}

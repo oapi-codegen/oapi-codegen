@@ -1,0 +1,138 @@
+openapi: "3.1.0"
+info:
+  version: 1.0.0
+  title: Tree Farm
+  description: |
+    A tree planting service that demonstrates OpenAPI callbacks.
+    The client submits a tree planting request along with a callback URL.
+    When the tree has been planted, the server sends a POST to the callback URL
+    to notify the client of the result.
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+paths:
+  /api/plant_tree:
+    post:
+      summary: Request a tree planting
+      description: |
+        Submits a request to plant a tree at the specified location.
+        This is a long-running operation — the server accepts the request
+        and later notifies the caller via the provided callback URL.
+      operationId: PlantTree
+      requestBody:
+        $ref: '#/components/requestBodies/TreePlanting'
+      responses:
+        '202':
+          description: Tree planting request accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TreeWithId'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+      callbacks:
+        treePlanted:
+          '{$request.body#/callbackUrl}':
+            post:
+              summary: Tree planting result notification
+              description: |
+                Sent by the server to the callback URL when the tree planting
+                operation completes (successfully or not).
+              operationId: TreePlanted
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/TreePlantingResult'
+              responses:
+                '200':
+                  description: Callback received successfully
+                default:
+                  description: unexpected error
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Tree:
+      type: object
+      description: A tree to be planted
+      required:
+        - location
+        - kind
+      properties:
+        location:
+          type: string
+          description: Where to plant the tree (e.g. "north meadow")
+        kind:
+          type: string
+          description: What kind of tree to plant (e.g. "oak")
+
+    TreePlantingRequest:
+      description: |
+        A tree planting request, combining the tree details with a callback URL
+        for completion notification.
+      allOf:
+        - $ref: '#/components/schemas/Tree'
+        - type: object
+          required:
+            - callbackUrl
+          properties:
+            callbackUrl:
+              type: string
+              format: uri
+              description: URL to receive the planting result callback
+
+    TreeWithId:
+      description: A tree with a server-assigned identifier
+      allOf:
+        - $ref: '#/components/schemas/Tree'
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              format: uuid
+              description: Unique identifier for this planting request
+
+    TreePlantingResult:
+      description: The result of a tree planting operation, sent via callback
+      allOf:
+        - $ref: '#/components/schemas/TreeWithId'
+        - type: object
+          required:
+            - success
+          properties:
+            success:
+              type: boolean
+              description: Whether the tree was successfully planted
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+        message:
+          type: string
+          description: Error message
+
+  requestBodies:
+    TreePlanting:
+      description: Tree planting request
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/TreePlantingRequest'

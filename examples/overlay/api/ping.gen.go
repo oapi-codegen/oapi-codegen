@@ -19,6 +19,7 @@ import (
 
 // OverriddenPong defines model for Pong.
 type OverriddenPong struct {
+	// Ping Example: pong
 	Ping string `json:"ping"`
 }
 

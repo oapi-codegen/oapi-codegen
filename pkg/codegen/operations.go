@@ -332,6 +332,24 @@ type OperationDefinition struct {
 	IsAlias             bool                    // True when this path is a $ref alias of another path item
 	AliasTarget         string                  // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
 	PathItemRef         string                  // The path item's $ref (if any); used to qualify externally-loaded schemas referenced from this operation's responses
+
+	// IsWebhook is true when this OperationDefinition was sourced from
+	// spec.Webhooks (OpenAPI 3.1+). Webhook operations have no path
+	// template; the target URL is supplied per-call by the initiator.
+	IsWebhook bool
+	// WebhookName is the spec.Webhooks map key when IsWebhook is true.
+	WebhookName string
+
+	// IsCallback is true when this OperationDefinition was sourced from
+	// a parent operation's `callbacks:` block (OpenAPI 3.0+). Callback
+	// operations have no path template at codegen time; the target URL
+	// is the runtime callback URL discovered via the spec's callback
+	// expression (typically a field on the parent operation's request
+	// body) and is supplied per-call by the initiator.
+	IsCallback bool
+	// CallbackName is the parent operation's `callbacks:` map key
+	// (e.g. "treePlanted") when IsCallback is true.
+	CallbackName string
 }
 
 // HandlerName returns the OperationId to use when referencing the server-side
@@ -353,6 +371,40 @@ func (o *OperationDefinition) MiddlewareKey() string {
 		return o.SpecOperationId
 	}
 	return o.OperationId
+}
+
+// SourceName returns WebhookName when IsWebhook, CallbackName when
+// IsCallback, or empty otherwise. Templates use this to label the
+// emitted handler uniformly without branching on which kind of source
+// the operation came from.
+func (o OperationDefinition) SourceName() string {
+	if o.IsWebhook {
+		return o.WebhookName
+	}
+	if o.IsCallback {
+		return o.CallbackName
+	}
+	return ""
+}
+
+// ReceiverTemplateData is the input to the per-framework webhook /
+// callback receiver template. Prefix selects between "Webhook" and
+// "Callback" (and the lowercase form for prose), so a single template
+// per framework handles both kinds.
+type ReceiverTemplateData struct {
+	Prefix      string // "Webhook" or "Callback"
+	PrefixLower string // lowercase form of Prefix, for prose
+	Operations  []OperationDefinition
+}
+
+// NewReceiverTemplateData builds the template input for the given
+// prefix ("Webhook" or "Callback") and operation list.
+func NewReceiverTemplateData(prefix string, ops []OperationDefinition) ReceiverTemplateData {
+	return ReceiverTemplateData{
+		Prefix:      prefix,
+		PrefixLower: strings.ToLower(prefix),
+		Operations:  ops,
+	}
 }
 
 // Params returns the list of all parameters except Path parameters. Path parameters
@@ -895,6 +947,238 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	return operations, nil
 }
 
+// WebhookOperationDefinitions extracts OpenAPI 3.1+ webhook operations
+// from swagger.Webhooks into the same OperationDefinition shape used for
+// path operations, so they flow through the same downstream pipeline
+// (body / response generation, type definitions, etc.) but are routed
+// to webhook-specific templates.
+//
+// kin-openapi only populates the Webhooks field for OpenAPI 3.1+
+// documents, so a missing/empty map naturally short-circuits this for
+// 3.0 specs without an explicit version check.
+//
+// The result mirrors OperationDefinitions in structure, minus the
+// path-alias logic (webhooks have no path template) and the path-
+// parameter extraction (webhooks have no path params).
+func WebhookOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
+	var operations []OperationDefinition
+	if swagger == nil || len(swagger.Webhooks) == 0 {
+		return operations, nil
+	}
+
+	for _, webhookName := range SortedMapKeys(swagger.Webhooks) {
+		pathItem := swagger.Webhooks[webhookName]
+		if pathItem == nil {
+			continue
+		}
+
+		// Path-item-level parameters apply to every method on the
+		// webhook (rare for webhooks, but honored defensively).
+		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
+		if err != nil {
+			return nil, fmt.Errorf("error describing webhook %q parameters: %w", webhookName, err)
+		}
+
+		pathOps := pathItem.Operations()
+		for _, opName := range SortedMapKeys(pathOps) {
+			op := pathOps[opName]
+
+			// Prefer an explicit operationId on the webhook operation;
+			// otherwise derive from the webhook map key. Either way,
+			// run through the configured name normalizer.
+			operationId := op.OperationID
+			if operationId == "" {
+				operationId = webhookName
+			}
+			operationId = nameNormalizer(operationId)
+			operationId = typeNamePrefix(operationId) + operationId
+
+			localParams, err := DescribeParameters(op.Parameters, []string{operationId + "Params"})
+			if err != nil {
+				return nil, fmt.Errorf("error describing webhook %q operation params: %w", webhookName, err)
+			}
+			allParams, err := CombineOperationParameters(globalParams, localParams)
+			if err != nil {
+				return nil, err
+			}
+
+			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(operationId, op.RequestBody, pathItem.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("error generating body definitions for webhook %q: %w", webhookName, err)
+			}
+
+			responseDefinitions, err := GenerateResponseDefinitions(operationId, op.Responses.Map(), pathItem.Ref)
+			if err != nil {
+				return nil, fmt.Errorf("error generating response definitions for webhook %q: %w", webhookName, err)
+			}
+
+			opDef := OperationDefinition{
+				HeaderParams:    FilterParameterDefinitionByType(allParams, "header"),
+				QueryParams:     FilterParameterDefinitionByType(allParams, "query"),
+				CookieParams:    FilterParameterDefinitionByType(allParams, "cookie"),
+				OperationId:     nameNormalizer(operationId),
+				Summary:         op.Summary,
+				Method:          opName,
+				Path:            "",
+				Spec:            op,
+				Bodies:          bodyDefinitions,
+				Responses:       responseDefinitions,
+				TypeDefinitions: typeDefinitions,
+				IsWebhook:       true,
+				WebhookName:     webhookName,
+			}
+
+			if op.Security != nil {
+				opDef.SecurityDefinitions = DescribeSecurityDefinition(*op.Security)
+			} else {
+				opDef.SecurityDefinitions = DescribeSecurityDefinition(swagger.Security)
+			}
+
+			if op.RequestBody != nil {
+				opDef.BodyRequired = op.RequestBody.Value.Required
+			}
+
+			opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
+			operations = append(operations, opDef)
+		}
+	}
+	return operations, nil
+}
+
+// CallbackOperationDefinitions extracts OpenAPI callback operations
+// from spec.Paths.<path>.<method>.Callbacks into the same
+// OperationDefinition shape used for path operations, so they flow
+// through the same downstream pipeline (body / response generation,
+// type definitions, etc.) but are routed to callback-specific
+// templates.
+//
+// Callbacks have been part of the OpenAPI spec since 3.0, so this is
+// not gated on version: any spec that declares callbacks gets them
+// generated. The spec shape:
+//
+//	paths:
+//	  /api/plant_tree:
+//	    post:
+//	      operationId: PlantTree
+//	      callbacks:
+//	        treePlanted:                 # the callback map key
+//	          '{$request.body#/url}':    # the runtime URL expression
+//	            post:
+//	              operationId: TreePlanted
+//
+// Each leaf operation (the inner `post:` above) becomes one
+// OperationDefinition with IsCallback=true and CallbackName set to the
+// outer map key ("treePlanted"). The codegen does not interpret the URL
+// expression itself -- the caller of the generated CallbackInitiator
+// supplies the resolved target URL at runtime (the same way it would
+// for a webhook).
+func CallbackOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
+	var operations []OperationDefinition
+	if swagger == nil || swagger.Paths == nil {
+		return operations, nil
+	}
+
+	for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
+		pathItem := swagger.Paths.Value(requestPath)
+		if pathItem == nil {
+			continue
+		}
+		// Iterate path-item operations in sorted method order for
+		// deterministic output across runs (Operations() returns a
+		// map; range order is randomized).
+		parentOps := pathItem.Operations()
+		for _, parentMethod := range SortedMapKeys(parentOps) {
+			parentOp := parentOps[parentMethod]
+			if len(parentOp.Callbacks) == 0 {
+				continue
+			}
+			for _, callbackName := range SortedMapKeys(parentOp.Callbacks) {
+				cbRef := parentOp.Callbacks[callbackName]
+				if cbRef == nil || cbRef.Value == nil {
+					continue
+				}
+				cb := cbRef.Value
+				// A Callback maps URL-expression to PathItem; iterate
+				// in sorted key order for deterministic output. The
+				// internal map is private so use the accessor pair.
+				cbKeys := append([]string(nil), cb.Keys()...)
+				slices.Sort(cbKeys)
+				for _, urlExpr := range cbKeys {
+					cbPathItem := cb.Value(urlExpr)
+					if cbPathItem == nil {
+						continue
+					}
+					globalParams, err := DescribeParameters(cbPathItem.Parameters, nil)
+					if err != nil {
+						return nil, fmt.Errorf("error describing callback %q parameters: %w", callbackName, err)
+					}
+
+					cbOps := cbPathItem.Operations()
+					for _, opName := range SortedMapKeys(cbOps) {
+						op := cbOps[opName]
+
+						operationId := op.OperationID
+						if operationId == "" {
+							operationId = callbackName
+						}
+						operationId = nameNormalizer(operationId)
+						operationId = typeNamePrefix(operationId) + operationId
+
+						localParams, err := DescribeParameters(op.Parameters, []string{operationId + "Params"})
+						if err != nil {
+							return nil, fmt.Errorf("error describing callback %q operation params: %w", callbackName, err)
+						}
+						allParams, err := CombineOperationParameters(globalParams, localParams)
+						if err != nil {
+							return nil, err
+						}
+
+						bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(operationId, op.RequestBody, cbPathItem.Ref)
+						if err != nil {
+							return nil, fmt.Errorf("error generating body definitions for callback %q: %w", callbackName, err)
+						}
+
+						responseDefinitions, err := GenerateResponseDefinitions(operationId, op.Responses.Map(), cbPathItem.Ref)
+						if err != nil {
+							return nil, fmt.Errorf("error generating response definitions for callback %q: %w", callbackName, err)
+						}
+
+						opDef := OperationDefinition{
+							HeaderParams:    FilterParameterDefinitionByType(allParams, "header"),
+							QueryParams:     FilterParameterDefinitionByType(allParams, "query"),
+							CookieParams:    FilterParameterDefinitionByType(allParams, "cookie"),
+							OperationId:     nameNormalizer(operationId),
+							Summary:         op.Summary,
+							Method:          opName,
+							Path:            "",
+							Spec:            op,
+							Bodies:          bodyDefinitions,
+							Responses:       responseDefinitions,
+							TypeDefinitions: typeDefinitions,
+							IsCallback:      true,
+							CallbackName:    callbackName,
+						}
+
+						if op.Security != nil {
+							opDef.SecurityDefinitions = DescribeSecurityDefinition(*op.Security)
+						} else {
+							opDef.SecurityDefinitions = DescribeSecurityDefinition(swagger.Security)
+						}
+
+						if op.RequestBody != nil {
+							opDef.BodyRequired = op.RequestBody.Value.Required
+						}
+
+						opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
+						operations = append(operations, opDef)
+					}
+				}
+			}
+		}
+	}
+	return operations, nil
+}
+
 func generateDefaultOperationID(opName string, requestPath string) (string, error) {
 	if opName == "" {
 		return "", fmt.Errorf("operation name cannot be an empty string")
@@ -1121,7 +1405,10 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			if err != nil {
 				return nil, fmt.Errorf("error generating response header definition: %w", err)
 			}
-			nullable := header.Value.Schema != nil && header.Value.Schema.Value != nil && header.Value.Schema.Value.Nullable
+			var nullable bool
+			if header.Value.Schema != nil {
+				nullable = schemaIsNullable(header.Value.Schema.Value)
+			}
 			headerDefinition := ResponseHeaderDefinition{
 				Name:     headerName,
 				GoName:   SchemaNameToTypeName(headerName),
@@ -1351,6 +1638,93 @@ func GenerateClient(t *template.Template, ops []OperationDefinition) (string, er
 // unmarshaling.
 func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition) (string, error) {
 	return GenerateTemplates([]string{"client-with-responses.tmpl"}, t, ops)
+}
+
+// GenerateWebhookInitiator generates the WebhookInitiator -- the
+// client-side analog for OpenAPI 3.1 webhooks. It mirrors the path
+// Client (struct + options + per-method calls + request builders) but
+// takes the target URL per-call instead of from a stored Server field.
+// The caller passes only the webhook OperationDefinitions (gathered via
+// WebhookOperationDefinitions); path operations are emitted by the
+// regular Client templates.
+func GenerateWebhookInitiator(t *template.Template, webhookOps []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"webhook-initiator.tmpl"}, t, webhookOps)
+}
+
+// GenerateCallbackInitiator generates the CallbackInitiator -- the
+// client-side analog for OpenAPI callbacks. Structurally identical to
+// GenerateWebhookInitiator but takes the callback OperationDefinitions
+// gathered via CallbackOperationDefinitions, which walk paths/operations/
+// callbacks rather than spec.Webhooks.
+func GenerateCallbackInitiator(t *template.Template, callbackOps []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"callback-initiator.tmpl"}, t, callbackOps)
+}
+
+// GenerateStdHTTPReceiver renders the merged stdhttp receiver template
+// (used for both webhook and callback receivers). The caller selects
+// between them by passing prefix "Webhook" or "Callback" along with the
+// matching OperationDefinitions. The template emits a {Prefix}Receiver
+// interface plus per-operation {Op}{Prefix}Handler factories with
+// query/header parameter binding inline (matching the param-binding
+// machinery used by the path-server middleware).
+func GenerateStdHTTPReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"stdhttp/std-http-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+}
+
+// GenerateChiReceiver renders the chi receiver template. Chi shares
+// stdhttp's (w, r) handler signature, so the template is structurally
+// identical -- only the file path and (in the future, if needed)
+// framework-specific helpers differ.
+func GenerateChiReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"chi/chi-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+}
+
+// GenerateGorillaReceiver renders the gorilla/mux receiver template.
+// Gorilla shares stdhttp's (w, r) handler signature, so the template
+// is structurally identical to stdhttp's.
+func GenerateGorillaReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"gorilla/gorilla-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+}
+
+// GenerateEchoReceiver renders the echo (v4) receiver template. Echo's
+// handler shape is `(ctx echo.Context) error`, and binding errors are
+// returned via echo.NewHTTPError so echo's framework error chain
+// reports them as 400 -- there's no errHandler argument like the
+// stdhttp receiver factory has.
+func GenerateEchoReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"echo/echo-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+}
+
+// GenerateEcho5Receiver renders the echo (v5) receiver template. Same
+// shape as v4 but with `*echo.Context` (pointer) -- the only API
+// difference between echo v4 and v5 that affects the receiver.
+func GenerateEcho5Receiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"echo/v5/echo-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+}
+
+// GenerateGinReceiver renders the gin receiver template. Gin's handler
+// shape is `(c *gin.Context)` (no error return); binding errors abort
+// with c.JSON(400, gin.H{"error": ...}). Per-handler middleware is not
+// generated here -- gin's idiom prefers engine .Use() composition.
+func GenerateGinReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"gin/gin-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+}
+
+// GenerateFiberReceiver renders the fiber (v2) receiver template.
+// Fiber's handler shape is `(c *fiber.Ctx) error`; binding errors are
+// returned via fiber.NewError so fiber's error chain reports them as
+// 400. Per-handler middleware is not generated; use fiber.App.Use().
+func GenerateFiberReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"fiber/fiber-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+}
+
+// GenerateIrisReceiver renders the iris receiver template. Iris's
+// handler shape is `(ctx iris.Context)` (no error return); binding
+// errors set ctx.StatusCode(400) plus ctx.WriteString and return.
+// Per-handler middleware is not generated; use app.Use() at the
+// engine or Party level.
+func GenerateIrisReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"iris/iris-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
 }
 
 // GenerateTemplates used to generate templates
