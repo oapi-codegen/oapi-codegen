@@ -747,7 +747,11 @@ type ReceiverTemplateData struct {
 	// "*fiber.Ctx" vs "fiber.Ctx" for fiber v2/v3. Only the echo and fiber
 	// receiver templates read it; the other frameworks' templates embed
 	// their fixed context type directly and leave this empty.
-	CtxType    string
+	CtxType string
+	// AttachErr is the echo.HTTPError method call (".SetInternal(err)" for v4,
+	// ".Wrap(err)" for v5) that keeps a binding error server-side instead of
+	// putting it in the response body. Only the echo receiver template reads it.
+	AttachErr  string
 	Operations []OperationDefinition
 }
 
@@ -2999,6 +3003,7 @@ func GenerateGorillaReceiver(t *template.Template, prefix string, ops []Operatio
 func GenerateEchoReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
 	data := NewReceiverTemplateData(prefix, ops)
 	data.CtxType = "echo.Context"
+	data.AttachErr = ".SetInternal(err)"
 	return GenerateTemplates([]string{"echo/echo-receiver.tmpl"}, t, data)
 }
 
@@ -3008,6 +3013,7 @@ func GenerateEchoReceiver(t *template.Template, prefix string, ops []OperationDe
 func GenerateEcho5Receiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
 	data := NewReceiverTemplateData(prefix, ops)
 	data.CtxType = "*echo.Context"
+	data.AttachErr = ".Wrap(err)"
 	return GenerateTemplates([]string{"echo/echo-receiver.tmpl"}, t, data)
 }
 

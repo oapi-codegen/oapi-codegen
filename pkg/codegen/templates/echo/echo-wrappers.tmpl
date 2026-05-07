@@ -20,7 +20,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx {{block "echo.ctxType" .}
 {{if .IsStyled}}
     err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", ctx.Param("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"{{unionTypes .SchemaTypes}}, ValueIsUnescaped: ctx.Request().URL.RawPath == ""})
     if err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: '%s'", ctx.Param("{{.ParamName}}"))){{template "echo.attachErr"}}
     }
 {{end}}
 {{end}}
@@ -41,7 +41,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx {{block "echo.ctxType" .}
     {{if .IsStyled}}
     err = runtime.BindQueryParameterWithOptions("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.QueryParams(), &params.{{.GoName}}, runtime.BindQueryParameterOptions{Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"{{unionTypes .SchemaTypes}}})
     if err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: '%s'", strings.Join(ctx.QueryParams()["{{.ParamName}}"], ","))){{template "echo.attachErr"}}
     }
     {{else}}
     if paramValue := ctx.QueryParam("{{.ParamName}}"); paramValue != "" {
@@ -83,7 +83,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx {{block "echo.ctxType" .}
 {{if .IsStyled}}
         err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"{{unionTypes .SchemaTypes}}})
         if err != nil {
-            return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+            return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: '%s'", valueList[0])){{template "echo.attachErr"}}
         }
 {{end}}
         params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
@@ -115,7 +115,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx {{block "echo.ctxType" .}
     var value {{.TypeDef}}
     err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"{{unionTypes .SchemaTypes}}})
     if err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: '%s'", cookie.Value)){{template "echo.attachErr"}}
     }
     params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
     {{end}}
@@ -131,3 +131,5 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx {{block "echo.ctxType" .}
     return err
 }
 {{end}}{{end}}
+{{/* How a binding error is kept server-side instead of going into the response body; echo v5 overrides this in v5/hooks.tmpl. */}}
+{{define "echo.attachErr"}}.SetInternal(err){{end}}

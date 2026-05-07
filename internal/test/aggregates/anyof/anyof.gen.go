@@ -1435,14 +1435,14 @@ func (w *ServerInterfaceWrapper) GetParamTest(ctx echo.Context) error {
 
 	err = runtime.BindQueryParameterWithOptions("form", true, false, "test", ctx.QueryParams(), &params.Test, runtime.BindQueryParameterOptions{Type: "", Format: ""})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter test: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter test: '%s'", strings.Join(ctx.QueryParams()["test"], ","))).SetInternal(err)
 	}
 
 	// ------------- Optional query parameter "test2" -------------
 
 	err = runtime.BindQueryParameterWithOptions("form", true, false, "test2", ctx.QueryParams(), &params.Test2, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter test2: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter test2: '%s'", strings.Join(ctx.QueryParams()["test2"], ","))).SetInternal(err)
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
