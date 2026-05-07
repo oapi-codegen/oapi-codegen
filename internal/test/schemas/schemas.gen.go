@@ -1554,7 +1554,7 @@ func (w *ServerInterfaceWrapper) Issue209(ctx echo.Context) error {
 
 	err = runtime.BindStyledParameterWithOptions("simple", "str", ctx.Param("str"), &str, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter str: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter str: '%s'", ctx.Param("str"))).SetInternal(err)
 	}
 
 	ctx.Set(string(Access_tokenScopes), []string{})
@@ -1572,7 +1572,7 @@ func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 
 	err = runtime.BindStyledParameterWithOptions("simple", "fallthrough", ctx.Param("fallthrough"), &pFallthrough, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter fallthrough: '%s'", ctx.Param("fallthrough"))).SetInternal(err)
 	}
 
 	ctx.Set(string(Access_tokenScopes), []string{})
@@ -1601,7 +1601,7 @@ func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 
 	err = runtime.BindStyledParameterWithOptions("simple", "1param", ctx.Param("1param"), &n1param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "object", Format: ""})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1param: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1param: '%s'", ctx.Param("1param"))).SetInternal(err)
 	}
 
 	ctx.Set(string(Access_tokenScopes), []string{})
@@ -1623,7 +1623,7 @@ func (w *ServerInterfaceWrapper) Issue9(ctx echo.Context) error {
 
 	err = runtime.BindQueryParameterWithOptions("form", true, true, "foo", ctx.QueryParams(), &params.Foo, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter foo: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter foo: '%s'", ctx.QueryParams().Get("foo"))).SetInternal(err)
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
