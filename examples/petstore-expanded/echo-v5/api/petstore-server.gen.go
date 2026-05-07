@@ -50,14 +50,14 @@ func (w *ServerInterfaceWrapper) FindPets(ctx *echo.Context) error {
 
 	err = runtime.BindQueryParameterWithOptions("form", true, false, "tags", ctx.QueryParams(), &params.Tags, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter tags: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter tags: '%s'", ctx.QueryParams().Get("tags"))).Wrap(err)
 	}
 
 	// ------------- Optional query parameter "limit" -------------
 
 	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", ctx.QueryParams(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter limit: '%s'", ctx.QueryParams().Get("limit"))).Wrap(err)
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -82,7 +82,7 @@ func (w *ServerInterfaceWrapper) DeletePet(ctx *echo.Context) error {
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64"})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: '%s'", ctx.Param("id"))).Wrap(err)
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -98,7 +98,7 @@ func (w *ServerInterfaceWrapper) FindPetByID(ctx *echo.Context) error {
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64"})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: '%s'", ctx.Param("id"))).Wrap(err)
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
