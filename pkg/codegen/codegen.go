@@ -218,44 +218,10 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
 	TemplateFunctions["jsonNewEncoder"] = func(bufVarName string) string {
-		enc := globalState.options.OutputOptions.JSONEncoding
-		if !enc.NeedsCustomEncoding() {
-			return "json.NewEncoder(&" + bufVarName + ")"
-		}
-		var sb strings.Builder
-		sb.WriteString("func() *json.Encoder {\n")
-		sb.WriteString("__e := json.NewEncoder(&" + bufVarName + ")\n")
-		if !enc.EscapeHTMLValue() {
-			sb.WriteString("__e.SetEscapeHTML(false)\n")
-		}
-		if enc.Indent != "" || enc.IndentPrefix != "" {
-			fmt.Fprintf(&sb, "__e.SetIndent(%q, %q)\n", enc.IndentPrefix, enc.Indent)
-		}
-		sb.WriteString("return __e\n")
-		sb.WriteString("}()")
-		return sb.String()
+		return jsonNewEncoderExpr(globalState.options.OutputOptions.JSONEncoding, bufVarName)
 	}
 	TemplateFunctions["jsonMarshalExpr"] = func(varName string) string {
-		enc := globalState.options.OutputOptions.JSONEncoding
-		if !enc.NeedsCustomEncoding() {
-			return "json.Marshal(" + varName + ")"
-		}
-		var sb strings.Builder
-		sb.WriteString("func() ([]byte, error) {\n")
-		sb.WriteString("var __buf bytes.Buffer\n")
-		sb.WriteString("__enc := json.NewEncoder(&__buf)\n")
-		if !enc.EscapeHTMLValue() {
-			sb.WriteString("__enc.SetEscapeHTML(false)\n")
-		}
-		if enc.Indent != "" || enc.IndentPrefix != "" {
-			fmt.Fprintf(&sb, "__enc.SetIndent(%q, %q)\n", enc.IndentPrefix, enc.Indent)
-		}
-		sb.WriteString("if __err := __enc.Encode(" + varName + "); __err != nil {\n")
-		sb.WriteString("return nil, __err\n")
-		sb.WriteString("}\n")
-		sb.WriteString("return bytes.TrimRight(__buf.Bytes(), \"\\n\"), nil\n")
-		sb.WriteString("}()")
-		return sb.String()
+		return jsonMarshalExpr(globalState.options.OutputOptions.JSONEncoding, varName)
 	}
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
