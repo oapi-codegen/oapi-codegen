@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: issue1808
+generate:
+  models: true
+output: issue1808.gen.go
+output-options:
+  skip-prune: true
+import-mapping:
+  id/spec.yaml: github.com/oapi-codegen/oapi-codegen/internal/test/issues/issue-1808/id
+  idparam/spec.yaml: github.com/oapi-codegen/oapi-codegen/internal/test/issues/issue-1808/idparam
