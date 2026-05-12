@@ -329,5 +329,109 @@ paths:
 	assert.Contains(t, code, "roleName string")
 }
 
+func TestJSONEncodingOptions(t *testing.T) {
+	// Spec with a oneOf type (triggers union.tmpl MarshalJSON) and a type
+	// with additionalProperties (triggers additional-properties.tmpl MarshalJSON).
+	const spec = `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: JSON encoding test
+components:
+  schemas:
+    Cat:
+      type: object
+      properties:
+        name:
+          type: string
+    Dog:
+      type: object
+      properties:
+        breed:
+          type: string
+    Pet:
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    Metadata:
+      type: object
+      properties:
+        name:
+          type: string
+      additionalProperties:
+        type: string
+paths: {}
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	boolPtr := func(b bool) *bool { return &b }
+
+	tests := []struct {
+		name        string
+		encoding    JSONEncodingOptions
+		wantContain []string
+		wantAbsent  []string
+	}{
+		{
+			name:        "default: uses json.Marshal",
+			encoding:    JSONEncodingOptions{},
+			wantContain: []string{"json.Marshal(v)"},
+			wantAbsent:  []string{"SetEscapeHTML", "SetIndent"},
+		},
+		{
+			name:        "escape-html false: uses encoder with SetEscapeHTML(false)",
+			encoding:    JSONEncodingOptions{EscapeHTML: boolPtr(false)},
+			wantContain: []string{"json.NewEncoder", "SetEscapeHTML(false)"},
+			wantAbsent:  []string{"json.Marshal(v)", "SetIndent"},
+		},
+		{
+			name:        "indent set: uses encoder with SetIndent",
+			encoding:    JSONEncodingOptions{Indent: "\t"},
+			wantContain: []string{"json.NewEncoder", `SetIndent("", "\t")`},
+			wantAbsent:  []string{"json.Marshal(v)", "SetEscapeHTML"},
+		},
+		{
+			name:        "both options: encoder with SetEscapeHTML and SetIndent",
+			encoding:    JSONEncodingOptions{EscapeHTML: boolPtr(false), Indent: "  "},
+			wantContain: []string{"json.NewEncoder", "SetEscapeHTML(false)", `SetIndent("", "  ")`},
+			wantAbsent:  []string{"json.Marshal(v)"},
+		},
+		{
+			name:        "escape-html true explicit: same as default",
+			encoding:    JSONEncodingOptions{EscapeHTML: boolPtr(true)},
+			wantContain: []string{"json.Marshal(v)"},
+			wantAbsent:  []string{"SetEscapeHTML", "SetIndent"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opts := Configuration{
+				PackageName: "testpkg",
+				Generate:    GenerateOptions{Models: true},
+				OutputOptions: OutputOptions{
+					SkipPrune:    true,
+					JSONEncoding: tt.encoding,
+				},
+			}
+			code, err := Generate(swagger, opts)
+			require.NoError(t, err)
+			assert.NotEmpty(t, code)
+
+			_, err = format.Source([]byte(code))
+			require.NoError(t, err, "generated code must be valid Go")
+
+			for _, want := range tt.wantContain {
+				assert.Contains(t, code, want)
+			}
+			for _, absent := range tt.wantAbsent {
+				assert.NotContains(t, code, absent)
+			}
+		})
+	}
+}
+
 //go:embed test_spec.yaml
 var testOpenAPIDefinition string
