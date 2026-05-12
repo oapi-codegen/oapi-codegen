@@ -440,6 +440,17 @@ func jsonMarshalExpr(enc JSONEncodingOptions, varName string) string {
 	return sb.String()
 }
 
+// jsonMarshalFieldExpr is like jsonMarshalExpr but never applies indentation.
+// Use this when marshaling individual field values that will be stored as
+// json.RawMessage in an intermediate map; the outer marshal via jsonMarshalExpr
+// is the right place to apply indentation so that the full structure is
+// indented consistently without double-indenting nested values.
+func jsonMarshalFieldExpr(enc JSONEncodingOptions, varName string) string {
+	enc.Indent = ""
+	enc.IndentPrefix = ""
+	return jsonMarshalExpr(enc, varName)
+}
+
 // jsonNewEncoderExpr returns a Go expression that creates a *json.Encoder
 // writing to &bufVarName, applying any JSONEncoding options. When no custom
 // encoding is required the expression is a plain json.NewEncoder call;

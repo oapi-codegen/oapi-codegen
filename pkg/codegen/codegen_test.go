@@ -330,8 +330,10 @@ paths:
 }
 
 func TestJSONEncodingOptions(t *testing.T) {
-	// Spec with a oneOf type (triggers union.tmpl MarshalJSON) and a type
-	// with additionalProperties (triggers additional-properties.tmpl MarshalJSON).
+	// Spec with a oneOf type (triggers union.tmpl MarshalJSON), a type with
+	// additionalProperties (triggers additional-properties.tmpl MarshalJSON),
+	// and a path with a JSON request body and response (exercises client.tmpl
+	// and strict-interface.tmpl).
 	const spec = `
 openapi: "3.0.0"
 info:
@@ -360,7 +362,23 @@ components:
           type: string
       additionalProperties:
         type: string
-paths: {}
+paths:
+  /pets:
+    post:
+      operationId: createPet
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+      responses:
+        '200':
+          description: created pet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
 `
 	loader := openapi3.NewLoader()
 	swagger, err := loader.LoadFromData([]byte(spec))
@@ -370,39 +388,90 @@ paths: {}
 
 	tests := []struct {
 		name        string
+		generate    GenerateOptions
 		encoding    JSONEncodingOptions
 		wantContain []string
 		wantAbsent  []string
 	}{
+		// --- models (union / additionalProperties MarshalJSON) ---
 		{
-			name:        "default: uses json.Marshal",
+			name:        "models/default: uses json.Marshal",
+			generate:    GenerateOptions{Models: true},
 			encoding:    JSONEncodingOptions{},
 			wantContain: []string{"json.Marshal(v)"},
 			wantAbsent:  []string{"SetEscapeHTML", "SetIndent"},
 		},
 		{
-			name:        "escape-html false: uses encoder with SetEscapeHTML(false)",
+			name:        "models/escape-html false: uses encoder with SetEscapeHTML(false)",
+			generate:    GenerateOptions{Models: true},
 			encoding:    JSONEncodingOptions{EscapeHTML: boolPtr(false)},
 			wantContain: []string{"json.NewEncoder", "SetEscapeHTML(false)"},
 			wantAbsent:  []string{"json.Marshal(v)", "SetIndent"},
 		},
 		{
-			name:        "indent set: uses encoder with SetIndent",
+			name:        "models/indent set: uses encoder with SetIndent",
+			generate:    GenerateOptions{Models: true},
 			encoding:    JSONEncodingOptions{Indent: "\t"},
 			wantContain: []string{"json.NewEncoder", `SetIndent("", "\t")`},
 			wantAbsent:  []string{"json.Marshal(v)", "SetEscapeHTML"},
 		},
 		{
-			name:        "both options: encoder with SetEscapeHTML and SetIndent",
+			name:        "models/both options: encoder with SetEscapeHTML and SetIndent",
+			generate:    GenerateOptions{Models: true},
 			encoding:    JSONEncodingOptions{EscapeHTML: boolPtr(false), Indent: "  "},
 			wantContain: []string{"json.NewEncoder", "SetEscapeHTML(false)", `SetIndent("", "  ")`},
 			wantAbsent:  []string{"json.Marshal(v)"},
 		},
 		{
-			name:        "escape-html true explicit: same as default",
+			name:        "models/escape-html true explicit: same as default",
+			generate:    GenerateOptions{Models: true},
 			encoding:    JSONEncodingOptions{EscapeHTML: boolPtr(true)},
 			wantContain: []string{"json.Marshal(v)"},
 			wantAbsent:  []string{"SetEscapeHTML", "SetIndent"},
+		},
+		// --- client (JSON request body path in client.tmpl) ---
+		{
+			name:        "client/default: uses json.Marshal(body)",
+			generate:    GenerateOptions{Client: true},
+			encoding:    JSONEncodingOptions{},
+			wantContain: []string{"json.Marshal(body)"},
+			wantAbsent:  []string{"func() ([]byte, error) {"},
+		},
+		{
+			name:        "client/escape-html false: uses IIFE encoder for body",
+			generate:    GenerateOptions{Client: true},
+			encoding:    JSONEncodingOptions{EscapeHTML: boolPtr(false)},
+			wantContain: []string{"func() ([]byte, error) {", "SetEscapeHTML(false)"},
+			wantAbsent:  []string{"json.Marshal(body)"},
+		},
+		{
+			name:        "client/indent set: uses IIFE encoder with SetIndent for body",
+			generate:    GenerateOptions{Client: true},
+			encoding:    JSONEncodingOptions{Indent: "\t"},
+			wantContain: []string{"func() ([]byte, error) {", `SetIndent("", "\t")`},
+			wantAbsent:  []string{"json.Marshal(body)", "SetEscapeHTML"},
+		},
+		// --- strict server (JSON response path in strict-interface.tmpl) ---
+		{
+			name:        "strict-server/default: uses json.NewEncoder(&buf) directly",
+			generate:    GenerateOptions{StdHTTPServer: true, Strict: true, Models: true},
+			encoding:    JSONEncodingOptions{},
+			wantContain: []string{"json.NewEncoder(&buf)"},
+			wantAbsent:  []string{"func() *json.Encoder {"},
+		},
+		{
+			name:        "strict-server/escape-html false: uses IIFE encoder",
+			generate:    GenerateOptions{StdHTTPServer: true, Strict: true, Models: true},
+			encoding:    JSONEncodingOptions{EscapeHTML: boolPtr(false)},
+			wantContain: []string{"func() *json.Encoder {", "SetEscapeHTML(false)"},
+			wantAbsent:  []string{},
+		},
+		{
+			name:        "strict-server/indent set: uses IIFE encoder with SetIndent",
+			generate:    GenerateOptions{StdHTTPServer: true, Strict: true, Models: true},
+			encoding:    JSONEncodingOptions{Indent: "  "},
+			wantContain: []string{"func() *json.Encoder {", `SetIndent("", "  ")`},
+			wantAbsent:  []string{"SetEscapeHTML"},
 		},
 	}
 
@@ -410,7 +479,7 @@ paths: {}
 		t.Run(tt.name, func(t *testing.T) {
 			opts := Configuration{
 				PackageName: "testpkg",
-				Generate:    GenerateOptions{Models: true},
+				Generate:    tt.generate,
 				OutputOptions: OutputOptions{
 					SkipPrune:    true,
 					JSONEncoding: tt.encoding,

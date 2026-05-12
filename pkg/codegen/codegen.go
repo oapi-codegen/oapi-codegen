@@ -223,6 +223,9 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	TemplateFunctions["jsonMarshalExpr"] = func(varName string) string {
 		return jsonMarshalExpr(globalState.options.OutputOptions.JSONEncoding, varName)
 	}
+	TemplateFunctions["jsonMarshalFieldExpr"] = func(varName string) string {
+		return jsonMarshalFieldExpr(globalState.options.OutputOptions.JSONEncoding, varName)
+	}
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above
