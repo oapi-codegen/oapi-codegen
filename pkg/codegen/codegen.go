@@ -217,6 +217,24 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
+	TemplateFunctions["jsonNewEncoder"] = func(bufVarName string) string {
+		enc := globalState.options.OutputOptions.JSONEncoding
+		if !enc.NeedsCustomEncoding() {
+			return "json.NewEncoder(&" + bufVarName + ")"
+		}
+		var sb strings.Builder
+		sb.WriteString("func() *json.Encoder {\n")
+		sb.WriteString("__e := json.NewEncoder(&" + bufVarName + ")\n")
+		if !enc.EscapeHTMLValue() {
+			sb.WriteString("__e.SetEscapeHTML(false)\n")
+		}
+		if enc.Indent != "" || enc.IndentPrefix != "" {
+			fmt.Fprintf(&sb, "__e.SetIndent(%q, %q)\n", enc.IndentPrefix, enc.Indent)
+		}
+		sb.WriteString("return __e\n")
+		sb.WriteString("}()")
+		return sb.String()
+	}
 	TemplateFunctions["jsonMarshalExpr"] = func(varName string) string {
 		enc := globalState.options.OutputOptions.JSONEncoding
 		if !enc.NeedsCustomEncoding() {
