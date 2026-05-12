@@ -295,6 +295,28 @@
               "$ref": "#/$defs/format-mapping"
             }
           }
+        },
+        "json-encoding": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "JSONEncoding controls JSON encoding behavior (HTML escaping, indentation) for MarshalJSON methods and request body serialization in generated code.",
+          "properties": {
+            "escape-html": {
+              "type": "boolean",
+              "description": "Controls whether HTML special characters (<, >, &) are escaped to Unicode escape sequences in JSON output. When set to false, these characters are output as-is. Defaults to true, matching json.Marshal behavior.",
+              "default": true
+            },
+            "indent-prefix": {
+              "type": "string",
+              "description": "String prepended to each line per indentation level. Corresponds to the first argument of json.Encoder.SetIndent.",
+              "default": ""
+            },
+            "indent": {
+              "type": "string",
+              "description": "String appended per nesting level in JSON output. When non-empty, generated code uses an indented encoder instead of json.Marshal. Corresponds to the second argument of json.Encoder.SetIndent.",
+              "default": ""
+            }
+          }
         }
       }
     },

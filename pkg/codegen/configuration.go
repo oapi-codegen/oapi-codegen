@@ -392,6 +392,10 @@ type OutputOptions struct {
 	// TypeMapping allows customizing OpenAPI type/format to Go type mappings.
 	// User-specified mappings are merged on top of the defaults.
 	TypeMapping *TypeMapping `yaml:"type-mapping,omitempty"`
+
+	// JSONEncoding controls JSON encoding behavior (e.g. HTML escaping, indentation)
+	// for MarshalJSON methods and request body serialization in generated code.
+	JSONEncoding JSONEncodingOptions `yaml:"json-encoding,omitempty"`
 }
 
 func (oo OutputOptions) Validate() map[string]string {
@@ -434,4 +438,34 @@ type OutputOptionsOverlay struct {
 	// Strict defines whether the Overlay should be applied in a strict way, highlighting any actions that will not take any effect. This can, however, lead to more work when testing new actions in an Overlay, so can be turned off with this setting.
 	// Defaults to true.
 	Strict *bool `yaml:"strict,omitempty"`
+}
+
+// JSONEncodingOptions controls JSON encoding behavior for MarshalJSON methods
+// and request body serialization in generated code.
+type JSONEncodingOptions struct {
+	// EscapeHTML controls whether HTML special characters (<, >, &) are escaped
+	// to Unicode escape sequences in JSON output. When set to false, these
+	// characters are output as-is. Defaults to true, matching json.Marshal behavior.
+	EscapeHTML *bool `yaml:"escape-html,omitempty"`
+	// IndentPrefix is the string prepended to each line for each level of
+	// indentation. Corresponds to the first argument of json.Encoder.SetIndent.
+	IndentPrefix string `yaml:"indent-prefix,omitempty"`
+	// Indent is the string appended per nesting level. When non-empty, generated
+	// code uses an indented encoder instead of json.Marshal.
+	// Corresponds to the second argument of json.Encoder.SetIndent.
+	Indent string `yaml:"indent,omitempty"`
+}
+
+// EscapeHTMLValue returns the effective EscapeHTML setting, defaulting to true.
+func (o JSONEncodingOptions) EscapeHTMLValue() bool {
+	if o.EscapeHTML == nil {
+		return true
+	}
+	return *o.EscapeHTML
+}
+
+// NeedsCustomEncoding reports whether the options differ from standard json.Marshal
+// behavior and therefore require using json.Encoder.
+func (o JSONEncodingOptions) NeedsCustomEncoding() bool {
+	return !o.EscapeHTMLValue() || o.Indent != "" || o.IndentPrefix != ""
 }
