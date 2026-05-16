@@ -1,0 +1,13 @@
+openapi: "3.0.0"
+info:
+  title: issue-2367
+  version: 1.0.0
+security:
+  - api_key: []
+paths:
+  /hello:
+    get:
+      operationId: getHello
+      responses:
+        "200":
+          description: ok
