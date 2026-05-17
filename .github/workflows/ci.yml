@@ -7,7 +7,7 @@ permissions:
   contents: read
 jobs:
   build:
-    uses: oapi-codegen/actions/.github/workflows/ci.yml@6cf35d4f044f2663dae54547ff6d426e565beb48 # v0.6.0
+    uses: oapi-codegen/actions/.github/workflows/ci.yml@0b10ad68a53148bd29896be82ad92027b35507a3 # v0.8.0
     with:
       lint_versions: '["1.26"]'
       # The module requires Go 1.25.9, so exclude 1.24 from the default matrix.
