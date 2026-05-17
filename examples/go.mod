@@ -5,7 +5,7 @@ go 1.25.9
 replace github.com/oapi-codegen/oapi-codegen/v2 => ../
 
 require (
-	github.com/getkin/kin-openapi v0.137.0
+	github.com/getkin/kin-openapi v0.138.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/gofiber/fiber/v2 v2.52.13
