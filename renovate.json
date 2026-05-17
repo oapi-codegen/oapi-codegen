@@ -56,7 +56,7 @@
 			"description": "",
 			"matchFileNames": [
 				"**/*/go.mod",
-				"**/*.go.sum"
+				"**/*/go.sum"
 			],
 			"postUpgradeTasks": {
 				"commands": [
