@@ -10,7 +10,7 @@ help:
 	@echo "    lint         lint the project"
 
 $(GOBIN)/golangci-lint:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOBIN) v2.11.4
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/main/install.sh | sh -s -- -b $(GOBIN) v2.12.2
 
 .PHONY: tools
 tools: $(GOBIN)/golangci-lint
