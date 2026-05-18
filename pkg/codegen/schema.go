@@ -51,7 +51,7 @@ func (s Schema) IsPrimitive() bool {
 	if s.OAPISchema == nil {
 		return false
 	}
-	t := s.OAPISchema.Type
+	t := schemaPrimaryType(s.OAPISchema.Type)
 	return t.Is("string") || t.Is("integer") || t.Is("number") || t.Is("boolean")
 }
 
@@ -190,7 +190,7 @@ func (p Property) ZeroValueIsNil() bool {
 		return false
 	}
 
-	if p.Schema.OAPISchema.Type.Is("array") {
+	if schemaPrimaryType(p.Schema.OAPISchema.Type).Is("array") {
 		return true
 	}
 
@@ -680,8 +680,12 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		return outSchema, nil
 	}
 
-	// Schema type and format, eg. string / binary
-	t := schema.Type
+	// Schema type and format, eg. string / binary. In OpenAPI 3.1, `type`
+	// may include "null" alongside the primary type to express nullability;
+	// strip "null" up front so the object / fall-through dispatch sees the
+	// underlying type. Nullability itself is captured by schemaIsNullable()
+	// at the call sites that wrap the result in a pointer.
+	t := schemaPrimaryType(schema.Type)
 	// Handle objects and empty schemas first as a special case
 	if t.Slice() == nil || t.Is("object") {
 		var outType string

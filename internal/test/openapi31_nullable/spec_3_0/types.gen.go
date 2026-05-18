@@ -8,6 +8,14 @@ type Pet struct {
 	// Name Required, non-nullable.
 	Name string `json:"name"`
 
-	// Nickname Optional, nullable via 3.0 `nullable: true`.
+	// Nickname Optional, nullable scalar via 3.0 `nullable: true`.
 	Nickname *string `json:"nickname,omitempty"`
+
+	// Owner Optional, nullable inline object.
+	Owner *struct {
+		Id *string `json:"id,omitempty"`
+	} `json:"owner,omitempty"`
+
+	// Tags Optional, nullable array.
+	Tags *[]string `json:"tags,omitempty"`
 }

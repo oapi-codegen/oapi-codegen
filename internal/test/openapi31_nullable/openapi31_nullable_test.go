@@ -50,6 +50,58 @@ func TestNicknameIsPointer_3_1(t *testing.T) {
 	assert.Nil(t, p2.Nickname)
 }
 
+// TestNullableArrayAndObjectFields_3_1 asserts that nullable array and
+// nullable inline-object fields generate as pointer-to-slice and
+// pointer-to-struct respectively in 3.1. Regression for the case where
+// `type: ["array","null"]` and `type: ["object","null"]` were rejected
+// before schemaPrimaryType was applied at the GenerateGoSchema dispatch
+// (see pkg/codegen/schema.go).
+func TestNullableArrayAndObjectFields_3_1(t *testing.T) {
+	tags := []string{"good", "boy"}
+	id := "owner-1"
+	p := spec31.Pet{
+		Name: "fluffy",
+		Tags: &tags,
+		Owner: &struct {
+			Id *string `json:"id,omitempty"`
+		}{Id: &id},
+	}
+	require.NotNil(t, p.Tags)
+	assert.Equal(t, []string{"good", "boy"}, *p.Tags)
+	require.NotNil(t, p.Owner)
+	require.NotNil(t, p.Owner.Id)
+	assert.Equal(t, "owner-1", *p.Owner.Id)
+
+	// Zero-value: nullable fields must be nil, not empty.
+	p2 := spec31.Pet{Name: "fluffy"}
+	assert.Nil(t, p2.Tags)
+	assert.Nil(t, p2.Owner)
+}
+
+// TestNullableArrayAndObjectFields_3_0 is the matching control case
+// asserting that `nullable: true` arrays and inline objects in 3.0
+// generate the same pointer shape.
+func TestNullableArrayAndObjectFields_3_0(t *testing.T) {
+	tags := []string{"good", "boy"}
+	id := "owner-1"
+	p := spec30.Pet{
+		Name: "fluffy",
+		Tags: &tags,
+		Owner: &struct {
+			Id *string `json:"id,omitempty"`
+		}{Id: &id},
+	}
+	require.NotNil(t, p.Tags)
+	assert.Equal(t, []string{"good", "boy"}, *p.Tags)
+	require.NotNil(t, p.Owner)
+	require.NotNil(t, p.Owner.Id)
+	assert.Equal(t, "owner-1", *p.Owner.Id)
+
+	p2 := spec30.Pet{Name: "fluffy"}
+	assert.Nil(t, p2.Tags)
+	assert.Nil(t, p2.Owner)
+}
+
 // TestJsonRoundTrip_NullableFields_AcrossVersions asserts that a JSON
 // payload with an explicit null nickname unmarshals to (*string)(nil) in
 // both spec versions, and that JSON output omits the field when nil due

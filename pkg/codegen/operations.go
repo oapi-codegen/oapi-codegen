@@ -62,7 +62,7 @@ func (pd ParameterDefinition) ZeroValueIsNil() bool {
 		return false
 	}
 
-	if pd.Schema.OAPISchema.Type.Is("array") {
+	if schemaPrimaryType(pd.Schema.OAPISchema.Type).Is("array") {
 		return true
 	}
 

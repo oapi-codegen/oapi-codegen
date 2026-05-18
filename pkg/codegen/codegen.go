@@ -1689,7 +1689,7 @@ func GoSchemaImports(schemas ...*openapi3.SchemaRef) (map[string]goImport, error
 		}
 		schemaVal := sref.Value
 
-		t := schemaVal.Type
+		t := schemaPrimaryType(schemaVal.Type)
 		if t.Slice() == nil || t.Is("object") {
 			for _, v := range schemaVal.Properties {
 				imprts, err := GoSchemaImports(v)

@@ -3,8 +3,9 @@ info:
   title: Nullable test (OpenAPI 3.0)
   version: 1.0.0
   description: |
-    Control case for the OpenAPI 3.1 nullable backport. The Nickname field
-    is nullable via the 3.0 idiom (the explicit `nullable: true` flag).
+    Control case for the OpenAPI 3.1 nullable backport. Each nullable
+    field uses the 3.0 idiom (`nullable: true`) so the generated Go
+    shape can be compared against the 3.1 type-array idiom.
 paths: {}
 components:
   schemas:
@@ -19,4 +20,17 @@ components:
         nickname:
           type: string
           nullable: true
-          description: "Optional, nullable via 3.0 `nullable: true`."
+          description: "Optional, nullable scalar via 3.0 `nullable: true`."
+        tags:
+          type: array
+          nullable: true
+          items:
+            type: string
+          description: "Optional, nullable array."
+        owner:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: string
+          description: "Optional, nullable inline object."
