@@ -392,6 +392,29 @@ func testImpl(t *testing.T, handler http.Handler) {
 			assert.Equal(t, expectedComplexObject, got.DeepObj)
 		})
 
+		// Regression for oapi-codegen/runtime#131: with the v2.7.0 client
+		// no longer re-encoding query fragments, the runtime marshaller must
+		// percent-encode reserved URI characters and non-ASCII bytes inside
+		// deepObject values. Without the fix, '&' splits the value into two
+		// query params (silent corruption) and non-ASCII bytes produce
+		// invalid URIs that strict servers reject.
+		t.Run("deepObject with unicode and reserved chars", func(t *testing.T) {
+			adversarial := paramclient.ComplexObject{
+				Object: paramclient.Object{
+					FirstName: "filter&q=こんにちは",
+					Role:      "admin role+with spaces",
+				},
+				Id:      12345,
+				IsAdmin: true,
+			}
+			params := paramclient.GetDeepObjectParams{DeepObj: adversarial}
+			req, err := paramclient.NewGetDeepObjectRequest(server, &params)
+			require.NoError(t, err)
+			var got paramclient.GetDeepObjectParams
+			doRoundTrip(t, req, &got)
+			assert.Equal(t, adversarial, got.DeepObj)
+		})
+
 		t.Run("spaceDelimited", func(t *testing.T) {
 		})
 
