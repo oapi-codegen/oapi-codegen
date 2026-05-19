@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: chi
+generate:
+  models: true
+  client: true
+  chi-server: true
+output-options:
+  skip-prune: true
+output: webhooks.gen.go

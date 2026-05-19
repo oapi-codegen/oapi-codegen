@@ -87,10 +87,17 @@ func (e FindPetsByStatusParamsStatus) Valid() bool {
 
 // Address defines model for Address.
 type Address struct {
-	City   *string `json:"city,omitempty"`
-	State  *string `json:"state,omitempty"`
+	// City Example: Palo Alto
+	City *string `json:"city,omitempty"`
+
+	// State Example: CA
+	State *string `json:"state,omitempty"`
+
+	// Street Example: 437 Lytton
 	Street *string `json:"street,omitempty"`
-	Zip    *string `json:"zip,omitempty"`
+
+	// Zip Example: 94301
+	Zip *string `json:"zip,omitempty"`
 }
 
 // ApiResponse defines model for ApiResponse.
@@ -102,38 +109,59 @@ type ApiResponse struct {
 
 // Category defines model for Category.
 type Category struct {
-	Id   *int64  `json:"id,omitempty"`
+	// Id Example: 1
+	Id *int64 `json:"id,omitempty"`
+
+	// Name Example: Dogs
 	Name *string `json:"name,omitempty"`
 }
 
 // Customer defines model for Customer.
 type Customer struct {
-	Address  *[]Address `json:"address,omitempty"`
-	Id       *int64     `json:"id,omitempty"`
-	Username *string    `json:"username,omitempty"`
+	Address *[]Address `json:"address,omitempty"`
+
+	// Id Example: 100000
+	Id *int64 `json:"id,omitempty"`
+
+	// Username Example: fehguy
+	Username *string `json:"username,omitempty"`
 }
 
 // Order defines model for Order.
 type Order struct {
-	Complete *bool      `json:"complete,omitempty"`
-	Id       *int64     `json:"id,omitempty"`
-	PetId    *int64     `json:"petId,omitempty"`
+	Complete *bool `json:"complete,omitempty"`
+
+	// Id Example: 10
+	Id *int64 `json:"id,omitempty"`
+
+	// PetId Example: 198772
+	PetId *int64 `json:"petId,omitempty"`
+
+	// Quantity Example: 7
 	Quantity *int32     `json:"quantity,omitempty"`
 	ShipDate *time.Time `json:"shipDate,omitempty"`
 
 	// Status Order Status
+	//
+	// Example: approved
 	Status *OrderStatus `json:"status,omitempty"`
 }
 
 // OrderStatus Order Status
+//
+// Example: approved
 type OrderStatus string
 
 // Pet defines model for Pet.
 type Pet struct {
-	Category  *Category `json:"category,omitempty"`
-	Id        *int64    `json:"id,omitempty"`
-	Name      string    `json:"name"`
-	PhotoUrls []string  `json:"photoUrls"`
+	Category *Category `json:"category,omitempty"`
+
+	// Id Example: 10
+	Id *int64 `json:"id,omitempty"`
+
+	// Name Example: doggie
+	Name      string   `json:"name"`
+	PhotoUrls []string `json:"photoUrls"`
 
 	// Status pet status in the store
 	Status *PetStatus `json:"status,omitempty"`
@@ -151,16 +179,31 @@ type Tag struct {
 
 // User defines model for User.
 type User struct {
-	Email     *string `json:"email,omitempty"`
+	// Email Example: john@email.com
+	Email *string `json:"email,omitempty"`
+
+	// FirstName Example: John
 	FirstName *string `json:"firstName,omitempty"`
-	Id        *int64  `json:"id,omitempty"`
-	LastName  *string `json:"lastName,omitempty"`
-	Password  *string `json:"password,omitempty"`
-	Phone     *string `json:"phone,omitempty"`
+
+	// Id Example: 10
+	Id *int64 `json:"id,omitempty"`
+
+	// LastName Example: James
+	LastName *string `json:"lastName,omitempty"`
+
+	// Password Example: 12345
+	Password *string `json:"password,omitempty"`
+
+	// Phone Example: 12345
+	Phone *string `json:"phone,omitempty"`
 
 	// UserStatus User Status
-	UserStatus *int32  `json:"userStatus,omitempty"`
-	Username   *string `json:"username,omitempty"`
+	//
+	// Example: 1
+	UserStatus *int32 `json:"userStatus,omitempty"`
+
+	// Username Example: theUser
+	Username *string `json:"username,omitempty"`
 }
 
 // UserArray defines model for UserArray.

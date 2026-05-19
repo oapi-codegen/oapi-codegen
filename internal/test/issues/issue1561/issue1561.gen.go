@@ -5,6 +5,7 @@ package issue1561
 
 // Pong defines model for Pong.
 type Pong struct {
+	// Ping Example: pong
 	Ping string `json:"ping"`
 }
 

@@ -143,6 +143,10 @@
           "type": "boolean",
           "description": "Whether to skip generation of the Valid() method on enum types"
         },
+        "skip-enum-via-oneof": {
+          "type": "boolean",
+          "description": "Disables detection of the OpenAPI 3.1 enum-via-oneOf idiom: a schema with `type: string|integer` and `oneOf:` members that each carry `const` + `title` will normally be emitted as a Go enum with named constants. Set this to true to fall through to the standard union generator instead."
+        },
         "include-tags": {
           "type": "array",
           "description": "Only include operations that have one of these tags. Ignored when empty.",

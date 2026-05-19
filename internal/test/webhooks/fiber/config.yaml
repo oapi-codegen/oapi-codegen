@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: fiber
+generate:
+  models: true
+  client: true
+  fiber-server: true
+output-options:
+  skip-prune: true
+output: webhooks.gen.go

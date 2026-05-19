@@ -1,0 +1,33 @@
+openapi: 3.1.0
+info:
+  title: OpenAPI 3.1 polish features
+  version: 1.0.0
+  description: |
+    Verifies the smaller 3.1 polish features:
+      * `examples` (plural array) propagates into Go doc comments.
+      * `const` on a scalar schema becomes a typed alias + singleton
+        constant via the existing enum-codegen path.
+paths: {}
+components:
+  schemas:
+    Pet:
+      type: object
+      required: [name, lives]
+      properties:
+        name:
+          type: string
+          description: The pet's name.
+          examples:
+            - "Whiskers"
+            - "Rex"
+        lives:
+          type: integer
+          examples:
+            - 9
+
+    # Top-level `const` schema -- with no `enum:` set, the codegen
+    # synthesizes a single-value enum from the const so the schema
+    # becomes a typed alias plus a singleton constant.
+    Status:
+      type: string
+      const: active

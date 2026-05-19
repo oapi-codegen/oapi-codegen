@@ -1,0 +1,33 @@
+openapi: 3.1.0
+info:
+  title: Nullable test (OpenAPI 3.1)
+  version: 1.0.0
+  description: |
+    Each nullable field uses the 3.1 type-array idiom
+    (`type: ["X","null"]`). The generated Go must match the 3.0 control
+    case so callers see no behavioral difference between spec versions.
+paths: {}
+components:
+  schemas:
+    Pet:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Required, non-nullable.
+        nickname:
+          type: ["string", "null"]
+          description: Optional, nullable scalar via 3.1 type-array idiom.
+        tags:
+          type: ["array", "null"]
+          items:
+            type: string
+          description: Optional, nullable array.
+        owner:
+          type: ["object", "null"]
+          properties:
+            id:
+              type: string
+          description: Optional, nullable inline object.
