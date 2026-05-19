@@ -413,3 +413,63 @@ var TemplateFunctions = template.FuncMap{
 	"genServerURLWithVariablesFunctionParams": genServerURLWithVariablesFunctionParams,
 	"httpMethodConstant":                      httpMethodConstant,
 }
+
+// jsonMarshalExpr returns a Go expression that marshals varName to JSON,
+// respecting the JSONEncoding options. When no custom encoding is required the
+// expression is a plain json.Marshal call; otherwise it is an immediately-
+// invoked function that configures a json.Encoder appropriately.
+func jsonMarshalExpr(enc JSONEncodingOptions, varName string) string {
+	if !enc.NeedsCustomEncoding() {
+		return "json.Marshal(" + varName + ")"
+	}
+	var sb strings.Builder
+	sb.WriteString("func() ([]byte, error) {\n")
+	sb.WriteString("var __buf bytes.Buffer\n")
+	sb.WriteString("__enc := json.NewEncoder(&__buf)\n")
+	if !enc.EscapeHTMLValue() {
+		sb.WriteString("__enc.SetEscapeHTML(false)\n")
+	}
+	if enc.Indent != "" || enc.IndentPrefix != "" {
+		fmt.Fprintf(&sb, "__enc.SetIndent(%q, %q)\n", enc.IndentPrefix, enc.Indent)
+	}
+	sb.WriteString("if __err := __enc.Encode(" + varName + "); __err != nil {\n")
+	sb.WriteString("return nil, __err\n")
+	sb.WriteString("}\n")
+	sb.WriteString("return bytes.TrimRight(__buf.Bytes(), \"\\n\"), nil\n")
+	sb.WriteString("}()")
+	return sb.String()
+}
+
+// jsonMarshalFieldExpr is like jsonMarshalExpr but never applies indentation.
+// Use this when marshaling individual field values that will be stored as
+// json.RawMessage in an intermediate map; the outer marshal via jsonMarshalExpr
+// is the right place to apply indentation so that the full structure is
+// indented consistently without double-indenting nested values.
+func jsonMarshalFieldExpr(enc JSONEncodingOptions, varName string) string {
+	enc.Indent = ""
+	enc.IndentPrefix = ""
+	return jsonMarshalExpr(enc, varName)
+}
+
+// jsonNewEncoderExpr returns a Go expression that creates a *json.Encoder
+// writing to &bufVarName, applying any JSONEncoding options. When no custom
+// encoding is required the expression is a plain json.NewEncoder call;
+// otherwise it is an immediately-invoked function that sets the options before
+// returning the encoder.
+func jsonNewEncoderExpr(enc JSONEncodingOptions, bufVarName string) string {
+	if !enc.NeedsCustomEncoding() {
+		return "json.NewEncoder(&" + bufVarName + ")"
+	}
+	var sb strings.Builder
+	sb.WriteString("func() *json.Encoder {\n")
+	sb.WriteString("__e := json.NewEncoder(&" + bufVarName + ")\n")
+	if !enc.EscapeHTMLValue() {
+		sb.WriteString("__e.SetEscapeHTML(false)\n")
+	}
+	if enc.Indent != "" || enc.IndentPrefix != "" {
+		fmt.Fprintf(&sb, "__e.SetIndent(%q, %q)\n", enc.IndentPrefix, enc.Indent)
+	}
+	sb.WriteString("return __e\n")
+	sb.WriteString("}()")
+	return sb.String()
+}

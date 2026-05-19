@@ -30,7 +30,7 @@
                     {{end -}}
                 {{end -}}
             {{end -}}
-            b, err := json.Marshal(v)
+            b, err := {{jsonMarshalExpr "v"}}
             t.union = b
             return err
         }
@@ -53,7 +53,7 @@
                     {{end -}}
                 {{end -}}
             {{end -}}
-            b, err := json.Marshal(v)
+            b, err := {{jsonMarshalExpr "v"}}
             if err != nil {
               return err
             }
@@ -108,13 +108,13 @@
             }
             {{range .Schema.Properties}}
             {{if .RequiresNilCheck}}if t.{{.GoFieldName}} != nil { {{end}}
-                object["{{.JsonFieldName}}"], err = json.Marshal(t.{{.GoFieldName}})
+                object["{{.JsonFieldName}}"], err = {{jsonMarshalExpr (printf "t.%s" .GoFieldName)}}
                 if err != nil {
                     return nil, fmt.Errorf("error marshaling '{{.JsonFieldName}}': %w", err)
                 }
             {{if .RequiresNilCheck}} }{{end}}
             {{end -}}
-            b, err = json.Marshal(object)
+            b, err = {{jsonMarshalExpr "object"}}
         {{end -}}
         return b, err
     }
