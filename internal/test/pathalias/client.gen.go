@@ -227,6 +227,16 @@ type GetTestResponse struct {
 	JSON200      *B
 }
 
+// GetJSON200 returns JSON200
+func (r GetTestResponse) GetJSON200() *B {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetTestResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r GetTestResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -255,6 +265,16 @@ type GetTestAlias0Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *B
+}
+
+// GetJSON200 returns JSON200
+func (r GetTestAlias0Response) GetJSON200() *B {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetTestAlias0Response) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status

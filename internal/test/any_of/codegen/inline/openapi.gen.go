@@ -313,6 +313,18 @@ type GetPetsResponse struct {
 	}
 }
 
+// GetJSON200 returns JSON200
+func (r GetPetsResponse) GetJSON200() *struct {
+	Data *[]GetPets200JSONResponseBody_Data_Item `json:"data,omitempty"`
+} {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetPetsResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r GetPetsResponse) Status() string {
 	if r.HTTPResponse != nil {

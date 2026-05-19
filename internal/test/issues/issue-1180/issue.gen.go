@@ -195,6 +195,11 @@ type GetSimplePrimitiveResponse struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r GetSimplePrimitiveResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r GetSimplePrimitiveResponse) Status() string {
 	if r.HTTPResponse != nil {

@@ -293,6 +293,16 @@ type ListThingsResponse struct {
 	JSON200      *[]ThingWithID
 }
 
+// GetJSON200 returns JSON200
+func (r ListThingsResponse) GetJSON200() *[]ThingWithID {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r ListThingsResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r ListThingsResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -321,6 +331,16 @@ type AddThingResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON201      *[]ThingWithID
+}
+
+// GetJSON201 returns JSON201
+func (r AddThingResponse) GetJSON201() *[]ThingWithID {
+	return r.JSON201
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r AddThingResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status

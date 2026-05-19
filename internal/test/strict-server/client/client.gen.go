@@ -1304,6 +1304,16 @@ type JSONExampleResponse struct {
 	JSON200      *Example
 }
 
+// GetJSON200 returns JSON200
+func (r JSONExampleResponse) GetJSON200() *Example {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r JSONExampleResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r JSONExampleResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -1333,6 +1343,11 @@ type MultipartExampleResponse struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r MultipartExampleResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r MultipartExampleResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -1360,6 +1375,11 @@ func (r MultipartExampleResponse) ContentType() string {
 type MultipartRelatedExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r MultipartRelatedExampleResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -1392,6 +1412,16 @@ type MultipleRequestAndResponseTypesResponse struct {
 	JSON200      *Example
 }
 
+// GetJSON200 returns JSON200
+func (r MultipleRequestAndResponseTypesResponse) GetJSON200() *Example {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r MultipleRequestAndResponseTypesResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r MultipleRequestAndResponseTypesResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -1419,6 +1449,11 @@ func (r MultipleRequestAndResponseTypesResponse) ContentType() string {
 type NoContentHeadersResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r NoContentHeadersResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -1451,6 +1486,16 @@ type RequiredJSONBodyResponse struct {
 	JSON200      *Example
 }
 
+// GetJSON200 returns JSON200
+func (r RequiredJSONBodyResponse) GetJSON200() *Example {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r RequiredJSONBodyResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r RequiredJSONBodyResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -1480,6 +1525,11 @@ type RequiredTextBodyResponse struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r RequiredTextBodyResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r RequiredTextBodyResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -1507,6 +1557,11 @@ func (r RequiredTextBodyResponse) ContentType() string {
 type ReservedGoKeywordParametersResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r ReservedGoKeywordParametersResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -1539,6 +1594,16 @@ type ReusableResponsesResponse struct {
 	JSON200      *Reusableresponse
 }
 
+// GetJSON200 returns JSON200
+func (r ReusableResponsesResponse) GetJSON200() *Reusableresponse {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r ReusableResponsesResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r ReusableResponsesResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -1566,6 +1631,11 @@ func (r ReusableResponsesResponse) ContentType() string {
 type TextExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r TextExampleResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -1597,6 +1667,11 @@ type UnknownExampleResponse struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r UnknownExampleResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r UnknownExampleResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -1626,6 +1701,11 @@ type UnspecifiedContentTypeResponse struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r UnspecifiedContentTypeResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r UnspecifiedContentTypeResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -1653,6 +1733,11 @@ func (r UnspecifiedContentTypeResponse) ContentType() string {
 type URLEncodedExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r URLEncodedExampleResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -1685,6 +1770,16 @@ type HeadersExampleResponse struct {
 	JSON200      *Example
 }
 
+// GetJSON200 returns JSON200
+func (r HeadersExampleResponse) GetJSON200() *Example {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r HeadersExampleResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r HeadersExampleResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -1714,6 +1809,21 @@ type UnionExampleResponse struct {
 	HTTPResponse                  *http.Response
 	ApplicationalternativeJSON200 *Example
 	JSON200                       *UnionExample200JSONResponseBody
+}
+
+// GetApplicationalternativeJSON200 returns ApplicationalternativeJSON200
+func (r UnionExampleResponse) GetApplicationalternativeJSON200() *Example {
+	return r.ApplicationalternativeJSON200
+}
+
+// GetJSON200 returns JSON200
+func (r UnionExampleResponse) GetJSON200() *UnionExample200JSONResponseBody {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r UnionExampleResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status

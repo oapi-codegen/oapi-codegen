@@ -812,6 +812,24 @@ type EnsureEverythingIsReferencedResponse struct {
 	}
 }
 
+// GetJSON200 returns JSON200
+func (r EnsureEverythingIsReferencedResponse) GetJSON200() *struct {
+	AnyType1 *AnyType1 `json:"anyType1,omitempty"`
+
+	// AnyType2 AnyType2 represents any type.
+	//
+	// This should be an interface{}
+	AnyType2         *AnyType2         `json:"anyType2,omitempty"`
+	CustomStringType *CustomStringType `foo:"bar" json:"customStringType,omitempty"`
+} {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r EnsureEverythingIsReferencedResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r EnsureEverythingIsReferencedResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -841,6 +859,21 @@ type Issue1051Response struct {
 	HTTPResponse                     *http.Response
 	JSON200                          *map[string]interface{}
 	ApplicationvndSomethingV1JSON200 *map[string]interface{}
+}
+
+// GetJSON200 returns JSON200
+func (r Issue1051Response) GetJSON200() *map[string]interface{} {
+	return r.JSON200
+}
+
+// GetApplicationvndSomethingV1JSON200 returns ApplicationvndSomethingV1JSON200
+func (r Issue1051Response) GetApplicationvndSomethingV1JSON200() *map[string]interface{} {
+	return r.ApplicationvndSomethingV1JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r Issue1051Response) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -876,6 +909,31 @@ type Issue127Response struct {
 	JSONDefault  *GenericObject
 }
 
+// GetJSON200 returns JSON200
+func (r Issue127Response) GetJSON200() *GenericObject {
+	return r.JSON200
+}
+
+// GetXML200 returns XML200
+func (r Issue127Response) GetXML200() *GenericObject {
+	return r.XML200
+}
+
+// GetYAML200 returns YAML200
+func (r Issue127Response) GetYAML200() *GenericObject {
+	return r.YAML200
+}
+
+// GetJSONDefault returns JSONDefault
+func (r Issue127Response) GetJSONDefault() *GenericObject {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r Issue127Response) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r Issue127Response) Status() string {
 	if r.HTTPResponse != nil {
@@ -903,6 +961,11 @@ func (r Issue127Response) ContentType() string {
 type Issue185Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r Issue185Response) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -934,6 +997,11 @@ type Issue209Response struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r Issue209Response) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r Issue209Response) Status() string {
 	if r.HTTPResponse != nil {
@@ -961,6 +1029,11 @@ func (r Issue209Response) ContentType() string {
 type Issue30Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r Issue30Response) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -993,6 +1066,16 @@ type GetIssues375Response struct {
 	JSON200      *EnumInObjInArray
 }
 
+// GetJSON200 returns JSON200
+func (r GetIssues375Response) GetJSON200() *EnumInObjInArray {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetIssues375Response) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r GetIssues375Response) Status() string {
 	if r.HTTPResponse != nil {
@@ -1020,6 +1103,11 @@ func (r GetIssues375Response) ContentType() string {
 type Issue41Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r Issue41Response) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -1051,6 +1139,11 @@ type Issue9Response struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r Issue9Response) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r Issue9Response) Status() string {
 	if r.HTTPResponse != nil {
@@ -1079,6 +1172,16 @@ type Issue975Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *DeprecatedProperty
+}
+
+// GetJSON200 returns JSON200
+func (r Issue975Response) GetJSON200() *DeprecatedProperty {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r Issue975Response) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status

@@ -396,6 +396,11 @@ type ListThingsResponse struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r ListThingsResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r ListThingsResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -423,6 +428,11 @@ func (r ListThingsResponse) ContentType() string {
 type CreateThingResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r CreateThingResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status

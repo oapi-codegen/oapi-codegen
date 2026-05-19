@@ -422,6 +422,21 @@ type GetGetMultibodyResponse struct {
 	ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200 *string
 }
 
+// GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 returns ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200
+func (r GetGetMultibodyResponse) GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200() *string {
+	return r.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200
+}
+
+// GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200 returns ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200
+func (r GetGetMultibodyResponse) GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200() *string {
+	return r.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetGetMultibodyResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r GetGetMultibodyResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -450,6 +465,16 @@ type GetObjectResponse struct {
 	Body                                                      []byte
 	HTTPResponse                                              *http.Response
 	ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 *string
+}
+
+// GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 returns ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200
+func (r GetObjectResponse) GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200() *string {
+	return r.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetObjectResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -481,6 +506,11 @@ type PostPostMultibodyResponse struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r PostPostMultibodyResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r PostPostMultibodyResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -508,6 +538,11 @@ func (r PostPostMultibodyResponse) ContentType() string {
 type PostPostObjectResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r PostPostObjectResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status

@@ -234,6 +234,16 @@ type GetFooResponse struct {
 	JSON200      *[]Bar
 }
 
+// GetJSON200 returns JSON200
+func (r GetFooResponse) GetJSON200() *[]Bar {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetFooResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r GetFooResponse) Status() string {
 	if r.HTTPResponse != nil {

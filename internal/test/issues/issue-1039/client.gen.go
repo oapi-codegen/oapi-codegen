@@ -211,6 +211,11 @@ type ExamplePatchResponse struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r ExamplePatchResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r ExamplePatchResponse) Status() string {
 	if r.HTTPResponse != nil {

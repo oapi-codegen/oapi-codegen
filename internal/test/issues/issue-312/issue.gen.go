@@ -295,6 +295,16 @@ type GetPetResponse struct {
 	JSON200      *Pet
 }
 
+// GetJSON200 returns JSON200
+func (r GetPetResponse) GetJSON200() *Pet {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetPetResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r GetPetResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -324,6 +334,21 @@ type ValidatePetsResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *[]Pet
 	JSONDefault  *Error
+}
+
+// GetJSON200 returns JSON200
+func (r ValidatePetsResponse) GetJSON200() *[]Pet {
+	return r.JSON200
+}
+
+// GetJSONDefault returns JSONDefault
+func (r ValidatePetsResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r ValidatePetsResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status

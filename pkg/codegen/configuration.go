@@ -351,6 +351,9 @@ type OutputOptions struct {
 	//   "array"
 	DisableTypeAliasesForType []string `yaml:"disable-type-aliases-for-type"`
 
+	// SkipResponseBodyGetters decides whether to generate getter methods for response bodies.
+	SkipResponseBodyGetters bool `yaml:"skip-response-body-getters,omitempty"`
+
 	// NameNormalizer is the method used to normalize Go names and types, for instance converting the text `MyApi` to `MyAPI`. Corresponds with the constants defined for `codegen.NameNormalizerFunction`
 	NameNormalizer string `yaml:"name-normalizer,omitempty"`
 

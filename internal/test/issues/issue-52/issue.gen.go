@@ -203,6 +203,16 @@ type ExampleGetResponse struct {
 	JSON200      *Document
 }
 
+// GetJSON200 returns JSON200
+func (r ExampleGetResponse) GetJSON200() *Document {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r ExampleGetResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r ExampleGetResponse) Status() string {
 	if r.HTTPResponse != nil {

@@ -53,6 +53,20 @@ type {{genResponseTypeName $opid | ucFirst}} struct {
     {{- end}}
 }
 
+{{ if not opts.OutputOptions.SkipResponseBodyGetters }}
+{{- range $responseTypeDefinitions}}
+  // Get{{.TypeName}} returns {{.TypeName}}
+  func (r {{genResponseTypeName $opid | ucFirst}}) Get{{.TypeName}}() *{{.Schema.TypeDecl}} {
+      return r.{{.TypeName}}
+  }
+{{- end}}
+
+// GetBody returns the raw response body bytes (Body)
+func (r {{genResponseTypeName $opid | ucFirst}}) GetBody() []byte {
+    return r.Body
+}
+{{end}}
+
 // Status returns HTTPResponse.Status
 func (r {{genResponseTypeName $opid | ucFirst}}) Status() string {
     if r.HTTPResponse != nil {

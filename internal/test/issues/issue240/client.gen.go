@@ -232,6 +232,16 @@ type GetClientResponse struct {
 	JSON200      *ClientType
 }
 
+// GetJSON200 returns JSON200
+func (r GetClientResponse) GetJSON200() *ClientType {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetClientResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r GetClientResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -267,6 +277,18 @@ type UpdateClientResponse struct {
 	JSON400      *struct {
 		Code string `json:"code"`
 	}
+}
+
+// GetJSON400 returns JSON400
+func (r UpdateClientResponse) GetJSON400() *struct {
+	Code string `json:"code"`
+} {
+	return r.JSON400
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r UpdateClientResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
