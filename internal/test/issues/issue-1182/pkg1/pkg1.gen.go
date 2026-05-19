@@ -188,6 +188,11 @@ type TestGetResponse struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r TestGetResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r TestGetResponse) Status() string {
 	if r.HTTPResponse != nil {

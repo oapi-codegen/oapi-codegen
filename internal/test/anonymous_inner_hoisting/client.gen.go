@@ -928,6 +928,11 @@ type PostBodyPropertyOneOfResponse struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r PostBodyPropertyOneOfResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r PostBodyPropertyOneOfResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -955,6 +960,11 @@ func (r PostBodyPropertyOneOfResponse) ContentType() string {
 type PostBodyRootOneOfResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r PostBodyRootOneOfResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -991,6 +1001,20 @@ type GetResponseDeepNestedResponse struct {
 	}
 }
 
+// GetJSON200 returns JSON200
+func (r GetResponseDeepNestedResponse) GetJSON200() *struct {
+	Wrapper *struct {
+		Inner *GetResponseDeepNested200JSONResponseBody_Wrapper_Inner `json:"inner,omitempty"`
+	} `json:"wrapper,omitempty"`
+} {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetResponseDeepNestedResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r GetResponseDeepNestedResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -1023,6 +1047,18 @@ type GetResponseItemsOneOfResponse struct {
 	}
 }
 
+// GetJSON200 returns JSON200
+func (r GetResponseItemsOneOfResponse) GetJSON200() *struct {
+	Items []GetResponseItemsOneOf200JSONResponseBody_Items_Item `json:"items"`
+} {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetResponseItemsOneOfResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r GetResponseItemsOneOfResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -1053,6 +1089,16 @@ type GetResponseRootAnyOfResponse struct {
 	JSON200      *GetResponseRootAnyOf200JSONResponseBody
 }
 
+// GetJSON200 returns JSON200
+func (r GetResponseRootAnyOfResponse) GetJSON200() *GetResponseRootAnyOf200JSONResponseBody {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetResponseRootAnyOfResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r GetResponseRootAnyOfResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -1081,6 +1127,16 @@ type GetResponseRootOneOfResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *GetResponseRootOneOf200JSONResponseBody
+}
+
+// GetJSON200 returns JSON200
+func (r GetResponseRootOneOfResponse) GetJSON200() *GetResponseRootOneOf200JSONResponseBody {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetResponseRootOneOfResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status

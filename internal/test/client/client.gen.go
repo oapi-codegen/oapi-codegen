@@ -611,6 +611,11 @@ type PostBothResponse struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r PostBothResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r PostBothResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -638,6 +643,11 @@ func (r PostBothResponse) ContentType() string {
 type GetBothResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetBothResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -669,6 +679,11 @@ type PostJsonResponse struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r PostJsonResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r PostJsonResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -696,6 +711,11 @@ func (r PostJsonResponse) ContentType() string {
 type GetJsonResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetJsonResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -727,6 +747,11 @@ type PostOtherResponse struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r PostOtherResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r PostOtherResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -754,6 +779,11 @@ func (r PostOtherResponse) ContentType() string {
 type GetOtherResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetOtherResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -785,6 +815,11 @@ type GetJsonWithTrailingSlashResponse struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r GetJsonWithTrailingSlashResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r GetJsonWithTrailingSlashResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -812,6 +847,11 @@ func (r GetJsonWithTrailingSlashResponse) ContentType() string {
 type PostVendorJsonResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r PostVendorJsonResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status

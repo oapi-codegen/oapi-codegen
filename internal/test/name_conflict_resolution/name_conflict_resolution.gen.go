@@ -1889,6 +1889,19 @@ type ListEntitiesResponse struct {
 	}
 }
 
+// GetJSON200 returns JSON200
+func (r ListEntitiesResponse) GetJSON200() *struct {
+	Data     *[]Widget `json:"data,omitempty"`
+	Metadata *Metadata `json:"metadata,omitempty"`
+} {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r ListEntitiesResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r ListEntitiesResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -1917,6 +1930,16 @@ type PostFooResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *BarResponse
+}
+
+// GetJSON200 returns JSON200
+func (r PostFooResponse) GetJSON200() *BarResponse {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r PostFooResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -1949,6 +1972,16 @@ type ListItemsResponse2 struct {
 	JSON200      *ListItemsResponse
 }
 
+// GetJSON200 returns JSON200
+func (r ListItemsResponse2) GetJSON200() *ListItemsResponse {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r ListItemsResponse2) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r ListItemsResponse2) Status() string {
 	if r.HTTPResponse != nil {
@@ -1977,6 +2010,16 @@ type CreateItemResponse2 struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *CreateItemResponse
+}
+
+// GetJSON200 returns JSON200
+func (r CreateItemResponse2) GetJSON200() *CreateItemResponse {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r CreateItemResponse2) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -2009,6 +2052,16 @@ type CreateOrderResponse struct {
 	JSON200      *Order
 }
 
+// GetJSON200 returns JSON200
+func (r CreateOrderResponse) GetJSON200() *Order {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r CreateOrderResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r CreateOrderResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -2039,6 +2092,16 @@ type GetOutcomeResponse struct {
 	JSON200      *OutcomeResult
 }
 
+// GetJSON200 returns JSON200
+func (r GetOutcomeResponse) GetJSON200() *OutcomeResult {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetOutcomeResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r GetOutcomeResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -2066,6 +2129,11 @@ func (r GetOutcomeResponse) ContentType() string {
 type PostOutcomeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r PostOutcomeResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -2098,6 +2166,16 @@ type SendPayloadResponse struct {
 	JSON200      *Payload
 }
 
+// GetJSON200 returns JSON200
+func (r SendPayloadResponse) GetJSON200() *Payload {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r SendPayloadResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r SendPayloadResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -2126,6 +2204,16 @@ type CreatePetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *Pet
+}
+
+// GetJSON200 returns JSON200
+func (r CreatePetResponse) GetJSON200() *Pet {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r CreatePetResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -2158,6 +2246,16 @@ type QueryResponse2 struct {
 	JSON200      *QueryResponse
 }
 
+// GetJSON200 returns JSON200
+func (r QueryResponse2) GetJSON200() *QueryResponse {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r QueryResponse2) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r QueryResponse2) Status() string {
 	if r.HTTPResponse != nil {
@@ -2188,6 +2286,16 @@ type GetQuxResponse struct {
 	JSON200      *QuxResponse
 }
 
+// GetJSON200 returns JSON200
+func (r GetQuxResponse) GetJSON200() *QuxResponse {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetQuxResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r GetQuxResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -2215,6 +2323,11 @@ func (r GetQuxResponse) ContentType() string {
 type PostQuxResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r PostQuxResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -2247,6 +2360,16 @@ type GetRenamedSchemaResponse struct {
 	JSON200      *Renamer
 }
 
+// GetJSON200 returns JSON200
+func (r GetRenamedSchemaResponse) GetJSON200() *Renamer {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetRenamedSchemaResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r GetRenamedSchemaResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -2274,6 +2397,11 @@ func (r GetRenamedSchemaResponse) ContentType() string {
 type PostRenamedSchemaResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r PostRenamedSchemaResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -2309,6 +2437,31 @@ type PatchResourceResponse struct {
 	ApplicationmergePatchJSON200     *N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON
 }
 
+// GetJSON200 returns JSON200
+func (r PatchResourceResponse) GetJSON200() *N200ResourcePatchResponseJSONApplicationJSON {
+	return r.JSON200
+}
+
+// GetApplicationjsonPatchJSON200 returns ApplicationjsonPatchJSON200
+func (r PatchResourceResponse) GetApplicationjsonPatchJSON200() *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON {
+	return r.ApplicationjsonPatchJSON200
+}
+
+// GetApplicationjsonPatchQueryJSON200 returns ApplicationjsonPatchQueryJSON200
+func (r PatchResourceResponse) GetApplicationjsonPatchQueryJSON200() *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON {
+	return r.ApplicationjsonPatchQueryJSON200
+}
+
+// GetApplicationmergePatchJSON200 returns ApplicationmergePatchJSON200
+func (r PatchResourceResponse) GetApplicationmergePatchJSON200() *N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON {
+	return r.ApplicationmergePatchJSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r PatchResourceResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r PatchResourceResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -2337,6 +2490,16 @@ type GetStatusResponse2 struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *GetStatusResponse
+}
+
+// GetJSON200 returns JSON200
+func (r GetStatusResponse2) GetJSON200() *GetStatusResponse {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetStatusResponse2) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -2369,6 +2532,16 @@ type GetZapResponse struct {
 	JSON200      *ZapResponse
 }
 
+// GetJSON200 returns JSON200
+func (r GetZapResponse) GetJSON200() *ZapResponse {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r GetZapResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r GetZapResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -2396,6 +2569,11 @@ func (r GetZapResponse) ContentType() string {
 type PostZapResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r PostZapResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status

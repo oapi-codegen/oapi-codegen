@@ -187,6 +187,16 @@ type UpdateClientResp struct {
 	JSON400      *UpdateClientResponse
 }
 
+// GetJSON400 returns JSON400
+func (r UpdateClientResp) GetJSON400() *UpdateClientResponse {
+	return r.JSON400
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r UpdateClientResp) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r UpdateClientResp) Status() string {
 	if r.HTTPResponse != nil {

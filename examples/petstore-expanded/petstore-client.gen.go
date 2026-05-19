@@ -445,6 +445,21 @@ type FindPetsResponse struct {
 	JSONDefault  *Error
 }
 
+// GetJSON200 returns JSON200
+func (r FindPetsResponse) GetJSON200() *[]Pet {
+	return r.JSON200
+}
+
+// GetJSONDefault returns JSONDefault
+func (r FindPetsResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r FindPetsResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r FindPetsResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -474,6 +489,21 @@ type AddPetResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *Pet
 	JSONDefault  *Error
+}
+
+// GetJSON200 returns JSON200
+func (r AddPetResponse) GetJSON200() *Pet {
+	return r.JSON200
+}
+
+// GetJSONDefault returns JSONDefault
+func (r AddPetResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r AddPetResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -506,6 +536,16 @@ type DeletePetResponse struct {
 	JSONDefault  *Error
 }
 
+// GetJSONDefault returns JSONDefault
+func (r DeletePetResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r DeletePetResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r DeletePetResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -535,6 +575,21 @@ type FindPetByIDResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *Pet
 	JSONDefault  *Error
+}
+
+// GetJSON200 returns JSON200
+func (r FindPetByIDResponse) GetJSON200() *Pet {
+	return r.JSON200
+}
+
+// GetJSONDefault returns JSONDefault
+func (r FindPetByIDResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r FindPetByIDResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status

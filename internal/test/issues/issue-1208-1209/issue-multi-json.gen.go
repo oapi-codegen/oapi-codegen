@@ -208,6 +208,31 @@ type TestResponse struct {
 	ApplicationfooJSON201 *BazApplicationFooPlusJSON
 }
 
+// GetApplicationbarJSON200 returns ApplicationbarJSON200
+func (r TestResponse) GetApplicationbarJSON200() *Bar {
+	return r.ApplicationbarJSON200
+}
+
+// GetApplicationfooJSON200 returns ApplicationfooJSON200
+func (r TestResponse) GetApplicationfooJSON200() *Foo {
+	return r.ApplicationfooJSON200
+}
+
+// GetApplicationbarJSON201 returns ApplicationbarJSON201
+func (r TestResponse) GetApplicationbarJSON201() *BazApplicationBarPlusJSON {
+	return r.ApplicationbarJSON201
+}
+
+// GetApplicationfooJSON201 returns ApplicationfooJSON201
+func (r TestResponse) GetApplicationfooJSON201() *BazApplicationFooPlusJSON {
+	return r.ApplicationfooJSON201
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r TestResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r TestResponse) Status() string {
 	if r.HTTPResponse != nil {

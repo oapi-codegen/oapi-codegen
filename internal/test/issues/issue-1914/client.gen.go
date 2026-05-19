@@ -297,6 +297,11 @@ type PostPetResponse struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes (Body)
+func (r PostPetResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r PostPetResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -324,6 +329,11 @@ func (r PostPetResponse) ContentType() string {
 type PostPet1234Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes (Body)
+func (r PostPet1234Response) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
