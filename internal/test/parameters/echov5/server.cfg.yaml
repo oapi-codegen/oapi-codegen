@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../../../../configuration-schema.json
-package: echov5params
+package: echov5paramsgen
 generate:
   echo5-server: true
   embedded-spec: true
-output: server.gen.go
+output: gen/server.gen.go
