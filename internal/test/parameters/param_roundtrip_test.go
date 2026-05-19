@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kataras/iris/v12"
 	"github.com/labstack/echo/v4"
+	echov5 "github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -21,6 +22,8 @@ import (
 	paramclient "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/client/gen"
 	echoparams "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/echo"
 	echogen "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/echo/gen"
+	echov5params "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/echov5"
+	echov5gen "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/echov5/gen"
 	fiberparams "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/fiber"
 	fibergen "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/fiber/gen"
 	ginparams "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/gin"
@@ -37,6 +40,13 @@ func TestEchoParameterRoundTrip(t *testing.T) {
 	var s echoparams.Server
 	e := echo.New()
 	echogen.RegisterHandlers(e, &s)
+	testImpl(t, e)
+}
+
+func TestEchoV5ParameterRoundTrip(t *testing.T) {
+	var s echov5params.Server
+	e := echov5.New()
+	echov5gen.RegisterHandlers(e, &s)
 	testImpl(t, e)
 }
 
