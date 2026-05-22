@@ -190,7 +190,12 @@ func (p Property) ZeroValueIsNil() bool {
 		return false
 	}
 
-	if schemaPrimaryType(p.Schema.OAPISchema.Type).Is("array") {
+	t := schemaPrimaryType(p.Schema.OAPISchema.Type)
+	if t.Is("array") {
+		return true
+	}
+
+	if t.Is("null") {
 		return true
 	}
 
@@ -1006,6 +1011,10 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		if outSchema.GoType == "json.RawMessage" {
 			outSchema.SkipOptionalPointer = true
 		}
+		outSchema.DefineViaAlias = true
+	} else if t.Is("null") {
+		spec := globalState.typeMapping.Null.Resolve(f)
+		outSchema.GoType = spec.Type
 		outSchema.DefineViaAlias = true
 	} else {
 		return fmt.Errorf("unhandled Schema type: %v", t)

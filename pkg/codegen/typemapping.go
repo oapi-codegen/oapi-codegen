@@ -22,6 +22,7 @@ type TypeMapping struct {
 	Number  FormatMapping `yaml:"number,omitempty" json:"number"`
 	Boolean FormatMapping `yaml:"boolean,omitempty" json:"boolean"`
 	String  FormatMapping `yaml:"string,omitempty" json:"string"`
+	Null    FormatMapping `yaml:"null,omitempty" json:"null"`
 }
 
 // Merge returns a new TypeMapping with user overrides applied on top of base.
@@ -31,6 +32,7 @@ func (base TypeMapping) Merge(user TypeMapping) TypeMapping {
 		Number:  base.Number.merge(user.Number),
 		Boolean: base.Boolean.merge(user.Boolean),
 		String:  base.String.merge(user.String),
+		Null:    base.Null.merge(user.Null),
 	}
 }
 
@@ -103,5 +105,8 @@ var DefaultTypeMapping = TypeMapping{
 			"uuid":      {Type: "openapi_types.UUID"},
 			"binary":    {Type: "openapi_types.File"},
 		},
+	},
+	Null: FormatMapping{
+		Default: SimpleTypeSpec{Type: "interface{}"},
 	},
 }

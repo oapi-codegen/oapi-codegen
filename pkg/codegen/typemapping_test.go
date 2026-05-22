@@ -53,6 +53,9 @@ func TestTypeMapping_Merge(t *testing.T) {
 	// Number and Boolean unchanged
 	assert.Equal(t, "float32", merged.Number.Default.Type)
 	assert.Equal(t, "bool", merged.Boolean.Default.Type)
+
+	// Null unchanged (no user override)
+	assert.Equal(t, "interface{}", merged.Null.Default.Type)
 }
 
 func TestDefaultTypeMapping_Completeness(t *testing.T) {
@@ -85,4 +88,7 @@ func TestDefaultTypeMapping_Completeness(t *testing.T) {
 	assert.Equal(t, "openapi_types.UUID", dm.String.Resolve("uuid").Type)
 	assert.Equal(t, "openapi_types.File", dm.String.Resolve("binary").Type)
 	assert.Equal(t, "string", dm.String.Resolve("unknown").Type)
+
+	// Null
+	assert.Equal(t, "interface{}", dm.Null.Resolve("").Type)
 }

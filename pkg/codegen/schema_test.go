@@ -509,6 +509,11 @@ func TestProperty_ZeroValueIsNil(t *testing.T) {
 			oapiSchema:  &openapi3.Schema{},
 			expectIsNil: false,
 		},
+		{
+			name:        "when type is null, returns true",
+			oapiSchema:  &openapi3.Schema{Type: newType("null")},
+			expectIsNil: true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -524,6 +529,50 @@ func TestProperty_ZeroValueIsNil(t *testing.T) {
 			} else {
 				require.False(t, prop.ZeroValueIsNil())
 			}
+		})
+	}
+}
+
+func TestNullTypeSupport(t *testing.T) {
+	// Test that type: "null" maps to interface{} in Go
+	newType := func(typ string) *openapi3.Types {
+		return &openapi3.Types{typ}
+	}
+
+	tests := []struct {
+		name       string
+		schema     *openapi3.Schema
+		expectedGo string
+	}{
+		{
+			name:       "type: null maps to interface{}",
+			schema:     &openapi3.Schema{Type: newType("null")},
+			expectedGo: "interface{}",
+		},
+		{
+			name:       "type: string maps to string",
+			schema:     &openapi3.Schema{Type: newType("string")},
+			expectedGo: "string",
+		},
+		{
+			name:       "type: integer maps to int",
+			schema:     &openapi3.Schema{Type: newType("integer")},
+			expectedGo: "int",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Set up global state for OpenAPI 3.1
+			oldState := globalState
+			globalState.is31 = true
+			globalState.typeMapping = DefaultTypeMapping
+			defer func() { globalState = oldState }()
+
+			schemaRef := &openapi3.SchemaRef{Value: tt.schema}
+			result, err := GenerateGoSchema(schemaRef, []string{"test"})
+			require.NoError(t, err)
+			assert.Equal(t, tt.expectedGo, result.GoType)
 		})
 	}
 }
