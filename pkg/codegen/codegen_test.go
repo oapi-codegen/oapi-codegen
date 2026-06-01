@@ -329,5 +329,60 @@ paths:
 	assert.Contains(t, code, "roleName string")
 }
 
+// TestEnumConflictDetectionOrderIndependent checks that conflict detection
+// doesn't miss overlaps because an enum was already marked for prefixing.
+func TestEnumConflictDetectionOrderIndependent(t *testing.T) {
+	// AState+BState share "running" (both prefixed), AState+CState share "migrating".
+	// The bug: once AState was marked, GetValues() returned prefixed names that
+	// no longer matched CState's raw values, so CState's conflict was missed.
+	const spec = `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Test Enum Conflict Detection
+paths: {}
+components:
+  schemas:
+    AState:
+      type: string
+      enum:
+        - running
+        - migrating
+    BState:
+      type: string
+      enum:
+        - running
+    CState:
+      type: string
+      enum:
+        - migrating
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	opts := Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			Models: true,
+		},
+		OutputOptions: OutputOptions{
+			SkipPrune: true,
+		},
+	}
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+
+	_, err = format.Source([]byte(code))
+	require.NoError(t, err)
+
+	// All three enums share values with at least one other enum; all must be prefixed.
+	assert.Contains(t, code, "AStateRunning")
+	assert.Contains(t, code, "AStateMigrating")
+	assert.Contains(t, code, "BStateRunning")
+	assert.Contains(t, code, "CStateMigrating")
+}
+
 //go:embed test_spec.yaml
 var testOpenAPIDefinition string
