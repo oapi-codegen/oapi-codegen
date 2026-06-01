@@ -384,5 +384,80 @@ components:
 	assert.Contains(t, code, "CStateMigrating")
 }
 
+// TestEnumConflictDetectionBothOrders verifies that enum conflict detection
+// produces identical output regardless of the order schemas appear in the spec.
+// The old GetValues()-based approach was order-dependent: processing AState
+// before CState caused CState to be left unprefixed, while reversing the order
+// would prefix it. Go map iteration is non-deterministic (randomized since
+// Go 1.12), so this was a latent correctness bug.
+func TestEnumConflictDetectionBothOrders(t *testing.T) {
+	specAFirst := `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Test
+paths: {}
+components:
+  schemas:
+    AState:
+      type: string
+      enum: [running, migrating]
+    BState:
+      type: string
+      enum: [running]
+    CState:
+      type: string
+      enum: [migrating]
+`
+	specCFirst := `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Test
+paths: {}
+components:
+  schemas:
+    CState:
+      type: string
+      enum: [migrating]
+    BState:
+      type: string
+      enum: [running]
+    AState:
+      type: string
+      enum: [running, migrating]
+`
+	opts := Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{Models: true},
+		OutputOptions: OutputOptions{
+			SkipPrune: true,
+		},
+	}
+
+	loader := openapi3.NewLoader()
+
+	swaggerA, err := loader.LoadFromData([]byte(specAFirst))
+	require.NoError(t, err)
+	codeA, err := Generate(swaggerA, opts)
+	require.NoError(t, err)
+
+	swaggerC, err := loader.LoadFromData([]byte(specCFirst))
+	require.NoError(t, err)
+	codeC, err := Generate(swaggerC, opts)
+	require.NoError(t, err)
+
+	// Both orderings must produce fully prefixed constants.
+	for _, code := range []string{codeA, codeC} {
+		assert.Contains(t, code, "AStateRunning")
+		assert.Contains(t, code, "AStateMigrating")
+		assert.Contains(t, code, "BStateRunning")
+		assert.Contains(t, code, "CStateMigrating")
+		// Unprefixed names must not appear as standalone constants.
+		assert.NotContains(t, code, "\tRunning ")
+		assert.NotContains(t, code, "\tMigrating ")
+	}
+}
+
 //go:embed test_spec.yaml
 var testOpenAPIDefinition string
