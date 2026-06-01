@@ -299,6 +299,14 @@ type CompatibilityOptions struct {
 	// are treated as required.
 	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/2267
 	HeadersImplicitlyRequired bool `yaml:"headers-implicitly-required,omitempty"`
+
+	// OldEnumConflictDetection reverts enum conflict detection to the pre-v2.7.1
+	// behavior, which compared generated constant names (GetValues()) rather than
+	// raw schema values. The old approach was order-dependent: whether an enum got
+	// prefixed could vary based on map iteration order (non-deterministic in Go).
+	// Set this only if you need to preserve existing generated output while you
+	// migrate. Please see https://github.com/oapi-codegen/oapi-codegen/issues/2391
+	OldEnumConflictDetection bool `yaml:"old-enum-conflict-detection,omitempty"`
 }
 
 func (co CompatibilityOptions) Validate() map[string]string {
