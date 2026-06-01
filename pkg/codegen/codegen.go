@@ -1021,7 +1021,7 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 
 	// Now, go through all the enums, and figure out if we have conflicts with
 	// any others.
-	if globalState.options.Compatibility.OldEnumConflictDetection {
+	if globalState.options.Compatibility.OldEnumConflicts {
 		// Legacy behavior (pre-v2.7.1): compare generated constant names via
 		// GetValues(). This is order-dependent because GetValues() reflects
 		// already-applied prefixes, so enums processed later may miss conflicts

@@ -231,8 +231,13 @@ type CompatibilityOptions struct {
 	// Enum values can generate conflicting typenames, so we've updated the
 	// code for enum generation to avoid these conflicts, but it will result
 	// in some enum types being renamed in existing code. Set OldEnumConflicts to true
-	// to revert to old behavior. Please see:
+	// to revert to old behavior.
+	// As of v2.7.1, this also reverts the order-independent conflict detection
+	// fix (issue #2391): the legacy GetValues()-based path is order-dependent
+	// and may produce different output on different runs, but is provided as
+	// an escape hatch for users who need to preserve existing generated code.
 	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/549
+	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/2391
 	OldEnumConflicts bool `yaml:"old-enum-conflicts,omitempty"`
 	// It was a mistake to generate a go type definition for every $ref in
 	// the OpenAPI schema. New behavior uses type aliases where possible, but
@@ -300,13 +305,6 @@ type CompatibilityOptions struct {
 	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/2267
 	HeadersImplicitlyRequired bool `yaml:"headers-implicitly-required,omitempty"`
 
-	// OldEnumConflictDetection reverts enum conflict detection to the pre-v2.7.1
-	// behavior, which compared generated constant names (GetValues()) rather than
-	// raw schema values. The old approach was order-dependent: whether an enum got
-	// prefixed could vary based on map iteration order (non-deterministic in Go).
-	// Set this only if you need to preserve existing generated output while you
-	// migrate. Please see https://github.com/oapi-codegen/oapi-codegen/issues/2391
-	OldEnumConflictDetection bool `yaml:"old-enum-conflict-detection,omitempty"`
 }
 
 func (co CompatibilityOptions) Validate() map[string]string {
