@@ -422,22 +422,21 @@ func jsonMarshalExpr(enc JSONEncodingOptions, varName string) string {
 	if !enc.NeedsCustomEncoding() {
 		return "json.Marshal(" + varName + ")"
 	}
-	var sb strings.Builder
-	sb.WriteString("func() ([]byte, error) {\n")
-	sb.WriteString("var __buf bytes.Buffer\n")
-	sb.WriteString("__enc := json.NewEncoder(&__buf)\n")
+	var opts string
 	if !enc.EscapeHTMLValue() {
-		sb.WriteString("__enc.SetEscapeHTML(false)\n")
+		opts += "__enc.SetEscapeHTML(false)\n"
 	}
 	if enc.Indent != "" || enc.IndentPrefix != "" {
-		fmt.Fprintf(&sb, "__enc.SetIndent(%q, %q)\n", enc.IndentPrefix, enc.Indent)
+		opts += fmt.Sprintf("__enc.SetIndent(%q, %q)\n", enc.IndentPrefix, enc.Indent)
 	}
-	sb.WriteString("if __err := __enc.Encode(" + varName + "); __err != nil {\n")
-	sb.WriteString("return nil, __err\n")
-	sb.WriteString("}\n")
-	sb.WriteString("return bytes.TrimRight(__buf.Bytes(), \"\\n\"), nil\n")
-	sb.WriteString("}()")
-	return sb.String()
+	return fmt.Sprintf(`func() ([]byte, error) {
+var __buf bytes.Buffer
+__enc := json.NewEncoder(&__buf)
+%sif __err := __enc.Encode(%s); __err != nil {
+return nil, __err
+}
+return bytes.TrimRight(__buf.Bytes(), "\n"), nil
+}()`, opts, varName)
 }
 
 // jsonMarshalFieldExpr is like jsonMarshalExpr but never applies indentation.
@@ -460,16 +459,15 @@ func jsonNewEncoderExpr(enc JSONEncodingOptions, bufVarName string) string {
 	if !enc.NeedsCustomEncoding() {
 		return "json.NewEncoder(&" + bufVarName + ")"
 	}
-	var sb strings.Builder
-	sb.WriteString("func() *json.Encoder {\n")
-	sb.WriteString("__e := json.NewEncoder(&" + bufVarName + ")\n")
+	var opts string
 	if !enc.EscapeHTMLValue() {
-		sb.WriteString("__e.SetEscapeHTML(false)\n")
+		opts += "__e.SetEscapeHTML(false)\n"
 	}
 	if enc.Indent != "" || enc.IndentPrefix != "" {
-		fmt.Fprintf(&sb, "__e.SetIndent(%q, %q)\n", enc.IndentPrefix, enc.Indent)
+		opts += fmt.Sprintf("__e.SetIndent(%q, %q)\n", enc.IndentPrefix, enc.Indent)
 	}
-	sb.WriteString("return __e\n")
-	sb.WriteString("}()")
-	return sb.String()
+	return fmt.Sprintf(`func() *json.Encoder {
+__e := json.NewEncoder(&%s)
+%sreturn __e
+}()`, bufVarName, opts)
 }
