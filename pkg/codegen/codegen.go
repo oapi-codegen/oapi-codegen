@@ -1474,3 +1474,24 @@ func GetParametersImports(params map[string]*openapi3.ParameterRef) (map[string]
 func SetGlobalStateSpec(spec *openapi3.T) {
 	globalState.spec = spec
 }
+
+// SetGlobalStateOptions allows setting globalState.options without calling
+// Generate. This is useful when using oapi-codegen as a library and calling
+// Generate multiple times with different options in a single process.
+func SetGlobalStateOptions(opts Configuration) {
+	globalState.options = opts
+}
+
+// ResetGlobalState resets all global state to its zero value. This is useful
+// when using oapi-codegen as a library and calling Generate multiple times
+// in a single process to ensure no state leaks between calls.
+func ResetGlobalState() {
+	globalState.options = Configuration{}
+	globalState.spec = nil
+	globalState.importMapping = nil
+	globalState.initialismsMap = nil
+	globalState.typeMapping = TypeMapping{}
+	globalState.resolvedNames = nil
+	globalState.resolvedClientWrapperNames = nil
+	globalState.streamingContentTypeRegexes = nil
+}
