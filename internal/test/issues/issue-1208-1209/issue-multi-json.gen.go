@@ -280,28 +280,28 @@ func ParseTestResponse(rsp *http.Response) (*TestResponse, error) {
 	}
 
 	switch {
-	case rsp.Header.Get("Content-Type") == "application/bar+json" && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/bar+json" && rsp.StatusCode == http.StatusOK:
 		var dest Bar
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationbarJSON200 = &dest
 
-	case rsp.Header.Get("Content-Type") == "application/bar+json" && rsp.StatusCode == 201:
+	case rsp.Header.Get("Content-Type") == "application/bar+json" && rsp.StatusCode == http.StatusCreated:
 		var dest BazApplicationBarPlusJSON
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationbarJSON201 = &dest
 
-	case rsp.Header.Get("Content-Type") == "application/foo+json" && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/foo+json" && rsp.StatusCode == http.StatusOK:
 		var dest Foo
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationfooJSON200 = &dest
 
-	case rsp.Header.Get("Content-Type") == "application/foo+json" && rsp.StatusCode == 201:
+	case rsp.Header.Get("Content-Type") == "application/foo+json" && rsp.StatusCode == http.StatusCreated:
 		var dest BazApplicationFooPlusJSON
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -391,7 +391,7 @@ func (response Test200ApplicationBarPlusJSONResponse) VisitTestResponse(w http.R
 		return err
 	}
 	w.Header().Set("Content-Type", "application/bar+json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -405,7 +405,7 @@ func (response Test200ApplicationFooPlusJSONResponse) VisitTestResponse(w http.R
 		return err
 	}
 	w.Header().Set("Content-Type", "application/foo+json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -421,7 +421,7 @@ func (response Test201ApplicationBarPlusJSONResponse) VisitTestResponse(w http.R
 		return err
 	}
 	w.Header().Set("Content-Type", "application/bar+json")
-	w.WriteHeader(201)
+	w.WriteHeader(http.StatusCreated)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -437,7 +437,7 @@ func (response Test201ApplicationFooPlusJSONResponse) VisitTestResponse(w http.R
 		return err
 	}
 	w.Header().Set("Content-Type", "application/foo+json")
-	w.WriteHeader(201)
+	w.WriteHeader(http.StatusCreated)
 	_, err := buf.WriteTo(w)
 	return err
 }

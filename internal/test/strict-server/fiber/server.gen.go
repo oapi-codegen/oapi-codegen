@@ -487,7 +487,7 @@ type JSONExample200JSONResponse Example
 
 func (response JSONExample200JSONResponse) VisitJSONExampleResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "application/json")
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	return ctx.JSON(&response)
 }
@@ -495,7 +495,7 @@ func (response JSONExample200JSONResponse) VisitJSONExampleResponse(ctx *fiber.C
 type JSONExample400Response = BadrequestResponse
 
 func (response JSONExample400Response) VisitJSONExampleResponse(ctx *fiber.Ctx) error {
-	ctx.Status(400)
+	ctx.Status(http.StatusBadRequest)
 	return nil
 }
 
@@ -521,7 +521,7 @@ type MultipartExample200MultipartResponse func(writer *multipart.Writer) error
 func (response MultipartExample200MultipartResponse) VisitMultipartExampleResponse(ctx *fiber.Ctx) error {
 	writer := multipart.NewWriter(ctx.Response().BodyWriter())
 	ctx.Response().Header.Set("Content-Type", writer.FormDataContentType())
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	defer writer.Close()
 	return response(writer)
@@ -530,7 +530,7 @@ func (response MultipartExample200MultipartResponse) VisitMultipartExampleRespon
 type MultipartExample400Response = BadrequestResponse
 
 func (response MultipartExample400Response) VisitMultipartExampleResponse(ctx *fiber.Ctx) error {
-	ctx.Status(400)
+	ctx.Status(http.StatusBadRequest)
 	return nil
 }
 
@@ -556,7 +556,7 @@ type MultipartRelatedExample200MultipartResponse func(writer *multipart.Writer) 
 func (response MultipartRelatedExample200MultipartResponse) VisitMultipartRelatedExampleResponse(ctx *fiber.Ctx) error {
 	writer := multipart.NewWriter(ctx.Response().BodyWriter())
 	ctx.Response().Header.Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	defer writer.Close()
 	return response(writer)
@@ -565,7 +565,7 @@ func (response MultipartRelatedExample200MultipartResponse) VisitMultipartRelate
 type MultipartRelatedExample400Response = BadrequestResponse
 
 func (response MultipartRelatedExample400Response) VisitMultipartRelatedExampleResponse(ctx *fiber.Ctx) error {
-	ctx.Status(400)
+	ctx.Status(http.StatusBadRequest)
 	return nil
 }
 
@@ -594,7 +594,7 @@ type MultipleRequestAndResponseTypes200JSONResponse Example
 
 func (response MultipleRequestAndResponseTypes200JSONResponse) VisitMultipleRequestAndResponseTypesResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "application/json")
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	return ctx.JSON(&response)
 }
@@ -603,7 +603,7 @@ type MultipleRequestAndResponseTypes200FormdataResponse Example
 
 func (response MultipleRequestAndResponseTypes200FormdataResponse) VisitMultipleRequestAndResponseTypesResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	if form, err := runtime.MarshalForm(response, nil); err != nil {
 		return err
@@ -623,7 +623,7 @@ func (response MultipleRequestAndResponseTypes200ImagepngResponse) VisitMultiple
 	if response.ContentLength != 0 {
 		ctx.Response().Header.Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
@@ -637,7 +637,7 @@ type MultipleRequestAndResponseTypes200MultipartResponse func(writer *multipart.
 func (response MultipleRequestAndResponseTypes200MultipartResponse) VisitMultipleRequestAndResponseTypesResponse(ctx *fiber.Ctx) error {
 	writer := multipart.NewWriter(ctx.Response().BodyWriter())
 	ctx.Response().Header.Set("Content-Type", writer.FormDataContentType())
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	defer writer.Close()
 	return response(writer)
@@ -647,7 +647,7 @@ type MultipleRequestAndResponseTypes200TextResponse string
 
 func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequestAndResponseTypesResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "text/plain")
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	_, err := ctx.WriteString(string(response))
 	return err
@@ -656,7 +656,7 @@ func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequ
 type MultipleRequestAndResponseTypes400Response = BadrequestResponse
 
 func (response MultipleRequestAndResponseTypes400Response) VisitMultipleRequestAndResponseTypesResponse(ctx *fiber.Ctx) error {
-	ctx.Status(400)
+	ctx.Status(http.StatusBadRequest)
 	return nil
 }
 
@@ -683,7 +683,7 @@ func (response NoContentHeaders204Response) VisitNoContentHeadersResponse(ctx *f
 	if response.Headers.OptionalHeader != nil {
 		ctx.Response().Header.Set("optional-header", fmt.Sprint(*response.Headers.OptionalHeader))
 	}
-	ctx.Status(204)
+	ctx.Status(http.StatusNoContent)
 	return nil
 }
 
@@ -699,7 +699,7 @@ type RequiredJSONBody200JSONResponse Example
 
 func (response RequiredJSONBody200JSONResponse) VisitRequiredJSONBodyResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "application/json")
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	return ctx.JSON(&response)
 }
@@ -707,7 +707,7 @@ func (response RequiredJSONBody200JSONResponse) VisitRequiredJSONBodyResponse(ct
 type RequiredJSONBody400Response = BadrequestResponse
 
 func (response RequiredJSONBody400Response) VisitRequiredJSONBodyResponse(ctx *fiber.Ctx) error {
-	ctx.Status(400)
+	ctx.Status(http.StatusBadRequest)
 	return nil
 }
 
@@ -732,7 +732,7 @@ type RequiredTextBody200TextResponse string
 
 func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "text/plain")
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	_, err := ctx.WriteString(string(response))
 	return err
@@ -741,7 +741,7 @@ func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(ct
 type RequiredTextBody400Response = BadrequestResponse
 
 func (response RequiredTextBody400Response) VisitRequiredTextBodyResponse(ctx *fiber.Ctx) error {
-	ctx.Status(400)
+	ctx.Status(http.StatusBadRequest)
 	return nil
 }
 
@@ -766,7 +766,7 @@ type ReservedGoKeywordParameters200TextResponse string
 
 func (response ReservedGoKeywordParameters200TextResponse) VisitReservedGoKeywordParametersResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "text/plain")
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	_, err := ctx.WriteString(string(response))
 	return err
@@ -786,7 +786,7 @@ func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(
 	ctx.Response().Header.Set("header1", fmt.Sprint(response.Headers.Header1))
 	ctx.Response().Header.Set("header2", fmt.Sprint(response.Headers.Header2))
 	ctx.Response().Header.Set("Content-Type", "application/json")
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	return ctx.JSON(&response.Body)
 }
@@ -794,7 +794,7 @@ func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(
 type ReusableResponses400Response = BadrequestResponse
 
 func (response ReusableResponses400Response) VisitReusableResponsesResponse(ctx *fiber.Ctx) error {
-	ctx.Status(400)
+	ctx.Status(http.StatusBadRequest)
 	return nil
 }
 
@@ -819,7 +819,7 @@ type TextExample200TextResponse string
 
 func (response TextExample200TextResponse) VisitTextExampleResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "text/plain")
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	_, err := ctx.WriteString(string(response))
 	return err
@@ -828,7 +828,7 @@ func (response TextExample200TextResponse) VisitTextExampleResponse(ctx *fiber.C
 type TextExample400Response = BadrequestResponse
 
 func (response TextExample400Response) VisitTextExampleResponse(ctx *fiber.Ctx) error {
-	ctx.Status(400)
+	ctx.Status(http.StatusBadRequest)
 	return nil
 }
 
@@ -859,7 +859,7 @@ func (response UnknownExample200Videomp4Response) VisitUnknownExampleResponse(ct
 	if response.ContentLength != 0 {
 		ctx.Response().Header.Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
@@ -871,7 +871,7 @@ func (response UnknownExample200Videomp4Response) VisitUnknownExampleResponse(ct
 type UnknownExample400Response = BadrequestResponse
 
 func (response UnknownExample400Response) VisitUnknownExampleResponse(ctx *fiber.Ctx) error {
-	ctx.Status(400)
+	ctx.Status(http.StatusBadRequest)
 	return nil
 }
 
@@ -904,7 +904,7 @@ func (response UnspecifiedContentType200VideoResponse) VisitUnspecifiedContentTy
 	if response.ContentLength != 0 {
 		ctx.Response().Header.Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
@@ -916,7 +916,7 @@ func (response UnspecifiedContentType200VideoResponse) VisitUnspecifiedContentTy
 type UnspecifiedContentType400Response = BadrequestResponse
 
 func (response UnspecifiedContentType400Response) VisitUnspecifiedContentTypeResponse(ctx *fiber.Ctx) error {
-	ctx.Status(400)
+	ctx.Status(http.StatusBadRequest)
 	return nil
 }
 
@@ -924,7 +924,7 @@ type UnspecifiedContentType401Response struct {
 }
 
 func (response UnspecifiedContentType401Response) VisitUnspecifiedContentTypeResponse(ctx *fiber.Ctx) error {
-	ctx.Status(401)
+	ctx.Status(http.StatusUnauthorized)
 	return nil
 }
 
@@ -932,7 +932,7 @@ type UnspecifiedContentType403Response struct {
 }
 
 func (response UnspecifiedContentType403Response) VisitUnspecifiedContentTypeResponse(ctx *fiber.Ctx) error {
-	ctx.Status(403)
+	ctx.Status(http.StatusForbidden)
 	return nil
 }
 
@@ -957,7 +957,7 @@ type URLEncodedExample200FormdataResponse Example
 
 func (response URLEncodedExample200FormdataResponse) VisitURLEncodedExampleResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	if form, err := runtime.MarshalForm(response, nil); err != nil {
 		return err
@@ -970,7 +970,7 @@ func (response URLEncodedExample200FormdataResponse) VisitURLEncodedExampleRespo
 type URLEncodedExample400Response = BadrequestResponse
 
 func (response URLEncodedExample400Response) VisitURLEncodedExampleResponse(ctx *fiber.Ctx) error {
-	ctx.Status(400)
+	ctx.Status(http.StatusBadRequest)
 	return nil
 }
 
@@ -1014,7 +1014,7 @@ func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(ctx *f
 		ctx.Response().Header.Set("optional-header", fmt.Sprint(*response.Headers.OptionalHeader))
 	}
 	ctx.Response().Header.Set("Content-Type", "application/json")
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	return ctx.JSON(&response.Body)
 }
@@ -1022,7 +1022,7 @@ func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(ctx *f
 type HeadersExample400Response = BadrequestResponse
 
 func (response HeadersExample400Response) VisitHeadersExampleResponse(ctx *fiber.Ctx) error {
-	ctx.Status(400)
+	ctx.Status(http.StatusBadRequest)
 	return nil
 }
 
@@ -1057,7 +1057,7 @@ func (response UnionExample200ApplicationAlternativePlusJSONResponse) VisitUnion
 	ctx.Response().Header.Set("header1", fmt.Sprint(response.Headers.Header1))
 	ctx.Response().Header.Set("header2", fmt.Sprint(response.Headers.Header2))
 	ctx.Response().Header.Set("Content-Type", "application/alternative+json")
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	return ctx.JSON(&response.Body)
 }
@@ -1071,7 +1071,7 @@ func (response UnionExample200JSONResponse) VisitUnionExampleResponse(ctx *fiber
 	ctx.Response().Header.Set("header1", fmt.Sprint(response.Headers.Header1))
 	ctx.Response().Header.Set("header2", fmt.Sprint(response.Headers.Header2))
 	ctx.Response().Header.Set("Content-Type", "application/json")
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	return ctx.JSON(&response.Body.union)
 }
@@ -1079,7 +1079,7 @@ func (response UnionExample200JSONResponse) VisitUnionExampleResponse(ctx *fiber
 type UnionExample400Response = BadrequestResponse
 
 func (response UnionExample400Response) VisitUnionExampleResponse(ctx *fiber.Ctx) error {
-	ctx.Status(400)
+	ctx.Status(http.StatusBadRequest)
 	return nil
 }
 

@@ -181,7 +181,7 @@ func (response GetPing200TextResponse) VisitGetPingResponse(w http.ResponseWrite
 	if response.Headers.MyHeader != nil {
 		w.Header().Set("MyHeader", fmt.Sprint(*response.Headers.MyHeader))
 	}
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 	_, err := w.Write([]byte(response.Body))
 	return err

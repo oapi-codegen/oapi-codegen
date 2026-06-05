@@ -324,7 +324,7 @@ type TestGetResponseObject interface {
 type TestGet200Response externalRef0.ResponseWithReferenceResponse
 
 func (response TestGet200Response) VisitTestGetResponse(w http.ResponseWriter) error {
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	return nil
 }
 

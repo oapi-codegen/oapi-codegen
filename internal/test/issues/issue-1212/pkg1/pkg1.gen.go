@@ -316,7 +316,7 @@ func (response Test200MultipartResponse) VisitTestResponse(w http.ResponseWriter
 	writer := multipart.NewWriter(w)
 
 	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 	defer writer.Close()
 	return response(writer)

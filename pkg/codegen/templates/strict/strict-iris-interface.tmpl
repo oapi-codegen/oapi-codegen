@@ -22,6 +22,7 @@
 
     {{range .Responses}}
         {{$statusCode := .StatusCode -}}
+        {{$statusCodeHttpConstant := .HttpStatusConstant -}}
         {{$hasHeaders := ne 0 (len .Headers) -}}
         {{$fixedStatusCode := .HasFixedStatusCode -}}
         {{$isRef := .IsRef -}}
@@ -101,7 +102,7 @@
                         ctx.ResponseWriter().Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
                     }
                 {{end -}}
-                ctx.StatusCode({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
+                ctx.StatusCode({{if $fixedStatusCode}}{{$statusCodeHttpConstant}}{{else}}response.StatusCode{{end}})
                 {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
                 {{if .IsJSON -}}
                     {{$hasUnionElements := ne 0 (len .Schema.UnionElements)}}
@@ -184,7 +185,7 @@
                         ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
                     {{end -}}
                 {{end -}}
-                ctx.StatusCode({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
+                ctx.StatusCode({{if $fixedStatusCode}}{{$statusCodeHttpConstant}}{{else}}response.StatusCode{{end}})
                 return nil
             }
         {{end}}

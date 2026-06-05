@@ -415,7 +415,7 @@ func ParseGetPetResponse(rsp *http.Response) (*GetPetResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest Pet
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -441,7 +441,7 @@ func ParseValidatePetsResponse(rsp *http.Response) (*ValidatePetsResponse, error
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest []Pet
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

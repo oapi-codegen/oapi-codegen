@@ -333,7 +333,7 @@ func ParseGetTestResponse(rsp *http.Response) (*GetTestResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest B
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -359,7 +359,7 @@ func ParseGetTestAlias0Response(rsp *http.Response) (*GetTestAlias0Response, err
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest B
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

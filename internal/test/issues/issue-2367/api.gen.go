@@ -81,7 +81,7 @@ type GetHello200Response struct {
 }
 
 func (response GetHello200Response) VisitGetHelloResponse(w http.ResponseWriter) error {
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	return nil
 }
 

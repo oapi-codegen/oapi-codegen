@@ -309,7 +309,7 @@ type JSONExample200JSONResponse Example
 
 func (response JSONExample200JSONResponse) VisitJSONExampleResponse(ctx iris.Context) error {
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	return ctx.JSON(&response)
 }
@@ -317,7 +317,7 @@ func (response JSONExample200JSONResponse) VisitJSONExampleResponse(ctx iris.Con
 type JSONExample400Response = BadrequestResponse
 
 func (response JSONExample400Response) VisitJSONExampleResponse(ctx iris.Context) error {
-	ctx.StatusCode(400)
+	ctx.StatusCode(http.StatusBadRequest)
 	return nil
 }
 
@@ -343,7 +343,7 @@ type MultipartExample200MultipartResponse func(writer *multipart.Writer) error
 func (response MultipartExample200MultipartResponse) VisitMultipartExampleResponse(ctx iris.Context) error {
 	writer := multipart.NewWriter(ctx.ResponseWriter())
 	ctx.ResponseWriter().Header().Set("Content-Type", writer.FormDataContentType())
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	defer writer.Close()
 	return response(writer)
@@ -352,7 +352,7 @@ func (response MultipartExample200MultipartResponse) VisitMultipartExampleRespon
 type MultipartExample400Response = BadrequestResponse
 
 func (response MultipartExample400Response) VisitMultipartExampleResponse(ctx iris.Context) error {
-	ctx.StatusCode(400)
+	ctx.StatusCode(http.StatusBadRequest)
 	return nil
 }
 
@@ -378,7 +378,7 @@ type MultipartRelatedExample200MultipartResponse func(writer *multipart.Writer) 
 func (response MultipartRelatedExample200MultipartResponse) VisitMultipartRelatedExampleResponse(ctx iris.Context) error {
 	writer := multipart.NewWriter(ctx.ResponseWriter())
 	ctx.ResponseWriter().Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	defer writer.Close()
 	return response(writer)
@@ -387,7 +387,7 @@ func (response MultipartRelatedExample200MultipartResponse) VisitMultipartRelate
 type MultipartRelatedExample400Response = BadrequestResponse
 
 func (response MultipartRelatedExample400Response) VisitMultipartRelatedExampleResponse(ctx iris.Context) error {
-	ctx.StatusCode(400)
+	ctx.StatusCode(http.StatusBadRequest)
 	return nil
 }
 
@@ -416,7 +416,7 @@ type MultipleRequestAndResponseTypes200JSONResponse Example
 
 func (response MultipleRequestAndResponseTypes200JSONResponse) VisitMultipleRequestAndResponseTypesResponse(ctx iris.Context) error {
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	return ctx.JSON(&response)
 }
@@ -425,7 +425,7 @@ type MultipleRequestAndResponseTypes200FormdataResponse Example
 
 func (response MultipleRequestAndResponseTypes200FormdataResponse) VisitMultipleRequestAndResponseTypesResponse(ctx iris.Context) error {
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	if form, err := runtime.MarshalForm(response, nil); err != nil {
 		return err
@@ -445,7 +445,7 @@ func (response MultipleRequestAndResponseTypes200ImagepngResponse) VisitMultiple
 	if response.ContentLength != 0 {
 		ctx.ResponseWriter().Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
@@ -459,7 +459,7 @@ type MultipleRequestAndResponseTypes200MultipartResponse func(writer *multipart.
 func (response MultipleRequestAndResponseTypes200MultipartResponse) VisitMultipleRequestAndResponseTypesResponse(ctx iris.Context) error {
 	writer := multipart.NewWriter(ctx.ResponseWriter())
 	ctx.ResponseWriter().Header().Set("Content-Type", writer.FormDataContentType())
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	defer writer.Close()
 	return response(writer)
@@ -469,7 +469,7 @@ type MultipleRequestAndResponseTypes200TextResponse string
 
 func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequestAndResponseTypesResponse(ctx iris.Context) error {
 	ctx.ResponseWriter().Header().Set("Content-Type", "text/plain")
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	_, err := ctx.WriteString(string(response))
 	return err
@@ -478,7 +478,7 @@ func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequ
 type MultipleRequestAndResponseTypes400Response = BadrequestResponse
 
 func (response MultipleRequestAndResponseTypes400Response) VisitMultipleRequestAndResponseTypesResponse(ctx iris.Context) error {
-	ctx.StatusCode(400)
+	ctx.StatusCode(http.StatusBadRequest)
 	return nil
 }
 
@@ -505,7 +505,7 @@ func (response NoContentHeaders204Response) VisitNoContentHeadersResponse(ctx ir
 	if response.Headers.OptionalHeader != nil {
 		ctx.ResponseWriter().Header().Set("optional-header", fmt.Sprint(*response.Headers.OptionalHeader))
 	}
-	ctx.StatusCode(204)
+	ctx.StatusCode(http.StatusNoContent)
 	return nil
 }
 
@@ -521,7 +521,7 @@ type RequiredJSONBody200JSONResponse Example
 
 func (response RequiredJSONBody200JSONResponse) VisitRequiredJSONBodyResponse(ctx iris.Context) error {
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	return ctx.JSON(&response)
 }
@@ -529,7 +529,7 @@ func (response RequiredJSONBody200JSONResponse) VisitRequiredJSONBodyResponse(ct
 type RequiredJSONBody400Response = BadrequestResponse
 
 func (response RequiredJSONBody400Response) VisitRequiredJSONBodyResponse(ctx iris.Context) error {
-	ctx.StatusCode(400)
+	ctx.StatusCode(http.StatusBadRequest)
 	return nil
 }
 
@@ -554,7 +554,7 @@ type RequiredTextBody200TextResponse string
 
 func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(ctx iris.Context) error {
 	ctx.ResponseWriter().Header().Set("Content-Type", "text/plain")
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	_, err := ctx.WriteString(string(response))
 	return err
@@ -563,7 +563,7 @@ func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(ct
 type RequiredTextBody400Response = BadrequestResponse
 
 func (response RequiredTextBody400Response) VisitRequiredTextBodyResponse(ctx iris.Context) error {
-	ctx.StatusCode(400)
+	ctx.StatusCode(http.StatusBadRequest)
 	return nil
 }
 
@@ -588,7 +588,7 @@ type ReservedGoKeywordParameters200TextResponse string
 
 func (response ReservedGoKeywordParameters200TextResponse) VisitReservedGoKeywordParametersResponse(ctx iris.Context) error {
 	ctx.ResponseWriter().Header().Set("Content-Type", "text/plain")
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	_, err := ctx.WriteString(string(response))
 	return err
@@ -608,7 +608,7 @@ func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(
 	ctx.ResponseWriter().Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	ctx.ResponseWriter().Header().Set("header2", fmt.Sprint(response.Headers.Header2))
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	return ctx.JSON(&response.Body)
 }
@@ -616,7 +616,7 @@ func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(
 type ReusableResponses400Response = BadrequestResponse
 
 func (response ReusableResponses400Response) VisitReusableResponsesResponse(ctx iris.Context) error {
-	ctx.StatusCode(400)
+	ctx.StatusCode(http.StatusBadRequest)
 	return nil
 }
 
@@ -641,7 +641,7 @@ type TextExample200TextResponse string
 
 func (response TextExample200TextResponse) VisitTextExampleResponse(ctx iris.Context) error {
 	ctx.ResponseWriter().Header().Set("Content-Type", "text/plain")
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	_, err := ctx.WriteString(string(response))
 	return err
@@ -650,7 +650,7 @@ func (response TextExample200TextResponse) VisitTextExampleResponse(ctx iris.Con
 type TextExample400Response = BadrequestResponse
 
 func (response TextExample400Response) VisitTextExampleResponse(ctx iris.Context) error {
-	ctx.StatusCode(400)
+	ctx.StatusCode(http.StatusBadRequest)
 	return nil
 }
 
@@ -681,7 +681,7 @@ func (response UnknownExample200Videomp4Response) VisitUnknownExampleResponse(ct
 	if response.ContentLength != 0 {
 		ctx.ResponseWriter().Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
@@ -693,7 +693,7 @@ func (response UnknownExample200Videomp4Response) VisitUnknownExampleResponse(ct
 type UnknownExample400Response = BadrequestResponse
 
 func (response UnknownExample400Response) VisitUnknownExampleResponse(ctx iris.Context) error {
-	ctx.StatusCode(400)
+	ctx.StatusCode(http.StatusBadRequest)
 	return nil
 }
 
@@ -726,7 +726,7 @@ func (response UnspecifiedContentType200VideoResponse) VisitUnspecifiedContentTy
 	if response.ContentLength != 0 {
 		ctx.ResponseWriter().Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
@@ -738,7 +738,7 @@ func (response UnspecifiedContentType200VideoResponse) VisitUnspecifiedContentTy
 type UnspecifiedContentType400Response = BadrequestResponse
 
 func (response UnspecifiedContentType400Response) VisitUnspecifiedContentTypeResponse(ctx iris.Context) error {
-	ctx.StatusCode(400)
+	ctx.StatusCode(http.StatusBadRequest)
 	return nil
 }
 
@@ -746,7 +746,7 @@ type UnspecifiedContentType401Response struct {
 }
 
 func (response UnspecifiedContentType401Response) VisitUnspecifiedContentTypeResponse(ctx iris.Context) error {
-	ctx.StatusCode(401)
+	ctx.StatusCode(http.StatusUnauthorized)
 	return nil
 }
 
@@ -754,7 +754,7 @@ type UnspecifiedContentType403Response struct {
 }
 
 func (response UnspecifiedContentType403Response) VisitUnspecifiedContentTypeResponse(ctx iris.Context) error {
-	ctx.StatusCode(403)
+	ctx.StatusCode(http.StatusForbidden)
 	return nil
 }
 
@@ -779,7 +779,7 @@ type URLEncodedExample200FormdataResponse Example
 
 func (response URLEncodedExample200FormdataResponse) VisitURLEncodedExampleResponse(ctx iris.Context) error {
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	if form, err := runtime.MarshalForm(response, nil); err != nil {
 		return err
@@ -792,7 +792,7 @@ func (response URLEncodedExample200FormdataResponse) VisitURLEncodedExampleRespo
 type URLEncodedExample400Response = BadrequestResponse
 
 func (response URLEncodedExample400Response) VisitURLEncodedExampleResponse(ctx iris.Context) error {
-	ctx.StatusCode(400)
+	ctx.StatusCode(http.StatusBadRequest)
 	return nil
 }
 
@@ -836,7 +836,7 @@ func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(ctx ir
 		ctx.ResponseWriter().Header().Set("optional-header", fmt.Sprint(*response.Headers.OptionalHeader))
 	}
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	return ctx.JSON(&response.Body)
 }
@@ -844,7 +844,7 @@ func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(ctx ir
 type HeadersExample400Response = BadrequestResponse
 
 func (response HeadersExample400Response) VisitHeadersExampleResponse(ctx iris.Context) error {
-	ctx.StatusCode(400)
+	ctx.StatusCode(http.StatusBadRequest)
 	return nil
 }
 
@@ -879,7 +879,7 @@ func (response UnionExample200ApplicationAlternativePlusJSONResponse) VisitUnion
 	ctx.ResponseWriter().Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	ctx.ResponseWriter().Header().Set("header2", fmt.Sprint(response.Headers.Header2))
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/alternative+json")
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	return ctx.JSON(&response.Body)
 }
@@ -893,7 +893,7 @@ func (response UnionExample200JSONResponse) VisitUnionExampleResponse(ctx iris.C
 	ctx.ResponseWriter().Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	ctx.ResponseWriter().Header().Set("header2", fmt.Sprint(response.Headers.Header2))
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	return ctx.JSON(&response.Body.union)
 }
@@ -901,7 +901,7 @@ func (response UnionExample200JSONResponse) VisitUnionExampleResponse(ctx iris.C
 type UnionExample400Response = BadrequestResponse
 
 func (response UnionExample400Response) VisitUnionExampleResponse(ctx iris.Context) error {
-	ctx.StatusCode(400)
+	ctx.StatusCode(http.StatusBadRequest)
 	return nil
 }
 

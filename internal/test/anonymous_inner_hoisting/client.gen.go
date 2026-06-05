@@ -1279,7 +1279,7 @@ func ParseGetResponseDeepNestedResponse(rsp *http.Response) (*GetResponseDeepNes
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest struct {
 			Wrapper *struct {
 				Inner *GetResponseDeepNested200JSONResponseBody_Wrapper_Inner `json:"inner,omitempty"`
@@ -1309,7 +1309,7 @@ func ParseGetResponseItemsOneOfResponse(rsp *http.Response) (*GetResponseItemsOn
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest struct {
 			Items []GetResponseItemsOneOf200JSONResponseBody_Items_Item `json:"items"`
 		}
@@ -1337,7 +1337,7 @@ func ParseGetResponseRootAnyOfResponse(rsp *http.Response) (*GetResponseRootAnyO
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest GetResponseRootAnyOf200JSONResponseBody
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -1363,7 +1363,7 @@ func ParseGetResponseRootOneOfResponse(rsp *http.Response) (*GetResponseRootOneO
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest GetResponseRootOneOf200JSONResponseBody
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

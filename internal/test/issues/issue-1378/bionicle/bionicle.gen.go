@@ -247,7 +247,7 @@ func (response GetBionicleName200JSONResponse) VisitGetBionicleNameResponse(w ht
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -261,7 +261,7 @@ func (response GetBionicleName400JSONResponse) VisitGetBionicleNameResponse(w ht
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
+	w.WriteHeader(http.StatusBadRequest)
 	_, err := buf.WriteTo(w)
 	return err
 }

@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -172,7 +173,7 @@ type GetGetMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystream
 
 func (response GetGetMultibody200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitGetGetMultibodyResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	return ctx.JSON(&response)
 }
@@ -181,7 +182,7 @@ type GetGetMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystream
 
 func (response GetGetMultibody200ApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Response) VisitGetGetMultibodyResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"")
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	return ctx.JSON(&response)
 }
@@ -197,7 +198,7 @@ type GetObject200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRespo
 
 func (response GetObject200ApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsResponse) VisitGetObjectResponse(ctx *fiber.Ctx) error {
 	ctx.Response().Header.Set("Content-Type", "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"")
-	ctx.Status(200)
+	ctx.Status(http.StatusOK)
 
 	return ctx.JSON(&response)
 }

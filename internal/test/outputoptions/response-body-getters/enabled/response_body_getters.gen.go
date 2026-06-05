@@ -266,7 +266,7 @@ func ParseGetThingResponse(rsp *http.Response) (*GetThingResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest Thing
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

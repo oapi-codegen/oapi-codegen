@@ -245,7 +245,7 @@ func ParseGetTestResponse(rsp *http.Response) (*GetTestResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest Success
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -432,7 +432,7 @@ func (response GetTest200JSONResponse) VisitGetTestResponse(w http.ResponseWrite
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -442,7 +442,7 @@ type GetTest401TextResponse UnauthorizedTextResponse
 func (response GetTest401TextResponse) VisitGetTestResponse(w http.ResponseWriter) error {
 
 	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(401)
+	w.WriteHeader(http.StatusUnauthorized)
 
 	_, err := w.Write([]byte(response))
 	return err

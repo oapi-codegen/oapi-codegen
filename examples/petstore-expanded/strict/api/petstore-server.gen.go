@@ -332,7 +332,7 @@ func (response FindPets200JSONResponse) VisitFindPetsResponse(w http.ResponseWri
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -371,7 +371,7 @@ func (response AddPet200JSONResponse) VisitAddPetResponse(w http.ResponseWriter)
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -405,7 +405,7 @@ type DeletePet204Response struct {
 }
 
 func (response DeletePet204Response) VisitDeletePetResponse(w http.ResponseWriter) error {
-	w.WriteHeader(204)
+	w.WriteHeader(http.StatusNoContent)
 	return nil
 }
 
@@ -443,7 +443,7 @@ func (response FindPetByID200JSONResponse) VisitFindPetByIDResponse(w http.Respo
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
