@@ -322,8 +322,10 @@ func toStringArray(sarr []string) string {
 	return `[]string{` + s + `}`
 }
 
+// stripNewLines removes newlines so untrusted spec text stays inside a single
+// generated `//` line comment instead of breaking out into real Go source.
 func stripNewLines(s string) string {
-	r := strings.NewReplacer("\n", "")
+	r := strings.NewReplacer("\n", "", "\r", "")
 	return r.Replace(s)
 }
 
