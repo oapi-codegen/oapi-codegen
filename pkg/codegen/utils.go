@@ -905,10 +905,12 @@ func PathToTypeName(path []string) string {
 }
 
 // StringToGoString takes an arbitrary string and converts it to a valid Go string literal,
-// including the quotes. For instance, `foo "bar"` would be converted to `"foo \"bar\""`
+// including the quotes. For instance, `foo "bar"` would be converted to `"foo \"bar\""`.
+//
+// strconv.Quote escapes backslashes, newlines and other control characters too,
+// so untrusted spec text cannot break out of the generated string literal.
 func StringToGoString(in string) string {
-	esc := strings.ReplaceAll(in, "\"", "\\\"")
-	return fmt.Sprintf("\"%s\"", esc)
+	return strconv.Quote(in)
 }
 
 // StringToGoComment renders a possible multi-line string as a valid Go-Comment.
