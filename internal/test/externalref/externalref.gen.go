@@ -31,14 +31,15 @@ type Container struct {
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"pFRNb9swDP0rAbej0GTosINvbXdfDtupKAxGZhxttqRJTNag0H8fKDWNE6dIsl0Mmh8P7z3SfgHteu8s",
-	"WY5QvUDUK+oxhw/OMhpLQV58cJ4CG8olt/hJmmuU+GOgJVTwYboHmr6iTD3qX9jSXR096fpbnrqDpHYA",
-	"iwsB7ocA9wMAfQ7grS8p8MTn2tGbenNbO09WwjkxpJQUHOUfkKl1YTt2xjTypGfsfUdQfVKwdKFHhgqM",
-	"5S+fQQFvPZVXaikIMYs9HYzBV9fGfWvkYGwLQuQ1U2SBgue+k8mCAHrH6wTneVF/SFcPhFzhy5v+pEaK",
-	"Z/8ouXFta2gsWoFfOXY/QlcMZupzcNh27MRuZmgahoDbfeefgN5TAxWHNUlbZOR1xm4o6mA8G2cFi3hS",
-	"ahNjJ7yiSWQXhCrZdQ/VI+AGTYeLTnKebFMYRdc18HRCEGN7qOUK679jgbhEUlIQ6PfaBEk9FmuGdj6d",
-	"uyef7390SsLhncu/YvXXHjdj6Rp++tg0RraE3XxARtQfo8kdnfwbjYS8w++/f1ppT+GodCmFlDGMXbpc",
-	"NJw/HFCwoRDLrWaeZU1Qwe3N7GYmK0deCXBKfwMAAP//",
+	"vFVNb9swDP0rAbej62bYsINvbXdfDtupKAxGZhxt1scouk1R+L8PkmPHjTs0G7JeEkUUn/jeI5UnUM54",
+	"Z8lKgOIJgtqSwbS8cVZQW+L4w7PzxKIphdz6BykpMa7fM22ggHeXB6DLPcqlR/UTa7oqgydVfk1ZV9Bl",
+	"A8D6RIDrKcD1BEC9BjCe6zLwJK8dDw9Y18QX6HU5rD1JEMdUMm1CuSWsQmkwCHEZWJUGtS2ZgmtZUSid",
+	"JxuzVyTQdUeVYlVp0c5is5roKdxSBvLoCYr98VTui+LNvLBoKH7v84OwtvUZNO4OJRyFTi0hIpxP0BsU",
+	"qh0/zq/XVfykHRrfEBQfMtg4NihQgLby+ROM4morVBNHdYaaxzT44upwODqSOHYmg93FwIRdK8QXxlXU",
+	"RHiX7yP5wDFPsXwsPoOdaQ6agRoC5xVr1bf6c53URMG3GYKRdpfNXFr+o02Vq2tNc6My8Fsn7js3fVMI",
+	"mTBvymP9h5yp0ciME6ceGL2nqp/TZJOgtAm7oqBY+zjSEYtk0ccW2i5kS4skGWRAtjVQ3ALeo25w3cQ9",
+	"T7bqKwquqeDuBUKC9XMub+PaN+xvP0WNLgOmX63muHXbqzp14u4s4xPbeeZcemDPOTSR9x8el7/o1P/y",
+	"fsTSjgUQTG9sHC27celqLWlEIIN74tB3Zfor6BlCAR/zZb6MDqFsI7+u+x0AAP//",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
@@ -90,7 +91,7 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 		}
 		res[rawPath] = rawFunc
 	}
-	for rawPath, rawFunc := range externalRef1.PathToRawSpec(path.Join(path.Dir(pathToFile), "https://petstore3.swagger.io/api/v3/openapi.json")) {
+	for rawPath, rawFunc := range externalRef1.PathToRawSpec(path.Join(path.Dir(pathToFile), "https://raw.githubusercontent.com/swagger-api/swagger-petstore/refs/heads/master/src/main/resources/openapi.yaml")) {
 		if _, ok := res[rawPath]; ok {
 			// it is not possible to compare functions in golang, so always overwrite the old value
 		}
