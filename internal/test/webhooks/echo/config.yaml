@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: echo
+generate:
+  models: true
+  client: true
+  echo-server: true
+output-options:
+  skip-prune: true
+output: webhooks.gen.go

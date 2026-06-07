@@ -1,0 +1,97 @@
+// {{.Prefix}}ReceiverInterface represents handlers for receiving inbound
+// {{.PrefixLower}} requests. Each {{.PrefixLower}} becomes a Handle*{{.Prefix}}
+// method that the implementation fills in. The caller mounts the per-
+// {{.PrefixLower}} gin.HandlerFunc returned by {Op}{{.Prefix}}Handler at
+// whatever URL path they advertise to senders.
+type {{.Prefix}}ReceiverInterface interface {
+{{range .Operations -}}
+{{.SummaryAsComment}}
+// Handle{{.OperationId}}{{$.Prefix}} handles the {{.Method}} {{$.PrefixLower}} for {{.SourceName}}.
+Handle{{.OperationId}}{{$.Prefix}}(c *gin.Context{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
+{{end}}
+}
+
+{{range .Operations -}}
+{{$opid := .OperationId -}}
+{{$srcName := .SourceName -}}
+// {{$opid}}{{$.Prefix}}Handler returns the gin.HandlerFunc for the {{$srcName}} {{$.PrefixLower}}.
+// Mount this at the URL path advertised to {{$.PrefixLower}} senders.
+// Parameter-binding errors abort the request with 400 and a JSON body
+// of the form {"error": "..."}. Engine-level middleware can be applied
+// via gin.Engine.Use(); per-handler middleware is not generated here
+// (gin's idiom prefers route-group / engine .Use composition).
+func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface) gin.HandlerFunc {
+    return func(c *gin.Context) {
+{{- if .RequiresParamObject}}
+        var err error
+        _ = err
+
+        // Parameter object where we will unmarshal all parameters from the context.
+        var params {{$opid}}Params
+{{range $paramIdx, $param := .QueryParams}}
+        // ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
+        {{if .IsStyled}}
+        err = runtime.BindQueryParameterWithOptions("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", c.Request.URL.Query(), &params.{{.GoName}}, runtime.BindQueryParameterOptions{Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+        if err != nil {
+            c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err)})
+            return
+        }
+        {{else}}
+        if paramValue := c.Query("{{.ParamName}}"); paramValue != "" {
+            {{if .IsPassThrough}}
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}paramValue
+            {{end}}
+            {{if .IsJson}}
+            var value {{.TypeDef}}
+            err = json.Unmarshal([]byte(paramValue), &value)
+            if err != nil {
+                c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err)})
+                return
+            }
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
+            {{end}}
+        }{{if .Required}} else {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "Query parameter {{.ParamName}} is required, but not found"})
+            return
+        }{{end}}
+        {{end}}
+{{end}}
+{{range $paramIdx, $param := .HeaderParams}}
+        // ------------- {{if .Required}}Required{{else}}Optional{{end}} header parameter "{{.ParamName}}" -------------
+        if valueList, found := c.Request.Header[http.CanonicalHeaderKey("{{.ParamName}}")]; found {
+            var {{.GoName}} {{.TypeDef}}
+            n := len(valueList)
+            if n != 1 {
+                c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Expected one value for {{.ParamName}}, got %d", n)})
+                return
+            }
+            {{if .IsPassThrough}}
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}valueList[0]
+            {{end}}
+            {{if .IsJson}}
+            err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+            if err != nil {
+                c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err)})
+                return
+            }
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
+            {{end}}
+            {{if .IsStyled}}
+            err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+            if err != nil {
+                c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err)})
+                return
+            }
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
+            {{end}}
+        }{{if .Required}} else {
+            c.JSON(http.StatusBadRequest, gin.H{"error": "Header parameter {{.ParamName}} is required, but not found"})
+            return
+        }{{end}}
+{{end}}
+{{- end}}
+        si.Handle{{$opid}}{{$.Prefix}}(c{{if .RequiresParamObject}}, params{{end}})
+    }
+}
+
+{{end}}
