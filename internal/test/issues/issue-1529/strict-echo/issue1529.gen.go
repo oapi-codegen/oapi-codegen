@@ -261,21 +261,21 @@ func ParseTestResponse(rsp *http.Response) (*TestResponse, error) {
 	}
 
 	switch {
-	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == http.StatusOK:
 		var dest Test
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
-	case rsp.Header.Get("Content-Type") == "application/json; profile=\"Bar\"" && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/json; profile=\"Bar\"" && rsp.StatusCode == http.StatusOK:
 		var dest Test
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationjsonProfileBar200 = &dest
 
-	case rsp.Header.Get("Content-Type") == "application/json; profile=\"Foo\"" && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/json; profile=\"Foo\"" && rsp.StatusCode == http.StatusOK:
 		var dest Test
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -375,7 +375,7 @@ func (response Test200JSONResponse) VisitTestResponse(w http.ResponseWriter) err
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -389,7 +389,7 @@ func (response Test200ApplicationJSONProfileBarResponse) VisitTestResponse(w htt
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json; profile=\"Bar\"")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -403,7 +403,7 @@ func (response Test200ApplicationJSONProfileFooResponse) VisitTestResponse(w htt
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json; profile=\"Foo\"")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }

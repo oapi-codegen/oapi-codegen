@@ -293,7 +293,7 @@ func (response BinaryEndpoint200ApplicationoctetStreamResponse) VisitBinaryEndpo
 	if response.ContentLength != 0 {
 		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
@@ -319,7 +319,7 @@ func (response FormdataEndpoint200FormdataResponse) VisitFormdataEndpointRespons
 		return err
 	}
 	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err = w.Write([]byte(form.Encode()))
 	return err
 }
@@ -341,7 +341,7 @@ func (response JsonEndpoint200JSONResponse) VisitJsonEndpointResponse(w http.Res
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -360,7 +360,7 @@ func (response MultipartEndpoint200MultipartResponse) VisitMultipartEndpointResp
 	writer := multipart.NewWriter(w)
 
 	w.Header().Set("Content-Type", writer.FormDataContentType())
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 	defer writer.Close()
 	return response(writer)
@@ -379,7 +379,7 @@ type TextEndpoint200TextResponse string
 func (response TextEndpoint200TextResponse) VisitTextEndpointResponse(w http.ResponseWriter) error {
 
 	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 	_, err := w.Write([]byte(response))
 	return err

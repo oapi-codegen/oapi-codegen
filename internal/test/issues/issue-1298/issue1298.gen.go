@@ -356,7 +356,7 @@ type Test204Response struct {
 }
 
 func (response Test204Response) VisitTestResponse(w http.ResponseWriter) error {
-	w.WriteHeader(204)
+	w.WriteHeader(http.StatusNoContent)
 	return nil
 }
 

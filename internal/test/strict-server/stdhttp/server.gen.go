@@ -524,7 +524,7 @@ func (response JSONExample200JSONResponse) VisitJSONExampleResponse(w http.Respo
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -532,7 +532,7 @@ func (response JSONExample200JSONResponse) VisitJSONExampleResponse(w http.Respo
 type JSONExample400Response = BadrequestResponse
 
 func (response JSONExample400Response) VisitJSONExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+	w.WriteHeader(http.StatusBadRequest)
 	return nil
 }
 
@@ -559,7 +559,7 @@ func (response MultipartExample200MultipartResponse) VisitMultipartExampleRespon
 	writer := multipart.NewWriter(w)
 
 	w.Header().Set("Content-Type", writer.FormDataContentType())
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 	defer writer.Close()
 	return response(writer)
@@ -568,7 +568,7 @@ func (response MultipartExample200MultipartResponse) VisitMultipartExampleRespon
 type MultipartExample400Response = BadrequestResponse
 
 func (response MultipartExample400Response) VisitMultipartExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+	w.WriteHeader(http.StatusBadRequest)
 	return nil
 }
 
@@ -595,7 +595,7 @@ func (response MultipartRelatedExample200MultipartResponse) VisitMultipartRelate
 	writer := multipart.NewWriter(w)
 
 	w.Header().Set("Content-Type", mime.FormatMediaType("multipart/related", map[string]string{"boundary": writer.Boundary()}))
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 	defer writer.Close()
 	return response(writer)
@@ -604,7 +604,7 @@ func (response MultipartRelatedExample200MultipartResponse) VisitMultipartRelate
 type MultipartRelatedExample400Response = BadrequestResponse
 
 func (response MultipartRelatedExample400Response) VisitMultipartRelatedExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+	w.WriteHeader(http.StatusBadRequest)
 	return nil
 }
 
@@ -638,7 +638,7 @@ func (response MultipleRequestAndResponseTypes200JSONResponse) VisitMultipleRequ
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -652,7 +652,7 @@ func (response MultipleRequestAndResponseTypes200FormdataResponse) VisitMultiple
 		return err
 	}
 	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err = w.Write([]byte(form.Encode()))
 	return err
 }
@@ -668,7 +668,7 @@ func (response MultipleRequestAndResponseTypes200ImagepngResponse) VisitMultiple
 	if response.ContentLength != 0 {
 		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
@@ -683,7 +683,7 @@ func (response MultipleRequestAndResponseTypes200MultipartResponse) VisitMultipl
 	writer := multipart.NewWriter(w)
 
 	w.Header().Set("Content-Type", writer.FormDataContentType())
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 	defer writer.Close()
 	return response(writer)
@@ -694,7 +694,7 @@ type MultipleRequestAndResponseTypes200TextResponse string
 func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
 
 	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 	_, err := w.Write([]byte(response))
 	return err
@@ -703,7 +703,7 @@ func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequ
 type MultipleRequestAndResponseTypes400Response = BadrequestResponse
 
 func (response MultipleRequestAndResponseTypes400Response) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+	w.WriteHeader(http.StatusBadRequest)
 	return nil
 }
 
@@ -730,7 +730,7 @@ func (response NoContentHeaders204Response) VisitNoContentHeadersResponse(w http
 	if response.Headers.OptionalHeader != nil {
 		w.Header().Set("optional-header", fmt.Sprint(*response.Headers.OptionalHeader))
 	}
-	w.WriteHeader(204)
+	w.WriteHeader(http.StatusNoContent)
 	return nil
 }
 
@@ -751,7 +751,7 @@ func (response RequiredJSONBody200JSONResponse) VisitRequiredJSONBodyResponse(w 
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -759,7 +759,7 @@ func (response RequiredJSONBody200JSONResponse) VisitRequiredJSONBodyResponse(w 
 type RequiredJSONBody400Response = BadrequestResponse
 
 func (response RequiredJSONBody400Response) VisitRequiredJSONBodyResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+	w.WriteHeader(http.StatusBadRequest)
 	return nil
 }
 
@@ -785,7 +785,7 @@ type RequiredTextBody200TextResponse string
 func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(w http.ResponseWriter) error {
 
 	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 	_, err := w.Write([]byte(response))
 	return err
@@ -794,7 +794,7 @@ func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(w 
 type RequiredTextBody400Response = BadrequestResponse
 
 func (response RequiredTextBody400Response) VisitRequiredTextBodyResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+	w.WriteHeader(http.StatusBadRequest)
 	return nil
 }
 
@@ -820,7 +820,7 @@ type ReservedGoKeywordParameters200TextResponse string
 func (response ReservedGoKeywordParameters200TextResponse) VisitReservedGoKeywordParametersResponse(w http.ResponseWriter) error {
 
 	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 	_, err := w.Write([]byte(response))
 	return err
@@ -845,7 +845,7 @@ func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -853,7 +853,7 @@ func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(
 type ReusableResponses400Response = BadrequestResponse
 
 func (response ReusableResponses400Response) VisitReusableResponsesResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+	w.WriteHeader(http.StatusBadRequest)
 	return nil
 }
 
@@ -879,7 +879,7 @@ type TextExample200TextResponse string
 func (response TextExample200TextResponse) VisitTextExampleResponse(w http.ResponseWriter) error {
 
 	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 	_, err := w.Write([]byte(response))
 	return err
@@ -888,7 +888,7 @@ func (response TextExample200TextResponse) VisitTextExampleResponse(w http.Respo
 type TextExample400Response = BadrequestResponse
 
 func (response TextExample400Response) VisitTextExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+	w.WriteHeader(http.StatusBadRequest)
 	return nil
 }
 
@@ -920,7 +920,7 @@ func (response UnknownExample200Videomp4Response) VisitUnknownExampleResponse(w 
 	if response.ContentLength != 0 {
 		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
@@ -932,7 +932,7 @@ func (response UnknownExample200Videomp4Response) VisitUnknownExampleResponse(w 
 type UnknownExample400Response = BadrequestResponse
 
 func (response UnknownExample400Response) VisitUnknownExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+	w.WriteHeader(http.StatusBadRequest)
 	return nil
 }
 
@@ -966,7 +966,7 @@ func (response UnspecifiedContentType200VideoResponse) VisitUnspecifiedContentTy
 	if response.ContentLength != 0 {
 		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()
@@ -978,7 +978,7 @@ func (response UnspecifiedContentType200VideoResponse) VisitUnspecifiedContentTy
 type UnspecifiedContentType400Response = BadrequestResponse
 
 func (response UnspecifiedContentType400Response) VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+	w.WriteHeader(http.StatusBadRequest)
 	return nil
 }
 
@@ -986,7 +986,7 @@ type UnspecifiedContentType401Response struct {
 }
 
 func (response UnspecifiedContentType401Response) VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error {
-	w.WriteHeader(401)
+	w.WriteHeader(http.StatusUnauthorized)
 	return nil
 }
 
@@ -994,7 +994,7 @@ type UnspecifiedContentType403Response struct {
 }
 
 func (response UnspecifiedContentType403Response) VisitUnspecifiedContentTypeResponse(w http.ResponseWriter) error {
-	w.WriteHeader(403)
+	w.WriteHeader(http.StatusForbidden)
 	return nil
 }
 
@@ -1024,7 +1024,7 @@ func (response URLEncodedExample200FormdataResponse) VisitURLEncodedExampleRespo
 		return err
 	}
 	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err = w.Write([]byte(form.Encode()))
 	return err
 }
@@ -1032,7 +1032,7 @@ func (response URLEncodedExample200FormdataResponse) VisitURLEncodedExampleRespo
 type URLEncodedExample400Response = BadrequestResponse
 
 func (response URLEncodedExample400Response) VisitURLEncodedExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+	w.WriteHeader(http.StatusBadRequest)
 	return nil
 }
 
@@ -1081,7 +1081,7 @@ func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(w http
 	if response.Headers.OptionalHeader != nil {
 		w.Header().Set("optional-header", fmt.Sprint(*response.Headers.OptionalHeader))
 	}
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -1089,7 +1089,7 @@ func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(w http
 type HeadersExample400Response = BadrequestResponse
 
 func (response HeadersExample400Response) VisitHeadersExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+	w.WriteHeader(http.StatusBadRequest)
 	return nil
 }
 
@@ -1129,7 +1129,7 @@ func (response UnionExample200ApplicationAlternativePlusJSONResponse) VisitUnion
 	w.Header().Set("Content-Type", "application/alternative+json")
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -1148,7 +1148,7 @@ func (response UnionExample200JSONResponse) VisitUnionExampleResponse(w http.Res
 	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
 	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -1156,7 +1156,7 @@ func (response UnionExample200JSONResponse) VisitUnionExampleResponse(w http.Res
 type UnionExample400Response = BadrequestResponse
 
 func (response UnionExample400Response) VisitUnionExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(400)
+	w.WriteHeader(http.StatusBadRequest)
 	return nil
 }
 

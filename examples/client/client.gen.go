@@ -342,7 +342,7 @@ func ParseGetClientResponse(rsp *http.Response) (*GetClientResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest ClientType
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -368,7 +368,7 @@ func ParseUpdateClientResponse(rsp *http.Response) (*UpdateClientResponse, error
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusBadRequest:
 		var dest struct {
 			Code string `json:"code"`
 		}
