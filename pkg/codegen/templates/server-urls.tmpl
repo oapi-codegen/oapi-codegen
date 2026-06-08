@@ -3,8 +3,8 @@
 {{ $undeclared := .UndeclaredPlaceholders }}
 {{ if and (eq 0 (len $usedVars)) (eq 0 (len $undeclared)) }}
 {{/* URLs without variables (declared or used) are straightforward, so we'll create them a constant */}}
-// {{ .GoName }} defines the Server URL for {{ if len .OAPISchema.Description }}{{ .OAPISchema.Description }}{{ else }}{{ .OAPISchema.URL }}{{ end }}
-const {{ .GoName}} = "{{ .OAPISchema.URL }}"
+// {{ .GoName }} defines the Server URL for {{ if len .OAPISchema.Description }}{{ stripNewLines .OAPISchema.Description }}{{ else }}{{ stripNewLines .OAPISchema.URL }}{{ end }}
+const {{ .GoName}} = {{ .OAPISchema.URL | toGoString }}
 {{ else }}
 {{/* URLs with variables are not straightforward, as we may need multiple types, and so will model them as a function */}}
 
@@ -36,7 +36,7 @@ const {{ .GoName}} = "{{ .OAPISchema.URL }}"
    type {{ $prefix }} string
    {{ if $v.Default }}
    // {{ $prefix }}Default is the default value for the `{{ $k }}` variable for {{ $goName }}
-   const {{ $prefix }}Default = "{{ $v.Default }}"
+   const {{ $prefix }}Default = {{ $v.Default | toGoString }}
    {{ end }}
    {{ end }}
 {{ end }}
@@ -55,7 +55,7 @@ const {{ .GoName}} = "{{ .OAPISchema.URL }}"
 {{ end }}
 
 
-// New{{ .GoName }} constructs the Server URL for {{ .OAPISchema.Description }}, with the provided variables.
+// New{{ .GoName }} constructs the Server URL for {{ stripNewLines .OAPISchema.Description }}, with the provided variables.
 func New{{ .GoName }}({{ .NewServerFunctionParams }}) (string, error) {
     {{ range $k, $v := $usedVars }}
         {{- if gt (len $v.Enum) 0 -}}
@@ -64,7 +64,7 @@ func New{{ .GoName }}({{ .NewServerFunctionParams }}) (string, error) {
     }
         {{ end -}}
     {{ end }}
-    u := "{{ .OAPISchema.URL }}"
+    u := {{ .OAPISchema.URL | toGoString }}
 
     {{ range $k, $v := $usedVars }}
         {{- $placeholder := printf "{%s}" $k -}}

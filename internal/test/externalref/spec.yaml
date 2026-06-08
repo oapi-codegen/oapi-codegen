@@ -12,4 +12,4 @@ components:
         object_c:
           $ref: ./object_c.json
         pet:
-          $ref: https://petstore3.swagger.io/api/v3/openapi.json#/components/schemas/Pet
+          $ref: https://raw.githubusercontent.com/swagger-api/swagger-petstore/refs/heads/master/src/main/resources/openapi.yaml#/components/schemas/Pet
