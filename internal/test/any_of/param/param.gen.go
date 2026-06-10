@@ -60,7 +60,10 @@ func (t Test) AsTest0() (Test0, error) {
 func (t *Test) FromTest0(v Test0) error {
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeTest0 performs a merge with any union data inside the Test, using the provided Test0
@@ -86,7 +89,10 @@ func (t Test) AsTest1() (Test1, error) {
 func (t *Test) FromTest1(v Test1) error {
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeTest1 performs a merge with any union data inside the Test, using the provided Test1
@@ -122,7 +128,10 @@ func (t Test2) AsTest20() (Test20, error) {
 func (t *Test2) FromTest20(v Test20) error {
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeTest20 performs a merge with any union data inside the Test2, using the provided Test20
@@ -148,7 +157,10 @@ func (t Test2) AsTest21() (Test21, error) {
 func (t *Test2) FromTest21(v Test21) error {
 	b, err := json.Marshal(v)
 	t.union = b
-	return err
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, t)
 }
 
 // MergeTest21 performs a merge with any union data inside the Test2, using the provided Test21
