@@ -54,19 +54,19 @@ func (a {{.TypeName}}) MarshalJSON() ([]byte, error) {
     object := make(map[string]json.RawMessage)
 {{range .Schema.Properties}}
 {{if .RequiresNilCheck}}if a.{{.GoFieldName}} != nil { {{end}}
-    object["{{.JsonFieldName}}"], err = json.Marshal(a.{{.GoFieldName}})
+    object["{{.JsonFieldName}}"], err = {{jsonMarshalFieldExpr (printf "a.%s" .GoFieldName)}}
     if err != nil {
         return nil, fmt.Errorf("error marshaling '{{.JsonFieldName}}': %w", err)
     }
 {{if .RequiresNilCheck}} }{{end}}
 {{end}}
     for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = {{jsonMarshalFieldExpr "field"}}
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return {{jsonMarshalExpr "object"}}
 }
 {{end}}
 {{end}}

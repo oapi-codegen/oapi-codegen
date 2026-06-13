@@ -136,7 +136,7 @@ func (c *{{ $clientTypeName }}) {{$opid}}{{.Suffix}}(ctx context.Context{{genPar
 func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Request, error) {
     var bodyReader io.Reader
     {{if .IsJSON -}}
-        buf, err := json.Marshal(body)
+        buf, err := {{jsonMarshalExpr "body"}}
         if err != nil {
             return nil, err
         }
