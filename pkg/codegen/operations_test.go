@@ -210,6 +210,64 @@ func TestSummaryAsComment(t *testing.T) {
 	}
 }
 
+func TestDeprecationComment(t *testing.T) {
+	tests := []struct {
+		name string
+		op   *OperationDefinition
+		want string
+	}{
+		{
+			name: "nil spec returns empty string",
+			op:   &OperationDefinition{Spec: nil},
+			want: "",
+		},
+		{
+			name: "non-deprecated operation returns empty string",
+			op: &OperationDefinition{
+				Spec: &openapi3.Operation{Deprecated: false},
+			},
+			want: "",
+		},
+		{
+			name: "deprecated operation without x-deprecated-reason uses default message",
+			op: &OperationDefinition{
+				Spec: &openapi3.Operation{Deprecated: true},
+			},
+			want: "// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set",
+		},
+		{
+			name: "deprecated operation with x-deprecated-reason uses the reason",
+			op: &OperationDefinition{
+				Spec: &openapi3.Operation{
+					Deprecated: true,
+					Extensions: map[string]any{
+						"x-deprecated-reason": "Use /v2/foo instead.",
+					},
+				},
+			},
+			want: "// Deprecated: Use /v2/foo instead.",
+		},
+		{
+			name: "deprecated operation with non-string x-deprecated-reason falls back to default message",
+			op: &OperationDefinition{
+				Spec: &openapi3.Operation{
+					Deprecated: true,
+					Extensions: map[string]any{
+						"x-deprecated-reason": 42,
+					},
+				},
+			},
+			want: "// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.op.DeprecationComment())
+		})
+	}
+}
+
 func TestOperationDefinition_GenerateFunctionComment(t *testing.T) {
 	opWithBody := func(summary string) OperationDefinition {
 		return OperationDefinition{

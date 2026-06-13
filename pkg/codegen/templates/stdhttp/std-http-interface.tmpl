@@ -2,6 +2,8 @@
 type ServerInterface interface {
 {{range .}}{{if not .IsAlias}}{{.SummaryAsComment .OperationId }}
 // ({{.Method}} {{.Path}})
-{{.OperationId}}(w http.ResponseWriter, r *http.Request{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
+{{with .DeprecationComment}}//
+{{.}}
+{{end}}{{.OperationId}}(w http.ResponseWriter, r *http.Request{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
 {{end}}{{end}}
 }
