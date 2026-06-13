@@ -35,6 +35,8 @@ type ClientWithExtension struct {
 }
 
 // DeprecatedObject defines model for DeprecatedObject.
+//
+// Deprecated: Don't use because reasons
 type DeprecatedObject struct {
 	ThisIsFine *string `json:"this_is_fine,omitempty"`
 }
@@ -46,13 +48,16 @@ type LegacyResponse struct {
 
 // GetDeprecatedFieldParams defines parameters for GetDeprecatedField.
 type GetDeprecatedFieldParams struct {
+	// Deprecated: Use new_filter instead.
 	OldFilter *string `form:"old_filter,omitempty" json:"old_filter,omitempty"`
 	NewFilter *string `form:"new_filter,omitempty" json:"new_filter,omitempty"`
 }
 
 // GetDeprecatedParamsOldIdParams defines parameters for GetDeprecatedParamsOldId.
 type GetDeprecatedParamsOldIdParams struct {
+	// Deprecated: Use Authorization instead.
 	OldHeader *string `json:"old_header,omitempty"`
+	// Deprecated: Use session header instead.
 	OldCookie *string `form:"old_cookie,omitempty" json:"old_cookie,omitempty"`
 }
 
@@ -141,6 +146,8 @@ type ClientInterface interface {
 	PostClients(ctx context.Context, body PostClientsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetDeprecatedEndpoint request
+	//
+	// Deprecated: Use another endpoint instead.
 	GetDeprecatedEndpoint(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetDeprecatedField request
@@ -150,8 +157,11 @@ type ClientInterface interface {
 	GetDeprecatedParamsOldId(ctx context.Context, oldId string, params *GetDeprecatedParamsOldIdParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostDeprecatedRequestBodyWithBody request with any body
+	//
+	// Deprecated: Use /clients instead.
 	PostDeprecatedRequestBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// Deprecated: Use /clients instead.
 	PostDeprecatedRequestBody(ctx context.Context, body PostDeprecatedRequestBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetLegacy request
@@ -182,6 +192,7 @@ func (c *APIClient) PostClients(ctx context.Context, body PostClientsJSONRequest
 	return c.Client.Do(req)
 }
 
+// Deprecated: Use another endpoint instead.
 func (c *APIClient) GetDeprecatedEndpoint(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetDeprecatedEndpointRequest(c.Server)
 	if err != nil {
@@ -218,6 +229,7 @@ func (c *APIClient) GetDeprecatedParamsOldId(ctx context.Context, oldId string, 
 	return c.Client.Do(req)
 }
 
+// Deprecated: Use /clients instead.
 func (c *APIClient) PostDeprecatedRequestBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostDeprecatedRequestBodyRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -230,6 +242,7 @@ func (c *APIClient) PostDeprecatedRequestBodyWithBody(ctx context.Context, conte
 	return c.Client.Do(req)
 }
 
+// Deprecated: Use /clients instead.
 func (c *APIClient) PostDeprecatedRequestBody(ctx context.Context, body PostDeprecatedRequestBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostDeprecatedRequestBodyRequest(c.Server, body)
 	if err != nil {
@@ -569,6 +582,8 @@ type ClientWithResponsesInterface interface {
 	PostClientsWithResponse(ctx context.Context, body PostClientsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostClientsResponse, error)
 
 	// GetDeprecatedEndpointWithResponse request
+	//
+	// Deprecated: Use another endpoint instead.
 	GetDeprecatedEndpointWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetDeprecatedEndpointResponse, error)
 
 	// GetDeprecatedFieldWithResponse request
@@ -578,8 +593,11 @@ type ClientWithResponsesInterface interface {
 	GetDeprecatedParamsOldIdWithResponse(ctx context.Context, oldId string, params *GetDeprecatedParamsOldIdParams, reqEditors ...RequestEditorFn) (*GetDeprecatedParamsOldIdResponse, error)
 
 	// PostDeprecatedRequestBodyWithBodyWithResponse request with any body
+	//
+	// Deprecated: Use /clients instead.
 	PostDeprecatedRequestBodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostDeprecatedRequestBodyResponse, error)
 
+	// Deprecated: Use /clients instead.
 	PostDeprecatedRequestBodyWithResponse(ctx context.Context, body PostDeprecatedRequestBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostDeprecatedRequestBodyResponse, error)
 
 	// GetLegacyWithResponse request
@@ -874,6 +892,8 @@ func (c *ClientWithResponses) PostClientsWithResponse(ctx context.Context, body 
 }
 
 // GetDeprecatedEndpointWithResponse request returning *GetDeprecatedEndpointResponse
+//
+// Deprecated: Use another endpoint instead.
 func (c *ClientWithResponses) GetDeprecatedEndpointWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetDeprecatedEndpointResponse, error) {
 	rsp, err := c.GetDeprecatedEndpoint(ctx, reqEditors...)
 	if err != nil {
@@ -901,6 +921,8 @@ func (c *ClientWithResponses) GetDeprecatedParamsOldIdWithResponse(ctx context.C
 }
 
 // PostDeprecatedRequestBodyWithBodyWithResponse request with arbitrary body returning *PostDeprecatedRequestBodyResponse
+//
+// Deprecated: Use /clients instead.
 func (c *ClientWithResponses) PostDeprecatedRequestBodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostDeprecatedRequestBodyResponse, error) {
 	rsp, err := c.PostDeprecatedRequestBodyWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -909,6 +931,7 @@ func (c *ClientWithResponses) PostDeprecatedRequestBodyWithBodyWithResponse(ctx 
 	return ParsePostDeprecatedRequestBodyResponse(rsp)
 }
 
+// Deprecated: Use /clients instead.
 func (c *ClientWithResponses) PostDeprecatedRequestBodyWithResponse(ctx context.Context, body PostDeprecatedRequestBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*PostDeprecatedRequestBodyResponse, error) {
 	rsp, err := c.PostDeprecatedRequestBody(ctx, body, reqEditors...)
 	if err != nil {
@@ -1104,6 +1127,8 @@ type ServerInterface interface {
 	PostClients(w http.ResponseWriter, r *http.Request)
 
 	// (GET /deprecated_endpoint)
+	//
+	// Deprecated: Use another endpoint instead.
 	GetDeprecatedEndpoint(w http.ResponseWriter, r *http.Request)
 
 	// (GET /deprecated_field)
@@ -1113,6 +1138,8 @@ type ServerInterface interface {
 	GetDeprecatedParamsOldId(w http.ResponseWriter, r *http.Request, oldId string, params GetDeprecatedParamsOldIdParams)
 
 	// (POST /deprecated_request_body)
+	//
+	// Deprecated: Use /clients instead.
 	PostDeprecatedRequestBody(w http.ResponseWriter, r *http.Request)
 
 	// (GET /legacy)
@@ -1427,7 +1454,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 
 type LegacyResponseResponseHeaders struct {
 	XCorrelationId *string
-	XOldTrace      *string
+	// Deprecated: Use X-Trace-Id instead.
+	XOldTrace *string
 }
 type LegacyResponseJSONResponse struct {
 	Body struct {
@@ -1525,6 +1553,7 @@ type GetDeprecatedParamsOldIdResponseObject interface {
 }
 
 type GetDeprecatedParamsOldId200ResponseHeaders struct {
+	// Deprecated: Use the Authorization header instead.
 	XOldToken *string
 }
 
@@ -1606,6 +1635,8 @@ type StrictServerInterface interface {
 	PostClients(ctx context.Context, request PostClientsRequestObject) (PostClientsResponseObject, error)
 
 	// (GET /deprecated_endpoint)
+	//
+	// Deprecated: Use another endpoint instead.
 	GetDeprecatedEndpoint(ctx context.Context, request GetDeprecatedEndpointRequestObject) (GetDeprecatedEndpointResponseObject, error)
 
 	// (GET /deprecated_field)
@@ -1615,6 +1646,8 @@ type StrictServerInterface interface {
 	GetDeprecatedParamsOldId(ctx context.Context, request GetDeprecatedParamsOldIdRequestObject) (GetDeprecatedParamsOldIdResponseObject, error)
 
 	// (POST /deprecated_request_body)
+	//
+	// Deprecated: Use /clients instead.
 	PostDeprecatedRequestBody(ctx context.Context, request PostDeprecatedRequestBodyRequestObject) (PostDeprecatedRequestBodyResponseObject, error)
 
 	// (GET /legacy)

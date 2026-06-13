@@ -195,7 +195,9 @@
 type StrictServerInterface interface {
 {{range .}}{{if not .IsAlias}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
-{{$opid := .OperationId -}}
+{{with .DeprecationComment}}//
+{{.}}
+{{end}}{{$opid := .OperationId -}}
 {{$opid}}(ctx context.Context, request {{$opid | ucFirst}}RequestObject) ({{$opid | ucFirst}}ResponseObject, error)
 {{end}}{{end}}{{/* range . */ -}}
 }
