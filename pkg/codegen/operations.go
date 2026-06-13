@@ -499,6 +499,20 @@ func (o OperationDefinition) GenerateFunctionComment(originalFunctionName string
 	return strings.Join(parts, "\n")
 }
 
+// DeprecationComment returns a Go-style deprecation comment if the operation is deprecated, otherwise returns an empty string.
+func (o *OperationDefinition) DeprecationComment() string {
+	if o.Spec == nil || !o.Spec.Deprecated {
+		return ""
+	}
+	reason := "this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set"
+	if extension, ok := o.Spec.Extensions[extDeprecationReason]; ok {
+		if r, err := extParseDeprecationReason(extension); err == nil {
+			reason = r
+		}
+	}
+	return DeprecationComment(reason)
+}
+
 // GetResponseTypeDefinitions produces a list of type definitions for a given Operation for the response
 // types which we know how to parse. These will be turned into fields on a
 // response object for automatic deserialization of responses in the generated
@@ -837,11 +851,25 @@ func (r ResponseContentDefinition) IsStreamingContentType() bool {
 }
 
 type ResponseHeaderDefinition struct {
-	Name     string
-	GoName   string
-	Schema   Schema
-	Required bool
-	Nullable bool
+	Name               string
+	GoName             string
+	Schema             Schema
+	Required           bool
+	Nullable           bool
+	Deprecated         bool
+	DeprecationReason  string
+}
+
+// DeprecationComment returns a Go-style deprecation comment if the header is deprecated, otherwise returns an empty string.
+func (h ResponseHeaderDefinition) DeprecationComment() string {
+	if !h.Deprecated {
+		return ""
+	}
+	reason := h.DeprecationReason
+	if reason == "" {
+		reason = "this header has been marked as deprecated upstream, but no `x-deprecated-reason` was set"
+	}
+	return DeprecationComment(reason)
 }
 
 // GoTypeDef returns the Go type string for this header, applying pointer or
@@ -1291,6 +1319,14 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 				Required: header.Value.Required || globalState.options.Compatibility.HeadersImplicitlyRequired,
 				Nullable: nullable,
 			}
+			if header.Value.Deprecated {
+				headerDefinition.Deprecated = true
+				if extension, ok := header.Value.Extensions[extDeprecationReason]; ok {
+					if r, err := extParseDeprecationReason(extension); err == nil {
+						headerDefinition.DeprecationReason = r
+					}
+				}
+			}
 			responseHeaderDefinitions = append(responseHeaderDefinitions, headerDefinition)
 		}
 
@@ -1392,6 +1428,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			Schema:        pSchema,
 			NeedsFormTag:  param.Style() == "form",
 			Extensions:    extensions,
+			Deprecated:    param.Spec.Deprecated,
 		}
 		s.Properties = append(s.Properties, prop)
 	}

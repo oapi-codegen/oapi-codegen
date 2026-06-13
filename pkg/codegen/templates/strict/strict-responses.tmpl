@@ -4,7 +4,8 @@
     {{if $hasHeaders -}}
         type {{$name}}ResponseHeaders struct {
             {{range .Headers -}}
-                {{.GoName}} {{.GoTypeDef}}
+                {{with .DeprecationComment}}{{.}}
+                {{end -}}{{.GoName}} {{.GoTypeDef}}
             {{end -}}
         }
     {{end -}}

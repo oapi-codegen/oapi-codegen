@@ -2,6 +2,8 @@
 type ServerInterface interface {
 {{range .}}{{if not .IsAlias}}{{.SummaryAsComment .OperationId }}
 // ({{.Method}} {{.Path}})
-{{.OperationId}}(c *fiber.Ctx{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
+{{with .DeprecationComment}}//
+{{.}}
+{{end}}{{.OperationId}}(c *fiber.Ctx{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}{{end}}
 }
