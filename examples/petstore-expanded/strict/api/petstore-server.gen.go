@@ -23,16 +23,16 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Returns all pets
+	// FindPets Returns all pets
 	// (GET /pets)
 	FindPets(w http.ResponseWriter, r *http.Request, params FindPetsParams)
-	// Creates a new pet
+	// AddPet Creates a new pet
 	// (POST /pets)
 	AddPet(w http.ResponseWriter, r *http.Request)
-	// Deletes a pet by ID
+	// DeletePet Deletes a pet by ID
 	// (DELETE /pets/{id})
 	DeletePet(w http.ResponseWriter, r *http.Request, id int64)
-	// Returns a pet by ID
+	// FindPetByID Returns a pet by ID
 	// (GET /pets/{id})
 	FindPetByID(w http.ResponseWriter, r *http.Request, id int64)
 }
@@ -41,25 +41,25 @@ type ServerInterface interface {
 
 type Unimplemented struct{}
 
-// Returns all pets
+// FindPets Returns all pets
 // (GET /pets)
 func (_ Unimplemented) FindPets(w http.ResponseWriter, r *http.Request, params FindPetsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Creates a new pet
+// AddPet Creates a new pet
 // (POST /pets)
 func (_ Unimplemented) AddPet(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Deletes a pet by ID
+// DeletePet Deletes a pet by ID
 // (DELETE /pets/{id})
 func (_ Unimplemented) DeletePet(w http.ResponseWriter, r *http.Request, id int64) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Returns a pet by ID
+// FindPetByID Returns a pet by ID
 // (GET /pets/{id})
 func (_ Unimplemented) FindPetByID(w http.ResponseWriter, r *http.Request, id int64) {
 	w.WriteHeader(http.StatusNotImplemented)
@@ -467,16 +467,16 @@ func (response FindPetByIDdefaultJSONResponse) VisitFindPetByIDResponse(w http.R
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-	// Returns all pets
+	// FindPets Returns all pets
 	// (GET /pets)
 	FindPets(ctx context.Context, request FindPetsRequestObject) (FindPetsResponseObject, error)
-	// Creates a new pet
+	// AddPet Creates a new pet
 	// (POST /pets)
 	AddPet(ctx context.Context, request AddPetRequestObject) (AddPetResponseObject, error)
-	// Deletes a pet by ID
+	// DeletePet Deletes a pet by ID
 	// (DELETE /pets/{id})
 	DeletePet(ctx context.Context, request DeletePetRequestObject) (DeletePetResponseObject, error)
-	// Returns a pet by ID
+	// FindPetByID Returns a pet by ID
 	// (GET /pets/{id})
 	FindPetByID(ctx context.Context, request FindPetByIDRequestObject) (FindPetByIDResponseObject, error)
 }

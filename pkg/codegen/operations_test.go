@@ -148,6 +148,66 @@ func TestGenerateDefaultOperationID(t *testing.T) {
 	}
 }
 
+func TestSummaryAsComment(t *testing.T) {
+	tests := []struct {
+		name    string
+		summary string
+		prefix  string
+		want    string
+	}{
+		{
+			name:    "empty summary returns empty string",
+			summary: "",
+			prefix:  "GetFoo",
+			want:    "",
+		},
+		{
+			name:    "single line summary with prefix",
+			summary: "Get a foo",
+			prefix:  "GetFoo",
+			want:    "// GetFoo Get a foo",
+		},
+		{
+			name:    "single line summary with empty prefix",
+			summary: "Get a foo",
+			prefix:  "",
+			want:    "// Get a foo",
+		},
+		{
+			name:    "multiline summary with prefix only prefixes first line",
+			summary: "Get a foo\nReturns the foo resource",
+			prefix:  "GetFoo",
+			want:    "// GetFoo Get a foo\n// Returns the foo resource",
+		},
+		{
+			name:    "trailing newline is trimmed",
+			summary: "Get a foo\n\r",
+			prefix:  "GetFoo",
+			want:    "// GetFoo Get a foo",
+		},
+		{
+			name:    "CRLF line endings are treated as newlines",
+			summary: "Get a foo\r\nReturns the foo resource",
+			prefix:  "GetFoo",
+			want:    "// GetFoo Get a foo\n// Returns the foo resource",
+		},
+		{
+			name:    "bare CR is treated as a newline, not left in output",
+			summary: "Get a foo\rReturns the foo resource",
+			prefix:  "GetFoo",
+			want:    "// GetFoo Get a foo\n// Returns the foo resource",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			op := OperationDefinition{Summary: tt.summary}
+			got := op.SummaryAsComment(tt.prefix)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestJsonTag(t *testing.T) {
 	t.Run("required param with no extra tags", func(t *testing.T) {
 		pd := ParameterDefinition{

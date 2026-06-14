@@ -22,7 +22,7 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// JSON Lines Stream
+	// GetStream JSON Lines Stream
 	// (GET /)
 	GetStream(w http.ResponseWriter, r *http.Request)
 }
@@ -227,7 +227,7 @@ func (response GetStream200ApplicationjsonlResponse) VisitGetStreamResponse(w ht
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-	// JSON Lines Stream
+	// GetStream JSON Lines Stream
 	// (GET /)
 	GetStream(ctx context.Context, request GetStreamRequestObject) (GetStreamResponseObject, error)
 }

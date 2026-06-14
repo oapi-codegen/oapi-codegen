@@ -142,35 +142,35 @@ type UpdateResource3JSONRequestBody UpdateResource3JSONBody
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// get every type optional
+	// GetEveryTypeOptional get every type optional
 	// (GET /every-type-optional)
 	GetEveryTypeOptional(w http.ResponseWriter, r *http.Request)
-	// Get resource via simple path
+	// GetSimple Get resource via simple path
 	// (GET /get-simple)
 	GetSimple(w http.ResponseWriter, r *http.Request)
-	// Getter with referenced parameter and referenced response
+	// GetWithArgs Getter with referenced parameter and referenced response
 	// (GET /get-with-args)
 	GetWithArgs(w http.ResponseWriter, r *http.Request, params GetWithArgsParams)
-	// Getter with referenced parameter and referenced response
+	// GetWithReferences Getter with referenced parameter and referenced response
 	// (GET /get-with-references/{global_argument}/{argument})
 	GetWithReferences(w http.ResponseWriter, r *http.Request, globalArgument int64, argument Argument)
-	// Get an object by ID
+	// GetWithContentType Get an object by ID
 	// (GET /get-with-type/{content_type})
 	GetWithContentType(w http.ResponseWriter, r *http.Request, contentType GetWithContentTypeParamsContentType)
-	// get with reserved keyword
+	// GetReservedKeyword get with reserved keyword
 	// (GET /reserved-keyword)
 	GetReservedKeyword(w http.ResponseWriter, r *http.Request)
-	// Create a resource
+	// CreateResource Create a resource
 	// (POST /resource/{argument})
 	CreateResource(w http.ResponseWriter, r *http.Request, argument Argument)
-	// Create a resource with inline parameter
+	// CreateResource2 Create a resource with inline parameter
 	// (POST /resource2/{inline_argument})
 	CreateResource2(w http.ResponseWriter, r *http.Request, inlineArgument int, params CreateResource2Params)
-	// Update a resource with inline body. The parameter name is a reserved
+	// UpdateResource3 Update a resource with inline body. The parameter name is a reserved
 	// keyword, so make sure that gets prefixed to avoid syntax errors
 	// (PUT /resource3/{fallthrough})
 	UpdateResource3(w http.ResponseWriter, r *http.Request, pFallthrough int)
-	// get response with reference
+	// GetResponseWithReference get response with reference
 	// (GET /response-with-reference)
 	GetResponseWithReference(w http.ResponseWriter, r *http.Request)
 }
@@ -179,62 +179,62 @@ type ServerInterface interface {
 
 type Unimplemented struct{}
 
-// get every type optional
+// GetEveryTypeOptional get every type optional
 // (GET /every-type-optional)
 func (_ Unimplemented) GetEveryTypeOptional(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Get resource via simple path
+// GetSimple Get resource via simple path
 // (GET /get-simple)
 func (_ Unimplemented) GetSimple(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Getter with referenced parameter and referenced response
+// GetWithArgs Getter with referenced parameter and referenced response
 // (GET /get-with-args)
 func (_ Unimplemented) GetWithArgs(w http.ResponseWriter, r *http.Request, params GetWithArgsParams) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Getter with referenced parameter and referenced response
+// GetWithReferences Getter with referenced parameter and referenced response
 // (GET /get-with-references/{global_argument}/{argument})
 func (_ Unimplemented) GetWithReferences(w http.ResponseWriter, r *http.Request, globalArgument int64, argument Argument) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Get an object by ID
+// GetWithContentType Get an object by ID
 // (GET /get-with-type/{content_type})
 func (_ Unimplemented) GetWithContentType(w http.ResponseWriter, r *http.Request, contentType GetWithContentTypeParamsContentType) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// get with reserved keyword
+// GetReservedKeyword get with reserved keyword
 // (GET /reserved-keyword)
 func (_ Unimplemented) GetReservedKeyword(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Create a resource
+// CreateResource Create a resource
 // (POST /resource/{argument})
 func (_ Unimplemented) CreateResource(w http.ResponseWriter, r *http.Request, argument Argument) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Create a resource with inline parameter
+// CreateResource2 Create a resource with inline parameter
 // (POST /resource2/{inline_argument})
 func (_ Unimplemented) CreateResource2(w http.ResponseWriter, r *http.Request, inlineArgument int, params CreateResource2Params) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// Update a resource with inline body. The parameter name is a reserved
+// UpdateResource3 Update a resource with inline body. The parameter name is a reserved
 // keyword, so make sure that gets prefixed to avoid syntax errors
 // (PUT /resource3/{fallthrough})
 func (_ Unimplemented) UpdateResource3(w http.ResponseWriter, r *http.Request, pFallthrough int) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
-// get response with reference
+// GetResponseWithReference get response with reference
 // (GET /response-with-reference)
 func (_ Unimplemented) GetResponseWithReference(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)

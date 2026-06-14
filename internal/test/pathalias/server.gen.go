@@ -17,7 +17,7 @@ type B struct {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// test
+	// GetTest test
 	// (GET /test)
 	GetTest(w http.ResponseWriter, r *http.Request)
 }
@@ -26,7 +26,7 @@ type ServerInterface interface {
 
 type Unimplemented struct{}
 
-// test
+// GetTest test
 // (GET /test)
 func (_ Unimplemented) GetTest(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)

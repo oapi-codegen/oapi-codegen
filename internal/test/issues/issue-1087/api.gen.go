@@ -334,7 +334,7 @@ func ParseGetThingsResponse(rsp *http.Response) (*GetThingsResponse, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// list things
+	// GetThings list things
 	// (GET /api/my/path)
 	GetThings(w http.ResponseWriter, r *http.Request)
 }
@@ -343,7 +343,7 @@ type ServerInterface interface {
 
 type Unimplemented struct{}
 
-// list things
+// GetThings list things
 // (GET /api/my/path)
 func (_ Unimplemented) GetThings(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)

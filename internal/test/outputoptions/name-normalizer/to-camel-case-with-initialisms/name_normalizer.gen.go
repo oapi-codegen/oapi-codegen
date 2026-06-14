@@ -364,7 +364,7 @@ func ParseGetHTTPPetResponse(rsp *http.Response) (*GetHTTPPetResponse, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Get pet given identifier.
+	// GetHTTPPet Get pet given identifier.
 	// (GET /api/pets/{petId})
 	GetHTTPPet(w http.ResponseWriter, r *http.Request, petID string)
 }
