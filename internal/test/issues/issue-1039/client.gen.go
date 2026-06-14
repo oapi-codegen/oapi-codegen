@@ -87,7 +87,7 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// ExamplePatchWithBody request with any body
+	// ExamplePatchWithBody request, with any body, and a specified content type
 	ExamplePatchWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	ExamplePatch(ctx context.Context, body ExamplePatchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -128,7 +128,7 @@ func NewExamplePatchRequest(server string, body ExamplePatchJSONRequestBody) (*h
 	return NewExamplePatchRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewExamplePatchRequestWithBody generates requests for ExamplePatch with any type of body
+// NewExamplePatchRequestWithBody constructs an http.Request for the ExamplePatch method, with any body, and a specified content type
 func NewExamplePatchRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 

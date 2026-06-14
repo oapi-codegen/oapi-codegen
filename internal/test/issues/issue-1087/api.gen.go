@@ -125,7 +125,7 @@ func (c *Client) GetThings(ctx context.Context, reqEditors ...RequestEditorFn) (
 	return c.Client.Do(req)
 }
 
-// NewGetThingsRequest generates requests for GetThings
+// NewGetThingsRequest constructs an http.Request for the GetThings method
 func NewGetThingsRequest(server string) (*http.Request, error) {
 	var err error
 

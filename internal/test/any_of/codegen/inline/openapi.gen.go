@@ -231,7 +231,7 @@ func (c *Client) GetPets(ctx context.Context, reqEditors ...RequestEditorFn) (*h
 	return c.Client.Do(req)
 }
 
-// NewGetPetsRequest generates requests for GetPets
+// NewGetPetsRequest constructs an http.Request for the GetPets method
 func NewGetPetsRequest(server string) (*http.Request, error) {
 	var err error
 

@@ -633,7 +633,7 @@ func (c *Client) GetStartingWithNumber(ctx context.Context, n1param string, reqE
 	return c.Client.Do(req)
 }
 
-// NewGetContentObjectRequest generates requests for GetContentObject
+// NewGetContentObjectRequest constructs an http.Request for the GetContentObject method
 func NewGetContentObjectRequest(server string, param ComplexObject) (*http.Request, error) {
 	var err error
 
@@ -669,7 +669,7 @@ func NewGetContentObjectRequest(server string, param ComplexObject) (*http.Reque
 	return req, nil
 }
 
-// NewGetCookieRequest generates requests for GetCookie
+// NewGetCookieRequest constructs an http.Request for the GetCookie method
 func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request, error) {
 	var err error
 
@@ -820,7 +820,7 @@ func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request,
 	return req, nil
 }
 
-// NewEnumParamsRequest generates requests for EnumParams
+// NewEnumParamsRequest constructs an http.Request for the EnumParams method
 func NewEnumParamsRequest(server string, params *EnumParamsParams) (*http.Request, error) {
 	var err error
 
@@ -874,7 +874,7 @@ func NewEnumParamsRequest(server string, params *EnumParamsParams) (*http.Reques
 	return req, nil
 }
 
-// NewGetHeaderRequest generates requests for GetHeader
+// NewGetHeaderRequest constructs an http.Request for the GetHeader method
 func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request, error) {
 	var err error
 
@@ -995,7 +995,7 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 	return req, nil
 }
 
-// NewGetLabelExplodeArrayRequest generates requests for GetLabelExplodeArray
+// NewGetLabelExplodeArrayRequest constructs an http.Request for the GetLabelExplodeArray method
 func NewGetLabelExplodeArrayRequest(server string, param []int32) (*http.Request, error) {
 	var err error
 
@@ -1029,7 +1029,7 @@ func NewGetLabelExplodeArrayRequest(server string, param []int32) (*http.Request
 	return req, nil
 }
 
-// NewGetLabelExplodeObjectRequest generates requests for GetLabelExplodeObject
+// NewGetLabelExplodeObjectRequest constructs an http.Request for the GetLabelExplodeObject method
 func NewGetLabelExplodeObjectRequest(server string, param Object) (*http.Request, error) {
 	var err error
 
@@ -1063,7 +1063,7 @@ func NewGetLabelExplodeObjectRequest(server string, param Object) (*http.Request
 	return req, nil
 }
 
-// NewGetLabelExplodePrimitiveRequest generates requests for GetLabelExplodePrimitive
+// NewGetLabelExplodePrimitiveRequest constructs an http.Request for the GetLabelExplodePrimitive method
 func NewGetLabelExplodePrimitiveRequest(server string, param int32) (*http.Request, error) {
 	var err error
 
@@ -1097,7 +1097,7 @@ func NewGetLabelExplodePrimitiveRequest(server string, param int32) (*http.Reque
 	return req, nil
 }
 
-// NewGetLabelNoExplodeArrayRequest generates requests for GetLabelNoExplodeArray
+// NewGetLabelNoExplodeArrayRequest constructs an http.Request for the GetLabelNoExplodeArray method
 func NewGetLabelNoExplodeArrayRequest(server string, param []int32) (*http.Request, error) {
 	var err error
 
@@ -1131,7 +1131,7 @@ func NewGetLabelNoExplodeArrayRequest(server string, param []int32) (*http.Reque
 	return req, nil
 }
 
-// NewGetLabelNoExplodeObjectRequest generates requests for GetLabelNoExplodeObject
+// NewGetLabelNoExplodeObjectRequest constructs an http.Request for the GetLabelNoExplodeObject method
 func NewGetLabelNoExplodeObjectRequest(server string, param Object) (*http.Request, error) {
 	var err error
 
@@ -1165,7 +1165,7 @@ func NewGetLabelNoExplodeObjectRequest(server string, param Object) (*http.Reque
 	return req, nil
 }
 
-// NewGetLabelPrimitiveRequest generates requests for GetLabelPrimitive
+// NewGetLabelPrimitiveRequest constructs an http.Request for the GetLabelPrimitive method
 func NewGetLabelPrimitiveRequest(server string, param int32) (*http.Request, error) {
 	var err error
 
@@ -1199,7 +1199,7 @@ func NewGetLabelPrimitiveRequest(server string, param int32) (*http.Request, err
 	return req, nil
 }
 
-// NewGetMatrixExplodeArrayRequest generates requests for GetMatrixExplodeArray
+// NewGetMatrixExplodeArrayRequest constructs an http.Request for the GetMatrixExplodeArray method
 func NewGetMatrixExplodeArrayRequest(server string, id []int32) (*http.Request, error) {
 	var err error
 
@@ -1233,7 +1233,7 @@ func NewGetMatrixExplodeArrayRequest(server string, id []int32) (*http.Request, 
 	return req, nil
 }
 
-// NewGetMatrixExplodeObjectRequest generates requests for GetMatrixExplodeObject
+// NewGetMatrixExplodeObjectRequest constructs an http.Request for the GetMatrixExplodeObject method
 func NewGetMatrixExplodeObjectRequest(server string, id Object) (*http.Request, error) {
 	var err error
 
@@ -1267,7 +1267,7 @@ func NewGetMatrixExplodeObjectRequest(server string, id Object) (*http.Request, 
 	return req, nil
 }
 
-// NewGetMatrixExplodePrimitiveRequest generates requests for GetMatrixExplodePrimitive
+// NewGetMatrixExplodePrimitiveRequest constructs an http.Request for the GetMatrixExplodePrimitive method
 func NewGetMatrixExplodePrimitiveRequest(server string, id int32) (*http.Request, error) {
 	var err error
 
@@ -1301,7 +1301,7 @@ func NewGetMatrixExplodePrimitiveRequest(server string, id int32) (*http.Request
 	return req, nil
 }
 
-// NewGetMatrixNoExplodeArrayRequest generates requests for GetMatrixNoExplodeArray
+// NewGetMatrixNoExplodeArrayRequest constructs an http.Request for the GetMatrixNoExplodeArray method
 func NewGetMatrixNoExplodeArrayRequest(server string, id []int32) (*http.Request, error) {
 	var err error
 
@@ -1335,7 +1335,7 @@ func NewGetMatrixNoExplodeArrayRequest(server string, id []int32) (*http.Request
 	return req, nil
 }
 
-// NewGetMatrixNoExplodeObjectRequest generates requests for GetMatrixNoExplodeObject
+// NewGetMatrixNoExplodeObjectRequest constructs an http.Request for the GetMatrixNoExplodeObject method
 func NewGetMatrixNoExplodeObjectRequest(server string, id Object) (*http.Request, error) {
 	var err error
 
@@ -1369,7 +1369,7 @@ func NewGetMatrixNoExplodeObjectRequest(server string, id Object) (*http.Request
 	return req, nil
 }
 
-// NewGetMatrixPrimitiveRequest generates requests for GetMatrixPrimitive
+// NewGetMatrixPrimitiveRequest constructs an http.Request for the GetMatrixPrimitive method
 func NewGetMatrixPrimitiveRequest(server string, id int32) (*http.Request, error) {
 	var err error
 
@@ -1403,7 +1403,7 @@ func NewGetMatrixPrimitiveRequest(server string, id int32) (*http.Request, error
 	return req, nil
 }
 
-// NewGetPassThroughRequest generates requests for GetPassThrough
+// NewGetPassThroughRequest constructs an http.Request for the GetPassThrough method
 func NewGetPassThroughRequest(server string, param string) (*http.Request, error) {
 	var err error
 
@@ -1434,7 +1434,7 @@ func NewGetPassThroughRequest(server string, param string) (*http.Request, error
 	return req, nil
 }
 
-// NewGetDeepObjectRequest generates requests for GetDeepObject
+// NewGetDeepObjectRequest constructs an http.Request for the GetDeepObject method
 func NewGetDeepObjectRequest(server string, params *GetDeepObjectParams) (*http.Request, error) {
 	var err error
 
@@ -1484,7 +1484,7 @@ func NewGetDeepObjectRequest(server string, params *GetDeepObjectParams) (*http.
 	return req, nil
 }
 
-// NewGetQueryDelimitedRequest generates requests for GetQueryDelimited
+// NewGetQueryDelimitedRequest constructs an http.Request for the GetQueryDelimited method
 func NewGetQueryDelimitedRequest(server string, params *GetQueryDelimitedParams) (*http.Request, error) {
 	var err error
 
@@ -1550,7 +1550,7 @@ func NewGetQueryDelimitedRequest(server string, params *GetQueryDelimitedParams)
 	return req, nil
 }
 
-// NewGetQueryFormRequest generates requests for GetQueryForm
+// NewGetQueryFormRequest constructs an http.Request for the GetQueryForm method
 func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Request, error) {
 	var err error
 
@@ -1698,7 +1698,7 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 	return req, nil
 }
 
-// NewGetSimpleExplodeArrayRequest generates requests for GetSimpleExplodeArray
+// NewGetSimpleExplodeArrayRequest constructs an http.Request for the GetSimpleExplodeArray method
 func NewGetSimpleExplodeArrayRequest(server string, param []int32) (*http.Request, error) {
 	var err error
 
@@ -1732,7 +1732,7 @@ func NewGetSimpleExplodeArrayRequest(server string, param []int32) (*http.Reques
 	return req, nil
 }
 
-// NewGetSimpleExplodeObjectRequest generates requests for GetSimpleExplodeObject
+// NewGetSimpleExplodeObjectRequest constructs an http.Request for the GetSimpleExplodeObject method
 func NewGetSimpleExplodeObjectRequest(server string, param Object) (*http.Request, error) {
 	var err error
 
@@ -1766,7 +1766,7 @@ func NewGetSimpleExplodeObjectRequest(server string, param Object) (*http.Reques
 	return req, nil
 }
 
-// NewGetSimpleExplodePrimitiveRequest generates requests for GetSimpleExplodePrimitive
+// NewGetSimpleExplodePrimitiveRequest constructs an http.Request for the GetSimpleExplodePrimitive method
 func NewGetSimpleExplodePrimitiveRequest(server string, param int32) (*http.Request, error) {
 	var err error
 
@@ -1800,7 +1800,7 @@ func NewGetSimpleExplodePrimitiveRequest(server string, param int32) (*http.Requ
 	return req, nil
 }
 
-// NewGetSimpleNoExplodeArrayRequest generates requests for GetSimpleNoExplodeArray
+// NewGetSimpleNoExplodeArrayRequest constructs an http.Request for the GetSimpleNoExplodeArray method
 func NewGetSimpleNoExplodeArrayRequest(server string, param []int32) (*http.Request, error) {
 	var err error
 
@@ -1834,7 +1834,7 @@ func NewGetSimpleNoExplodeArrayRequest(server string, param []int32) (*http.Requ
 	return req, nil
 }
 
-// NewGetSimpleNoExplodeObjectRequest generates requests for GetSimpleNoExplodeObject
+// NewGetSimpleNoExplodeObjectRequest constructs an http.Request for the GetSimpleNoExplodeObject method
 func NewGetSimpleNoExplodeObjectRequest(server string, param Object) (*http.Request, error) {
 	var err error
 
@@ -1868,7 +1868,7 @@ func NewGetSimpleNoExplodeObjectRequest(server string, param Object) (*http.Requ
 	return req, nil
 }
 
-// NewGetSimplePrimitiveRequest generates requests for GetSimplePrimitive
+// NewGetSimplePrimitiveRequest constructs an http.Request for the GetSimplePrimitive method
 func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, error) {
 	var err error
 
@@ -1902,7 +1902,7 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 	return req, nil
 }
 
-// NewGetStartingWithNumberRequest generates requests for GetStartingWithNumber
+// NewGetStartingWithNumberRequest constructs an http.Request for the GetStartingWithNumber method
 func NewGetStartingWithNumberRequest(server string, n1param string) (*http.Request, error) {
 	var err error
 

@@ -107,7 +107,7 @@ func (c *Client) UpdateClient(ctx context.Context, reqEditors ...RequestEditorFn
 	return c.Client.Do(req)
 }
 
-// NewUpdateClientRequest generates requests for UpdateClient
+// NewUpdateClientRequest constructs an http.Request for the UpdateClient method
 func NewUpdateClientRequest(server string) (*http.Request, error) {
 	var err error
 

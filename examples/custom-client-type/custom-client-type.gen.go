@@ -107,7 +107,7 @@ func (c *CustomClientType) GetClient(ctx context.Context, reqEditors ...RequestE
 	return c.Client.Do(req)
 }
 
-// NewGetClientRequest generates requests for GetClient
+// NewGetClientRequest constructs an http.Request for the GetClient method
 func NewGetClientRequest(server string) (*http.Request, error) {
 	var err error
 

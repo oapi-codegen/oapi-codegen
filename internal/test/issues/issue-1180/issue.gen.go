@@ -109,7 +109,7 @@ func (c *Client) GetSimplePrimitive(ctx context.Context, param string, reqEditor
 	return c.Client.Do(req)
 }
 
-// NewGetSimplePrimitiveRequest generates requests for GetSimplePrimitive
+// NewGetSimplePrimitiveRequest constructs an http.Request for the GetSimplePrimitive method
 func NewGetSimplePrimitiveRequest(server string, param string) (*http.Request, error) {
 	var err error
 

@@ -134,7 +134,7 @@ type ClientInterface interface {
 	// FindPets request
 	FindPets(ctx context.Context, params *FindPetsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// AddPetWithBody request with any body
+	// AddPetWithBody request, with any body, and a specified content type
 	AddPetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	AddPet(ctx context.Context, body AddPetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -206,7 +206,7 @@ func (c *Client) FindPetByID(ctx context.Context, id int64, reqEditors ...Reques
 	return c.Client.Do(req)
 }
 
-// NewFindPetsRequest generates requests for FindPets
+// NewFindPetsRequest constructs an http.Request for the FindPets method
 func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, error) {
 	var err error
 
@@ -283,7 +283,7 @@ func NewAddPetRequest(server string, body AddPetJSONRequestBody) (*http.Request,
 	return NewAddPetRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewAddPetRequestWithBody generates requests for AddPet with any type of body
+// NewAddPetRequestWithBody constructs an http.Request for the AddPet method, with any body, and a specified content type
 func NewAddPetRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -312,7 +312,7 @@ func NewAddPetRequestWithBody(server string, contentType string, body io.Reader)
 	return req, nil
 }
 
-// NewDeletePetRequest generates requests for DeletePet
+// NewDeletePetRequest constructs an http.Request for the DeletePet method
 func NewDeletePetRequest(server string, id int64) (*http.Request, error) {
 	var err error
 
@@ -346,7 +346,7 @@ func NewDeletePetRequest(server string, id int64) (*http.Request, error) {
 	return req, nil
 }
 
-// NewFindPetByIDRequest generates requests for FindPetByID
+// NewFindPetByIDRequest constructs an http.Request for the FindPetByID method
 func NewFindPetByIDRequest(server string, id int64) (*http.Request, error) {
 	var err error
 

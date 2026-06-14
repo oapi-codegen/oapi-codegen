@@ -101,7 +101,7 @@ func (c *Client) GetStream(ctx context.Context, reqEditors ...RequestEditorFn) (
 	return c.Client.Do(req)
 }
 
-// NewGetStreamRequest generates requests for GetStream
+// NewGetStreamRequest constructs an http.Request for the GetStream method
 func NewGetStreamRequest(server string) (*http.Request, error) {
 	var err error
 

@@ -320,7 +320,7 @@ func (c *Client) Test(ctx context.Context, reqEditors ...RequestEditorFn) (*http
 	return c.Client.Do(req)
 }
 
-// NewTestRequest generates requests for Test
+// NewTestRequest constructs an http.Request for the Test method
 func NewTestRequest(server string) (*http.Request, error) {
 	var err error
 

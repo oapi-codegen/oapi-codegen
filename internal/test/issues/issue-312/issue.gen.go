@@ -121,7 +121,7 @@ type ClientInterface interface {
 	// GetPet request
 	GetPet(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ValidatePetsWithBody request with any body
+	// ValidatePetsWithBody request, with any body, and a specified content type
 	ValidatePetsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	ValidatePets(ctx context.Context, body ValidatePetsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -163,7 +163,7 @@ func (c *Client) ValidatePets(ctx context.Context, body ValidatePetsJSONRequestB
 	return c.Client.Do(req)
 }
 
-// NewGetPetRequest generates requests for GetPet
+// NewGetPetRequest constructs an http.Request for the GetPet method
 func NewGetPetRequest(server string, petId string) (*http.Request, error) {
 	var err error
 
@@ -208,7 +208,7 @@ func NewValidatePetsRequest(server string, body ValidatePetsJSONRequestBody) (*h
 	return NewValidatePetsRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewValidatePetsRequestWithBody generates requests for ValidatePets with any type of body
+// NewValidatePetsRequestWithBody constructs an http.Request for the ValidatePets method, with any body, and a specified content type
 func NewValidatePetsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 

@@ -112,7 +112,7 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// PostBothWithBody request with any body
+	// PostBothWithBody request, with any body, and a specified content type
 	PostBothWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostBoth(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -120,7 +120,7 @@ type ClientInterface interface {
 	// GetBoth request
 	GetBoth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostJsonWithBody request with any body
+	// PostJsonWithBody request, with any body, and a specified content type
 	PostJsonWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostJson(ctx context.Context, body PostJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -128,7 +128,7 @@ type ClientInterface interface {
 	// GetJson request
 	GetJson(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostOtherWithBody request with any body
+	// PostOtherWithBody request, with any body, and a specified content type
 	PostOtherWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOther request
@@ -137,7 +137,7 @@ type ClientInterface interface {
 	// GetJsonWithTrailingSlash request
 	GetJsonWithTrailingSlash(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostVendorJsonWithBody request with any body
+	// PostVendorJsonWithBody request, with any body, and a specified content type
 	PostVendorJsonWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostVendorJsonWithApplicationVndAPIPlusJSONBody(ctx context.Context, body PostVendorJsonApplicationVndAPIPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -286,7 +286,7 @@ func NewPostBothRequest(server string, body PostBothJSONRequestBody) (*http.Requ
 	return NewPostBothRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostBothRequestWithBody generates requests for PostBoth with any type of body
+// NewPostBothRequestWithBody constructs an http.Request for the PostBoth method, with any body, and a specified content type
 func NewPostBothRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -315,7 +315,7 @@ func NewPostBothRequestWithBody(server string, contentType string, body io.Reade
 	return req, nil
 }
 
-// NewGetBothRequest generates requests for GetBoth
+// NewGetBothRequest constructs an http.Request for the GetBoth method
 func NewGetBothRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -353,7 +353,7 @@ func NewPostJsonRequest(server string, body PostJsonJSONRequestBody) (*http.Requ
 	return NewPostJsonRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostJsonRequestWithBody generates requests for PostJson with any type of body
+// NewPostJsonRequestWithBody constructs an http.Request for the PostJson method, with any body, and a specified content type
 func NewPostJsonRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -382,7 +382,7 @@ func NewPostJsonRequestWithBody(server string, contentType string, body io.Reade
 	return req, nil
 }
 
-// NewGetJsonRequest generates requests for GetJson
+// NewGetJsonRequest constructs an http.Request for the GetJson method
 func NewGetJsonRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -409,7 +409,7 @@ func NewGetJsonRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewPostOtherRequestWithBody generates requests for PostOther with any type of body
+// NewPostOtherRequestWithBody constructs an http.Request for the PostOther method, with any body, and a specified content type
 func NewPostOtherRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -438,7 +438,7 @@ func NewPostOtherRequestWithBody(server string, contentType string, body io.Read
 	return req, nil
 }
 
-// NewGetOtherRequest generates requests for GetOther
+// NewGetOtherRequest constructs an http.Request for the GetOther method
 func NewGetOtherRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -465,7 +465,7 @@ func NewGetOtherRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetJsonWithTrailingSlashRequest generates requests for GetJsonWithTrailingSlash
+// NewGetJsonWithTrailingSlashRequest constructs an http.Request for the GetJsonWithTrailingSlash method
 func NewGetJsonWithTrailingSlashRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -503,7 +503,7 @@ func NewPostVendorJsonRequestWithApplicationVndAPIPlusJSONBody(server string, bo
 	return NewPostVendorJsonRequestWithBody(server, "application/vnd.api+json", bodyReader)
 }
 
-// NewPostVendorJsonRequestWithBody generates requests for PostVendorJson with any type of body
+// NewPostVendorJsonRequestWithBody constructs an http.Request for the PostVendorJson method, with any body, and a specified content type
 func NewPostVendorJsonRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 

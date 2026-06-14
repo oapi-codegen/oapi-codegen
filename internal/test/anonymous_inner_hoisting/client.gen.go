@@ -550,12 +550,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// PostBodyPropertyOneOfWithBody request with any body
+	// PostBodyPropertyOneOfWithBody request, with any body, and a specified content type
 	PostBodyPropertyOneOfWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostBodyPropertyOneOf(ctx context.Context, body PostBodyPropertyOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostBodyRootOneOfWithBody request with any body
+	// PostBodyRootOneOfWithBody request, with any body, and a specified content type
 	PostBodyRootOneOfWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostBodyRootOneOf(ctx context.Context, body PostBodyRootOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -680,7 +680,7 @@ func NewPostBodyPropertyOneOfRequest(server string, body PostBodyPropertyOneOfJS
 	return NewPostBodyPropertyOneOfRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostBodyPropertyOneOfRequestWithBody generates requests for PostBodyPropertyOneOf with any type of body
+// NewPostBodyPropertyOneOfRequestWithBody constructs an http.Request for the PostBodyPropertyOneOf method, with any body, and a specified content type
 func NewPostBodyPropertyOneOfRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -720,7 +720,7 @@ func NewPostBodyRootOneOfRequest(server string, body PostBodyRootOneOfJSONReques
 	return NewPostBodyRootOneOfRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostBodyRootOneOfRequestWithBody generates requests for PostBodyRootOneOf with any type of body
+// NewPostBodyRootOneOfRequestWithBody constructs an http.Request for the PostBodyRootOneOf method, with any body, and a specified content type
 func NewPostBodyRootOneOfRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -749,7 +749,7 @@ func NewPostBodyRootOneOfRequestWithBody(server string, contentType string, body
 	return req, nil
 }
 
-// NewGetResponseDeepNestedRequest generates requests for GetResponseDeepNested
+// NewGetResponseDeepNestedRequest constructs an http.Request for the GetResponseDeepNested method
 func NewGetResponseDeepNestedRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -776,7 +776,7 @@ func NewGetResponseDeepNestedRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetResponseItemsOneOfRequest generates requests for GetResponseItemsOneOf
+// NewGetResponseItemsOneOfRequest constructs an http.Request for the GetResponseItemsOneOf method
 func NewGetResponseItemsOneOfRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -803,7 +803,7 @@ func NewGetResponseItemsOneOfRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetResponseRootAnyOfRequest generates requests for GetResponseRootAnyOf
+// NewGetResponseRootAnyOfRequest constructs an http.Request for the GetResponseRootAnyOf method
 func NewGetResponseRootAnyOfRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -830,7 +830,7 @@ func NewGetResponseRootAnyOfRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetResponseRootOneOfRequest generates requests for GetResponseRootOneOf
+// NewGetResponseRootOneOfRequest constructs an http.Request for the GetResponseRootOneOf method
 func NewGetResponseRootOneOfRequest(server string) (*http.Request, error) {
 	var err error
 
