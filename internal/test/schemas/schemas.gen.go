@@ -812,7 +812,7 @@ type EnsureEverythingIsReferencedResponse struct {
 	}
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r EnsureEverythingIsReferencedResponse) GetJSON200() *struct {
 	AnyType1 *AnyType1 `json:"anyType1,omitempty"`
 
@@ -861,12 +861,12 @@ type Issue1051Response struct {
 	ApplicationvndSomethingV1JSON200 *map[string]interface{}
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r Issue1051Response) GetJSON200() *map[string]interface{} {
 	return r.JSON200
 }
 
-// GetApplicationvndSomethingV1JSON200 returns ApplicationvndSomethingV1JSON200
+// GetApplicationvndSomethingV1JSON200 returns the response for an HTTP 200 `application/vnd.something.v1+json` response
 func (r Issue1051Response) GetApplicationvndSomethingV1JSON200() *map[string]interface{} {
 	return r.ApplicationvndSomethingV1JSON200
 }
@@ -909,22 +909,22 @@ type Issue127Response struct {
 	JSONDefault  *GenericObject
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r Issue127Response) GetJSON200() *GenericObject {
 	return r.JSON200
 }
 
-// GetXML200 returns XML200
+// GetXML200 returns the response for an HTTP 200 `application/xml` response
 func (r Issue127Response) GetXML200() *GenericObject {
 	return r.XML200
 }
 
-// GetYAML200 returns YAML200
+// GetYAML200 returns the response for an HTTP 200 `text/yaml` response
 func (r Issue127Response) GetYAML200() *GenericObject {
 	return r.YAML200
 }
 
-// GetJSONDefault returns JSONDefault
+// GetJSONDefault returns the response for an HTTP default `application/json` response
 func (r Issue127Response) GetJSONDefault() *GenericObject {
 	return r.JSONDefault
 }
@@ -1066,7 +1066,7 @@ type GetIssues375Response struct {
 	JSON200      *EnumInObjInArray
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetIssues375Response) GetJSON200() *EnumInObjInArray {
 	return r.JSON200
 }
@@ -1174,7 +1174,7 @@ type Issue975Response struct {
 	JSON200      *DeprecatedProperty
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r Issue975Response) GetJSON200() *DeprecatedProperty {
 	return r.JSON200
 }

@@ -204,12 +204,12 @@ type GetThingResponse struct {
 	JSONDefault  *Error
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetThingResponse) GetJSON200() *Thing {
 	return r.JSON200
 }
 
-// GetJSONDefault returns JSONDefault
+// GetJSONDefault returns the response for an HTTP default `application/json` response
 func (r GetThingResponse) GetJSONDefault() *Error {
 	return r.JSONDefault
 }

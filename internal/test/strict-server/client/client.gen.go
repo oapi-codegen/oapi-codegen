@@ -1304,7 +1304,7 @@ type JSONExampleResponse struct {
 	JSON200      *Example
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r JSONExampleResponse) GetJSON200() *Example {
 	return r.JSON200
 }
@@ -1412,7 +1412,7 @@ type MultipleRequestAndResponseTypesResponse struct {
 	JSON200      *Example
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r MultipleRequestAndResponseTypesResponse) GetJSON200() *Example {
 	return r.JSON200
 }
@@ -1486,7 +1486,7 @@ type RequiredJSONBodyResponse struct {
 	JSON200      *Example
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r RequiredJSONBodyResponse) GetJSON200() *Example {
 	return r.JSON200
 }
@@ -1594,7 +1594,7 @@ type ReusableResponsesResponse struct {
 	JSON200      *Reusableresponse
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r ReusableResponsesResponse) GetJSON200() *Reusableresponse {
 	return r.JSON200
 }
@@ -1770,7 +1770,7 @@ type HeadersExampleResponse struct {
 	JSON200      *Example
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r HeadersExampleResponse) GetJSON200() *Example {
 	return r.JSON200
 }
@@ -1811,12 +1811,12 @@ type UnionExampleResponse struct {
 	JSON200                       *UnionExample200JSONResponseBody
 }
 
-// GetApplicationalternativeJSON200 returns ApplicationalternativeJSON200
+// GetApplicationalternativeJSON200 returns the response for an HTTP 200 `application/alternative+json` response
 func (r UnionExampleResponse) GetApplicationalternativeJSON200() *Example {
 	return r.ApplicationalternativeJSON200
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r UnionExampleResponse) GetJSON200() *UnionExample200JSONResponseBody {
 	return r.JSON200
 }

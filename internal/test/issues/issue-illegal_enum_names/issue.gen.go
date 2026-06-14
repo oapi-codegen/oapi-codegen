@@ -234,7 +234,7 @@ type GetFooResponse struct {
 	JSON200      *[]Bar
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetFooResponse) GetJSON200() *[]Bar {
 	return r.JSON200
 }

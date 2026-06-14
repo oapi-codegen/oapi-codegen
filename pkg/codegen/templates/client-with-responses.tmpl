@@ -55,7 +55,7 @@ type {{genResponseTypeName $opid | ucFirst}} struct {
 
 {{ if not opts.OutputOptions.SkipResponseBodyGetters }}
 {{- range $responseTypeDefinitions}}
-  // Get{{.TypeName}} returns {{.TypeName}}
+  // Get{{.TypeName}} returns the response for an HTTP {{ .ResponseName }} `{{ .ContentTypeName }}` response
   func (r {{genResponseTypeName $opid | ucFirst}}) Get{{.TypeName}}() *{{.Schema.TypeDecl}} {
       return r.{{.TypeName}}
   }

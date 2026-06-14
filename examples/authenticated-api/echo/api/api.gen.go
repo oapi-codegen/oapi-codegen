@@ -293,7 +293,7 @@ type ListThingsResponse struct {
 	JSON200      *[]ThingWithID
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r ListThingsResponse) GetJSON200() *[]ThingWithID {
 	return r.JSON200
 }
@@ -333,7 +333,7 @@ type AddThingResponse struct {
 	JSON201      *[]ThingWithID
 }
 
-// GetJSON201 returns JSON201
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
 func (r AddThingResponse) GetJSON201() *[]ThingWithID {
 	return r.JSON201
 }

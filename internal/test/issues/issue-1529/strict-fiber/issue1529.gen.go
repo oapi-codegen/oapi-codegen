@@ -194,17 +194,17 @@ type TestResponse struct {
 	ApplicationjsonProfileFoo200 *Test
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r TestResponse) GetJSON200() *Test {
 	return r.JSON200
 }
 
-// GetApplicationjsonProfileBar200 returns ApplicationjsonProfileBar200
+// GetApplicationjsonProfileBar200 returns the response for an HTTP 200 `application/json; profile="Bar"` response
 func (r TestResponse) GetApplicationjsonProfileBar200() *Test {
 	return r.ApplicationjsonProfileBar200
 }
 
-// GetApplicationjsonProfileFoo200 returns ApplicationjsonProfileFoo200
+// GetApplicationjsonProfileFoo200 returns the response for an HTTP 200 `application/json; profile="Foo"` response
 func (r TestResponse) GetApplicationjsonProfileFoo200() *Test {
 	return r.ApplicationjsonProfileFoo200
 }

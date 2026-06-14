@@ -1889,7 +1889,7 @@ type ListEntitiesResponse struct {
 	}
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r ListEntitiesResponse) GetJSON200() *struct {
 	Data     *[]Widget `json:"data,omitempty"`
 	Metadata *Metadata `json:"metadata,omitempty"`
@@ -1932,7 +1932,7 @@ type PostFooResponse struct {
 	JSON200      *BarResponse
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r PostFooResponse) GetJSON200() *BarResponse {
 	return r.JSON200
 }
@@ -1972,7 +1972,7 @@ type ListItemsResponse2 struct {
 	JSON200      *ListItemsResponse
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r ListItemsResponse2) GetJSON200() *ListItemsResponse {
 	return r.JSON200
 }
@@ -2012,7 +2012,7 @@ type CreateItemResponse2 struct {
 	JSON200      *CreateItemResponse
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r CreateItemResponse2) GetJSON200() *CreateItemResponse {
 	return r.JSON200
 }
@@ -2052,7 +2052,7 @@ type CreateOrderResponse struct {
 	JSON200      *Order
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r CreateOrderResponse) GetJSON200() *Order {
 	return r.JSON200
 }
@@ -2092,7 +2092,7 @@ type GetOutcomeResponse struct {
 	JSON200      *OutcomeResult
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetOutcomeResponse) GetJSON200() *OutcomeResult {
 	return r.JSON200
 }
@@ -2166,7 +2166,7 @@ type SendPayloadResponse struct {
 	JSON200      *Payload
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r SendPayloadResponse) GetJSON200() *Payload {
 	return r.JSON200
 }
@@ -2206,7 +2206,7 @@ type CreatePetResponse struct {
 	JSON200      *Pet
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r CreatePetResponse) GetJSON200() *Pet {
 	return r.JSON200
 }
@@ -2246,7 +2246,7 @@ type QueryResponse2 struct {
 	JSON200      *QueryResponse
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r QueryResponse2) GetJSON200() *QueryResponse {
 	return r.JSON200
 }
@@ -2286,7 +2286,7 @@ type GetQuxResponse struct {
 	JSON200      *QuxResponse
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetQuxResponse) GetJSON200() *QuxResponse {
 	return r.JSON200
 }
@@ -2360,7 +2360,7 @@ type GetRenamedSchemaResponse struct {
 	JSON200      *Renamer
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetRenamedSchemaResponse) GetJSON200() *Renamer {
 	return r.JSON200
 }
@@ -2437,22 +2437,22 @@ type PatchResourceResponse struct {
 	ApplicationmergePatchJSON200     *N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r PatchResourceResponse) GetJSON200() *N200ResourcePatchResponseJSONApplicationJSON {
 	return r.JSON200
 }
 
-// GetApplicationjsonPatchJSON200 returns ApplicationjsonPatchJSON200
+// GetApplicationjsonPatchJSON200 returns the response for an HTTP 200 `application/json-patch+json` response
 func (r PatchResourceResponse) GetApplicationjsonPatchJSON200() *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON {
 	return r.ApplicationjsonPatchJSON200
 }
 
-// GetApplicationjsonPatchQueryJSON200 returns ApplicationjsonPatchQueryJSON200
+// GetApplicationjsonPatchQueryJSON200 returns the response for an HTTP 200 `application/json-patch-query+json` response
 func (r PatchResourceResponse) GetApplicationjsonPatchQueryJSON200() *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON {
 	return r.ApplicationjsonPatchQueryJSON200
 }
 
-// GetApplicationmergePatchJSON200 returns ApplicationmergePatchJSON200
+// GetApplicationmergePatchJSON200 returns the response for an HTTP 200 `application/merge-patch+json` response
 func (r PatchResourceResponse) GetApplicationmergePatchJSON200() *N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON {
 	return r.ApplicationmergePatchJSON200
 }
@@ -2492,7 +2492,7 @@ type GetStatusResponse2 struct {
 	JSON200      *GetStatusResponse
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetStatusResponse2) GetJSON200() *GetStatusResponse {
 	return r.JSON200
 }
@@ -2532,7 +2532,7 @@ type GetZapResponse struct {
 	JSON200      *ZapResponse
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetZapResponse) GetJSON200() *ZapResponse {
 	return r.JSON200
 }

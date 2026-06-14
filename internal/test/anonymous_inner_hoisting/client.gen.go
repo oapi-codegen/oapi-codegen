@@ -1001,7 +1001,7 @@ type GetResponseDeepNestedResponse struct {
 	}
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetResponseDeepNestedResponse) GetJSON200() *struct {
 	Wrapper *struct {
 		Inner *GetResponseDeepNested200JSONResponseBody_Wrapper_Inner `json:"inner,omitempty"`
@@ -1047,7 +1047,7 @@ type GetResponseItemsOneOfResponse struct {
 	}
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetResponseItemsOneOfResponse) GetJSON200() *struct {
 	Items []GetResponseItemsOneOf200JSONResponseBody_Items_Item `json:"items"`
 } {
@@ -1089,7 +1089,7 @@ type GetResponseRootAnyOfResponse struct {
 	JSON200      *GetResponseRootAnyOf200JSONResponseBody
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetResponseRootAnyOfResponse) GetJSON200() *GetResponseRootAnyOf200JSONResponseBody {
 	return r.JSON200
 }
@@ -1129,7 +1129,7 @@ type GetResponseRootOneOfResponse struct {
 	JSON200      *GetResponseRootOneOf200JSONResponseBody
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetResponseRootOneOfResponse) GetJSON200() *GetResponseRootOneOf200JSONResponseBody {
 	return r.JSON200
 }
