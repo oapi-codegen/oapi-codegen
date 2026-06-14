@@ -58,7 +58,7 @@ type FindPetsParams struct {
 // AddPetJSONRequestBody defines body for AddPet for application/json ContentType.
 type AddPetJSONRequestBody = NewPet
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -131,21 +131,42 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// FindPets request
+
+	// FindPets Returns all pets
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with GET /pets (the `findPets` operationId).
 	FindPets(ctx context.Context, params *FindPetsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// AddPetWithBody request with any body
+	// AddPetWithBody Creates a new pet
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /pets (the `addPet` operationId).
 	AddPetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// AddPet Creates a new pet
+	// Takes a body for the `application/json` content type.
+	//
+	// Corresponds with POST /pets (the `addPet` operationId).
 	AddPet(ctx context.Context, body AddPetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// DeletePet request
+	// DeletePet Deletes a pet by ID
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with DELETE /pets/{id} (the `deletePet` operationId).
 	DeletePet(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// FindPetByID request
+	// FindPetByID Returns a pet by ID
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with GET /pets/{id} (the `findPetByID` operationId).
 	FindPetByID(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// FindPets Returns all pets
+// Takes any type of body and a specified content type.
+//
+// Corresponds with GET /pets (the `findPets` operationId).
 func (c *Client) FindPets(ctx context.Context, params *FindPetsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFindPetsRequest(c.Server, params)
 	if err != nil {
@@ -158,6 +179,10 @@ func (c *Client) FindPets(ctx context.Context, params *FindPetsParams, reqEditor
 	return c.Client.Do(req)
 }
 
+// AddPetWithBody Creates a new pet
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /pets (the `addPet` operationId).
 func (c *Client) AddPetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewAddPetRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -170,6 +195,10 @@ func (c *Client) AddPetWithBody(ctx context.Context, contentType string, body io
 	return c.Client.Do(req)
 }
 
+// AddPet Creates a new pet
+// Takes a body for the `application/json` content type.
+//
+// Corresponds with POST /pets (the `addPet` operationId).
 func (c *Client) AddPet(ctx context.Context, body AddPetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewAddPetRequest(c.Server, body)
 	if err != nil {
@@ -182,6 +211,10 @@ func (c *Client) AddPet(ctx context.Context, body AddPetJSONRequestBody, reqEdit
 	return c.Client.Do(req)
 }
 
+// DeletePet Deletes a pet by ID
+// Takes any type of body and a specified content type.
+//
+// Corresponds with DELETE /pets/{id} (the `deletePet` operationId).
 func (c *Client) DeletePet(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeletePetRequest(c.Server, id)
 	if err != nil {
@@ -194,6 +227,10 @@ func (c *Client) DeletePet(ctx context.Context, id int64, reqEditors ...RequestE
 	return c.Client.Do(req)
 }
 
+// FindPetByID Returns a pet by ID
+// Takes any type of body and a specified content type.
+//
+// Corresponds with GET /pets/{id} (the `findPetByID` operationId).
 func (c *Client) FindPetByID(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFindPetByIDRequest(c.Server, id)
 	if err != nil {
@@ -206,7 +243,7 @@ func (c *Client) FindPetByID(ctx context.Context, id int64, reqEditors ...Reques
 	return c.Client.Do(req)
 }
 
-// NewFindPetsRequest generates requests for FindPets
+// NewFindPetsRequest constructs an http.Request for the FindPets method
 func NewFindPetsRequest(server string, params *FindPetsParams) (*http.Request, error) {
 	var err error
 
@@ -283,7 +320,7 @@ func NewAddPetRequest(server string, body AddPetJSONRequestBody) (*http.Request,
 	return NewAddPetRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewAddPetRequestWithBody generates requests for AddPet with any type of body
+// NewAddPetRequestWithBody constructs an http.Request for the AddPet method, with any body, and a specified content type
 func NewAddPetRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -312,7 +349,7 @@ func NewAddPetRequestWithBody(server string, contentType string, body io.Reader)
 	return req, nil
 }
 
-// NewDeletePetRequest generates requests for DeletePet
+// NewDeletePetRequest constructs an http.Request for the DeletePet method
 func NewDeletePetRequest(server string, id int64) (*http.Request, error) {
 	var err error
 
@@ -346,7 +383,7 @@ func NewDeletePetRequest(server string, id int64) (*http.Request, error) {
 	return req, nil
 }
 
-// NewFindPetByIDRequest generates requests for FindPetByID
+// NewFindPetByIDRequest constructs an http.Request for the FindPetByID method
 func NewFindPetByIDRequest(server string, id int64) (*http.Request, error) {
 	var err error
 
@@ -423,18 +460,35 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// FindPetsWithResponse request
+
+	// FindPetsWithResponse Returns all pets
+	// Takes any type of body and a specified content type,, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /pets (the `findPets` operationId).
 	FindPetsWithResponse(ctx context.Context, params *FindPetsParams, reqEditors ...RequestEditorFn) (*FindPetsResponse, error)
 
-	// AddPetWithBodyWithResponse request with any body
+	// AddPetWithBodyWithResponse Creates a new pet
+	// Takes any type of body and a specified content type,, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /pets (the `addPet` operationId).
 	AddPetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddPetResponse, error)
 
+	// WithBodyWithResponse Creates a new pet
+	// Takes a body for the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /pets (the `addPet` operationId).
 	AddPetWithResponse(ctx context.Context, body AddPetJSONRequestBody, reqEditors ...RequestEditorFn) (*AddPetResponse, error)
 
-	// DeletePetWithResponse request
+	// DeletePetWithResponse Deletes a pet by ID
+	// Takes any type of body and a specified content type,, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /pets/{id} (the `deletePet` operationId).
 	DeletePetWithResponse(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*DeletePetResponse, error)
 
-	// FindPetByIDWithResponse request
+	// FindPetByIDWithResponse Returns a pet by ID
+	// Takes any type of body and a specified content type,, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /pets/{id} (the `findPetByID` operationId).
 	FindPetByIDWithResponse(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*FindPetByIDResponse, error)
 }
 
@@ -445,12 +499,12 @@ type FindPetsResponse struct {
 	JSONDefault  *Error
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r FindPetsResponse) GetJSON200() *[]Pet {
 	return r.JSON200
 }
 
-// GetJSONDefault returns JSONDefault
+// GetJSONDefault returns the response for an HTTP default `application/json` response
 func (r FindPetsResponse) GetJSONDefault() *Error {
 	return r.JSONDefault
 }
@@ -491,12 +545,12 @@ type AddPetResponse struct {
 	JSONDefault  *Error
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r AddPetResponse) GetJSON200() *Pet {
 	return r.JSON200
 }
 
-// GetJSONDefault returns JSONDefault
+// GetJSONDefault returns the response for an HTTP default `application/json` response
 func (r AddPetResponse) GetJSONDefault() *Error {
 	return r.JSONDefault
 }
@@ -536,7 +590,7 @@ type DeletePetResponse struct {
 	JSONDefault  *Error
 }
 
-// GetJSONDefault returns JSONDefault
+// GetJSONDefault returns the response for an HTTP default `application/json` response
 func (r DeletePetResponse) GetJSONDefault() *Error {
 	return r.JSONDefault
 }
@@ -577,12 +631,12 @@ type FindPetByIDResponse struct {
 	JSONDefault  *Error
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r FindPetByIDResponse) GetJSON200() *Pet {
 	return r.JSON200
 }
 
-// GetJSONDefault returns JSONDefault
+// GetJSONDefault returns the response for an HTTP default `application/json` response
 func (r FindPetByIDResponse) GetJSONDefault() *Error {
 	return r.JSONDefault
 }
@@ -616,7 +670,10 @@ func (r FindPetByIDResponse) ContentType() string {
 	return ""
 }
 
-// FindPetsWithResponse request returning *FindPetsResponse
+// FindPetsWithResponse Returns all pets
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /pets (the `findPets` operationId).
 func (c *ClientWithResponses) FindPetsWithResponse(ctx context.Context, params *FindPetsParams, reqEditors ...RequestEditorFn) (*FindPetsResponse, error) {
 	rsp, err := c.FindPets(ctx, params, reqEditors...)
 	if err != nil {
@@ -625,7 +682,10 @@ func (c *ClientWithResponses) FindPetsWithResponse(ctx context.Context, params *
 	return ParseFindPetsResponse(rsp)
 }
 
-// AddPetWithBodyWithResponse request with arbitrary body returning *AddPetResponse
+// AddPetWithBodyWithResponse Creates a new pet
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /pets (the `addPet` operationId).
 func (c *ClientWithResponses) AddPetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddPetResponse, error) {
 	rsp, err := c.AddPetWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -634,6 +694,10 @@ func (c *ClientWithResponses) AddPetWithBodyWithResponse(ctx context.Context, co
 	return ParseAddPetResponse(rsp)
 }
 
+// WithBodyWithResponse Creates a new pet
+// Takes a body for the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /pets (the `addPet` operationId).
 func (c *ClientWithResponses) AddPetWithResponse(ctx context.Context, body AddPetJSONRequestBody, reqEditors ...RequestEditorFn) (*AddPetResponse, error) {
 	rsp, err := c.AddPet(ctx, body, reqEditors...)
 	if err != nil {
@@ -642,7 +706,10 @@ func (c *ClientWithResponses) AddPetWithResponse(ctx context.Context, body AddPe
 	return ParseAddPetResponse(rsp)
 }
 
-// DeletePetWithResponse request returning *DeletePetResponse
+// DeletePetWithResponse Deletes a pet by ID
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /pets/{id} (the `deletePet` operationId).
 func (c *ClientWithResponses) DeletePetWithResponse(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*DeletePetResponse, error) {
 	rsp, err := c.DeletePet(ctx, id, reqEditors...)
 	if err != nil {
@@ -651,7 +718,10 @@ func (c *ClientWithResponses) DeletePetWithResponse(ctx context.Context, id int6
 	return ParseDeletePetResponse(rsp)
 }
 
-// FindPetByIDWithResponse request returning *FindPetByIDResponse
+// FindPetByIDWithResponse Returns a pet by ID
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /pets/{id} (the `findPetByID` operationId).
 func (c *ClientWithResponses) FindPetByIDWithResponse(ctx context.Context, id int64, reqEditors ...RequestEditorFn) (*FindPetByIDResponse, error) {
 	rsp, err := c.FindPetByID(ctx, id, reqEditors...)
 	if err != nil {

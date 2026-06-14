@@ -51,7 +51,7 @@ type bearerAuthContextKey string
 // AddThingJSONRequestBody defines body for AddThing for application/json ContentType.
 type AddThingJSONRequestBody = Thing
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -124,15 +124,19 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// ListThings request
+
+	// ListThings performs a GET /things (the `listThings` operationId) request
 	ListThings(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// AddThingWithBody request with any body
+	// AddThingWithBody performs a POST /things (the `addThing` operationId) request, with any type of body, and a specified content type
 	AddThingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// AddThing performs a POST /things (the `addThing` operationId) request,
+	// with the `application/json` content type.
 	AddThing(ctx context.Context, body AddThingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// ListThings performs a GET /things (the `listThings` operationId) request
 func (c *Client) ListThings(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListThingsRequest(c.Server)
 	if err != nil {
@@ -145,6 +149,7 @@ func (c *Client) ListThings(ctx context.Context, reqEditors ...RequestEditorFn) 
 	return c.Client.Do(req)
 }
 
+// AddThingWithBody performs a POST /things (the `addThing` operationId) request, with any type of body, and a specified content type
 func (c *Client) AddThingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewAddThingRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -157,6 +162,8 @@ func (c *Client) AddThingWithBody(ctx context.Context, contentType string, body 
 	return c.Client.Do(req)
 }
 
+// AddThing performs a POST /things (the `addThing` operationId) request,
+// with the `application/json` content type.
 func (c *Client) AddThing(ctx context.Context, body AddThingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewAddThingRequest(c.Server, body)
 	if err != nil {
@@ -169,7 +176,7 @@ func (c *Client) AddThing(ctx context.Context, body AddThingJSONRequestBody, req
 	return c.Client.Do(req)
 }
 
-// NewListThingsRequest generates requests for ListThings
+// NewListThingsRequest constructs an http.Request for the ListThings method
 func NewListThingsRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -207,7 +214,7 @@ func NewAddThingRequest(server string, body AddThingJSONRequestBody) (*http.Requ
 	return NewAddThingRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewAddThingRequestWithBody generates requests for AddThing with any type of body
+// NewAddThingRequestWithBody constructs an http.Request for the AddThing method, with any body, and a specified content type
 func NewAddThingRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -279,12 +286,15 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// ListThingsWithResponse request
+
+	// ListThings performs a GET /things (the `listThings` operationId) request, and returns a wrapper object for the known response body format(s).
 	ListThingsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListThingsResponse, error)
 
-	// AddThingWithBodyWithResponse request with any body
+	// AddThingWithBody performs a POST /things (the `addThing` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	AddThingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddThingResponse, error)
 
+	// AddThing performs a POST /things (the `addThing` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	AddThingWithResponse(ctx context.Context, body AddThingJSONRequestBody, reqEditors ...RequestEditorFn) (*AddThingResponse, error)
 }
 
@@ -294,7 +304,7 @@ type ListThingsResponse struct {
 	JSON200      *[]ThingWithID
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r ListThingsResponse) GetJSON200() *[]ThingWithID {
 	return r.JSON200
 }
@@ -334,7 +344,7 @@ type AddThingResponse struct {
 	JSON201      *[]ThingWithID
 }
 
-// GetJSON201 returns JSON201
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
 func (r AddThingResponse) GetJSON201() *[]ThingWithID {
 	return r.JSON201
 }
@@ -368,7 +378,7 @@ func (r AddThingResponse) ContentType() string {
 	return ""
 }
 
-// ListThingsWithResponse request returning *ListThingsResponse
+// ListThings performs a GET /things (the `listThings` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ListThingsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListThingsResponse, error) {
 	rsp, err := c.ListThings(ctx, reqEditors...)
 	if err != nil {
@@ -377,7 +387,7 @@ func (c *ClientWithResponses) ListThingsWithResponse(ctx context.Context, reqEdi
 	return ParseListThingsResponse(rsp)
 }
 
-// AddThingWithBodyWithResponse request with arbitrary body returning *AddThingResponse
+// AddThingWithBody performs a POST /things (the `addThing` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) AddThingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddThingResponse, error) {
 	rsp, err := c.AddThingWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -386,6 +396,8 @@ func (c *ClientWithResponses) AddThingWithBodyWithResponse(ctx context.Context, 
 	return ParseAddThingResponse(rsp)
 }
 
+// AddThing performs a POST /things (the `addThing` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) AddThingWithResponse(ctx context.Context, body AddThingJSONRequestBody, reqEditors ...RequestEditorFn) (*AddThingResponse, error) {
 	rsp, err := c.AddThing(ctx, body, reqEditors...)
 	if err != nil {

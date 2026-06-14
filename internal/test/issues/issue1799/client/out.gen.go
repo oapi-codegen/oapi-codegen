@@ -32,7 +32,7 @@ type PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams
 // PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody defines body for PostPostObject for application/ld+json; profile="https://www.w3.org/ns/activitystreams" ContentType.
 type PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody = PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -105,25 +105,33 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetGetMultibody request
+
+	// GetGetMultibody performs a GET /get-multibody (the `` operationId) request
 	GetGetMultibody(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetObject request
+	// GetObject performs a GET /object (the `` operationId) request
 	GetObject(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostPostMultibodyWithBody request with any body
+	// PostPostMultibodyWithBody performs a POST /post-multibody (the `` operationId) request, with any type of body, and a specified content type
 	PostPostMultibodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody performs a POST /post-multibody (the `` operationId) request,
+	// with the `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` content type.
 	PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body performs a POST /post-multibody (the `` operationId) request,
+	// with the `application/ld+json; profile="https://www.w3.org/ns/activitystreams2"` content type.
 	PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostPostObjectWithBody request with any body
+	// PostPostObjectWithBody performs a POST /post-object (the `` operationId) request, with any type of body, and a specified content type
 	PostPostObjectWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostPostObjectWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody performs a POST /post-object (the `` operationId) request,
+	// with the `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` content type.
 	PostPostObjectWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(ctx context.Context, body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetGetMultibody performs a GET /get-multibody (the “ operationId) request
 func (c *Client) GetGetMultibody(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetGetMultibodyRequest(c.Server)
 	if err != nil {
@@ -136,6 +144,7 @@ func (c *Client) GetGetMultibody(ctx context.Context, reqEditors ...RequestEdito
 	return c.Client.Do(req)
 }
 
+// GetObject performs a GET /object (the “ operationId) request
 func (c *Client) GetObject(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetObjectRequest(c.Server)
 	if err != nil {
@@ -148,6 +157,7 @@ func (c *Client) GetObject(ctx context.Context, reqEditors ...RequestEditorFn) (
 	return c.Client.Do(req)
 }
 
+// PostPostMultibodyWithBody performs a POST /post-multibody (the “ operationId) request, with any type of body, and a specified content type
 func (c *Client) PostPostMultibodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostPostMultibodyRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -160,6 +170,8 @@ func (c *Client) PostPostMultibodyWithBody(ctx context.Context, contentType stri
 	return c.Client.Do(req)
 }
 
+// PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody performs a POST /post-multibody (the “ operationId) request,
+// with the `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` content type.
 func (c *Client) PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostPostMultibodyRequestWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(c.Server, body)
 	if err != nil {
@@ -172,6 +184,8 @@ func (c *Client) PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgn
 	return c.Client.Do(req)
 }
 
+// PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body performs a POST /post-multibody (the “ operationId) request,
+// with the `application/ld+json; profile="https://www.w3.org/ns/activitystreams2"` content type.
 func (c *Client) PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostPostMultibodyRequestWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body(c.Server, body)
 	if err != nil {
@@ -184,6 +198,7 @@ func (c *Client) PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgn
 	return c.Client.Do(req)
 }
 
+// PostPostObjectWithBody performs a POST /post-object (the “ operationId) request, with any type of body, and a specified content type
 func (c *Client) PostPostObjectWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostPostObjectRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -196,6 +211,8 @@ func (c *Client) PostPostObjectWithBody(ctx context.Context, contentType string,
 	return c.Client.Do(req)
 }
 
+// PostPostObjectWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody performs a POST /post-object (the “ operationId) request,
+// with the `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` content type.
 func (c *Client) PostPostObjectWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(ctx context.Context, body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostPostObjectRequestWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(c.Server, body)
 	if err != nil {
@@ -208,7 +225,7 @@ func (c *Client) PostPostObjectWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsac
 	return c.Client.Do(req)
 }
 
-// NewGetGetMultibodyRequest generates requests for GetGetMultibody
+// NewGetGetMultibodyRequest constructs an http.Request for the GetGetMultibody method
 func NewGetGetMultibodyRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -235,7 +252,7 @@ func NewGetGetMultibodyRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetObjectRequest generates requests for GetObject
+// NewGetObjectRequest constructs an http.Request for the GetObject method
 func NewGetObjectRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -284,7 +301,7 @@ func NewPostPostMultibodyRequestWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsa
 	return NewPostPostMultibodyRequestWithBody(server, "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"", bodyReader)
 }
 
-// NewPostPostMultibodyRequestWithBody generates requests for PostPostMultibody with any type of body
+// NewPostPostMultibodyRequestWithBody constructs an http.Request for the PostPostMultibody method, with any body, and a specified content type
 func NewPostPostMultibodyRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -324,7 +341,7 @@ func NewPostPostObjectRequestWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsacti
 	return NewPostPostObjectRequestWithBody(server, "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"", bodyReader)
 }
 
-// NewPostPostObjectRequestWithBody generates requests for PostPostObject with any type of body
+// NewPostPostObjectRequestWithBody constructs an http.Request for the PostPostObject method, with any body, and a specified content type
 func NewPostPostObjectRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -396,22 +413,29 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetGetMultibodyWithResponse request
+
+	// GetGetMultibody performs a GET /get-multibody (the `` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetGetMultibodyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetGetMultibodyResponse, error)
 
-	// GetObjectWithResponse request
+	// GetObject performs a GET /object (the `` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetObjectWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetObjectResponse, error)
 
-	// PostPostMultibodyWithBodyWithResponse request with any body
+	// PostPostMultibodyWithBody performs a POST /post-multibody (the `` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	PostPostMultibodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostPostMultibodyResponse, error)
 
+	// PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody performs a POST /post-multibody (the `` operationId) request,
+	// with the `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` content type, and returns a wrapper object for the known response body format(s).
 	PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBodyWithResponse(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody, reqEditors ...RequestEditorFn) (*PostPostMultibodyResponse, error)
 
+	// PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body performs a POST /post-multibody (the `` operationId) request,
+	// with the `application/ld+json; profile="https://www.w3.org/ns/activitystreams2"` content type, and returns a wrapper object for the known response body format(s).
 	PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2BodyWithResponse(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody, reqEditors ...RequestEditorFn) (*PostPostMultibodyResponse, error)
 
-	// PostPostObjectWithBodyWithResponse request with any body
+	// PostPostObjectWithBody performs a POST /post-object (the `` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	PostPostObjectWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostPostObjectResponse, error)
 
+	// PostPostObjectWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody performs a POST /post-object (the `` operationId) request,
+	// with the `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` content type, and returns a wrapper object for the known response body format(s).
 	PostPostObjectWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBodyWithResponse(ctx context.Context, body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody, reqEditors ...RequestEditorFn) (*PostPostObjectResponse, error)
 }
 
@@ -422,12 +446,12 @@ type GetGetMultibodyResponse struct {
 	ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200 *string
 }
 
-// GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 returns ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200
+// GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 returns the response for an HTTP 200 `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` response
 func (r GetGetMultibodyResponse) GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200() *string {
 	return r.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200
 }
 
-// GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200 returns ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200
+// GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200 returns the response for an HTTP 200 `application/ld+json; profile="https://www.w3.org/ns/activitystreams2"` response
 func (r GetGetMultibodyResponse) GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200() *string {
 	return r.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200
 }
@@ -467,7 +491,7 @@ type GetObjectResponse struct {
 	ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 *string
 }
 
-// GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 returns ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200
+// GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 returns the response for an HTTP 200 `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` response
 func (r GetObjectResponse) GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200() *string {
 	return r.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200
 }
@@ -569,7 +593,7 @@ func (r PostPostObjectResponse) ContentType() string {
 	return ""
 }
 
-// GetGetMultibodyWithResponse request returning *GetGetMultibodyResponse
+// GetGetMultibody performs a GET /get-multibody (the “ operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetGetMultibodyWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetGetMultibodyResponse, error) {
 	rsp, err := c.GetGetMultibody(ctx, reqEditors...)
 	if err != nil {
@@ -578,7 +602,7 @@ func (c *ClientWithResponses) GetGetMultibodyWithResponse(ctx context.Context, r
 	return ParseGetGetMultibodyResponse(rsp)
 }
 
-// GetObjectWithResponse request returning *GetObjectResponse
+// GetObject performs a GET /object (the “ operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetObjectWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetObjectResponse, error) {
 	rsp, err := c.GetObject(ctx, reqEditors...)
 	if err != nil {
@@ -587,7 +611,7 @@ func (c *ClientWithResponses) GetObjectWithResponse(ctx context.Context, reqEdit
 	return ParseGetObjectResponse(rsp)
 }
 
-// PostPostMultibodyWithBodyWithResponse request with arbitrary body returning *PostPostMultibodyResponse
+// PostPostMultibodyWithBody performs a POST /post-multibody (the “ operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostPostMultibodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostPostMultibodyResponse, error) {
 	rsp, err := c.PostPostMultibodyWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -596,6 +620,8 @@ func (c *ClientWithResponses) PostPostMultibodyWithBodyWithResponse(ctx context.
 	return ParsePostPostMultibodyResponse(rsp)
 }
 
+// PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody performs a POST /post-multibody (the “ operationId) request,
+// with the `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBodyWithResponse(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody, reqEditors ...RequestEditorFn) (*PostPostMultibodyResponse, error) {
 	rsp, err := c.PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(ctx, body, reqEditors...)
 	if err != nil {
@@ -604,6 +630,8 @@ func (c *ClientWithResponses) PostPostMultibodyWithApplicationLdPlusJSONProfileh
 	return ParsePostPostMultibodyResponse(rsp)
 }
 
+// PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body performs a POST /post-multibody (the “ operationId) request,
+// with the `application/ld+json; profile="https://www.w3.org/ns/activitystreams2"` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2BodyWithResponse(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody, reqEditors ...RequestEditorFn) (*PostPostMultibodyResponse, error) {
 	rsp, err := c.PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body(ctx, body, reqEditors...)
 	if err != nil {
@@ -612,7 +640,7 @@ func (c *ClientWithResponses) PostPostMultibodyWithApplicationLdPlusJSONProfileh
 	return ParsePostPostMultibodyResponse(rsp)
 }
 
-// PostPostObjectWithBodyWithResponse request with arbitrary body returning *PostPostObjectResponse
+// PostPostObjectWithBody performs a POST /post-object (the “ operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostPostObjectWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostPostObjectResponse, error) {
 	rsp, err := c.PostPostObjectWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -621,6 +649,8 @@ func (c *ClientWithResponses) PostPostObjectWithBodyWithResponse(ctx context.Con
 	return ParsePostPostObjectResponse(rsp)
 }
 
+// PostPostObjectWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody performs a POST /post-object (the “ operationId) request,
+// with the `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostPostObjectWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBodyWithResponse(ctx context.Context, body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody, reqEditors ...RequestEditorFn) (*PostPostObjectResponse, error) {
 	rsp, err := c.PostPostObjectWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(ctx, body, reqEditors...)
 	if err != nil {

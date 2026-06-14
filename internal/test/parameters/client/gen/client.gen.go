@@ -154,7 +154,7 @@ type GetQueryFormParams struct {
 	N1s *string `form:"1s,omitempty" json:"1s,omitempty"`
 }
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -227,88 +227,90 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetContentObject request
+
+	// GetContentObject performs a GET /contentObject/{param} (the `getContentObject` operationId) request
 	GetContentObject(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetCookie request
+	// GetCookie performs a GET /cookie (the `getCookie` operationId) request
 	GetCookie(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// EnumParams request
+	// EnumParams performs a GET /enums (the `enumParams` operationId) request
 	EnumParams(ctx context.Context, params *EnumParamsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetHeader request
+	// GetHeader performs a GET /header (the `getHeader` operationId) request
 	GetHeader(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetLabelExplodeArray request
+	// GetLabelExplodeArray performs a GET /labelExplodeArray/{.param*} (the `getLabelExplodeArray` operationId) request
 	GetLabelExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetLabelExplodeObject request
+	// GetLabelExplodeObject performs a GET /labelExplodeObject/{.param*} (the `getLabelExplodeObject` operationId) request
 	GetLabelExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetLabelExplodePrimitive request
+	// GetLabelExplodePrimitive performs a GET /labelExplodePrimitive/{.param*} (the `getLabelExplodePrimitive` operationId) request
 	GetLabelExplodePrimitive(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetLabelNoExplodeArray request
+	// GetLabelNoExplodeArray performs a GET /labelNoExplodeArray/{.param} (the `getLabelNoExplodeArray` operationId) request
 	GetLabelNoExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetLabelNoExplodeObject request
+	// GetLabelNoExplodeObject performs a GET /labelNoExplodeObject/{.param} (the `getLabelNoExplodeObject` operationId) request
 	GetLabelNoExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetLabelPrimitive request
+	// GetLabelPrimitive performs a GET /labelPrimitive/{.param} (the `getLabelPrimitive` operationId) request
 	GetLabelPrimitive(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetMatrixExplodeArray request
+	// GetMatrixExplodeArray performs a GET /matrixExplodeArray/{.id*} (the `getMatrixExplodeArray` operationId) request
 	GetMatrixExplodeArray(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetMatrixExplodeObject request
+	// GetMatrixExplodeObject performs a GET /matrixExplodeObject/{.id*} (the `getMatrixExplodeObject` operationId) request
 	GetMatrixExplodeObject(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetMatrixExplodePrimitive request
+	// GetMatrixExplodePrimitive performs a GET /matrixExplodePrimitive/{;id*} (the `getMatrixExplodePrimitive` operationId) request
 	GetMatrixExplodePrimitive(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetMatrixNoExplodeArray request
+	// GetMatrixNoExplodeArray performs a GET /matrixNoExplodeArray/{.id} (the `getMatrixNoExplodeArray` operationId) request
 	GetMatrixNoExplodeArray(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetMatrixNoExplodeObject request
+	// GetMatrixNoExplodeObject performs a GET /matrixNoExplodeObject/{.id} (the `getMatrixNoExplodeObject` operationId) request
 	GetMatrixNoExplodeObject(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetMatrixPrimitive request
+	// GetMatrixPrimitive performs a GET /matrixPrimitive/{;id} (the `getMatrixPrimitive` operationId) request
 	GetMatrixPrimitive(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetPassThrough request
+	// GetPassThrough performs a GET /passThrough/{param} (the `getPassThrough` operationId) request
 	GetPassThrough(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetDeepObject request
+	// GetDeepObject performs a GET /queryDeepObject (the `getDeepObject` operationId) request
 	GetDeepObject(ctx context.Context, params *GetDeepObjectParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetQueryDelimited request
+	// GetQueryDelimited performs a GET /queryDelimited (the `getQueryDelimited` operationId) request
 	GetQueryDelimited(ctx context.Context, params *GetQueryDelimitedParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetQueryForm request
+	// GetQueryForm performs a GET /queryForm (the `getQueryForm` operationId) request
 	GetQueryForm(ctx context.Context, params *GetQueryFormParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetSimpleExplodeArray request
+	// GetSimpleExplodeArray performs a GET /simpleExplodeArray/{param*} (the `getSimpleExplodeArray` operationId) request
 	GetSimpleExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetSimpleExplodeObject request
+	// GetSimpleExplodeObject performs a GET /simpleExplodeObject/{param*} (the `getSimpleExplodeObject` operationId) request
 	GetSimpleExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetSimpleExplodePrimitive request
+	// GetSimpleExplodePrimitive performs a GET /simpleExplodePrimitive/{param} (the `getSimpleExplodePrimitive` operationId) request
 	GetSimpleExplodePrimitive(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetSimpleNoExplodeArray request
+	// GetSimpleNoExplodeArray performs a GET /simpleNoExplodeArray/{param} (the `getSimpleNoExplodeArray` operationId) request
 	GetSimpleNoExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetSimpleNoExplodeObject request
+	// GetSimpleNoExplodeObject performs a GET /simpleNoExplodeObject/{param} (the `getSimpleNoExplodeObject` operationId) request
 	GetSimpleNoExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetSimplePrimitive request
+	// GetSimplePrimitive performs a GET /simplePrimitive/{param} (the `getSimplePrimitive` operationId) request
 	GetSimplePrimitive(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetStartingWithNumber request
+	// GetStartingWithNumber performs a GET /startingWithNumber/{1param} (the `getStartingWithNumber` operationId) request
 	GetStartingWithNumber(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetContentObject performs a GET /contentObject/{param} (the `getContentObject` operationId) request
 func (c *Client) GetContentObject(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetContentObjectRequest(c.Server, param)
 	if err != nil {
@@ -321,6 +323,7 @@ func (c *Client) GetContentObject(ctx context.Context, param ComplexObject, reqE
 	return c.Client.Do(req)
 }
 
+// GetCookie performs a GET /cookie (the `getCookie` operationId) request
 func (c *Client) GetCookie(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetCookieRequest(c.Server, params)
 	if err != nil {
@@ -333,6 +336,7 @@ func (c *Client) GetCookie(ctx context.Context, params *GetCookieParams, reqEdit
 	return c.Client.Do(req)
 }
 
+// EnumParams performs a GET /enums (the `enumParams` operationId) request
 func (c *Client) EnumParams(ctx context.Context, params *EnumParamsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewEnumParamsRequest(c.Server, params)
 	if err != nil {
@@ -345,6 +349,7 @@ func (c *Client) EnumParams(ctx context.Context, params *EnumParamsParams, reqEd
 	return c.Client.Do(req)
 }
 
+// GetHeader performs a GET /header (the `getHeader` operationId) request
 func (c *Client) GetHeader(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetHeaderRequest(c.Server, params)
 	if err != nil {
@@ -357,6 +362,7 @@ func (c *Client) GetHeader(ctx context.Context, params *GetHeaderParams, reqEdit
 	return c.Client.Do(req)
 }
 
+// GetLabelExplodeArray performs a GET /labelExplodeArray/{.param*} (the `getLabelExplodeArray` operationId) request
 func (c *Client) GetLabelExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetLabelExplodeArrayRequest(c.Server, param)
 	if err != nil {
@@ -369,6 +375,7 @@ func (c *Client) GetLabelExplodeArray(ctx context.Context, param []int32, reqEdi
 	return c.Client.Do(req)
 }
 
+// GetLabelExplodeObject performs a GET /labelExplodeObject/{.param*} (the `getLabelExplodeObject` operationId) request
 func (c *Client) GetLabelExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetLabelExplodeObjectRequest(c.Server, param)
 	if err != nil {
@@ -381,6 +388,7 @@ func (c *Client) GetLabelExplodeObject(ctx context.Context, param Object, reqEdi
 	return c.Client.Do(req)
 }
 
+// GetLabelExplodePrimitive performs a GET /labelExplodePrimitive/{.param*} (the `getLabelExplodePrimitive` operationId) request
 func (c *Client) GetLabelExplodePrimitive(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetLabelExplodePrimitiveRequest(c.Server, param)
 	if err != nil {
@@ -393,6 +401,7 @@ func (c *Client) GetLabelExplodePrimitive(ctx context.Context, param int32, reqE
 	return c.Client.Do(req)
 }
 
+// GetLabelNoExplodeArray performs a GET /labelNoExplodeArray/{.param} (the `getLabelNoExplodeArray` operationId) request
 func (c *Client) GetLabelNoExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetLabelNoExplodeArrayRequest(c.Server, param)
 	if err != nil {
@@ -405,6 +414,7 @@ func (c *Client) GetLabelNoExplodeArray(ctx context.Context, param []int32, reqE
 	return c.Client.Do(req)
 }
 
+// GetLabelNoExplodeObject performs a GET /labelNoExplodeObject/{.param} (the `getLabelNoExplodeObject` operationId) request
 func (c *Client) GetLabelNoExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetLabelNoExplodeObjectRequest(c.Server, param)
 	if err != nil {
@@ -417,6 +427,7 @@ func (c *Client) GetLabelNoExplodeObject(ctx context.Context, param Object, reqE
 	return c.Client.Do(req)
 }
 
+// GetLabelPrimitive performs a GET /labelPrimitive/{.param} (the `getLabelPrimitive` operationId) request
 func (c *Client) GetLabelPrimitive(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetLabelPrimitiveRequest(c.Server, param)
 	if err != nil {
@@ -429,6 +440,7 @@ func (c *Client) GetLabelPrimitive(ctx context.Context, param int32, reqEditors 
 	return c.Client.Do(req)
 }
 
+// GetMatrixExplodeArray performs a GET /matrixExplodeArray/{.id*} (the `getMatrixExplodeArray` operationId) request
 func (c *Client) GetMatrixExplodeArray(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetMatrixExplodeArrayRequest(c.Server, id)
 	if err != nil {
@@ -441,6 +453,7 @@ func (c *Client) GetMatrixExplodeArray(ctx context.Context, id []int32, reqEdito
 	return c.Client.Do(req)
 }
 
+// GetMatrixExplodeObject performs a GET /matrixExplodeObject/{.id*} (the `getMatrixExplodeObject` operationId) request
 func (c *Client) GetMatrixExplodeObject(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetMatrixExplodeObjectRequest(c.Server, id)
 	if err != nil {
@@ -453,6 +466,7 @@ func (c *Client) GetMatrixExplodeObject(ctx context.Context, id Object, reqEdito
 	return c.Client.Do(req)
 }
 
+// GetMatrixExplodePrimitive performs a GET /matrixExplodePrimitive/{;id*} (the `getMatrixExplodePrimitive` operationId) request
 func (c *Client) GetMatrixExplodePrimitive(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetMatrixExplodePrimitiveRequest(c.Server, id)
 	if err != nil {
@@ -465,6 +479,7 @@ func (c *Client) GetMatrixExplodePrimitive(ctx context.Context, id int32, reqEdi
 	return c.Client.Do(req)
 }
 
+// GetMatrixNoExplodeArray performs a GET /matrixNoExplodeArray/{.id} (the `getMatrixNoExplodeArray` operationId) request
 func (c *Client) GetMatrixNoExplodeArray(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetMatrixNoExplodeArrayRequest(c.Server, id)
 	if err != nil {
@@ -477,6 +492,7 @@ func (c *Client) GetMatrixNoExplodeArray(ctx context.Context, id []int32, reqEdi
 	return c.Client.Do(req)
 }
 
+// GetMatrixNoExplodeObject performs a GET /matrixNoExplodeObject/{.id} (the `getMatrixNoExplodeObject` operationId) request
 func (c *Client) GetMatrixNoExplodeObject(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetMatrixNoExplodeObjectRequest(c.Server, id)
 	if err != nil {
@@ -489,6 +505,7 @@ func (c *Client) GetMatrixNoExplodeObject(ctx context.Context, id Object, reqEdi
 	return c.Client.Do(req)
 }
 
+// GetMatrixPrimitive performs a GET /matrixPrimitive/{;id} (the `getMatrixPrimitive` operationId) request
 func (c *Client) GetMatrixPrimitive(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetMatrixPrimitiveRequest(c.Server, id)
 	if err != nil {
@@ -501,6 +518,7 @@ func (c *Client) GetMatrixPrimitive(ctx context.Context, id int32, reqEditors ..
 	return c.Client.Do(req)
 }
 
+// GetPassThrough performs a GET /passThrough/{param} (the `getPassThrough` operationId) request
 func (c *Client) GetPassThrough(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetPassThroughRequest(c.Server, param)
 	if err != nil {
@@ -513,6 +531,7 @@ func (c *Client) GetPassThrough(ctx context.Context, param string, reqEditors ..
 	return c.Client.Do(req)
 }
 
+// GetDeepObject performs a GET /queryDeepObject (the `getDeepObject` operationId) request
 func (c *Client) GetDeepObject(ctx context.Context, params *GetDeepObjectParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetDeepObjectRequest(c.Server, params)
 	if err != nil {
@@ -525,6 +544,7 @@ func (c *Client) GetDeepObject(ctx context.Context, params *GetDeepObjectParams,
 	return c.Client.Do(req)
 }
 
+// GetQueryDelimited performs a GET /queryDelimited (the `getQueryDelimited` operationId) request
 func (c *Client) GetQueryDelimited(ctx context.Context, params *GetQueryDelimitedParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetQueryDelimitedRequest(c.Server, params)
 	if err != nil {
@@ -537,6 +557,7 @@ func (c *Client) GetQueryDelimited(ctx context.Context, params *GetQueryDelimite
 	return c.Client.Do(req)
 }
 
+// GetQueryForm performs a GET /queryForm (the `getQueryForm` operationId) request
 func (c *Client) GetQueryForm(ctx context.Context, params *GetQueryFormParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetQueryFormRequest(c.Server, params)
 	if err != nil {
@@ -549,6 +570,7 @@ func (c *Client) GetQueryForm(ctx context.Context, params *GetQueryFormParams, r
 	return c.Client.Do(req)
 }
 
+// GetSimpleExplodeArray performs a GET /simpleExplodeArray/{param*} (the `getSimpleExplodeArray` operationId) request
 func (c *Client) GetSimpleExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSimpleExplodeArrayRequest(c.Server, param)
 	if err != nil {
@@ -561,6 +583,7 @@ func (c *Client) GetSimpleExplodeArray(ctx context.Context, param []int32, reqEd
 	return c.Client.Do(req)
 }
 
+// GetSimpleExplodeObject performs a GET /simpleExplodeObject/{param*} (the `getSimpleExplodeObject` operationId) request
 func (c *Client) GetSimpleExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSimpleExplodeObjectRequest(c.Server, param)
 	if err != nil {
@@ -573,6 +596,7 @@ func (c *Client) GetSimpleExplodeObject(ctx context.Context, param Object, reqEd
 	return c.Client.Do(req)
 }
 
+// GetSimpleExplodePrimitive performs a GET /simpleExplodePrimitive/{param} (the `getSimpleExplodePrimitive` operationId) request
 func (c *Client) GetSimpleExplodePrimitive(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSimpleExplodePrimitiveRequest(c.Server, param)
 	if err != nil {
@@ -585,6 +609,7 @@ func (c *Client) GetSimpleExplodePrimitive(ctx context.Context, param int32, req
 	return c.Client.Do(req)
 }
 
+// GetSimpleNoExplodeArray performs a GET /simpleNoExplodeArray/{param} (the `getSimpleNoExplodeArray` operationId) request
 func (c *Client) GetSimpleNoExplodeArray(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSimpleNoExplodeArrayRequest(c.Server, param)
 	if err != nil {
@@ -597,6 +622,7 @@ func (c *Client) GetSimpleNoExplodeArray(ctx context.Context, param []int32, req
 	return c.Client.Do(req)
 }
 
+// GetSimpleNoExplodeObject performs a GET /simpleNoExplodeObject/{param} (the `getSimpleNoExplodeObject` operationId) request
 func (c *Client) GetSimpleNoExplodeObject(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSimpleNoExplodeObjectRequest(c.Server, param)
 	if err != nil {
@@ -609,6 +635,7 @@ func (c *Client) GetSimpleNoExplodeObject(ctx context.Context, param Object, req
 	return c.Client.Do(req)
 }
 
+// GetSimplePrimitive performs a GET /simplePrimitive/{param} (the `getSimplePrimitive` operationId) request
 func (c *Client) GetSimplePrimitive(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSimplePrimitiveRequest(c.Server, param)
 	if err != nil {
@@ -621,6 +648,7 @@ func (c *Client) GetSimplePrimitive(ctx context.Context, param int32, reqEditors
 	return c.Client.Do(req)
 }
 
+// GetStartingWithNumber performs a GET /startingWithNumber/{1param} (the `getStartingWithNumber` operationId) request
 func (c *Client) GetStartingWithNumber(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetStartingWithNumberRequest(c.Server, n1param)
 	if err != nil {
@@ -633,7 +661,7 @@ func (c *Client) GetStartingWithNumber(ctx context.Context, n1param string, reqE
 	return c.Client.Do(req)
 }
 
-// NewGetContentObjectRequest generates requests for GetContentObject
+// NewGetContentObjectRequest constructs an http.Request for the GetContentObject method
 func NewGetContentObjectRequest(server string, param ComplexObject) (*http.Request, error) {
 	var err error
 
@@ -669,7 +697,7 @@ func NewGetContentObjectRequest(server string, param ComplexObject) (*http.Reque
 	return req, nil
 }
 
-// NewGetCookieRequest generates requests for GetCookie
+// NewGetCookieRequest constructs an http.Request for the GetCookie method
 func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request, error) {
 	var err error
 
@@ -820,7 +848,7 @@ func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request,
 	return req, nil
 }
 
-// NewEnumParamsRequest generates requests for EnumParams
+// NewEnumParamsRequest constructs an http.Request for the EnumParams method
 func NewEnumParamsRequest(server string, params *EnumParamsParams) (*http.Request, error) {
 	var err error
 
@@ -874,7 +902,7 @@ func NewEnumParamsRequest(server string, params *EnumParamsParams) (*http.Reques
 	return req, nil
 }
 
-// NewGetHeaderRequest generates requests for GetHeader
+// NewGetHeaderRequest constructs an http.Request for the GetHeader method
 func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request, error) {
 	var err error
 
@@ -995,7 +1023,7 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 	return req, nil
 }
 
-// NewGetLabelExplodeArrayRequest generates requests for GetLabelExplodeArray
+// NewGetLabelExplodeArrayRequest constructs an http.Request for the GetLabelExplodeArray method
 func NewGetLabelExplodeArrayRequest(server string, param []int32) (*http.Request, error) {
 	var err error
 
@@ -1029,7 +1057,7 @@ func NewGetLabelExplodeArrayRequest(server string, param []int32) (*http.Request
 	return req, nil
 }
 
-// NewGetLabelExplodeObjectRequest generates requests for GetLabelExplodeObject
+// NewGetLabelExplodeObjectRequest constructs an http.Request for the GetLabelExplodeObject method
 func NewGetLabelExplodeObjectRequest(server string, param Object) (*http.Request, error) {
 	var err error
 
@@ -1063,7 +1091,7 @@ func NewGetLabelExplodeObjectRequest(server string, param Object) (*http.Request
 	return req, nil
 }
 
-// NewGetLabelExplodePrimitiveRequest generates requests for GetLabelExplodePrimitive
+// NewGetLabelExplodePrimitiveRequest constructs an http.Request for the GetLabelExplodePrimitive method
 func NewGetLabelExplodePrimitiveRequest(server string, param int32) (*http.Request, error) {
 	var err error
 
@@ -1097,7 +1125,7 @@ func NewGetLabelExplodePrimitiveRequest(server string, param int32) (*http.Reque
 	return req, nil
 }
 
-// NewGetLabelNoExplodeArrayRequest generates requests for GetLabelNoExplodeArray
+// NewGetLabelNoExplodeArrayRequest constructs an http.Request for the GetLabelNoExplodeArray method
 func NewGetLabelNoExplodeArrayRequest(server string, param []int32) (*http.Request, error) {
 	var err error
 
@@ -1131,7 +1159,7 @@ func NewGetLabelNoExplodeArrayRequest(server string, param []int32) (*http.Reque
 	return req, nil
 }
 
-// NewGetLabelNoExplodeObjectRequest generates requests for GetLabelNoExplodeObject
+// NewGetLabelNoExplodeObjectRequest constructs an http.Request for the GetLabelNoExplodeObject method
 func NewGetLabelNoExplodeObjectRequest(server string, param Object) (*http.Request, error) {
 	var err error
 
@@ -1165,7 +1193,7 @@ func NewGetLabelNoExplodeObjectRequest(server string, param Object) (*http.Reque
 	return req, nil
 }
 
-// NewGetLabelPrimitiveRequest generates requests for GetLabelPrimitive
+// NewGetLabelPrimitiveRequest constructs an http.Request for the GetLabelPrimitive method
 func NewGetLabelPrimitiveRequest(server string, param int32) (*http.Request, error) {
 	var err error
 
@@ -1199,7 +1227,7 @@ func NewGetLabelPrimitiveRequest(server string, param int32) (*http.Request, err
 	return req, nil
 }
 
-// NewGetMatrixExplodeArrayRequest generates requests for GetMatrixExplodeArray
+// NewGetMatrixExplodeArrayRequest constructs an http.Request for the GetMatrixExplodeArray method
 func NewGetMatrixExplodeArrayRequest(server string, id []int32) (*http.Request, error) {
 	var err error
 
@@ -1233,7 +1261,7 @@ func NewGetMatrixExplodeArrayRequest(server string, id []int32) (*http.Request, 
 	return req, nil
 }
 
-// NewGetMatrixExplodeObjectRequest generates requests for GetMatrixExplodeObject
+// NewGetMatrixExplodeObjectRequest constructs an http.Request for the GetMatrixExplodeObject method
 func NewGetMatrixExplodeObjectRequest(server string, id Object) (*http.Request, error) {
 	var err error
 
@@ -1267,7 +1295,7 @@ func NewGetMatrixExplodeObjectRequest(server string, id Object) (*http.Request, 
 	return req, nil
 }
 
-// NewGetMatrixExplodePrimitiveRequest generates requests for GetMatrixExplodePrimitive
+// NewGetMatrixExplodePrimitiveRequest constructs an http.Request for the GetMatrixExplodePrimitive method
 func NewGetMatrixExplodePrimitiveRequest(server string, id int32) (*http.Request, error) {
 	var err error
 
@@ -1301,7 +1329,7 @@ func NewGetMatrixExplodePrimitiveRequest(server string, id int32) (*http.Request
 	return req, nil
 }
 
-// NewGetMatrixNoExplodeArrayRequest generates requests for GetMatrixNoExplodeArray
+// NewGetMatrixNoExplodeArrayRequest constructs an http.Request for the GetMatrixNoExplodeArray method
 func NewGetMatrixNoExplodeArrayRequest(server string, id []int32) (*http.Request, error) {
 	var err error
 
@@ -1335,7 +1363,7 @@ func NewGetMatrixNoExplodeArrayRequest(server string, id []int32) (*http.Request
 	return req, nil
 }
 
-// NewGetMatrixNoExplodeObjectRequest generates requests for GetMatrixNoExplodeObject
+// NewGetMatrixNoExplodeObjectRequest constructs an http.Request for the GetMatrixNoExplodeObject method
 func NewGetMatrixNoExplodeObjectRequest(server string, id Object) (*http.Request, error) {
 	var err error
 
@@ -1369,7 +1397,7 @@ func NewGetMatrixNoExplodeObjectRequest(server string, id Object) (*http.Request
 	return req, nil
 }
 
-// NewGetMatrixPrimitiveRequest generates requests for GetMatrixPrimitive
+// NewGetMatrixPrimitiveRequest constructs an http.Request for the GetMatrixPrimitive method
 func NewGetMatrixPrimitiveRequest(server string, id int32) (*http.Request, error) {
 	var err error
 
@@ -1403,7 +1431,7 @@ func NewGetMatrixPrimitiveRequest(server string, id int32) (*http.Request, error
 	return req, nil
 }
 
-// NewGetPassThroughRequest generates requests for GetPassThrough
+// NewGetPassThroughRequest constructs an http.Request for the GetPassThrough method
 func NewGetPassThroughRequest(server string, param string) (*http.Request, error) {
 	var err error
 
@@ -1434,7 +1462,7 @@ func NewGetPassThroughRequest(server string, param string) (*http.Request, error
 	return req, nil
 }
 
-// NewGetDeepObjectRequest generates requests for GetDeepObject
+// NewGetDeepObjectRequest constructs an http.Request for the GetDeepObject method
 func NewGetDeepObjectRequest(server string, params *GetDeepObjectParams) (*http.Request, error) {
 	var err error
 
@@ -1484,7 +1512,7 @@ func NewGetDeepObjectRequest(server string, params *GetDeepObjectParams) (*http.
 	return req, nil
 }
 
-// NewGetQueryDelimitedRequest generates requests for GetQueryDelimited
+// NewGetQueryDelimitedRequest constructs an http.Request for the GetQueryDelimited method
 func NewGetQueryDelimitedRequest(server string, params *GetQueryDelimitedParams) (*http.Request, error) {
 	var err error
 
@@ -1550,7 +1578,7 @@ func NewGetQueryDelimitedRequest(server string, params *GetQueryDelimitedParams)
 	return req, nil
 }
 
-// NewGetQueryFormRequest generates requests for GetQueryForm
+// NewGetQueryFormRequest constructs an http.Request for the GetQueryForm method
 func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Request, error) {
 	var err error
 
@@ -1698,7 +1726,7 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 	return req, nil
 }
 
-// NewGetSimpleExplodeArrayRequest generates requests for GetSimpleExplodeArray
+// NewGetSimpleExplodeArrayRequest constructs an http.Request for the GetSimpleExplodeArray method
 func NewGetSimpleExplodeArrayRequest(server string, param []int32) (*http.Request, error) {
 	var err error
 
@@ -1732,7 +1760,7 @@ func NewGetSimpleExplodeArrayRequest(server string, param []int32) (*http.Reques
 	return req, nil
 }
 
-// NewGetSimpleExplodeObjectRequest generates requests for GetSimpleExplodeObject
+// NewGetSimpleExplodeObjectRequest constructs an http.Request for the GetSimpleExplodeObject method
 func NewGetSimpleExplodeObjectRequest(server string, param Object) (*http.Request, error) {
 	var err error
 
@@ -1766,7 +1794,7 @@ func NewGetSimpleExplodeObjectRequest(server string, param Object) (*http.Reques
 	return req, nil
 }
 
-// NewGetSimpleExplodePrimitiveRequest generates requests for GetSimpleExplodePrimitive
+// NewGetSimpleExplodePrimitiveRequest constructs an http.Request for the GetSimpleExplodePrimitive method
 func NewGetSimpleExplodePrimitiveRequest(server string, param int32) (*http.Request, error) {
 	var err error
 
@@ -1800,7 +1828,7 @@ func NewGetSimpleExplodePrimitiveRequest(server string, param int32) (*http.Requ
 	return req, nil
 }
 
-// NewGetSimpleNoExplodeArrayRequest generates requests for GetSimpleNoExplodeArray
+// NewGetSimpleNoExplodeArrayRequest constructs an http.Request for the GetSimpleNoExplodeArray method
 func NewGetSimpleNoExplodeArrayRequest(server string, param []int32) (*http.Request, error) {
 	var err error
 
@@ -1834,7 +1862,7 @@ func NewGetSimpleNoExplodeArrayRequest(server string, param []int32) (*http.Requ
 	return req, nil
 }
 
-// NewGetSimpleNoExplodeObjectRequest generates requests for GetSimpleNoExplodeObject
+// NewGetSimpleNoExplodeObjectRequest constructs an http.Request for the GetSimpleNoExplodeObject method
 func NewGetSimpleNoExplodeObjectRequest(server string, param Object) (*http.Request, error) {
 	var err error
 
@@ -1868,7 +1896,7 @@ func NewGetSimpleNoExplodeObjectRequest(server string, param Object) (*http.Requ
 	return req, nil
 }
 
-// NewGetSimplePrimitiveRequest generates requests for GetSimplePrimitive
+// NewGetSimplePrimitiveRequest constructs an http.Request for the GetSimplePrimitive method
 func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, error) {
 	var err error
 
@@ -1902,7 +1930,7 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 	return req, nil
 }
 
-// NewGetStartingWithNumberRequest generates requests for GetStartingWithNumber
+// NewGetStartingWithNumberRequest constructs an http.Request for the GetStartingWithNumber method
 func NewGetStartingWithNumberRequest(server string, n1param string) (*http.Request, error) {
 	var err error
 
@@ -1976,85 +2004,86 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetContentObjectWithResponse request
+
+	// GetContentObject performs a GET /contentObject/{param} (the `getContentObject` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetContentObjectWithResponse(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*GetContentObjectResponse, error)
 
-	// GetCookieWithResponse request
+	// GetCookie performs a GET /cookie (the `getCookie` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetCookieWithResponse(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*GetCookieResponse, error)
 
-	// EnumParamsWithResponse request
+	// EnumParams performs a GET /enums (the `enumParams` operationId) request, and returns a wrapper object for the known response body format(s).
 	EnumParamsWithResponse(ctx context.Context, params *EnumParamsParams, reqEditors ...RequestEditorFn) (*EnumParamsResponse, error)
 
-	// GetHeaderWithResponse request
+	// GetHeader performs a GET /header (the `getHeader` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*GetHeaderResponse, error)
 
-	// GetLabelExplodeArrayWithResponse request
+	// GetLabelExplodeArray performs a GET /labelExplodeArray/{.param*} (the `getLabelExplodeArray` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetLabelExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelExplodeArrayResponse, error)
 
-	// GetLabelExplodeObjectWithResponse request
+	// GetLabelExplodeObject performs a GET /labelExplodeObject/{.param*} (the `getLabelExplodeObject` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetLabelExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelExplodeObjectResponse, error)
 
-	// GetLabelExplodePrimitiveWithResponse request
+	// GetLabelExplodePrimitive performs a GET /labelExplodePrimitive/{.param*} (the `getLabelExplodePrimitive` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetLabelExplodePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetLabelExplodePrimitiveResponse, error)
 
-	// GetLabelNoExplodeArrayWithResponse request
+	// GetLabelNoExplodeArray performs a GET /labelNoExplodeArray/{.param} (the `getLabelNoExplodeArray` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetLabelNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeArrayResponse, error)
 
-	// GetLabelNoExplodeObjectWithResponse request
+	// GetLabelNoExplodeObject performs a GET /labelNoExplodeObject/{.param} (the `getLabelNoExplodeObject` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetLabelNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeObjectResponse, error)
 
-	// GetLabelPrimitiveWithResponse request
+	// GetLabelPrimitive performs a GET /labelPrimitive/{.param} (the `getLabelPrimitive` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetLabelPrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetLabelPrimitiveResponse, error)
 
-	// GetMatrixExplodeArrayWithResponse request
+	// GetMatrixExplodeArray performs a GET /matrixExplodeArray/{.id*} (the `getMatrixExplodeArray` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetMatrixExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixExplodeArrayResponse, error)
 
-	// GetMatrixExplodeObjectWithResponse request
+	// GetMatrixExplodeObject performs a GET /matrixExplodeObject/{.id*} (the `getMatrixExplodeObject` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetMatrixExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixExplodeObjectResponse, error)
 
-	// GetMatrixExplodePrimitiveWithResponse request
+	// GetMatrixExplodePrimitive performs a GET /matrixExplodePrimitive/{;id*} (the `getMatrixExplodePrimitive` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetMatrixExplodePrimitiveWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*GetMatrixExplodePrimitiveResponse, error)
 
-	// GetMatrixNoExplodeArrayWithResponse request
+	// GetMatrixNoExplodeArray performs a GET /matrixNoExplodeArray/{.id} (the `getMatrixNoExplodeArray` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetMatrixNoExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeArrayResponse, error)
 
-	// GetMatrixNoExplodeObjectWithResponse request
+	// GetMatrixNoExplodeObject performs a GET /matrixNoExplodeObject/{.id} (the `getMatrixNoExplodeObject` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetMatrixNoExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeObjectResponse, error)
 
-	// GetMatrixPrimitiveWithResponse request
+	// GetMatrixPrimitive performs a GET /matrixPrimitive/{;id} (the `getMatrixPrimitive` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetMatrixPrimitiveWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*GetMatrixPrimitiveResponse, error)
 
-	// GetPassThroughWithResponse request
+	// GetPassThrough performs a GET /passThrough/{param} (the `getPassThrough` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetPassThroughWithResponse(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*GetPassThroughResponse, error)
 
-	// GetDeepObjectWithResponse request
+	// GetDeepObject performs a GET /queryDeepObject (the `getDeepObject` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetDeepObjectWithResponse(ctx context.Context, params *GetDeepObjectParams, reqEditors ...RequestEditorFn) (*GetDeepObjectResponse, error)
 
-	// GetQueryDelimitedWithResponse request
+	// GetQueryDelimited performs a GET /queryDelimited (the `getQueryDelimited` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetQueryDelimitedWithResponse(ctx context.Context, params *GetQueryDelimitedParams, reqEditors ...RequestEditorFn) (*GetQueryDelimitedResponse, error)
 
-	// GetQueryFormWithResponse request
+	// GetQueryForm performs a GET /queryForm (the `getQueryForm` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetQueryFormWithResponse(ctx context.Context, params *GetQueryFormParams, reqEditors ...RequestEditorFn) (*GetQueryFormResponse, error)
 
-	// GetSimpleExplodeArrayWithResponse request
+	// GetSimpleExplodeArray performs a GET /simpleExplodeArray/{param*} (the `getSimpleExplodeArray` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetSimpleExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleExplodeArrayResponse, error)
 
-	// GetSimpleExplodeObjectWithResponse request
+	// GetSimpleExplodeObject performs a GET /simpleExplodeObject/{param*} (the `getSimpleExplodeObject` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetSimpleExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleExplodeObjectResponse, error)
 
-	// GetSimpleExplodePrimitiveWithResponse request
+	// GetSimpleExplodePrimitive performs a GET /simpleExplodePrimitive/{param} (the `getSimpleExplodePrimitive` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetSimpleExplodePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetSimpleExplodePrimitiveResponse, error)
 
-	// GetSimpleNoExplodeArrayWithResponse request
+	// GetSimpleNoExplodeArray performs a GET /simpleNoExplodeArray/{param} (the `getSimpleNoExplodeArray` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetSimpleNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeArrayResponse, error)
 
-	// GetSimpleNoExplodeObjectWithResponse request
+	// GetSimpleNoExplodeObject performs a GET /simpleNoExplodeObject/{param} (the `getSimpleNoExplodeObject` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetSimpleNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeObjectResponse, error)
 
-	// GetSimplePrimitiveWithResponse request
+	// GetSimplePrimitive performs a GET /simplePrimitive/{param} (the `getSimplePrimitive` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetSimplePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetSimplePrimitiveResponse, error)
 
-	// GetStartingWithNumberWithResponse request
+	// GetStartingWithNumber performs a GET /startingWithNumber/{1param} (the `getStartingWithNumber` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetStartingWithNumberWithResponse(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*GetStartingWithNumberResponse, error)
 }
 
@@ -2976,7 +3005,7 @@ func (r GetStartingWithNumberResponse) ContentType() string {
 	return ""
 }
 
-// GetContentObjectWithResponse request returning *GetContentObjectResponse
+// GetContentObject performs a GET /contentObject/{param} (the `getContentObject` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetContentObjectWithResponse(ctx context.Context, param ComplexObject, reqEditors ...RequestEditorFn) (*GetContentObjectResponse, error) {
 	rsp, err := c.GetContentObject(ctx, param, reqEditors...)
 	if err != nil {
@@ -2985,7 +3014,7 @@ func (c *ClientWithResponses) GetContentObjectWithResponse(ctx context.Context, 
 	return ParseGetContentObjectResponse(rsp)
 }
 
-// GetCookieWithResponse request returning *GetCookieResponse
+// GetCookie performs a GET /cookie (the `getCookie` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetCookieWithResponse(ctx context.Context, params *GetCookieParams, reqEditors ...RequestEditorFn) (*GetCookieResponse, error) {
 	rsp, err := c.GetCookie(ctx, params, reqEditors...)
 	if err != nil {
@@ -2994,7 +3023,7 @@ func (c *ClientWithResponses) GetCookieWithResponse(ctx context.Context, params 
 	return ParseGetCookieResponse(rsp)
 }
 
-// EnumParamsWithResponse request returning *EnumParamsResponse
+// EnumParams performs a GET /enums (the `enumParams` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) EnumParamsWithResponse(ctx context.Context, params *EnumParamsParams, reqEditors ...RequestEditorFn) (*EnumParamsResponse, error) {
 	rsp, err := c.EnumParams(ctx, params, reqEditors...)
 	if err != nil {
@@ -3003,7 +3032,7 @@ func (c *ClientWithResponses) EnumParamsWithResponse(ctx context.Context, params
 	return ParseEnumParamsResponse(rsp)
 }
 
-// GetHeaderWithResponse request returning *GetHeaderResponse
+// GetHeader performs a GET /header (the `getHeader` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetHeaderWithResponse(ctx context.Context, params *GetHeaderParams, reqEditors ...RequestEditorFn) (*GetHeaderResponse, error) {
 	rsp, err := c.GetHeader(ctx, params, reqEditors...)
 	if err != nil {
@@ -3012,7 +3041,7 @@ func (c *ClientWithResponses) GetHeaderWithResponse(ctx context.Context, params 
 	return ParseGetHeaderResponse(rsp)
 }
 
-// GetLabelExplodeArrayWithResponse request returning *GetLabelExplodeArrayResponse
+// GetLabelExplodeArray performs a GET /labelExplodeArray/{.param*} (the `getLabelExplodeArray` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetLabelExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelExplodeArrayResponse, error) {
 	rsp, err := c.GetLabelExplodeArray(ctx, param, reqEditors...)
 	if err != nil {
@@ -3021,7 +3050,7 @@ func (c *ClientWithResponses) GetLabelExplodeArrayWithResponse(ctx context.Conte
 	return ParseGetLabelExplodeArrayResponse(rsp)
 }
 
-// GetLabelExplodeObjectWithResponse request returning *GetLabelExplodeObjectResponse
+// GetLabelExplodeObject performs a GET /labelExplodeObject/{.param*} (the `getLabelExplodeObject` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetLabelExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelExplodeObjectResponse, error) {
 	rsp, err := c.GetLabelExplodeObject(ctx, param, reqEditors...)
 	if err != nil {
@@ -3030,7 +3059,7 @@ func (c *ClientWithResponses) GetLabelExplodeObjectWithResponse(ctx context.Cont
 	return ParseGetLabelExplodeObjectResponse(rsp)
 }
 
-// GetLabelExplodePrimitiveWithResponse request returning *GetLabelExplodePrimitiveResponse
+// GetLabelExplodePrimitive performs a GET /labelExplodePrimitive/{.param*} (the `getLabelExplodePrimitive` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetLabelExplodePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetLabelExplodePrimitiveResponse, error) {
 	rsp, err := c.GetLabelExplodePrimitive(ctx, param, reqEditors...)
 	if err != nil {
@@ -3039,7 +3068,7 @@ func (c *ClientWithResponses) GetLabelExplodePrimitiveWithResponse(ctx context.C
 	return ParseGetLabelExplodePrimitiveResponse(rsp)
 }
 
-// GetLabelNoExplodeArrayWithResponse request returning *GetLabelNoExplodeArrayResponse
+// GetLabelNoExplodeArray performs a GET /labelNoExplodeArray/{.param} (the `getLabelNoExplodeArray` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetLabelNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeArrayResponse, error) {
 	rsp, err := c.GetLabelNoExplodeArray(ctx, param, reqEditors...)
 	if err != nil {
@@ -3048,7 +3077,7 @@ func (c *ClientWithResponses) GetLabelNoExplodeArrayWithResponse(ctx context.Con
 	return ParseGetLabelNoExplodeArrayResponse(rsp)
 }
 
-// GetLabelNoExplodeObjectWithResponse request returning *GetLabelNoExplodeObjectResponse
+// GetLabelNoExplodeObject performs a GET /labelNoExplodeObject/{.param} (the `getLabelNoExplodeObject` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetLabelNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetLabelNoExplodeObjectResponse, error) {
 	rsp, err := c.GetLabelNoExplodeObject(ctx, param, reqEditors...)
 	if err != nil {
@@ -3057,7 +3086,7 @@ func (c *ClientWithResponses) GetLabelNoExplodeObjectWithResponse(ctx context.Co
 	return ParseGetLabelNoExplodeObjectResponse(rsp)
 }
 
-// GetLabelPrimitiveWithResponse request returning *GetLabelPrimitiveResponse
+// GetLabelPrimitive performs a GET /labelPrimitive/{.param} (the `getLabelPrimitive` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetLabelPrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetLabelPrimitiveResponse, error) {
 	rsp, err := c.GetLabelPrimitive(ctx, param, reqEditors...)
 	if err != nil {
@@ -3066,7 +3095,7 @@ func (c *ClientWithResponses) GetLabelPrimitiveWithResponse(ctx context.Context,
 	return ParseGetLabelPrimitiveResponse(rsp)
 }
 
-// GetMatrixExplodeArrayWithResponse request returning *GetMatrixExplodeArrayResponse
+// GetMatrixExplodeArray performs a GET /matrixExplodeArray/{.id*} (the `getMatrixExplodeArray` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetMatrixExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixExplodeArrayResponse, error) {
 	rsp, err := c.GetMatrixExplodeArray(ctx, id, reqEditors...)
 	if err != nil {
@@ -3075,7 +3104,7 @@ func (c *ClientWithResponses) GetMatrixExplodeArrayWithResponse(ctx context.Cont
 	return ParseGetMatrixExplodeArrayResponse(rsp)
 }
 
-// GetMatrixExplodeObjectWithResponse request returning *GetMatrixExplodeObjectResponse
+// GetMatrixExplodeObject performs a GET /matrixExplodeObject/{.id*} (the `getMatrixExplodeObject` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetMatrixExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixExplodeObjectResponse, error) {
 	rsp, err := c.GetMatrixExplodeObject(ctx, id, reqEditors...)
 	if err != nil {
@@ -3084,7 +3113,7 @@ func (c *ClientWithResponses) GetMatrixExplodeObjectWithResponse(ctx context.Con
 	return ParseGetMatrixExplodeObjectResponse(rsp)
 }
 
-// GetMatrixExplodePrimitiveWithResponse request returning *GetMatrixExplodePrimitiveResponse
+// GetMatrixExplodePrimitive performs a GET /matrixExplodePrimitive/{;id*} (the `getMatrixExplodePrimitive` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetMatrixExplodePrimitiveWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*GetMatrixExplodePrimitiveResponse, error) {
 	rsp, err := c.GetMatrixExplodePrimitive(ctx, id, reqEditors...)
 	if err != nil {
@@ -3093,7 +3122,7 @@ func (c *ClientWithResponses) GetMatrixExplodePrimitiveWithResponse(ctx context.
 	return ParseGetMatrixExplodePrimitiveResponse(rsp)
 }
 
-// GetMatrixNoExplodeArrayWithResponse request returning *GetMatrixNoExplodeArrayResponse
+// GetMatrixNoExplodeArray performs a GET /matrixNoExplodeArray/{.id} (the `getMatrixNoExplodeArray` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetMatrixNoExplodeArrayWithResponse(ctx context.Context, id []int32, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeArrayResponse, error) {
 	rsp, err := c.GetMatrixNoExplodeArray(ctx, id, reqEditors...)
 	if err != nil {
@@ -3102,7 +3131,7 @@ func (c *ClientWithResponses) GetMatrixNoExplodeArrayWithResponse(ctx context.Co
 	return ParseGetMatrixNoExplodeArrayResponse(rsp)
 }
 
-// GetMatrixNoExplodeObjectWithResponse request returning *GetMatrixNoExplodeObjectResponse
+// GetMatrixNoExplodeObject performs a GET /matrixNoExplodeObject/{.id} (the `getMatrixNoExplodeObject` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetMatrixNoExplodeObjectWithResponse(ctx context.Context, id Object, reqEditors ...RequestEditorFn) (*GetMatrixNoExplodeObjectResponse, error) {
 	rsp, err := c.GetMatrixNoExplodeObject(ctx, id, reqEditors...)
 	if err != nil {
@@ -3111,7 +3140,7 @@ func (c *ClientWithResponses) GetMatrixNoExplodeObjectWithResponse(ctx context.C
 	return ParseGetMatrixNoExplodeObjectResponse(rsp)
 }
 
-// GetMatrixPrimitiveWithResponse request returning *GetMatrixPrimitiveResponse
+// GetMatrixPrimitive performs a GET /matrixPrimitive/{;id} (the `getMatrixPrimitive` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetMatrixPrimitiveWithResponse(ctx context.Context, id int32, reqEditors ...RequestEditorFn) (*GetMatrixPrimitiveResponse, error) {
 	rsp, err := c.GetMatrixPrimitive(ctx, id, reqEditors...)
 	if err != nil {
@@ -3120,7 +3149,7 @@ func (c *ClientWithResponses) GetMatrixPrimitiveWithResponse(ctx context.Context
 	return ParseGetMatrixPrimitiveResponse(rsp)
 }
 
-// GetPassThroughWithResponse request returning *GetPassThroughResponse
+// GetPassThrough performs a GET /passThrough/{param} (the `getPassThrough` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetPassThroughWithResponse(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*GetPassThroughResponse, error) {
 	rsp, err := c.GetPassThrough(ctx, param, reqEditors...)
 	if err != nil {
@@ -3129,7 +3158,7 @@ func (c *ClientWithResponses) GetPassThroughWithResponse(ctx context.Context, pa
 	return ParseGetPassThroughResponse(rsp)
 }
 
-// GetDeepObjectWithResponse request returning *GetDeepObjectResponse
+// GetDeepObject performs a GET /queryDeepObject (the `getDeepObject` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetDeepObjectWithResponse(ctx context.Context, params *GetDeepObjectParams, reqEditors ...RequestEditorFn) (*GetDeepObjectResponse, error) {
 	rsp, err := c.GetDeepObject(ctx, params, reqEditors...)
 	if err != nil {
@@ -3138,7 +3167,7 @@ func (c *ClientWithResponses) GetDeepObjectWithResponse(ctx context.Context, par
 	return ParseGetDeepObjectResponse(rsp)
 }
 
-// GetQueryDelimitedWithResponse request returning *GetQueryDelimitedResponse
+// GetQueryDelimited performs a GET /queryDelimited (the `getQueryDelimited` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetQueryDelimitedWithResponse(ctx context.Context, params *GetQueryDelimitedParams, reqEditors ...RequestEditorFn) (*GetQueryDelimitedResponse, error) {
 	rsp, err := c.GetQueryDelimited(ctx, params, reqEditors...)
 	if err != nil {
@@ -3147,7 +3176,7 @@ func (c *ClientWithResponses) GetQueryDelimitedWithResponse(ctx context.Context,
 	return ParseGetQueryDelimitedResponse(rsp)
 }
 
-// GetQueryFormWithResponse request returning *GetQueryFormResponse
+// GetQueryForm performs a GET /queryForm (the `getQueryForm` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetQueryFormWithResponse(ctx context.Context, params *GetQueryFormParams, reqEditors ...RequestEditorFn) (*GetQueryFormResponse, error) {
 	rsp, err := c.GetQueryForm(ctx, params, reqEditors...)
 	if err != nil {
@@ -3156,7 +3185,7 @@ func (c *ClientWithResponses) GetQueryFormWithResponse(ctx context.Context, para
 	return ParseGetQueryFormResponse(rsp)
 }
 
-// GetSimpleExplodeArrayWithResponse request returning *GetSimpleExplodeArrayResponse
+// GetSimpleExplodeArray performs a GET /simpleExplodeArray/{param*} (the `getSimpleExplodeArray` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetSimpleExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleExplodeArrayResponse, error) {
 	rsp, err := c.GetSimpleExplodeArray(ctx, param, reqEditors...)
 	if err != nil {
@@ -3165,7 +3194,7 @@ func (c *ClientWithResponses) GetSimpleExplodeArrayWithResponse(ctx context.Cont
 	return ParseGetSimpleExplodeArrayResponse(rsp)
 }
 
-// GetSimpleExplodeObjectWithResponse request returning *GetSimpleExplodeObjectResponse
+// GetSimpleExplodeObject performs a GET /simpleExplodeObject/{param*} (the `getSimpleExplodeObject` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetSimpleExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleExplodeObjectResponse, error) {
 	rsp, err := c.GetSimpleExplodeObject(ctx, param, reqEditors...)
 	if err != nil {
@@ -3174,7 +3203,7 @@ func (c *ClientWithResponses) GetSimpleExplodeObjectWithResponse(ctx context.Con
 	return ParseGetSimpleExplodeObjectResponse(rsp)
 }
 
-// GetSimpleExplodePrimitiveWithResponse request returning *GetSimpleExplodePrimitiveResponse
+// GetSimpleExplodePrimitive performs a GET /simpleExplodePrimitive/{param} (the `getSimpleExplodePrimitive` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetSimpleExplodePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetSimpleExplodePrimitiveResponse, error) {
 	rsp, err := c.GetSimpleExplodePrimitive(ctx, param, reqEditors...)
 	if err != nil {
@@ -3183,7 +3212,7 @@ func (c *ClientWithResponses) GetSimpleExplodePrimitiveWithResponse(ctx context.
 	return ParseGetSimpleExplodePrimitiveResponse(rsp)
 }
 
-// GetSimpleNoExplodeArrayWithResponse request returning *GetSimpleNoExplodeArrayResponse
+// GetSimpleNoExplodeArray performs a GET /simpleNoExplodeArray/{param} (the `getSimpleNoExplodeArray` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetSimpleNoExplodeArrayWithResponse(ctx context.Context, param []int32, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeArrayResponse, error) {
 	rsp, err := c.GetSimpleNoExplodeArray(ctx, param, reqEditors...)
 	if err != nil {
@@ -3192,7 +3221,7 @@ func (c *ClientWithResponses) GetSimpleNoExplodeArrayWithResponse(ctx context.Co
 	return ParseGetSimpleNoExplodeArrayResponse(rsp)
 }
 
-// GetSimpleNoExplodeObjectWithResponse request returning *GetSimpleNoExplodeObjectResponse
+// GetSimpleNoExplodeObject performs a GET /simpleNoExplodeObject/{param} (the `getSimpleNoExplodeObject` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetSimpleNoExplodeObjectWithResponse(ctx context.Context, param Object, reqEditors ...RequestEditorFn) (*GetSimpleNoExplodeObjectResponse, error) {
 	rsp, err := c.GetSimpleNoExplodeObject(ctx, param, reqEditors...)
 	if err != nil {
@@ -3201,7 +3230,7 @@ func (c *ClientWithResponses) GetSimpleNoExplodeObjectWithResponse(ctx context.C
 	return ParseGetSimpleNoExplodeObjectResponse(rsp)
 }
 
-// GetSimplePrimitiveWithResponse request returning *GetSimplePrimitiveResponse
+// GetSimplePrimitive performs a GET /simplePrimitive/{param} (the `getSimplePrimitive` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetSimplePrimitiveResponse, error) {
 	rsp, err := c.GetSimplePrimitive(ctx, param, reqEditors...)
 	if err != nil {
@@ -3210,7 +3239,7 @@ func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context
 	return ParseGetSimplePrimitiveResponse(rsp)
 }
 
-// GetStartingWithNumberWithResponse request returning *GetStartingWithNumberResponse
+// GetStartingWithNumber performs a GET /startingWithNumber/{1param} (the `getStartingWithNumber` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetStartingWithNumberWithResponse(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*GetStartingWithNumberResponse, error) {
 	rsp, err := c.GetStartingWithNumber(ctx, n1param, reqEditors...)
 	if err != nil {

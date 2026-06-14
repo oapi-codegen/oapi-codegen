@@ -147,7 +147,7 @@ func (t *GetPetsDto_Data) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -220,10 +220,18 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetPets request
+
+	// GetPets Get a list of pets
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with GET /pets (the `getPets` operationId).
 	GetPets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetPets Get a list of pets
+// Takes any type of body and a specified content type.
+//
+// Corresponds with GET /pets (the `getPets` operationId).
 func (c *Client) GetPets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetPetsRequest(c.Server)
 	if err != nil {
@@ -236,7 +244,7 @@ func (c *Client) GetPets(ctx context.Context, reqEditors ...RequestEditorFn) (*h
 	return c.Client.Do(req)
 }
 
-// NewGetPetsRequest generates requests for GetPets
+// NewGetPetsRequest constructs an http.Request for the GetPets method
 func NewGetPetsRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -306,7 +314,11 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetPetsWithResponse request
+
+	// GetPetsWithResponse Get a list of pets
+	// Takes any type of body and a specified content type,, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /pets (the `getPets` operationId).
 	GetPetsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetPetsResponse, error)
 }
 
@@ -316,7 +328,7 @@ type GetPetsResponse struct {
 	JSON200      *GetPetsDto
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetPetsResponse) GetJSON200() *GetPetsDto {
 	return r.JSON200
 }
@@ -350,7 +362,10 @@ func (r GetPetsResponse) ContentType() string {
 	return ""
 }
 
-// GetPetsWithResponse request returning *GetPetsResponse
+// GetPetsWithResponse Get a list of pets
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /pets (the `getPets` operationId).
 func (c *ClientWithResponses) GetPetsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetPetsResponse, error) {
 	rsp, err := c.GetPets(ctx, reqEditors...)
 	if err != nil {
@@ -387,7 +402,7 @@ func ParseGetPetsResponse(rsp *http.Response) (*GetPetsResponse, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Get a list of pets
+	// GetPets Get a list of pets
 	// (GET /pets)
 	GetPets(ctx echo.Context) error
 }

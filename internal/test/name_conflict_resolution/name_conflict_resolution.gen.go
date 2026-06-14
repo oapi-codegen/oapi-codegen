@@ -491,7 +491,7 @@ func (t *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) Unmars
 	return err
 }
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -564,91 +564,123 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// ListEntities request
+
+	// ListEntities performs a GET /entities (the `listEntities` operationId) request
 	ListEntities(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostFooWithBody request with any body
+	// PostFooWithBody performs a POST /foo (the `postFoo` operationId) request, with any type of body, and a specified content type
 	PostFooWithBody(ctx context.Context, params *PostFooParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostFoo performs a POST /foo (the `postFoo` operationId) request,
+	// with the `application/json` content type.
 	PostFoo(ctx context.Context, params *PostFooParams, body PostFooJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListItems request
+	// ListItems performs a GET /items (the `listItems` operationId) request
 	ListItems(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateItemWithBody request with any body
+	// CreateItemWithBody performs a POST /items (the `createItem` operationId) request, with any type of body, and a specified content type
 	CreateItemWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// CreateItem performs a POST /items (the `createItem` operationId) request,
+	// with the `application/json` content type.
 	CreateItem(ctx context.Context, body CreateItemJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateOrderWithBody request with any body
+	// CreateOrderWithBody performs a POST /orders (the `createOrder` operationId) request, with any type of body, and a specified content type
 	CreateOrderWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// CreateOrder performs a POST /orders (the `createOrder` operationId) request,
+	// with the `application/json` content type.
 	CreateOrder(ctx context.Context, body CreateOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// CreateOrderWithApplicationJSONPatchPlusJSONBody performs a POST /orders (the `createOrder` operationId) request,
+	// with the `application/json-patch+json` content type.
 	CreateOrderWithApplicationJSONPatchPlusJSONBody(ctx context.Context, body CreateOrderApplicationJSONPatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// CreateOrderWithApplicationMergePatchPlusJSONBody performs a POST /orders (the `createOrder` operationId) request,
+	// with the `application/merge-patch+json` content type.
 	CreateOrderWithApplicationMergePatchPlusJSONBody(ctx context.Context, body CreateOrderApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOutcome request
+	// GetOutcome performs a GET /outcome (the `getOutcome` operationId) request
 	GetOutcome(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostOutcomeWithBody request with any body
+	// PostOutcomeWithBody performs a POST /outcome (the `postOutcome` operationId) request, with any type of body, and a specified content type
 	PostOutcomeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostOutcome performs a POST /outcome (the `postOutcome` operationId) request,
+	// with the `application/json` content type.
 	PostOutcome(ctx context.Context, body PostOutcomeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SendPayloadWithBody request with any body
+	// SendPayloadWithBody performs a POST /payload (the `sendPayload` operationId) request, with any type of body, and a specified content type
 	SendPayloadWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// SendPayload performs a POST /payload (the `sendPayload` operationId) request,
+	// with the `application/json` content type.
 	SendPayload(ctx context.Context, body SendPayloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreatePetWithBody request with any body
+	// CreatePetWithBody performs a POST /pets (the `createPet` operationId) request, with any type of body, and a specified content type
 	CreatePetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// CreatePet performs a POST /pets (the `createPet` operationId) request,
+	// with the `application/json` content type.
 	CreatePet(ctx context.Context, body CreatePetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// QueryWithBody request with any body
+	// QueryWithBody performs a POST /query (the `query` operationId) request, with any type of body, and a specified content type
 	QueryWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// Query performs a POST /query (the `query` operationId) request,
+	// with the `application/json` content type.
 	Query(ctx context.Context, body QueryJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetQux request
+	// GetQux performs a GET /qux (the `getQux` operationId) request
 	GetQux(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostQuxWithBody request with any body
+	// PostQuxWithBody performs a POST /qux (the `postQux` operationId) request, with any type of body, and a specified content type
 	PostQuxWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostQux performs a POST /qux (the `postQux` operationId) request,
+	// with the `application/json` content type.
 	PostQux(ctx context.Context, body PostQuxJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetRenamedSchema request
+	// GetRenamedSchema performs a GET /renamed-schema (the `getRenamedSchema` operationId) request
 	GetRenamedSchema(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostRenamedSchemaWithBody request with any body
+	// PostRenamedSchemaWithBody performs a POST /renamed-schema (the `postRenamedSchema` operationId) request, with any type of body, and a specified content type
 	PostRenamedSchemaWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostRenamedSchema performs a POST /renamed-schema (the `postRenamedSchema` operationId) request,
+	// with the `application/json` content type.
 	PostRenamedSchema(ctx context.Context, body PostRenamedSchemaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PatchResourceWithBody request with any body
+	// PatchResourceWithBody performs a PATCH /resources/{id} (the `patchResource` operationId) request, with any type of body, and a specified content type
 	PatchResourceWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PatchResource performs a PATCH /resources/{id} (the `patchResource` operationId) request,
+	// with the `application/json` content type.
 	PatchResource(ctx context.Context, id string, body PatchResourceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PatchResourceWithApplicationJSONPatchPlusJSONBody performs a PATCH /resources/{id} (the `patchResource` operationId) request,
+	// with the `application/json-patch+json` content type.
 	PatchResourceWithApplicationJSONPatchPlusJSONBody(ctx context.Context, id string, body PatchResourceApplicationJSONPatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PatchResourceWithApplicationMergePatchPlusJSONBody performs a PATCH /resources/{id} (the `patchResource` operationId) request,
+	// with the `application/merge-patch+json` content type.
 	PatchResourceWithApplicationMergePatchPlusJSONBody(ctx context.Context, id string, body PatchResourceApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetStatus request
+	// GetStatus performs a GET /status (the `getStatus` operationId) request
 	GetStatus(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetZap request
+	// GetZap performs a GET /zap (the `getZap` operationId) request
 	GetZap(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostZapWithBody request with any body
+	// PostZapWithBody performs a POST /zap (the `postZap` operationId) request, with any type of body, and a specified content type
 	PostZapWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostZap performs a POST /zap (the `postZap` operationId) request,
+	// with the `application/json` content type.
 	PostZap(ctx context.Context, body PostZapJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// ListEntities performs a GET /entities (the `listEntities` operationId) request
 func (c *Client) ListEntities(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListEntitiesRequest(c.Server)
 	if err != nil {
@@ -661,6 +693,7 @@ func (c *Client) ListEntities(ctx context.Context, reqEditors ...RequestEditorFn
 	return c.Client.Do(req)
 }
 
+// PostFooWithBody performs a POST /foo (the `postFoo` operationId) request, with any type of body, and a specified content type
 func (c *Client) PostFooWithBody(ctx context.Context, params *PostFooParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostFooRequestWithBody(c.Server, params, contentType, body)
 	if err != nil {
@@ -673,6 +706,8 @@ func (c *Client) PostFooWithBody(ctx context.Context, params *PostFooParams, con
 	return c.Client.Do(req)
 }
 
+// PostFoo performs a POST /foo (the `postFoo` operationId) request,
+// with the `application/json` content type.
 func (c *Client) PostFoo(ctx context.Context, params *PostFooParams, body PostFooJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostFooRequest(c.Server, params, body)
 	if err != nil {
@@ -685,6 +720,7 @@ func (c *Client) PostFoo(ctx context.Context, params *PostFooParams, body PostFo
 	return c.Client.Do(req)
 }
 
+// ListItems performs a GET /items (the `listItems` operationId) request
 func (c *Client) ListItems(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListItemsRequest(c.Server)
 	if err != nil {
@@ -697,6 +733,7 @@ func (c *Client) ListItems(ctx context.Context, reqEditors ...RequestEditorFn) (
 	return c.Client.Do(req)
 }
 
+// CreateItemWithBody performs a POST /items (the `createItem` operationId) request, with any type of body, and a specified content type
 func (c *Client) CreateItemWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateItemRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -709,6 +746,8 @@ func (c *Client) CreateItemWithBody(ctx context.Context, contentType string, bod
 	return c.Client.Do(req)
 }
 
+// CreateItem performs a POST /items (the `createItem` operationId) request,
+// with the `application/json` content type.
 func (c *Client) CreateItem(ctx context.Context, body CreateItemJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateItemRequest(c.Server, body)
 	if err != nil {
@@ -721,6 +760,7 @@ func (c *Client) CreateItem(ctx context.Context, body CreateItemJSONRequestBody,
 	return c.Client.Do(req)
 }
 
+// CreateOrderWithBody performs a POST /orders (the `createOrder` operationId) request, with any type of body, and a specified content type
 func (c *Client) CreateOrderWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateOrderRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -733,6 +773,8 @@ func (c *Client) CreateOrderWithBody(ctx context.Context, contentType string, bo
 	return c.Client.Do(req)
 }
 
+// CreateOrder performs a POST /orders (the `createOrder` operationId) request,
+// with the `application/json` content type.
 func (c *Client) CreateOrder(ctx context.Context, body CreateOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateOrderRequest(c.Server, body)
 	if err != nil {
@@ -745,6 +787,8 @@ func (c *Client) CreateOrder(ctx context.Context, body CreateOrderJSONRequestBod
 	return c.Client.Do(req)
 }
 
+// CreateOrderWithApplicationJSONPatchPlusJSONBody performs a POST /orders (the `createOrder` operationId) request,
+// with the `application/json-patch+json` content type.
 func (c *Client) CreateOrderWithApplicationJSONPatchPlusJSONBody(ctx context.Context, body CreateOrderApplicationJSONPatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateOrderRequestWithApplicationJSONPatchPlusJSONBody(c.Server, body)
 	if err != nil {
@@ -757,6 +801,8 @@ func (c *Client) CreateOrderWithApplicationJSONPatchPlusJSONBody(ctx context.Con
 	return c.Client.Do(req)
 }
 
+// CreateOrderWithApplicationMergePatchPlusJSONBody performs a POST /orders (the `createOrder` operationId) request,
+// with the `application/merge-patch+json` content type.
 func (c *Client) CreateOrderWithApplicationMergePatchPlusJSONBody(ctx context.Context, body CreateOrderApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateOrderRequestWithApplicationMergePatchPlusJSONBody(c.Server, body)
 	if err != nil {
@@ -769,6 +815,7 @@ func (c *Client) CreateOrderWithApplicationMergePatchPlusJSONBody(ctx context.Co
 	return c.Client.Do(req)
 }
 
+// GetOutcome performs a GET /outcome (the `getOutcome` operationId) request
 func (c *Client) GetOutcome(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOutcomeRequest(c.Server)
 	if err != nil {
@@ -781,6 +828,7 @@ func (c *Client) GetOutcome(ctx context.Context, reqEditors ...RequestEditorFn) 
 	return c.Client.Do(req)
 }
 
+// PostOutcomeWithBody performs a POST /outcome (the `postOutcome` operationId) request, with any type of body, and a specified content type
 func (c *Client) PostOutcomeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOutcomeRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -793,6 +841,8 @@ func (c *Client) PostOutcomeWithBody(ctx context.Context, contentType string, bo
 	return c.Client.Do(req)
 }
 
+// PostOutcome performs a POST /outcome (the `postOutcome` operationId) request,
+// with the `application/json` content type.
 func (c *Client) PostOutcome(ctx context.Context, body PostOutcomeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOutcomeRequest(c.Server, body)
 	if err != nil {
@@ -805,6 +855,7 @@ func (c *Client) PostOutcome(ctx context.Context, body PostOutcomeJSONRequestBod
 	return c.Client.Do(req)
 }
 
+// SendPayloadWithBody performs a POST /payload (the `sendPayload` operationId) request, with any type of body, and a specified content type
 func (c *Client) SendPayloadWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewSendPayloadRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -817,6 +868,8 @@ func (c *Client) SendPayloadWithBody(ctx context.Context, contentType string, bo
 	return c.Client.Do(req)
 }
 
+// SendPayload performs a POST /payload (the `sendPayload` operationId) request,
+// with the `application/json` content type.
 func (c *Client) SendPayload(ctx context.Context, body SendPayloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewSendPayloadRequest(c.Server, body)
 	if err != nil {
@@ -829,6 +882,7 @@ func (c *Client) SendPayload(ctx context.Context, body SendPayloadJSONRequestBod
 	return c.Client.Do(req)
 }
 
+// CreatePetWithBody performs a POST /pets (the `createPet` operationId) request, with any type of body, and a specified content type
 func (c *Client) CreatePetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreatePetRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -841,6 +895,8 @@ func (c *Client) CreatePetWithBody(ctx context.Context, contentType string, body
 	return c.Client.Do(req)
 }
 
+// CreatePet performs a POST /pets (the `createPet` operationId) request,
+// with the `application/json` content type.
 func (c *Client) CreatePet(ctx context.Context, body CreatePetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreatePetRequest(c.Server, body)
 	if err != nil {
@@ -853,6 +909,7 @@ func (c *Client) CreatePet(ctx context.Context, body CreatePetJSONRequestBody, r
 	return c.Client.Do(req)
 }
 
+// QueryWithBody performs a POST /query (the `query` operationId) request, with any type of body, and a specified content type
 func (c *Client) QueryWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewQueryRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -865,6 +922,8 @@ func (c *Client) QueryWithBody(ctx context.Context, contentType string, body io.
 	return c.Client.Do(req)
 }
 
+// Query performs a POST /query (the `query` operationId) request,
+// with the `application/json` content type.
 func (c *Client) Query(ctx context.Context, body QueryJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewQueryRequest(c.Server, body)
 	if err != nil {
@@ -877,6 +936,7 @@ func (c *Client) Query(ctx context.Context, body QueryJSONRequestBody, reqEditor
 	return c.Client.Do(req)
 }
 
+// GetQux performs a GET /qux (the `getQux` operationId) request
 func (c *Client) GetQux(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetQuxRequest(c.Server)
 	if err != nil {
@@ -889,6 +949,7 @@ func (c *Client) GetQux(ctx context.Context, reqEditors ...RequestEditorFn) (*ht
 	return c.Client.Do(req)
 }
 
+// PostQuxWithBody performs a POST /qux (the `postQux` operationId) request, with any type of body, and a specified content type
 func (c *Client) PostQuxWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostQuxRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -901,6 +962,8 @@ func (c *Client) PostQuxWithBody(ctx context.Context, contentType string, body i
 	return c.Client.Do(req)
 }
 
+// PostQux performs a POST /qux (the `postQux` operationId) request,
+// with the `application/json` content type.
 func (c *Client) PostQux(ctx context.Context, body PostQuxJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostQuxRequest(c.Server, body)
 	if err != nil {
@@ -913,6 +976,7 @@ func (c *Client) PostQux(ctx context.Context, body PostQuxJSONRequestBody, reqEd
 	return c.Client.Do(req)
 }
 
+// GetRenamedSchema performs a GET /renamed-schema (the `getRenamedSchema` operationId) request
 func (c *Client) GetRenamedSchema(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetRenamedSchemaRequest(c.Server)
 	if err != nil {
@@ -925,6 +989,7 @@ func (c *Client) GetRenamedSchema(ctx context.Context, reqEditors ...RequestEdit
 	return c.Client.Do(req)
 }
 
+// PostRenamedSchemaWithBody performs a POST /renamed-schema (the `postRenamedSchema` operationId) request, with any type of body, and a specified content type
 func (c *Client) PostRenamedSchemaWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostRenamedSchemaRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -937,6 +1002,8 @@ func (c *Client) PostRenamedSchemaWithBody(ctx context.Context, contentType stri
 	return c.Client.Do(req)
 }
 
+// PostRenamedSchema performs a POST /renamed-schema (the `postRenamedSchema` operationId) request,
+// with the `application/json` content type.
 func (c *Client) PostRenamedSchema(ctx context.Context, body PostRenamedSchemaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostRenamedSchemaRequest(c.Server, body)
 	if err != nil {
@@ -949,6 +1016,7 @@ func (c *Client) PostRenamedSchema(ctx context.Context, body PostRenamedSchemaJS
 	return c.Client.Do(req)
 }
 
+// PatchResourceWithBody performs a PATCH /resources/{id} (the `patchResource` operationId) request, with any type of body, and a specified content type
 func (c *Client) PatchResourceWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPatchResourceRequestWithBody(c.Server, id, contentType, body)
 	if err != nil {
@@ -961,6 +1029,8 @@ func (c *Client) PatchResourceWithBody(ctx context.Context, id string, contentTy
 	return c.Client.Do(req)
 }
 
+// PatchResource performs a PATCH /resources/{id} (the `patchResource` operationId) request,
+// with the `application/json` content type.
 func (c *Client) PatchResource(ctx context.Context, id string, body PatchResourceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPatchResourceRequest(c.Server, id, body)
 	if err != nil {
@@ -973,6 +1043,8 @@ func (c *Client) PatchResource(ctx context.Context, id string, body PatchResourc
 	return c.Client.Do(req)
 }
 
+// PatchResourceWithApplicationJSONPatchPlusJSONBody performs a PATCH /resources/{id} (the `patchResource` operationId) request,
+// with the `application/json-patch+json` content type.
 func (c *Client) PatchResourceWithApplicationJSONPatchPlusJSONBody(ctx context.Context, id string, body PatchResourceApplicationJSONPatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPatchResourceRequestWithApplicationJSONPatchPlusJSONBody(c.Server, id, body)
 	if err != nil {
@@ -985,6 +1057,8 @@ func (c *Client) PatchResourceWithApplicationJSONPatchPlusJSONBody(ctx context.C
 	return c.Client.Do(req)
 }
 
+// PatchResourceWithApplicationMergePatchPlusJSONBody performs a PATCH /resources/{id} (the `patchResource` operationId) request,
+// with the `application/merge-patch+json` content type.
 func (c *Client) PatchResourceWithApplicationMergePatchPlusJSONBody(ctx context.Context, id string, body PatchResourceApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPatchResourceRequestWithApplicationMergePatchPlusJSONBody(c.Server, id, body)
 	if err != nil {
@@ -997,6 +1071,7 @@ func (c *Client) PatchResourceWithApplicationMergePatchPlusJSONBody(ctx context.
 	return c.Client.Do(req)
 }
 
+// GetStatus performs a GET /status (the `getStatus` operationId) request
 func (c *Client) GetStatus(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetStatusRequest(c.Server)
 	if err != nil {
@@ -1009,6 +1084,7 @@ func (c *Client) GetStatus(ctx context.Context, reqEditors ...RequestEditorFn) (
 	return c.Client.Do(req)
 }
 
+// GetZap performs a GET /zap (the `getZap` operationId) request
 func (c *Client) GetZap(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetZapRequest(c.Server)
 	if err != nil {
@@ -1021,6 +1097,7 @@ func (c *Client) GetZap(ctx context.Context, reqEditors ...RequestEditorFn) (*ht
 	return c.Client.Do(req)
 }
 
+// PostZapWithBody performs a POST /zap (the `postZap` operationId) request, with any type of body, and a specified content type
 func (c *Client) PostZapWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostZapRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -1033,6 +1110,8 @@ func (c *Client) PostZapWithBody(ctx context.Context, contentType string, body i
 	return c.Client.Do(req)
 }
 
+// PostZap performs a POST /zap (the `postZap` operationId) request,
+// with the `application/json` content type.
 func (c *Client) PostZap(ctx context.Context, body PostZapJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostZapRequest(c.Server, body)
 	if err != nil {
@@ -1045,7 +1124,7 @@ func (c *Client) PostZap(ctx context.Context, body PostZapJSONRequestBody, reqEd
 	return c.Client.Do(req)
 }
 
-// NewListEntitiesRequest generates requests for ListEntities
+// NewListEntitiesRequest constructs an http.Request for the ListEntities method
 func NewListEntitiesRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -1083,7 +1162,7 @@ func NewPostFooRequest(server string, params *PostFooParams, body PostFooJSONReq
 	return NewPostFooRequestWithBody(server, params, "application/json", bodyReader)
 }
 
-// NewPostFooRequestWithBody generates requests for PostFoo with any type of body
+// NewPostFooRequestWithBody constructs an http.Request for the PostFoo method, with any body, and a specified content type
 func NewPostFooRequestWithBody(server string, params *PostFooParams, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1139,7 +1218,7 @@ func NewPostFooRequestWithBody(server string, params *PostFooParams, contentType
 	return req, nil
 }
 
-// NewListItemsRequest generates requests for ListItems
+// NewListItemsRequest constructs an http.Request for the ListItems method
 func NewListItemsRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -1177,7 +1256,7 @@ func NewCreateItemRequest(server string, body CreateItemJSONRequestBody) (*http.
 	return NewCreateItemRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewCreateItemRequestWithBody generates requests for CreateItem with any type of body
+// NewCreateItemRequestWithBody constructs an http.Request for the CreateItem method, with any body, and a specified content type
 func NewCreateItemRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1239,7 +1318,7 @@ func NewCreateOrderRequestWithApplicationMergePatchPlusJSONBody(server string, b
 	return NewCreateOrderRequestWithBody(server, "application/merge-patch+json", bodyReader)
 }
 
-// NewCreateOrderRequestWithBody generates requests for CreateOrder with any type of body
+// NewCreateOrderRequestWithBody constructs an http.Request for the CreateOrder method, with any body, and a specified content type
 func NewCreateOrderRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1268,7 +1347,7 @@ func NewCreateOrderRequestWithBody(server string, contentType string, body io.Re
 	return req, nil
 }
 
-// NewGetOutcomeRequest generates requests for GetOutcome
+// NewGetOutcomeRequest constructs an http.Request for the GetOutcome method
 func NewGetOutcomeRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -1306,7 +1385,7 @@ func NewPostOutcomeRequest(server string, body PostOutcomeJSONRequestBody) (*htt
 	return NewPostOutcomeRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostOutcomeRequestWithBody generates requests for PostOutcome with any type of body
+// NewPostOutcomeRequestWithBody constructs an http.Request for the PostOutcome method, with any body, and a specified content type
 func NewPostOutcomeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1346,7 +1425,7 @@ func NewSendPayloadRequest(server string, body SendPayloadJSONRequestBody) (*htt
 	return NewSendPayloadRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewSendPayloadRequestWithBody generates requests for SendPayload with any type of body
+// NewSendPayloadRequestWithBody constructs an http.Request for the SendPayload method, with any body, and a specified content type
 func NewSendPayloadRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1386,7 +1465,7 @@ func NewCreatePetRequest(server string, body CreatePetJSONRequestBody) (*http.Re
 	return NewCreatePetRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewCreatePetRequestWithBody generates requests for CreatePet with any type of body
+// NewCreatePetRequestWithBody constructs an http.Request for the CreatePet method, with any body, and a specified content type
 func NewCreatePetRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1426,7 +1505,7 @@ func NewQueryRequest(server string, body QueryJSONRequestBody) (*http.Request, e
 	return NewQueryRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewQueryRequestWithBody generates requests for Query with any type of body
+// NewQueryRequestWithBody constructs an http.Request for the Query method, with any body, and a specified content type
 func NewQueryRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1455,7 +1534,7 @@ func NewQueryRequestWithBody(server string, contentType string, body io.Reader) 
 	return req, nil
 }
 
-// NewGetQuxRequest generates requests for GetQux
+// NewGetQuxRequest constructs an http.Request for the GetQux method
 func NewGetQuxRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -1493,7 +1572,7 @@ func NewPostQuxRequest(server string, body PostQuxJSONRequestBody) (*http.Reques
 	return NewPostQuxRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostQuxRequestWithBody generates requests for PostQux with any type of body
+// NewPostQuxRequestWithBody constructs an http.Request for the PostQux method, with any body, and a specified content type
 func NewPostQuxRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1522,7 +1601,7 @@ func NewPostQuxRequestWithBody(server string, contentType string, body io.Reader
 	return req, nil
 }
 
-// NewGetRenamedSchemaRequest generates requests for GetRenamedSchema
+// NewGetRenamedSchemaRequest constructs an http.Request for the GetRenamedSchema method
 func NewGetRenamedSchemaRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -1560,7 +1639,7 @@ func NewPostRenamedSchemaRequest(server string, body PostRenamedSchemaJSONReques
 	return NewPostRenamedSchemaRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostRenamedSchemaRequestWithBody generates requests for PostRenamedSchema with any type of body
+// NewPostRenamedSchemaRequestWithBody constructs an http.Request for the PostRenamedSchema method, with any body, and a specified content type
 func NewPostRenamedSchemaRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1622,7 +1701,7 @@ func NewPatchResourceRequestWithApplicationMergePatchPlusJSONBody(server string,
 	return NewPatchResourceRequestWithBody(server, id, "application/merge-patch+json", bodyReader)
 }
 
-// NewPatchResourceRequestWithBody generates requests for PatchResource with any type of body
+// NewPatchResourceRequestWithBody constructs an http.Request for the PatchResource method, with any body, and a specified content type
 func NewPatchResourceRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1658,7 +1737,7 @@ func NewPatchResourceRequestWithBody(server string, id string, contentType strin
 	return req, nil
 }
 
-// NewGetStatusRequest generates requests for GetStatus
+// NewGetStatusRequest constructs an http.Request for the GetStatus method
 func NewGetStatusRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -1685,7 +1764,7 @@ func NewGetStatusRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetZapRequest generates requests for GetZap
+// NewGetZapRequest constructs an http.Request for the GetZap method
 func NewGetZapRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -1723,7 +1802,7 @@ func NewPostZapRequest(server string, body PostZapJSONRequestBody) (*http.Reques
 	return NewPostZapRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostZapRequestWithBody generates requests for PostZap with any type of body
+// NewPostZapRequestWithBody constructs an http.Request for the PostZap method, with any body, and a specified content type
 func NewPostZapRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1795,88 +1874,119 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// ListEntitiesWithResponse request
+
+	// ListEntities performs a GET /entities (the `listEntities` operationId) request, and returns a wrapper object for the known response body format(s).
 	ListEntitiesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListEntitiesResponse, error)
 
-	// PostFooWithBodyWithResponse request with any body
+	// PostFooWithBody performs a POST /foo (the `postFoo` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	PostFooWithBodyWithResponse(ctx context.Context, params *PostFooParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostFooResponse, error)
 
+	// PostFoo performs a POST /foo (the `postFoo` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	PostFooWithResponse(ctx context.Context, params *PostFooParams, body PostFooJSONRequestBody, reqEditors ...RequestEditorFn) (*PostFooResponse, error)
 
-	// ListItemsWithResponse request
+	// ListItems performs a GET /items (the `listItems` operationId) request, and returns a wrapper object for the known response body format(s).
 	ListItemsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListItemsResponse2, error)
 
-	// CreateItemWithBodyWithResponse request with any body
+	// CreateItemWithBody performs a POST /items (the `createItem` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	CreateItemWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateItemResponse2, error)
 
+	// CreateItem performs a POST /items (the `createItem` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	CreateItemWithResponse(ctx context.Context, body CreateItemJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateItemResponse2, error)
 
-	// CreateOrderWithBodyWithResponse request with any body
+	// CreateOrderWithBody performs a POST /orders (the `createOrder` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	CreateOrderWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error)
 
+	// CreateOrder performs a POST /orders (the `createOrder` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	CreateOrderWithResponse(ctx context.Context, body CreateOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error)
 
+	// CreateOrderWithApplicationJSONPatchPlusJSONBody performs a POST /orders (the `createOrder` operationId) request,
+	// with the `application/json-patch+json` content type, and returns a wrapper object for the known response body format(s).
 	CreateOrderWithApplicationJSONPatchPlusJSONBodyWithResponse(ctx context.Context, body CreateOrderApplicationJSONPatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error)
 
+	// CreateOrderWithApplicationMergePatchPlusJSONBody performs a POST /orders (the `createOrder` operationId) request,
+	// with the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
 	CreateOrderWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, body CreateOrderApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error)
 
-	// GetOutcomeWithResponse request
+	// GetOutcome performs a GET /outcome (the `getOutcome` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetOutcomeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOutcomeResponse, error)
 
-	// PostOutcomeWithBodyWithResponse request with any body
+	// PostOutcomeWithBody performs a POST /outcome (the `postOutcome` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	PostOutcomeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOutcomeResponse, error)
 
+	// PostOutcome performs a POST /outcome (the `postOutcome` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	PostOutcomeWithResponse(ctx context.Context, body PostOutcomeJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOutcomeResponse, error)
 
-	// SendPayloadWithBodyWithResponse request with any body
+	// SendPayloadWithBody performs a POST /payload (the `sendPayload` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	SendPayloadWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendPayloadResponse, error)
 
+	// SendPayload performs a POST /payload (the `sendPayload` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	SendPayloadWithResponse(ctx context.Context, body SendPayloadJSONRequestBody, reqEditors ...RequestEditorFn) (*SendPayloadResponse, error)
 
-	// CreatePetWithBodyWithResponse request with any body
+	// CreatePetWithBody performs a POST /pets (the `createPet` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	CreatePetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePetResponse, error)
 
+	// CreatePet performs a POST /pets (the `createPet` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	CreatePetWithResponse(ctx context.Context, body CreatePetJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePetResponse, error)
 
-	// QueryWithBodyWithResponse request with any body
+	// QueryWithBody performs a POST /query (the `query` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	QueryWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryResponse2, error)
 
+	// Query performs a POST /query (the `query` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	QueryWithResponse(ctx context.Context, body QueryJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryResponse2, error)
 
-	// GetQuxWithResponse request
+	// GetQux performs a GET /qux (the `getQux` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetQuxWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetQuxResponse, error)
 
-	// PostQuxWithBodyWithResponse request with any body
+	// PostQuxWithBody performs a POST /qux (the `postQux` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	PostQuxWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostQuxResponse, error)
 
+	// PostQux performs a POST /qux (the `postQux` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	PostQuxWithResponse(ctx context.Context, body PostQuxJSONRequestBody, reqEditors ...RequestEditorFn) (*PostQuxResponse, error)
 
-	// GetRenamedSchemaWithResponse request
+	// GetRenamedSchema performs a GET /renamed-schema (the `getRenamedSchema` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetRenamedSchemaWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetRenamedSchemaResponse, error)
 
-	// PostRenamedSchemaWithBodyWithResponse request with any body
+	// PostRenamedSchemaWithBody performs a POST /renamed-schema (the `postRenamedSchema` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	PostRenamedSchemaWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostRenamedSchemaResponse, error)
 
+	// PostRenamedSchema performs a POST /renamed-schema (the `postRenamedSchema` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	PostRenamedSchemaWithResponse(ctx context.Context, body PostRenamedSchemaJSONRequestBody, reqEditors ...RequestEditorFn) (*PostRenamedSchemaResponse, error)
 
-	// PatchResourceWithBodyWithResponse request with any body
+	// PatchResourceWithBody performs a PATCH /resources/{id} (the `patchResource` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	PatchResourceWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error)
 
+	// PatchResource performs a PATCH /resources/{id} (the `patchResource` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	PatchResourceWithResponse(ctx context.Context, id string, body PatchResourceJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error)
 
+	// PatchResourceWithApplicationJSONPatchPlusJSONBody performs a PATCH /resources/{id} (the `patchResource` operationId) request,
+	// with the `application/json-patch+json` content type, and returns a wrapper object for the known response body format(s).
 	PatchResourceWithApplicationJSONPatchPlusJSONBodyWithResponse(ctx context.Context, id string, body PatchResourceApplicationJSONPatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error)
 
+	// PatchResourceWithApplicationMergePatchPlusJSONBody performs a PATCH /resources/{id} (the `patchResource` operationId) request,
+	// with the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
 	PatchResourceWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, id string, body PatchResourceApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error)
 
-	// GetStatusWithResponse request
+	// GetStatus performs a GET /status (the `getStatus` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetStatusWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetStatusResponse2, error)
 
-	// GetZapWithResponse request
+	// GetZap performs a GET /zap (the `getZap` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetZapWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetZapResponse, error)
 
-	// PostZapWithBodyWithResponse request with any body
+	// PostZapWithBody performs a POST /zap (the `postZap` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	PostZapWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostZapResponse, error)
 
+	// PostZap performs a POST /zap (the `postZap` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	PostZapWithResponse(ctx context.Context, body PostZapJSONRequestBody, reqEditors ...RequestEditorFn) (*PostZapResponse, error)
 }
 
@@ -1889,7 +1999,7 @@ type ListEntitiesResponse struct {
 	}
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r ListEntitiesResponse) GetJSON200() *struct {
 	Data     *[]Widget `json:"data,omitempty"`
 	Metadata *Metadata `json:"metadata,omitempty"`
@@ -1932,7 +2042,7 @@ type PostFooResponse struct {
 	JSON200      *BarResponse
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r PostFooResponse) GetJSON200() *BarResponse {
 	return r.JSON200
 }
@@ -1972,7 +2082,7 @@ type ListItemsResponse2 struct {
 	JSON200      *ListItemsResponse
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r ListItemsResponse2) GetJSON200() *ListItemsResponse {
 	return r.JSON200
 }
@@ -2012,7 +2122,7 @@ type CreateItemResponse2 struct {
 	JSON200      *CreateItemResponse
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r CreateItemResponse2) GetJSON200() *CreateItemResponse {
 	return r.JSON200
 }
@@ -2052,7 +2162,7 @@ type CreateOrderResponse struct {
 	JSON200      *Order
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r CreateOrderResponse) GetJSON200() *Order {
 	return r.JSON200
 }
@@ -2092,7 +2202,7 @@ type GetOutcomeResponse struct {
 	JSON200      *OutcomeResult
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetOutcomeResponse) GetJSON200() *OutcomeResult {
 	return r.JSON200
 }
@@ -2166,7 +2276,7 @@ type SendPayloadResponse struct {
 	JSON200      *Payload
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r SendPayloadResponse) GetJSON200() *Payload {
 	return r.JSON200
 }
@@ -2206,7 +2316,7 @@ type CreatePetResponse struct {
 	JSON200      *Pet
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r CreatePetResponse) GetJSON200() *Pet {
 	return r.JSON200
 }
@@ -2246,7 +2356,7 @@ type QueryResponse2 struct {
 	JSON200      *QueryResponse
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r QueryResponse2) GetJSON200() *QueryResponse {
 	return r.JSON200
 }
@@ -2286,7 +2396,7 @@ type GetQuxResponse struct {
 	JSON200      *QuxResponse
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetQuxResponse) GetJSON200() *QuxResponse {
 	return r.JSON200
 }
@@ -2360,7 +2470,7 @@ type GetRenamedSchemaResponse struct {
 	JSON200      *Renamer
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetRenamedSchemaResponse) GetJSON200() *Renamer {
 	return r.JSON200
 }
@@ -2437,22 +2547,22 @@ type PatchResourceResponse struct {
 	ApplicationmergePatchJSON200     *N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r PatchResourceResponse) GetJSON200() *N200ResourcePatchResponseJSONApplicationJSON {
 	return r.JSON200
 }
 
-// GetApplicationjsonPatchJSON200 returns ApplicationjsonPatchJSON200
+// GetApplicationjsonPatchJSON200 returns the response for an HTTP 200 `application/json-patch+json` response
 func (r PatchResourceResponse) GetApplicationjsonPatchJSON200() *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON {
 	return r.ApplicationjsonPatchJSON200
 }
 
-// GetApplicationjsonPatchQueryJSON200 returns ApplicationjsonPatchQueryJSON200
+// GetApplicationjsonPatchQueryJSON200 returns the response for an HTTP 200 `application/json-patch-query+json` response
 func (r PatchResourceResponse) GetApplicationjsonPatchQueryJSON200() *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON {
 	return r.ApplicationjsonPatchQueryJSON200
 }
 
-// GetApplicationmergePatchJSON200 returns ApplicationmergePatchJSON200
+// GetApplicationmergePatchJSON200 returns the response for an HTTP 200 `application/merge-patch+json` response
 func (r PatchResourceResponse) GetApplicationmergePatchJSON200() *N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON {
 	return r.ApplicationmergePatchJSON200
 }
@@ -2492,7 +2602,7 @@ type GetStatusResponse2 struct {
 	JSON200      *GetStatusResponse
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetStatusResponse2) GetJSON200() *GetStatusResponse {
 	return r.JSON200
 }
@@ -2532,7 +2642,7 @@ type GetZapResponse struct {
 	JSON200      *ZapResponse
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetZapResponse) GetJSON200() *ZapResponse {
 	return r.JSON200
 }
@@ -2600,7 +2710,7 @@ func (r PostZapResponse) ContentType() string {
 	return ""
 }
 
-// ListEntitiesWithResponse request returning *ListEntitiesResponse
+// ListEntities performs a GET /entities (the `listEntities` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ListEntitiesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListEntitiesResponse, error) {
 	rsp, err := c.ListEntities(ctx, reqEditors...)
 	if err != nil {
@@ -2609,7 +2719,7 @@ func (c *ClientWithResponses) ListEntitiesWithResponse(ctx context.Context, reqE
 	return ParseListEntitiesResponse(rsp)
 }
 
-// PostFooWithBodyWithResponse request with arbitrary body returning *PostFooResponse
+// PostFooWithBody performs a POST /foo (the `postFoo` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostFooWithBodyWithResponse(ctx context.Context, params *PostFooParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostFooResponse, error) {
 	rsp, err := c.PostFooWithBody(ctx, params, contentType, body, reqEditors...)
 	if err != nil {
@@ -2618,6 +2728,8 @@ func (c *ClientWithResponses) PostFooWithBodyWithResponse(ctx context.Context, p
 	return ParsePostFooResponse(rsp)
 }
 
+// PostFoo performs a POST /foo (the `postFoo` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostFooWithResponse(ctx context.Context, params *PostFooParams, body PostFooJSONRequestBody, reqEditors ...RequestEditorFn) (*PostFooResponse, error) {
 	rsp, err := c.PostFoo(ctx, params, body, reqEditors...)
 	if err != nil {
@@ -2626,7 +2738,7 @@ func (c *ClientWithResponses) PostFooWithResponse(ctx context.Context, params *P
 	return ParsePostFooResponse(rsp)
 }
 
-// ListItemsWithResponse request returning *ListItemsResponse2
+// ListItems performs a GET /items (the `listItems` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ListItemsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListItemsResponse2, error) {
 	rsp, err := c.ListItems(ctx, reqEditors...)
 	if err != nil {
@@ -2635,7 +2747,7 @@ func (c *ClientWithResponses) ListItemsWithResponse(ctx context.Context, reqEdit
 	return ParseListItemsResponse2(rsp)
 }
 
-// CreateItemWithBodyWithResponse request with arbitrary body returning *CreateItemResponse2
+// CreateItemWithBody performs a POST /items (the `createItem` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) CreateItemWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateItemResponse2, error) {
 	rsp, err := c.CreateItemWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -2644,6 +2756,8 @@ func (c *ClientWithResponses) CreateItemWithBodyWithResponse(ctx context.Context
 	return ParseCreateItemResponse2(rsp)
 }
 
+// CreateItem performs a POST /items (the `createItem` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) CreateItemWithResponse(ctx context.Context, body CreateItemJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateItemResponse2, error) {
 	rsp, err := c.CreateItem(ctx, body, reqEditors...)
 	if err != nil {
@@ -2652,7 +2766,7 @@ func (c *ClientWithResponses) CreateItemWithResponse(ctx context.Context, body C
 	return ParseCreateItemResponse2(rsp)
 }
 
-// CreateOrderWithBodyWithResponse request with arbitrary body returning *CreateOrderResponse
+// CreateOrderWithBody performs a POST /orders (the `createOrder` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) CreateOrderWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error) {
 	rsp, err := c.CreateOrderWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -2661,6 +2775,8 @@ func (c *ClientWithResponses) CreateOrderWithBodyWithResponse(ctx context.Contex
 	return ParseCreateOrderResponse(rsp)
 }
 
+// CreateOrder performs a POST /orders (the `createOrder` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) CreateOrderWithResponse(ctx context.Context, body CreateOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error) {
 	rsp, err := c.CreateOrder(ctx, body, reqEditors...)
 	if err != nil {
@@ -2669,6 +2785,8 @@ func (c *ClientWithResponses) CreateOrderWithResponse(ctx context.Context, body 
 	return ParseCreateOrderResponse(rsp)
 }
 
+// CreateOrderWithApplicationJSONPatchPlusJSONBody performs a POST /orders (the `createOrder` operationId) request,
+// with the `application/json-patch+json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) CreateOrderWithApplicationJSONPatchPlusJSONBodyWithResponse(ctx context.Context, body CreateOrderApplicationJSONPatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error) {
 	rsp, err := c.CreateOrderWithApplicationJSONPatchPlusJSONBody(ctx, body, reqEditors...)
 	if err != nil {
@@ -2677,6 +2795,8 @@ func (c *ClientWithResponses) CreateOrderWithApplicationJSONPatchPlusJSONBodyWit
 	return ParseCreateOrderResponse(rsp)
 }
 
+// CreateOrderWithApplicationMergePatchPlusJSONBody performs a POST /orders (the `createOrder` operationId) request,
+// with the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) CreateOrderWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, body CreateOrderApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateOrderResponse, error) {
 	rsp, err := c.CreateOrderWithApplicationMergePatchPlusJSONBody(ctx, body, reqEditors...)
 	if err != nil {
@@ -2685,7 +2805,7 @@ func (c *ClientWithResponses) CreateOrderWithApplicationMergePatchPlusJSONBodyWi
 	return ParseCreateOrderResponse(rsp)
 }
 
-// GetOutcomeWithResponse request returning *GetOutcomeResponse
+// GetOutcome performs a GET /outcome (the `getOutcome` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetOutcomeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOutcomeResponse, error) {
 	rsp, err := c.GetOutcome(ctx, reqEditors...)
 	if err != nil {
@@ -2694,7 +2814,7 @@ func (c *ClientWithResponses) GetOutcomeWithResponse(ctx context.Context, reqEdi
 	return ParseGetOutcomeResponse(rsp)
 }
 
-// PostOutcomeWithBodyWithResponse request with arbitrary body returning *PostOutcomeResponse
+// PostOutcomeWithBody performs a POST /outcome (the `postOutcome` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostOutcomeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOutcomeResponse, error) {
 	rsp, err := c.PostOutcomeWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -2703,6 +2823,8 @@ func (c *ClientWithResponses) PostOutcomeWithBodyWithResponse(ctx context.Contex
 	return ParsePostOutcomeResponse(rsp)
 }
 
+// PostOutcome performs a POST /outcome (the `postOutcome` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostOutcomeWithResponse(ctx context.Context, body PostOutcomeJSONRequestBody, reqEditors ...RequestEditorFn) (*PostOutcomeResponse, error) {
 	rsp, err := c.PostOutcome(ctx, body, reqEditors...)
 	if err != nil {
@@ -2711,7 +2833,7 @@ func (c *ClientWithResponses) PostOutcomeWithResponse(ctx context.Context, body 
 	return ParsePostOutcomeResponse(rsp)
 }
 
-// SendPayloadWithBodyWithResponse request with arbitrary body returning *SendPayloadResponse
+// SendPayloadWithBody performs a POST /payload (the `sendPayload` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) SendPayloadWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SendPayloadResponse, error) {
 	rsp, err := c.SendPayloadWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -2720,6 +2842,8 @@ func (c *ClientWithResponses) SendPayloadWithBodyWithResponse(ctx context.Contex
 	return ParseSendPayloadResponse(rsp)
 }
 
+// SendPayload performs a POST /payload (the `sendPayload` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) SendPayloadWithResponse(ctx context.Context, body SendPayloadJSONRequestBody, reqEditors ...RequestEditorFn) (*SendPayloadResponse, error) {
 	rsp, err := c.SendPayload(ctx, body, reqEditors...)
 	if err != nil {
@@ -2728,7 +2852,7 @@ func (c *ClientWithResponses) SendPayloadWithResponse(ctx context.Context, body 
 	return ParseSendPayloadResponse(rsp)
 }
 
-// CreatePetWithBodyWithResponse request with arbitrary body returning *CreatePetResponse
+// CreatePetWithBody performs a POST /pets (the `createPet` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) CreatePetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreatePetResponse, error) {
 	rsp, err := c.CreatePetWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -2737,6 +2861,8 @@ func (c *ClientWithResponses) CreatePetWithBodyWithResponse(ctx context.Context,
 	return ParseCreatePetResponse(rsp)
 }
 
+// CreatePet performs a POST /pets (the `createPet` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) CreatePetWithResponse(ctx context.Context, body CreatePetJSONRequestBody, reqEditors ...RequestEditorFn) (*CreatePetResponse, error) {
 	rsp, err := c.CreatePet(ctx, body, reqEditors...)
 	if err != nil {
@@ -2745,7 +2871,7 @@ func (c *ClientWithResponses) CreatePetWithResponse(ctx context.Context, body Cr
 	return ParseCreatePetResponse(rsp)
 }
 
-// QueryWithBodyWithResponse request with arbitrary body returning *QueryResponse2
+// QueryWithBody performs a POST /query (the `query` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) QueryWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryResponse2, error) {
 	rsp, err := c.QueryWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -2754,6 +2880,8 @@ func (c *ClientWithResponses) QueryWithBodyWithResponse(ctx context.Context, con
 	return ParseQueryResponse2(rsp)
 }
 
+// Query performs a POST /query (the `query` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) QueryWithResponse(ctx context.Context, body QueryJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryResponse2, error) {
 	rsp, err := c.Query(ctx, body, reqEditors...)
 	if err != nil {
@@ -2762,7 +2890,7 @@ func (c *ClientWithResponses) QueryWithResponse(ctx context.Context, body QueryJ
 	return ParseQueryResponse2(rsp)
 }
 
-// GetQuxWithResponse request returning *GetQuxResponse
+// GetQux performs a GET /qux (the `getQux` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetQuxWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetQuxResponse, error) {
 	rsp, err := c.GetQux(ctx, reqEditors...)
 	if err != nil {
@@ -2771,7 +2899,7 @@ func (c *ClientWithResponses) GetQuxWithResponse(ctx context.Context, reqEditors
 	return ParseGetQuxResponse(rsp)
 }
 
-// PostQuxWithBodyWithResponse request with arbitrary body returning *PostQuxResponse
+// PostQuxWithBody performs a POST /qux (the `postQux` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostQuxWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostQuxResponse, error) {
 	rsp, err := c.PostQuxWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -2780,6 +2908,8 @@ func (c *ClientWithResponses) PostQuxWithBodyWithResponse(ctx context.Context, c
 	return ParsePostQuxResponse(rsp)
 }
 
+// PostQux performs a POST /qux (the `postQux` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostQuxWithResponse(ctx context.Context, body PostQuxJSONRequestBody, reqEditors ...RequestEditorFn) (*PostQuxResponse, error) {
 	rsp, err := c.PostQux(ctx, body, reqEditors...)
 	if err != nil {
@@ -2788,7 +2918,7 @@ func (c *ClientWithResponses) PostQuxWithResponse(ctx context.Context, body Post
 	return ParsePostQuxResponse(rsp)
 }
 
-// GetRenamedSchemaWithResponse request returning *GetRenamedSchemaResponse
+// GetRenamedSchema performs a GET /renamed-schema (the `getRenamedSchema` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetRenamedSchemaWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetRenamedSchemaResponse, error) {
 	rsp, err := c.GetRenamedSchema(ctx, reqEditors...)
 	if err != nil {
@@ -2797,7 +2927,7 @@ func (c *ClientWithResponses) GetRenamedSchemaWithResponse(ctx context.Context, 
 	return ParseGetRenamedSchemaResponse(rsp)
 }
 
-// PostRenamedSchemaWithBodyWithResponse request with arbitrary body returning *PostRenamedSchemaResponse
+// PostRenamedSchemaWithBody performs a POST /renamed-schema (the `postRenamedSchema` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostRenamedSchemaWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostRenamedSchemaResponse, error) {
 	rsp, err := c.PostRenamedSchemaWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -2806,6 +2936,8 @@ func (c *ClientWithResponses) PostRenamedSchemaWithBodyWithResponse(ctx context.
 	return ParsePostRenamedSchemaResponse(rsp)
 }
 
+// PostRenamedSchema performs a POST /renamed-schema (the `postRenamedSchema` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostRenamedSchemaWithResponse(ctx context.Context, body PostRenamedSchemaJSONRequestBody, reqEditors ...RequestEditorFn) (*PostRenamedSchemaResponse, error) {
 	rsp, err := c.PostRenamedSchema(ctx, body, reqEditors...)
 	if err != nil {
@@ -2814,7 +2946,7 @@ func (c *ClientWithResponses) PostRenamedSchemaWithResponse(ctx context.Context,
 	return ParsePostRenamedSchemaResponse(rsp)
 }
 
-// PatchResourceWithBodyWithResponse request with arbitrary body returning *PatchResourceResponse
+// PatchResourceWithBody performs a PATCH /resources/{id} (the `patchResource` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PatchResourceWithBodyWithResponse(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error) {
 	rsp, err := c.PatchResourceWithBody(ctx, id, contentType, body, reqEditors...)
 	if err != nil {
@@ -2823,6 +2955,8 @@ func (c *ClientWithResponses) PatchResourceWithBodyWithResponse(ctx context.Cont
 	return ParsePatchResourceResponse(rsp)
 }
 
+// PatchResource performs a PATCH /resources/{id} (the `patchResource` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PatchResourceWithResponse(ctx context.Context, id string, body PatchResourceJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error) {
 	rsp, err := c.PatchResource(ctx, id, body, reqEditors...)
 	if err != nil {
@@ -2831,6 +2965,8 @@ func (c *ClientWithResponses) PatchResourceWithResponse(ctx context.Context, id 
 	return ParsePatchResourceResponse(rsp)
 }
 
+// PatchResourceWithApplicationJSONPatchPlusJSONBody performs a PATCH /resources/{id} (the `patchResource` operationId) request,
+// with the `application/json-patch+json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PatchResourceWithApplicationJSONPatchPlusJSONBodyWithResponse(ctx context.Context, id string, body PatchResourceApplicationJSONPatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error) {
 	rsp, err := c.PatchResourceWithApplicationJSONPatchPlusJSONBody(ctx, id, body, reqEditors...)
 	if err != nil {
@@ -2839,6 +2975,8 @@ func (c *ClientWithResponses) PatchResourceWithApplicationJSONPatchPlusJSONBodyW
 	return ParsePatchResourceResponse(rsp)
 }
 
+// PatchResourceWithApplicationMergePatchPlusJSONBody performs a PATCH /resources/{id} (the `patchResource` operationId) request,
+// with the `application/merge-patch+json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PatchResourceWithApplicationMergePatchPlusJSONBodyWithResponse(ctx context.Context, id string, body PatchResourceApplicationMergePatchPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchResourceResponse, error) {
 	rsp, err := c.PatchResourceWithApplicationMergePatchPlusJSONBody(ctx, id, body, reqEditors...)
 	if err != nil {
@@ -2847,7 +2985,7 @@ func (c *ClientWithResponses) PatchResourceWithApplicationMergePatchPlusJSONBody
 	return ParsePatchResourceResponse(rsp)
 }
 
-// GetStatusWithResponse request returning *GetStatusResponse2
+// GetStatus performs a GET /status (the `getStatus` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetStatusWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetStatusResponse2, error) {
 	rsp, err := c.GetStatus(ctx, reqEditors...)
 	if err != nil {
@@ -2856,7 +2994,7 @@ func (c *ClientWithResponses) GetStatusWithResponse(ctx context.Context, reqEdit
 	return ParseGetStatusResponse2(rsp)
 }
 
-// GetZapWithResponse request returning *GetZapResponse
+// GetZap performs a GET /zap (the `getZap` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetZapWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetZapResponse, error) {
 	rsp, err := c.GetZap(ctx, reqEditors...)
 	if err != nil {
@@ -2865,7 +3003,7 @@ func (c *ClientWithResponses) GetZapWithResponse(ctx context.Context, reqEditors
 	return ParseGetZapResponse(rsp)
 }
 
-// PostZapWithBodyWithResponse request with arbitrary body returning *PostZapResponse
+// PostZapWithBody performs a POST /zap (the `postZap` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostZapWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostZapResponse, error) {
 	rsp, err := c.PostZapWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -2874,6 +3012,8 @@ func (c *ClientWithResponses) PostZapWithBodyWithResponse(ctx context.Context, c
 	return ParsePostZapResponse(rsp)
 }
 
+// PostZap performs a POST /zap (the `postZap` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostZapWithResponse(ctx context.Context, body PostZapJSONRequestBody, reqEditors ...RequestEditorFn) (*PostZapResponse, error) {
 	rsp, err := c.PostZap(ctx, body, reqEditors...)
 	if err != nil {

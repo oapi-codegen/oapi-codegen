@@ -151,7 +151,7 @@ func (t *UnionExample200JSONResponseBody) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -224,74 +224,98 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// JSONExampleWithBody request with any body
+
+	// JSONExampleWithBody performs a POST /json (the `JSONExample` operationId) request, with any type of body, and a specified content type
 	JSONExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// JSONExample performs a POST /json (the `JSONExample` operationId) request,
+	// with the `application/json` content type.
 	JSONExample(ctx context.Context, body JSONExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// MultipartExampleWithBody request with any body
+	// MultipartExampleWithBody performs a POST /multipart (the `MultipartExample` operationId) request, with any type of body, and a specified content type
 	MultipartExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// MultipartRelatedExampleWithBody request with any body
+	// MultipartRelatedExampleWithBody performs a POST /multipart-related (the `MultipartRelatedExample` operationId) request, with any type of body, and a specified content type
 	MultipartRelatedExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// MultipleRequestAndResponseTypesWithBody request with any body
+	// MultipleRequestAndResponseTypesWithBody performs a POST /multiple (the `MultipleRequestAndResponseTypes` operationId) request, with any type of body, and a specified content type
 	MultipleRequestAndResponseTypesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// MultipleRequestAndResponseTypes performs a POST /multiple (the `MultipleRequestAndResponseTypes` operationId) request,
+	// with the `application/json` content type.
 	MultipleRequestAndResponseTypes(ctx context.Context, body MultipleRequestAndResponseTypesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// MultipleRequestAndResponseTypesWithFormdataBody performs a POST /multiple (the `MultipleRequestAndResponseTypes` operationId) request,
+	// with the `application/x-www-form-urlencoded` content type.
 	MultipleRequestAndResponseTypesWithFormdataBody(ctx context.Context, body MultipleRequestAndResponseTypesFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// MultipleRequestAndResponseTypesWithTextBody performs a POST /multiple (the `MultipleRequestAndResponseTypes` operationId) request,
+	// with the `text/plain` content type.
 	MultipleRequestAndResponseTypesWithTextBody(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// NoContentHeaders request
+	// NoContentHeaders performs a POST /no-content-headers (the `NoContentHeaders` operationId) request
 	NoContentHeaders(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// RequiredJSONBodyWithBody request with any body
+	// RequiredJSONBodyWithBody performs a POST /required-json-body (the `RequiredJSONBody` operationId) request, with any type of body, and a specified content type
 	RequiredJSONBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// RequiredJSONBody performs a POST /required-json-body (the `RequiredJSONBody` operationId) request,
+	// with the `application/json` content type.
 	RequiredJSONBody(ctx context.Context, body RequiredJSONBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// RequiredTextBodyWithBody request with any body
+	// RequiredTextBodyWithBody performs a POST /required-text-body (the `RequiredTextBody` operationId) request, with any type of body, and a specified content type
 	RequiredTextBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// RequiredTextBodyWithTextBody performs a POST /required-text-body (the `RequiredTextBody` operationId) request,
+	// with the `text/plain` content type.
 	RequiredTextBodyWithTextBody(ctx context.Context, body RequiredTextBodyTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ReservedGoKeywordParameters request
+	// ReservedGoKeywordParameters performs a GET /reserved-go-keyword-parameters/{type} (the `ReservedGoKeywordParameters` operationId) request
 	ReservedGoKeywordParameters(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ReusableResponsesWithBody request with any body
+	// ReusableResponsesWithBody performs a POST /reusable-responses (the `ReusableResponses` operationId) request, with any type of body, and a specified content type
 	ReusableResponsesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ReusableResponses performs a POST /reusable-responses (the `ReusableResponses` operationId) request,
+	// with the `application/json` content type.
 	ReusableResponses(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// TextExampleWithBody request with any body
+	// TextExampleWithBody performs a POST /text (the `TextExample` operationId) request, with any type of body, and a specified content type
 	TextExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TextExampleWithTextBody performs a POST /text (the `TextExample` operationId) request,
+	// with the `text/plain` content type.
 	TextExampleWithTextBody(ctx context.Context, body TextExampleTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UnknownExampleWithBody request with any body
+	// UnknownExampleWithBody performs a POST /unknown (the `UnknownExample` operationId) request, with any type of body, and a specified content type
 	UnknownExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UnspecifiedContentTypeWithBody request with any body
+	// UnspecifiedContentTypeWithBody performs a POST /unspecified-content-type (the `UnspecifiedContentType` operationId) request, with any type of body, and a specified content type
 	UnspecifiedContentTypeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// URLEncodedExampleWithBody request with any body
+	// URLEncodedExampleWithBody performs a POST /urlencoded (the `URLEncodedExample` operationId) request, with any type of body, and a specified content type
 	URLEncodedExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// URLEncodedExampleWithFormdataBody performs a POST /urlencoded (the `URLEncodedExample` operationId) request,
+	// with the `application/x-www-form-urlencoded` content type.
 	URLEncodedExampleWithFormdataBody(ctx context.Context, body URLEncodedExampleFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// HeadersExampleWithBody request with any body
+	// HeadersExampleWithBody performs a POST /with-headers (the `HeadersExample` operationId) request, with any type of body, and a specified content type
 	HeadersExampleWithBody(ctx context.Context, params *HeadersExampleParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// HeadersExample performs a POST /with-headers (the `HeadersExample` operationId) request,
+	// with the `application/json` content type.
 	HeadersExample(ctx context.Context, params *HeadersExampleParams, body HeadersExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UnionExampleWithBody request with any body
+	// UnionExampleWithBody performs a POST /with-union (the `UnionExample` operationId) request, with any type of body, and a specified content type
 	UnionExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// UnionExample performs a POST /with-union (the `UnionExample` operationId) request,
+	// with the `application/json` content type.
 	UnionExample(ctx context.Context, body UnionExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// JSONExampleWithBody performs a POST /json (the `JSONExample` operationId) request, with any type of body, and a specified content type
 func (c *Client) JSONExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewJSONExampleRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -304,6 +328,8 @@ func (c *Client) JSONExampleWithBody(ctx context.Context, contentType string, bo
 	return c.Client.Do(req)
 }
 
+// JSONExample performs a POST /json (the `JSONExample` operationId) request,
+// with the `application/json` content type.
 func (c *Client) JSONExample(ctx context.Context, body JSONExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewJSONExampleRequest(c.Server, body)
 	if err != nil {
@@ -316,6 +342,7 @@ func (c *Client) JSONExample(ctx context.Context, body JSONExampleJSONRequestBod
 	return c.Client.Do(req)
 }
 
+// MultipartExampleWithBody performs a POST /multipart (the `MultipartExample` operationId) request, with any type of body, and a specified content type
 func (c *Client) MultipartExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewMultipartExampleRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -328,6 +355,7 @@ func (c *Client) MultipartExampleWithBody(ctx context.Context, contentType strin
 	return c.Client.Do(req)
 }
 
+// MultipartRelatedExampleWithBody performs a POST /multipart-related (the `MultipartRelatedExample` operationId) request, with any type of body, and a specified content type
 func (c *Client) MultipartRelatedExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewMultipartRelatedExampleRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -340,6 +368,7 @@ func (c *Client) MultipartRelatedExampleWithBody(ctx context.Context, contentTyp
 	return c.Client.Do(req)
 }
 
+// MultipleRequestAndResponseTypesWithBody performs a POST /multiple (the `MultipleRequestAndResponseTypes` operationId) request, with any type of body, and a specified content type
 func (c *Client) MultipleRequestAndResponseTypesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewMultipleRequestAndResponseTypesRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -352,6 +381,8 @@ func (c *Client) MultipleRequestAndResponseTypesWithBody(ctx context.Context, co
 	return c.Client.Do(req)
 }
 
+// MultipleRequestAndResponseTypes performs a POST /multiple (the `MultipleRequestAndResponseTypes` operationId) request,
+// with the `application/json` content type.
 func (c *Client) MultipleRequestAndResponseTypes(ctx context.Context, body MultipleRequestAndResponseTypesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewMultipleRequestAndResponseTypesRequest(c.Server, body)
 	if err != nil {
@@ -364,6 +395,8 @@ func (c *Client) MultipleRequestAndResponseTypes(ctx context.Context, body Multi
 	return c.Client.Do(req)
 }
 
+// MultipleRequestAndResponseTypesWithFormdataBody performs a POST /multiple (the `MultipleRequestAndResponseTypes` operationId) request,
+// with the `application/x-www-form-urlencoded` content type.
 func (c *Client) MultipleRequestAndResponseTypesWithFormdataBody(ctx context.Context, body MultipleRequestAndResponseTypesFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewMultipleRequestAndResponseTypesRequestWithFormdataBody(c.Server, body)
 	if err != nil {
@@ -376,6 +409,8 @@ func (c *Client) MultipleRequestAndResponseTypesWithFormdataBody(ctx context.Con
 	return c.Client.Do(req)
 }
 
+// MultipleRequestAndResponseTypesWithTextBody performs a POST /multiple (the `MultipleRequestAndResponseTypes` operationId) request,
+// with the `text/plain` content type.
 func (c *Client) MultipleRequestAndResponseTypesWithTextBody(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewMultipleRequestAndResponseTypesRequestWithTextBody(c.Server, body)
 	if err != nil {
@@ -388,6 +423,7 @@ func (c *Client) MultipleRequestAndResponseTypesWithTextBody(ctx context.Context
 	return c.Client.Do(req)
 }
 
+// NoContentHeaders performs a POST /no-content-headers (the `NoContentHeaders` operationId) request
 func (c *Client) NoContentHeaders(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewNoContentHeadersRequest(c.Server)
 	if err != nil {
@@ -400,6 +436,7 @@ func (c *Client) NoContentHeaders(ctx context.Context, reqEditors ...RequestEdit
 	return c.Client.Do(req)
 }
 
+// RequiredJSONBodyWithBody performs a POST /required-json-body (the `RequiredJSONBody` operationId) request, with any type of body, and a specified content type
 func (c *Client) RequiredJSONBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRequiredJSONBodyRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -412,6 +449,8 @@ func (c *Client) RequiredJSONBodyWithBody(ctx context.Context, contentType strin
 	return c.Client.Do(req)
 }
 
+// RequiredJSONBody performs a POST /required-json-body (the `RequiredJSONBody` operationId) request,
+// with the `application/json` content type.
 func (c *Client) RequiredJSONBody(ctx context.Context, body RequiredJSONBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRequiredJSONBodyRequest(c.Server, body)
 	if err != nil {
@@ -424,6 +463,7 @@ func (c *Client) RequiredJSONBody(ctx context.Context, body RequiredJSONBodyJSON
 	return c.Client.Do(req)
 }
 
+// RequiredTextBodyWithBody performs a POST /required-text-body (the `RequiredTextBody` operationId) request, with any type of body, and a specified content type
 func (c *Client) RequiredTextBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRequiredTextBodyRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -436,6 +476,8 @@ func (c *Client) RequiredTextBodyWithBody(ctx context.Context, contentType strin
 	return c.Client.Do(req)
 }
 
+// RequiredTextBodyWithTextBody performs a POST /required-text-body (the `RequiredTextBody` operationId) request,
+// with the `text/plain` content type.
 func (c *Client) RequiredTextBodyWithTextBody(ctx context.Context, body RequiredTextBodyTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRequiredTextBodyRequestWithTextBody(c.Server, body)
 	if err != nil {
@@ -448,6 +490,7 @@ func (c *Client) RequiredTextBodyWithTextBody(ctx context.Context, body Required
 	return c.Client.Do(req)
 }
 
+// ReservedGoKeywordParameters performs a GET /reserved-go-keyword-parameters/{type} (the `ReservedGoKeywordParameters` operationId) request
 func (c *Client) ReservedGoKeywordParameters(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewReservedGoKeywordParametersRequest(c.Server, pType)
 	if err != nil {
@@ -460,6 +503,7 @@ func (c *Client) ReservedGoKeywordParameters(ctx context.Context, pType string, 
 	return c.Client.Do(req)
 }
 
+// ReusableResponsesWithBody performs a POST /reusable-responses (the `ReusableResponses` operationId) request, with any type of body, and a specified content type
 func (c *Client) ReusableResponsesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewReusableResponsesRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -472,6 +516,8 @@ func (c *Client) ReusableResponsesWithBody(ctx context.Context, contentType stri
 	return c.Client.Do(req)
 }
 
+// ReusableResponses performs a POST /reusable-responses (the `ReusableResponses` operationId) request,
+// with the `application/json` content type.
 func (c *Client) ReusableResponses(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewReusableResponsesRequest(c.Server, body)
 	if err != nil {
@@ -484,6 +530,7 @@ func (c *Client) ReusableResponses(ctx context.Context, body ReusableResponsesJS
 	return c.Client.Do(req)
 }
 
+// TextExampleWithBody performs a POST /text (the `TextExample` operationId) request, with any type of body, and a specified content type
 func (c *Client) TextExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTextExampleRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -496,6 +543,8 @@ func (c *Client) TextExampleWithBody(ctx context.Context, contentType string, bo
 	return c.Client.Do(req)
 }
 
+// TextExampleWithTextBody performs a POST /text (the `TextExample` operationId) request,
+// with the `text/plain` content type.
 func (c *Client) TextExampleWithTextBody(ctx context.Context, body TextExampleTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTextExampleRequestWithTextBody(c.Server, body)
 	if err != nil {
@@ -508,6 +557,7 @@ func (c *Client) TextExampleWithTextBody(ctx context.Context, body TextExampleTe
 	return c.Client.Do(req)
 }
 
+// UnknownExampleWithBody performs a POST /unknown (the `UnknownExample` operationId) request, with any type of body, and a specified content type
 func (c *Client) UnknownExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUnknownExampleRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -520,6 +570,7 @@ func (c *Client) UnknownExampleWithBody(ctx context.Context, contentType string,
 	return c.Client.Do(req)
 }
 
+// UnspecifiedContentTypeWithBody performs a POST /unspecified-content-type (the `UnspecifiedContentType` operationId) request, with any type of body, and a specified content type
 func (c *Client) UnspecifiedContentTypeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUnspecifiedContentTypeRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -532,6 +583,7 @@ func (c *Client) UnspecifiedContentTypeWithBody(ctx context.Context, contentType
 	return c.Client.Do(req)
 }
 
+// URLEncodedExampleWithBody performs a POST /urlencoded (the `URLEncodedExample` operationId) request, with any type of body, and a specified content type
 func (c *Client) URLEncodedExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewURLEncodedExampleRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -544,6 +596,8 @@ func (c *Client) URLEncodedExampleWithBody(ctx context.Context, contentType stri
 	return c.Client.Do(req)
 }
 
+// URLEncodedExampleWithFormdataBody performs a POST /urlencoded (the `URLEncodedExample` operationId) request,
+// with the `application/x-www-form-urlencoded` content type.
 func (c *Client) URLEncodedExampleWithFormdataBody(ctx context.Context, body URLEncodedExampleFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewURLEncodedExampleRequestWithFormdataBody(c.Server, body)
 	if err != nil {
@@ -556,6 +610,7 @@ func (c *Client) URLEncodedExampleWithFormdataBody(ctx context.Context, body URL
 	return c.Client.Do(req)
 }
 
+// HeadersExampleWithBody performs a POST /with-headers (the `HeadersExample` operationId) request, with any type of body, and a specified content type
 func (c *Client) HeadersExampleWithBody(ctx context.Context, params *HeadersExampleParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewHeadersExampleRequestWithBody(c.Server, params, contentType, body)
 	if err != nil {
@@ -568,6 +623,8 @@ func (c *Client) HeadersExampleWithBody(ctx context.Context, params *HeadersExam
 	return c.Client.Do(req)
 }
 
+// HeadersExample performs a POST /with-headers (the `HeadersExample` operationId) request,
+// with the `application/json` content type.
 func (c *Client) HeadersExample(ctx context.Context, params *HeadersExampleParams, body HeadersExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewHeadersExampleRequest(c.Server, params, body)
 	if err != nil {
@@ -580,6 +637,7 @@ func (c *Client) HeadersExample(ctx context.Context, params *HeadersExampleParam
 	return c.Client.Do(req)
 }
 
+// UnionExampleWithBody performs a POST /with-union (the `UnionExample` operationId) request, with any type of body, and a specified content type
 func (c *Client) UnionExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUnionExampleRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -592,6 +650,8 @@ func (c *Client) UnionExampleWithBody(ctx context.Context, contentType string, b
 	return c.Client.Do(req)
 }
 
+// UnionExample performs a POST /with-union (the `UnionExample` operationId) request,
+// with the `application/json` content type.
 func (c *Client) UnionExample(ctx context.Context, body UnionExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUnionExampleRequest(c.Server, body)
 	if err != nil {
@@ -615,7 +675,7 @@ func NewJSONExampleRequest(server string, body JSONExampleJSONRequestBody) (*htt
 	return NewJSONExampleRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewJSONExampleRequestWithBody generates requests for JSONExample with any type of body
+// NewJSONExampleRequestWithBody constructs an http.Request for the JSONExample method, with any body, and a specified content type
 func NewJSONExampleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -644,7 +704,7 @@ func NewJSONExampleRequestWithBody(server string, contentType string, body io.Re
 	return req, nil
 }
 
-// NewMultipartExampleRequestWithBody generates requests for MultipartExample with any type of body
+// NewMultipartExampleRequestWithBody constructs an http.Request for the MultipartExample method, with any body, and a specified content type
 func NewMultipartExampleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -673,7 +733,7 @@ func NewMultipartExampleRequestWithBody(server string, contentType string, body 
 	return req, nil
 }
 
-// NewMultipartRelatedExampleRequestWithBody generates requests for MultipartRelatedExample with any type of body
+// NewMultipartRelatedExampleRequestWithBody constructs an http.Request for the MultipartRelatedExample method, with any body, and a specified content type
 func NewMultipartRelatedExampleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -735,7 +795,7 @@ func NewMultipleRequestAndResponseTypesRequestWithTextBody(server string, body M
 	return NewMultipleRequestAndResponseTypesRequestWithBody(server, "text/plain", bodyReader)
 }
 
-// NewMultipleRequestAndResponseTypesRequestWithBody generates requests for MultipleRequestAndResponseTypes with any type of body
+// NewMultipleRequestAndResponseTypesRequestWithBody constructs an http.Request for the MultipleRequestAndResponseTypes method, with any body, and a specified content type
 func NewMultipleRequestAndResponseTypesRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -764,7 +824,7 @@ func NewMultipleRequestAndResponseTypesRequestWithBody(server string, contentTyp
 	return req, nil
 }
 
-// NewNoContentHeadersRequest generates requests for NoContentHeaders
+// NewNoContentHeadersRequest constructs an http.Request for the NoContentHeaders method
 func NewNoContentHeadersRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -802,7 +862,7 @@ func NewRequiredJSONBodyRequest(server string, body RequiredJSONBodyJSONRequestB
 	return NewRequiredJSONBodyRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewRequiredJSONBodyRequestWithBody generates requests for RequiredJSONBody with any type of body
+// NewRequiredJSONBodyRequestWithBody constructs an http.Request for the RequiredJSONBody method, with any body, and a specified content type
 func NewRequiredJSONBodyRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -842,7 +902,7 @@ func NewRequiredTextBodyRequestWithTextBody(server string, body RequiredTextBody
 	return NewRequiredTextBodyRequestWithBody(server, "text/plain", bodyReader)
 }
 
-// NewRequiredTextBodyRequestWithBody generates requests for RequiredTextBody with any type of body
+// NewRequiredTextBodyRequestWithBody constructs an http.Request for the RequiredTextBody method, with any body, and a specified content type
 func NewRequiredTextBodyRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -871,7 +931,7 @@ func NewRequiredTextBodyRequestWithBody(server string, contentType string, body 
 	return req, nil
 }
 
-// NewReservedGoKeywordParametersRequest generates requests for ReservedGoKeywordParameters
+// NewReservedGoKeywordParametersRequest constructs an http.Request for the ReservedGoKeywordParameters method
 func NewReservedGoKeywordParametersRequest(server string, pType string) (*http.Request, error) {
 	var err error
 
@@ -916,7 +976,7 @@ func NewReusableResponsesRequest(server string, body ReusableResponsesJSONReques
 	return NewReusableResponsesRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewReusableResponsesRequestWithBody generates requests for ReusableResponses with any type of body
+// NewReusableResponsesRequestWithBody constructs an http.Request for the ReusableResponses method, with any body, and a specified content type
 func NewReusableResponsesRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -956,7 +1016,7 @@ func NewTextExampleRequestWithTextBody(server string, body TextExampleTextReques
 	return NewTextExampleRequestWithBody(server, "text/plain", bodyReader)
 }
 
-// NewTextExampleRequestWithBody generates requests for TextExample with any type of body
+// NewTextExampleRequestWithBody constructs an http.Request for the TextExample method, with any body, and a specified content type
 func NewTextExampleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -985,7 +1045,7 @@ func NewTextExampleRequestWithBody(server string, contentType string, body io.Re
 	return req, nil
 }
 
-// NewUnknownExampleRequestWithBody generates requests for UnknownExample with any type of body
+// NewUnknownExampleRequestWithBody constructs an http.Request for the UnknownExample method, with any body, and a specified content type
 func NewUnknownExampleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1014,7 +1074,7 @@ func NewUnknownExampleRequestWithBody(server string, contentType string, body io
 	return req, nil
 }
 
-// NewUnspecifiedContentTypeRequestWithBody generates requests for UnspecifiedContentType with any type of body
+// NewUnspecifiedContentTypeRequestWithBody constructs an http.Request for the UnspecifiedContentType method, with any body, and a specified content type
 func NewUnspecifiedContentTypeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1054,7 +1114,7 @@ func NewURLEncodedExampleRequestWithFormdataBody(server string, body URLEncodedE
 	return NewURLEncodedExampleRequestWithBody(server, "application/x-www-form-urlencoded", bodyReader)
 }
 
-// NewURLEncodedExampleRequestWithBody generates requests for URLEncodedExample with any type of body
+// NewURLEncodedExampleRequestWithBody constructs an http.Request for the URLEncodedExample method, with any body, and a specified content type
 func NewURLEncodedExampleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1094,7 +1154,7 @@ func NewHeadersExampleRequest(server string, params *HeadersExampleParams, body 
 	return NewHeadersExampleRequestWithBody(server, params, "application/json", bodyReader)
 }
 
-// NewHeadersExampleRequestWithBody generates requests for HeadersExample with any type of body
+// NewHeadersExampleRequestWithBody constructs an http.Request for the HeadersExample method, with any body, and a specified content type
 func NewHeadersExampleRequestWithBody(server string, params *HeadersExampleParams, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1158,7 +1218,7 @@ func NewUnionExampleRequest(server string, body UnionExampleJSONRequestBody) (*h
 	return NewUnionExampleRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewUnionExampleRequestWithBody generates requests for UnionExample with any type of body
+// NewUnionExampleRequestWithBody constructs an http.Request for the UnionExample method, with any body, and a specified content type
 func NewUnionExampleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1230,71 +1290,94 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// JSONExampleWithBodyWithResponse request with any body
+
+	// JSONExampleWithBody performs a POST /json (the `JSONExample` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	JSONExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*JSONExampleResponse, error)
 
+	// JSONExample performs a POST /json (the `JSONExample` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	JSONExampleWithResponse(ctx context.Context, body JSONExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*JSONExampleResponse, error)
 
-	// MultipartExampleWithBodyWithResponse request with any body
+	// MultipartExampleWithBody performs a POST /multipart (the `MultipartExample` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	MultipartExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MultipartExampleResponse, error)
 
-	// MultipartRelatedExampleWithBodyWithResponse request with any body
+	// MultipartRelatedExampleWithBody performs a POST /multipart-related (the `MultipartRelatedExample` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	MultipartRelatedExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MultipartRelatedExampleResponse, error)
 
-	// MultipleRequestAndResponseTypesWithBodyWithResponse request with any body
+	// MultipleRequestAndResponseTypesWithBody performs a POST /multiple (the `MultipleRequestAndResponseTypes` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	MultipleRequestAndResponseTypesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error)
 
+	// MultipleRequestAndResponseTypes performs a POST /multiple (the `MultipleRequestAndResponseTypes` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	MultipleRequestAndResponseTypesWithResponse(ctx context.Context, body MultipleRequestAndResponseTypesJSONRequestBody, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error)
 
+	// MultipleRequestAndResponseTypesWithFormdataBody performs a POST /multiple (the `MultipleRequestAndResponseTypes` operationId) request,
+	// with the `application/x-www-form-urlencoded` content type, and returns a wrapper object for the known response body format(s).
 	MultipleRequestAndResponseTypesWithFormdataBodyWithResponse(ctx context.Context, body MultipleRequestAndResponseTypesFormdataRequestBody, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error)
 
+	// MultipleRequestAndResponseTypesWithTextBody performs a POST /multiple (the `MultipleRequestAndResponseTypes` operationId) request,
+	// with the `text/plain` content type, and returns a wrapper object for the known response body format(s).
 	MultipleRequestAndResponseTypesWithTextBodyWithResponse(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error)
 
-	// NoContentHeadersWithResponse request
+	// NoContentHeaders performs a POST /no-content-headers (the `NoContentHeaders` operationId) request, and returns a wrapper object for the known response body format(s).
 	NoContentHeadersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*NoContentHeadersResponse, error)
 
-	// RequiredJSONBodyWithBodyWithResponse request with any body
+	// RequiredJSONBodyWithBody performs a POST /required-json-body (the `RequiredJSONBody` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	RequiredJSONBodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequiredJSONBodyResponse, error)
 
+	// RequiredJSONBody performs a POST /required-json-body (the `RequiredJSONBody` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	RequiredJSONBodyWithResponse(ctx context.Context, body RequiredJSONBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*RequiredJSONBodyResponse, error)
 
-	// RequiredTextBodyWithBodyWithResponse request with any body
+	// RequiredTextBodyWithBody performs a POST /required-text-body (the `RequiredTextBody` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	RequiredTextBodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequiredTextBodyResponse, error)
 
+	// RequiredTextBodyWithTextBody performs a POST /required-text-body (the `RequiredTextBody` operationId) request,
+	// with the `text/plain` content type, and returns a wrapper object for the known response body format(s).
 	RequiredTextBodyWithTextBodyWithResponse(ctx context.Context, body RequiredTextBodyTextRequestBody, reqEditors ...RequestEditorFn) (*RequiredTextBodyResponse, error)
 
-	// ReservedGoKeywordParametersWithResponse request
+	// ReservedGoKeywordParameters performs a GET /reserved-go-keyword-parameters/{type} (the `ReservedGoKeywordParameters` operationId) request, and returns a wrapper object for the known response body format(s).
 	ReservedGoKeywordParametersWithResponse(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*ReservedGoKeywordParametersResponse, error)
 
-	// ReusableResponsesWithBodyWithResponse request with any body
+	// ReusableResponsesWithBody performs a POST /reusable-responses (the `ReusableResponses` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	ReusableResponsesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReusableResponsesResponse, error)
 
+	// ReusableResponses performs a POST /reusable-responses (the `ReusableResponses` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	ReusableResponsesWithResponse(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*ReusableResponsesResponse, error)
 
-	// TextExampleWithBodyWithResponse request with any body
+	// TextExampleWithBody performs a POST /text (the `TextExample` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	TextExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TextExampleResponse, error)
 
+	// TextExampleWithTextBody performs a POST /text (the `TextExample` operationId) request,
+	// with the `text/plain` content type, and returns a wrapper object for the known response body format(s).
 	TextExampleWithTextBodyWithResponse(ctx context.Context, body TextExampleTextRequestBody, reqEditors ...RequestEditorFn) (*TextExampleResponse, error)
 
-	// UnknownExampleWithBodyWithResponse request with any body
+	// UnknownExampleWithBody performs a POST /unknown (the `UnknownExample` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	UnknownExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UnknownExampleResponse, error)
 
-	// UnspecifiedContentTypeWithBodyWithResponse request with any body
+	// UnspecifiedContentTypeWithBody performs a POST /unspecified-content-type (the `UnspecifiedContentType` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	UnspecifiedContentTypeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UnspecifiedContentTypeResponse, error)
 
-	// URLEncodedExampleWithBodyWithResponse request with any body
+	// URLEncodedExampleWithBody performs a POST /urlencoded (the `URLEncodedExample` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	URLEncodedExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*URLEncodedExampleResponse, error)
 
+	// URLEncodedExampleWithFormdataBody performs a POST /urlencoded (the `URLEncodedExample` operationId) request,
+	// with the `application/x-www-form-urlencoded` content type, and returns a wrapper object for the known response body format(s).
 	URLEncodedExampleWithFormdataBodyWithResponse(ctx context.Context, body URLEncodedExampleFormdataRequestBody, reqEditors ...RequestEditorFn) (*URLEncodedExampleResponse, error)
 
-	// HeadersExampleWithBodyWithResponse request with any body
+	// HeadersExampleWithBody performs a POST /with-headers (the `HeadersExample` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	HeadersExampleWithBodyWithResponse(ctx context.Context, params *HeadersExampleParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*HeadersExampleResponse, error)
 
+	// HeadersExample performs a POST /with-headers (the `HeadersExample` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	HeadersExampleWithResponse(ctx context.Context, params *HeadersExampleParams, body HeadersExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*HeadersExampleResponse, error)
 
-	// UnionExampleWithBodyWithResponse request with any body
+	// UnionExampleWithBody performs a POST /with-union (the `UnionExample` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	UnionExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UnionExampleResponse, error)
 
+	// UnionExample performs a POST /with-union (the `UnionExample` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	UnionExampleWithResponse(ctx context.Context, body UnionExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*UnionExampleResponse, error)
 }
 
@@ -1304,7 +1387,7 @@ type JSONExampleResponse struct {
 	JSON200      *Example
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r JSONExampleResponse) GetJSON200() *Example {
 	return r.JSON200
 }
@@ -1412,7 +1495,7 @@ type MultipleRequestAndResponseTypesResponse struct {
 	JSON200      *Example
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r MultipleRequestAndResponseTypesResponse) GetJSON200() *Example {
 	return r.JSON200
 }
@@ -1486,7 +1569,7 @@ type RequiredJSONBodyResponse struct {
 	JSON200      *Example
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r RequiredJSONBodyResponse) GetJSON200() *Example {
 	return r.JSON200
 }
@@ -1594,7 +1677,7 @@ type ReusableResponsesResponse struct {
 	JSON200      *Reusableresponse
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r ReusableResponsesResponse) GetJSON200() *Reusableresponse {
 	return r.JSON200
 }
@@ -1770,7 +1853,7 @@ type HeadersExampleResponse struct {
 	JSON200      *Example
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r HeadersExampleResponse) GetJSON200() *Example {
 	return r.JSON200
 }
@@ -1811,12 +1894,12 @@ type UnionExampleResponse struct {
 	JSON200                       *UnionExample200JSONResponseBody
 }
 
-// GetApplicationalternativeJSON200 returns ApplicationalternativeJSON200
+// GetApplicationalternativeJSON200 returns the response for an HTTP 200 `application/alternative+json` response
 func (r UnionExampleResponse) GetApplicationalternativeJSON200() *Example {
 	return r.ApplicationalternativeJSON200
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r UnionExampleResponse) GetJSON200() *UnionExample200JSONResponseBody {
 	return r.JSON200
 }
@@ -1850,7 +1933,7 @@ func (r UnionExampleResponse) ContentType() string {
 	return ""
 }
 
-// JSONExampleWithBodyWithResponse request with arbitrary body returning *JSONExampleResponse
+// JSONExampleWithBody performs a POST /json (the `JSONExample` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) JSONExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*JSONExampleResponse, error) {
 	rsp, err := c.JSONExampleWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -1859,6 +1942,8 @@ func (c *ClientWithResponses) JSONExampleWithBodyWithResponse(ctx context.Contex
 	return ParseJSONExampleResponse(rsp)
 }
 
+// JSONExample performs a POST /json (the `JSONExample` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) JSONExampleWithResponse(ctx context.Context, body JSONExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*JSONExampleResponse, error) {
 	rsp, err := c.JSONExample(ctx, body, reqEditors...)
 	if err != nil {
@@ -1867,7 +1952,7 @@ func (c *ClientWithResponses) JSONExampleWithResponse(ctx context.Context, body 
 	return ParseJSONExampleResponse(rsp)
 }
 
-// MultipartExampleWithBodyWithResponse request with arbitrary body returning *MultipartExampleResponse
+// MultipartExampleWithBody performs a POST /multipart (the `MultipartExample` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) MultipartExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MultipartExampleResponse, error) {
 	rsp, err := c.MultipartExampleWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -1876,7 +1961,7 @@ func (c *ClientWithResponses) MultipartExampleWithBodyWithResponse(ctx context.C
 	return ParseMultipartExampleResponse(rsp)
 }
 
-// MultipartRelatedExampleWithBodyWithResponse request with arbitrary body returning *MultipartRelatedExampleResponse
+// MultipartRelatedExampleWithBody performs a POST /multipart-related (the `MultipartRelatedExample` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) MultipartRelatedExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MultipartRelatedExampleResponse, error) {
 	rsp, err := c.MultipartRelatedExampleWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -1885,7 +1970,7 @@ func (c *ClientWithResponses) MultipartRelatedExampleWithBodyWithResponse(ctx co
 	return ParseMultipartRelatedExampleResponse(rsp)
 }
 
-// MultipleRequestAndResponseTypesWithBodyWithResponse request with arbitrary body returning *MultipleRequestAndResponseTypesResponse
+// MultipleRequestAndResponseTypesWithBody performs a POST /multiple (the `MultipleRequestAndResponseTypes` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) MultipleRequestAndResponseTypesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error) {
 	rsp, err := c.MultipleRequestAndResponseTypesWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -1894,6 +1979,8 @@ func (c *ClientWithResponses) MultipleRequestAndResponseTypesWithBodyWithRespons
 	return ParseMultipleRequestAndResponseTypesResponse(rsp)
 }
 
+// MultipleRequestAndResponseTypes performs a POST /multiple (the `MultipleRequestAndResponseTypes` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) MultipleRequestAndResponseTypesWithResponse(ctx context.Context, body MultipleRequestAndResponseTypesJSONRequestBody, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error) {
 	rsp, err := c.MultipleRequestAndResponseTypes(ctx, body, reqEditors...)
 	if err != nil {
@@ -1902,6 +1989,8 @@ func (c *ClientWithResponses) MultipleRequestAndResponseTypesWithResponse(ctx co
 	return ParseMultipleRequestAndResponseTypesResponse(rsp)
 }
 
+// MultipleRequestAndResponseTypesWithFormdataBody performs a POST /multiple (the `MultipleRequestAndResponseTypes` operationId) request,
+// with the `application/x-www-form-urlencoded` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) MultipleRequestAndResponseTypesWithFormdataBodyWithResponse(ctx context.Context, body MultipleRequestAndResponseTypesFormdataRequestBody, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error) {
 	rsp, err := c.MultipleRequestAndResponseTypesWithFormdataBody(ctx, body, reqEditors...)
 	if err != nil {
@@ -1910,6 +1999,8 @@ func (c *ClientWithResponses) MultipleRequestAndResponseTypesWithFormdataBodyWit
 	return ParseMultipleRequestAndResponseTypesResponse(rsp)
 }
 
+// MultipleRequestAndResponseTypesWithTextBody performs a POST /multiple (the `MultipleRequestAndResponseTypes` operationId) request,
+// with the `text/plain` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) MultipleRequestAndResponseTypesWithTextBodyWithResponse(ctx context.Context, body MultipleRequestAndResponseTypesTextRequestBody, reqEditors ...RequestEditorFn) (*MultipleRequestAndResponseTypesResponse, error) {
 	rsp, err := c.MultipleRequestAndResponseTypesWithTextBody(ctx, body, reqEditors...)
 	if err != nil {
@@ -1918,7 +2009,7 @@ func (c *ClientWithResponses) MultipleRequestAndResponseTypesWithTextBodyWithRes
 	return ParseMultipleRequestAndResponseTypesResponse(rsp)
 }
 
-// NoContentHeadersWithResponse request returning *NoContentHeadersResponse
+// NoContentHeaders performs a POST /no-content-headers (the `NoContentHeaders` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) NoContentHeadersWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*NoContentHeadersResponse, error) {
 	rsp, err := c.NoContentHeaders(ctx, reqEditors...)
 	if err != nil {
@@ -1927,7 +2018,7 @@ func (c *ClientWithResponses) NoContentHeadersWithResponse(ctx context.Context, 
 	return ParseNoContentHeadersResponse(rsp)
 }
 
-// RequiredJSONBodyWithBodyWithResponse request with arbitrary body returning *RequiredJSONBodyResponse
+// RequiredJSONBodyWithBody performs a POST /required-json-body (the `RequiredJSONBody` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) RequiredJSONBodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequiredJSONBodyResponse, error) {
 	rsp, err := c.RequiredJSONBodyWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -1936,6 +2027,8 @@ func (c *ClientWithResponses) RequiredJSONBodyWithBodyWithResponse(ctx context.C
 	return ParseRequiredJSONBodyResponse(rsp)
 }
 
+// RequiredJSONBody performs a POST /required-json-body (the `RequiredJSONBody` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) RequiredJSONBodyWithResponse(ctx context.Context, body RequiredJSONBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*RequiredJSONBodyResponse, error) {
 	rsp, err := c.RequiredJSONBody(ctx, body, reqEditors...)
 	if err != nil {
@@ -1944,7 +2037,7 @@ func (c *ClientWithResponses) RequiredJSONBodyWithResponse(ctx context.Context, 
 	return ParseRequiredJSONBodyResponse(rsp)
 }
 
-// RequiredTextBodyWithBodyWithResponse request with arbitrary body returning *RequiredTextBodyResponse
+// RequiredTextBodyWithBody performs a POST /required-text-body (the `RequiredTextBody` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) RequiredTextBodyWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequiredTextBodyResponse, error) {
 	rsp, err := c.RequiredTextBodyWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -1953,6 +2046,8 @@ func (c *ClientWithResponses) RequiredTextBodyWithBodyWithResponse(ctx context.C
 	return ParseRequiredTextBodyResponse(rsp)
 }
 
+// RequiredTextBodyWithTextBody performs a POST /required-text-body (the `RequiredTextBody` operationId) request,
+// with the `text/plain` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) RequiredTextBodyWithTextBodyWithResponse(ctx context.Context, body RequiredTextBodyTextRequestBody, reqEditors ...RequestEditorFn) (*RequiredTextBodyResponse, error) {
 	rsp, err := c.RequiredTextBodyWithTextBody(ctx, body, reqEditors...)
 	if err != nil {
@@ -1961,7 +2056,7 @@ func (c *ClientWithResponses) RequiredTextBodyWithTextBodyWithResponse(ctx conte
 	return ParseRequiredTextBodyResponse(rsp)
 }
 
-// ReservedGoKeywordParametersWithResponse request returning *ReservedGoKeywordParametersResponse
+// ReservedGoKeywordParameters performs a GET /reserved-go-keyword-parameters/{type} (the `ReservedGoKeywordParameters` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ReservedGoKeywordParametersWithResponse(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*ReservedGoKeywordParametersResponse, error) {
 	rsp, err := c.ReservedGoKeywordParameters(ctx, pType, reqEditors...)
 	if err != nil {
@@ -1970,7 +2065,7 @@ func (c *ClientWithResponses) ReservedGoKeywordParametersWithResponse(ctx contex
 	return ParseReservedGoKeywordParametersResponse(rsp)
 }
 
-// ReusableResponsesWithBodyWithResponse request with arbitrary body returning *ReusableResponsesResponse
+// ReusableResponsesWithBody performs a POST /reusable-responses (the `ReusableResponses` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ReusableResponsesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReusableResponsesResponse, error) {
 	rsp, err := c.ReusableResponsesWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -1979,6 +2074,8 @@ func (c *ClientWithResponses) ReusableResponsesWithBodyWithResponse(ctx context.
 	return ParseReusableResponsesResponse(rsp)
 }
 
+// ReusableResponses performs a POST /reusable-responses (the `ReusableResponses` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ReusableResponsesWithResponse(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*ReusableResponsesResponse, error) {
 	rsp, err := c.ReusableResponses(ctx, body, reqEditors...)
 	if err != nil {
@@ -1987,7 +2084,7 @@ func (c *ClientWithResponses) ReusableResponsesWithResponse(ctx context.Context,
 	return ParseReusableResponsesResponse(rsp)
 }
 
-// TextExampleWithBodyWithResponse request with arbitrary body returning *TextExampleResponse
+// TextExampleWithBody performs a POST /text (the `TextExample` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) TextExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TextExampleResponse, error) {
 	rsp, err := c.TextExampleWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -1996,6 +2093,8 @@ func (c *ClientWithResponses) TextExampleWithBodyWithResponse(ctx context.Contex
 	return ParseTextExampleResponse(rsp)
 }
 
+// TextExampleWithTextBody performs a POST /text (the `TextExample` operationId) request,
+// with the `text/plain` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) TextExampleWithTextBodyWithResponse(ctx context.Context, body TextExampleTextRequestBody, reqEditors ...RequestEditorFn) (*TextExampleResponse, error) {
 	rsp, err := c.TextExampleWithTextBody(ctx, body, reqEditors...)
 	if err != nil {
@@ -2004,7 +2103,7 @@ func (c *ClientWithResponses) TextExampleWithTextBodyWithResponse(ctx context.Co
 	return ParseTextExampleResponse(rsp)
 }
 
-// UnknownExampleWithBodyWithResponse request with arbitrary body returning *UnknownExampleResponse
+// UnknownExampleWithBody performs a POST /unknown (the `UnknownExample` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) UnknownExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UnknownExampleResponse, error) {
 	rsp, err := c.UnknownExampleWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -2013,7 +2112,7 @@ func (c *ClientWithResponses) UnknownExampleWithBodyWithResponse(ctx context.Con
 	return ParseUnknownExampleResponse(rsp)
 }
 
-// UnspecifiedContentTypeWithBodyWithResponse request with arbitrary body returning *UnspecifiedContentTypeResponse
+// UnspecifiedContentTypeWithBody performs a POST /unspecified-content-type (the `UnspecifiedContentType` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) UnspecifiedContentTypeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UnspecifiedContentTypeResponse, error) {
 	rsp, err := c.UnspecifiedContentTypeWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -2022,7 +2121,7 @@ func (c *ClientWithResponses) UnspecifiedContentTypeWithBodyWithResponse(ctx con
 	return ParseUnspecifiedContentTypeResponse(rsp)
 }
 
-// URLEncodedExampleWithBodyWithResponse request with arbitrary body returning *URLEncodedExampleResponse
+// URLEncodedExampleWithBody performs a POST /urlencoded (the `URLEncodedExample` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) URLEncodedExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*URLEncodedExampleResponse, error) {
 	rsp, err := c.URLEncodedExampleWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -2031,6 +2130,8 @@ func (c *ClientWithResponses) URLEncodedExampleWithBodyWithResponse(ctx context.
 	return ParseURLEncodedExampleResponse(rsp)
 }
 
+// URLEncodedExampleWithFormdataBody performs a POST /urlencoded (the `URLEncodedExample` operationId) request,
+// with the `application/x-www-form-urlencoded` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) URLEncodedExampleWithFormdataBodyWithResponse(ctx context.Context, body URLEncodedExampleFormdataRequestBody, reqEditors ...RequestEditorFn) (*URLEncodedExampleResponse, error) {
 	rsp, err := c.URLEncodedExampleWithFormdataBody(ctx, body, reqEditors...)
 	if err != nil {
@@ -2039,7 +2140,7 @@ func (c *ClientWithResponses) URLEncodedExampleWithFormdataBodyWithResponse(ctx 
 	return ParseURLEncodedExampleResponse(rsp)
 }
 
-// HeadersExampleWithBodyWithResponse request with arbitrary body returning *HeadersExampleResponse
+// HeadersExampleWithBody performs a POST /with-headers (the `HeadersExample` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) HeadersExampleWithBodyWithResponse(ctx context.Context, params *HeadersExampleParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*HeadersExampleResponse, error) {
 	rsp, err := c.HeadersExampleWithBody(ctx, params, contentType, body, reqEditors...)
 	if err != nil {
@@ -2048,6 +2149,8 @@ func (c *ClientWithResponses) HeadersExampleWithBodyWithResponse(ctx context.Con
 	return ParseHeadersExampleResponse(rsp)
 }
 
+// HeadersExample performs a POST /with-headers (the `HeadersExample` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) HeadersExampleWithResponse(ctx context.Context, params *HeadersExampleParams, body HeadersExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*HeadersExampleResponse, error) {
 	rsp, err := c.HeadersExample(ctx, params, body, reqEditors...)
 	if err != nil {
@@ -2056,7 +2159,7 @@ func (c *ClientWithResponses) HeadersExampleWithResponse(ctx context.Context, pa
 	return ParseHeadersExampleResponse(rsp)
 }
 
-// UnionExampleWithBodyWithResponse request with arbitrary body returning *UnionExampleResponse
+// UnionExampleWithBody performs a POST /with-union (the `UnionExample` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) UnionExampleWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*UnionExampleResponse, error) {
 	rsp, err := c.UnionExampleWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -2065,6 +2168,8 @@ func (c *ClientWithResponses) UnionExampleWithBodyWithResponse(ctx context.Conte
 	return ParseUnionExampleResponse(rsp)
 }
 
+// UnionExample performs a POST /with-union (the `UnionExample` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) UnionExampleWithResponse(ctx context.Context, body UnionExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*UnionExampleResponse, error) {
 	rsp, err := c.UnionExample(ctx, body, reqEditors...)
 	if err != nil {

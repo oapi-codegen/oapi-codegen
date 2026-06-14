@@ -20,7 +20,7 @@ import (
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1182/pkg2"
 )
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -93,10 +93,18 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// TestGet request
+
+	// TestGet get test response
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with GET /test (the `TestGet` operationId).
 	TestGet(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// TestGet get test response
+// Takes any type of body and a specified content type.
+//
+// Corresponds with GET /test (the `TestGet` operationId).
 func (c *Client) TestGet(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestGetRequest(c.Server)
 	if err != nil {
@@ -109,7 +117,7 @@ func (c *Client) TestGet(ctx context.Context, reqEditors ...RequestEditorFn) (*h
 	return c.Client.Do(req)
 }
 
-// NewTestGetRequest generates requests for TestGet
+// NewTestGetRequest constructs an http.Request for the TestGet method
 func NewTestGetRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -179,7 +187,11 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// TestGetWithResponse request
+
+	// TestGetWithResponse get test response
+	// Takes any type of body and a specified content type,, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /test (the `TestGet` operationId).
 	TestGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestGetResponse, error)
 }
 
@@ -217,7 +229,10 @@ func (r TestGetResponse) ContentType() string {
 	return ""
 }
 
-// TestGetWithResponse request returning *TestGetResponse
+// TestGetWithResponse get test response
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /test (the `TestGet` operationId).
 func (c *ClientWithResponses) TestGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestGetResponse, error) {
 	rsp, err := c.TestGet(ctx, reqEditors...)
 	if err != nil {
@@ -244,7 +259,7 @@ func ParseTestGetResponse(rsp *http.Response) (*TestGetResponse, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// get test response
+	// TestGet get test response
 	// (GET /test)
 	TestGet(ctx echo.Context) error
 }
@@ -330,7 +345,7 @@ func (response TestGet200Response) VisitTestGetResponse(w http.ResponseWriter) e
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-	// get test response
+	// TestGet get test response
 	// (GET /test)
 	TestGet(ctx context.Context, request TestGetRequestObject) (TestGetResponseObject, error)
 }

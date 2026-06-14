@@ -63,16 +63,16 @@ type AddPetJSONRequestBody = NewPet
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Returns all pets
+	// FindPets Returns all pets
 	// (GET /pets)
 	FindPets(w http.ResponseWriter, r *http.Request, params FindPetsParams)
-	// Creates a new pet
+	// AddPet Creates a new pet
 	// (POST /pets)
 	AddPet(w http.ResponseWriter, r *http.Request)
-	// Deletes a pet by ID
+	// DeletePet Deletes a pet by ID
 	// (DELETE /pets/{id})
 	DeletePet(w http.ResponseWriter, r *http.Request, id int64)
-	// Returns a pet by ID
+	// FindPetByID Returns a pet by ID
 	// (GET /pets/{id})
 	FindPetByID(w http.ResponseWriter, r *http.Request, id int64)
 }

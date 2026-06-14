@@ -33,10 +33,29 @@ type ClientWithResponsesInterface interface {
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
-    // {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse request{{if .HasBody}} with any body{{end}}
+{{$parent := . }}
+{{$opidSuffix := ""}}
+{{- if .HasBody -}}
+{{- $opidSuffix = "WithBody" -}}
+{{- end -}}
+    {{ if .Summary }}{{.SummaryAsComment (printf "%s%sWithResponse" $opid $opidSuffix) }}
+    // Takes any type of body and a specified content type,, and returns a wrapper object for the known response body format(s).
+    //
+    // Corresponds with {{.Method}} {{.Path}} (the `{{.SpecOperationId }}` operationId).
+    {{ else }}
+    // {{$opid}}{{if .HasBody}}WithBody{{end}} performs a {{.Method}} {{.Path}} (the `{{.SpecOperationId }}` operationId) request{{if .HasBody}}, with any type of body, and a specified content type{{end}}, and returns a wrapper object for the known response body format(s).
+    {{ end -}}
     {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error)
 {{range .Bodies}}
     {{if .IsSupportedByClient -}}
+	{{ if $parent.Summary }}{{$parent.SummaryAsComment (printf "%s%sWithResponse" .Suffix $opidSuffix) }}
+	// Takes a body for the `{{ .ContentType }}` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with {{$parent.Method}} {{$parent.Path}} (the `{{$parent.SpecOperationId }}` operationId).
+	{{ else }}
+	// {{$opid}}{{.Suffix}} performs a {{$parent.Method}} {{$parent.Path}} (the `{{$parent.SpecOperationId }}` operationId) request,
+	// with the `{{ .ContentType }}` content type, and returns a wrapper object for the known response body format(s).
+	{{ end -}}
         {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error)
     {{end -}}
 {{end}}{{/* range .Bodies */}}
@@ -55,7 +74,7 @@ type {{genResponseTypeName $opid | ucFirst}} struct {
 
 {{ if not opts.OutputOptions.SkipResponseBodyGetters }}
 {{- range $responseTypeDefinitions}}
-  // Get{{.TypeName}} returns {{.TypeName}}
+  // Get{{.TypeName}} returns the response for an HTTP {{ .ResponseName }} `{{ .ContentTypeName }}` response
   func (r {{genResponseTypeName $opid | ucFirst}}) Get{{.TypeName}}() *{{.Schema.TypeDecl}} {
       return r.{{.TypeName}}
   }
@@ -105,9 +124,20 @@ func (r {{genResponseTypeName $opid | ucFirst}}) ContentType() string {
 
 {{range .}}
 {{$opid := .OperationId -}}
+{{$parent := . }}
+{{$opidSuffix := ""}}
+{{- if .HasBody -}}
+{{- $opidSuffix = "WithBody" -}}
+{{- end -}}
 {{/* Generate client methods (with responses)*/}}
 
-// {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse request{{if .HasBody}} with arbitrary body{{end}} returning *{{genResponseTypeName $opid}}
+{{ if .Summary }}{{.SummaryAsComment (printf "%s%sWithResponse" $opid $opidSuffix) }}
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with {{.Method}} {{.Path}} (the `{{.SpecOperationId }}` operationId).
+{{ else }}
+// {{$opid}}{{if .HasBody}}WithBody{{end}} performs a {{.Method}} {{.Path}} (the `{{.SpecOperationId }}` operationId) request{{if .HasBody}}, with any type of body, and a specified content type{{end}}, and returns a wrapper object for the known response body format(s).
+{{ end -}}
 func (c *ClientWithResponses) {{$opid}}{{if .HasBody}}WithBody{{end}}WithResponse(ctx context.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error){
     rsp, err := c.{{$opid}}{{if .HasBody}}WithBody{{end}}(ctx{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}}{{if .HasBody}}, contentType, body{{end}}, reqEditors...)
     if err != nil {
@@ -121,6 +151,14 @@ func (c *ClientWithResponses) {{$opid}}{{if .HasBody}}WithBody{{end}}WithRespons
 {{$bodyRequired := .BodyRequired -}}
 {{range .Bodies}}
 {{if .IsSupportedByClient -}}
+{{ if $parent.Summary }}{{$parent.SummaryAsComment (printf "%s%sWithResponse" .Suffix $opidSuffix) }}
+// Takes a body for the `{{ .ContentType }}` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with {{$parent.Method}} {{$parent.Path}} (the `{{$parent.SpecOperationId }}` operationId).
+{{ else }}
+// {{$opid}}{{.Suffix}} performs a {{$parent.Method}} {{$parent.Path}} (the `{{$parent.SpecOperationId }}` operationId) request,
+// with the `{{ .ContentType }}` content type, and returns a wrapper object for the known response body format(s).
+{{ end -}}
 func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error) {
     rsp, err := c.{{$opid}}{{.Suffix}}(ctx{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body, reqEditors...)
     if err != nil {

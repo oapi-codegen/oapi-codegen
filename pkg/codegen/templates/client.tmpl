@@ -1,4 +1,4 @@
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -77,10 +77,29 @@ type ClientInterface interface {
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
-    // {{$opid}}{{if .HasBody}}WithBody{{end}} request{{if .HasBody}} with any body{{end}}
+{{$opidSuffix := ""}}
+{{$parent := . }}
+{{- if .HasBody -}}
+{{- $opidSuffix = "WithBody" -}}
+{{- end -}}
+    {{ if .Summary }}{{.SummaryAsComment (printf "%s%s" $opid $opidSuffix) }}
+    // Takes any type of body and a specified content type.
+    //
+    // Corresponds with {{.Method}} {{.Path}} (the `{{.SpecOperationId }}` operationId).
+    {{ else }}
+    // {{$opid}}{{if .HasBody}}WithBody{{end}} performs a {{.Method}} {{.Path}} (the `{{.SpecOperationId }}` operationId) request{{if .HasBody}}, with any type of body, and a specified content type{{end}}
+    {{ end -}}
     {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error)
 {{range .Bodies}}
     {{if .IsSupportedByClient -}}
+    {{ if $parent.Summary }}{{$parent.SummaryAsComment (printf "%s%s" $opid .Suffix) }}
+    // Takes a body for the `{{ .ContentType }}` content type.
+    //
+    // Corresponds with {{$parent.Method}} {{$parent.Path}} (the `{{$parent.SpecOperationId }}` operationId).
+    {{ else }}
+    // {{$opid}}{{.Suffix}} performs a {{$parent.Method}} {{$parent.Path}} (the `{{$parent.SpecOperationId }}` operationId) request,
+    // with the `{{ .ContentType }}` content type.
+    {{ end -}}
     {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error)
     {{end -}}
 {{end}}{{/* range .Bodies */}}
@@ -93,7 +112,19 @@ type ClientInterface interface {
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
+{{$parent := . }}
+{{$opidSuffix := ""}}
+{{- if .HasBody -}}
+{{- $opidSuffix = "WithBody" -}}
+{{- end -}}
 
+{{ if .Summary }}{{.SummaryAsComment (printf "%s%s" $opid $opidSuffix) }}
+// Takes any type of body and a specified content type.
+//
+// Corresponds with {{.Method}} {{.Path}} (the `{{.SpecOperationId }}` operationId).
+{{ else }}
+// {{$opid}}{{if .HasBody}}WithBody{{end}} performs a {{.Method}} {{.Path}} (the `{{.SpecOperationId }}` operationId) request{{if .HasBody}}, with any type of body, and a specified content type{{end}}
+{{ end -}}
 func (c *{{ $clientTypeName }}) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error) {
     req, err := New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(c.Server{{genParamNames .PathParams}}{{if $hasParams}}, params{{end}}{{if .HasBody}}, contentType, body{{end}})
     if err != nil {
@@ -108,6 +139,14 @@ func (c *{{ $clientTypeName }}) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx cont
 
 {{range .Bodies}}
 {{if .IsSupportedByClient -}}
+{{ if $parent.Summary }}{{$parent.SummaryAsComment (printf "%s%s" $opid .Suffix) }}
+// Takes a body for the `{{ .ContentType }}` content type.
+//
+// Corresponds with {{$parent.Method}} {{$parent.Path}} (the `{{$parent.SpecOperationId }}` operationId).
+{{ else }}
+// {{$opid}}{{.Suffix}} performs a {{$parent.Method}} {{$parent.Path}} (the `{{$parent.SpecOperationId }}` operationId) request,
+// with the `{{ .ContentType }}` content type.
+{{ end -}}
 func (c *{{ $clientTypeName }}) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error) {
     req, err := New{{$opid}}Request{{.Suffix}}(c.Server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
     if err != nil {
@@ -163,7 +202,7 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
 {{end -}}
 {{end}}
 
-// New{{$opid}}Request{{if .HasBody}}WithBody{{end}} generates requests for {{$opid}}{{if .HasBody}} with any type of body{{end}}
+// New{{$opid}}Request{{if .HasBody}}WithBody{{end}} constructs an http.Request for the {{$opid}} method{{if .HasBody}}, with any body, and a specified content type{{end}}
 func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*http.Request, error) {
     var err error
 {{range $paramIdx, $param := .PathParams}}

@@ -27,7 +27,7 @@ type Thing struct {
 	Name string `json:"name"`
 }
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -100,10 +100,18 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetThing request
+
+	// GetThing Get a thing by id
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with GET /things/{id} (the `getThing` operationId).
 	GetThing(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetThing Get a thing by id
+// Takes any type of body and a specified content type.
+//
+// Corresponds with GET /things/{id} (the `getThing` operationId).
 func (c *Client) GetThing(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetThingRequest(c.Server, id)
 	if err != nil {
@@ -116,7 +124,7 @@ func (c *Client) GetThing(ctx context.Context, id string, reqEditors ...RequestE
 	return c.Client.Do(req)
 }
 
-// NewGetThingRequest generates requests for GetThing
+// NewGetThingRequest constructs an http.Request for the GetThing method
 func NewGetThingRequest(server string, id string) (*http.Request, error) {
 	var err error
 
@@ -193,7 +201,11 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetThingWithResponse request
+
+	// GetThingWithResponse Get a thing by id
+	// Takes any type of body and a specified content type,, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /things/{id} (the `getThing` operationId).
 	GetThingWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetThingResponse, error)
 }
 
@@ -228,7 +240,10 @@ func (r GetThingResponse) ContentType() string {
 	return ""
 }
 
-// GetThingWithResponse request returning *GetThingResponse
+// GetThingWithResponse Get a thing by id
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /things/{id} (the `getThing` operationId).
 func (c *ClientWithResponses) GetThingWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetThingResponse, error) {
 	rsp, err := c.GetThing(ctx, id, reqEditors...)
 	if err != nil {
