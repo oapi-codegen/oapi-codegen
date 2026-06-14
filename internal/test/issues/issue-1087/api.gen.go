@@ -209,27 +209,27 @@ type GetThingsResponse struct {
 	JSON500      *externalRef0.DefaultError
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetThingsResponse) GetJSON200() *ThingResponse {
 	return r.JSON200
 }
 
-// GetJSON401 returns JSON401
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
 func (r GetThingsResponse) GetJSON401() *externalRef0.N401 {
 	return r.JSON401
 }
 
-// GetJSON403 returns JSON403
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
 func (r GetThingsResponse) GetJSON403() *externalRef0.N403 {
 	return r.JSON403
 }
 
-// GetJSON404 returns JSON404
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
 func (r GetThingsResponse) GetJSON404() *N404 {
 	return r.JSON404
 }
 
-// GetJSON500 returns JSON500
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
 func (r GetThingsResponse) GetJSON500() *externalRef0.DefaultError {
 	return r.JSON500
 }

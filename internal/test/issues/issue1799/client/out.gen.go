@@ -422,12 +422,12 @@ type GetGetMultibodyResponse struct {
 	ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200 *string
 }
 
-// GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 returns ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200
+// GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 returns the response for an HTTP 200 `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` response
 func (r GetGetMultibodyResponse) GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200() *string {
 	return r.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200
 }
 
-// GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200 returns ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200
+// GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200 returns the response for an HTTP 200 `application/ld+json; profile="https://www.w3.org/ns/activitystreams2"` response
 func (r GetGetMultibodyResponse) GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200() *string {
 	return r.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200
 }
@@ -467,7 +467,7 @@ type GetObjectResponse struct {
 	ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 *string
 }
 
-// GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 returns ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200
+// GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 returns the response for an HTTP 200 `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` response
 func (r GetObjectResponse) GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200() *string {
 	return r.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200
 }

@@ -225,7 +225,7 @@ type GetFooResponse struct {
 	JSON200      *string
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetFooResponse) GetJSON200() *string {
 	return r.JSON200
 }

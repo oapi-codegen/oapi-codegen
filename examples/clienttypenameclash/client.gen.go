@@ -187,7 +187,7 @@ type UpdateClientResp struct {
 	JSON400      *UpdateClientResponse
 }
 
-// GetJSON400 returns JSON400
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
 func (r UpdateClientResp) GetJSON400() *UpdateClientResponse {
 	return r.JSON400
 }

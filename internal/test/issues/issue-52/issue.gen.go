@@ -203,7 +203,7 @@ type ExampleGetResponse struct {
 	JSON200      *Document
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r ExampleGetResponse) GetJSON200() *Document {
 	return r.JSON200
 }

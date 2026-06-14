@@ -295,7 +295,7 @@ type GetPetResponse struct {
 	JSON200      *Pet
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetPetResponse) GetJSON200() *Pet {
 	return r.JSON200
 }
@@ -336,12 +336,12 @@ type ValidatePetsResponse struct {
 	JSONDefault  *Error
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r ValidatePetsResponse) GetJSON200() *[]Pet {
 	return r.JSON200
 }
 
-// GetJSONDefault returns JSONDefault
+// GetJSONDefault returns the response for an HTTP default `application/json` response
 func (r ValidatePetsResponse) GetJSONDefault() *Error {
 	return r.JSONDefault
 }

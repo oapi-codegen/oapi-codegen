@@ -227,7 +227,7 @@ type GetTestResponse struct {
 	JSON200      *B
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetTestResponse) GetJSON200() *B {
 	return r.JSON200
 }
@@ -267,7 +267,7 @@ type GetTestAlias0Response struct {
 	JSON200      *B
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetTestAlias0Response) GetJSON200() *B {
 	return r.JSON200
 }

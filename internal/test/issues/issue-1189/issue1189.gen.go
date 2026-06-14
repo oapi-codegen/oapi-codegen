@@ -400,7 +400,7 @@ type TestResponse struct {
 	JSON200      *Test
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r TestResponse) GetJSON200() *Test {
 	return r.JSON200
 }

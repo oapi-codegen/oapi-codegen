@@ -445,12 +445,12 @@ type FindPetsResponse struct {
 	JSONDefault  *Error
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r FindPetsResponse) GetJSON200() *[]Pet {
 	return r.JSON200
 }
 
-// GetJSONDefault returns JSONDefault
+// GetJSONDefault returns the response for an HTTP default `application/json` response
 func (r FindPetsResponse) GetJSONDefault() *Error {
 	return r.JSONDefault
 }
@@ -491,12 +491,12 @@ type AddPetResponse struct {
 	JSONDefault  *Error
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r AddPetResponse) GetJSON200() *Pet {
 	return r.JSON200
 }
 
-// GetJSONDefault returns JSONDefault
+// GetJSONDefault returns the response for an HTTP default `application/json` response
 func (r AddPetResponse) GetJSONDefault() *Error {
 	return r.JSONDefault
 }
@@ -536,7 +536,7 @@ type DeletePetResponse struct {
 	JSONDefault  *Error
 }
 
-// GetJSONDefault returns JSONDefault
+// GetJSONDefault returns the response for an HTTP default `application/json` response
 func (r DeletePetResponse) GetJSONDefault() *Error {
 	return r.JSONDefault
 }
@@ -577,12 +577,12 @@ type FindPetByIDResponse struct {
 	JSONDefault  *Error
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r FindPetByIDResponse) GetJSON200() *Pet {
 	return r.JSON200
 }
 
-// GetJSONDefault returns JSONDefault
+// GetJSONDefault returns the response for an HTTP default `application/json` response
 func (r FindPetByIDResponse) GetJSONDefault() *Error {
 	return r.JSONDefault
 }

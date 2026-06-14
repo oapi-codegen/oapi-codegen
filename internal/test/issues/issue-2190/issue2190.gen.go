@@ -188,7 +188,7 @@ type GetTestResponse struct {
 	JSON200      *Success
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetTestResponse) GetJSON200() *Success {
 	return r.JSON200
 }

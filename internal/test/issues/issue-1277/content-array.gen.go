@@ -275,7 +275,7 @@ type TestResponse struct {
 	JSON200      *[]Test200JSONResponseBody_Item
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r TestResponse) GetJSON200() *[]Test200JSONResponseBody_Item {
 	return r.JSON200
 }

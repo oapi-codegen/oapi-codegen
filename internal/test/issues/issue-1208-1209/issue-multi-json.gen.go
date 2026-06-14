@@ -208,22 +208,22 @@ type TestResponse struct {
 	ApplicationfooJSON201 *BazApplicationFooPlusJSON
 }
 
-// GetApplicationbarJSON200 returns ApplicationbarJSON200
+// GetApplicationbarJSON200 returns the response for an HTTP 200 `application/bar+json` response
 func (r TestResponse) GetApplicationbarJSON200() *Bar {
 	return r.ApplicationbarJSON200
 }
 
-// GetApplicationfooJSON200 returns ApplicationfooJSON200
+// GetApplicationfooJSON200 returns the response for an HTTP 200 `application/foo+json` response
 func (r TestResponse) GetApplicationfooJSON200() *Foo {
 	return r.ApplicationfooJSON200
 }
 
-// GetApplicationbarJSON201 returns ApplicationbarJSON201
+// GetApplicationbarJSON201 returns the response for an HTTP 201 `application/bar+json` response
 func (r TestResponse) GetApplicationbarJSON201() *BazApplicationBarPlusJSON {
 	return r.ApplicationbarJSON201
 }
 
-// GetApplicationfooJSON201 returns ApplicationfooJSON201
+// GetApplicationfooJSON201 returns the response for an HTTP 201 `application/foo+json` response
 func (r TestResponse) GetApplicationfooJSON201() *BazApplicationFooPlusJSON {
 	return r.ApplicationfooJSON201
 }
