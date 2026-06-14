@@ -400,15 +400,19 @@ func (o *OperationDefinition) HasBody() bool {
 	return o.Spec.RequestBody != nil
 }
 
-// SummaryAsComment returns the Operations summary as a multi line comment
-func (o *OperationDefinition) SummaryAsComment() string {
+// SummaryAsComment returns the Operations summary as a Godoc-style multi line comment
+func (o *OperationDefinition) SummaryAsComment(prefix string) string {
 	if o.Summary == "" {
 		return ""
 	}
 	trimmed := strings.TrimSuffix(o.Summary, "\n")
 	parts := strings.Split(trimmed, "\n")
 	for i, p := range parts {
-		parts[i] = "// " + p
+		if i == 0 && prefix != "" {
+			parts[i] = "// " + prefix + " " + p
+		} else {
+			parts[i] = "// " + p
+		}
 	}
 	return strings.Join(parts, "\n")
 }

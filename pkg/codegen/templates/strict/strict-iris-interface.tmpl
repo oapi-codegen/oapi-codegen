@@ -193,7 +193,7 @@
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-{{range .}}{{if not .IsAlias}}{{.SummaryAsComment }}
+{{range .}}{{if not .IsAlias}}{{.SummaryAsComment .OperationId }}
 // ({{.Method}} {{.Path}})
 {{$opid := .OperationId -}}
 {{$opid}}(ctx context.Context, request {{$opid | ucFirst}}RequestObject) ({{$opid | ucFirst}}ResponseObject, error)
