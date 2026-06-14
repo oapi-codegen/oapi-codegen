@@ -77,7 +77,7 @@ type ClientInterface interface {
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
-    // {{$opid}}{{if .HasBody}}WithBody{{end}} request{{if .HasBody}} with any body{{end}}
+    // {{$opid}}{{if .HasBody}}WithBody{{end}} request{{if .HasBody}}, with any body, and a specified content type{{end}}
     {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error)
 {{range .Bodies}}
     {{if .IsSupportedByClient -}}
@@ -163,7 +163,7 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
 {{end -}}
 {{end}}
 
-// New{{$opid}}Request{{if .HasBody}}WithBody{{end}} generates requests for {{$opid}}{{if .HasBody}} with any type of body{{end}}
+// New{{$opid}}Request{{if .HasBody}}WithBody{{end}} constructs an http.Request for the {{$opid}} method{{if .HasBody}}, with any body, and a specified content type{{end}}
 func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*http.Request, error) {
     var err error
 {{range $paramIdx, $param := .PathParams}}
