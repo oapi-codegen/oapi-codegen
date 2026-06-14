@@ -388,7 +388,7 @@ func ParseGetPetsResponse(rsp *http.Response) (*GetPetsResponse, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Get a list of pets
+	// GetPets Get a list of pets
 	// (GET /pets)
 	GetPets(ctx echo.Context) error
 }

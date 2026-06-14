@@ -462,10 +462,10 @@ func ParseValidatePetsResponse(rsp *http.Response) (*ValidatePetsResponse, error
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Get pet given identifier.
+	// GetPet Get pet given identifier.
 	// (GET /pets/{petId})
 	GetPet(ctx echo.Context, petId string) error
-	// Validate pets
+	// ValidatePets Validate pets
 	// (POST /pets:validate)
 	ValidatePets(ctx echo.Context) error
 }

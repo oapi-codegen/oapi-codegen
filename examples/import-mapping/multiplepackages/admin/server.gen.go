@@ -14,7 +14,7 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Get a user's details
+	// GetUserById Get a user's details
 	// (GET /admin/user/{id})
 	GetUserById(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 }
@@ -23,7 +23,7 @@ type ServerInterface interface {
 
 type Unimplemented struct{}
 
-// Get a user's details
+// GetUserById Get a user's details
 // (GET /admin/user/{id})
 func (_ Unimplemented) GetUserById(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
 	w.WriteHeader(http.StatusNotImplemented)

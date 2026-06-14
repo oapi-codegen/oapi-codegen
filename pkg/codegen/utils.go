@@ -1163,3 +1163,10 @@ func isAdditionalPropertiesExplicitFalse(s *openapi3.Schema) bool {
 
 	return !*s.AdditionalProperties.Has
 }
+
+// normalizeWhitespace converts `\n`, `\r` and `\r\n` to `\n`, and removes any trailing newline(s)
+func normalizeWhitespace(s string) string {
+	s = strings.ReplaceAll(s, "\r\n", "\n")
+	s = strings.ReplaceAll(s, "\r", "\n")
+	return strings.TrimRight(s, "\n\r")
+}

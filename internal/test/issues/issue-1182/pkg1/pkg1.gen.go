@@ -244,7 +244,7 @@ func ParseTestGetResponse(rsp *http.Response) (*TestGetResponse, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// get test response
+	// TestGet get test response
 	// (GET /test)
 	TestGet(ctx echo.Context) error
 }
@@ -330,7 +330,7 @@ func (response TestGet200Response) VisitTestGetResponse(w http.ResponseWriter) e
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-	// get test response
+	// TestGet get test response
 	// (GET /test)
 	TestGet(ctx context.Context, request TestGetRequestObject) (TestGetResponseObject, error)
 }
