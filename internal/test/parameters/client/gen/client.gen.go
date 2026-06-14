@@ -154,7 +154,7 @@ type GetQueryFormParams struct {
 	N1s *string `form:"1s,omitempty" json:"1s,omitempty"`
 }
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.

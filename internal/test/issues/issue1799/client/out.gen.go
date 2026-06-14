@@ -32,7 +32,7 @@ type PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams
 // PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody defines body for PostPostObject for application/ld+json; profile="https://www.w3.org/ns/activitystreams" ContentType.
 type PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody = PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
