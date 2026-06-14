@@ -109,7 +109,7 @@ func (c *Client) TestGet(ctx context.Context, reqEditors ...RequestEditorFn) (*h
 	return c.Client.Do(req)
 }
 
-// NewTestGetRequest generates requests for TestGet
+// NewTestGetRequest constructs an http.Request for the TestGet method
 func NewTestGetRequest(server string) (*http.Request, error) {
 	var err error
 

@@ -567,7 +567,7 @@ type ClientInterface interface {
 	// ListEntities request
 	ListEntities(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostFooWithBody request with any body
+	// PostFooWithBody request, with any body, and a specified content type
 	PostFooWithBody(ctx context.Context, params *PostFooParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostFoo(ctx context.Context, params *PostFooParams, body PostFooJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -575,12 +575,12 @@ type ClientInterface interface {
 	// ListItems request
 	ListItems(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateItemWithBody request with any body
+	// CreateItemWithBody request, with any body, and a specified content type
 	CreateItemWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	CreateItem(ctx context.Context, body CreateItemJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateOrderWithBody request with any body
+	// CreateOrderWithBody request, with any body, and a specified content type
 	CreateOrderWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	CreateOrder(ctx context.Context, body CreateOrderJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -592,22 +592,22 @@ type ClientInterface interface {
 	// GetOutcome request
 	GetOutcome(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostOutcomeWithBody request with any body
+	// PostOutcomeWithBody request, with any body, and a specified content type
 	PostOutcomeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostOutcome(ctx context.Context, body PostOutcomeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// SendPayloadWithBody request with any body
+	// SendPayloadWithBody request, with any body, and a specified content type
 	SendPayloadWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	SendPayload(ctx context.Context, body SendPayloadJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreatePetWithBody request with any body
+	// CreatePetWithBody request, with any body, and a specified content type
 	CreatePetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	CreatePet(ctx context.Context, body CreatePetJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// QueryWithBody request with any body
+	// QueryWithBody request, with any body, and a specified content type
 	QueryWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	Query(ctx context.Context, body QueryJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -615,7 +615,7 @@ type ClientInterface interface {
 	// GetQux request
 	GetQux(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostQuxWithBody request with any body
+	// PostQuxWithBody request, with any body, and a specified content type
 	PostQuxWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostQux(ctx context.Context, body PostQuxJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -623,12 +623,12 @@ type ClientInterface interface {
 	// GetRenamedSchema request
 	GetRenamedSchema(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostRenamedSchemaWithBody request with any body
+	// PostRenamedSchemaWithBody request, with any body, and a specified content type
 	PostRenamedSchemaWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostRenamedSchema(ctx context.Context, body PostRenamedSchemaJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PatchResourceWithBody request with any body
+	// PatchResourceWithBody request, with any body, and a specified content type
 	PatchResourceWithBody(ctx context.Context, id string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PatchResource(ctx context.Context, id string, body PatchResourceJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -643,7 +643,7 @@ type ClientInterface interface {
 	// GetZap request
 	GetZap(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostZapWithBody request with any body
+	// PostZapWithBody request, with any body, and a specified content type
 	PostZapWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostZap(ctx context.Context, body PostZapJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1045,7 +1045,7 @@ func (c *Client) PostZap(ctx context.Context, body PostZapJSONRequestBody, reqEd
 	return c.Client.Do(req)
 }
 
-// NewListEntitiesRequest generates requests for ListEntities
+// NewListEntitiesRequest constructs an http.Request for the ListEntities method
 func NewListEntitiesRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -1083,7 +1083,7 @@ func NewPostFooRequest(server string, params *PostFooParams, body PostFooJSONReq
 	return NewPostFooRequestWithBody(server, params, "application/json", bodyReader)
 }
 
-// NewPostFooRequestWithBody generates requests for PostFoo with any type of body
+// NewPostFooRequestWithBody constructs an http.Request for the PostFoo method, with any body, and a specified content type
 func NewPostFooRequestWithBody(server string, params *PostFooParams, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1139,7 +1139,7 @@ func NewPostFooRequestWithBody(server string, params *PostFooParams, contentType
 	return req, nil
 }
 
-// NewListItemsRequest generates requests for ListItems
+// NewListItemsRequest constructs an http.Request for the ListItems method
 func NewListItemsRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -1177,7 +1177,7 @@ func NewCreateItemRequest(server string, body CreateItemJSONRequestBody) (*http.
 	return NewCreateItemRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewCreateItemRequestWithBody generates requests for CreateItem with any type of body
+// NewCreateItemRequestWithBody constructs an http.Request for the CreateItem method, with any body, and a specified content type
 func NewCreateItemRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1239,7 +1239,7 @@ func NewCreateOrderRequestWithApplicationMergePatchPlusJSONBody(server string, b
 	return NewCreateOrderRequestWithBody(server, "application/merge-patch+json", bodyReader)
 }
 
-// NewCreateOrderRequestWithBody generates requests for CreateOrder with any type of body
+// NewCreateOrderRequestWithBody constructs an http.Request for the CreateOrder method, with any body, and a specified content type
 func NewCreateOrderRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1268,7 +1268,7 @@ func NewCreateOrderRequestWithBody(server string, contentType string, body io.Re
 	return req, nil
 }
 
-// NewGetOutcomeRequest generates requests for GetOutcome
+// NewGetOutcomeRequest constructs an http.Request for the GetOutcome method
 func NewGetOutcomeRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -1306,7 +1306,7 @@ func NewPostOutcomeRequest(server string, body PostOutcomeJSONRequestBody) (*htt
 	return NewPostOutcomeRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostOutcomeRequestWithBody generates requests for PostOutcome with any type of body
+// NewPostOutcomeRequestWithBody constructs an http.Request for the PostOutcome method, with any body, and a specified content type
 func NewPostOutcomeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1346,7 +1346,7 @@ func NewSendPayloadRequest(server string, body SendPayloadJSONRequestBody) (*htt
 	return NewSendPayloadRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewSendPayloadRequestWithBody generates requests for SendPayload with any type of body
+// NewSendPayloadRequestWithBody constructs an http.Request for the SendPayload method, with any body, and a specified content type
 func NewSendPayloadRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1386,7 +1386,7 @@ func NewCreatePetRequest(server string, body CreatePetJSONRequestBody) (*http.Re
 	return NewCreatePetRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewCreatePetRequestWithBody generates requests for CreatePet with any type of body
+// NewCreatePetRequestWithBody constructs an http.Request for the CreatePet method, with any body, and a specified content type
 func NewCreatePetRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1426,7 +1426,7 @@ func NewQueryRequest(server string, body QueryJSONRequestBody) (*http.Request, e
 	return NewQueryRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewQueryRequestWithBody generates requests for Query with any type of body
+// NewQueryRequestWithBody constructs an http.Request for the Query method, with any body, and a specified content type
 func NewQueryRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1455,7 +1455,7 @@ func NewQueryRequestWithBody(server string, contentType string, body io.Reader) 
 	return req, nil
 }
 
-// NewGetQuxRequest generates requests for GetQux
+// NewGetQuxRequest constructs an http.Request for the GetQux method
 func NewGetQuxRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -1493,7 +1493,7 @@ func NewPostQuxRequest(server string, body PostQuxJSONRequestBody) (*http.Reques
 	return NewPostQuxRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostQuxRequestWithBody generates requests for PostQux with any type of body
+// NewPostQuxRequestWithBody constructs an http.Request for the PostQux method, with any body, and a specified content type
 func NewPostQuxRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1522,7 +1522,7 @@ func NewPostQuxRequestWithBody(server string, contentType string, body io.Reader
 	return req, nil
 }
 
-// NewGetRenamedSchemaRequest generates requests for GetRenamedSchema
+// NewGetRenamedSchemaRequest constructs an http.Request for the GetRenamedSchema method
 func NewGetRenamedSchemaRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -1560,7 +1560,7 @@ func NewPostRenamedSchemaRequest(server string, body PostRenamedSchemaJSONReques
 	return NewPostRenamedSchemaRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostRenamedSchemaRequestWithBody generates requests for PostRenamedSchema with any type of body
+// NewPostRenamedSchemaRequestWithBody constructs an http.Request for the PostRenamedSchema method, with any body, and a specified content type
 func NewPostRenamedSchemaRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1622,7 +1622,7 @@ func NewPatchResourceRequestWithApplicationMergePatchPlusJSONBody(server string,
 	return NewPatchResourceRequestWithBody(server, id, "application/merge-patch+json", bodyReader)
 }
 
-// NewPatchResourceRequestWithBody generates requests for PatchResource with any type of body
+// NewPatchResourceRequestWithBody constructs an http.Request for the PatchResource method, with any body, and a specified content type
 func NewPatchResourceRequestWithBody(server string, id string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1658,7 +1658,7 @@ func NewPatchResourceRequestWithBody(server string, id string, contentType strin
 	return req, nil
 }
 
-// NewGetStatusRequest generates requests for GetStatus
+// NewGetStatusRequest constructs an http.Request for the GetStatus method
 func NewGetStatusRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -1685,7 +1685,7 @@ func NewGetStatusRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetZapRequest generates requests for GetZap
+// NewGetZapRequest constructs an http.Request for the GetZap method
 func NewGetZapRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -1723,7 +1723,7 @@ func NewPostZapRequest(server string, body PostZapJSONRequestBody) (*http.Reques
 	return NewPostZapRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostZapRequestWithBody generates requests for PostZap with any type of body
+// NewPostZapRequestWithBody constructs an http.Request for the PostZap method, with any body, and a specified content type
 func NewPostZapRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 

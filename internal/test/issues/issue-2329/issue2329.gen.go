@@ -191,7 +191,7 @@ type ClientInterface interface {
 	// ListThings request
 	ListThings(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateThingWithBody request with any body
+	// CreateThingWithBody request, with any body, and a specified content type
 	CreateThingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	CreateThing(ctx context.Context, body CreateThingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -233,7 +233,7 @@ func (c *Client) CreateThing(ctx context.Context, body CreateThingJSONRequestBod
 	return c.Client.Do(req)
 }
 
-// NewListThingsRequest generates requests for ListThings
+// NewListThingsRequest constructs an http.Request for the ListThings method
 func NewListThingsRequest(server string, params *ListThingsParams) (*http.Request, error) {
 	var err error
 
@@ -310,7 +310,7 @@ func NewCreateThingRequest(server string, body CreateThingJSONRequestBody) (*htt
 	return NewCreateThingRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewCreateThingRequestWithBody generates requests for CreateThing with any type of body
+// NewCreateThingRequestWithBody constructs an http.Request for the CreateThing method, with any body, and a specified content type
 func NewCreateThingRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 

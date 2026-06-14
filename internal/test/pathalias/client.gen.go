@@ -117,7 +117,7 @@ func (c *Client) GetTestAlias0(ctx context.Context, reqEditors ...RequestEditorF
 	return c.Client.Do(req)
 }
 
-// NewGetTestRequest generates requests for GetTest
+// NewGetTestRequest constructs an http.Request for the GetTest method
 func NewGetTestRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -144,7 +144,7 @@ func NewGetTestRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetTestAlias0Request generates requests for GetTestAlias0
+// NewGetTestAlias0Request constructs an http.Request for the GetTestAlias0 method
 func NewGetTestAlias0Request(server string) (*http.Request, error) {
 	var err error
 

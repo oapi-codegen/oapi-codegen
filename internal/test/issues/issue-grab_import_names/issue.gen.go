@@ -119,7 +119,7 @@ func (c *Client) GetFoo(ctx context.Context, params *GetFooParams, reqEditors ..
 	return c.Client.Do(req)
 }
 
-// NewGetFooRequest generates requests for GetFoo
+// NewGetFooRequest constructs an http.Request for the GetFoo method
 func NewGetFooRequest(server string, params *GetFooParams) (*http.Request, error) {
 	var err error
 

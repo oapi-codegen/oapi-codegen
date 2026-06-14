@@ -111,14 +111,14 @@ type ClientInterface interface {
 	// GetObject request
 	GetObject(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostPostMultibodyWithBody request with any body
+	// PostPostMultibodyWithBody request, with any body, and a specified content type
 	PostPostMultibodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostPostMultibodyWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body(ctx context.Context, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostPostObjectWithBody request with any body
+	// PostPostObjectWithBody request, with any body, and a specified content type
 	PostPostObjectWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostPostObjectWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(ctx context.Context, body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -208,7 +208,7 @@ func (c *Client) PostPostObjectWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsac
 	return c.Client.Do(req)
 }
 
-// NewGetGetMultibodyRequest generates requests for GetGetMultibody
+// NewGetGetMultibodyRequest constructs an http.Request for the GetGetMultibody method
 func NewGetGetMultibodyRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -235,7 +235,7 @@ func NewGetGetMultibodyRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetObjectRequest generates requests for GetObject
+// NewGetObjectRequest constructs an http.Request for the GetObject method
 func NewGetObjectRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -284,7 +284,7 @@ func NewPostPostMultibodyRequestWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsa
 	return NewPostPostMultibodyRequestWithBody(server, "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"", bodyReader)
 }
 
-// NewPostPostMultibodyRequestWithBody generates requests for PostPostMultibody with any type of body
+// NewPostPostMultibodyRequestWithBody constructs an http.Request for the PostPostMultibody method, with any body, and a specified content type
 func NewPostPostMultibodyRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -324,7 +324,7 @@ func NewPostPostObjectRequestWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsacti
 	return NewPostPostObjectRequestWithBody(server, "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"", bodyReader)
 }
 
-// NewPostPostObjectRequestWithBody generates requests for PostPostObject with any type of body
+// NewPostPostObjectRequestWithBody constructs an http.Request for the PostPostObject method, with any body, and a specified content type
 func NewPostPostObjectRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 

@@ -206,7 +206,7 @@ func (c *Client) GetHttpPet(ctx context.Context, petId string, reqEditors ...Req
 	return c.Client.Do(req)
 }
 
-// NewGetHttpPetRequest generates requests for GetHttpPet
+// NewGetHttpPetRequest constructs an http.Request for the GetHttpPet method
 func NewGetHttpPetRequest(server string, petId string) (*http.Request, error) {
 	var err error
 

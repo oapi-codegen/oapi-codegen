@@ -154,7 +154,7 @@ func (c *Client) GetFoo(ctx context.Context, reqEditors ...RequestEditorFn) (*ht
 	return c.Client.Do(req)
 }
 
-// NewGetFooRequest generates requests for GetFoo
+// NewGetFooRequest constructs an http.Request for the GetFoo method
 func NewGetFooRequest(server string) (*http.Request, error) {
 	var err error
 

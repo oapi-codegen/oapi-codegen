@@ -127,7 +127,7 @@ type ClientInterface interface {
 	// ListThings request
 	ListThings(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// AddThingWithBody request with any body
+	// AddThingWithBody request, with any body, and a specified content type
 	AddThingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	AddThing(ctx context.Context, body AddThingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -169,7 +169,7 @@ func (c *Client) AddThing(ctx context.Context, body AddThingJSONRequestBody, req
 	return c.Client.Do(req)
 }
 
-// NewListThingsRequest generates requests for ListThings
+// NewListThingsRequest constructs an http.Request for the ListThings method
 func NewListThingsRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -207,7 +207,7 @@ func NewAddThingRequest(server string, body AddThingJSONRequestBody) (*http.Requ
 	return NewAddThingRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewAddThingRequestWithBody generates requests for AddThing with any type of body
+// NewAddThingRequestWithBody constructs an http.Request for the AddThing method, with any body, and a specified content type
 func NewAddThingRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 

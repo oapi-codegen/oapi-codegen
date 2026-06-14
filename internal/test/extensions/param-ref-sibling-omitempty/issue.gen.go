@@ -111,7 +111,7 @@ func (c *Client) ListThings(ctx context.Context, params *ListThingsParams, reqEd
 	return c.Client.Do(req)
 }
 
-// NewListThingsRequest generates requests for ListThings
+// NewListThingsRequest constructs an http.Request for the ListThings method
 func NewListThingsRequest(server string, params *ListThingsParams) (*http.Request, error) {
 	var err error
 

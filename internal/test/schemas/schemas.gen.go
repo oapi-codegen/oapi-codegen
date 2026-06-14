@@ -210,7 +210,7 @@ type ClientInterface interface {
 	// Issue127 request
 	Issue127(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue185WithBody request with any body
+	// Issue185WithBody request, with any body, and a specified content type
 	Issue185WithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	Issue185(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -227,7 +227,7 @@ type ClientInterface interface {
 	// Issue41 request
 	Issue41(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue9WithBody request with any body
+	// Issue9WithBody request, with any body, and a specified content type
 	Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -380,7 +380,7 @@ func (c *Client) Issue975(ctx context.Context, reqEditors ...RequestEditorFn) (*
 	return c.Client.Do(req)
 }
 
-// NewEnsureEverythingIsReferencedRequest generates requests for EnsureEverythingIsReferenced
+// NewEnsureEverythingIsReferencedRequest constructs an http.Request for the EnsureEverythingIsReferenced method
 func NewEnsureEverythingIsReferencedRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -407,7 +407,7 @@ func NewEnsureEverythingIsReferencedRequest(server string) (*http.Request, error
 	return req, nil
 }
 
-// NewIssue1051Request generates requests for Issue1051
+// NewIssue1051Request constructs an http.Request for the Issue1051 method
 func NewIssue1051Request(server string) (*http.Request, error) {
 	var err error
 
@@ -434,7 +434,7 @@ func NewIssue1051Request(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewIssue127Request generates requests for Issue127
+// NewIssue127Request constructs an http.Request for the Issue127 method
 func NewIssue127Request(server string) (*http.Request, error) {
 	var err error
 
@@ -472,7 +472,7 @@ func NewIssue185Request(server string, body Issue185JSONRequestBody) (*http.Requ
 	return NewIssue185RequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewIssue185RequestWithBody generates requests for Issue185 with any type of body
+// NewIssue185RequestWithBody constructs an http.Request for the Issue185 method, with any body, and a specified content type
 func NewIssue185RequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -501,7 +501,7 @@ func NewIssue185RequestWithBody(server string, contentType string, body io.Reade
 	return req, nil
 }
 
-// NewIssue209Request generates requests for Issue209
+// NewIssue209Request constructs an http.Request for the Issue209 method
 func NewIssue209Request(server string, str StringInPath) (*http.Request, error) {
 	var err error
 
@@ -535,7 +535,7 @@ func NewIssue209Request(server string, str StringInPath) (*http.Request, error) 
 	return req, nil
 }
 
-// NewIssue30Request generates requests for Issue30
+// NewIssue30Request constructs an http.Request for the Issue30 method
 func NewIssue30Request(server string, pFallthrough string) (*http.Request, error) {
 	var err error
 
@@ -569,7 +569,7 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 	return req, nil
 }
 
-// NewGetIssues375Request generates requests for GetIssues375
+// NewGetIssues375Request constructs an http.Request for the GetIssues375 method
 func NewGetIssues375Request(server string) (*http.Request, error) {
 	var err error
 
@@ -596,7 +596,7 @@ func NewGetIssues375Request(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewIssue41Request generates requests for Issue41
+// NewIssue41Request constructs an http.Request for the Issue41 method
 func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request, error) {
 	var err error
 
@@ -641,7 +641,7 @@ func NewIssue9Request(server string, params *Issue9Params, body Issue9JSONReques
 	return NewIssue9RequestWithBody(server, params, "application/json", bodyReader)
 }
 
-// NewIssue9RequestWithBody generates requests for Issue9 with any type of body
+// NewIssue9RequestWithBody constructs an http.Request for the Issue9 method, with any body, and a specified content type
 func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -693,7 +693,7 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 	return req, nil
 }
 
-// NewIssue975Request generates requests for Issue975
+// NewIssue975Request constructs an http.Request for the Issue975 method
 func NewIssue975Request(server string) (*http.Request, error) {
 	var err error
 

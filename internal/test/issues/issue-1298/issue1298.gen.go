@@ -99,7 +99,7 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// TestWithBody request with any body
+	// TestWithBody request, with any body, and a specified content type
 	TestWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	TestWithApplicationTestPlusJSONBody(ctx context.Context, body TestApplicationTestPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -140,7 +140,7 @@ func NewTestRequestWithApplicationTestPlusJSONBody(server string, body TestAppli
 	return NewTestRequestWithBody(server, "application/test+json", bodyReader)
 }
 
-// NewTestRequestWithBody generates requests for Test with any type of body
+// NewTestRequestWithBody constructs an http.Request for the Test method, with any body, and a specified content type
 func NewTestRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 

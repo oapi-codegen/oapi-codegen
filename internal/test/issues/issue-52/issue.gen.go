@@ -123,7 +123,7 @@ func (c *Client) ExampleGet(ctx context.Context, reqEditors ...RequestEditorFn) 
 	return c.Client.Do(req)
 }
 
-// NewExampleGetRequest generates requests for ExampleGet
+// NewExampleGetRequest constructs an http.Request for the ExampleGet method
 func NewExampleGetRequest(server string) (*http.Request, error) {
 	var err error
 

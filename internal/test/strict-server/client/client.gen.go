@@ -224,18 +224,18 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// JSONExampleWithBody request with any body
+	// JSONExampleWithBody request, with any body, and a specified content type
 	JSONExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	JSONExample(ctx context.Context, body JSONExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// MultipartExampleWithBody request with any body
+	// MultipartExampleWithBody request, with any body, and a specified content type
 	MultipartExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// MultipartRelatedExampleWithBody request with any body
+	// MultipartRelatedExampleWithBody request, with any body, and a specified content type
 	MultipartRelatedExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// MultipleRequestAndResponseTypesWithBody request with any body
+	// MultipleRequestAndResponseTypesWithBody request, with any body, and a specified content type
 	MultipleRequestAndResponseTypesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	MultipleRequestAndResponseTypes(ctx context.Context, body MultipleRequestAndResponseTypesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -247,12 +247,12 @@ type ClientInterface interface {
 	// NoContentHeaders request
 	NoContentHeaders(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// RequiredJSONBodyWithBody request with any body
+	// RequiredJSONBodyWithBody request, with any body, and a specified content type
 	RequiredJSONBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	RequiredJSONBody(ctx context.Context, body RequiredJSONBodyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// RequiredTextBodyWithBody request with any body
+	// RequiredTextBodyWithBody request, with any body, and a specified content type
 	RequiredTextBodyWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	RequiredTextBodyWithTextBody(ctx context.Context, body RequiredTextBodyTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -260,33 +260,33 @@ type ClientInterface interface {
 	// ReservedGoKeywordParameters request
 	ReservedGoKeywordParameters(ctx context.Context, pType string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ReusableResponsesWithBody request with any body
+	// ReusableResponsesWithBody request, with any body, and a specified content type
 	ReusableResponsesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	ReusableResponses(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// TextExampleWithBody request with any body
+	// TextExampleWithBody request, with any body, and a specified content type
 	TextExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	TextExampleWithTextBody(ctx context.Context, body TextExampleTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UnknownExampleWithBody request with any body
+	// UnknownExampleWithBody request, with any body, and a specified content type
 	UnknownExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UnspecifiedContentTypeWithBody request with any body
+	// UnspecifiedContentTypeWithBody request, with any body, and a specified content type
 	UnspecifiedContentTypeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// URLEncodedExampleWithBody request with any body
+	// URLEncodedExampleWithBody request, with any body, and a specified content type
 	URLEncodedExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	URLEncodedExampleWithFormdataBody(ctx context.Context, body URLEncodedExampleFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// HeadersExampleWithBody request with any body
+	// HeadersExampleWithBody request, with any body, and a specified content type
 	HeadersExampleWithBody(ctx context.Context, params *HeadersExampleParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	HeadersExample(ctx context.Context, params *HeadersExampleParams, body HeadersExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// UnionExampleWithBody request with any body
+	// UnionExampleWithBody request, with any body, and a specified content type
 	UnionExampleWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	UnionExample(ctx context.Context, body UnionExampleJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -615,7 +615,7 @@ func NewJSONExampleRequest(server string, body JSONExampleJSONRequestBody) (*htt
 	return NewJSONExampleRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewJSONExampleRequestWithBody generates requests for JSONExample with any type of body
+// NewJSONExampleRequestWithBody constructs an http.Request for the JSONExample method, with any body, and a specified content type
 func NewJSONExampleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -644,7 +644,7 @@ func NewJSONExampleRequestWithBody(server string, contentType string, body io.Re
 	return req, nil
 }
 
-// NewMultipartExampleRequestWithBody generates requests for MultipartExample with any type of body
+// NewMultipartExampleRequestWithBody constructs an http.Request for the MultipartExample method, with any body, and a specified content type
 func NewMultipartExampleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -673,7 +673,7 @@ func NewMultipartExampleRequestWithBody(server string, contentType string, body 
 	return req, nil
 }
 
-// NewMultipartRelatedExampleRequestWithBody generates requests for MultipartRelatedExample with any type of body
+// NewMultipartRelatedExampleRequestWithBody constructs an http.Request for the MultipartRelatedExample method, with any body, and a specified content type
 func NewMultipartRelatedExampleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -735,7 +735,7 @@ func NewMultipleRequestAndResponseTypesRequestWithTextBody(server string, body M
 	return NewMultipleRequestAndResponseTypesRequestWithBody(server, "text/plain", bodyReader)
 }
 
-// NewMultipleRequestAndResponseTypesRequestWithBody generates requests for MultipleRequestAndResponseTypes with any type of body
+// NewMultipleRequestAndResponseTypesRequestWithBody constructs an http.Request for the MultipleRequestAndResponseTypes method, with any body, and a specified content type
 func NewMultipleRequestAndResponseTypesRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -764,7 +764,7 @@ func NewMultipleRequestAndResponseTypesRequestWithBody(server string, contentTyp
 	return req, nil
 }
 
-// NewNoContentHeadersRequest generates requests for NoContentHeaders
+// NewNoContentHeadersRequest constructs an http.Request for the NoContentHeaders method
 func NewNoContentHeadersRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -802,7 +802,7 @@ func NewRequiredJSONBodyRequest(server string, body RequiredJSONBodyJSONRequestB
 	return NewRequiredJSONBodyRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewRequiredJSONBodyRequestWithBody generates requests for RequiredJSONBody with any type of body
+// NewRequiredJSONBodyRequestWithBody constructs an http.Request for the RequiredJSONBody method, with any body, and a specified content type
 func NewRequiredJSONBodyRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -842,7 +842,7 @@ func NewRequiredTextBodyRequestWithTextBody(server string, body RequiredTextBody
 	return NewRequiredTextBodyRequestWithBody(server, "text/plain", bodyReader)
 }
 
-// NewRequiredTextBodyRequestWithBody generates requests for RequiredTextBody with any type of body
+// NewRequiredTextBodyRequestWithBody constructs an http.Request for the RequiredTextBody method, with any body, and a specified content type
 func NewRequiredTextBodyRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -871,7 +871,7 @@ func NewRequiredTextBodyRequestWithBody(server string, contentType string, body 
 	return req, nil
 }
 
-// NewReservedGoKeywordParametersRequest generates requests for ReservedGoKeywordParameters
+// NewReservedGoKeywordParametersRequest constructs an http.Request for the ReservedGoKeywordParameters method
 func NewReservedGoKeywordParametersRequest(server string, pType string) (*http.Request, error) {
 	var err error
 
@@ -916,7 +916,7 @@ func NewReusableResponsesRequest(server string, body ReusableResponsesJSONReques
 	return NewReusableResponsesRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewReusableResponsesRequestWithBody generates requests for ReusableResponses with any type of body
+// NewReusableResponsesRequestWithBody constructs an http.Request for the ReusableResponses method, with any body, and a specified content type
 func NewReusableResponsesRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -956,7 +956,7 @@ func NewTextExampleRequestWithTextBody(server string, body TextExampleTextReques
 	return NewTextExampleRequestWithBody(server, "text/plain", bodyReader)
 }
 
-// NewTextExampleRequestWithBody generates requests for TextExample with any type of body
+// NewTextExampleRequestWithBody constructs an http.Request for the TextExample method, with any body, and a specified content type
 func NewTextExampleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -985,7 +985,7 @@ func NewTextExampleRequestWithBody(server string, contentType string, body io.Re
 	return req, nil
 }
 
-// NewUnknownExampleRequestWithBody generates requests for UnknownExample with any type of body
+// NewUnknownExampleRequestWithBody constructs an http.Request for the UnknownExample method, with any body, and a specified content type
 func NewUnknownExampleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1014,7 +1014,7 @@ func NewUnknownExampleRequestWithBody(server string, contentType string, body io
 	return req, nil
 }
 
-// NewUnspecifiedContentTypeRequestWithBody generates requests for UnspecifiedContentType with any type of body
+// NewUnspecifiedContentTypeRequestWithBody constructs an http.Request for the UnspecifiedContentType method, with any body, and a specified content type
 func NewUnspecifiedContentTypeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1054,7 +1054,7 @@ func NewURLEncodedExampleRequestWithFormdataBody(server string, body URLEncodedE
 	return NewURLEncodedExampleRequestWithBody(server, "application/x-www-form-urlencoded", bodyReader)
 }
 
-// NewURLEncodedExampleRequestWithBody generates requests for URLEncodedExample with any type of body
+// NewURLEncodedExampleRequestWithBody constructs an http.Request for the URLEncodedExample method, with any body, and a specified content type
 func NewURLEncodedExampleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1094,7 +1094,7 @@ func NewHeadersExampleRequest(server string, params *HeadersExampleParams, body 
 	return NewHeadersExampleRequestWithBody(server, params, "application/json", bodyReader)
 }
 
-// NewHeadersExampleRequestWithBody generates requests for HeadersExample with any type of body
+// NewHeadersExampleRequestWithBody constructs an http.Request for the HeadersExample method, with any body, and a specified content type
 func NewHeadersExampleRequestWithBody(server string, params *HeadersExampleParams, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -1158,7 +1158,7 @@ func NewUnionExampleRequest(server string, body UnionExampleJSONRequestBody) (*h
 	return NewUnionExampleRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewUnionExampleRequestWithBody generates requests for UnionExample with any type of body
+// NewUnionExampleRequestWithBody constructs an http.Request for the UnionExample method, with any body, and a specified content type
 func NewUnionExampleRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 

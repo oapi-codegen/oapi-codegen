@@ -99,12 +99,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// PostPetWithBody request with any body
+	// PostPetWithBody request, with any body, and a specified content type
 	PostPetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostPetWithTextBody(ctx context.Context, body PostPetTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostPet1234WithBody request with any body
+	// PostPet1234WithBody request, with any body, and a specified content type
 	PostPet1234WithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	PostPet1234WithTextBody(ctx context.Context, body PostPet1234TextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -169,7 +169,7 @@ func NewPostPetRequestWithTextBody(server string, body PostPetTextRequestBody) (
 	return NewPostPetRequestWithBody(server, "text/plain", bodyReader)
 }
 
-// NewPostPetRequestWithBody generates requests for PostPet with any type of body
+// NewPostPetRequestWithBody constructs an http.Request for the PostPet method, with any body, and a specified content type
 func NewPostPetRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -209,7 +209,7 @@ func NewPostPet1234RequestWithTextBody(server string, body PostPet1234TextReques
 	return NewPostPet1234RequestWithBody(server, "text/plain", bodyReader)
 }
 
-// NewPostPet1234RequestWithBody generates requests for PostPet1234 with any type of body
+// NewPostPet1234RequestWithBody constructs an http.Request for the PostPet1234 method, with any body, and a specified content type
 func NewPostPet1234RequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 

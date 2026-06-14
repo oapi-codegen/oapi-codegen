@@ -108,7 +108,7 @@ func (c *Client) GetTest(ctx context.Context, params *GetTestParams, reqEditors 
 	return c.Client.Do(req)
 }
 
-// NewGetTestRequest generates requests for GetTest
+// NewGetTestRequest constructs an http.Request for the GetTest method
 func NewGetTestRequest(server string, params *GetTestParams) (*http.Request, error) {
 	var err error
 
