@@ -123,15 +123,34 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// ListThings request
+
+	// ListThings performs a GET /things (the `ListThings` operationId) request.
+	//
+	// Returns a list of things. Because this endpoint doesn't override the
+	// global security, it requires a JWT for authentication.
 	ListThings(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// AddThingWithBody request, with any body, and a specified content type
+	// AddThingWithBody performs a POST /things (the `AddThing` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Adds a thing to the list of things. This endpoints overrides the global
+	// security scheme and requires a `things:w` scope in order to perform a
+	// write.
 	AddThingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// AddThing performs a POST /things (the `AddThing` operationId) request.
+	// Takes a body of the `application/json` content type.
+	//
+	// Adds a thing to the list of things. This endpoints overrides the global
+	// security scheme and requires a `things:w` scope in order to perform a
+	// write.
 	AddThing(ctx context.Context, body AddThingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// ListThings performs a GET /things (the `ListThings` operationId) request.
+//
+// Returns a list of things. Because this endpoint doesn't override the
+// global security, it requires a JWT for authentication.
 func (c *Client) ListThings(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListThingsRequest(c.Server)
 	if err != nil {
@@ -144,6 +163,12 @@ func (c *Client) ListThings(ctx context.Context, reqEditors ...RequestEditorFn) 
 	return c.Client.Do(req)
 }
 
+// AddThingWithBody performs a POST /things (the `AddThing` operationId) request,
+// with any type of body and a specified content type.
+//
+// Adds a thing to the list of things. This endpoints overrides the global
+// security scheme and requires a `things:w` scope in order to perform a
+// write.
 func (c *Client) AddThingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewAddThingRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -156,6 +181,12 @@ func (c *Client) AddThingWithBody(ctx context.Context, contentType string, body 
 	return c.Client.Do(req)
 }
 
+// AddThing performs a POST /things (the `AddThing` operationId) request.
+// Takes a body of the `application/json` content type.
+//
+// Adds a thing to the list of things. This endpoints overrides the global
+// security scheme and requires a `things:w` scope in order to perform a
+// write.
 func (c *Client) AddThing(ctx context.Context, body AddThingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewAddThingRequest(c.Server, body)
 	if err != nil {
@@ -278,12 +309,31 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// ListThingsWithResponse request
+
+	// ListThingsWithResponse performs a GET /things (the `ListThings` operationId) request.
+	//
+	// Returns a list of things. Because this endpoint doesn't override the
+	// global security, it requires a JWT for authentication.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	ListThingsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListThingsResponse, error)
 
-	// AddThingWithBodyWithResponse request with any body
+	// AddThingWithBodyWithResponse performs a POST /things (the `AddThing` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Adds a thing to the list of things. This endpoints overrides the global
+	// security scheme and requires a `things:w` scope in order to perform a
+	// write.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	AddThingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddThingResponse, error)
 
+	// AddThingWithResponse performs a POST /things (the `AddThing` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Adds a thing to the list of things. This endpoints overrides the global
+	// security scheme and requires a `things:w` scope in order to perform a
+	// write.
 	AddThingWithResponse(ctx context.Context, body AddThingJSONRequestBody, reqEditors ...RequestEditorFn) (*AddThingResponse, error)
 }
 
@@ -369,7 +419,12 @@ func (r AddThingResponse) ContentType() string {
 	return ""
 }
 
-// ListThingsWithResponse request returning *ListThingsResponse
+// ListThingsWithResponse performs a GET /things (the `ListThings` operationId) request.
+//
+// Returns a list of things. Because this endpoint doesn't override the
+// global security, it requires a JWT for authentication.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ListThingsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListThingsResponse, error) {
 	rsp, err := c.ListThings(ctx, reqEditors...)
 	if err != nil {
@@ -378,7 +433,14 @@ func (c *ClientWithResponses) ListThingsWithResponse(ctx context.Context, reqEdi
 	return ParseListThingsResponse(rsp)
 }
 
-// AddThingWithBodyWithResponse request with arbitrary body returning *AddThingResponse
+// AddThingWithBodyWithResponse performs a POST /things (the `AddThing` operationId) request,
+// with any type of body and a specified content type.
+//
+// Adds a thing to the list of things. This endpoints overrides the global
+// security scheme and requires a `things:w` scope in order to perform a
+// write.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) AddThingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AddThingResponse, error) {
 	rsp, err := c.AddThingWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -387,6 +449,12 @@ func (c *ClientWithResponses) AddThingWithBodyWithResponse(ctx context.Context, 
 	return ParseAddThingResponse(rsp)
 }
 
+// AddThingWithResponse performs a POST /things (the `AddThing` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Adds a thing to the list of things. This endpoints overrides the global
+// security scheme and requires a `things:w` scope in order to perform a
+// write.
 func (c *ClientWithResponses) AddThingWithResponse(ctx context.Context, body AddThingJSONRequestBody, reqEditors ...RequestEditorFn) (*AddThingResponse, error) {
 	rsp, err := c.AddThing(ctx, body, reqEditors...)
 	if err != nil {

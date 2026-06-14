@@ -87,12 +87,18 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// ExamplePatchWithBody request, with any body, and a specified content type
+
+	// ExamplePatchWithBody performs a PATCH /example (the `ExamplePatch` operationId) request,
+	// with any type of body and a specified content type.
 	ExamplePatchWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ExamplePatch performs a PATCH /example (the `ExamplePatch` operationId) request.
+	// Takes a body of the `application/json` content type.
 	ExamplePatch(ctx context.Context, body ExamplePatchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// ExamplePatchWithBody performs a PATCH /example (the `ExamplePatch` operationId) request,
+// with any type of body and a specified content type.
 func (c *Client) ExamplePatchWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewExamplePatchRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -105,6 +111,8 @@ func (c *Client) ExamplePatchWithBody(ctx context.Context, contentType string, b
 	return c.Client.Do(req)
 }
 
+// ExamplePatch performs a PATCH /example (the `ExamplePatch` operationId) request.
+// Takes a body of the `application/json` content type.
 func (c *Client) ExamplePatch(ctx context.Context, body ExamplePatchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewExamplePatchRequest(c.Server, body)
 	if err != nil {
@@ -200,9 +208,15 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// ExamplePatchWithBodyWithResponse request with any body
+
+	// ExamplePatchWithBodyWithResponse performs a PATCH /example (the `ExamplePatch` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	ExamplePatchWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ExamplePatchResponse, error)
 
+	// ExamplePatchWithResponse performs a PATCH /example (the `ExamplePatch` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	ExamplePatchWithResponse(ctx context.Context, body ExamplePatchJSONRequestBody, reqEditors ...RequestEditorFn) (*ExamplePatchResponse, error)
 }
 
@@ -240,7 +254,10 @@ func (r ExamplePatchResponse) ContentType() string {
 	return ""
 }
 
-// ExamplePatchWithBodyWithResponse request with arbitrary body returning *ExamplePatchResponse
+// ExamplePatchWithBodyWithResponse performs a PATCH /example (the `ExamplePatch` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ExamplePatchWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ExamplePatchResponse, error) {
 	rsp, err := c.ExamplePatchWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -249,6 +266,8 @@ func (c *ClientWithResponses) ExamplePatchWithBodyWithResponse(ctx context.Conte
 	return ParseExamplePatchResponse(rsp)
 }
 
+// ExamplePatchWithResponse performs a PATCH /example (the `ExamplePatch` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ExamplePatchWithResponse(ctx context.Context, body ExamplePatchJSONRequestBody, reqEditors ...RequestEditorFn) (*ExamplePatchResponse, error) {
 	rsp, err := c.ExamplePatch(ctx, body, reqEditors...)
 	if err != nil {

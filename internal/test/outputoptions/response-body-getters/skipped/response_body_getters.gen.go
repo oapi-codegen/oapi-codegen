@@ -100,10 +100,16 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetThing request
+
+	// GetThing Get a thing by id
+	//
+	// Corresponds with GET /things/{id} (the `GetThing` operationId).
 	GetThing(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetThing Get a thing by id
+//
+// Corresponds with GET /things/{id} (the `GetThing` operationId).
 func (c *Client) GetThing(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetThingRequest(c.Server, id)
 	if err != nil {
@@ -193,7 +199,12 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetThingWithResponse request
+
+	// GetThingWithResponse Get a thing by id
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /things/{id} (the `GetThing` operationId).
 	GetThingWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetThingResponse, error)
 }
 
@@ -230,7 +241,11 @@ func (r GetThingResponse) ContentType() string {
 	return ""
 }
 
-// GetThingWithResponse request returning *GetThingResponse
+// GetThingWithResponse Get a thing by id
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /things/{id} (the `GetThing` operationId).
 func (c *ClientWithResponses) GetThingWithResponse(ctx context.Context, id string, reqEditors ...RequestEditorFn) (*GetThingResponse, error) {
 	rsp, err := c.GetThing(ctx, id, reqEditors...)
 	if err != nil {

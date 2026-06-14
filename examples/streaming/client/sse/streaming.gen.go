@@ -85,10 +85,20 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetStream request
+
+	// GetStream JSON Lines Stream
+	//
+	// Provides a stream of JSON documents (one per line, application/jsonl) containing a timestamp and sequence number.
+	//
+	// Corresponds with GET / (the `GetStream` operationId).
 	GetStream(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetStream JSON Lines Stream
+//
+// Provides a stream of JSON documents (one per line, application/jsonl) containing a timestamp and sequence number.
+//
+// Corresponds with GET / (the `GetStream` operationId).
 func (c *Client) GetStream(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetStreamRequest(c.Server)
 	if err != nil {
@@ -171,7 +181,14 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetStreamWithResponse request
+
+	// GetStreamWithResponse JSON Lines Stream
+	//
+	// Provides a stream of JSON documents (one per line, application/jsonl) containing a timestamp and sequence number.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET / (the `GetStream` operationId).
 	GetStreamWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetStreamResponse, error)
 }
 
@@ -209,7 +226,13 @@ func (r GetStreamResponse) ContentType() string {
 	return ""
 }
 
-// GetStreamWithResponse request returning *GetStreamResponse
+// GetStreamWithResponse JSON Lines Stream
+//
+// Provides a stream of JSON documents (one per line, application/jsonl) containing a timestamp and sequence number.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET / (the `GetStream` operationId).
 func (c *ClientWithResponses) GetStreamWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetStreamResponse, error) {
 	rsp, err := c.GetStream(ctx, reqEditors...)
 	if err != nil {

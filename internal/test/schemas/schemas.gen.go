@@ -201,41 +201,78 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// EnsureEverythingIsReferenced request
+
+	// EnsureEverythingIsReferenced performs a GET /ensure-everything-is-referenced (the `EnsureEverythingIsReferenced` operationId) request.
+	//
+	// This endpoint exists so that components can be created in this
+	// spec and not be pruned
 	EnsureEverythingIsReferenced(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue1051 request
+	// Issue1051 performs a GET /issues/1051 (the `Issue1051` operationId) request.
+	//
+	// Multiple media types contain JSON.
 	Issue1051(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue127 request
+	// Issue127 performs a GET /issues/127 (the `Issue127` operationId) request.
+	//
+	// Make sure unsupported context types don't preempt supported types.
 	Issue127(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue185WithBody request, with any body, and a specified content type
+	// Issue185WithBody performs a GET /issues/185 (the `Issue185` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Type generation when optional/required properties are nullable.
 	Issue185WithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// Issue185 performs a GET /issues/185 (the `Issue185` operationId) request.
+	// Takes a body of the `application/json` content type.
+	//
+	// Type generation when optional/required properties are nullable.
 	Issue185(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue209 request
+	// Issue209 performs a GET /issues/209/${str} (the `Issue209` operationId) request.
+	//
+	// Checks if parameters are declared properly.
 	Issue209(ctx context.Context, str StringInPath, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue30 request
+	// Issue30 performs a GET /issues/30/{fallthrough} (the `Issue30` operationId) request.
 	Issue30(ctx context.Context, pFallthrough string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetIssues375 request
+	// GetIssues375 performs a GET /issues/375 (the `GetIssues375` operationId) request.
+	//
+	// Enum declaration was generated twice if the enum was in an object
+	// which was inside of an array.
 	GetIssues375(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue41 request
+	// Issue41 performs a GET /issues/41/{1param} (the `Issue41` operationId) request.
+	//
+	// Parameter name starting with number.
 	Issue41(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue9WithBody request, with any body, and a specified content type
+	// Issue9WithBody performs a GET /issues/9 (the `Issue9` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Client params type incorrectly included for request with body and
+	// parameters.
 	Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// Issue9 performs a GET /issues/9 (the `Issue9` operationId) request.
+	// Takes a body of the `application/json` content type.
+	//
+	// Client params type incorrectly included for request with body and
+	// parameters.
 	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// Issue975 request
+	// Issue975 performs a GET /issues/975 (the `Issue975` operationId) request.
+	//
+	// Deprecated fields should get a proper comment.
 	Issue975(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// EnsureEverythingIsReferenced performs a GET /ensure-everything-is-referenced (the `EnsureEverythingIsReferenced` operationId) request.
+//
+// This endpoint exists so that components can be created in this
+// spec and not be pruned
 func (c *Client) EnsureEverythingIsReferenced(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewEnsureEverythingIsReferencedRequest(c.Server)
 	if err != nil {
@@ -248,6 +285,9 @@ func (c *Client) EnsureEverythingIsReferenced(ctx context.Context, reqEditors ..
 	return c.Client.Do(req)
 }
 
+// Issue1051 performs a GET /issues/1051 (the `Issue1051` operationId) request.
+//
+// Multiple media types contain JSON.
 func (c *Client) Issue1051(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIssue1051Request(c.Server)
 	if err != nil {
@@ -260,6 +300,9 @@ func (c *Client) Issue1051(ctx context.Context, reqEditors ...RequestEditorFn) (
 	return c.Client.Do(req)
 }
 
+// Issue127 performs a GET /issues/127 (the `Issue127` operationId) request.
+//
+// Make sure unsupported context types don't preempt supported types.
 func (c *Client) Issue127(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIssue127Request(c.Server)
 	if err != nil {
@@ -272,6 +315,10 @@ func (c *Client) Issue127(ctx context.Context, reqEditors ...RequestEditorFn) (*
 	return c.Client.Do(req)
 }
 
+// Issue185WithBody performs a GET /issues/185 (the `Issue185` operationId) request,
+// with any type of body and a specified content type.
+//
+// Type generation when optional/required properties are nullable.
 func (c *Client) Issue185WithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIssue185RequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -284,6 +331,10 @@ func (c *Client) Issue185WithBody(ctx context.Context, contentType string, body 
 	return c.Client.Do(req)
 }
 
+// Issue185 performs a GET /issues/185 (the `Issue185` operationId) request.
+// Takes a body of the `application/json` content type.
+//
+// Type generation when optional/required properties are nullable.
 func (c *Client) Issue185(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIssue185Request(c.Server, body)
 	if err != nil {
@@ -296,6 +347,9 @@ func (c *Client) Issue185(ctx context.Context, body Issue185JSONRequestBody, req
 	return c.Client.Do(req)
 }
 
+// Issue209 performs a GET /issues/209/${str} (the `Issue209` operationId) request.
+//
+// Checks if parameters are declared properly.
 func (c *Client) Issue209(ctx context.Context, str StringInPath, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIssue209Request(c.Server, str)
 	if err != nil {
@@ -308,6 +362,7 @@ func (c *Client) Issue209(ctx context.Context, str StringInPath, reqEditors ...R
 	return c.Client.Do(req)
 }
 
+// Issue30 performs a GET /issues/30/{fallthrough} (the `Issue30` operationId) request.
 func (c *Client) Issue30(ctx context.Context, pFallthrough string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIssue30Request(c.Server, pFallthrough)
 	if err != nil {
@@ -320,6 +375,10 @@ func (c *Client) Issue30(ctx context.Context, pFallthrough string, reqEditors ..
 	return c.Client.Do(req)
 }
 
+// GetIssues375 performs a GET /issues/375 (the `GetIssues375` operationId) request.
+//
+// Enum declaration was generated twice if the enum was in an object
+// which was inside of an array.
 func (c *Client) GetIssues375(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetIssues375Request(c.Server)
 	if err != nil {
@@ -332,6 +391,9 @@ func (c *Client) GetIssues375(ctx context.Context, reqEditors ...RequestEditorFn
 	return c.Client.Do(req)
 }
 
+// Issue41 performs a GET /issues/41/{1param} (the `Issue41` operationId) request.
+//
+// Parameter name starting with number.
 func (c *Client) Issue41(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIssue41Request(c.Server, n1param)
 	if err != nil {
@@ -344,6 +406,11 @@ func (c *Client) Issue41(ctx context.Context, n1param N5StartsWithNumber, reqEdi
 	return c.Client.Do(req)
 }
 
+// Issue9WithBody performs a GET /issues/9 (the `Issue9` operationId) request,
+// with any type of body and a specified content type.
+//
+// Client params type incorrectly included for request with body and
+// parameters.
 func (c *Client) Issue9WithBody(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIssue9RequestWithBody(c.Server, params, contentType, body)
 	if err != nil {
@@ -356,6 +423,11 @@ func (c *Client) Issue9WithBody(ctx context.Context, params *Issue9Params, conte
 	return c.Client.Do(req)
 }
 
+// Issue9 performs a GET /issues/9 (the `Issue9` operationId) request.
+// Takes a body of the `application/json` content type.
+//
+// Client params type incorrectly included for request with body and
+// parameters.
 func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIssue9Request(c.Server, params, body)
 	if err != nil {
@@ -368,6 +440,9 @@ func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JS
 	return c.Client.Do(req)
 }
 
+// Issue975 performs a GET /issues/975 (the `Issue975` operationId) request.
+//
+// Deprecated fields should get a proper comment.
 func (c *Client) Issue975(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIssue975Request(c.Server)
 	if err != nil {
@@ -763,38 +838,91 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// EnsureEverythingIsReferencedWithResponse request
+
+	// EnsureEverythingIsReferencedWithResponse performs a GET /ensure-everything-is-referenced (the `EnsureEverythingIsReferenced` operationId) request.
+	//
+	// This endpoint exists so that components can be created in this
+	// spec and not be pruned
+	//
+	// Returns a wrapper object for the known response body format(s).
 	EnsureEverythingIsReferencedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error)
 
-	// Issue1051WithResponse request
+	// Issue1051WithResponse performs a GET /issues/1051 (the `Issue1051` operationId) request.
+	//
+	// Multiple media types contain JSON.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	Issue1051WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue1051Response, error)
 
-	// Issue127WithResponse request
+	// Issue127WithResponse performs a GET /issues/127 (the `Issue127` operationId) request.
+	//
+	// Make sure unsupported context types don't preempt supported types.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	Issue127WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue127Response, error)
 
-	// Issue185WithBodyWithResponse request with any body
+	// Issue185WithBodyWithResponse performs a GET /issues/185 (the `Issue185` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Type generation when optional/required properties are nullable.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue185Response, error)
 
+	// Issue185WithResponse performs a GET /issues/185 (the `Issue185` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Type generation when optional/required properties are nullable.
 	Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue185Response, error)
 
-	// Issue209WithResponse request
+	// Issue209WithResponse performs a GET /issues/209/${str} (the `Issue209` operationId) request.
+	//
+	// Checks if parameters are declared properly.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	Issue209WithResponse(ctx context.Context, str StringInPath, reqEditors ...RequestEditorFn) (*Issue209Response, error)
 
-	// Issue30WithResponse request
+	// Issue30WithResponse performs a GET /issues/30/{fallthrough} (the `Issue30` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	Issue30WithResponse(ctx context.Context, pFallthrough string, reqEditors ...RequestEditorFn) (*Issue30Response, error)
 
-	// GetIssues375WithResponse request
+	// GetIssues375WithResponse performs a GET /issues/375 (the `GetIssues375` operationId) request.
+	//
+	// Enum declaration was generated twice if the enum was in an object
+	// which was inside of an array.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	GetIssues375WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetIssues375Response, error)
 
-	// Issue41WithResponse request
+	// Issue41WithResponse performs a GET /issues/41/{1param} (the `Issue41` operationId) request.
+	//
+	// Parameter name starting with number.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41Response, error)
 
-	// Issue9WithBodyWithResponse request with any body
+	// Issue9WithBodyWithResponse performs a GET /issues/9 (the `Issue9` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Client params type incorrectly included for request with body and
+	// parameters.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue9Response, error)
 
+	// Issue9WithResponse performs a GET /issues/9 (the `Issue9` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Client params type incorrectly included for request with body and
+	// parameters.
 	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error)
 
-	// Issue975WithResponse request
+	// Issue975WithResponse performs a GET /issues/975 (the `Issue975` operationId) request.
+	//
+	// Deprecated fields should get a proper comment.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	Issue975WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue975Response, error)
 }
 
@@ -1217,7 +1345,12 @@ func (r Issue975Response) ContentType() string {
 	return ""
 }
 
-// EnsureEverythingIsReferencedWithResponse request returning *EnsureEverythingIsReferencedResponse
+// EnsureEverythingIsReferencedWithResponse performs a GET /ensure-everything-is-referenced (the `EnsureEverythingIsReferenced` operationId) request.
+//
+// This endpoint exists so that components can be created in this
+// spec and not be pruned
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*EnsureEverythingIsReferencedResponse, error) {
 	rsp, err := c.EnsureEverythingIsReferenced(ctx, reqEditors...)
 	if err != nil {
@@ -1226,7 +1359,11 @@ func (c *ClientWithResponses) EnsureEverythingIsReferencedWithResponse(ctx conte
 	return ParseEnsureEverythingIsReferencedResponse(rsp)
 }
 
-// Issue1051WithResponse request returning *Issue1051Response
+// Issue1051WithResponse performs a GET /issues/1051 (the `Issue1051` operationId) request.
+//
+// Multiple media types contain JSON.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) Issue1051WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue1051Response, error) {
 	rsp, err := c.Issue1051(ctx, reqEditors...)
 	if err != nil {
@@ -1235,7 +1372,11 @@ func (c *ClientWithResponses) Issue1051WithResponse(ctx context.Context, reqEdit
 	return ParseIssue1051Response(rsp)
 }
 
-// Issue127WithResponse request returning *Issue127Response
+// Issue127WithResponse performs a GET /issues/127 (the `Issue127` operationId) request.
+//
+// Make sure unsupported context types don't preempt supported types.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) Issue127WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue127Response, error) {
 	rsp, err := c.Issue127(ctx, reqEditors...)
 	if err != nil {
@@ -1244,7 +1385,12 @@ func (c *ClientWithResponses) Issue127WithResponse(ctx context.Context, reqEdito
 	return ParseIssue127Response(rsp)
 }
 
-// Issue185WithBodyWithResponse request with arbitrary body returning *Issue185Response
+// Issue185WithBodyWithResponse performs a GET /issues/185 (the `Issue185` operationId) request,
+// with any type of body and a specified content type.
+//
+// Type generation when optional/required properties are nullable.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) Issue185WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue185Response, error) {
 	rsp, err := c.Issue185WithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -1253,6 +1399,10 @@ func (c *ClientWithResponses) Issue185WithBodyWithResponse(ctx context.Context, 
 	return ParseIssue185Response(rsp)
 }
 
+// Issue185WithResponse performs a GET /issues/185 (the `Issue185` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Type generation when optional/required properties are nullable.
 func (c *ClientWithResponses) Issue185WithResponse(ctx context.Context, body Issue185JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue185Response, error) {
 	rsp, err := c.Issue185(ctx, body, reqEditors...)
 	if err != nil {
@@ -1261,7 +1411,11 @@ func (c *ClientWithResponses) Issue185WithResponse(ctx context.Context, body Iss
 	return ParseIssue185Response(rsp)
 }
 
-// Issue209WithResponse request returning *Issue209Response
+// Issue209WithResponse performs a GET /issues/209/${str} (the `Issue209` operationId) request.
+//
+// Checks if parameters are declared properly.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) Issue209WithResponse(ctx context.Context, str StringInPath, reqEditors ...RequestEditorFn) (*Issue209Response, error) {
 	rsp, err := c.Issue209(ctx, str, reqEditors...)
 	if err != nil {
@@ -1270,7 +1424,9 @@ func (c *ClientWithResponses) Issue209WithResponse(ctx context.Context, str Stri
 	return ParseIssue209Response(rsp)
 }
 
-// Issue30WithResponse request returning *Issue30Response
+// Issue30WithResponse performs a GET /issues/30/{fallthrough} (the `Issue30` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthrough string, reqEditors ...RequestEditorFn) (*Issue30Response, error) {
 	rsp, err := c.Issue30(ctx, pFallthrough, reqEditors...)
 	if err != nil {
@@ -1279,7 +1435,12 @@ func (c *ClientWithResponses) Issue30WithResponse(ctx context.Context, pFallthro
 	return ParseIssue30Response(rsp)
 }
 
-// GetIssues375WithResponse request returning *GetIssues375Response
+// GetIssues375WithResponse performs a GET /issues/375 (the `GetIssues375` operationId) request.
+//
+// Enum declaration was generated twice if the enum was in an object
+// which was inside of an array.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetIssues375WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetIssues375Response, error) {
 	rsp, err := c.GetIssues375(ctx, reqEditors...)
 	if err != nil {
@@ -1288,7 +1449,11 @@ func (c *ClientWithResponses) GetIssues375WithResponse(ctx context.Context, reqE
 	return ParseGetIssues375Response(rsp)
 }
 
-// Issue41WithResponse request returning *Issue41Response
+// Issue41WithResponse performs a GET /issues/41/{1param} (the `Issue41` operationId) request.
+//
+// Parameter name starting with number.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N5StartsWithNumber, reqEditors ...RequestEditorFn) (*Issue41Response, error) {
 	rsp, err := c.Issue41(ctx, n1param, reqEditors...)
 	if err != nil {
@@ -1297,7 +1462,13 @@ func (c *ClientWithResponses) Issue41WithResponse(ctx context.Context, n1param N
 	return ParseIssue41Response(rsp)
 }
 
-// Issue9WithBodyWithResponse request with arbitrary body returning *Issue9Response
+// Issue9WithBodyWithResponse performs a GET /issues/9 (the `Issue9` operationId) request,
+// with any type of body and a specified content type.
+//
+// Client params type incorrectly included for request with body and
+// parameters.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, params *Issue9Params, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*Issue9Response, error) {
 	rsp, err := c.Issue9WithBody(ctx, params, contentType, body, reqEditors...)
 	if err != nil {
@@ -1306,6 +1477,11 @@ func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, pa
 	return ParseIssue9Response(rsp)
 }
 
+// Issue9WithResponse performs a GET /issues/9 (the `Issue9` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Client params type incorrectly included for request with body and
+// parameters.
 func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error) {
 	rsp, err := c.Issue9(ctx, params, body, reqEditors...)
 	if err != nil {
@@ -1314,7 +1490,11 @@ func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Is
 	return ParseIssue9Response(rsp)
 }
 
-// Issue975WithResponse request returning *Issue975Response
+// Issue975WithResponse performs a GET /issues/975 (the `Issue975` operationId) request.
+//
+// Deprecated fields should get a proper comment.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) Issue975WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*Issue975Response, error) {
 	rsp, err := c.Issue975(ctx, reqEditors...)
 	if err != nil {
