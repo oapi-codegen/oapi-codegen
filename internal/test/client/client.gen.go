@@ -39,7 +39,7 @@ type PostJsonJSONRequestBody = SchemaObject
 // PostVendorJsonApplicationVndAPIPlusJSONRequestBody defines body for PostVendorJson for application/vnd.api+json ContentType.
 type PostVendorJsonApplicationVndAPIPlusJSONRequestBody = PostVendorJsonApplicationVndAPIPlusJSONBody
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -112,37 +112,45 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// PostBothWithBody request with any body
+
+	// PostBothWithBody performs a POST /with_both_bodies (the `PostBoth` operationId) request, with any type of body, and a specified content type
 	PostBothWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostBoth performs a POST /with_both_bodies (the `PostBoth` operationId) request,
+	// with the `application/json` content type.
 	PostBoth(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetBoth request
+	// GetBoth performs a GET /with_both_responses (the `GetBoth` operationId) request
 	GetBoth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostJsonWithBody request with any body
+	// PostJsonWithBody performs a POST /with_json_body (the `PostJson` operationId) request, with any type of body, and a specified content type
 	PostJsonWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostJson performs a POST /with_json_body (the `PostJson` operationId) request,
+	// with the `application/json` content type.
 	PostJson(ctx context.Context, body PostJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetJson request
+	// GetJson performs a GET /with_json_response (the `GetJson` operationId) request
 	GetJson(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostOtherWithBody request with any body
+	// PostOtherWithBody performs a POST /with_other_body (the `PostOther` operationId) request, with any type of body, and a specified content type
 	PostOtherWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetOther request
+	// GetOther performs a GET /with_other_response (the `GetOther` operationId) request
 	GetOther(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetJsonWithTrailingSlash request
+	// GetJsonWithTrailingSlash performs a GET /with_trailing_slash/ (the `GetJsonWithTrailingSlash` operationId) request
 	GetJsonWithTrailingSlash(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostVendorJsonWithBody request with any body
+	// PostVendorJsonWithBody performs a POST /with_vendor_json (the `PostVendorJson` operationId) request, with any type of body, and a specified content type
 	PostVendorJsonWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostVendorJsonWithApplicationVndAPIPlusJSONBody performs a POST /with_vendor_json (the `PostVendorJson` operationId) request,
+	// with the `application/vnd.api+json` content type.
 	PostVendorJsonWithApplicationVndAPIPlusJSONBody(ctx context.Context, body PostVendorJsonApplicationVndAPIPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// PostBothWithBody performs a POST /with_both_bodies (the `PostBoth` operationId) request, with any type of body, and a specified content type
 func (c *Client) PostBothWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostBothRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -155,6 +163,8 @@ func (c *Client) PostBothWithBody(ctx context.Context, contentType string, body 
 	return c.Client.Do(req)
 }
 
+// PostBoth performs a POST /with_both_bodies (the `PostBoth` operationId) request,
+// with the `application/json` content type.
 func (c *Client) PostBoth(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostBothRequest(c.Server, body)
 	if err != nil {
@@ -167,6 +177,7 @@ func (c *Client) PostBoth(ctx context.Context, body PostBothJSONRequestBody, req
 	return c.Client.Do(req)
 }
 
+// GetBoth performs a GET /with_both_responses (the `GetBoth` operationId) request
 func (c *Client) GetBoth(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetBothRequest(c.Server)
 	if err != nil {
@@ -179,6 +190,7 @@ func (c *Client) GetBoth(ctx context.Context, reqEditors ...RequestEditorFn) (*h
 	return c.Client.Do(req)
 }
 
+// PostJsonWithBody performs a POST /with_json_body (the `PostJson` operationId) request, with any type of body, and a specified content type
 func (c *Client) PostJsonWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostJsonRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -191,6 +203,8 @@ func (c *Client) PostJsonWithBody(ctx context.Context, contentType string, body 
 	return c.Client.Do(req)
 }
 
+// PostJson performs a POST /with_json_body (the `PostJson` operationId) request,
+// with the `application/json` content type.
 func (c *Client) PostJson(ctx context.Context, body PostJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostJsonRequest(c.Server, body)
 	if err != nil {
@@ -203,6 +217,7 @@ func (c *Client) PostJson(ctx context.Context, body PostJsonJSONRequestBody, req
 	return c.Client.Do(req)
 }
 
+// GetJson performs a GET /with_json_response (the `GetJson` operationId) request
 func (c *Client) GetJson(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetJsonRequest(c.Server)
 	if err != nil {
@@ -215,6 +230,7 @@ func (c *Client) GetJson(ctx context.Context, reqEditors ...RequestEditorFn) (*h
 	return c.Client.Do(req)
 }
 
+// PostOtherWithBody performs a POST /with_other_body (the `PostOther` operationId) request, with any type of body, and a specified content type
 func (c *Client) PostOtherWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostOtherRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -227,6 +243,7 @@ func (c *Client) PostOtherWithBody(ctx context.Context, contentType string, body
 	return c.Client.Do(req)
 }
 
+// GetOther performs a GET /with_other_response (the `GetOther` operationId) request
 func (c *Client) GetOther(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOtherRequest(c.Server)
 	if err != nil {
@@ -239,6 +256,7 @@ func (c *Client) GetOther(ctx context.Context, reqEditors ...RequestEditorFn) (*
 	return c.Client.Do(req)
 }
 
+// GetJsonWithTrailingSlash performs a GET /with_trailing_slash/ (the `GetJsonWithTrailingSlash` operationId) request
 func (c *Client) GetJsonWithTrailingSlash(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetJsonWithTrailingSlashRequest(c.Server)
 	if err != nil {
@@ -251,6 +269,7 @@ func (c *Client) GetJsonWithTrailingSlash(ctx context.Context, reqEditors ...Req
 	return c.Client.Do(req)
 }
 
+// PostVendorJsonWithBody performs a POST /with_vendor_json (the `PostVendorJson` operationId) request, with any type of body, and a specified content type
 func (c *Client) PostVendorJsonWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostVendorJsonRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -263,6 +282,8 @@ func (c *Client) PostVendorJsonWithBody(ctx context.Context, contentType string,
 	return c.Client.Do(req)
 }
 
+// PostVendorJsonWithApplicationVndAPIPlusJSONBody performs a POST /with_vendor_json (the `PostVendorJson` operationId) request,
+// with the `application/vnd.api+json` content type.
 func (c *Client) PostVendorJsonWithApplicationVndAPIPlusJSONBody(ctx context.Context, body PostVendorJsonApplicationVndAPIPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostVendorJsonRequestWithApplicationVndAPIPlusJSONBody(c.Server, body)
 	if err != nil {
@@ -286,7 +307,7 @@ func NewPostBothRequest(server string, body PostBothJSONRequestBody) (*http.Requ
 	return NewPostBothRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostBothRequestWithBody generates requests for PostBoth with any type of body
+// NewPostBothRequestWithBody constructs an http.Request for the PostBoth method, with any body, and a specified content type
 func NewPostBothRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -315,7 +336,7 @@ func NewPostBothRequestWithBody(server string, contentType string, body io.Reade
 	return req, nil
 }
 
-// NewGetBothRequest generates requests for GetBoth
+// NewGetBothRequest constructs an http.Request for the GetBoth method
 func NewGetBothRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -353,7 +374,7 @@ func NewPostJsonRequest(server string, body PostJsonJSONRequestBody) (*http.Requ
 	return NewPostJsonRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPostJsonRequestWithBody generates requests for PostJson with any type of body
+// NewPostJsonRequestWithBody constructs an http.Request for the PostJson method, with any body, and a specified content type
 func NewPostJsonRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -382,7 +403,7 @@ func NewPostJsonRequestWithBody(server string, contentType string, body io.Reade
 	return req, nil
 }
 
-// NewGetJsonRequest generates requests for GetJson
+// NewGetJsonRequest constructs an http.Request for the GetJson method
 func NewGetJsonRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -409,7 +430,7 @@ func NewGetJsonRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewPostOtherRequestWithBody generates requests for PostOther with any type of body
+// NewPostOtherRequestWithBody constructs an http.Request for the PostOther method, with any body, and a specified content type
 func NewPostOtherRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -438,7 +459,7 @@ func NewPostOtherRequestWithBody(server string, contentType string, body io.Read
 	return req, nil
 }
 
-// NewGetOtherRequest generates requests for GetOther
+// NewGetOtherRequest constructs an http.Request for the GetOther method
 func NewGetOtherRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -465,7 +486,7 @@ func NewGetOtherRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetJsonWithTrailingSlashRequest generates requests for GetJsonWithTrailingSlash
+// NewGetJsonWithTrailingSlashRequest constructs an http.Request for the GetJsonWithTrailingSlash method
 func NewGetJsonWithTrailingSlashRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -503,7 +524,7 @@ func NewPostVendorJsonRequestWithApplicationVndAPIPlusJSONBody(server string, bo
 	return NewPostVendorJsonRequestWithBody(server, "application/vnd.api+json", bodyReader)
 }
 
-// NewPostVendorJsonRequestWithBody generates requests for PostVendorJson with any type of body
+// NewPostVendorJsonRequestWithBody constructs an http.Request for the PostVendorJson method, with any body, and a specified content type
 func NewPostVendorJsonRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -575,34 +596,41 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// PostBothWithBodyWithResponse request with any body
+
+	// PostBothWithBody performs a POST /with_both_bodies (the `PostBoth` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	PostBothWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostBothResponse, error)
 
+	// PostBoth performs a POST /with_both_bodies (the `PostBoth` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	PostBothWithResponse(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBothResponse, error)
 
-	// GetBothWithResponse request
+	// GetBoth performs a GET /with_both_responses (the `GetBoth` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetBothWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetBothResponse, error)
 
-	// PostJsonWithBodyWithResponse request with any body
+	// PostJsonWithBody performs a POST /with_json_body (the `PostJson` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	PostJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostJsonResponse, error)
 
+	// PostJson performs a POST /with_json_body (the `PostJson` operationId) request,
+	// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	PostJsonWithResponse(ctx context.Context, body PostJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*PostJsonResponse, error)
 
-	// GetJsonWithResponse request
+	// GetJson performs a GET /with_json_response (the `GetJson` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetJsonWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetJsonResponse, error)
 
-	// PostOtherWithBodyWithResponse request with any body
+	// PostOtherWithBody performs a POST /with_other_body (the `PostOther` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	PostOtherWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOtherResponse, error)
 
-	// GetOtherWithResponse request
+	// GetOther performs a GET /with_other_response (the `GetOther` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetOtherWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOtherResponse, error)
 
-	// GetJsonWithTrailingSlashWithResponse request
+	// GetJsonWithTrailingSlash performs a GET /with_trailing_slash/ (the `GetJsonWithTrailingSlash` operationId) request, and returns a wrapper object for the known response body format(s).
 	GetJsonWithTrailingSlashWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetJsonWithTrailingSlashResponse, error)
 
-	// PostVendorJsonWithBodyWithResponse request with any body
+	// PostVendorJsonWithBody performs a POST /with_vendor_json (the `PostVendorJson` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 	PostVendorJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostVendorJsonResponse, error)
 
+	// PostVendorJsonWithApplicationVndAPIPlusJSONBody performs a POST /with_vendor_json (the `PostVendorJson` operationId) request,
+	// with the `application/vnd.api+json` content type, and returns a wrapper object for the known response body format(s).
 	PostVendorJsonWithApplicationVndAPIPlusJSONBodyWithResponse(ctx context.Context, body PostVendorJsonApplicationVndAPIPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*PostVendorJsonResponse, error)
 }
 
@@ -878,7 +906,7 @@ func (r PostVendorJsonResponse) ContentType() string {
 	return ""
 }
 
-// PostBothWithBodyWithResponse request with arbitrary body returning *PostBothResponse
+// PostBothWithBody performs a POST /with_both_bodies (the `PostBoth` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostBothWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostBothResponse, error) {
 	rsp, err := c.PostBothWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -887,6 +915,8 @@ func (c *ClientWithResponses) PostBothWithBodyWithResponse(ctx context.Context, 
 	return ParsePostBothResponse(rsp)
 }
 
+// PostBoth performs a POST /with_both_bodies (the `PostBoth` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostBothWithResponse(ctx context.Context, body PostBothJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBothResponse, error) {
 	rsp, err := c.PostBoth(ctx, body, reqEditors...)
 	if err != nil {
@@ -895,7 +925,7 @@ func (c *ClientWithResponses) PostBothWithResponse(ctx context.Context, body Pos
 	return ParsePostBothResponse(rsp)
 }
 
-// GetBothWithResponse request returning *GetBothResponse
+// GetBoth performs a GET /with_both_responses (the `GetBoth` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetBothWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetBothResponse, error) {
 	rsp, err := c.GetBoth(ctx, reqEditors...)
 	if err != nil {
@@ -904,7 +934,7 @@ func (c *ClientWithResponses) GetBothWithResponse(ctx context.Context, reqEditor
 	return ParseGetBothResponse(rsp)
 }
 
-// PostJsonWithBodyWithResponse request with arbitrary body returning *PostJsonResponse
+// PostJsonWithBody performs a POST /with_json_body (the `PostJson` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostJsonResponse, error) {
 	rsp, err := c.PostJsonWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -913,6 +943,8 @@ func (c *ClientWithResponses) PostJsonWithBodyWithResponse(ctx context.Context, 
 	return ParsePostJsonResponse(rsp)
 }
 
+// PostJson performs a POST /with_json_body (the `PostJson` operationId) request,
+// with the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostJsonWithResponse(ctx context.Context, body PostJsonJSONRequestBody, reqEditors ...RequestEditorFn) (*PostJsonResponse, error) {
 	rsp, err := c.PostJson(ctx, body, reqEditors...)
 	if err != nil {
@@ -921,7 +953,7 @@ func (c *ClientWithResponses) PostJsonWithResponse(ctx context.Context, body Pos
 	return ParsePostJsonResponse(rsp)
 }
 
-// GetJsonWithResponse request returning *GetJsonResponse
+// GetJson performs a GET /with_json_response (the `GetJson` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetJsonWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetJsonResponse, error) {
 	rsp, err := c.GetJson(ctx, reqEditors...)
 	if err != nil {
@@ -930,7 +962,7 @@ func (c *ClientWithResponses) GetJsonWithResponse(ctx context.Context, reqEditor
 	return ParseGetJsonResponse(rsp)
 }
 
-// PostOtherWithBodyWithResponse request with arbitrary body returning *PostOtherResponse
+// PostOtherWithBody performs a POST /with_other_body (the `PostOther` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostOtherWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostOtherResponse, error) {
 	rsp, err := c.PostOtherWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -939,7 +971,7 @@ func (c *ClientWithResponses) PostOtherWithBodyWithResponse(ctx context.Context,
 	return ParsePostOtherResponse(rsp)
 }
 
-// GetOtherWithResponse request returning *GetOtherResponse
+// GetOther performs a GET /with_other_response (the `GetOther` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetOtherWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetOtherResponse, error) {
 	rsp, err := c.GetOther(ctx, reqEditors...)
 	if err != nil {
@@ -948,7 +980,7 @@ func (c *ClientWithResponses) GetOtherWithResponse(ctx context.Context, reqEdito
 	return ParseGetOtherResponse(rsp)
 }
 
-// GetJsonWithTrailingSlashWithResponse request returning *GetJsonWithTrailingSlashResponse
+// GetJsonWithTrailingSlash performs a GET /with_trailing_slash/ (the `GetJsonWithTrailingSlash` operationId) request, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetJsonWithTrailingSlashWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetJsonWithTrailingSlashResponse, error) {
 	rsp, err := c.GetJsonWithTrailingSlash(ctx, reqEditors...)
 	if err != nil {
@@ -957,7 +989,7 @@ func (c *ClientWithResponses) GetJsonWithTrailingSlashWithResponse(ctx context.C
 	return ParseGetJsonWithTrailingSlashResponse(rsp)
 }
 
-// PostVendorJsonWithBodyWithResponse request with arbitrary body returning *PostVendorJsonResponse
+// PostVendorJsonWithBody performs a POST /with_vendor_json (the `PostVendorJson` operationId) request, with any type of body, and a specified content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostVendorJsonWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostVendorJsonResponse, error) {
 	rsp, err := c.PostVendorJsonWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -966,6 +998,8 @@ func (c *ClientWithResponses) PostVendorJsonWithBodyWithResponse(ctx context.Con
 	return ParsePostVendorJsonResponse(rsp)
 }
 
+// PostVendorJsonWithApplicationVndAPIPlusJSONBody performs a POST /with_vendor_json (the `PostVendorJson` operationId) request,
+// with the `application/vnd.api+json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostVendorJsonWithApplicationVndAPIPlusJSONBodyWithResponse(ctx context.Context, body PostVendorJsonApplicationVndAPIPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*PostVendorJsonResponse, error) {
 	rsp, err := c.PostVendorJsonWithApplicationVndAPIPlusJSONBody(ctx, body, reqEditors...)
 	if err != nil {

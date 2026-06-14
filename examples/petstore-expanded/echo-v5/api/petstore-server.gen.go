@@ -21,16 +21,16 @@ import (
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Returns all pets
+	// FindPets Returns all pets
 	// (GET /pets)
 	FindPets(ctx *echo.Context, params FindPetsParams) error
-	// Creates a new pet
+	// AddPet Creates a new pet
 	// (POST /pets)
 	AddPet(ctx *echo.Context) error
-	// Deletes a pet by ID
+	// DeletePet Deletes a pet by ID
 	// (DELETE /pets/{id})
 	DeletePet(ctx *echo.Context, id int64) error
-	// Returns a pet by ID
+	// FindPetByID Returns a pet by ID
 	// (GET /pets/{id})
 	FindPetByID(ctx *echo.Context, id int64) error
 }

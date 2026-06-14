@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -85,10 +85,18 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetStream request
+
+	// GetStream JSON Lines Stream
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with GET / (the `getStream` operationId).
 	GetStream(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetStream JSON Lines Stream
+// Takes any type of body and a specified content type.
+//
+// Corresponds with GET / (the `getStream` operationId).
 func (c *Client) GetStream(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetStreamRequest(c.Server)
 	if err != nil {
@@ -101,7 +109,7 @@ func (c *Client) GetStream(ctx context.Context, reqEditors ...RequestEditorFn) (
 	return c.Client.Do(req)
 }
 
-// NewGetStreamRequest generates requests for GetStream
+// NewGetStreamRequest constructs an http.Request for the GetStream method
 func NewGetStreamRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -171,7 +179,11 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetStreamWithResponse request
+
+	// GetStreamWithResponse JSON Lines Stream
+	// Takes any type of body and a specified content type,, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET / (the `getStream` operationId).
 	GetStreamWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetStreamResponse, error)
 }
 
@@ -209,7 +221,10 @@ func (r GetStreamResponse) ContentType() string {
 	return ""
 }
 
-// GetStreamWithResponse request returning *GetStreamResponse
+// GetStreamWithResponse JSON Lines Stream
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET / (the `getStream` operationId).
 func (c *ClientWithResponses) GetStreamWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetStreamResponse, error) {
 	rsp, err := c.GetStream(ctx, reqEditors...)
 	if err != nil {
