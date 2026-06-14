@@ -26,7 +26,7 @@ type PostPetTextRequestBody = PostPetTextBody
 // PostPet1234TextRequestBody defines body for PostPet1234 for text/plain ContentType.
 type PostPet1234TextRequestBody = PostPet1234TextBody
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.

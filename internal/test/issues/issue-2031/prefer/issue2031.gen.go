@@ -19,7 +19,7 @@ type GetTestParams struct {
 	UserIds []int `form:"user_ids[],omitempty" json:"user_ids[],omitempty"`
 }
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
