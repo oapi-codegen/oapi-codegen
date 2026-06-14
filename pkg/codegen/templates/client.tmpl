@@ -83,7 +83,7 @@ type ClientInterface interface {
 {{- $opidSuffix = "WithBody" -}}
 {{- end -}}
     {{ if .Summary }}{{.SummaryAsComment (printf "%s%s" $opid $opidSuffix) }}
-    // Takes any type of body.
+    // Takes any type of body and a specified content type.
     //
     // Corresponds with {{.Method}} {{.Path}} (the `{{.SpecOperationId }}` operationId).
     {{ else }}
@@ -92,7 +92,7 @@ type ClientInterface interface {
     {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error)
 {{range .Bodies}}
     {{if .IsSupportedByClient -}}
-    {{ if $parent.Summary }}{{$parent.SummaryAsComment (printf "%s%s" $opid $opidSuffix) }}
+    {{ if $parent.Summary }}{{$parent.SummaryAsComment (printf "%s%s" $opid .Suffix) }}
     // Takes a body for the `{{ .ContentType }}` content type.
     //
     // Corresponds with {{$parent.Method}} {{$parent.Path}} (the `{{$parent.SpecOperationId }}` operationId).
@@ -119,7 +119,7 @@ type ClientInterface interface {
 {{- end -}}
 
 {{ if .Summary }}{{.SummaryAsComment (printf "%s%s" $opid $opidSuffix) }}
-// Takes any type of body.
+// Takes any type of body and a specified content type.
 //
 // Corresponds with {{.Method}} {{.Path}} (the `{{.SpecOperationId }}` operationId).
 {{ else }}
@@ -139,7 +139,7 @@ func (c *{{ $clientTypeName }}) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx cont
 
 {{range .Bodies}}
 {{if .IsSupportedByClient -}}
-{{ if $parent.Summary }}{{$parent.SummaryAsComment (printf "%s%s" $opid $opidSuffix) }}
+{{ if $parent.Summary }}{{$parent.SummaryAsComment (printf "%s%s" $opid .Suffix) }}
 // Takes a body for the `{{ .ContentType }}` content type.
 //
 // Corresponds with {{$parent.Method}} {{$parent.Path}} (the `{{$parent.SpecOperationId }}` operationId).
