@@ -38,7 +38,7 @@ type ClientWithResponsesInterface interface {
 {{- if .HasBody -}}
 {{- $opidSuffix = "WithBody" -}}
 {{- end -}}
-    {{ if .Summary }}{{.SummaryAsComment (printf "%s%s" $opid $opidSuffix) }}
+    {{ if .Summary }}{{.SummaryAsComment (printf "%s%sWithResponse" $opid $opidSuffix) }}
     // Takes any type of body and a specified content type,, and returns a wrapper object for the known response body format(s).
     //
     // Corresponds with {{.Method}} {{.Path}} (the `{{.SpecOperationId }}` operationId).
@@ -131,7 +131,7 @@ func (r {{genResponseTypeName $opid | ucFirst}}) ContentType() string {
 {{- end -}}
 {{/* Generate client methods (with responses)*/}}
 
-{{ if .Summary }}{{.SummaryAsComment (printf "%s%s" $opid $opidSuffix) }}
+{{ if .Summary }}{{.SummaryAsComment (printf "%s%sWithResponse" $opid $opidSuffix) }}
 // Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
 //
 // Corresponds with {{.Method}} {{.Path}} (the `{{.SpecOperationId }}` operationId).
@@ -151,7 +151,7 @@ func (c *ClientWithResponses) {{$opid}}{{if .HasBody}}WithBody{{end}}WithRespons
 {{$bodyRequired := .BodyRequired -}}
 {{range .Bodies}}
 {{if .IsSupportedByClient -}}
-{{ if $parent.Summary }}{{$parent.SummaryAsComment (printf "%s%s" $opid .Suffix) }}
+{{ if $parent.Summary }}{{$parent.SummaryAsComment (printf "%s%sWithResponse" .Suffix $opidSuffix) }}
 // Takes a body for the `{{ .ContentType }}` content type, and returns a wrapper object for the known response body format(s).
 //
 // Corresponds with {{$parent.Method}} {{$parent.Path}} (the `{{$parent.SpecOperationId }}` operationId).
