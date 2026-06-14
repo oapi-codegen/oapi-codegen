@@ -2,7 +2,9 @@
 type ServerInterface interface {
 {{range .}}{{if not .IsAlias}}{{.SummaryAsComment }}
 // ({{.Method}} {{.Path}})
-{{.OperationId}}(w http.ResponseWriter, r *http.Request{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
+{{with .DeprecationComment}}//
+{{.}}
+{{end}}{{.OperationId}}(w http.ResponseWriter, r *http.Request{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
 {{end}}{{end}}
 }
 
@@ -11,7 +13,9 @@ type ServerInterface interface {
 type Unimplemented struct {}
  {{range .}}{{if not .IsAlias}}{{.SummaryAsComment }}
  // ({{.Method}} {{.Path}})
- func (_ Unimplemented) {{.OperationId}}(w http.ResponseWriter, r *http.Request{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) {
+{{with .DeprecationComment}}//
+{{.}}
+{{end}} func (_ Unimplemented) {{.OperationId}}(w http.ResponseWriter, r *http.Request{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) {
 	w.WriteHeader(http.StatusNotImplemented)
  }
  {{end}}{{end}}

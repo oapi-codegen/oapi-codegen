@@ -1,0 +1,183 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Marking operations and types as deprecated
+components:
+  responses:
+    LegacyResponse:
+      description: A component-level response with a deprecated header
+      headers:
+        X-Old-Trace:
+          deprecated: true
+          x-deprecated-reason: Use X-Trace-Id instead.
+          schema:
+            type: string
+        X-Correlation-Id:
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              result:
+                type: string
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+    ClientWithExtension:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          deprecated: true
+          x-deprecated-reason: Don't use because reasons
+        id:
+          type: number
+          # NOTE that this doesn't generate, as no `deprecated: true` is set
+          x-deprecated-reason: NOTE you shouldn't see this, as you've not deprecated this field
+        deprecated_without_reason:
+          type: string
+          deprecated: true
+          # no `x-deprecated-reason` is set
+    DeprecatedObject:
+      type: object
+      deprecated: true
+      x-deprecated-reason: Don't use because reasons
+      properties:
+        this_is_fine:
+          type: string
+paths:
+  /deprecated_endpoint:
+    get:
+      deprecated: true
+      x-deprecated-reason: Use another endpoint instead.
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_deprecated:
+                    $ref: "#/components/schemas/ClientWithExtension"
+                  not_deprecated:
+                    type: string
+  /deprecated_field:
+    get:
+      parameters:
+        - name: old_filter
+          in: query
+          deprecated: true
+          x-deprecated-reason: Use new_filter instead.
+          schema:
+            type: string
+        - name: new_filter
+          in: query
+          schema:
+            type: string
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  is_deprecated:
+                    $ref: "#/components/schemas/ClientWithExtension"
+                  not_deprecated:
+                    type: string
+                  deprecated_on_allof:
+                    deprecated: true
+                    allOf:
+                      - $ref: "#/components/schemas/Client"
+                  deprecated_object:
+                    $ref: "#/components/schemas/DeprecatedObject"
+  /deprecated_params/{old_id}:
+    get:
+      parameters:
+        - name: old_id
+          in: path
+          required: true
+          deprecated: true
+          x-deprecated-reason: Use new_id instead.
+          schema:
+            type: string
+        - name: old_header
+          in: header
+          deprecated: true
+          x-deprecated-reason: Use Authorization instead.
+          schema:
+            type: string
+        - name: old_cookie
+          in: cookie
+          deprecated: true
+          x-deprecated-reason: Use session header instead.
+          schema:
+            type: string
+      responses:
+        200:
+          description: OK
+          headers:
+            X-Old-Token:
+              deprecated: true
+              x-deprecated-reason: Use the Authorization header instead.
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  result:
+                    type: string
+  /deprecated_request_body:
+    post:
+      deprecated: true
+      x-deprecated-reason: Use /clients instead.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeprecatedObject"
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeprecatedObject"
+  /clients:
+    post:
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Client"
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deprecated_ref_and_field:
+                    deprecated: true
+                    x-deprecated-reason: This field and its type are both deprecated.
+                    allOf:
+                      - $ref: "#/components/schemas/DeprecatedObject"
+  /legacy:
+    get:
+      responses:
+        200:
+          $ref: "#/components/responses/LegacyResponse"
