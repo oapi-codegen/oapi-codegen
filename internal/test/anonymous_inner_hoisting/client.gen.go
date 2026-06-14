@@ -550,29 +550,38 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// PostBodyPropertyOneOfWithBody request, with any body, and a specified content type
+
+	// PostBodyPropertyOneOfWithBody performs a POST /body-property-oneof (the `PostBodyPropertyOneOf` operationId) request,
+	// with any type of body and a specified content type.
 	PostBodyPropertyOneOfWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostBodyPropertyOneOf performs a POST /body-property-oneof (the `PostBodyPropertyOneOf` operationId) request.
+	// Takes a body of the `application/json` content type.
 	PostBodyPropertyOneOf(ctx context.Context, body PostBodyPropertyOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostBodyRootOneOfWithBody request, with any body, and a specified content type
+	// PostBodyRootOneOfWithBody performs a POST /body-root-oneof (the `PostBodyRootOneOf` operationId) request,
+	// with any type of body and a specified content type.
 	PostBodyRootOneOfWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostBodyRootOneOf performs a POST /body-root-oneof (the `PostBodyRootOneOf` operationId) request.
+	// Takes a body of the `application/json` content type.
 	PostBodyRootOneOf(ctx context.Context, body PostBodyRootOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetResponseDeepNested request
+	// GetResponseDeepNested performs a GET /response-deep-nested (the `GetResponseDeepNested` operationId) request.
 	GetResponseDeepNested(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetResponseItemsOneOf request
+	// GetResponseItemsOneOf performs a GET /response-items-oneof (the `GetResponseItemsOneOf` operationId) request.
 	GetResponseItemsOneOf(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetResponseRootAnyOf request
+	// GetResponseRootAnyOf performs a GET /response-root-anyof (the `GetResponseRootAnyOf` operationId) request.
 	GetResponseRootAnyOf(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetResponseRootOneOf request
+	// GetResponseRootOneOf performs a GET /response-root-oneof (the `GetResponseRootOneOf` operationId) request.
 	GetResponseRootOneOf(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// PostBodyPropertyOneOfWithBody performs a POST /body-property-oneof (the `PostBodyPropertyOneOf` operationId) request,
+// with any type of body and a specified content type.
 func (c *Client) PostBodyPropertyOneOfWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostBodyPropertyOneOfRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -585,6 +594,8 @@ func (c *Client) PostBodyPropertyOneOfWithBody(ctx context.Context, contentType 
 	return c.Client.Do(req)
 }
 
+// PostBodyPropertyOneOf performs a POST /body-property-oneof (the `PostBodyPropertyOneOf` operationId) request.
+// Takes a body of the `application/json` content type.
 func (c *Client) PostBodyPropertyOneOf(ctx context.Context, body PostBodyPropertyOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostBodyPropertyOneOfRequest(c.Server, body)
 	if err != nil {
@@ -597,6 +608,8 @@ func (c *Client) PostBodyPropertyOneOf(ctx context.Context, body PostBodyPropert
 	return c.Client.Do(req)
 }
 
+// PostBodyRootOneOfWithBody performs a POST /body-root-oneof (the `PostBodyRootOneOf` operationId) request,
+// with any type of body and a specified content type.
 func (c *Client) PostBodyRootOneOfWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostBodyRootOneOfRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -609,6 +622,8 @@ func (c *Client) PostBodyRootOneOfWithBody(ctx context.Context, contentType stri
 	return c.Client.Do(req)
 }
 
+// PostBodyRootOneOf performs a POST /body-root-oneof (the `PostBodyRootOneOf` operationId) request.
+// Takes a body of the `application/json` content type.
 func (c *Client) PostBodyRootOneOf(ctx context.Context, body PostBodyRootOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostBodyRootOneOfRequest(c.Server, body)
 	if err != nil {
@@ -621,6 +636,7 @@ func (c *Client) PostBodyRootOneOf(ctx context.Context, body PostBodyRootOneOfJS
 	return c.Client.Do(req)
 }
 
+// GetResponseDeepNested performs a GET /response-deep-nested (the `GetResponseDeepNested` operationId) request.
 func (c *Client) GetResponseDeepNested(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetResponseDeepNestedRequest(c.Server)
 	if err != nil {
@@ -633,6 +649,7 @@ func (c *Client) GetResponseDeepNested(ctx context.Context, reqEditors ...Reques
 	return c.Client.Do(req)
 }
 
+// GetResponseItemsOneOf performs a GET /response-items-oneof (the `GetResponseItemsOneOf` operationId) request.
 func (c *Client) GetResponseItemsOneOf(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetResponseItemsOneOfRequest(c.Server)
 	if err != nil {
@@ -645,6 +662,7 @@ func (c *Client) GetResponseItemsOneOf(ctx context.Context, reqEditors ...Reques
 	return c.Client.Do(req)
 }
 
+// GetResponseRootAnyOf performs a GET /response-root-anyof (the `GetResponseRootAnyOf` operationId) request.
 func (c *Client) GetResponseRootAnyOf(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetResponseRootAnyOfRequest(c.Server)
 	if err != nil {
@@ -657,6 +675,7 @@ func (c *Client) GetResponseRootAnyOf(ctx context.Context, reqEditors ...Request
 	return c.Client.Do(req)
 }
 
+// GetResponseRootOneOf performs a GET /response-root-oneof (the `GetResponseRootOneOf` operationId) request.
 func (c *Client) GetResponseRootOneOf(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetResponseRootOneOfRequest(c.Server)
 	if err != nil {
@@ -900,26 +919,45 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// PostBodyPropertyOneOfWithBodyWithResponse request with any body
+
+	// PostBodyPropertyOneOfWithBodyWithResponse performs a POST /body-property-oneof (the `PostBodyPropertyOneOf` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	PostBodyPropertyOneOfWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostBodyPropertyOneOfResponse, error)
 
+	// PostBodyPropertyOneOfWithResponse performs a POST /body-property-oneof (the `PostBodyPropertyOneOf` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	PostBodyPropertyOneOfWithResponse(ctx context.Context, body PostBodyPropertyOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBodyPropertyOneOfResponse, error)
 
-	// PostBodyRootOneOfWithBodyWithResponse request with any body
+	// PostBodyRootOneOfWithBodyWithResponse performs a POST /body-root-oneof (the `PostBodyRootOneOf` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	PostBodyRootOneOfWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostBodyRootOneOfResponse, error)
 
+	// PostBodyRootOneOfWithResponse performs a POST /body-root-oneof (the `PostBodyRootOneOf` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	PostBodyRootOneOfWithResponse(ctx context.Context, body PostBodyRootOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBodyRootOneOfResponse, error)
 
-	// GetResponseDeepNestedWithResponse request
+	// GetResponseDeepNestedWithResponse performs a GET /response-deep-nested (the `GetResponseDeepNested` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	GetResponseDeepNestedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetResponseDeepNestedResponse, error)
 
-	// GetResponseItemsOneOfWithResponse request
+	// GetResponseItemsOneOfWithResponse performs a GET /response-items-oneof (the `GetResponseItemsOneOf` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	GetResponseItemsOneOfWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetResponseItemsOneOfResponse, error)
 
-	// GetResponseRootAnyOfWithResponse request
+	// GetResponseRootAnyOfWithResponse performs a GET /response-root-anyof (the `GetResponseRootAnyOf` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	GetResponseRootAnyOfWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetResponseRootAnyOfResponse, error)
 
-	// GetResponseRootOneOfWithResponse request
+	// GetResponseRootOneOfWithResponse performs a GET /response-root-oneof (the `GetResponseRootOneOf` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	GetResponseRootOneOfWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetResponseRootOneOfResponse, error)
 }
 
@@ -1167,7 +1205,10 @@ func (r GetResponseRootOneOfResponse) ContentType() string {
 	return ""
 }
 
-// PostBodyPropertyOneOfWithBodyWithResponse request with arbitrary body returning *PostBodyPropertyOneOfResponse
+// PostBodyPropertyOneOfWithBodyWithResponse performs a POST /body-property-oneof (the `PostBodyPropertyOneOf` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostBodyPropertyOneOfWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostBodyPropertyOneOfResponse, error) {
 	rsp, err := c.PostBodyPropertyOneOfWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -1176,6 +1217,8 @@ func (c *ClientWithResponses) PostBodyPropertyOneOfWithBodyWithResponse(ctx cont
 	return ParsePostBodyPropertyOneOfResponse(rsp)
 }
 
+// PostBodyPropertyOneOfWithResponse performs a POST /body-property-oneof (the `PostBodyPropertyOneOf` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostBodyPropertyOneOfWithResponse(ctx context.Context, body PostBodyPropertyOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBodyPropertyOneOfResponse, error) {
 	rsp, err := c.PostBodyPropertyOneOf(ctx, body, reqEditors...)
 	if err != nil {
@@ -1184,7 +1227,10 @@ func (c *ClientWithResponses) PostBodyPropertyOneOfWithResponse(ctx context.Cont
 	return ParsePostBodyPropertyOneOfResponse(rsp)
 }
 
-// PostBodyRootOneOfWithBodyWithResponse request with arbitrary body returning *PostBodyRootOneOfResponse
+// PostBodyRootOneOfWithBodyWithResponse performs a POST /body-root-oneof (the `PostBodyRootOneOf` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostBodyRootOneOfWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostBodyRootOneOfResponse, error) {
 	rsp, err := c.PostBodyRootOneOfWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -1193,6 +1239,8 @@ func (c *ClientWithResponses) PostBodyRootOneOfWithBodyWithResponse(ctx context.
 	return ParsePostBodyRootOneOfResponse(rsp)
 }
 
+// PostBodyRootOneOfWithResponse performs a POST /body-root-oneof (the `PostBodyRootOneOf` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostBodyRootOneOfWithResponse(ctx context.Context, body PostBodyRootOneOfJSONRequestBody, reqEditors ...RequestEditorFn) (*PostBodyRootOneOfResponse, error) {
 	rsp, err := c.PostBodyRootOneOf(ctx, body, reqEditors...)
 	if err != nil {
@@ -1201,7 +1249,9 @@ func (c *ClientWithResponses) PostBodyRootOneOfWithResponse(ctx context.Context,
 	return ParsePostBodyRootOneOfResponse(rsp)
 }
 
-// GetResponseDeepNestedWithResponse request returning *GetResponseDeepNestedResponse
+// GetResponseDeepNestedWithResponse performs a GET /response-deep-nested (the `GetResponseDeepNested` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetResponseDeepNestedWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetResponseDeepNestedResponse, error) {
 	rsp, err := c.GetResponseDeepNested(ctx, reqEditors...)
 	if err != nil {
@@ -1210,7 +1260,9 @@ func (c *ClientWithResponses) GetResponseDeepNestedWithResponse(ctx context.Cont
 	return ParseGetResponseDeepNestedResponse(rsp)
 }
 
-// GetResponseItemsOneOfWithResponse request returning *GetResponseItemsOneOfResponse
+// GetResponseItemsOneOfWithResponse performs a GET /response-items-oneof (the `GetResponseItemsOneOf` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetResponseItemsOneOfWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetResponseItemsOneOfResponse, error) {
 	rsp, err := c.GetResponseItemsOneOf(ctx, reqEditors...)
 	if err != nil {
@@ -1219,7 +1271,9 @@ func (c *ClientWithResponses) GetResponseItemsOneOfWithResponse(ctx context.Cont
 	return ParseGetResponseItemsOneOfResponse(rsp)
 }
 
-// GetResponseRootAnyOfWithResponse request returning *GetResponseRootAnyOfResponse
+// GetResponseRootAnyOfWithResponse performs a GET /response-root-anyof (the `GetResponseRootAnyOf` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetResponseRootAnyOfWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetResponseRootAnyOfResponse, error) {
 	rsp, err := c.GetResponseRootAnyOf(ctx, reqEditors...)
 	if err != nil {
@@ -1228,7 +1282,9 @@ func (c *ClientWithResponses) GetResponseRootAnyOfWithResponse(ctx context.Conte
 	return ParseGetResponseRootAnyOfResponse(rsp)
 }
 
-// GetResponseRootOneOfWithResponse request returning *GetResponseRootOneOfResponse
+// GetResponseRootOneOfWithResponse performs a GET /response-root-oneof (the `GetResponseRootOneOf` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetResponseRootOneOfWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetResponseRootOneOfResponse, error) {
 	rsp, err := c.GetResponseRootOneOf(ctx, reqEditors...)
 	if err != nil {

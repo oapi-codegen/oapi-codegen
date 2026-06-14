@@ -107,10 +107,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// ExampleGet request
+
+	// ExampleGet performs a GET /example (the `ExampleGet` operationId) request.
 	ExampleGet(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// ExampleGet performs a GET /example (the `ExampleGet` operationId) request.
 func (c *Client) ExampleGet(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewExampleGetRequest(c.Server)
 	if err != nil {
@@ -193,7 +195,10 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// ExampleGetWithResponse request
+
+	// ExampleGetWithResponse performs a GET /example (the `ExampleGet` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	ExampleGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ExampleGetResponse, error)
 }
 
@@ -238,7 +243,9 @@ func (r ExampleGetResponse) ContentType() string {
 	return ""
 }
 
-// ExampleGetWithResponse request returning *ExampleGetResponse
+// ExampleGetWithResponse performs a GET /example (the `ExampleGet` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ExampleGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ExampleGetResponse, error) {
 	rsp, err := c.ExampleGet(ctx, reqEditors...)
 	if err != nil {

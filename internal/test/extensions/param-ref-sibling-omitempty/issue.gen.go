@@ -95,10 +95,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// ListThings request
+
+	// ListThings performs a GET /things (the `ListThings` operationId) request.
 	ListThings(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// ListThings performs a GET /things (the `ListThings` operationId) request.
 func (c *Client) ListThings(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListThingsRequest(c.Server, params)
 	if err != nil {
@@ -208,7 +210,10 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// ListThingsWithResponse request
+
+	// ListThingsWithResponse performs a GET /things (the `ListThings` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	ListThingsWithResponse(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*ListThingsResponse, error)
 }
 
@@ -246,7 +251,9 @@ func (r ListThingsResponse) ContentType() string {
 	return ""
 }
 
-// ListThingsWithResponse request returning *ListThingsResponse
+// ListThingsWithResponse performs a GET /things (the `ListThings` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ListThingsWithResponse(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*ListThingsResponse, error) {
 	rsp, err := c.ListThings(ctx, params, reqEditors...)
 	if err != nil {

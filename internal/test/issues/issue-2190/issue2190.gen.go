@@ -92,10 +92,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetTest request
+
+	// GetTest performs a GET /v1/test (the `GetTest` operationId) request.
 	GetTest(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetTest performs a GET /v1/test (the `GetTest` operationId) request.
 func (c *Client) GetTest(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetTestRequest(c.Server)
 	if err != nil {
@@ -178,7 +180,10 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetTestWithResponse request
+
+	// GetTestWithResponse performs a GET /v1/test (the `GetTest` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	GetTestWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetTestResponse, error)
 }
 
@@ -223,7 +228,9 @@ func (r GetTestResponse) ContentType() string {
 	return ""
 }
 
-// GetTestWithResponse request returning *GetTestResponse
+// GetTestWithResponse performs a GET /v1/test (the `GetTest` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetTestWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetTestResponse, error) {
 	rsp, err := c.GetTest(ctx, reqEditors...)
 	if err != nil {

@@ -91,10 +91,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// UpdateClient request
+
+	// UpdateClient performs a PUT /client (the `UpdateClient` operationId) request.
 	UpdateClient(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// UpdateClient performs a PUT /client (the `UpdateClient` operationId) request.
 func (c *Client) UpdateClient(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateClientRequest(c.Server)
 	if err != nil {
@@ -177,7 +179,10 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// UpdateClientWithResponse request
+
+	// UpdateClientWithResponse performs a PUT /client (the `UpdateClient` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	UpdateClientWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*UpdateClientResp, error)
 }
 
@@ -222,7 +227,9 @@ func (r UpdateClientResp) ContentType() string {
 	return ""
 }
 
-// UpdateClientWithResponse request returning *UpdateClientResp
+// UpdateClientWithResponse performs a PUT /client (the `UpdateClient` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) UpdateClientWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*UpdateClientResp, error) {
 	rsp, err := c.UpdateClient(ctx, reqEditors...)
 	if err != nil {

@@ -93,10 +93,16 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// TestGet request
+
+	// TestGet get test response
+	//
+	// Corresponds with GET /test (the `TestGet` operationId).
 	TestGet(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// TestGet get test response
+//
+// Corresponds with GET /test (the `TestGet` operationId).
 func (c *Client) TestGet(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestGetRequest(c.Server)
 	if err != nil {
@@ -179,7 +185,12 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// TestGetWithResponse request
+
+	// TestGetWithResponse get test response
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /test (the `TestGet` operationId).
 	TestGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestGetResponse, error)
 }
 
@@ -217,7 +228,11 @@ func (r TestGetResponse) ContentType() string {
 	return ""
 }
 
-// TestGetWithResponse request returning *TestGetResponse
+// TestGetWithResponse get test response
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /test (the `TestGet` operationId).
 func (c *ClientWithResponses) TestGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestGetResponse, error) {
 	rsp, err := c.TestGet(ctx, reqEditors...)
 	if err != nil {

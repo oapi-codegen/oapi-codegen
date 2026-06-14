@@ -416,6 +416,89 @@ func (o *OperationDefinition) SummaryAsComment(prefix string) string {
 	return strings.Join(parts, "\n")
 }
 
+// prepareDescriptionLines normalises description for inclusion in a Godoc comment, and:
+//
+//  1. Returns nil when the description is the same as the summary
+//  1. Ensures a single-line description includes a trailing `.`, which prevents
+//     gofmt from promoting this to an "old-style" header
+func prepareDescriptionLines(summary, description string) []string {
+	description = normalizeWhitespace(description)
+	if description == "" {
+		return nil
+	}
+	if description == normalizeWhitespace(summary) {
+		return nil
+	}
+	lines := strings.Split(description, "\n")
+	if len(lines) == 1 && !strings.ContainsAny(lines[0], ".,;:!?") {
+		lines[0] += "."
+	}
+	return lines
+}
+
+// GenerateFunctionComment returns a full Godoc-style multi-line comment with:
+// - the Summary, if present, as the first line of the comment
+// - if not present, an indication of the HTTP call this corresponds with
+// - the Description, if present
+// - whether this function takes a body and a content type
+//
+// Takes originalFunctionName (the OperationId or the function name being generated for this Operation), a suffix (if necessary) and whether this is being generated for ClientInterface or ClientWithResponsesInterface
+func (o OperationDefinition) GenerateFunctionComment(originalFunctionName string, functionSuffix string, isFunctionWithResponses bool) string {
+	functionName := originalFunctionName + functionSuffix
+	descriptionLines := prepareDescriptionLines(o.Summary, o.Spec.Description)
+
+	var parts []string
+	if summary := o.SummaryAsComment(functionName); summary != "" {
+		parts = append(parts, strings.Split(summary, "\n")...)
+		parts = append(parts, "//")
+		if len(descriptionLines) > 0 {
+			for _, line := range descriptionLines {
+				parts = append(parts, "// "+line)
+			}
+			parts = append(parts, "//")
+		}
+		if o.HasBody() {
+			if isFunctionWithResponses {
+				parts = append(parts, "// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).")
+				parts = append(parts, "//")
+			} else {
+				parts = append(parts, "// Takes any type of body and a specified content type.")
+				parts = append(parts, "//")
+			}
+		} else {
+			if isFunctionWithResponses {
+				parts = append(parts, "// Returns a wrapper object for the known response body format(s).")
+				parts = append(parts, "//")
+			}
+		}
+		parts = append(parts, "// Corresponds with "+o.Method+" "+o.Path+" (the `"+o.OperationId+"` operationId).")
+	} else {
+		if o.HasBody() {
+			parts = append(parts, "// "+functionName+" performs a "+o.Method+" "+o.Path+" (the `"+o.OperationId+"` operationId) request,")
+			parts = append(parts, "// with any type of body and a specified content type.")
+		} else {
+			parts = append(parts, "// "+functionName+" performs a "+o.Method+" "+o.Path+" (the `"+o.OperationId+"` operationId) request.")
+		}
+		if len(descriptionLines) > 0 {
+			parts = append(parts, "//")
+			for _, line := range descriptionLines {
+				parts = append(parts, "// "+line)
+			}
+		}
+		if isFunctionWithResponses {
+			parts = append(parts, "//")
+			parts = append(parts, "// Returns a wrapper object for the known response body format(s).")
+		}
+	}
+
+	// make sure that each line is sanitised
+	for i, part := range parts {
+		parts[i] = stripNewLines(part)
+	}
+
+	return strings.Join(parts, "\n")
+}
+
 // GetResponseTypeDefinitions produces a list of type definitions for a given Operation for the response
 // types which we know how to parse. These will be turned into fields on a
 // response object for automatic deserialization of responses in the generated
@@ -561,6 +644,56 @@ type RequestBodyDefinition struct {
 
 	// Contains encoding options for formdata
 	Encoding map[string]RequestBodyEncoding
+}
+
+// GenerateFunctionComment returns a full Godoc-style multi-line comment with:
+// - the Summary, if present, as the first line of the comment
+// - if not present, an indication of the HTTP call this corresponds with
+// - whether this function takes a body and a content type
+//
+// Takes originalFunctionName (the OperationId or the function name being generated for this Operation), a suffix (if necessary) and whether this is being generated for ClientInterface or ClientWithResponsesInterface
+func (r RequestBodyDefinition) GenerateFunctionComment(originalFunctionName string, parent OperationDefinition, functionSuffix string, isFunctionWithResponses bool) string {
+	functionName := originalFunctionName + functionSuffix
+	descriptionLines := prepareDescriptionLines(parent.Summary, parent.Spec.Description)
+
+	var parts []string
+	if summary := parent.SummaryAsComment(functionName); summary != "" {
+		parts = append(parts, strings.Split(summary, "\n")...)
+		parts = append(parts, "//")
+		if len(descriptionLines) > 0 {
+			for _, line := range descriptionLines {
+				parts = append(parts, "// "+line)
+			}
+			parts = append(parts, "//")
+		}
+		if isFunctionWithResponses {
+			parts = append(parts, "// Takes a body of the `"+r.ContentType+"` content type, and returns a wrapper object for the known response body format(s).")
+		} else {
+			parts = append(parts, "// Takes a body of the `"+r.ContentType+"` content type.")
+		}
+		parts = append(parts, "//")
+		parts = append(parts, "// Corresponds with "+parent.Method+" "+parent.Path+" (the `"+parent.OperationId+"` operationId).")
+	} else {
+		parts = append(parts, "// "+functionName+" performs a "+parent.Method+" "+parent.Path+" (the `"+parent.OperationId+"` operationId) request.")
+		if isFunctionWithResponses {
+			parts = append(parts, "// Takes a body of the `"+r.ContentType+"` content type, and returns a wrapper object for the known response body format(s).")
+		} else {
+			parts = append(parts, "// Takes a body of the `"+r.ContentType+"` content type.")
+		}
+		if len(descriptionLines) > 0 {
+			parts = append(parts, "//")
+			for _, line := range descriptionLines {
+				parts = append(parts, "// "+line)
+			}
+		}
+	}
+
+	// make sure that each line is sanitised
+	for i, part := range parts {
+		parts[i] = stripNewLines(part)
+	}
+
+	return strings.Join(parts, "\n")
 }
 
 // TypeDef returns the Go type definition for a request body

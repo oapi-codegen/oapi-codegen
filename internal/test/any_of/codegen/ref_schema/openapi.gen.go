@@ -220,10 +220,20 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetPets request
+
+	// GetPets Get a list of pets
+	//
+	// This endpoint returns a list of pets. Each pet can be either a cat, dog or a rat.
+	//
+	// Corresponds with GET /pets (the `GetPets` operationId).
 	GetPets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetPets Get a list of pets
+//
+// This endpoint returns a list of pets. Each pet can be either a cat, dog or a rat.
+//
+// Corresponds with GET /pets (the `GetPets` operationId).
 func (c *Client) GetPets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetPetsRequest(c.Server)
 	if err != nil {
@@ -306,7 +316,14 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetPetsWithResponse request
+
+	// GetPetsWithResponse Get a list of pets
+	//
+	// This endpoint returns a list of pets. Each pet can be either a cat, dog or a rat.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /pets (the `GetPets` operationId).
 	GetPetsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetPetsResponse, error)
 }
 
@@ -351,7 +368,13 @@ func (r GetPetsResponse) ContentType() string {
 	return ""
 }
 
-// GetPetsWithResponse request returning *GetPetsResponse
+// GetPetsWithResponse Get a list of pets
+//
+// This endpoint returns a list of pets. Each pet can be either a cat, dog or a rat.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /pets (the `GetPets` operationId).
 func (c *ClientWithResponses) GetPetsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetPetsResponse, error) {
 	rsp, err := c.GetPets(ctx, reqEditors...)
 	if err != nil {

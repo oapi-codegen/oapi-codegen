@@ -190,10 +190,16 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetHttpPet request
+
+	// GetHttpPet Get pet given identifier.
+	//
+	// Corresponds with GET /api/pets/{petId} (the `GetHttpPet` operationId).
 	GetHttpPet(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetHttpPet Get pet given identifier.
+//
+// Corresponds with GET /api/pets/{petId} (the `GetHttpPet` operationId).
 func (c *Client) GetHttpPet(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetHttpPetRequest(c.Server, petId)
 	if err != nil {
@@ -283,7 +289,12 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetHttpPetWithResponse request
+
+	// GetHttpPetWithResponse Get pet given identifier.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /api/pets/{petId} (the `GetHttpPet` operationId).
 	GetHttpPetWithResponse(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*GetHttpPetResponse, error)
 }
 
@@ -328,7 +339,11 @@ func (r GetHttpPetResponse) ContentType() string {
 	return ""
 }
 
-// GetHttpPetWithResponse request returning *GetHttpPetResponse
+// GetHttpPetWithResponse Get pet given identifier.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /api/pets/{petId} (the `GetHttpPet` operationId).
 func (c *ClientWithResponses) GetHttpPetWithResponse(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*GetHttpPetResponse, error) {
 	rsp, err := c.GetHttpPet(ctx, petId, reqEditors...)
 	if err != nil {

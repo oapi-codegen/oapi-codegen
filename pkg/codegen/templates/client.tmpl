@@ -77,10 +77,20 @@ type ClientInterface interface {
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
-    // {{$opid}}{{if .HasBody}}WithBody{{end}} request{{if .HasBody}}, with any body, and a specified content type{{end}}
+{{$opidSuffix := ""}}
+{{$parent := . }}
+{{- if .HasBody -}}
+{{- $opidSuffix = "WithBody" -}}
+{{- end -}}
+    {{ if .HasBody }}
+        {{ .GenerateFunctionComment $opid "WithBody" false }}
+    {{ else -}}
+        {{ .GenerateFunctionComment $opid "" false }}
+    {{ end -}}
     {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error)
 {{range .Bodies}}
     {{if .IsSupportedByClient -}}
+    {{ .GenerateFunctionComment $opid $parent .Suffix false }}
     {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error)
     {{end -}}
 {{end}}{{/* range .Bodies */}}
@@ -93,7 +103,17 @@ type ClientInterface interface {
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
+{{$parent := . }}
+{{$opidSuffix := ""}}
+{{- if .HasBody -}}
+{{- $opidSuffix = "WithBody" -}}
+{{- end -}}
 
+{{ if .HasBody }}
+    {{ .GenerateFunctionComment $opid "WithBody" false }}
+{{ else }}
+    {{ .GenerateFunctionComment $opid "" false }}
+{{ end -}}
 func (c *{{ $clientTypeName }}) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error) {
     req, err := New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(c.Server{{genParamNames .PathParams}}{{if $hasParams}}, params{{end}}{{if .HasBody}}, contentType, body{{end}})
     if err != nil {
@@ -108,6 +128,7 @@ func (c *{{ $clientTypeName }}) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx cont
 
 {{range .Bodies}}
 {{if .IsSupportedByClient -}}
+{{ .GenerateFunctionComment $opid $parent .Suffix false }}
 func (c *{{ $clientTypeName }}) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error) {
     req, err := New{{$opid}}Request{{.Suffix}}(c.Server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
     if err != nil {
