@@ -49,6 +49,7 @@ type {{genResponseTypeName $opid | ucFirst}} struct {
     Body         []byte
 	HTTPResponse *http.Response
     {{- range $responseTypeDefinitions}}
+    // {{.TypeName}} the response for an HTTP {{ .ResponseName }} `{{ .ContentTypeName }}` response
     {{.TypeName}} *{{.Schema.TypeDecl}}
     {{- end}}
 }

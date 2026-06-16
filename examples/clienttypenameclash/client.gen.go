@@ -184,7 +184,8 @@ type ClientWithResponsesInterface interface {
 type UpdateClientResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON400      *UpdateClientResponse
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *UpdateClientResponse
 }
 
 // GetJSON400 returns the response for an HTTP 400 `application/json` response

@@ -229,7 +229,8 @@ type ClientWithResponsesInterface interface {
 type GetClientResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ClientType
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ClientType
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -274,7 +275,8 @@ func (r GetClientResponse) ContentType() string {
 type UpdateClientResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON400      *struct {
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *struct {
 		Code string `json:"code"`
 	}
 }

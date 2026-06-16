@@ -801,7 +801,8 @@ type ClientWithResponsesInterface interface {
 type EnsureEverythingIsReferencedResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *struct {
 		AnyType1 *AnyType1 `json:"anyType1,omitempty"`
 
 		// AnyType2 AnyType2 represents any type.
@@ -855,9 +856,11 @@ func (r EnsureEverythingIsReferencedResponse) ContentType() string {
 }
 
 type Issue1051Response struct {
-	Body                             []byte
-	HTTPResponse                     *http.Response
-	JSON200                          *map[string]interface{}
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *map[string]interface{}
+	// ApplicationvndSomethingV1JSON200 the response for an HTTP 200 `application/vnd.something.v1+json` response
 	ApplicationvndSomethingV1JSON200 *map[string]interface{}
 }
 
@@ -903,10 +906,14 @@ func (r Issue1051Response) ContentType() string {
 type Issue127Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *GenericObject
-	XML200       *GenericObject
-	YAML200      *GenericObject
-	JSONDefault  *GenericObject
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GenericObject
+	// XML200 the response for an HTTP 200 `application/xml` response
+	XML200 *GenericObject
+	// YAML200 the response for an HTTP 200 `text/yaml` response
+	YAML200 *GenericObject
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *GenericObject
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1063,7 +1070,8 @@ func (r Issue30Response) ContentType() string {
 type GetIssues375Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *EnumInObjInArray
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *EnumInObjInArray
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1171,7 +1179,8 @@ func (r Issue9Response) ContentType() string {
 type Issue975Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *DeprecatedProperty
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *DeprecatedProperty
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response

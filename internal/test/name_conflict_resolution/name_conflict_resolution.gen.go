@@ -1883,7 +1883,8 @@ type ClientWithResponsesInterface interface {
 type ListEntitiesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *struct {
 		Data     *[]Widget `json:"data,omitempty"`
 		Metadata *Metadata `json:"metadata,omitempty"`
 	}
@@ -1929,7 +1930,8 @@ func (r ListEntitiesResponse) ContentType() string {
 type PostFooResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *BarResponse
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *BarResponse
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1969,7 +1971,8 @@ func (r PostFooResponse) ContentType() string {
 type ListItemsResponse2 struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ListItemsResponse
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ListItemsResponse
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -2009,7 +2012,8 @@ func (r ListItemsResponse2) ContentType() string {
 type CreateItemResponse2 struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *CreateItemResponse
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *CreateItemResponse
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -2049,7 +2053,8 @@ func (r CreateItemResponse2) ContentType() string {
 type CreateOrderResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Order
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Order
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -2089,7 +2094,8 @@ func (r CreateOrderResponse) ContentType() string {
 type GetOutcomeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *OutcomeResult
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *OutcomeResult
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -2163,7 +2169,8 @@ func (r PostOutcomeResponse) ContentType() string {
 type SendPayloadResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Payload
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Payload
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -2203,7 +2210,8 @@ func (r SendPayloadResponse) ContentType() string {
 type CreatePetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Pet
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Pet
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -2243,7 +2251,8 @@ func (r CreatePetResponse) ContentType() string {
 type QueryResponse2 struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *QueryResponse
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *QueryResponse
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -2283,7 +2292,8 @@ func (r QueryResponse2) ContentType() string {
 type GetQuxResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *QuxResponse
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *QuxResponse
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -2357,7 +2367,8 @@ func (r PostQuxResponse) ContentType() string {
 type GetRenamedSchemaResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Renamer
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Renamer
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -2429,12 +2440,16 @@ func (r PostRenamedSchemaResponse) ContentType() string {
 }
 
 type PatchResourceResponse struct {
-	Body                             []byte
-	HTTPResponse                     *http.Response
-	JSON200                          *N200ResourcePatchResponseJSONApplicationJSON
-	ApplicationjsonPatchJSON200      *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *N200ResourcePatchResponseJSONApplicationJSON
+	// ApplicationjsonPatchJSON200 the response for an HTTP 200 `application/json-patch+json` response
+	ApplicationjsonPatchJSON200 *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON
+	// ApplicationjsonPatchQueryJSON200 the response for an HTTP 200 `application/json-patch-query+json` response
 	ApplicationjsonPatchQueryJSON200 *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON
-	ApplicationmergePatchJSON200     *N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON
+	// ApplicationmergePatchJSON200 the response for an HTTP 200 `application/merge-patch+json` response
+	ApplicationmergePatchJSON200 *N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -2489,7 +2504,8 @@ func (r PatchResourceResponse) ContentType() string {
 type GetStatusResponse2 struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *GetStatusResponse
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GetStatusResponse
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -2529,7 +2545,8 @@ func (r GetStatusResponse2) ContentType() string {
 type GetZapResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ZapResponse
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ZapResponse
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response

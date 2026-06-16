@@ -202,11 +202,16 @@ type ClientWithResponsesInterface interface {
 type GetThingsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ThingResponse
-	JSON401      *externalRef0.N401
-	JSON403      *externalRef0.N403
-	JSON404      *N404
-	JSON500      *externalRef0.DefaultError
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ThingResponse
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *externalRef0.N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *externalRef0.N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *N404
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *externalRef0.DefaultError
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response

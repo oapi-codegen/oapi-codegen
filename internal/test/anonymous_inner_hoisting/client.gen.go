@@ -994,7 +994,8 @@ func (r PostBodyRootOneOfResponse) ContentType() string {
 type GetResponseDeepNestedResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *struct {
 		Wrapper *struct {
 			Inner *GetResponseDeepNested200JSONResponseBody_Wrapper_Inner `json:"inner,omitempty"`
 		} `json:"wrapper,omitempty"`
@@ -1042,7 +1043,8 @@ func (r GetResponseDeepNestedResponse) ContentType() string {
 type GetResponseItemsOneOfResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *struct {
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *struct {
 		Items []GetResponseItemsOneOf200JSONResponseBody_Items_Item `json:"items"`
 	}
 }
@@ -1086,7 +1088,8 @@ func (r GetResponseItemsOneOfResponse) ContentType() string {
 type GetResponseRootAnyOfResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *GetResponseRootAnyOf200JSONResponseBody
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GetResponseRootAnyOf200JSONResponseBody
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1126,7 +1129,8 @@ func (r GetResponseRootAnyOfResponse) ContentType() string {
 type GetResponseRootOneOfResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *GetResponseRootOneOf200JSONResponseBody
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GetResponseRootOneOf200JSONResponseBody
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response

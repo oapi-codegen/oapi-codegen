@@ -200,11 +200,15 @@ type ClientWithResponsesInterface interface {
 }
 
 type TestResponse struct {
-	Body                  []byte
-	HTTPResponse          *http.Response
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationbarJSON200 the response for an HTTP 200 `application/bar+json` response
 	ApplicationbarJSON200 *Bar
+	// ApplicationfooJSON200 the response for an HTTP 200 `application/foo+json` response
 	ApplicationfooJSON200 *Foo
+	// ApplicationbarJSON201 the response for an HTTP 201 `application/bar+json` response
 	ApplicationbarJSON201 *BazApplicationBarPlusJSON
+	// ApplicationfooJSON201 the response for an HTTP 201 `application/foo+json` response
 	ApplicationfooJSON201 *BazApplicationFooPlusJSON
 }
 
