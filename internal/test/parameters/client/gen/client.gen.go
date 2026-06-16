@@ -2146,7 +2146,7 @@ type GetContentObjectResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetContentObjectResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2180,7 +2180,7 @@ type GetCookieResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetCookieResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2214,7 +2214,7 @@ type EnumParamsResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r EnumParamsResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2248,7 +2248,7 @@ type GetHeaderResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetHeaderResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2282,7 +2282,7 @@ type GetLabelExplodeArrayResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetLabelExplodeArrayResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2316,7 +2316,7 @@ type GetLabelExplodeObjectResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetLabelExplodeObjectResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2350,7 +2350,7 @@ type GetLabelExplodePrimitiveResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetLabelExplodePrimitiveResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2384,7 +2384,7 @@ type GetLabelNoExplodeArrayResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetLabelNoExplodeArrayResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2418,7 +2418,7 @@ type GetLabelNoExplodeObjectResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetLabelNoExplodeObjectResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2452,7 +2452,7 @@ type GetLabelPrimitiveResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetLabelPrimitiveResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2486,7 +2486,7 @@ type GetMatrixExplodeArrayResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetMatrixExplodeArrayResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2520,7 +2520,7 @@ type GetMatrixExplodeObjectResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetMatrixExplodeObjectResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2554,7 +2554,7 @@ type GetMatrixExplodePrimitiveResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetMatrixExplodePrimitiveResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2588,7 +2588,7 @@ type GetMatrixNoExplodeArrayResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetMatrixNoExplodeArrayResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2622,7 +2622,7 @@ type GetMatrixNoExplodeObjectResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetMatrixNoExplodeObjectResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2656,7 +2656,7 @@ type GetMatrixPrimitiveResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetMatrixPrimitiveResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2690,7 +2690,7 @@ type GetPassThroughResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetPassThroughResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2724,7 +2724,7 @@ type GetDeepObjectResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetDeepObjectResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2758,7 +2758,7 @@ type GetQueryDelimitedResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetQueryDelimitedResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2792,7 +2792,7 @@ type GetQueryFormResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetQueryFormResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2826,7 +2826,7 @@ type GetSimpleExplodeArrayResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetSimpleExplodeArrayResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2860,7 +2860,7 @@ type GetSimpleExplodeObjectResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetSimpleExplodeObjectResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2894,7 +2894,7 @@ type GetSimpleExplodePrimitiveResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetSimpleExplodePrimitiveResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2928,7 +2928,7 @@ type GetSimpleNoExplodeArrayResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetSimpleNoExplodeArrayResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2962,7 +2962,7 @@ type GetSimpleNoExplodeObjectResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetSimpleNoExplodeObjectResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2996,7 +2996,7 @@ type GetSimplePrimitiveResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetSimplePrimitiveResponse) GetBody() []byte {
 	return r.Body
 }
@@ -3030,7 +3030,7 @@ type GetStartingWithNumberResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetStartingWithNumberResponse) GetBody() []byte {
 	return r.Body
 }

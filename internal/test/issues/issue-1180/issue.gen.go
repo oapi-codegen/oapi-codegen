@@ -200,7 +200,7 @@ type GetSimplePrimitiveResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetSimplePrimitiveResponse) GetBody() []byte {
 	return r.Body
 }

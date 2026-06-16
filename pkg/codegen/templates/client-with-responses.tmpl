@@ -72,7 +72,7 @@ type {{genResponseTypeName $opid | ucFirst}} struct {
   }
 {{- end}}
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r {{genResponseTypeName $opid | ucFirst}}) GetBody() []byte {
     return r.Body
 }

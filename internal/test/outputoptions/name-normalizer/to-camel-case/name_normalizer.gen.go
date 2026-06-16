@@ -310,7 +310,7 @@ func (r GetHttpPetResponse) GetJSON200() *Pet {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetHttpPetResponse) GetBody() []byte {
 	return r.Body
 }

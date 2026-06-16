@@ -256,7 +256,7 @@ func (r GetThingsResponse) GetJSON500() *externalRef0.DefaultError {
 	return r.JSON500
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetThingsResponse) GetBody() []byte {
 	return r.Body
 }

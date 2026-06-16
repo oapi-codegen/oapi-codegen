@@ -237,7 +237,7 @@ func (r TestResponse) GetApplicationfooJSON201() *BazApplicationFooPlusJSON {
 	return r.ApplicationfooJSON201
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r TestResponse) GetBody() []byte {
 	return r.Body
 }

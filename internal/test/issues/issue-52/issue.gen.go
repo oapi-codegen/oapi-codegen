@@ -214,7 +214,7 @@ func (r ExampleGetResponse) GetJSON200() *Document {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r ExampleGetResponse) GetBody() []byte {
 	return r.Body
 }

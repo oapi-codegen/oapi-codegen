@@ -199,7 +199,7 @@ func (r GetTestResponse) GetJSON200() *Success {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetTestResponse) GetBody() []byte {
 	return r.Body
 }

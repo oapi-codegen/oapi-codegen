@@ -413,7 +413,7 @@ type ListThingsResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r ListThingsResponse) GetBody() []byte {
 	return r.Body
 }
@@ -447,7 +447,7 @@ type CreateThingResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r CreateThingResponse) GetBody() []byte {
 	return r.Body
 }

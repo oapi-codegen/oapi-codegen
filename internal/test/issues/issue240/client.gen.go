@@ -246,7 +246,7 @@ func (r GetClientResponse) GetJSON200() *ClientType {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetClientResponse) GetBody() []byte {
 	return r.Body
 }
@@ -296,7 +296,7 @@ func (r UpdateClientResponse) GetJSON400() *struct {
 	return r.JSON400
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r UpdateClientResponse) GetBody() []byte {
 	return r.Body
 }
