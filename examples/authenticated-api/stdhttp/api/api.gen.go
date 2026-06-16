@@ -291,7 +291,8 @@ type ClientWithResponsesInterface interface {
 type ListThingsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]ThingWithID
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]ThingWithID
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -331,7 +332,8 @@ func (r ListThingsResponse) ContentType() string {
 type AddThingResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *[]ThingWithID
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *[]ThingWithID
 }
 
 // GetJSON201 returns the response for an HTTP 201 `application/json` response

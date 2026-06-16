@@ -1301,7 +1301,8 @@ type ClientWithResponsesInterface interface {
 type JSONExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Example
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Example
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1409,7 +1410,8 @@ func (r MultipartRelatedExampleResponse) ContentType() string {
 type MultipleRequestAndResponseTypesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Example
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Example
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1483,7 +1485,8 @@ func (r NoContentHeadersResponse) ContentType() string {
 type RequiredJSONBodyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Example
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Example
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1591,7 +1594,8 @@ func (r ReservedGoKeywordParametersResponse) ContentType() string {
 type ReusableResponsesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Reusableresponse
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Reusableresponse
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1767,7 +1771,8 @@ func (r URLEncodedExampleResponse) ContentType() string {
 type HeadersExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Example
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Example
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1805,10 +1810,12 @@ func (r HeadersExampleResponse) ContentType() string {
 }
 
 type UnionExampleResponse struct {
-	Body                          []byte
-	HTTPResponse                  *http.Response
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationalternativeJSON200 the response for an HTTP 200 `application/alternative+json` response
 	ApplicationalternativeJSON200 *Example
-	JSON200                       *UnionExample200JSONResponseBody
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *UnionExample200JSONResponseBody
 }
 
 // GetApplicationalternativeJSON200 returns the response for an HTTP 200 `application/alternative+json` response

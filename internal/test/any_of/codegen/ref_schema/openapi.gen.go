@@ -313,7 +313,8 @@ type ClientWithResponsesInterface interface {
 type GetPetsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *GetPetsDto
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *GetPetsDto
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response

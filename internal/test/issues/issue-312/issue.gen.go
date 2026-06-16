@@ -292,7 +292,8 @@ type ClientWithResponsesInterface interface {
 type GetPetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Pet
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Pet
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -332,8 +333,10 @@ func (r GetPetResponse) ContentType() string {
 type ValidatePetsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]Pet
-	JSONDefault  *Error
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]Pet
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response

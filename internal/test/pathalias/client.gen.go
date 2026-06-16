@@ -224,7 +224,8 @@ type ClientWithResponsesInterface interface {
 type GetTestResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *B
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *B
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -264,7 +265,8 @@ func (r GetTestResponse) ContentType() string {
 type GetTestAlias0Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *B
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *B
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response

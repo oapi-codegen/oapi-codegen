@@ -416,9 +416,11 @@ type ClientWithResponsesInterface interface {
 }
 
 type GetGetMultibodyResponse struct {
-	Body                                                       []byte
-	HTTPResponse                                               *http.Response
-	ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200  *string
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 the response for an HTTP 200 `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` response
+	ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 *string
+	// ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200 the response for an HTTP 200 `application/ld+json; profile="https://www.w3.org/ns/activitystreams2"` response
 	ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200 *string
 }
 
@@ -462,8 +464,9 @@ func (r GetGetMultibodyResponse) ContentType() string {
 }
 
 type GetObjectResponse struct {
-	Body                                                      []byte
-	HTTPResponse                                              *http.Response
+	Body         []byte
+	HTTPResponse *http.Response
+	// ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 the response for an HTTP 200 `application/ld+json; profile="https://www.w3.org/ns/activitystreams"` response
 	ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 *string
 }
 
