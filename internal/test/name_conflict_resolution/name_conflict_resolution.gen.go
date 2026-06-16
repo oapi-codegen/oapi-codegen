@@ -2077,7 +2077,7 @@ func (r ListEntitiesResponse) GetJSON200() *struct {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r ListEntitiesResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2118,7 +2118,7 @@ func (r PostFooResponse) GetJSON200() *BarResponse {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostFooResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2159,7 +2159,7 @@ func (r ListItemsResponse2) GetJSON200() *ListItemsResponse {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r ListItemsResponse2) GetBody() []byte {
 	return r.Body
 }
@@ -2200,7 +2200,7 @@ func (r CreateItemResponse2) GetJSON200() *CreateItemResponse {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r CreateItemResponse2) GetBody() []byte {
 	return r.Body
 }
@@ -2241,7 +2241,7 @@ func (r CreateOrderResponse) GetJSON200() *Order {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r CreateOrderResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2282,7 +2282,7 @@ func (r GetOutcomeResponse) GetJSON200() *OutcomeResult {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetOutcomeResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2316,7 +2316,7 @@ type PostOutcomeResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostOutcomeResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2357,7 +2357,7 @@ func (r SendPayloadResponse) GetJSON200() *Payload {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r SendPayloadResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2398,7 +2398,7 @@ func (r CreatePetResponse) GetJSON200() *Pet {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r CreatePetResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2439,7 +2439,7 @@ func (r QueryResponse2) GetJSON200() *QueryResponse {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r QueryResponse2) GetBody() []byte {
 	return r.Body
 }
@@ -2480,7 +2480,7 @@ func (r GetQuxResponse) GetJSON200() *QuxResponse {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetQuxResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2514,7 +2514,7 @@ type PostQuxResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostQuxResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2555,7 +2555,7 @@ func (r GetRenamedSchemaResponse) GetJSON200() *Renamer {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetRenamedSchemaResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2589,7 +2589,7 @@ type PostRenamedSchemaResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostRenamedSchemaResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2651,7 +2651,7 @@ func (r PatchResourceResponse) GetApplicationmergePatchJSON200() *N200ResourcePa
 	return r.ApplicationmergePatchJSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PatchResourceResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2692,7 +2692,7 @@ func (r GetStatusResponse2) GetJSON200() *GetStatusResponse {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetStatusResponse2) GetBody() []byte {
 	return r.Body
 }
@@ -2733,7 +2733,7 @@ func (r GetZapResponse) GetJSON200() *ZapResponse {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetZapResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2767,7 +2767,7 @@ type PostZapResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostZapResponse) GetBody() []byte {
 	return r.Body
 }

@@ -198,7 +198,7 @@ func (r UpdateClientResp) GetJSON400() *UpdateClientResponse {
 	return r.JSON400
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r UpdateClientResp) GetBody() []byte {
 	return r.Body
 }

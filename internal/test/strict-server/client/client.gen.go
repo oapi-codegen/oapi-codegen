@@ -1576,7 +1576,7 @@ func (r JSONExampleResponse) GetJSON200() *Example {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r JSONExampleResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1610,7 +1610,7 @@ type MultipartExampleResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r MultipartExampleResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1644,7 +1644,7 @@ type MultipartRelatedExampleResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r MultipartRelatedExampleResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1685,7 +1685,7 @@ func (r MultipleRequestAndResponseTypesResponse) GetJSON200() *Example {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r MultipleRequestAndResponseTypesResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1719,7 +1719,7 @@ type NoContentHeadersResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r NoContentHeadersResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1760,7 +1760,7 @@ func (r RequiredJSONBodyResponse) GetJSON200() *Example {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r RequiredJSONBodyResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1794,7 +1794,7 @@ type RequiredTextBodyResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r RequiredTextBodyResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1828,7 +1828,7 @@ type ReservedGoKeywordParametersResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r ReservedGoKeywordParametersResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1869,7 +1869,7 @@ func (r ReusableResponsesResponse) GetJSON200() *Reusableresponse {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r ReusableResponsesResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1903,7 +1903,7 @@ type TextExampleResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r TextExampleResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1937,7 +1937,7 @@ type UnknownExampleResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r UnknownExampleResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1971,7 +1971,7 @@ type UnspecifiedContentTypeResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r UnspecifiedContentTypeResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2005,7 +2005,7 @@ type URLEncodedExampleResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r URLEncodedExampleResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2046,7 +2046,7 @@ func (r HeadersExampleResponse) GetJSON200() *Example {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r HeadersExampleResponse) GetBody() []byte {
 	return r.Body
 }
@@ -2094,7 +2094,7 @@ func (r UnionExampleResponse) GetJSON200() *UnionExample200JSONResponseBody {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r UnionExampleResponse) GetBody() []byte {
 	return r.Body
 }

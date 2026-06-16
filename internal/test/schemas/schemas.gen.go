@@ -954,7 +954,7 @@ func (r EnsureEverythingIsReferencedResponse) GetJSON200() *struct {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r EnsureEverythingIsReferencedResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1002,7 +1002,7 @@ func (r Issue1051Response) GetApplicationvndSomethingV1JSON200() *map[string]int
 	return r.ApplicationvndSomethingV1JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r Issue1051Response) GetBody() []byte {
 	return r.Body
 }
@@ -1064,7 +1064,7 @@ func (r Issue127Response) GetJSONDefault() *GenericObject {
 	return r.JSONDefault
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r Issue127Response) GetBody() []byte {
 	return r.Body
 }
@@ -1098,7 +1098,7 @@ type Issue185Response struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r Issue185Response) GetBody() []byte {
 	return r.Body
 }
@@ -1132,7 +1132,7 @@ type Issue209Response struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r Issue209Response) GetBody() []byte {
 	return r.Body
 }
@@ -1166,7 +1166,7 @@ type Issue30Response struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r Issue30Response) GetBody() []byte {
 	return r.Body
 }
@@ -1207,7 +1207,7 @@ func (r GetIssues375Response) GetJSON200() *EnumInObjInArray {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetIssues375Response) GetBody() []byte {
 	return r.Body
 }
@@ -1241,7 +1241,7 @@ type Issue41Response struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r Issue41Response) GetBody() []byte {
 	return r.Body
 }
@@ -1275,7 +1275,7 @@ type Issue9Response struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r Issue9Response) GetBody() []byte {
 	return r.Body
 }
@@ -1316,7 +1316,7 @@ func (r Issue975Response) GetJSON200() *DeprecatedProperty {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r Issue975Response) GetBody() []byte {
 	return r.Body
 }

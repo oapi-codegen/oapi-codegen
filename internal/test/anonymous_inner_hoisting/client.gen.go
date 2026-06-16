@@ -966,7 +966,7 @@ type PostBodyPropertyOneOfResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostBodyPropertyOneOfResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1000,7 +1000,7 @@ type PostBodyRootOneOfResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostBodyRootOneOfResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1049,7 +1049,7 @@ func (r GetResponseDeepNestedResponse) GetJSON200() *struct {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetResponseDeepNestedResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1094,7 +1094,7 @@ func (r GetResponseItemsOneOfResponse) GetJSON200() *struct {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetResponseItemsOneOfResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1135,7 +1135,7 @@ func (r GetResponseRootAnyOfResponse) GetJSON200() *GetResponseRootAnyOf200JSONR
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetResponseRootAnyOfResponse) GetBody() []byte {
 	return r.Body
 }
@@ -1176,7 +1176,7 @@ func (r GetResponseRootOneOfResponse) GetJSON200() *GetResponseRootOneOf200JSONR
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetResponseRootOneOfResponse) GetBody() []byte {
 	return r.Body
 }

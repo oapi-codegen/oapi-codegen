@@ -347,7 +347,7 @@ type PostPetResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostPetResponse) GetBody() []byte {
 	return r.Body
 }
@@ -381,7 +381,7 @@ type PostPet1234Response struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostPet1234Response) GetBody() []byte {
 	return r.Body
 }

@@ -227,7 +227,7 @@ func (r GetThingResponse) GetJSONDefault() *Error {
 	return r.JSONDefault
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetThingResponse) GetBody() []byte {
 	return r.Body
 }

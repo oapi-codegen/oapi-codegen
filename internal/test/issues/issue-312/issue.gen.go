@@ -340,7 +340,7 @@ func (r GetPetResponse) GetJSON200() *Pet {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetPetResponse) GetBody() []byte {
 	return r.Body
 }
@@ -388,7 +388,7 @@ func (r ValidatePetsResponse) GetJSONDefault() *Error {
 	return r.JSONDefault
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r ValidatePetsResponse) GetBody() []byte {
 	return r.Body
 }

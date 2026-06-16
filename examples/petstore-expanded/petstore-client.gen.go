@@ -553,7 +553,7 @@ func (r FindPetsResponse) GetJSONDefault() *Error {
 	return r.JSONDefault
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r FindPetsResponse) GetBody() []byte {
 	return r.Body
 }
@@ -601,7 +601,7 @@ func (r AddPetResponse) GetJSONDefault() *Error {
 	return r.JSONDefault
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r AddPetResponse) GetBody() []byte {
 	return r.Body
 }
@@ -642,7 +642,7 @@ func (r DeletePetResponse) GetJSONDefault() *Error {
 	return r.JSONDefault
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r DeletePetResponse) GetBody() []byte {
 	return r.Body
 }
@@ -690,7 +690,7 @@ func (r FindPetByIDResponse) GetJSONDefault() *Error {
 	return r.JSONDefault
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r FindPetByIDResponse) GetBody() []byte {
 	return r.Body
 }

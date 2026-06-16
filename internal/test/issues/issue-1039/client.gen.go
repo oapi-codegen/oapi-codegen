@@ -225,7 +225,7 @@ type ExamplePatchResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r ExamplePatchResponse) GetBody() []byte {
 	return r.Body
 }

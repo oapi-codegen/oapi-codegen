@@ -198,7 +198,7 @@ func (r GetClientResponse) GetJSON200() *Client {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetClientResponse) GetBody() []byte {
 	return r.Body
 }

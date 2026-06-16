@@ -245,7 +245,7 @@ func (r GetFooResponse) GetJSON200() *[]Bar {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetFooResponse) GetBody() []byte {
 	return r.Body
 }

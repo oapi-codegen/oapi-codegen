@@ -667,7 +667,7 @@ type PostBothResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostBothResponse) GetBody() []byte {
 	return r.Body
 }
@@ -701,7 +701,7 @@ type GetBothResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetBothResponse) GetBody() []byte {
 	return r.Body
 }
@@ -735,7 +735,7 @@ type PostJsonResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostJsonResponse) GetBody() []byte {
 	return r.Body
 }
@@ -769,7 +769,7 @@ type GetJsonResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetJsonResponse) GetBody() []byte {
 	return r.Body
 }
@@ -803,7 +803,7 @@ type PostOtherResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostOtherResponse) GetBody() []byte {
 	return r.Body
 }
@@ -837,7 +837,7 @@ type GetOtherResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetOtherResponse) GetBody() []byte {
 	return r.Body
 }
@@ -871,7 +871,7 @@ type GetJsonWithTrailingSlashResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetJsonWithTrailingSlashResponse) GetBody() []byte {
 	return r.Body
 }
@@ -905,7 +905,7 @@ type PostVendorJsonResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostVendorJsonResponse) GetBody() []byte {
 	return r.Body
 }

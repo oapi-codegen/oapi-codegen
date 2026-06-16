@@ -472,7 +472,7 @@ func (r GetGetMultibodyResponse) GetApplicationldJSONProfilehttpswwwW3Orgnsactiv
 	return r.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetGetMultibodyResponse) GetBody() []byte {
 	return r.Body
 }
@@ -513,7 +513,7 @@ func (r GetObjectResponse) GetApplicationldJSONProfilehttpswwwW3Orgnsactivitystr
 	return r.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetObjectResponse) GetBody() []byte {
 	return r.Body
 }
@@ -547,7 +547,7 @@ type PostPostMultibodyResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostPostMultibodyResponse) GetBody() []byte {
 	return r.Body
 }
@@ -581,7 +581,7 @@ type PostPostObjectResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostPostObjectResponse) GetBody() []byte {
 	return r.Body
 }

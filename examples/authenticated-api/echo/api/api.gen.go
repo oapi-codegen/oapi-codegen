@@ -349,7 +349,7 @@ func (r ListThingsResponse) GetJSON200() *[]ThingWithID {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r ListThingsResponse) GetBody() []byte {
 	return r.Body
 }
@@ -390,7 +390,7 @@ func (r AddThingResponse) GetJSON201() *[]ThingWithID {
 	return r.JSON201
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r AddThingResponse) GetBody() []byte {
 	return r.Body
 }
