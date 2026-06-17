@@ -344,9 +344,9 @@ type OperationDefinition struct {
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
 	Spec                *openapi3.Operation
-	IsAlias             bool                    // True when this path is a $ref alias of another path item
-	AliasTarget         string                  // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
-	PathItemRef         string                  // The path item's $ref (if any); used to qualify externally-loaded schemas referenced from this operation's responses
+	IsAlias             bool   // True when this path is a $ref alias of another path item
+	AliasTarget         string // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
+	PathItemRef         string // The path item's $ref (if any); used to qualify externally-loaded schemas referenced from this operation's responses
 }
 
 // HandlerName returns the OperationId to use when referencing the server-side
