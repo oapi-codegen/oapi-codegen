@@ -65,9 +65,13 @@ type GetDeprecatedParamsOldIdParams struct {
 type PostClientsJSONRequestBody = Client
 
 // PostDeprecatedEndpointWithNonDeprecatedBodyJSONRequestBody defines body for PostDeprecatedEndpointWithNonDeprecatedBody for application/json ContentType.
+//
+// Deprecated: Use /clients instead.
 type PostDeprecatedEndpointWithNonDeprecatedBodyJSONRequestBody = Client
 
 // PostDeprecatedRequestBodyJSONRequestBody defines body for PostDeprecatedRequestBody for application/json ContentType.
+//
+// Deprecated: Use /clients instead.
 type PostDeprecatedRequestBodyJSONRequestBody = DeprecatedObject
 
 // RequestEditorFn is the function signature for the RequestEditor callback function

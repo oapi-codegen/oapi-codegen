@@ -658,6 +658,13 @@ type RequestBodyDefinition struct {
 
 	// Contains encoding options for formdata
 	Encoding map[string]RequestBodyEncoding
+
+	// Deprecated indicates the parent operation is deprecated, so this body
+	// type alias should be marked deprecated too.
+	Deprecated bool
+
+	// DeprecationReason is propagated from the parent operation's x-deprecated-reason.
+	DeprecationReason string
 }
 
 // GenerateFunctionComment returns a full Godoc-style multi-line comment with:
@@ -713,8 +720,10 @@ func (r RequestBodyDefinition) GenerateFunctionComment(originalFunctionName stri
 // TypeDef returns the Go type definition for a request body
 func (r RequestBodyDefinition) TypeDef(opID string) *TypeDefinition {
 	return &TypeDefinition{
-		TypeName: fmt.Sprintf("%s%sRequestBody", opID, r.NameTag),
-		Schema:   r.Schema,
+		TypeName:          fmt.Sprintf("%s%sRequestBody", opID, r.NameTag),
+		Schema:            r.Schema,
+		Deprecated:        r.Deprecated,
+		DeprecationReason: r.DeprecationReason,
 	}
 }
 
@@ -1074,6 +1083,19 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 
 			if op.RequestBody != nil {
 				opDef.BodyRequired = op.RequestBody.Value.Required
+			}
+
+			if op.Deprecated {
+				reason := ""
+				if extension, ok := op.Extensions[extDeprecationReason]; ok {
+					if r, err := extParseDeprecationReason(extension); err == nil {
+						reason = r
+					}
+				}
+				for i := range opDef.Bodies {
+					opDef.Bodies[i].Deprecated = true
+					opDef.Bodies[i].DeprecationReason = reason
+				}
 			}
 
 			// Generate all the type definitions needed for this operation
