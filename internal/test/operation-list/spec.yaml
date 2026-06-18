@@ -16,6 +16,8 @@ paths:
       responses:
         '201':
           description: Created
+  /users-alias:
+    $ref: "#/paths/~1users"
   /users/{id}:
     get:
       summary: Get user

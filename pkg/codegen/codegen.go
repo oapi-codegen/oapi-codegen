@@ -690,6 +690,9 @@ type StrictOperationList struct {
 func GenerateStrictOperationList(t *template.Template, ops []OperationDefinition) (string, error) {
 	ids := make([]string, 0, len(ops))
 	for _, op := range ops {
+		if op.IsAlias {
+			continue
+		}
 		ids = append(ids, op.OperationId)
 	}
 	return GenerateTemplates([]string{"operation-list.tmpl"}, t, StrictOperationList{OperationIDs: ids})
