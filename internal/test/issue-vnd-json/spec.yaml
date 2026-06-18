@@ -1,0 +1,38 @@
+openapi: "3.0.0"
+info:
+  title: rootly-go issue with
+  version: "1.0.0"
+paths:
+  /items:
+    post:
+      operationId: createItem
+      responses:
+        "200":
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: "#/components/schemas/item"
+        "422":
+          content:
+            application/vnd.api+json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/error_a"
+                  - $ref: "#/components/schemas/error_b"
+components:
+  schemas:
+    item:
+      type: object
+      properties:
+        id:
+          type: string
+    error_a:
+      type: object
+      properties:
+        message:
+          type: string
+    error_b:
+      type: object
+      properties:
+        code:
+          type: integer
