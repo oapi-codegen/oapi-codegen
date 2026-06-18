@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: operationlist
+generate:
+  strict-operation-list: true
+output: operation_list.gen.go
