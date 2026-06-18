@@ -415,3 +415,61 @@ var TemplateFunctions = template.FuncMap{
 	"genServerURLWithVariablesFunctionParams": genServerURLWithVariablesFunctionParams,
 	"httpMethodConstant":                      httpMethodConstant,
 }
+
+// jsonMarshalExpr returns a Go expression that marshals varName to JSON,
+// respecting the JSONEncoding options. When no custom encoding is required the
+// expression is a plain json.Marshal call; otherwise it is an immediately-
+// invoked function that configures a json.Encoder appropriately.
+func jsonMarshalExpr(enc JSONEncodingOptions, varName string) string {
+	if !enc.NeedsCustomEncoding() {
+		return "json.Marshal(" + varName + ")"
+	}
+	var opts string
+	if !enc.EscapeHTMLValue() {
+		opts += "__enc.SetEscapeHTML(false)\n"
+	}
+	if enc.Indent != "" || enc.IndentPrefix != "" {
+		opts += fmt.Sprintf("__enc.SetIndent(%q, %q)\n", enc.IndentPrefix, enc.Indent)
+	}
+	return fmt.Sprintf(`func() ([]byte, error) {
+var __buf bytes.Buffer
+__enc := json.NewEncoder(&__buf)
+%sif __err := __enc.Encode(%s); __err != nil {
+return nil, __err
+}
+return bytes.TrimRight(__buf.Bytes(), "\n"), nil
+}()`, opts, varName)
+}
+
+// jsonMarshalFieldExpr is like jsonMarshalExpr but never applies indentation.
+// Use this when marshaling individual field values that will be stored as
+// json.RawMessage in an intermediate map; the outer marshal via jsonMarshalExpr
+// is the right place to apply indentation so that the full structure is
+// indented consistently without double-indenting nested values.
+func jsonMarshalFieldExpr(enc JSONEncodingOptions, varName string) string {
+	enc.Indent = ""
+	enc.IndentPrefix = ""
+	return jsonMarshalExpr(enc, varName)
+}
+
+// jsonNewEncoderExpr returns a Go expression that creates a *json.Encoder
+// writing to &bufVarName, applying any JSONEncoding options. When no custom
+// encoding is required the expression is a plain json.NewEncoder call;
+// otherwise it is an immediately-invoked function that sets the options before
+// returning the encoder.
+func jsonNewEncoderExpr(enc JSONEncodingOptions, bufVarName string) string {
+	if !enc.NeedsCustomEncoding() {
+		return "json.NewEncoder(&" + bufVarName + ")"
+	}
+	var opts string
+	if !enc.EscapeHTMLValue() {
+		opts += "__e.SetEscapeHTML(false)\n"
+	}
+	if enc.Indent != "" || enc.IndentPrefix != "" {
+		opts += fmt.Sprintf("__e.SetIndent(%q, %q)\n", enc.IndentPrefix, enc.Indent)
+	}
+	return fmt.Sprintf(`func() *json.Encoder {
+__e := json.NewEncoder(&%s)
+%sreturn __e
+}()`, bufVarName, opts)
+}

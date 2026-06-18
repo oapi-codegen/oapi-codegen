@@ -217,6 +217,15 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
+	TemplateFunctions["jsonNewEncoder"] = func(bufVarName string) string {
+		return jsonNewEncoderExpr(globalState.options.OutputOptions.JSONEncoding, bufVarName)
+	}
+	TemplateFunctions["jsonMarshalExpr"] = func(varName string) string {
+		return jsonMarshalExpr(globalState.options.OutputOptions.JSONEncoding, varName)
+	}
+	TemplateFunctions["jsonMarshalFieldExpr"] = func(varName string) string {
+		return jsonMarshalFieldExpr(globalState.options.OutputOptions.JSONEncoding, varName)
+	}
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above
