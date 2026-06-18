@@ -2463,7 +2463,7 @@ func ParseJSONExampleResponse(rsp *http.Response) (*JSONExampleResponse, error) 
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest Example
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -2521,14 +2521,23 @@ func ParseMultipleRequestAndResponseTypesResponse(rsp *http.Response) (*Multiple
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest Example
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
-	case rsp.StatusCode == 200:
+	case rsp.StatusCode == http.StatusOK:
+	// Content-type (application/x-www-form-urlencoded) unsupported
+
+	case rsp.StatusCode == http.StatusOK:
+	// Content-type (image/png) unsupported
+
+	case rsp.StatusCode == http.StatusOK:
+	// Content-type (multipart/form-data) unsupported
+
+	case rsp.StatusCode == http.StatusOK:
 		// Content-type (text/plain) unsupported
 
 	}
@@ -2566,7 +2575,7 @@ func ParseRequiredJSONBodyResponse(rsp *http.Response) (*RequiredJSONBodyRespons
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest Example
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -2624,7 +2633,7 @@ func ParseReusableResponsesResponse(rsp *http.Response) (*ReusableResponsesRespo
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest Reusableresponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -2714,7 +2723,7 @@ func ParseHeadersExampleResponse(rsp *http.Response) (*HeadersExampleResponse, e
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest Example
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -2740,14 +2749,14 @@ func ParseUnionExampleResponse(rsp *http.Response) (*UnionExampleResponse, error
 	}
 
 	switch {
-	case rsp.Header.Get("Content-Type") == "application/alternative+json" && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/alternative+json" && rsp.StatusCode == http.StatusOK:
 		var dest Example
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationalternativeJSON200 = &dest
 
-	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == http.StatusOK:
 		var dest UnionExample200JSONResponseBody
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

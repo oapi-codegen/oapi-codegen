@@ -204,7 +204,7 @@ func (response GetUserById200JSONResponse) VisitGetUserByIdResponse(w http.Respo
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }

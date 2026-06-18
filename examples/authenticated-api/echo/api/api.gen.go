@@ -477,7 +477,7 @@ func ParseListThingsResponse(rsp *http.Response) (*ListThingsResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest []ThingWithID
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -503,7 +503,7 @@ func ParseAddThingResponse(rsp *http.Response) (*AddThingResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusCreated:
 		var dest []ThingWithID
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

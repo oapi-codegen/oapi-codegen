@@ -192,7 +192,7 @@ type GetExample200Response struct {
 }
 
 func (response GetExample200Response) VisitGetExampleResponse(w http.ResponseWriter) error {
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	return nil
 }
 
@@ -205,7 +205,7 @@ func (response GetExample400JSONResponse) VisitGetExampleResponse(w http.Respons
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
+	w.WriteHeader(http.StatusBadRequest)
 	_, err := buf.WriteTo(w)
 	return err
 }

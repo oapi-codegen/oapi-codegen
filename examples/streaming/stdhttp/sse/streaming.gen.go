@@ -193,7 +193,7 @@ func (response GetStream200ApplicationjsonlResponse) VisitGetStreamResponse(w ht
 	if response.ContentLength != 0 {
 		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 
 	if closer, ok := response.Body.(io.ReadCloser); ok {
 		defer closer.Close()

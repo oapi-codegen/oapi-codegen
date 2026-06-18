@@ -252,7 +252,7 @@ func ParseUpdateClientResp(rsp *http.Response) (*UpdateClientResp, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusBadRequest:
 		var dest UpdateClientResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

@@ -226,7 +226,7 @@ func (response PostInvalidExtRefTrouble300JSONResponse) VisitPostInvalidExtRefTr
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(300)
+	w.WriteHeader(http.StatusMultipleChoices)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -252,7 +252,7 @@ func (response PostNoTrouble200JSONResponse) VisitPostNoTroubleResponse(w http.R
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }

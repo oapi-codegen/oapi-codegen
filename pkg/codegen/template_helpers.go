@@ -162,8 +162,9 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		// If there is no content-type then we have no unmarshaling to do:
 		if len(responseRef.Value.Content) == 0 {
 			caseAction := "break // No content-type"
-			caseClauseKey := "case " + getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName) + ":"
-			unhandledCaseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
+			caseClause := "case " + getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName) + ":"
+			caseKey := fmt.Sprintf("%s.%s", prefixLeastSpecific, typeDefinition.ResponseName)
+			unhandledCaseClauses[caseKey] = fmt.Sprintf("%s\n%s\n", caseClause, caseAction)
 			continue
 		}
 
@@ -238,8 +239,9 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			// Everything else:
 			default:
 				caseAction := fmt.Sprintf("// Content-type (%s) unsupported", contentTypeName)
-				caseClauseKey := "case " + getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName) + ":"
-				unhandledCaseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
+				caseClause := "case " + getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName) + ":"
+				caseKey := fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentTypeName, typeDefinition.ResponseName)
+				unhandledCaseClauses[caseKey] = fmt.Sprintf("%s\n%s\n", caseClause, caseAction)
 			}
 		}
 	}
@@ -309,7 +311,7 @@ func getConditionOfResponseName(statusCodeVar, responseName string) string {
 	case "1XX", "2XX", "3XX", "4XX", "5XX":
 		return fmt.Sprintf("%s / 100 == %s", statusCodeVar, responseName[:1])
 	default:
-		return fmt.Sprintf("%s == %s", statusCodeVar, responseName)
+		return fmt.Sprintf("%s == %s", statusCodeVar, httpStatusConstant(responseName))
 	}
 }
 

@@ -314,45 +314,45 @@ func ParseGetThingsResponse(rsp *http.Response) (*GetThingsResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest ThingResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusUnauthorized:
 		var dest externalRef0.N401
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON401 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusForbidden:
 		var dest externalRef0.N403
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON403 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusNotFound:
 		var dest N404
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON404 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 500:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusInternalServerError:
 		var dest externalRef0.DefaultError
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON500 = &dest
 
-	case rsp.StatusCode == 401:
+	case rsp.StatusCode == http.StatusUnauthorized:
 	// Content-type (text/plain) unsupported
 
-	case rsp.StatusCode == 403:
+	case rsp.StatusCode == http.StatusForbidden:
 		// Content-type (text/plain) unsupported
 
 	}

@@ -3169,7 +3169,7 @@ func ParseListEntitiesResponse(rsp *http.Response) (*ListEntitiesResponse, error
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest struct {
 			Data     *[]Widget `json:"data,omitempty"`
 			Metadata *Metadata `json:"metadata,omitempty"`
@@ -3198,7 +3198,7 @@ func ParsePostFooResponse(rsp *http.Response) (*PostFooResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest BarResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -3224,7 +3224,7 @@ func ParseListItemsResponse2(rsp *http.Response) (*ListItemsResponse2, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest ListItemsResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -3250,7 +3250,7 @@ func ParseCreateItemResponse2(rsp *http.Response) (*CreateItemResponse2, error) 
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest CreateItemResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -3276,7 +3276,7 @@ func ParseCreateOrderResponse(rsp *http.Response) (*CreateOrderResponse, error) 
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest Order
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -3302,7 +3302,7 @@ func ParseGetOutcomeResponse(rsp *http.Response) (*GetOutcomeResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest OutcomeResult
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -3344,7 +3344,7 @@ func ParseSendPayloadResponse(rsp *http.Response) (*SendPayloadResponse, error) 
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest Payload
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -3370,7 +3370,7 @@ func ParseCreatePetResponse(rsp *http.Response) (*CreatePetResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest Pet
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -3396,7 +3396,7 @@ func ParseQueryResponse2(rsp *http.Response) (*QueryResponse2, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest QueryResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -3422,7 +3422,7 @@ func ParseGetQuxResponse(rsp *http.Response) (*GetQuxResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest QuxResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -3464,7 +3464,7 @@ func ParseGetRenamedSchemaResponse(rsp *http.Response) (*GetRenamedSchemaRespons
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest Renamer
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -3506,28 +3506,28 @@ func ParsePatchResourceResponse(rsp *http.Response) (*PatchResourceResponse, err
 	}
 
 	switch {
-	case rsp.Header.Get("Content-Type") == "application/json-patch+json" && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/json-patch+json" && rsp.StatusCode == http.StatusOK:
 		var dest N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationjsonPatchJSON200 = &dest
 
-	case rsp.Header.Get("Content-Type") == "application/json-patch-query+json" && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/json-patch-query+json" && rsp.StatusCode == http.StatusOK:
 		var dest N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationjsonPatchQueryJSON200 = &dest
 
-	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == http.StatusOK:
 		var dest N200ResourcePatchResponseJSONApplicationJSON
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
-	case rsp.Header.Get("Content-Type") == "application/merge-patch+json" && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/merge-patch+json" && rsp.StatusCode == http.StatusOK:
 		var dest N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -3553,7 +3553,7 @@ func ParseGetStatusResponse2(rsp *http.Response) (*GetStatusResponse2, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest GetStatusResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -3579,7 +3579,7 @@ func ParseGetZapResponse(rsp *http.Response) (*GetZapResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest ZapResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

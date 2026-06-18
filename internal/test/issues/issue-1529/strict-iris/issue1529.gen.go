@@ -271,21 +271,21 @@ func ParseTestResponse(rsp *http.Response) (*TestResponse, error) {
 	}
 
 	switch {
-	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == http.StatusOK:
 		var dest Test
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
-	case rsp.Header.Get("Content-Type") == "application/json; profile=\"Bar\"" && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/json; profile=\"Bar\"" && rsp.StatusCode == http.StatusOK:
 		var dest Test
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationjsonProfileBar200 = &dest
 
-	case rsp.Header.Get("Content-Type") == "application/json; profile=\"Foo\"" && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/json; profile=\"Foo\"" && rsp.StatusCode == http.StatusOK:
 		var dest Test
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -352,7 +352,7 @@ type Test200JSONResponse Test
 
 func (response Test200JSONResponse) VisitTestResponse(ctx iris.Context) error {
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	return ctx.JSON(&response)
 }
@@ -361,7 +361,7 @@ type Test200ApplicationJSONProfileBarResponse Test
 
 func (response Test200ApplicationJSONProfileBarResponse) VisitTestResponse(ctx iris.Context) error {
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/json; profile=\"Bar\"")
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	return ctx.JSON(&response)
 }
@@ -370,7 +370,7 @@ type Test200ApplicationJSONProfileFooResponse Test
 
 func (response Test200ApplicationJSONProfileFooResponse) VisitTestResponse(ctx iris.Context) error {
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/json; profile=\"Foo\"")
-	ctx.StatusCode(200)
+	ctx.StatusCode(http.StatusOK)
 
 	return ctx.JSON(&response)
 }

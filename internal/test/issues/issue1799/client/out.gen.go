@@ -700,14 +700,14 @@ func ParseGetGetMultibodyResponse(rsp *http.Response) (*GetGetMultibodyResponse,
 	}
 
 	switch {
-	case rsp.Header.Get("Content-Type") == "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"" && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"" && rsp.StatusCode == http.StatusOK:
 		var dest string
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 = &dest
 
-	case rsp.Header.Get("Content-Type") == "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"" && rsp.StatusCode == 200:
+	case rsp.Header.Get("Content-Type") == "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"" && rsp.StatusCode == http.StatusOK:
 		var dest string
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -733,7 +733,7 @@ func ParseGetObjectResponse(rsp *http.Response) (*GetObjectResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == http.StatusOK:
 		var dest string
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err

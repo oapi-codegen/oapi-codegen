@@ -189,7 +189,7 @@ func (response ListThings200JSONResponse) VisitListThingsResponse(w http.Respons
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.WriteHeader(http.StatusOK)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -205,7 +205,7 @@ func (response ListThings400JSONResponse) VisitListThingsResponse(w http.Respons
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(400)
+	w.WriteHeader(http.StatusBadRequest)
 	_, err := buf.WriteTo(w)
 	return err
 }
