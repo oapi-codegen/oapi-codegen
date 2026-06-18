@@ -558,7 +558,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 						baseTypeName := fmt.Sprintf("%s%s", nameNormalizer(contentTypeName), nameNormalizer(responseName))
 
 						typeName = strings.ReplaceAll(baseTypeName, "Json", "JSON")
-						tag = strings.ReplaceAll(nameNormalizer(contentTypeName), "Json", "JSON")
+						tag = mediaTypeToCamelCase(contentTypeName)
 					// YAML:
 					case slices.Contains(contentTypesYAML, contentTypeName):
 						typeName = fmt.Sprintf("YAML%s", nameNormalizer(responseName))
@@ -860,13 +860,13 @@ func (r ResponseContentDefinition) IsStreamingContentType() bool {
 }
 
 type ResponseHeaderDefinition struct {
-	Name               string
-	GoName             string
-	Schema             Schema
-	Required           bool
-	Nullable           bool
-	Deprecated         bool
-	DeprecationReason  string
+	Name              string
+	GoName            string
+	Schema            Schema
+	Required          bool
+	Nullable          bool
+	Deprecated        bool
+	DeprecationReason string
 }
 
 // DeprecationComment returns a Go-style deprecation comment if the header is deprecated, otherwise returns an empty string.
