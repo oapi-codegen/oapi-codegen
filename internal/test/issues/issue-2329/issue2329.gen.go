@@ -115,7 +115,7 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -188,15 +188,20 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// ListThings request
+
+	// ListThings performs a GET /things (the `ListThings` operationId) request.
 	ListThings(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CreateThingWithBody request with any body
+	// CreateThingWithBody performs a POST /things (the `CreateThing` operationId) request,
+	// with any type of body and a specified content type.
 	CreateThingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// CreateThing performs a POST /things (the `CreateThing` operationId) request.
+	// Takes a body of the `application/json` content type.
 	CreateThing(ctx context.Context, body CreateThingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// ListThings performs a GET /things (the `ListThings` operationId) request.
 func (c *Client) ListThings(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListThingsRequest(c.Server, params)
 	if err != nil {
@@ -209,6 +214,8 @@ func (c *Client) ListThings(ctx context.Context, params *ListThingsParams, reqEd
 	return c.Client.Do(req)
 }
 
+// CreateThingWithBody performs a POST /things (the `CreateThing` operationId) request,
+// with any type of body and a specified content type.
 func (c *Client) CreateThingWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateThingRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -221,6 +228,8 @@ func (c *Client) CreateThingWithBody(ctx context.Context, contentType string, bo
 	return c.Client.Do(req)
 }
 
+// CreateThing performs a POST /things (the `CreateThing` operationId) request.
+// Takes a body of the `application/json` content type.
 func (c *Client) CreateThing(ctx context.Context, body CreateThingJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCreateThingRequest(c.Server, body)
 	if err != nil {
@@ -233,7 +242,7 @@ func (c *Client) CreateThing(ctx context.Context, body CreateThingJSONRequestBod
 	return c.Client.Do(req)
 }
 
-// NewListThingsRequest generates requests for ListThings
+// NewListThingsRequest constructs an http.Request for the ListThings method
 func NewListThingsRequest(server string, params *ListThingsParams) (*http.Request, error) {
 	var err error
 
@@ -310,7 +319,7 @@ func NewCreateThingRequest(server string, body CreateThingJSONRequestBody) (*htt
 	return NewCreateThingRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewCreateThingRequestWithBody generates requests for CreateThing with any type of body
+// NewCreateThingRequestWithBody constructs an http.Request for the CreateThing method, with any body, and a specified content type
 func NewCreateThingRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -382,18 +391,31 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// ListThingsWithResponse request
+
+	// ListThingsWithResponse performs a GET /things (the `ListThings` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	ListThingsWithResponse(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*ListThingsResponse, error)
 
-	// CreateThingWithBodyWithResponse request with any body
+	// CreateThingWithBodyWithResponse performs a POST /things (the `CreateThing` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	CreateThingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateThingResponse, error)
 
+	// CreateThingWithResponse performs a POST /things (the `CreateThing` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 	CreateThingWithResponse(ctx context.Context, body CreateThingJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateThingResponse, error)
 }
 
 type ListThingsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes
+func (r ListThingsResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -425,6 +447,11 @@ type CreateThingResponse struct {
 	HTTPResponse *http.Response
 }
 
+// GetBody returns the raw response body bytes
+func (r CreateThingResponse) GetBody() []byte {
+	return r.Body
+}
+
 // Status returns HTTPResponse.Status
 func (r CreateThingResponse) Status() string {
 	if r.HTTPResponse != nil {
@@ -449,7 +476,9 @@ func (r CreateThingResponse) ContentType() string {
 	return ""
 }
 
-// ListThingsWithResponse request returning *ListThingsResponse
+// ListThingsWithResponse performs a GET /things (the `ListThings` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ListThingsWithResponse(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*ListThingsResponse, error) {
 	rsp, err := c.ListThings(ctx, params, reqEditors...)
 	if err != nil {
@@ -458,7 +487,10 @@ func (c *ClientWithResponses) ListThingsWithResponse(ctx context.Context, params
 	return ParseListThingsResponse(rsp)
 }
 
-// CreateThingWithBodyWithResponse request with arbitrary body returning *CreateThingResponse
+// CreateThingWithBodyWithResponse performs a POST /things (the `CreateThing` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) CreateThingWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CreateThingResponse, error) {
 	rsp, err := c.CreateThingWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -467,6 +499,8 @@ func (c *ClientWithResponses) CreateThingWithBodyWithResponse(ctx context.Contex
 	return ParseCreateThingResponse(rsp)
 }
 
+// CreateThingWithResponse performs a POST /things (the `CreateThing` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) CreateThingWithResponse(ctx context.Context, body CreateThingJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateThingResponse, error) {
 	rsp, err := c.CreateThing(ctx, body, reqEditors...)
 	if err != nil {

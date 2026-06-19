@@ -344,9 +344,9 @@ type OperationDefinition struct {
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
 	Spec                *openapi3.Operation
-	IsAlias             bool                    // True when this path is a $ref alias of another path item
-	AliasTarget         string                  // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
-	PathItemRef         string                  // The path item's $ref (if any); used to qualify externally-loaded schemas referenced from this operation's responses
+	IsAlias             bool   // True when this path is a $ref alias of another path item
+	AliasTarget         string // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
+	PathItemRef         string // The path item's $ref (if any); used to qualify externally-loaded schemas referenced from this operation's responses
 
 	// IsWebhook is true when this OperationDefinition was sourced from
 	// spec.Webhooks (OpenAPI 3.1+). Webhook operations have no path
@@ -452,17 +452,117 @@ func (o *OperationDefinition) HasBody() bool {
 	return o.Spec.RequestBody != nil
 }
 
-// SummaryAsComment returns the Operations summary as a multi line comment
-func (o *OperationDefinition) SummaryAsComment() string {
+// SummaryAsComment returns the Operations summary as a Godoc-style multi line comment
+func (o *OperationDefinition) SummaryAsComment(prefix string) string {
 	if o.Summary == "" {
 		return ""
 	}
-	trimmed := strings.TrimSuffix(o.Summary, "\n")
-	parts := strings.Split(trimmed, "\n")
+	parts := strings.Split(normalizeWhitespace(o.Summary), "\n")
 	for i, p := range parts {
-		parts[i] = "// " + p
+		if i == 0 && prefix != "" {
+			parts[i] = "// " + prefix + " " + p
+		} else {
+			parts[i] = "// " + p
+		}
 	}
 	return strings.Join(parts, "\n")
+}
+
+// prepareDescriptionLines normalises description for inclusion in a Godoc comment, and:
+//
+//  1. Returns nil when the description is the same as the summary
+//  1. Ensures a single-line description includes a trailing `.`, which prevents
+//     gofmt from promoting this to an "old-style" header
+func prepareDescriptionLines(summary, description string) []string {
+	description = normalizeWhitespace(description)
+	if description == "" {
+		return nil
+	}
+	if description == normalizeWhitespace(summary) {
+		return nil
+	}
+	lines := strings.Split(description, "\n")
+	if len(lines) == 1 && !strings.ContainsAny(lines[0], ".,;:!?") {
+		lines[0] += "."
+	}
+	return lines
+}
+
+// GenerateFunctionComment returns a full Godoc-style multi-line comment with:
+// - the Summary, if present, as the first line of the comment
+// - if not present, an indication of the HTTP call this corresponds with
+// - the Description, if present
+// - whether this function takes a body and a content type
+//
+// Takes originalFunctionName (the OperationId or the function name being generated for this Operation), a suffix (if necessary) and whether this is being generated for ClientInterface or ClientWithResponsesInterface
+func (o OperationDefinition) GenerateFunctionComment(originalFunctionName string, functionSuffix string, isFunctionWithResponses bool) string {
+	functionName := originalFunctionName + functionSuffix
+	descriptionLines := prepareDescriptionLines(o.Summary, o.Spec.Description)
+
+	var parts []string
+	if summary := o.SummaryAsComment(functionName); summary != "" {
+		parts = append(parts, strings.Split(summary, "\n")...)
+		parts = append(parts, "//")
+		if len(descriptionLines) > 0 {
+			for _, line := range descriptionLines {
+				parts = append(parts, "// "+line)
+			}
+			parts = append(parts, "//")
+		}
+		if o.HasBody() {
+			if isFunctionWithResponses {
+				parts = append(parts, "// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).")
+				parts = append(parts, "//")
+			} else {
+				parts = append(parts, "// Takes any type of body and a specified content type.")
+				parts = append(parts, "//")
+			}
+		} else {
+			if isFunctionWithResponses {
+				parts = append(parts, "// Returns a wrapper object for the known response body format(s).")
+				parts = append(parts, "//")
+			}
+		}
+		parts = append(parts, "// Corresponds with "+o.Method+" "+o.Path+" (the `"+o.OperationId+"` operationId).")
+	} else {
+		if o.HasBody() {
+			parts = append(parts, "// "+functionName+" performs a "+o.Method+" "+o.Path+" (the `"+o.OperationId+"` operationId) request,")
+			parts = append(parts, "// with any type of body and a specified content type.")
+		} else {
+			parts = append(parts, "// "+functionName+" performs a "+o.Method+" "+o.Path+" (the `"+o.OperationId+"` operationId) request.")
+		}
+		if len(descriptionLines) > 0 {
+			parts = append(parts, "//")
+			for _, line := range descriptionLines {
+				parts = append(parts, "// "+line)
+			}
+		}
+		if isFunctionWithResponses {
+			parts = append(parts, "//")
+			parts = append(parts, "// Returns a wrapper object for the known response body format(s).")
+		}
+	}
+
+	// make sure that each line is sanitised
+	for i, part := range parts {
+		parts[i] = stripNewLines(part)
+	}
+
+	return strings.Join(parts, "\n")
+}
+
+// DeprecationComment returns a Go-style deprecation comment if the operation is deprecated, otherwise returns an empty string.
+func (o *OperationDefinition) DeprecationComment() string {
+	if o.Spec == nil || !o.Spec.Deprecated {
+		return ""
+	}
+	reason := "this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set"
+	if extension, ok := o.Spec.Extensions[extDeprecationReason]; ok {
+		if r, err := extParseDeprecationReason(extension); err == nil {
+			reason = r
+		}
+	}
+	return DeprecationComment(reason)
 }
 
 // GetResponseTypeDefinitions produces a list of type definitions for a given Operation for the response
@@ -510,7 +610,7 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 						baseTypeName := fmt.Sprintf("%s%s", nameNormalizer(contentTypeName), nameNormalizer(responseName))
 
 						typeName = strings.ReplaceAll(baseTypeName, "Json", "JSON")
-						tag = strings.ReplaceAll(nameNormalizer(contentTypeName), "Json", "JSON")
+						tag = mediaTypeToCamelCase(contentTypeName)
 					// YAML:
 					case slices.Contains(contentTypesYAML, contentTypeName):
 						typeName = fmt.Sprintf("YAML%s", nameNormalizer(responseName))
@@ -610,13 +710,72 @@ type RequestBodyDefinition struct {
 
 	// Contains encoding options for formdata
 	Encoding map[string]RequestBodyEncoding
+
+	// Deprecated indicates the parent operation is deprecated, so this body
+	// type alias should be marked deprecated too.
+	Deprecated bool
+
+	// DeprecationReason is propagated from the parent operation's x-deprecated-reason.
+	DeprecationReason string
+}
+
+// GenerateFunctionComment returns a full Godoc-style multi-line comment with:
+// - the Summary, if present, as the first line of the comment
+// - if not present, an indication of the HTTP call this corresponds with
+// - whether this function takes a body and a content type
+//
+// Takes originalFunctionName (the OperationId or the function name being generated for this Operation), a suffix (if necessary) and whether this is being generated for ClientInterface or ClientWithResponsesInterface
+func (r RequestBodyDefinition) GenerateFunctionComment(originalFunctionName string, parent OperationDefinition, functionSuffix string, isFunctionWithResponses bool) string {
+	functionName := originalFunctionName + functionSuffix
+	descriptionLines := prepareDescriptionLines(parent.Summary, parent.Spec.Description)
+
+	var parts []string
+	if summary := parent.SummaryAsComment(functionName); summary != "" {
+		parts = append(parts, strings.Split(summary, "\n")...)
+		parts = append(parts, "//")
+		if len(descriptionLines) > 0 {
+			for _, line := range descriptionLines {
+				parts = append(parts, "// "+line)
+			}
+			parts = append(parts, "//")
+		}
+		if isFunctionWithResponses {
+			parts = append(parts, "// Takes a body of the `"+r.ContentType+"` content type, and returns a wrapper object for the known response body format(s).")
+		} else {
+			parts = append(parts, "// Takes a body of the `"+r.ContentType+"` content type.")
+		}
+		parts = append(parts, "//")
+		parts = append(parts, "// Corresponds with "+parent.Method+" "+parent.Path+" (the `"+parent.OperationId+"` operationId).")
+	} else {
+		parts = append(parts, "// "+functionName+" performs a "+parent.Method+" "+parent.Path+" (the `"+parent.OperationId+"` operationId) request.")
+		if isFunctionWithResponses {
+			parts = append(parts, "// Takes a body of the `"+r.ContentType+"` content type, and returns a wrapper object for the known response body format(s).")
+		} else {
+			parts = append(parts, "// Takes a body of the `"+r.ContentType+"` content type.")
+		}
+		if len(descriptionLines) > 0 {
+			parts = append(parts, "//")
+			for _, line := range descriptionLines {
+				parts = append(parts, "// "+line)
+			}
+		}
+	}
+
+	// make sure that each line is sanitised
+	for i, part := range parts {
+		parts[i] = stripNewLines(part)
+	}
+
+	return strings.Join(parts, "\n")
 }
 
 // TypeDef returns the Go type definition for a request body
 func (r RequestBodyDefinition) TypeDef(opID string) *TypeDefinition {
 	return &TypeDefinition{
-		TypeName: fmt.Sprintf("%s%sRequestBody", opID, r.NameTag),
-		Schema:   r.Schema,
+		TypeName:          fmt.Sprintf("%s%sRequestBody", opID, r.NameTag),
+		Schema:            r.Schema,
+		Deprecated:        r.Deprecated,
+		DeprecationReason: r.DeprecationReason,
 	}
 }
 
@@ -753,11 +912,25 @@ func (r ResponseContentDefinition) IsStreamingContentType() bool {
 }
 
 type ResponseHeaderDefinition struct {
-	Name     string
-	GoName   string
-	Schema   Schema
-	Required bool
-	Nullable bool
+	Name              string
+	GoName            string
+	Schema            Schema
+	Required          bool
+	Nullable          bool
+	Deprecated        bool
+	DeprecationReason string
+}
+
+// DeprecationComment returns a Go-style deprecation comment if the header is deprecated, otherwise returns an empty string.
+func (h ResponseHeaderDefinition) DeprecationComment() string {
+	if !h.Deprecated {
+		return ""
+	}
+	reason := h.DeprecationReason
+	if reason == "" {
+		reason = "this header has been marked as deprecated upstream, but no `x-deprecated-reason` was set"
+	}
+	return DeprecationComment(reason)
 }
 
 // GoTypeDef returns the Go type string for this header, applying pointer or
@@ -962,6 +1135,19 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 
 			if op.RequestBody != nil {
 				opDef.BodyRequired = op.RequestBody.Value.Required
+			}
+
+			if op.Deprecated {
+				reason := ""
+				if extension, ok := op.Extensions[extDeprecationReason]; ok {
+					if r, err := extParseDeprecationReason(extension); err == nil {
+						reason = r
+					}
+				}
+				for i := range opDef.Bodies {
+					opDef.Bodies[i].Deprecated = true
+					opDef.Bodies[i].DeprecationReason = reason
+				}
 			}
 
 			// Generate all the type definitions needed for this operation
@@ -1442,6 +1628,14 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 				Required: header.Value.Required || globalState.options.Compatibility.HeadersImplicitlyRequired,
 				Nullable: nullable,
 			}
+			if header.Value.Deprecated {
+				headerDefinition.Deprecated = true
+				if extension, ok := header.Value.Extensions[extDeprecationReason]; ok {
+					if r, err := extParseDeprecationReason(extension); err == nil {
+						headerDefinition.DeprecationReason = r
+					}
+				}
+			}
 			responseHeaderDefinitions = append(responseHeaderDefinitions, headerDefinition)
 		}
 
@@ -1543,6 +1737,7 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			Schema:        pSchema,
 			NeedsFormTag:  param.Style() == "form",
 			Extensions:    extensions,
+			Deprecated:    param.Spec.Deprecated,
 		}
 		s.Properties = append(s.Properties, prop)
 	}

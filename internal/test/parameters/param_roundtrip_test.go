@@ -13,6 +13,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/kataras/iris/v12"
 	"github.com/labstack/echo/v4"
+	echov5 "github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -21,6 +22,8 @@ import (
 	paramclient "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/client/gen"
 	echoparams "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/echo"
 	echogen "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/echo/gen"
+	echov5params "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/echov5"
+	echov5gen "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/echov5/gen"
 	fiberparams "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/fiber"
 	fibergen "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/fiber/gen"
 	ginparams "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/gin"
@@ -37,6 +40,13 @@ func TestEchoParameterRoundTrip(t *testing.T) {
 	var s echoparams.Server
 	e := echo.New()
 	echogen.RegisterHandlers(e, &s)
+	testImpl(t, e)
+}
+
+func TestEchoV5ParameterRoundTrip(t *testing.T) {
+	var s echov5params.Server
+	e := echov5.New()
+	echov5gen.RegisterHandlers(e, &s)
 	testImpl(t, e)
 }
 
@@ -390,6 +400,29 @@ func testImpl(t *testing.T, handler http.Handler) {
 			var got paramclient.GetDeepObjectParams
 			doRoundTrip(t, req, &got)
 			assert.Equal(t, expectedComplexObject, got.DeepObj)
+		})
+
+		// Regression for oapi-codegen/runtime#131: with the v2.7.0 client
+		// no longer re-encoding query fragments, the runtime marshaller must
+		// percent-encode reserved URI characters and non-ASCII bytes inside
+		// deepObject values. Without the fix, '&' splits the value into two
+		// query params (silent corruption) and non-ASCII bytes produce
+		// invalid URIs that strict servers reject.
+		t.Run("deepObject with unicode and reserved chars", func(t *testing.T) {
+			adversarial := paramclient.ComplexObject{
+				Object: paramclient.Object{
+					FirstName: "filter&q=こんにちは",
+					Role:      "admin role+with spaces",
+				},
+				Id:      12345,
+				IsAdmin: true,
+			}
+			params := paramclient.GetDeepObjectParams{DeepObj: adversarial}
+			req, err := paramclient.NewGetDeepObjectRequest(server, &params)
+			require.NoError(t, err)
+			var got paramclient.GetDeepObjectParams
+			doRoundTrip(t, req, &got)
+			assert.Equal(t, adversarial, got.DeepObj)
 		})
 
 		t.Run("spaceDelimited", func(t *testing.T) {

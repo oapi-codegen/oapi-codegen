@@ -86,7 +86,7 @@ type PlantTreeJSONRequestBody = TreePlantingRequest
 // TreePlantedJSONRequestBody defines body for TreePlanted for application/json ContentType.
 type TreePlantedJSONRequestBody = TreePlantingResult
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -159,12 +159,39 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// PlantTreeWithBody request with any body
+
+	// PlantTreeWithBody Request a tree planting
+	//
+	// Submits a request to plant a tree at the specified location.
+	// This is a long-running operation — the server accepts the request
+	// and later notifies the caller via the provided callback URL.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /api/plant_tree (the `PlantTree` operationId).
 	PlantTreeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PlantTree Request a tree planting
+	//
+	// Submits a request to plant a tree at the specified location.
+	// This is a long-running operation — the server accepts the request
+	// and later notifies the caller via the provided callback URL.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /api/plant_tree (the `PlantTree` operationId).
 	PlantTree(ctx context.Context, body PlantTreeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// PlantTreeWithBody Request a tree planting
+//
+// Submits a request to plant a tree at the specified location.
+// This is a long-running operation — the server accepts the request
+// and later notifies the caller via the provided callback URL.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /api/plant_tree (the `PlantTree` operationId).
 func (c *Client) PlantTreeWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPlantTreeRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -177,6 +204,15 @@ func (c *Client) PlantTreeWithBody(ctx context.Context, contentType string, body
 	return c.Client.Do(req)
 }
 
+// PlantTree Request a tree planting
+//
+// Submits a request to plant a tree at the specified location.
+// This is a long-running operation — the server accepts the request
+// and later notifies the caller via the provided callback URL.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /api/plant_tree (the `PlantTree` operationId).
 func (c *Client) PlantTree(ctx context.Context, body PlantTreeJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPlantTreeRequest(c.Server, body)
 	if err != nil {
@@ -200,7 +236,7 @@ func NewPlantTreeRequest(server string, body PlantTreeJSONRequestBody) (*http.Re
 	return NewPlantTreeRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewPlantTreeRequestWithBody generates requests for PlantTree with any type of body
+// NewPlantTreeRequestWithBody constructs an http.Request for the PlantTree method, with any body, and a specified content type
 func NewPlantTreeRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -272,17 +308,52 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// PlantTreeWithBodyWithResponse request with any body
+
+	// PlantTreeWithBodyWithResponse Request a tree planting
+	//
+	// Submits a request to plant a tree at the specified location.
+	// This is a long-running operation — the server accepts the request
+	// and later notifies the caller via the provided callback URL.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /api/plant_tree (the `PlantTree` operationId).
 	PlantTreeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PlantTreeResponse, error)
 
+	// PlantTreeWithResponse Request a tree planting
+	//
+	// Submits a request to plant a tree at the specified location.
+	// This is a long-running operation — the server accepts the request
+	// and later notifies the caller via the provided callback URL.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /api/plant_tree (the `PlantTree` operationId).
 	PlantTreeWithResponse(ctx context.Context, body PlantTreeJSONRequestBody, reqEditors ...RequestEditorFn) (*PlantTreeResponse, error)
 }
 
 type PlantTreeResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON202      *TreeWithID
-	JSONDefault  *Error
+	// JSON202 the response for an HTTP 202 `application/json` response
+	JSON202 *TreeWithID
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON202 returns the response for an HTTP 202 `application/json` response
+func (r PlantTreeResponse) GetJSON202() *TreeWithID {
+	return r.JSON202
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r PlantTreeResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r PlantTreeResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -309,7 +380,15 @@ func (r PlantTreeResponse) ContentType() string {
 	return ""
 }
 
-// PlantTreeWithBodyWithResponse request with arbitrary body returning *PlantTreeResponse
+// PlantTreeWithBodyWithResponse Request a tree planting
+//
+// Submits a request to plant a tree at the specified location.
+// This is a long-running operation — the server accepts the request
+// and later notifies the caller via the provided callback URL.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /api/plant_tree (the `PlantTree` operationId).
 func (c *ClientWithResponses) PlantTreeWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PlantTreeResponse, error) {
 	rsp, err := c.PlantTreeWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -318,6 +397,15 @@ func (c *ClientWithResponses) PlantTreeWithBodyWithResponse(ctx context.Context,
 	return ParsePlantTreeResponse(rsp)
 }
 
+// PlantTreeWithResponse Request a tree planting
+//
+// Submits a request to plant a tree at the specified location.
+// This is a long-running operation — the server accepts the request
+// and later notifies the caller via the provided callback URL.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /api/plant_tree (the `PlantTree` operationId).
 func (c *ClientWithResponses) PlantTreeWithResponse(ctx context.Context, body PlantTreeJSONRequestBody, reqEditors ...RequestEditorFn) (*PlantTreeResponse, error) {
 	rsp, err := c.PlantTree(ctx, body, reqEditors...)
 	if err != nil {
@@ -489,7 +577,7 @@ func NewTreePlantedCallbackRequestWithBody(targetURL string, contentType string,
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Request a tree planting
+	// PlantTree Request a tree planting
 	// (POST /api/plant_tree)
 	PlantTree(w http.ResponseWriter, r *http.Request)
 }

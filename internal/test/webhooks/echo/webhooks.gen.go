@@ -48,7 +48,7 @@ type PetStatusEventStatus string
 // PetStatusChangedJSONRequestBody defines body for PetStatusChanged for application/json ContentType.
 type PetStatusChangedJSONRequestBody = PetStatusEvent
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.

@@ -544,6 +544,19 @@ func TestStringToGoStringValue(t *testing.T) {
 			expected: `"application/json; foo=\"bar\""`,
 			message:  "string with quotes should include escape characters",
 		},
+		{
+			// The previous implementation only escaped `"`, so a backslash
+			// before a quote (`\"`) escaped the escaping and let untrusted
+			// spec text break out of the generated string literal.
+			input:    `a\"; var Evil = 1; var _ = "`,
+			expected: `"a\\\"; var Evil = 1; var _ = \""`,
+			message:  "backslashes must be escaped so a quote cannot break out of the literal",
+		},
+		{
+			input:    "line1\nline2",
+			expected: `"line1\nline2"`,
+			message:  "newlines must be escaped so they cannot terminate the literal",
+		},
 	}
 	for _, testCase := range testCases {
 		t.Run(testCase.message, func(t *testing.T) {

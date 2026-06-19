@@ -268,6 +268,52 @@ type TypeDefinition struct {
 	// generated identifiers must remain stable to avoid colliding with
 	// other constants emitted alongside them.
 	ForceEnumPrefix bool
+
+	// Deprecated marks this type as deprecated, independent of the underlying
+	// schema's own deprecated flag. Used when the type is generated for a
+	// deprecated operation (e.g. request/response body aliases).
+	Deprecated bool
+
+	// DeprecationReason is the human-readable reason for deprecation, used
+	// when Deprecated is true. If empty, a generic message is emitted.
+	DeprecationReason string
+}
+
+// DeprecationComment returns a Go-style deprecation comment if the type is
+// deprecated, otherwise returns an empty string.
+func (t TypeDefinition) DeprecationComment() string {
+	if t.Deprecated {
+		reason := t.DeprecationReason
+		if reason == "" {
+			reason = "this type has been marked as deprecated upstream, but no `x-deprecated-reason` was set"
+		}
+		return DeprecationComment(reason)
+	}
+	if t.Schema.OAPISchema == nil || !t.Schema.OAPISchema.Deprecated {
+		return ""
+	}
+	reason := "this type has been marked as deprecated upstream, but no `x-deprecated-reason` was set"
+	if extension, ok := t.Schema.OAPISchema.Extensions[extDeprecationReason]; ok {
+		if r, err := extParseDeprecationReason(extension); err == nil {
+			reason = r
+		}
+	}
+	return DeprecationComment(reason)
+}
+
+// DocComment returns the full Go doc comment for the type, including the
+// deprecation notice as a separate paragraph when the type is deprecated.
+func (t TypeDefinition) DocComment() string {
+	var comment string
+	if t.Schema.Description != "" {
+		comment = StringWithTypeNameToGoComment(t.Schema.Description, t.TypeName)
+	} else {
+		comment = fmt.Sprintf("// %s defines model for %s.", t.TypeName, t.JsonName)
+	}
+	if dc := t.DeprecationComment(); dc != "" {
+		comment += "\n//\n" + dc
+	}
+	return comment
 }
 
 // ResponseTypeDefinition is an extension of TypeDefinition, specifically for

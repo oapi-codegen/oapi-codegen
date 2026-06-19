@@ -22,7 +22,7 @@ import (
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/issues/issue-1212/pkg2"
 )
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -95,10 +95,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// Test request
+
+	// Test performs a GET /test (the `Test` operationId) request.
 	Test(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// Test performs a GET /test (the `Test` operationId) request.
 func (c *Client) Test(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestRequest(c.Server)
 	if err != nil {
@@ -111,7 +113,7 @@ func (c *Client) Test(ctx context.Context, reqEditors ...RequestEditorFn) (*http
 	return c.Client.Do(req)
 }
 
-// NewTestRequest generates requests for Test
+// NewTestRequest constructs an http.Request for the Test method
 func NewTestRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -181,13 +183,21 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// TestWithResponse request
+
+	// TestWithResponse performs a GET /test (the `Test` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	TestWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestResponse, error)
 }
 
 type TestResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes
+func (r TestResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -214,7 +224,9 @@ func (r TestResponse) ContentType() string {
 	return ""
 }
 
-// TestWithResponse request returning *TestResponse
+// TestWithResponse performs a GET /test (the `Test` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) TestWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestResponse, error) {
 	rsp, err := c.Test(ctx, reqEditors...)
 	if err != nil {

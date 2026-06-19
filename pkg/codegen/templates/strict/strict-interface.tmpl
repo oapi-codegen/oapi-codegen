@@ -32,7 +32,8 @@
         {{if (and $hasHeaders (not $isRef)) -}}
             type {{$opid}}{{$statusCode}}ResponseHeaders struct {
                 {{range .Headers -}}
-                    {{.GoName}} {{.GoTypeDef}}
+                    {{with .DeprecationComment}}{{.}}
+                    {{end -}}{{.GoName}} {{.GoTypeDef}}
                 {{end -}}
             }
         {{end}}
@@ -231,9 +232,11 @@
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
-{{range .}}{{if not .IsAlias}}{{.SummaryAsComment }}
+{{range .}}{{if not .IsAlias}}{{.SummaryAsComment .OperationId }}
 // ({{.Method}} {{.Path}})
-{{$opid := .OperationId -}}
+{{with .DeprecationComment}}//
+{{.}}
+{{end}}{{$opid := .OperationId -}}
 {{$opid}}(ctx context.Context, request {{$opid | ucFirst}}RequestObject) ({{$opid | ucFirst}}ResponseObject, error)
 {{end}}{{end}}{{/* range . */ -}}
 }

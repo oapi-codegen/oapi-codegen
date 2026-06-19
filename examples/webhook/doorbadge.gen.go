@@ -76,7 +76,7 @@ type EnterEventJSONRequestBody = Person
 // ExitEventJSONRequestBody defines body for ExitEvent for application/json ContentType.
 type ExitEventJSONRequestBody = Person
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -149,15 +149,40 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// DeregisterWebhook request
+
+	// DeregisterWebhook Deregister a webhook
+	//
+	// Removes a previously registered webhook by its ID.
+	//
+	// Corresponds with DELETE /api/webhook/{id} (the `DeregisterWebhook` operationId).
 	DeregisterWebhook(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// RegisterWebhookWithBody request with any body
+	// RegisterWebhookWithBody Register a webhook
+	//
+	// Registers a webhook for the given event kind. The server will POST
+	// to the provided URL whenever an event of that kind occurs.
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /api/webhook/{kind} (the `RegisterWebhook` operationId).
 	RegisterWebhookWithBody(ctx context.Context, kind RegisterWebhookParamsKind, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// RegisterWebhook Register a webhook
+	//
+	// Registers a webhook for the given event kind. The server will POST
+	// to the provided URL whenever an event of that kind occurs.
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /api/webhook/{kind} (the `RegisterWebhook` operationId).
 	RegisterWebhook(ctx context.Context, kind RegisterWebhookParamsKind, body RegisterWebhookJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// DeregisterWebhook Deregister a webhook
+//
+// Removes a previously registered webhook by its ID.
+//
+// Corresponds with DELETE /api/webhook/{id} (the `DeregisterWebhook` operationId).
 func (c *Client) DeregisterWebhook(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeregisterWebhookRequest(c.Server, id)
 	if err != nil {
@@ -170,6 +195,14 @@ func (c *Client) DeregisterWebhook(ctx context.Context, id openapi_types.UUID, r
 	return c.Client.Do(req)
 }
 
+// RegisterWebhookWithBody Register a webhook
+//
+// Registers a webhook for the given event kind. The server will POST
+// to the provided URL whenever an event of that kind occurs.
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /api/webhook/{kind} (the `RegisterWebhook` operationId).
 func (c *Client) RegisterWebhookWithBody(ctx context.Context, kind RegisterWebhookParamsKind, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRegisterWebhookRequestWithBody(c.Server, kind, contentType, body)
 	if err != nil {
@@ -182,6 +215,14 @@ func (c *Client) RegisterWebhookWithBody(ctx context.Context, kind RegisterWebho
 	return c.Client.Do(req)
 }
 
+// RegisterWebhook Register a webhook
+//
+// Registers a webhook for the given event kind. The server will POST
+// to the provided URL whenever an event of that kind occurs.
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /api/webhook/{kind} (the `RegisterWebhook` operationId).
 func (c *Client) RegisterWebhook(ctx context.Context, kind RegisterWebhookParamsKind, body RegisterWebhookJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRegisterWebhookRequest(c.Server, kind, body)
 	if err != nil {
@@ -194,7 +235,7 @@ func (c *Client) RegisterWebhook(ctx context.Context, kind RegisterWebhookParams
 	return c.Client.Do(req)
 }
 
-// NewDeregisterWebhookRequest generates requests for DeregisterWebhook
+// NewDeregisterWebhookRequest constructs an http.Request for the DeregisterWebhook method
 func NewDeregisterWebhookRequest(server string, id openapi_types.UUID) (*http.Request, error) {
 	var err error
 
@@ -239,7 +280,7 @@ func NewRegisterWebhookRequest(server string, kind RegisterWebhookParamsKind, bo
 	return NewRegisterWebhookRequestWithBody(server, kind, "application/json", bodyReader)
 }
 
-// NewRegisterWebhookRequestWithBody generates requests for RegisterWebhook with any type of body
+// NewRegisterWebhookRequestWithBody constructs an http.Request for the RegisterWebhook method, with any body, and a specified content type
 func NewRegisterWebhookRequestWithBody(server string, kind RegisterWebhookParamsKind, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -318,19 +359,52 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// DeregisterWebhookWithResponse request
+
+	// DeregisterWebhookWithResponse Deregister a webhook
+	//
+	// Removes a previously registered webhook by its ID.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with DELETE /api/webhook/{id} (the `DeregisterWebhook` operationId).
 	DeregisterWebhookWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*DeregisterWebhookResponse, error)
 
-	// RegisterWebhookWithBodyWithResponse request with any body
+	// RegisterWebhookWithBodyWithResponse Register a webhook
+	//
+	// Registers a webhook for the given event kind. The server will POST
+	// to the provided URL whenever an event of that kind occurs.
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /api/webhook/{kind} (the `RegisterWebhook` operationId).
 	RegisterWebhookWithBodyWithResponse(ctx context.Context, kind RegisterWebhookParamsKind, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RegisterWebhookResponse, error)
 
+	// RegisterWebhookWithResponse Register a webhook
+	//
+	// Registers a webhook for the given event kind. The server will POST
+	// to the provided URL whenever an event of that kind occurs.
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /api/webhook/{kind} (the `RegisterWebhook` operationId).
 	RegisterWebhookWithResponse(ctx context.Context, kind RegisterWebhookParamsKind, body RegisterWebhookJSONRequestBody, reqEditors ...RequestEditorFn) (*RegisterWebhookResponse, error)
 }
 
 type DeregisterWebhookResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSONDefault  *Error
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r DeregisterWebhookResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r DeregisterWebhookResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -360,8 +434,25 @@ func (r DeregisterWebhookResponse) ContentType() string {
 type RegisterWebhookResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *WebhookRegistrationResponse
-	JSONDefault  *Error
+	// JSON201 the response for an HTTP 201 `application/json` response
+	JSON201 *WebhookRegistrationResponse
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON201 returns the response for an HTTP 201 `application/json` response
+func (r RegisterWebhookResponse) GetJSON201() *WebhookRegistrationResponse {
+	return r.JSON201
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r RegisterWebhookResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r RegisterWebhookResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -388,7 +479,13 @@ func (r RegisterWebhookResponse) ContentType() string {
 	return ""
 }
 
-// DeregisterWebhookWithResponse request returning *DeregisterWebhookResponse
+// DeregisterWebhookWithResponse Deregister a webhook
+//
+// Removes a previously registered webhook by its ID.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with DELETE /api/webhook/{id} (the `DeregisterWebhook` operationId).
 func (c *ClientWithResponses) DeregisterWebhookWithResponse(ctx context.Context, id openapi_types.UUID, reqEditors ...RequestEditorFn) (*DeregisterWebhookResponse, error) {
 	rsp, err := c.DeregisterWebhook(ctx, id, reqEditors...)
 	if err != nil {
@@ -397,7 +494,14 @@ func (c *ClientWithResponses) DeregisterWebhookWithResponse(ctx context.Context,
 	return ParseDeregisterWebhookResponse(rsp)
 }
 
-// RegisterWebhookWithBodyWithResponse request with arbitrary body returning *RegisterWebhookResponse
+// RegisterWebhookWithBodyWithResponse Register a webhook
+//
+// Registers a webhook for the given event kind. The server will POST
+// to the provided URL whenever an event of that kind occurs.
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /api/webhook/{kind} (the `RegisterWebhook` operationId).
 func (c *ClientWithResponses) RegisterWebhookWithBodyWithResponse(ctx context.Context, kind RegisterWebhookParamsKind, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RegisterWebhookResponse, error) {
 	rsp, err := c.RegisterWebhookWithBody(ctx, kind, contentType, body, reqEditors...)
 	if err != nil {
@@ -406,6 +510,14 @@ func (c *ClientWithResponses) RegisterWebhookWithBodyWithResponse(ctx context.Co
 	return ParseRegisterWebhookResponse(rsp)
 }
 
+// RegisterWebhookWithResponse Register a webhook
+//
+// Registers a webhook for the given event kind. The server will POST
+// to the provided URL whenever an event of that kind occurs.
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /api/webhook/{kind} (the `RegisterWebhook` operationId).
 func (c *ClientWithResponses) RegisterWebhookWithResponse(ctx context.Context, kind RegisterWebhookParamsKind, body RegisterWebhookJSONRequestBody, reqEditors ...RequestEditorFn) (*RegisterWebhookResponse, error) {
 	rsp, err := c.RegisterWebhook(ctx, kind, body, reqEditors...)
 	if err != nil {
@@ -662,10 +774,10 @@ func NewExitEventWebhookRequestWithBody(targetURL string, contentType string, bo
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Deregister a webhook
+	// DeregisterWebhook Deregister a webhook
 	// (DELETE /api/webhook/{id})
 	DeregisterWebhook(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
-	// Register a webhook
+	// RegisterWebhook Register a webhook
 	// (POST /api/webhook/{kind})
 	RegisterWebhook(w http.ResponseWriter, r *http.Request, kind RegisterWebhookParamsKind)
 }

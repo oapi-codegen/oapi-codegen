@@ -36,7 +36,7 @@ type ThingResponse = ThingList
 // bearerAuthWebhookContextKey is the context key for bearerAuthWebhook security scheme
 type bearerAuthWebhookContextKey string
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -109,10 +109,20 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetThings request
+
+	// GetThings list things
+	//
+	// my list of things.
+	//
+	// Corresponds with GET /api/my/path (the `GetThings` operationId).
 	GetThings(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetThings list things
+//
+// my list of things.
+//
+// Corresponds with GET /api/my/path (the `GetThings` operationId).
 func (c *Client) GetThings(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetThingsRequest(c.Server)
 	if err != nil {
@@ -125,7 +135,7 @@ func (c *Client) GetThings(ctx context.Context, reqEditors ...RequestEditorFn) (
 	return c.Client.Do(req)
 }
 
-// NewGetThingsRequest generates requests for GetThings
+// NewGetThingsRequest constructs an http.Request for the GetThings method
 func NewGetThingsRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -195,18 +205,60 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetThingsWithResponse request
+
+	// GetThingsWithResponse list things
+	//
+	// my list of things.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /api/my/path (the `GetThings` operationId).
 	GetThingsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetThingsResponse, error)
 }
 
 type GetThingsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ThingResponse
-	JSON401      *externalRef0.N401
-	JSON403      *externalRef0.N403
-	JSON404      *N404
-	JSON500      *externalRef0.DefaultError
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *ThingResponse
+	// JSON401 the response for an HTTP 401 `application/json` response
+	JSON401 *externalRef0.N401
+	// JSON403 the response for an HTTP 403 `application/json` response
+	JSON403 *externalRef0.N403
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *N404
+	// JSON500 the response for an HTTP 500 `application/json` response
+	JSON500 *externalRef0.DefaultError
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetThingsResponse) GetJSON200() *ThingResponse {
+	return r.JSON200
+}
+
+// GetJSON401 returns the response for an HTTP 401 `application/json` response
+func (r GetThingsResponse) GetJSON401() *externalRef0.N401 {
+	return r.JSON401
+}
+
+// GetJSON403 returns the response for an HTTP 403 `application/json` response
+func (r GetThingsResponse) GetJSON403() *externalRef0.N403 {
+	return r.JSON403
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r GetThingsResponse) GetJSON404() *N404 {
+	return r.JSON404
+}
+
+// GetJSON500 returns the response for an HTTP 500 `application/json` response
+func (r GetThingsResponse) GetJSON500() *externalRef0.DefaultError {
+	return r.JSON500
+}
+
+// GetBody returns the raw response body bytes
+func (r GetThingsResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -233,7 +285,13 @@ func (r GetThingsResponse) ContentType() string {
 	return ""
 }
 
-// GetThingsWithResponse request returning *GetThingsResponse
+// GetThingsWithResponse list things
+//
+// my list of things.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /api/my/path (the `GetThings` operationId).
 func (c *ClientWithResponses) GetThingsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetThingsResponse, error) {
 	rsp, err := c.GetThings(ctx, reqEditors...)
 	if err != nil {
@@ -304,7 +362,7 @@ func ParseGetThingsResponse(rsp *http.Response) (*GetThingsResponse, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// list things
+	// GetThings list things
 	// (GET /api/my/path)
 	GetThings(w http.ResponseWriter, r *http.Request)
 }
@@ -313,7 +371,7 @@ type ServerInterface interface {
 
 type Unimplemented struct{}
 
-// list things
+// GetThings list things
 // (GET /api/my/path)
 func (_ Unimplemented) GetThings(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)

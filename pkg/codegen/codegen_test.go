@@ -60,11 +60,16 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 type GetTestByNameResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]Test
-	XML200       *[]Test
-	JSON422      *[]interface{}
-	XML422       *[]interface{}
-	JSONDefault  *Error
+	// JSON200 the response for an HTTP 200 `+"`application/json`"+` response
+	JSON200 *[]Test
+	// XML200 the response for an HTTP 200 `+"`application/xml`"+` response
+	XML200 *[]Test
+	// JSON422 the response for an HTTP 422 `+"`application/json`"+` response
+	JSON422 *[]interface{}
+	// XML422 the response for an HTTP 422 `+"`application/xml`"+` response
+	XML422 *[]interface{}
+	// JSONDefault the response for an HTTP default `+"`application/json`"+` response
+	JSONDefault *Error
 }`)
 
 	// Check that the helper methods are generated correctly:

@@ -5,7 +5,7 @@
 // whatever URL path they advertise to senders.
 type {{.Prefix}}ReceiverInterface interface {
 {{range .Operations -}}
-{{.SummaryAsComment}}
+{{.SummaryAsComment ""}}
 // Handle{{.OperationId}}{{$.Prefix}} handles the {{.Method}} {{$.PrefixLower}} for {{.SourceName}}.
 Handle{{.OperationId}}{{$.Prefix}}(ctx echo.Context{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}

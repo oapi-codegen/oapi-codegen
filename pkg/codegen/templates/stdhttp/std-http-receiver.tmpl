@@ -5,7 +5,7 @@
 // whatever URL path they advertise to senders.
 type {{.Prefix}}ReceiverInterface interface {
 {{range .Operations -}}
-{{.SummaryAsComment}}
+{{.SummaryAsComment ""}}
 // Handle{{.OperationId}}{{$.Prefix}} handles the {{.Method}} {{$.PrefixLower}} for {{.SourceName}}.
 Handle{{.OperationId}}{{$.Prefix}}(w http.ResponseWriter, r *http.Request{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
 {{end}}

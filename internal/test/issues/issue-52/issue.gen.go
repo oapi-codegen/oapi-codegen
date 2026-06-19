@@ -34,7 +34,7 @@ type Value struct {
 	StringValue *string     `json:"stringValue,omitempty"`
 }
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -107,10 +107,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// ExampleGet request
+
+	// ExampleGet performs a GET /example (the `ExampleGet` operationId) request.
 	ExampleGet(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// ExampleGet performs a GET /example (the `ExampleGet` operationId) request.
 func (c *Client) ExampleGet(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewExampleGetRequest(c.Server)
 	if err != nil {
@@ -123,7 +125,7 @@ func (c *Client) ExampleGet(ctx context.Context, reqEditors ...RequestEditorFn) 
 	return c.Client.Do(req)
 }
 
-// NewExampleGetRequest generates requests for ExampleGet
+// NewExampleGetRequest constructs an http.Request for the ExampleGet method
 func NewExampleGetRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -193,14 +195,28 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// ExampleGetWithResponse request
+
+	// ExampleGetWithResponse performs a GET /example (the `ExampleGet` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	ExampleGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ExampleGetResponse, error)
 }
 
 type ExampleGetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Document
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Document
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ExampleGetResponse) GetJSON200() *Document {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes
+func (r ExampleGetResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -227,7 +243,9 @@ func (r ExampleGetResponse) ContentType() string {
 	return ""
 }
 
-// ExampleGetWithResponse request returning *ExampleGetResponse
+// ExampleGetWithResponse performs a GET /example (the `ExampleGet` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ExampleGetWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ExampleGetResponse, error) {
 	rsp, err := c.ExampleGet(ctx, reqEditors...)
 	if err != nil {

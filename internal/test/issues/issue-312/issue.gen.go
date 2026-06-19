@@ -45,7 +45,7 @@ type PetNames struct {
 // ValidatePetsJSONRequestBody defines body for ValidatePets for application/json ContentType.
 type ValidatePetsJSONRequestBody = PetNames
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -118,15 +118,30 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetPet request
+
+	// GetPet Get pet given identifier.
+	//
+	// Corresponds with GET /pets/{petId} (the `GetPet` operationId).
 	GetPet(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ValidatePetsWithBody request with any body
+	// ValidatePetsWithBody Validate pets
+	//
+	// Takes any type of body and a specified content type.
+	//
+	// Corresponds with POST /pets:validate (the `ValidatePets` operationId).
 	ValidatePetsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ValidatePets Validate pets
+	//
+	// Takes a body of the `application/json` content type.
+	//
+	// Corresponds with POST /pets:validate (the `ValidatePets` operationId).
 	ValidatePets(ctx context.Context, body ValidatePetsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetPet Get pet given identifier.
+//
+// Corresponds with GET /pets/{petId} (the `GetPet` operationId).
 func (c *Client) GetPet(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetPetRequest(c.Server, petId)
 	if err != nil {
@@ -139,6 +154,11 @@ func (c *Client) GetPet(ctx context.Context, petId string, reqEditors ...Request
 	return c.Client.Do(req)
 }
 
+// ValidatePetsWithBody Validate pets
+//
+// Takes any type of body and a specified content type.
+//
+// Corresponds with POST /pets:validate (the `ValidatePets` operationId).
 func (c *Client) ValidatePetsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewValidatePetsRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -151,6 +171,11 @@ func (c *Client) ValidatePetsWithBody(ctx context.Context, contentType string, b
 	return c.Client.Do(req)
 }
 
+// ValidatePets Validate pets
+//
+// Takes a body of the `application/json` content type.
+//
+// Corresponds with POST /pets:validate (the `ValidatePets` operationId).
 func (c *Client) ValidatePets(ctx context.Context, body ValidatePetsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewValidatePetsRequest(c.Server, body)
 	if err != nil {
@@ -163,7 +188,7 @@ func (c *Client) ValidatePets(ctx context.Context, body ValidatePetsJSONRequestB
 	return c.Client.Do(req)
 }
 
-// NewGetPetRequest generates requests for GetPet
+// NewGetPetRequest constructs an http.Request for the GetPet method
 func NewGetPetRequest(server string, petId string) (*http.Request, error) {
 	var err error
 
@@ -208,7 +233,7 @@ func NewValidatePetsRequest(server string, body ValidatePetsJSONRequestBody) (*h
 	return NewValidatePetsRequestWithBody(server, "application/json", bodyReader)
 }
 
-// NewValidatePetsRequestWithBody generates requests for ValidatePets with any type of body
+// NewValidatePetsRequestWithBody constructs an http.Request for the ValidatePets method, with any body, and a specified content type
 func NewValidatePetsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -280,19 +305,44 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetPetWithResponse request
+
+	// GetPetWithResponse Get pet given identifier.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /pets/{petId} (the `GetPet` operationId).
 	GetPetWithResponse(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*GetPetResponse, error)
 
-	// ValidatePetsWithBodyWithResponse request with any body
+	// ValidatePetsWithBodyWithResponse Validate pets
+	//
+	// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /pets:validate (the `ValidatePets` operationId).
 	ValidatePetsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ValidatePetsResponse, error)
 
+	// ValidatePetsWithResponse Validate pets
+	//
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with POST /pets:validate (the `ValidatePets` operationId).
 	ValidatePetsWithResponse(ctx context.Context, body ValidatePetsJSONRequestBody, reqEditors ...RequestEditorFn) (*ValidatePetsResponse, error)
 }
 
 type GetPetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Pet
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Pet
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetPetResponse) GetJSON200() *Pet {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes
+func (r GetPetResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -322,8 +372,25 @@ func (r GetPetResponse) ContentType() string {
 type ValidatePetsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]Pet
-	JSONDefault  *Error
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]Pet
+	// JSONDefault the response for an HTTP default `application/json` response
+	JSONDefault *Error
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r ValidatePetsResponse) GetJSON200() *[]Pet {
+	return r.JSON200
+}
+
+// GetJSONDefault returns the response for an HTTP default `application/json` response
+func (r ValidatePetsResponse) GetJSONDefault() *Error {
+	return r.JSONDefault
+}
+
+// GetBody returns the raw response body bytes
+func (r ValidatePetsResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -350,7 +417,11 @@ func (r ValidatePetsResponse) ContentType() string {
 	return ""
 }
 
-// GetPetWithResponse request returning *GetPetResponse
+// GetPetWithResponse Get pet given identifier.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /pets/{petId} (the `GetPet` operationId).
 func (c *ClientWithResponses) GetPetWithResponse(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*GetPetResponse, error) {
 	rsp, err := c.GetPet(ctx, petId, reqEditors...)
 	if err != nil {
@@ -359,7 +430,11 @@ func (c *ClientWithResponses) GetPetWithResponse(ctx context.Context, petId stri
 	return ParseGetPetResponse(rsp)
 }
 
-// ValidatePetsWithBodyWithResponse request with arbitrary body returning *ValidatePetsResponse
+// ValidatePetsWithBodyWithResponse Validate pets
+//
+// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /pets:validate (the `ValidatePets` operationId).
 func (c *ClientWithResponses) ValidatePetsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ValidatePetsResponse, error) {
 	rsp, err := c.ValidatePetsWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -368,6 +443,11 @@ func (c *ClientWithResponses) ValidatePetsWithBodyWithResponse(ctx context.Conte
 	return ParseValidatePetsResponse(rsp)
 }
 
+// ValidatePetsWithResponse Validate pets
+//
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Corresponds with POST /pets:validate (the `ValidatePets` operationId).
 func (c *ClientWithResponses) ValidatePetsWithResponse(ctx context.Context, body ValidatePetsJSONRequestBody, reqEditors ...RequestEditorFn) (*ValidatePetsResponse, error) {
 	rsp, err := c.ValidatePets(ctx, body, reqEditors...)
 	if err != nil {
@@ -437,10 +517,10 @@ func ParseValidatePetsResponse(rsp *http.Response) (*ValidatePetsResponse, error
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Get pet given identifier.
+	// GetPet Get pet given identifier.
 	// (GET /pets/{petId})
 	GetPet(ctx echo.Context, petId string) error
-	// Validate pets
+	// ValidatePets Validate pets
 	// (POST /pets:validate)
 	ValidatePets(ctx echo.Context) error
 }

@@ -1,7 +1,11 @@
 package codegen
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"testing"
+	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
@@ -55,6 +59,116 @@ func TestUsedAndUndeclaredVariables(t *testing.T) {
 
 	undeclared := srv.UndeclaredPlaceholders()
 	assert.Equal(t, []string{"path"}, undeclared, "URL placeholder not in variables must be reported (#2005)")
+}
+
+// renderServerURLs parses the embedded templates and renders the
+// server-urls template for spec, mirroring the setup in Generate.
+func renderServerURLs(t *testing.T, spec *openapi3.T) string {
+	t.Helper()
+	// Generate registers `opts` before parsing; mirror that here so the
+	// (unrelated) framework templates parse cleanly.
+	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
+	tmpl := template.New("oapi-codegen").Funcs(TemplateFunctions)
+	require.NoError(t, LoadTemplates(templates, tmpl))
+	out, err := GenerateServerURLs(tmpl, spec)
+	require.NoError(t, err)
+	return out
+}
+
+// injectSentinel is the identifier a malicious spec tries to smuggle in
+// as a real top-level declaration. The two escape techniques covered are:
+//   - a newline that breaks out of a `//` line comment, and
+//   - a `"` that breaks out of a `const … = "…"` string literal,
+//
+// both of which would land `var injectSentinel = …` at package scope.
+const injectSentinel = "OapiCodegenInjectedPwned"
+
+// TestServerURLInjection checks that attacker-controlled spec text (server
+// description, URL, and variable default), which flows into generated Go line
+// comments and string literals, cannot break out into an executable top-level
+// declaration.
+func TestServerURLInjection(t *testing.T) {
+	// commentBreakout escapes a `//` comment, declares the sentinel, then
+	// re-opens a comment so the surrounding template text stays valid.
+	commentBreakout := "benign\nvar " + injectSentinel + " = 1\n//"
+	// literalBreakout escapes a `"…"` string literal, declares the
+	// sentinel, then re-opens a literal to swallow the template's closing
+	// quote.
+	literalBreakout := `https://api.example.com"; var ` + injectSentinel + ` = 1; var _ = "`
+
+	t.Run("newline in description cannot escape the doc comment", func(t *testing.T) {
+		out := renderServerURLs(t, &openapi3.T{Servers: openapi3.Servers{
+			{URL: "https://api.example.com", Description: commentBreakout},
+		}})
+		assertSentinelNotDeclared(t, out)
+	})
+
+	t.Run("description in the function (variable-bearing) form cannot escape", func(t *testing.T) {
+		out := renderServerURLs(t, &openapi3.T{Servers: openapi3.Servers{
+			{URL: "https://api.example.com/{tenant}", Description: commentBreakout},
+		}})
+		assertSentinelNotDeclared(t, out)
+	})
+
+	t.Run("quote in URL cannot escape the const string literal", func(t *testing.T) {
+		out := renderServerURLs(t, &openapi3.T{Servers: openapi3.Servers{
+			{URL: literalBreakout},
+		}})
+		assertSentinelNotDeclared(t, out)
+	})
+
+	t.Run("quote in a variable default cannot escape the const string literal", func(t *testing.T) {
+		out := renderServerURLs(t, &openapi3.T{Servers: openapi3.Servers{
+			{
+				URL: "https://api.example.com/{base}",
+				Variables: map[string]*openapi3.ServerVariable{
+					// non-enum, used → emits `const …BaseVariableDefault = "<default>"`
+					"base": {Default: `v2"; var ` + injectSentinel + ` = 1; var _ = "`},
+				},
+			},
+		}})
+		assertSentinelNotDeclared(t, out)
+	})
+}
+
+// assertSentinelNotDeclared parses the generated output as a package body
+// and fails if it is not valid Go or if injectSentinel appears as a
+// top-level declared identifier (i.e. the payload escaped its comment or
+// string literal and became real source).
+func assertSentinelNotDeclared(t *testing.T, out string) {
+	t.Helper()
+	src := "package p\n" + out
+	fset := token.NewFileSet()
+	file, err := parser.ParseFile(fset, "gen.go", src, parser.ParseComments)
+	require.NoError(t, err, "generated output must parse as valid Go:\n%s", src)
+
+	for _, name := range topLevelDeclNames(file) {
+		assert.NotEqual(t, injectSentinel, name,
+			"injected identifier became a real top-level declaration:\n%s", src)
+	}
+}
+
+// topLevelDeclNames returns every identifier declared at file scope.
+func topLevelDeclNames(file *ast.File) []string {
+	var names []string
+	for _, decl := range file.Decls {
+		switch d := decl.(type) {
+		case *ast.FuncDecl:
+			names = append(names, d.Name.Name)
+		case *ast.GenDecl:
+			for _, spec := range d.Specs {
+				switch s := spec.(type) {
+				case *ast.ValueSpec:
+					for _, n := range s.Names {
+						names = append(names, n.Name)
+					}
+				case *ast.TypeSpec:
+					names = append(names, s.Name.Name)
+				}
+			}
+		}
+	}
+	return names
 }
 
 func TestBuildServerURLTypeDefinitions(t *testing.T) {

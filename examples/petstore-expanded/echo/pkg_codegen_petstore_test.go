@@ -60,7 +60,7 @@ func TestExamplePetStoreCodeGeneration(t *testing.T) {
 	assert.Contains(t, code, "// Id Unique id of the pet")
 
 	// Check that the summary comment contains newlines
-	assert.Contains(t, code, `// Deletes a pet by ID
+	assert.Contains(t, code, `// DeletePet Deletes a pet by ID
 	// (DELETE /pets/{id})
 `)
 

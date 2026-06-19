@@ -18,7 +18,7 @@ type Client struct {
 	Name string `json:"name"`
 }
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -91,10 +91,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetClient request
+
+	// GetClient performs a GET /client (the `GetClient` operationId) request.
 	GetClient(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetClient performs a GET /client (the `GetClient` operationId) request.
 func (c *CustomClientType) GetClient(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetClientRequest(c.Server)
 	if err != nil {
@@ -107,7 +109,7 @@ func (c *CustomClientType) GetClient(ctx context.Context, reqEditors ...RequestE
 	return c.Client.Do(req)
 }
 
-// NewGetClientRequest generates requests for GetClient
+// NewGetClientRequest constructs an http.Request for the GetClient method
 func NewGetClientRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -177,14 +179,28 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetClientWithResponse request
+
+	// GetClientWithResponse performs a GET /client (the `GetClient` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	GetClientWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetClientResponse, error)
 }
 
 type GetClientResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Client
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Client
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetClientResponse) GetJSON200() *Client {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes
+func (r GetClientResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -211,7 +227,9 @@ func (r GetClientResponse) ContentType() string {
 	return ""
 }
 
-// GetClientWithResponse request returning *GetClientResponse
+// GetClientWithResponse performs a GET /client (the `GetClient` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetClientWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetClientResponse, error) {
 	rsp, err := c.GetClient(ctx, reqEditors...)
 	if err != nil {

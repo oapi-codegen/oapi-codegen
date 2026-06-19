@@ -20,7 +20,7 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -93,10 +93,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetSimplePrimitive request
+
+	// GetSimplePrimitive performs a GET /simplePrimitive/{param} (the `GetSimplePrimitive` operationId) request.
 	GetSimplePrimitive(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetSimplePrimitive performs a GET /simplePrimitive/{param} (the `GetSimplePrimitive` operationId) request.
 func (c *Client) GetSimplePrimitive(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSimplePrimitiveRequest(c.Server, param)
 	if err != nil {
@@ -109,7 +111,7 @@ func (c *Client) GetSimplePrimitive(ctx context.Context, param string, reqEditor
 	return c.Client.Do(req)
 }
 
-// NewGetSimplePrimitiveRequest generates requests for GetSimplePrimitive
+// NewGetSimplePrimitiveRequest constructs an http.Request for the GetSimplePrimitive method
 func NewGetSimplePrimitiveRequest(server string, param string) (*http.Request, error) {
 	var err error
 
@@ -186,13 +188,21 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetSimplePrimitiveWithResponse request
+
+	// GetSimplePrimitiveWithResponse performs a GET /simplePrimitive/{param} (the `GetSimplePrimitive` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	GetSimplePrimitiveWithResponse(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*GetSimplePrimitiveResponse, error)
 }
 
 type GetSimplePrimitiveResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes
+func (r GetSimplePrimitiveResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -219,7 +229,9 @@ func (r GetSimplePrimitiveResponse) ContentType() string {
 	return ""
 }
 
-// GetSimplePrimitiveWithResponse request returning *GetSimplePrimitiveResponse
+// GetSimplePrimitiveWithResponse performs a GET /simplePrimitive/{param} (the `GetSimplePrimitive` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*GetSimplePrimitiveResponse, error) {
 	rsp, err := c.GetSimplePrimitive(ctx, param, reqEditors...)
 	if err != nil {

@@ -65,7 +65,7 @@ func (e Bar) Valid() bool {
 // Bar defines model for Bar.
 type Bar string
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -138,10 +138,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetFoo request
+
+	// GetFoo performs a GET /foo (the `GetFoo` operationId) request.
 	GetFoo(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetFoo performs a GET /foo (the `GetFoo` operationId) request.
 func (c *Client) GetFoo(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetFooRequest(c.Server)
 	if err != nil {
@@ -154,7 +156,7 @@ func (c *Client) GetFoo(ctx context.Context, reqEditors ...RequestEditorFn) (*ht
 	return c.Client.Do(req)
 }
 
-// NewGetFooRequest generates requests for GetFoo
+// NewGetFooRequest constructs an http.Request for the GetFoo method
 func NewGetFooRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -224,14 +226,28 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetFooWithResponse request
+
+	// GetFooWithResponse performs a GET /foo (the `GetFoo` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	GetFooWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetFooResponse, error)
 }
 
 type GetFooResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]Bar
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *[]Bar
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetFooResponse) GetJSON200() *[]Bar {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes
+func (r GetFooResponse) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -258,7 +274,9 @@ func (r GetFooResponse) ContentType() string {
 	return ""
 }
 
-// GetFooWithResponse request returning *GetFooResponse
+// GetFooWithResponse performs a GET /foo (the `GetFoo` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetFooWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetFooResponse, error) {
 	rsp, err := c.GetFoo(ctx, reqEditors...)
 	if err != nil {
