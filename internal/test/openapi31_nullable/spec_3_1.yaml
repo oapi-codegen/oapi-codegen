@@ -31,3 +31,19 @@ components:
             id:
               type: string
           description: Optional, nullable inline object.
+        extras:
+          type: ["object", "null"]
+          description: |
+            Optional, nullable *unspecified* object (no `properties:`).
+            Regression for the gap where `Schema.Is(...)` strict
+            equality on a 3.1 type-array failed to recognize the
+            primary type as "object", routing the schema away from
+            the unspecified-object code path. Expected shape:
+            `*map[string]interface{}`.
+        metadata:
+          type: ["null", "object"]
+          description: |
+            Same as `extras` but with the type-array order reversed.
+            Both orderings must resolve identically; this guards
+            against any code path that inspects only the first
+            element of the type array.

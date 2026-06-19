@@ -5,6 +5,20 @@ package spec_3_1
 
 // Pet defines model for Pet.
 type Pet struct {
+	// Extras Optional, nullable *unspecified* object (no `properties:`).
+	// Regression for the gap where `Schema.Is(...)` strict
+	// equality on a 3.1 type-array failed to recognize the
+	// primary type as "object", routing the schema away from
+	// the unspecified-object code path. Expected shape:
+	// `*map[string]interface{}`.
+	Extras *map[string]interface{} `json:"extras,omitempty"`
+
+	// Metadata Same as `extras` but with the type-array order reversed.
+	// Both orderings must resolve identically; this guards
+	// against any code path that inspects only the first
+	// element of the type array.
+	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+
 	// Name Required, non-nullable.
 	Name string `json:"name"`
 

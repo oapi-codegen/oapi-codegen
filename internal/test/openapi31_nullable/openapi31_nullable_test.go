@@ -102,6 +102,49 @@ func TestNullableArrayAndObjectFields_3_0(t *testing.T) {
 	assert.Nil(t, p2.Owner)
 }
 
+// TestNullableUnspecifiedObject_3_1 asserts that a bare nullable
+// object (`type: ["object","null"]` with no `properties:`) generates
+// as `*map[string]interface{}`. This is the gap flagged in the
+// kin-openapi-3.1 PR review: `Schema.Is(...)` strict equality on a
+// 3.1 type-array failed to recognize the primary type as "object",
+// routing the schema away from the unspecified-object code path.
+// Also asserts that the reversed type-array order
+// (`type: ["null","object"]`) resolves identically -- no code path
+// may peek only at the first element of the array.
+func TestNullableUnspecifiedObject_3_1(t *testing.T) {
+	extras := map[string]interface{}{"k": "v"}
+	metadata := map[string]interface{}{"j": float64(1)}
+	p := spec31.Pet{
+		Name:     "fluffy",
+		Extras:   &extras,
+		Metadata: &metadata,
+	}
+	require.NotNil(t, p.Extras)
+	assert.Equal(t, "v", (*p.Extras)["k"])
+	require.NotNil(t, p.Metadata)
+	assert.Equal(t, float64(1), (*p.Metadata)["j"])
+
+	// Zero-value: both unspecified-object fields must be nil.
+	p2 := spec31.Pet{Name: "fluffy"}
+	assert.Nil(t, p2.Extras)
+	assert.Nil(t, p2.Metadata)
+}
+
+// TestNullableUnspecifiedObject_3_0 is the matching 3.0 control case
+// asserting parity with the 3.1 type-array form.
+func TestNullableUnspecifiedObject_3_0(t *testing.T) {
+	extras := map[string]interface{}{"k": "v"}
+	p := spec30.Pet{
+		Name:   "fluffy",
+		Extras: &extras,
+	}
+	require.NotNil(t, p.Extras)
+	assert.Equal(t, "v", (*p.Extras)["k"])
+
+	p2 := spec30.Pet{Name: "fluffy"}
+	assert.Nil(t, p2.Extras)
+}
+
 // TestJsonRoundTrip_NullableFields_AcrossVersions asserts that a JSON
 // payload with an explicit null nickname unmarshals to (*string)(nil) in
 // both spec versions, and that JSON output omits the field when nil due

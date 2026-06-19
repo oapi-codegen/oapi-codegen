@@ -5,6 +5,11 @@ package spec_3_0
 
 // Pet defines model for Pet.
 type Pet struct {
+	// Extras Optional, nullable *unspecified* object (no `properties:`).
+	// 3.0 control case for the 3.1 `type: ["object","null"]`
+	// equivalent; expected shape: `*map[string]interface{}`.
+	Extras *map[string]interface{} `json:"extras,omitempty"`
+
 	// Name Required, non-nullable.
 	Name string `json:"name"`
 
