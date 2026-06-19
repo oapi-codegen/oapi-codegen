@@ -359,7 +359,7 @@ func (p *PetStore) FindPets(ctx context.Context, request FindPetsRequestObject) 
 }
 ```
 
-We can see that this provides the best means to focus on the implementation of the business logic within the endpoint, rather than (un)marshalling types to and from JSON, or wrangling cookies or headers.
+We can see that this provides the best means to focus on the implementation of the business logic within the endpoint, rather than (un)marshalling types to and from JSON, or wrangling cookies or headers. In order to actually use your strict server implementation use `NewStrictHandler` or `NewStrictHandlerWithOptions` to generate a (non-strict) server interface to use with the examples below.
 
 ## Key design decisions
 
