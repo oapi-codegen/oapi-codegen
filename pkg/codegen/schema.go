@@ -389,9 +389,41 @@ func schemaIsNullable(s *openapi3.Schema) bool {
 		return false
 	}
 	if globalState.is31 {
-		return s.Type != nil && s.Type.Includes("null")
+		if s.Type != nil && s.Type.Includes("null") {
+			return true
+		}
+		// OpenAPI 3.1 also allows nullability to be expressed via an
+		// `anyOf` or `oneOf` branch whose only type is "null", which is
+		// semantically equivalent to including "null" in the outer
+		// type array. Detect it here so downstream code that wraps in a
+		// pointer (or nullable.Nullable[T]) reaches the right decision.
+		for _, branch := range s.AnyOf {
+			if branch != nil && isNullTypeSchema(branch.Value) {
+				return true
+			}
+		}
+		for _, branch := range s.OneOf {
+			if branch != nil && isNullTypeSchema(branch.Value) {
+				return true
+			}
+		}
+		return false
 	}
 	return s.Nullable
+}
+
+// isNullTypeSchema reports whether an OpenAPI 3.1 schema is a bare
+// `{"type": "null"}` -- i.e. a schema whose only type is "null" and
+// which is otherwise empty of constraints. Used to detect the
+// nullability-via-anyOf idiom in `schemaIsNullable` and to filter such
+// branches out of `generateUnion` (they're nullability markers, not
+// union variants for which we need a Go type).
+func isNullTypeSchema(s *openapi3.Schema) bool {
+	if s == nil || s.Type == nil {
+		return false
+	}
+	slice := s.Type.Slice()
+	return len(slice) == 1 && slice[0] == "null"
 }
 
 // enumViaOneOfValue is one branch of an OpenAPI 3.1 enum-via-oneOf schema.
@@ -870,7 +902,15 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				}
 			}
 
-			outSchema.GoType = GenStructFromSchema(outSchema)
+			// Only generate a struct literal if the schema actually has
+			// struct content. When `generateUnion` collapses a one-
+			// element nullable union (`anyOf: [{type: X}, {type: "null"}]`)
+			// down to the bare X branch, it sets outSchema.GoType to the
+			// primitive's Go type and clears the struct-shaped fields;
+			// rebuilding `struct {}` here would clobber that.
+			if len(outSchema.Properties) > 0 || outSchema.HasAdditionalProperties || len(outSchema.UnionElements) > 0 {
+				outSchema.GoType = GenStructFromSchema(outSchema)
+			}
 		}
 
 		// Check for x-go-type-name. It behaves much like x-go-type, however, it will
@@ -1303,8 +1343,68 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 		}
 	}
 
+	// First pass: count effective (non-null) branches. In OpenAPI 3.1, a
+	// bare `{"type": "null"}` branch in anyOf/oneOf is a nullability
+	// marker, not a real union variant -- there's no Go type that
+	// corresponds to "only the JSON value null". The parent schema's
+	// nullability is captured by schemaIsNullable, which inspects
+	// anyOf/oneOf for the same idiom and wraps the result in a pointer
+	// at the call site.
+	effectiveCount := 0
+	hadNullBranch := false
+	var soleEffective *openapi3.SchemaRef
+	for _, e := range elements {
+		if e != nil && isNullTypeSchema(e.Value) {
+			hadNullBranch = true
+			continue
+		}
+		effectiveCount++
+		if soleEffective == nil {
+			soleEffective = e
+		}
+	}
+
+	// Collapse: if filtering out null branches leaves exactly one
+	// effective branch and there is no discriminator, the schema is
+	// semantically equivalent to that single branch (made nullable by
+	// the original null branch). Produce the same Go shape the
+	// type-array idiom would: `anyOf: [{type: string}, {type: "null"}]`
+	// must generate the same `*string` field as `type: ["string",
+	// "null"]`. Without this, the single remaining branch would be
+	// wrapped in a one-variant union type, exposing a needless
+	// `FromX`/`AsX` accessor API.
+	//
+	// We do not collapse when there was no null branch (`anyOf: [{type:
+	// X}]` alone) to avoid changing behavior for existing single-branch
+	// union specs that may rely on the wrapper shape. The narrow
+	// condition keeps this change scoped to the bug fix.
+	if effectiveCount == 1 && hadNullBranch && discriminator == nil {
+		elementSchema, err := GenerateGoSchema(soleEffective, path)
+		if err != nil {
+			return err
+		}
+		// Inherit the single branch's underlying representation. The
+		// caller will apply nullability (schemaIsNullable returns true
+		// because the original anyOf/oneOf contained a null branch).
+		outSchema.GoType = elementSchema.GoType
+		outSchema.RefType = elementSchema.RefType
+		outSchema.DefineViaAlias = elementSchema.DefineViaAlias
+		outSchema.Properties = elementSchema.Properties
+		outSchema.HasAdditionalProperties = elementSchema.HasAdditionalProperties
+		outSchema.AdditionalPropertiesType = elementSchema.AdditionalPropertiesType
+		outSchema.ArrayType = elementSchema.ArrayType
+		outSchema.SkipOptionalPointer = elementSchema.SkipOptionalPointer
+		outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
+		return nil
+	}
+
 	refToGoTypeMap := make(map[string]string)
 	for i, element := range elements {
+		// Skip null-only branches: nullability marker, not a real
+		// union variant. See the collapse comment above for context.
+		if element != nil && isNullTypeSchema(element.Value) {
+			continue
+		}
 		elementPath := append(path, fmt.Sprint(i))
 		elementSchema, err := GenerateGoSchema(element, elementPath)
 		if err != nil {

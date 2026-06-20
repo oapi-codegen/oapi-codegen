@@ -25,6 +25,16 @@ type Pet struct {
 	// Nickname Optional, nullable scalar via 3.1 type-array idiom.
 	Nickname *string `json:"nickname,omitempty"`
 
+	// NicknameAnyOf OpenAPI 3.1: a `{"type": "null"}` branch in `anyOf` is a
+	// nullability marker, not a separate union variant. Should
+	// generate the same shape as `type: ["string","null"]` (i.e.
+	// `*string`). Regression for a previous crash with
+	// "unhandled Schema type: &[null]".
+	NicknameAnyOf *string `json:"nicknameAnyOf,omitempty"`
+
+	// NicknameOneOf Same as `nicknameAnyOf` but using `oneOf`.
+	NicknameOneOf *string `json:"nicknameOneOf,omitempty"`
+
 	// Owner Optional, nullable inline object.
 	Owner *struct {
 		Id *string `json:"id,omitempty"`

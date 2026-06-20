@@ -145,6 +145,50 @@ func TestNullableUnspecifiedObject_3_0(t *testing.T) {
 	assert.Nil(t, p2.Extras)
 }
 
+// TestNullableViaAnyOfOneOf_3_1 asserts that `anyOf: [{type: string},
+// {type: "null"}]` and the matching `oneOf` form both generate as
+// `*string`, identical to the type-array idiom (`type: ["string",
+// "null"]`). The `{"type": "null"}` branch is a nullability marker and
+// must be skipped during union generation -- before the fix, the
+// recursive GenerateGoSchema call on the null-only branch failed with
+// `unhandled Schema type: &[null]`. And once null is filtered out,
+// the single remaining branch must be collapsed to its underlying
+// type instead of being wrapped in a one-variant union, so the two
+// idioms produce the same Go API surface.
+func TestNullableViaAnyOfOneOf_3_1(t *testing.T) {
+	nick := "rex"
+
+	// Compile-time check: the AnyOf and OneOf fields must be *string
+	// (assignment of &nick succeeds only for a pointer-to-string field).
+	p := spec31.Pet{
+		Name:          "fluffy",
+		NicknameAnyOf: &nick,
+		NicknameOneOf: &nick,
+	}
+	require.NotNil(t, p.NicknameAnyOf)
+	require.NotNil(t, p.NicknameOneOf)
+	assert.Equal(t, "rex", *p.NicknameAnyOf)
+	assert.Equal(t, "rex", *p.NicknameOneOf)
+
+	// Zero-value: both nullable fields must be nil.
+	p2 := spec31.Pet{Name: "fluffy"}
+	assert.Nil(t, p2.NicknameAnyOf)
+	assert.Nil(t, p2.NicknameOneOf)
+
+	// JSON round-trip: an explicit string in / explicit string out;
+	// missing field decodes to nil and re-encodes as absent (omitempty).
+	const populated = `{"name":"fluffy","nicknameAnyOf":"rex","nicknameOneOf":"rex"}`
+	encoded, err := json.Marshal(p)
+	require.NoError(t, err)
+	assert.JSONEq(t, populated, string(encoded))
+
+	const empty = `{"name":"fluffy"}`
+	var p3 spec31.Pet
+	require.NoError(t, json.Unmarshal([]byte(empty), &p3))
+	assert.Nil(t, p3.NicknameAnyOf)
+	assert.Nil(t, p3.NicknameOneOf)
+}
+
 // TestJsonRoundTrip_NullableFields_AcrossVersions asserts that a JSON
 // payload with an explicit null nickname unmarshals to (*string)(nil) in
 // both spec versions, and that JSON output omits the field when nil due

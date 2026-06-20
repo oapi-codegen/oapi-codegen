@@ -47,3 +47,18 @@ components:
             Both orderings must resolve identically; this guards
             against any code path that inspects only the first
             element of the type array.
+        nicknameAnyOf:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: |
+            OpenAPI 3.1: a `{"type": "null"}` branch in `anyOf` is a
+            nullability marker, not a separate union variant. Should
+            generate the same shape as `type: ["string","null"]` (i.e.
+            `*string`). Regression for a previous crash with
+            "unhandled Schema type: &[null]".
+        nicknameOneOf:
+          oneOf:
+            - type: string
+            - type: "null"
+          description: Same as `nicknameAnyOf` but using `oneOf`.
