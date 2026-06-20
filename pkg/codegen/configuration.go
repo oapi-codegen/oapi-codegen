@@ -103,6 +103,34 @@ func (o Configuration) Validate() error {
 	return nil
 }
 
+// Warnings returns informational diagnostics about cross-field configuration
+// combinations that aren't outright errors but are likely to produce
+// generated code that doesn't compile, or that requires the user to know a
+// specific multi-config convention. The warnings are surfaced on stderr by
+// the CLI so the user notices before running `go build`.
+func (o Configuration) Warnings() map[string]string {
+	warnings := make(map[string]string)
+
+	// `generate-types-for-anonymous-schemas` hoists inline schemas into
+	// named Go types. The declarations of those named types are emitted
+	// only when `generate.models: true`. If the flag is set with
+	// `models: false` alongside a client or server generator, the
+	// generated code will reference type names that this config does
+	// not declare.
+	//
+	// This is fine when a sibling config (e.g. a `models: true` config
+	// emitting into the same Go package) declares the types, but is a
+	// hard compile failure if no sibling is present. We can't tell the
+	// two cases apart from a single config, so we warn rather than
+	// error — split-config users can ignore the warning; single-config
+	// users get a heads-up before `go build` fails.
+	if o.OutputOptions.GenerateTypesForAnonymousSchemas && !o.Generate.Models && o.Generate.AnyOperationGenerator() {
+		warnings["generate-types-for-anonymous-schemas"] = "the flag is set with `generate.models: false` and a client/server generator. The hoisted named types this config emits references to will not be declared by this config. If a sibling config emits `generate.models: true` into the same Go package with the same flag setting, you can ignore this warning. Otherwise, set `generate.models: true` in this config or remove the flag to fall back to anonymous structs."
+	}
+
+	return warnings
+}
+
 // UpdateDefaults sets reasonable default values for unset fields in Configuration
 func (o Configuration) UpdateDefaults() Configuration {
 	if reflect.ValueOf(o.Generate).IsZero() {
@@ -170,6 +198,16 @@ func (g GenerateOptions) RouterImports() []AdditionalImport {
 	}
 
 	return imports
+}
+
+// AnyOperationGenerator returns true if any code generator that emits
+// per-operation Go code (clients, server frameworks, strict-server) is
+// enabled. Used to detect configurations where operation-derived type
+// references would be emitted without a corresponding declaration.
+func (g GenerateOptions) AnyOperationGenerator() bool {
+	return g.Client || g.IrisServer || g.EchoServer || g.Echo5Server ||
+		g.ChiServer || g.FiberServer || g.GinServer || g.GorillaServer ||
+		g.StdHTTPServer || g.Strict
 }
 
 func (oo GenerateOptions) Validate() map[string]string {
@@ -391,6 +429,32 @@ type OutputOptions struct {
 	// codegen will error on duplicate type names, requiring manual resolution
 	// via x-go-name.
 	ResolveTypeNameCollisions bool `yaml:"resolve-type-name-collisions,omitempty"`
+
+	// GenerateTypesForAnonymousSchemas, when true, causes oapi-codegen to
+	// emit a named Go type for every inline schema that would otherwise
+	// generate as an anonymous `struct { ... }`. The type's name is derived
+	// from the schema path (e.g. `GetRolesIdResponseBody_Data`). Default
+	// false. Equivalent to adding `x-go-type-name` to every inline schema;
+	// when both are present at the same site, `x-go-type-name` wins.
+	//
+	// The hoisted named types are declared by the same emission path that
+	// `generate.models` controls. In a single-config setup, this flag is
+	// only effective when `generate.models: true` is also set in the same
+	// config — otherwise the generated client/server code will reference
+	// type names that no emission path declares, and `go build` will fail.
+	//
+	// In a multi-config setup where one config emits `models` and a
+	// sibling config emits a client or server framework into the same
+	// Go package, the flag must be set consistently across all configs.
+	// Mixing the flag (set in one config, omitted in the other) causes
+	// references and declarations to disagree on whether to use the
+	// hoisted name or the inline struct. The sibling config that does
+	// not emit `models` will produce a warning at codegen time noting
+	// that it does not declare the hoisted names; you can ignore the
+	// warning when the sibling models config will declare them.
+	//
+	// See https://github.com/oapi-codegen/oapi-codegen/issues/1139
+	GenerateTypesForAnonymousSchemas bool `yaml:"generate-types-for-anonymous-schemas,omitempty"`
 
 	// TypeMapping allows customizing OpenAPI type/format to Go type mappings.
 	// User-specified mappings are merged on top of the defaults.

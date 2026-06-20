@@ -1,4 +1,4 @@
-package anonymous_inner_hoisting
+package implicit
 
 import (
 	"encoding/json"

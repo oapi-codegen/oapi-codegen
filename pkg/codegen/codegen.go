@@ -250,11 +250,30 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", fmt.Errorf("error getting operation imports: %w", err)
 	}
 
+	// Type and constant emission is gated by Generate.Models. Both
+	// component-derived types (from #/components) and op-derived types
+	// (Params/RequestBody/hoisted-ResponseBody) flow through this gate
+	// today; that conflation is historical but kept for backwards
+	// compatibility (changing it would alter the symbols emitted by
+	// `models: true`-alone configs and break downstream code in the wild).
 	var typeDefinitions, constantDefinitions string
 	if opts.Generate.Models {
-		typeDefinitions, err = GenerateTypeDefinitions(t, spec, ops, opts.OutputOptions.ExcludeSchemas)
+		componentTypes, err := collectComponentTypes(t, spec, opts.OutputOptions.ExcludeSchemas)
 		if err != nil {
-			return "", fmt.Errorf("error generating type definitions: %w", err)
+			return "", fmt.Errorf("error collecting component types: %w", err)
+		}
+		componentDecls, err := GenerateTypes(t, componentTypes)
+		if err != nil {
+			return "", fmt.Errorf("error generating code for type definitions: %w", err)
+		}
+
+		opTypes, err := collectOperationTypes(ops)
+		if err != nil {
+			return "", fmt.Errorf("error collecting operation types: %w", err)
+		}
+		opDecls, err := GenerateTypesForOperations(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go types for operations: %w", err)
 		}
 
 		constantDefinitions, err = GenerateConstants(t, ops)
@@ -267,6 +286,18 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 			return "", fmt.Errorf("error getting type definition imports: %w", err)
 		}
 		maps.Copy(xGoTypeImports, imprts)
+
+		// Boilerplate (enum Valid(), union accessors, additionalProperties
+		// marshalers) scans the union of all declared types so methods are
+		// emitted for inline types living inside operations too.
+		allEmitted := slices.Concat(componentTypes, opTypes)
+		enumsOut, allOfOut, unionOut, unionAndAdditionalOut, err := renderBoilerplate(t, allEmitted)
+		if err != nil {
+			return "", err
+		}
+		// Preserve historical concatenation order:
+		// enums, component decls, op decls, allOf, union, union+additional.
+		typeDefinitions = strings.Join([]string{enumsOut, componentDecls, opDecls, allOfOut, unionOut, unionAndAdditionalOut}, "")
 	}
 
 	var serverURLsDefinitions string
@@ -275,7 +306,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		// typedef.tmpl + constants.tmpl pipelines as any other
 		// enum-bearing schema, so they get matching `type X string`,
 		// `const ( … )` block, and `Valid()` method. We do this here
-		// (rather than in GenerateTypeDefinitions) so the types are
+		// (rather than in collectComponentTypes) so the types are
 		// emitted even when `generate.models` is disabled.
 		serverURLEnumTypes, err := BuildServerURLTypeDefinitions(spec)
 		if err != nil {
@@ -551,95 +582,88 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	return string(outBytes), nil
 }
 
-func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []OperationDefinition, excludeSchemas []string) (string, error) {
-	var allTypes []TypeDefinition
-	if swagger.Components != nil {
-		schemaTypes, err := GenerateTypesForSchemas(t, swagger.Components.Schemas, excludeSchemas)
-		if err != nil {
-			return "", fmt.Errorf("error generating Go types for component schemas: %w", err)
-		}
-
-		paramTypes, err := GenerateTypesForParameters(t, swagger.Components.Parameters)
-		if err != nil {
-			return "", fmt.Errorf("error generating Go types for component parameters: %w", err)
-		}
-		allTypes = append(schemaTypes, paramTypes...)
-
-		responseTypes, err := GenerateTypesForResponses(t, swagger.Components.Responses)
-		if err != nil {
-			return "", fmt.Errorf("error generating Go types for component responses: %w", err)
-		}
-		allTypes = append(allTypes, responseTypes...)
-
-		bodyTypes, err := GenerateTypesForRequestBodies(t, swagger.Components.RequestBodies)
-		if err != nil {
-			return "", fmt.Errorf("error generating Go types for component request bodies: %w", err)
-		}
-		allTypes = append(allTypes, bodyTypes...)
-
-		securitySchemeTypes, err := GenerateTypesForSecuritySchemes(t, swagger.Components.SecuritySchemes)
-		if err != nil {
-			return "", fmt.Errorf("error generating Go types for component security schemes: %w", err)
-		}
-		allTypes = append(allTypes, securitySchemeTypes...)
+// collectComponentTypes returns the TypeDefinitions collected from
+// components/{schemas,parameters,responses,requestBodies,securitySchemes}.
+// These are the "outer" types gated by Generate.Models.
+func collectComponentTypes(t *template.Template, swagger *openapi3.T, excludeSchemas []string) ([]TypeDefinition, error) {
+	if swagger.Components == nil {
+		return nil, nil
 	}
+	schemaTypes, err := GenerateTypesForSchemas(t, swagger.Components.Schemas, excludeSchemas)
+	if err != nil {
+		return nil, fmt.Errorf("error generating Go types for component schemas: %w", err)
+	}
+	paramTypes, err := GenerateTypesForParameters(t, swagger.Components.Parameters)
+	if err != nil {
+		return nil, fmt.Errorf("error generating Go types for component parameters: %w", err)
+	}
+	responseTypes, err := GenerateTypesForResponses(t, swagger.Components.Responses)
+	if err != nil {
+		return nil, fmt.Errorf("error generating Go types for component responses: %w", err)
+	}
+	bodyTypes, err := GenerateTypesForRequestBodies(t, swagger.Components.RequestBodies)
+	if err != nil {
+		return nil, fmt.Errorf("error generating Go types for component request bodies: %w", err)
+	}
+	securitySchemeTypes, err := GenerateTypesForSecuritySchemes(t, swagger.Components.SecuritySchemes)
+	if err != nil {
+		return nil, fmt.Errorf("error generating Go types for component security schemes: %w", err)
+	}
+	allTypes := append(schemaTypes, paramTypes...)
+	allTypes = append(allTypes, responseTypes...)
+	allTypes = append(allTypes, bodyTypes...)
+	allTypes = append(allTypes, securitySchemeTypes...)
+	return allTypes, nil
+}
 
-	// allTypes stays components-only — it's the slice passed to
-	// GenerateTypes (typedef.tmpl) for top-level type declarations.
-	// Op-derived types are declared by their per-context templates
-	// (param-types.tmpl, request-bodies.tmpl, client-with-responses.tmpl).
-	//
-	// boilerplateTypes is the wider universe for the method-emitting
-	// passes (enum scanning, additionalProperties marshalers, union
-	// accessors). Inline union/additionalProperties types living
-	// inside operations (params, request bodies, response schemas
-	// and any nested AdditionalTypeDefinitions) historically never
-	// reached these passes, so accessor methods were silently
-	// missing. Folding them in here is what fixes that.
-	boilerplateTypes := slices.Clone(allTypes)
+// collectOperationTypes returns the operation-derived TypeDefinitions that
+// flow into the boilerplate scan: op.TypeDefinitions (Params, hoisted
+// AdditionalTypes from params/bodies/response schemas) plus the per-
+// response AdditionalTypeDefinitions from client response wrappers.
+// These are the "outer" types gated by AnyOperationGenerator.
+//
+// Note: these are NOT the same set of types that param-types.tmpl /
+// request-bodies.tmpl declare — those templates iterate ops directly.
+// The slice returned here is what the *boilerplate* (enums, union and
+// additionalProperties marshalers) must scan so methods don't go missing
+// for inline types living inside operations.
+func collectOperationTypes(ops []OperationDefinition) ([]TypeDefinition, error) {
+	var out []TypeDefinition
 	for _, op := range ops {
-		boilerplateTypes = append(boilerplateTypes, op.TypeDefinitions...)
+		out = append(out, op.TypeDefinitions...)
 		respDefs, err := op.GetResponseTypeDefinitions()
 		if err != nil {
-			return "", fmt.Errorf("error collecting response type definitions for %s: %w", op.OperationId, err)
+			return nil, fmt.Errorf("error collecting response type definitions for %s: %w", op.OperationId, err)
 		}
 		for _, rd := range respDefs {
-			boilerplateTypes = append(boilerplateTypes, rd.AdditionalTypeDefinitions...)
+			out = append(out, rd.AdditionalTypeDefinitions...)
 		}
 	}
+	return out, nil
+}
 
-	operationsOut, err := GenerateTypesForOperations(t, ops)
+// renderBoilerplate runs the enum, additionalProperties, union, and
+// union+additionalProperties passes over the union of all emitted types.
+// These passes are "inner" — they emit methods/constants subordinate to
+// whichever outer types were declared.
+func renderBoilerplate(t *template.Template, allEmitted []TypeDefinition) (enumsOut, allOfOut, unionOut, unionAndAdditionalOut string, err error) {
+	enumsOut, err = GenerateEnums(t, allEmitted)
 	if err != nil {
-		return "", fmt.Errorf("error generating Go types for component request bodies: %w", err)
+		return "", "", "", "", fmt.Errorf("error generating code for type enums: %w", err)
 	}
-
-	enumsOut, err := GenerateEnums(t, boilerplateTypes)
+	allOfOut, err = GenerateAdditionalPropertyBoilerplate(t, allEmitted)
 	if err != nil {
-		return "", fmt.Errorf("error generating code for type enums: %w", err)
+		return "", "", "", "", fmt.Errorf("error generating allOf boilerplate: %w", err)
 	}
-
-	typesOut, err := GenerateTypes(t, allTypes)
+	unionOut, err = GenerateUnionBoilerplate(t, allEmitted)
 	if err != nil {
-		return "", fmt.Errorf("error generating code for type definitions: %w", err)
+		return "", "", "", "", fmt.Errorf("error generating union boilerplate: %w", err)
 	}
-
-	allOfBoilerplate, err := GenerateAdditionalPropertyBoilerplate(t, boilerplateTypes)
+	unionAndAdditionalOut, err = GenerateUnionAndAdditionalProopertiesBoilerplate(t, allEmitted)
 	if err != nil {
-		return "", fmt.Errorf("error generating allOf boilerplate: %w", err)
+		return "", "", "", "", fmt.Errorf("error generating boilerplate for union types with additionalProperties: %w", err)
 	}
-
-	unionBoilerplate, err := GenerateUnionBoilerplate(t, boilerplateTypes)
-	if err != nil {
-		return "", fmt.Errorf("error generating union boilerplate: %w", err)
-	}
-
-	unionAndAdditionalBoilerplate, err := GenerateUnionAndAdditionalProopertiesBoilerplate(t, boilerplateTypes)
-	if err != nil {
-		return "", fmt.Errorf("error generating boilerplate for union types with additionalProperties: %w", err)
-	}
-
-	typeDefinitions := strings.Join([]string{enumsOut, typesOut, operationsOut, allOfBoilerplate, unionBoilerplate, unionAndAdditionalBoilerplate}, "")
-	return typeDefinitions, nil
+	return enumsOut, allOfOut, unionOut, unionAndAdditionalOut, nil
 }
 
 // GenerateConstants generates operation ids, context keys, paths, etc. to be exported as constants
