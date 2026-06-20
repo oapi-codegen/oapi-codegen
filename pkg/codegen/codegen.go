@@ -1034,9 +1034,18 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 			if tp.Schema.GoType == "string" {
 				wrapper = `"`
 			}
+			// For an untyped enum the constants are the bare primitive type and
+			// carry no Valid() method, so any value remains assignable. See
+			// Schema.UntypedEnum and issue #2412.
+			constType := tp.TypeName
+			if tp.Schema.UntypedEnum {
+				constType = tp.Schema.GoType
+			}
 			enums = append(enums, EnumDefinition{
 				Schema:         tp.Schema,
 				TypeName:       tp.TypeName,
+				ConstType:      constType,
+				SkipValidate:   tp.Schema.UntypedEnum,
 				ValueWrapper:   wrapper,
 				PrefixTypeName: globalState.options.Compatibility.AlwaysPrefixEnumValues || tp.ForceEnumPrefix,
 			})

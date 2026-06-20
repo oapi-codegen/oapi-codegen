@@ -1,0 +1,51 @@
+openapi: "3.0.0"
+info:
+  title: Issue 2412
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    # The exact case from the issue: "a value from this enum, or any other
+    # string". This stays a plain string, but the known values are still
+    # emitted as (untyped) constants.
+    Source:
+      anyOf:
+        - type: string
+        - type: string
+          enum:
+            - rootly
+            - manual
+            - api
+            - heartbeat
+    # oneOf is treated identically, and the order of the members doesn't matter
+    # (the enum-bearing member may come first).
+    Priority:
+      oneOf:
+        - type: string
+          enum:
+            - low
+            - high
+        - type: string
+    # The idiom nested inside a property: the field stays a string (via a type
+    # alias), so any value remains assignable without a conversion.
+    Event:
+      type: object
+      properties:
+        source:
+          anyOf:
+            - type: string
+            - type: string
+              enum:
+                - webhook
+                - poll
+    # Negative case: the special-case is deliberately strict (exactly two
+    # members). A union with more than two members is left as a normal union.
+    Mixed:
+      anyOf:
+        - type: string
+        - type: string
+          enum:
+            - x
+        - type: string
+          enum:
+            - y

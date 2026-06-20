@@ -1,0 +1,7 @@
+package: issue2412
+output: issue2412.gen.go
+output-options:
+  # The schemas aren't referenced by any path, so keep them from being pruned.
+  skip-prune: true
+generate:
+  models: true
