@@ -42,3 +42,19 @@ func TestHoistedTypesRoundTrip(t *testing.T) {
 	require.NoError(t, json.Unmarshal(encoded, &decoded))
 	assert.Equal(t, body, decoded)
 }
+
+// TestArrayOfInlineObjectsHoisted verifies that a top-level array schema
+// whose items are an inline object emits a named element type under the
+// flag, instead of `type Roles = []struct{...}`. The element type's name
+// is Roles_Item (path + "Item" suffix, matching the existing array-item
+// hoist convention for unions and additionalProperties).
+func TestArrayOfInlineObjectsHoisted(t *testing.T) {
+	// Compile-time assertion: Roles is a slice whose element type is the
+	// named Roles_Item type, not an anonymous struct.
+	roles := Roles{
+		Roles_Item{Id: 1, Name: "admin"},
+		Roles_Item{Id: 2, Name: "user"},
+	}
+	require.Len(t, roles, 2)
+	assert.Equal(t, "admin", roles[0].Name)
+}

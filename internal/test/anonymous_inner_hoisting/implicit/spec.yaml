@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   version: 1.0.0
   title: Anonymous Inner Hoisting
@@ -6,6 +6,10 @@ info:
     Exercises inline oneOf / anyOf schemas at every operation root and at
     nested positions. Each generated wrapper type should receive
     As<Branch>() / From<Branch>() / Merge<Branch>() accessor methods.
+
+    Coverage spans regular paths, OpenAPI 3.1 webhooks, and callbacks
+    so the hoisting pipeline is verified for all three operation
+    sources.
 paths:
 
   /response-root-oneof:
@@ -105,6 +109,93 @@ paths:
       responses:
         '200':
           description: ok
+
+  /callback-trigger:
+    post:
+      operationId: triggerCallback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - callbackUrl
+              properties:
+                callbackUrl:
+                  type: string
+                  format: uri
+      responses:
+        '202':
+          description: accepted
+      callbacks:
+        callbackBodyRootOneOf:
+          '{$request.body#/callbackUrl}':
+            post:
+              operationId: callbackBodyRootOneOf
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      oneOf:
+                        - $ref: '#/components/schemas/Cat'
+                        - $ref: '#/components/schemas/Dog'
+              responses:
+                '204':
+                  description: ack
+        callbackBodyPropertyOneOf:
+          '{$request.body#/callbackUrl}':
+            post:
+              operationId: callbackBodyPropertyOneOf
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        pet:
+                          oneOf:
+                            - $ref: '#/components/schemas/Cat'
+                            - $ref: '#/components/schemas/Dog'
+              responses:
+                '204':
+                  description: ack
+
+webhooks:
+  webhookBodyRootOneOf:
+    post:
+      operationId: webhookBodyRootOneOf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/Cat'
+                - $ref: '#/components/schemas/Dog'
+      responses:
+        '204':
+          description: ack
+
+  webhookBodyPropertyOneOf:
+    post:
+      operationId: webhookBodyPropertyOneOf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pet:
+                  oneOf:
+                    - $ref: '#/components/schemas/Cat'
+                    - $ref: '#/components/schemas/Dog'
+      responses:
+        '204':
+          description: ack
 
 components:
   schemas:

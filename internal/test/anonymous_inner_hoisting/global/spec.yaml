@@ -31,6 +31,20 @@ paths:
                           role:
                             $ref: '#/components/schemas/Role'
                         required: [ role ]
+  # Reference the top-level `Roles` array schema from an operation so
+  # the default prune pass doesn't strip it before codegen runs.
+  /roles:
+    get:
+      operationId: GetRoles
+      tags:
+      - role
+      responses:
+        '200':
+          description: All roles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Roles'
 
 components:
   schemas:
@@ -57,3 +71,21 @@ components:
       required:
         - id
         - name
+    # Regression for: top-level array of inline objects. Under
+    # generate-types-for-anonymous-schemas, this must emit a named
+    # element type (Roles_Item) rather than `type Roles = []struct{...}`.
+    # The auto-hoist inside GenerateGoSchema is gated on len(path)>1,
+    # which fails for a top-level component path, so the array-item hoist
+    # in oapiSchemaToGoType has to cover this case.
+    Roles:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: integer
+          name:
+            type: string
+        required:
+          - id
+          - name
