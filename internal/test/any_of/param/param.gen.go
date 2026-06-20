@@ -173,7 +173,7 @@ func (t *Test2) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -246,10 +246,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetTest request
+
+	// GetTest performs a GET /test (the `GetTest` operationId) request.
 	GetTest(ctx context.Context, params *GetTestParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetTest performs a GET /test (the `GetTest` operationId) request.
 func (c *Client) GetTest(ctx context.Context, params *GetTestParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetTestRequest(c.Server, params)
 	if err != nil {
@@ -262,7 +264,7 @@ func (c *Client) GetTest(ctx context.Context, params *GetTestParams, reqEditors 
 	return c.Client.Do(req)
 }
 
-// NewGetTestRequest generates requests for GetTest
+// NewGetTestRequest constructs an http.Request for the GetTest method
 func NewGetTestRequest(server string, params *GetTestParams) (*http.Request, error) {
 	var err error
 
@@ -371,7 +373,10 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetTestWithResponse request
+
+	// GetTestWithResponse performs a GET /test (the `GetTest` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	GetTestWithResponse(ctx context.Context, params *GetTestParams, reqEditors ...RequestEditorFn) (*GetTestResponse, error)
 }
 
@@ -380,7 +385,7 @@ type GetTestResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetTestResponse) GetBody() []byte {
 	return r.Body
 }
@@ -409,7 +414,9 @@ func (r GetTestResponse) ContentType() string {
 	return ""
 }
 
-// GetTestWithResponse request returning *GetTestResponse
+// GetTestWithResponse performs a GET /test (the `GetTest` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) GetTestWithResponse(ctx context.Context, params *GetTestParams, reqEditors ...RequestEditorFn) (*GetTestResponse, error) {
 	rsp, err := c.GetTest(ctx, params, reqEditors...)
 	if err != nil {

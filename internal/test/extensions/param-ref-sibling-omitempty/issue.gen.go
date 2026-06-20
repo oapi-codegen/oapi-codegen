@@ -22,7 +22,7 @@ type ListThingsParams struct {
 	Filter *FilterValue `form:"filter" json:"filter"`
 }
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -95,10 +95,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// ListThings request
+
+	// ListThings performs a GET /things (the `ListThings` operationId) request.
 	ListThings(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// ListThings performs a GET /things (the `ListThings` operationId) request.
 func (c *Client) ListThings(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListThingsRequest(c.Server, params)
 	if err != nil {
@@ -111,7 +113,7 @@ func (c *Client) ListThings(ctx context.Context, params *ListThingsParams, reqEd
 	return c.Client.Do(req)
 }
 
-// NewListThingsRequest generates requests for ListThings
+// NewListThingsRequest constructs an http.Request for the ListThings method
 func NewListThingsRequest(server string, params *ListThingsParams) (*http.Request, error) {
 	var err error
 
@@ -208,7 +210,10 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// ListThingsWithResponse request
+
+	// ListThingsWithResponse performs a GET /things (the `ListThings` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	ListThingsWithResponse(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*ListThingsResponse, error)
 }
 
@@ -217,7 +222,7 @@ type ListThingsResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r ListThingsResponse) GetBody() []byte {
 	return r.Body
 }
@@ -246,7 +251,9 @@ func (r ListThingsResponse) ContentType() string {
 	return ""
 }
 
-// ListThingsWithResponse request returning *ListThingsResponse
+// ListThingsWithResponse performs a GET /things (the `ListThings` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) ListThingsWithResponse(ctx context.Context, params *ListThingsParams, reqEditors ...RequestEditorFn) (*ListThingsResponse, error) {
 	rsp, err := c.ListThings(ctx, params, reqEditors...)
 	if err != nil {

@@ -284,6 +284,17 @@ func main() {
 		_, _ = fmt.Fprint(os.Stderr, out.String())
 	}
 
+	if warnings := opts.Warnings(); len(warnings) > 0 {
+		var out strings.Builder
+		out.WriteString("WARNING: A number of cross-field configuration warning(s) were returned:")
+		for k, v := range warnings {
+			out.WriteString("\n- " + k + ": " + v)
+		}
+		out.WriteString("\n")
+
+		_, _ = fmt.Fprint(os.Stderr, out.String())
+	}
+
 	// If the user asked to output configuration, output it to stdout and exit
 	if flagOutputConfig {
 		var buf bytes.Buffer

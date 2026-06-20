@@ -68,7 +68,7 @@ type MyTestRequest struct {
 // TestApplicationTestPlusJSONRequestBody defines body for Test for application/test+json ContentType.
 type TestApplicationTestPlusJSONRequestBody = Test
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -141,12 +141,18 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// TestWithBody request with any body
+
+	// TestWithBody performs a GET /test (the `Test` operationId) request,
+	// with any type of body and a specified content type.
 	TestWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// TestWithApplicationTestPlusJSONBody performs a GET /test (the `Test` operationId) request.
+	// Takes a body of the `application/test+json` content type.
 	TestWithApplicationTestPlusJSONBody(ctx context.Context, body TestApplicationTestPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// TestWithBody performs a GET /test (the `Test` operationId) request,
+// with any type of body and a specified content type.
 func (c *Client) TestWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -159,6 +165,8 @@ func (c *Client) TestWithBody(ctx context.Context, contentType string, body io.R
 	return c.Client.Do(req)
 }
 
+// TestWithApplicationTestPlusJSONBody performs a GET /test (the `Test` operationId) request.
+// Takes a body of the `application/test+json` content type.
 func (c *Client) TestWithApplicationTestPlusJSONBody(ctx context.Context, body TestApplicationTestPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestRequestWithApplicationTestPlusJSONBody(c.Server, body)
 	if err != nil {
@@ -182,7 +190,7 @@ func NewTestRequestWithApplicationTestPlusJSONBody(server string, body TestAppli
 	return NewTestRequestWithBody(server, "application/test+json", bodyReader)
 }
 
-// NewTestRequestWithBody generates requests for Test with any type of body
+// NewTestRequestWithBody constructs an http.Request for the Test method, with any body, and a specified content type
 func NewTestRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -254,9 +262,15 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// TestWithBodyWithResponse request with any body
+
+	// TestWithBodyWithResponse performs a GET /test (the `Test` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	TestWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TestResponse, error)
 
+	// TestWithApplicationTestPlusJSONBodyWithResponse performs a GET /test (the `Test` operationId) request.
+	// Takes a body of the `application/test+json` content type, and returns a wrapper object for the known response body format(s).
 	TestWithApplicationTestPlusJSONBodyWithResponse(ctx context.Context, body TestApplicationTestPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*TestResponse, error)
 }
 
@@ -265,7 +279,7 @@ type TestResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r TestResponse) GetBody() []byte {
 	return r.Body
 }
@@ -294,7 +308,10 @@ func (r TestResponse) ContentType() string {
 	return ""
 }
 
-// TestWithBodyWithResponse request with arbitrary body returning *TestResponse
+// TestWithBodyWithResponse performs a GET /test (the `Test` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) TestWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*TestResponse, error) {
 	rsp, err := c.TestWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -303,6 +320,8 @@ func (c *ClientWithResponses) TestWithBodyWithResponse(ctx context.Context, cont
 	return ParseTestResponse(rsp)
 }
 
+// TestWithApplicationTestPlusJSONBodyWithResponse performs a GET /test (the `Test` operationId) request.
+// Takes a body of the `application/test+json` content type, and returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) TestWithApplicationTestPlusJSONBodyWithResponse(ctx context.Context, body TestApplicationTestPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*TestResponse, error) {
 	rsp, err := c.TestWithApplicationTestPlusJSONBody(ctx, body, reqEditors...)
 	if err != nil {

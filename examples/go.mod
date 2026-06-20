@@ -1,6 +1,6 @@
 module github.com/oapi-codegen/oapi-codegen/v2/examples
 
-go 1.25.9
+go 1.25.0
 
 replace github.com/oapi-codegen/oapi-codegen/v2 => ../
 
@@ -96,7 +96,7 @@ require (
 	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/speakeasy-api/jsonpath v0.6.3 // indirect
-	github.com/speakeasy-api/openapi v1.23.0 // indirect
+	github.com/speakeasy-api/openapi v1.23.1 // indirect
 	github.com/tdewolff/minify/v2 v2.24.13 // indirect
 	github.com/tdewolff/parse/v2 v2.8.12 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect

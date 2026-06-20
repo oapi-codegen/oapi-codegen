@@ -1,7 +1,9 @@
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-{{range .}}{{if not .IsAlias}}{{.SummaryAsComment }}
+{{range .}}{{if not .IsAlias}}{{.SummaryAsComment .OperationId }}
 // ({{.Method}} {{.Path}})
-{{.OperationId}}(c *gin.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
+{{with .DeprecationComment}}//
+{{.}}
+{{end}}{{.OperationId}}(c *gin.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}})
 {{end}}{{end}}
 }

@@ -26,7 +26,7 @@ type PostPetTextRequestBody = PostPetTextBody
 // PostPet1234TextRequestBody defines body for PostPet1234 for text/plain ContentType.
 type PostPet1234TextRequestBody = PostPet1234TextBody
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -99,17 +99,36 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// PostPetWithBody request with any body
+
+	// PostPetWithBody performs a POST /pet (the `PostPet` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Ensure that the `text/plain` format correctly handles coercing a UUID type to a string.
 	PostPetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostPetWithTextBody performs a POST /pet (the `PostPet` operationId) request.
+	// Takes a body of the `text/plain` content type.
+	//
+	// Ensure that the `text/plain` format correctly handles coercing a UUID type to a string.
 	PostPetWithTextBody(ctx context.Context, body PostPetTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// PostPet1234WithBody request with any body
+	// PostPet1234WithBody performs a POST /pet/1234 (the `PostPet1234` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Ensure that the `text/plain` format correctly handles coercing a numerical type to a string.
 	PostPet1234WithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PostPet1234WithTextBody performs a POST /pet/1234 (the `PostPet1234` operationId) request.
+	// Takes a body of the `text/plain` content type.
+	//
+	// Ensure that the `text/plain` format correctly handles coercing a numerical type to a string.
 	PostPet1234WithTextBody(ctx context.Context, body PostPet1234TextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// PostPetWithBody performs a POST /pet (the `PostPet` operationId) request,
+// with any type of body and a specified content type.
+//
+// Ensure that the `text/plain` format correctly handles coercing a UUID type to a string.
 func (c *Client) PostPetWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostPetRequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -122,6 +141,10 @@ func (c *Client) PostPetWithBody(ctx context.Context, contentType string, body i
 	return c.Client.Do(req)
 }
 
+// PostPetWithTextBody performs a POST /pet (the `PostPet` operationId) request.
+// Takes a body of the `text/plain` content type.
+//
+// Ensure that the `text/plain` format correctly handles coercing a UUID type to a string.
 func (c *Client) PostPetWithTextBody(ctx context.Context, body PostPetTextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostPetRequestWithTextBody(c.Server, body)
 	if err != nil {
@@ -134,6 +157,10 @@ func (c *Client) PostPetWithTextBody(ctx context.Context, body PostPetTextReques
 	return c.Client.Do(req)
 }
 
+// PostPet1234WithBody performs a POST /pet/1234 (the `PostPet1234` operationId) request,
+// with any type of body and a specified content type.
+//
+// Ensure that the `text/plain` format correctly handles coercing a numerical type to a string.
 func (c *Client) PostPet1234WithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostPet1234RequestWithBody(c.Server, contentType, body)
 	if err != nil {
@@ -146,6 +173,10 @@ func (c *Client) PostPet1234WithBody(ctx context.Context, contentType string, bo
 	return c.Client.Do(req)
 }
 
+// PostPet1234WithTextBody performs a POST /pet/1234 (the `PostPet1234` operationId) request.
+// Takes a body of the `text/plain` content type.
+//
+// Ensure that the `text/plain` format correctly handles coercing a numerical type to a string.
 func (c *Client) PostPet1234WithTextBody(ctx context.Context, body PostPet1234TextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPostPet1234RequestWithTextBody(c.Server, body)
 	if err != nil {
@@ -169,7 +200,7 @@ func NewPostPetRequestWithTextBody(server string, body PostPetTextRequestBody) (
 	return NewPostPetRequestWithBody(server, "text/plain", bodyReader)
 }
 
-// NewPostPetRequestWithBody generates requests for PostPet with any type of body
+// NewPostPetRequestWithBody constructs an http.Request for the PostPet method, with any body, and a specified content type
 func NewPostPetRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -209,7 +240,7 @@ func NewPostPet1234RequestWithTextBody(server string, body PostPet1234TextReques
 	return NewPostPet1234RequestWithBody(server, "text/plain", bodyReader)
 }
 
-// NewPostPet1234RequestWithBody generates requests for PostPet1234 with any type of body
+// NewPostPet1234RequestWithBody constructs an http.Request for the PostPet1234 method, with any body, and a specified content type
 func NewPostPet1234RequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
@@ -281,14 +312,33 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// PostPetWithBodyWithResponse request with any body
+
+	// PostPetWithBodyWithResponse performs a POST /pet (the `PostPet` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Ensure that the `text/plain` format correctly handles coercing a UUID type to a string.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	PostPetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostPetResponse, error)
 
+	// PostPetWithTextBodyWithResponse performs a POST /pet (the `PostPet` operationId) request.
+	// Takes a body of the `text/plain` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Ensure that the `text/plain` format correctly handles coercing a UUID type to a string.
 	PostPetWithTextBodyWithResponse(ctx context.Context, body PostPetTextRequestBody, reqEditors ...RequestEditorFn) (*PostPetResponse, error)
 
-	// PostPet1234WithBodyWithResponse request with any body
+	// PostPet1234WithBodyWithResponse performs a POST /pet/1234 (the `PostPet1234` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Ensure that the `text/plain` format correctly handles coercing a numerical type to a string.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	PostPet1234WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostPet1234Response, error)
 
+	// PostPet1234WithTextBodyWithResponse performs a POST /pet/1234 (the `PostPet1234` operationId) request.
+	// Takes a body of the `text/plain` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Ensure that the `text/plain` format correctly handles coercing a numerical type to a string.
 	PostPet1234WithTextBodyWithResponse(ctx context.Context, body PostPet1234TextRequestBody, reqEditors ...RequestEditorFn) (*PostPet1234Response, error)
 }
 
@@ -297,7 +347,7 @@ type PostPetResponse struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostPetResponse) GetBody() []byte {
 	return r.Body
 }
@@ -331,7 +381,7 @@ type PostPet1234Response struct {
 	HTTPResponse *http.Response
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r PostPet1234Response) GetBody() []byte {
 	return r.Body
 }
@@ -360,7 +410,12 @@ func (r PostPet1234Response) ContentType() string {
 	return ""
 }
 
-// PostPetWithBodyWithResponse request with arbitrary body returning *PostPetResponse
+// PostPetWithBodyWithResponse performs a POST /pet (the `PostPet` operationId) request,
+// with any type of body and a specified content type.
+//
+// Ensure that the `text/plain` format correctly handles coercing a UUID type to a string.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostPetWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostPetResponse, error) {
 	rsp, err := c.PostPetWithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -369,6 +424,10 @@ func (c *ClientWithResponses) PostPetWithBodyWithResponse(ctx context.Context, c
 	return ParsePostPetResponse(rsp)
 }
 
+// PostPetWithTextBodyWithResponse performs a POST /pet (the `PostPet` operationId) request.
+// Takes a body of the `text/plain` content type, and returns a wrapper object for the known response body format(s).
+//
+// Ensure that the `text/plain` format correctly handles coercing a UUID type to a string.
 func (c *ClientWithResponses) PostPetWithTextBodyWithResponse(ctx context.Context, body PostPetTextRequestBody, reqEditors ...RequestEditorFn) (*PostPetResponse, error) {
 	rsp, err := c.PostPetWithTextBody(ctx, body, reqEditors...)
 	if err != nil {
@@ -377,7 +436,12 @@ func (c *ClientWithResponses) PostPetWithTextBodyWithResponse(ctx context.Contex
 	return ParsePostPetResponse(rsp)
 }
 
-// PostPet1234WithBodyWithResponse request with arbitrary body returning *PostPet1234Response
+// PostPet1234WithBodyWithResponse performs a POST /pet/1234 (the `PostPet1234` operationId) request,
+// with any type of body and a specified content type.
+//
+// Ensure that the `text/plain` format correctly handles coercing a numerical type to a string.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) PostPet1234WithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostPet1234Response, error) {
 	rsp, err := c.PostPet1234WithBody(ctx, contentType, body, reqEditors...)
 	if err != nil {
@@ -386,6 +450,10 @@ func (c *ClientWithResponses) PostPet1234WithBodyWithResponse(ctx context.Contex
 	return ParsePostPet1234Response(rsp)
 }
 
+// PostPet1234WithTextBodyWithResponse performs a POST /pet/1234 (the `PostPet1234` operationId) request.
+// Takes a body of the `text/plain` content type, and returns a wrapper object for the known response body format(s).
+//
+// Ensure that the `text/plain` format correctly handles coercing a numerical type to a string.
 func (c *ClientWithResponses) PostPet1234WithTextBodyWithResponse(ctx context.Context, body PostPet1234TextRequestBody, reqEditors ...RequestEditorFn) (*PostPet1234Response, error) {
 	rsp, err := c.PostPet1234WithTextBody(ctx, body, reqEditors...)
 	if err != nil {

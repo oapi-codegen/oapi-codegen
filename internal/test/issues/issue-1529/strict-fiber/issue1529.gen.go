@@ -23,7 +23,7 @@ import (
 // Test defines model for Test.
 type Test = map[string]interface{}
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -96,10 +96,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// Test request
+
+	// Test performs a GET /test (the `Test` operationId) request.
 	Test(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// Test performs a GET /test (the `Test` operationId) request.
 func (c *Client) Test(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewTestRequest(c.Server)
 	if err != nil {
@@ -112,7 +114,7 @@ func (c *Client) Test(ctx context.Context, reqEditors ...RequestEditorFn) (*http
 	return c.Client.Do(req)
 }
 
-// NewTestRequest generates requests for Test
+// NewTestRequest constructs an http.Request for the Test method
 func NewTestRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -182,34 +184,40 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// TestWithResponse request
+
+	// TestWithResponse performs a GET /test (the `Test` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	TestWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestResponse, error)
 }
 
 type TestResponse struct {
-	Body                         []byte
-	HTTPResponse                 *http.Response
-	JSON200                      *Test
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Test
+	// ApplicationjsonProfileBar200 the response for an HTTP 200 `application/json; profile="Bar"` response
 	ApplicationjsonProfileBar200 *Test
+	// ApplicationjsonProfileFoo200 the response for an HTTP 200 `application/json; profile="Foo"` response
 	ApplicationjsonProfileFoo200 *Test
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r TestResponse) GetJSON200() *Test {
 	return r.JSON200
 }
 
-// GetApplicationjsonProfileBar200 returns ApplicationjsonProfileBar200
+// GetApplicationjsonProfileBar200 returns the response for an HTTP 200 `application/json; profile="Bar"` response
 func (r TestResponse) GetApplicationjsonProfileBar200() *Test {
 	return r.ApplicationjsonProfileBar200
 }
 
-// GetApplicationjsonProfileFoo200 returns ApplicationjsonProfileFoo200
+// GetApplicationjsonProfileFoo200 returns the response for an HTTP 200 `application/json; profile="Foo"` response
 func (r TestResponse) GetApplicationjsonProfileFoo200() *Test {
 	return r.ApplicationjsonProfileFoo200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r TestResponse) GetBody() []byte {
 	return r.Body
 }
@@ -238,7 +246,9 @@ func (r TestResponse) ContentType() string {
 	return ""
 }
 
-// TestWithResponse request returning *TestResponse
+// TestWithResponse performs a GET /test (the `Test` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) TestWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestResponse, error) {
 	rsp, err := c.Test(ctx, reqEditors...)
 	if err != nil {

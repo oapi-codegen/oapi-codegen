@@ -117,7 +117,7 @@ func (t *OneOf2Things) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -190,10 +190,16 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetHttpPet request
+
+	// GetHttpPet Get pet given identifier.
+	//
+	// Corresponds with GET /api/pets/{petId} (the `GetHttpPet` operationId).
 	GetHttpPet(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetHttpPet Get pet given identifier.
+//
+// Corresponds with GET /api/pets/{petId} (the `GetHttpPet` operationId).
 func (c *Client) GetHttpPet(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetHttpPetRequest(c.Server, petId)
 	if err != nil {
@@ -206,7 +212,7 @@ func (c *Client) GetHttpPet(ctx context.Context, petId string, reqEditors ...Req
 	return c.Client.Do(req)
 }
 
-// NewGetHttpPetRequest generates requests for GetHttpPet
+// NewGetHttpPetRequest constructs an http.Request for the GetHttpPet method
 func NewGetHttpPetRequest(server string, petId string) (*http.Request, error) {
 	var err error
 
@@ -283,22 +289,28 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetHttpPetWithResponse request
+
+	// GetHttpPetWithResponse Get pet given identifier.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /api/pets/{petId} (the `GetHttpPet` operationId).
 	GetHttpPetWithResponse(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*GetHttpPetResponse, error)
 }
 
 type GetHttpPetResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Pet
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Pet
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetHttpPetResponse) GetJSON200() *Pet {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetHttpPetResponse) GetBody() []byte {
 	return r.Body
 }
@@ -327,7 +339,11 @@ func (r GetHttpPetResponse) ContentType() string {
 	return ""
 }
 
-// GetHttpPetWithResponse request returning *GetHttpPetResponse
+// GetHttpPetWithResponse Get pet given identifier.
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /api/pets/{petId} (the `GetHttpPet` operationId).
 func (c *ClientWithResponses) GetHttpPetWithResponse(ctx context.Context, petId string, reqEditors ...RequestEditorFn) (*GetHttpPetResponse, error) {
 	rsp, err := c.GetHttpPet(ctx, petId, reqEditors...)
 	if err != nil {
@@ -364,7 +380,7 @@ func ParseGetHttpPetResponse(rsp *http.Response) (*GetHttpPetResponse, error) {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Get pet given identifier.
+	// GetHttpPet Get pet given identifier.
 	// (GET /api/pets/{petId})
 	GetHttpPet(w http.ResponseWriter, r *http.Request, petId string)
 }

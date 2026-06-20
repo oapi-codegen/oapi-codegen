@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -86,13 +86,21 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetTest request
+
+	// GetTest test
+	//
+	// Corresponds with GET /test (the `GetTest` operationId).
 	GetTest(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// GetTestAlias0 request
+	// GetTestAlias0 test
+	//
+	// Corresponds with GET /test2 (the `GetTestAlias0` operationId).
 	GetTestAlias0(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// GetTest test
+//
+// Corresponds with GET /test (the `GetTest` operationId).
 func (c *Client) GetTest(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetTestRequest(c.Server)
 	if err != nil {
@@ -105,6 +113,9 @@ func (c *Client) GetTest(ctx context.Context, reqEditors ...RequestEditorFn) (*h
 	return c.Client.Do(req)
 }
 
+// GetTestAlias0 test
+//
+// Corresponds with GET /test2 (the `GetTestAlias0` operationId).
 func (c *Client) GetTestAlias0(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetTestAlias0Request(c.Server)
 	if err != nil {
@@ -117,7 +128,7 @@ func (c *Client) GetTestAlias0(ctx context.Context, reqEditors ...RequestEditorF
 	return c.Client.Do(req)
 }
 
-// NewGetTestRequest generates requests for GetTest
+// NewGetTestRequest constructs an http.Request for the GetTest method
 func NewGetTestRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -144,7 +155,7 @@ func NewGetTestRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewGetTestAlias0Request generates requests for GetTestAlias0
+// NewGetTestAlias0Request constructs an http.Request for the GetTestAlias0 method
 func NewGetTestAlias0Request(server string) (*http.Request, error) {
 	var err error
 
@@ -214,25 +225,35 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// GetTestWithResponse request
+
+	// GetTestWithResponse test
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /test (the `GetTest` operationId).
 	GetTestWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetTestResponse, error)
 
-	// GetTestAlias0WithResponse request
+	// GetTestAlias0WithResponse test
+	//
+	// Returns a wrapper object for the known response body format(s).
+	//
+	// Corresponds with GET /test2 (the `GetTestAlias0` operationId).
 	GetTestAlias0WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetTestAlias0Response, error)
 }
 
 type GetTestResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *B
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *B
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetTestResponse) GetJSON200() *B {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetTestResponse) GetBody() []byte {
 	return r.Body
 }
@@ -264,15 +285,16 @@ func (r GetTestResponse) ContentType() string {
 type GetTestAlias0Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *B
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *B
 }
 
-// GetJSON200 returns JSON200
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
 func (r GetTestAlias0Response) GetJSON200() *B {
 	return r.JSON200
 }
 
-// GetBody returns the raw response body bytes (Body)
+// GetBody returns the raw response body bytes
 func (r GetTestAlias0Response) GetBody() []byte {
 	return r.Body
 }
@@ -301,7 +323,11 @@ func (r GetTestAlias0Response) ContentType() string {
 	return ""
 }
 
-// GetTestWithResponse request returning *GetTestResponse
+// GetTestWithResponse test
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /test (the `GetTest` operationId).
 func (c *ClientWithResponses) GetTestWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetTestResponse, error) {
 	rsp, err := c.GetTest(ctx, reqEditors...)
 	if err != nil {
@@ -310,7 +336,11 @@ func (c *ClientWithResponses) GetTestWithResponse(ctx context.Context, reqEditor
 	return ParseGetTestResponse(rsp)
 }
 
-// GetTestAlias0WithResponse request returning *GetTestAlias0Response
+// GetTestAlias0WithResponse test
+//
+// Returns a wrapper object for the known response body format(s).
+//
+// Corresponds with GET /test2 (the `GetTestAlias0` operationId).
 func (c *ClientWithResponses) GetTestAlias0WithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetTestAlias0Response, error) {
 	rsp, err := c.GetTestAlias0(ctx, reqEditors...)
 	if err != nil {
