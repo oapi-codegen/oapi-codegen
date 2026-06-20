@@ -1125,7 +1125,35 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		outSchema.GoType = spec.Type
 		outSchema.DefineViaAlias = true
 	} else if t.Is("string") {
-		spec := globalState.typeMapping.String.Resolve(f)
+		// OpenAPI 3.1: `contentMediaType` and `contentEncoding` are the
+		// JSON-Schema-aligned replacements for the 3.0 `format: binary`
+		// / `format: byte` idioms used to describe file uploads and
+		// base64-encoded binary data. When the spec author writes the
+		// 3.1 form (per learn.openapis.org/upgrading/v3.0-to-v3.1.html
+		// "Update file upload descriptions"), the schema arrives with
+		// no `format` set but one of these keywords populated; without
+		// this synthesis the field would fall through to the default
+		// `string` mapping and the user would silently lose the
+		// file/binary typing they had under 3.0. We only synthesize a
+		// format when the user has not explicitly set one, so any
+		// explicit `format` (or user-provided `type-mapping` overlay)
+		// continues to win.
+		resolvedFormat := f
+		if globalState.is31 && resolvedFormat == "" {
+			switch {
+			case schema.ContentMediaType != "":
+				// Raw binary content of any media type -- equivalent to
+				// 3.0 `format: binary`. Routes to openapi_types.File in
+				// the default mapping.
+				resolvedFormat = "binary"
+			case schema.ContentEncoding != "":
+				// String-encoded binary (base64, base64url, etc.) --
+				// equivalent to 3.0 `format: byte`. Routes to []byte in
+				// the default mapping.
+				resolvedFormat = "byte"
+			}
+		}
+		spec := globalState.typeMapping.String.Resolve(resolvedFormat)
 		outSchema.GoType = spec.Type
 		// Preserve special behaviors for specific types
 		if outSchema.GoType == "[]byte" {

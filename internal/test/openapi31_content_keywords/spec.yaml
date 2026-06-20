@@ -1,0 +1,67 @@
+openapi: 3.1.0
+info:
+  title: 3.1 content keywords (file uploads)
+  version: 1.0.0
+  description: |
+    Verifies that the 3.1 file-upload idioms documented at
+    https://learn.openapis.org/upgrading/v3.0-to-v3.1.html produce
+    the same Go shapes as their 3.0 `format: binary` / `format: byte`
+    counterparts.
+paths: {}
+components:
+  schemas:
+    # Property mirroring the multipart-file-upload example from the
+    # upgrade guide: `type: string, contentMediaType: application/
+    # octet-stream`. Equivalent to 3.0 `type: string, format: binary`.
+    # Expected Go shape: openapi_types.File.
+    FileUploadFields:
+      type: object
+      required:
+        - orderId
+        - rawFile
+        - base64Field
+        - base64UrlField
+      properties:
+        orderId:
+          type: integer
+        rawFile:
+          type: string
+          contentMediaType: application/octet-stream
+          description: Raw binary file content.
+        imageFile:
+          type: string
+          contentMediaType: image/png
+          description: |
+            A non-octet-stream contentMediaType still routes to
+            openapi_types.File -- any contentMediaType signals
+            "this string is binary content of a specific type."
+        base64Field:
+          type: string
+          contentEncoding: base64
+          description: |
+            Base64-encoded binary as a JSON string. Mirrors the
+            3.0 `format: byte` idiom -- expected Go shape: `[]byte`.
+        base64UrlField:
+          type: string
+          contentEncoding: base64url
+          description: |
+            Any RFC4648 encoding triggers the []byte mapping, not just
+            "base64".
+        bothKeywords:
+          type: string
+          contentEncoding: base64
+          contentMediaType: image/png
+          description: |
+            When both are set (base64-encoded binary of a specific
+            media type), the file mapping wins: openapi_types.File.
+            This matches the 3.0 behavior where `format: binary` would
+            dominate over any encoding hint.
+        explicitFormatWins:
+          type: string
+          format: date
+          contentMediaType: application/octet-stream
+          description: |
+            An explicit `format` always overrides the contentMediaType-
+            derived synthesis. Here `format: date` keeps its Go type
+            (openapi_types.Date) even though contentMediaType would
+            otherwise have routed to openapi_types.File.
