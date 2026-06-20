@@ -1029,11 +1029,18 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			return fmt.Errorf("error generating type for array: %w", err)
 		}
 
-		if (arrayType.HasAdditionalProperties || len(arrayType.UnionElements) != 0) && arrayType.RefType == "" {
+		if (arrayType.HasAdditionalProperties ||
+			len(arrayType.UnionElements) != 0 ||
+			(globalState.options.OutputOptions.GenerateTypesForAnonymousSchemas && len(arrayType.Properties) > 0)) &&
+			arrayType.RefType == "" {
 			// If we have items which have additional properties or union values,
 			// but are not a pre-defined type, we need to define a type
 			// for them, which will be based on the field names we followed
-			// to get to the type.
+			// to get to the type. The third clause catches plain inline
+			// object items under generate-types-for-anonymous-schemas: the
+			// auto-hoist block in GenerateGoSchema only fires when
+			// len(path) > 1, so top-level array schemas (path length 1) fall
+			// through with their items left anonymous unless we hoist here.
 			typeName := PathToTypeName(append(path, "Item"))
 
 			typeDef := TypeDefinition{

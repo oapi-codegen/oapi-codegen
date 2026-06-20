@@ -21,6 +21,15 @@ type Role struct {
 	Name string `json:"name"`
 }
 
+// Roles defines model for Roles.
+type Roles = []Roles_Item
+
+// Roles_Item defines model for Roles.Item.
+type Roles_Item struct {
+	Id   int    `json:"id"`
+	Name string `json:"name"`
+}
+
 // SuccessfulResponse defines model for SuccessfulResponse.
 type SuccessfulResponse struct {
 	// Data If successful, response from api
@@ -117,8 +126,24 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 // The interface specification for the client above.
 type ClientInterface interface {
 
+	// GetRoles performs a GET /roles (the `GetRoles` operationId) request.
+	GetRoles(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetRolesId performs a GET /roles/{id} (the `GetRolesId` operationId) request.
 	GetRolesId(ctx context.Context, id int, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+// GetRoles performs a GET /roles (the `GetRoles` operationId) request.
+func (c *Client) GetRoles(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetRolesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 // GetRolesId performs a GET /roles/{id} (the `GetRolesId` operationId) request.
@@ -132,6 +157,33 @@ func (c *Client) GetRolesId(ctx context.Context, id int, reqEditors ...RequestEd
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewGetRolesRequest constructs an http.Request for the GetRoles method
+func NewGetRolesRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/roles")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewGetRolesIdRequest constructs an http.Request for the GetRolesId method
@@ -212,10 +264,56 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 
+	// GetRolesWithResponse performs a GET /roles (the `GetRoles` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	GetRolesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetRolesResponse, error)
+
 	// GetRolesIdWithResponse performs a GET /roles/{id} (the `GetRolesId` operationId) request.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	GetRolesIdWithResponse(ctx context.Context, id int, reqEditors ...RequestEditorFn) (*GetRolesIdResponse, error)
+}
+
+type GetRolesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Roles
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetRolesResponse) GetJSON200() *Roles {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes
+func (r GetRolesResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetRolesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetRolesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetRolesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type GetRolesIdResponse struct {
@@ -259,6 +357,17 @@ func (r GetRolesIdResponse) ContentType() string {
 	return ""
 }
 
+// GetRolesWithResponse performs a GET /roles (the `GetRoles` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) GetRolesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetRolesResponse, error) {
+	rsp, err := c.GetRoles(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetRolesResponse(rsp)
+}
+
 // GetRolesIdWithResponse performs a GET /roles/{id} (the `GetRolesId` operationId) request.
 //
 // Returns a wrapper object for the known response body format(s).
@@ -268,6 +377,32 @@ func (c *ClientWithResponses) GetRolesIdWithResponse(ctx context.Context, id int
 		return nil, err
 	}
 	return ParseGetRolesIdResponse(rsp)
+}
+
+// ParseGetRolesResponse parses an HTTP response from a GetRolesWithResponse call
+func ParseGetRolesResponse(rsp *http.Response) (*GetRolesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetRolesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Roles
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParseGetRolesIdResponse parses an HTTP response from a GetRolesIdWithResponse call
