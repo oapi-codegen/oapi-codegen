@@ -334,5 +334,132 @@ paths:
 	assert.Contains(t, code, "roleName string")
 }
 
+// TestEnumConflictDetectionOrderIndependent checks that conflict detection
+// doesn't miss overlaps because an enum was already marked for prefixing.
+func TestEnumConflictDetectionOrderIndependent(t *testing.T) {
+	// AState+BState share "running" (both prefixed), AState+CState share "migrating".
+	// The bug: once AState was marked, GetValues() returned prefixed names that
+	// no longer matched CState's raw values, so CState's conflict was missed.
+	const spec = `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Test Enum Conflict Detection
+paths: {}
+components:
+  schemas:
+    AState:
+      type: string
+      enum:
+        - running
+        - migrating
+    BState:
+      type: string
+      enum:
+        - running
+    CState:
+      type: string
+      enum:
+        - migrating
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	opts := Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			Models: true,
+		},
+		OutputOptions: OutputOptions{
+			SkipPrune: true,
+		},
+	}
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+
+	_, err = format.Source([]byte(code))
+	require.NoError(t, err)
+
+	// All three enums share values with at least one other enum; all must be prefixed.
+	assert.Contains(t, code, "AStateRunning")
+	assert.Contains(t, code, "AStateMigrating")
+	assert.Contains(t, code, "BStateRunning")
+	assert.Contains(t, code, "CStateMigrating")
+}
+
+// TestEnumConflictDetectionBothOrders verifies that enum conflict detection
+// produces identical, fully-prefixed output regardless of the order the
+// schemas appear in the spec.
+func TestEnumConflictDetectionBothOrders(t *testing.T) {
+	specAFirst := `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Test
+paths: {}
+components:
+  schemas:
+    AState:
+      type: string
+      enum: [running, migrating]
+    BState:
+      type: string
+      enum: [running]
+    CState:
+      type: string
+      enum: [migrating]
+`
+	specCFirst := `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Test
+paths: {}
+components:
+  schemas:
+    CState:
+      type: string
+      enum: [migrating]
+    BState:
+      type: string
+      enum: [running]
+    AState:
+      type: string
+      enum: [running, migrating]
+`
+	opts := Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{Models: true},
+		OutputOptions: OutputOptions{
+			SkipPrune: true,
+		},
+	}
+
+	loader := openapi3.NewLoader()
+
+	swaggerA, err := loader.LoadFromData([]byte(specAFirst))
+	require.NoError(t, err)
+	codeA, err := Generate(swaggerA, opts)
+	require.NoError(t, err)
+
+	swaggerC, err := loader.LoadFromData([]byte(specCFirst))
+	require.NoError(t, err)
+	codeC, err := Generate(swaggerC, opts)
+	require.NoError(t, err)
+
+	// Both orderings must produce fully prefixed constants.
+	for _, code := range []string{codeA, codeC} {
+		assert.Contains(t, code, "AStateRunning")
+		assert.Contains(t, code, "AStateMigrating")
+		assert.Contains(t, code, "BStateRunning")
+		assert.Contains(t, code, "CStateMigrating")
+		// Unprefixed names must not appear as standalone constants.
+		assert.NotContains(t, code, "\tRunning ")
+		assert.NotContains(t, code, "\tMigrating ")
+	}
+}
+
 //go:embed test_spec.yaml
 var testOpenAPIDefinition string
