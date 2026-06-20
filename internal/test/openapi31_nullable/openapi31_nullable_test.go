@@ -189,6 +189,38 @@ func TestNullableViaAnyOfOneOf_3_1(t *testing.T) {
 	assert.Nil(t, p3.NicknameOneOf)
 }
 
+// TestNullableDiscriminatedUnion_3_1 asserts that a `oneOf` with a
+// discriminator and a `{"type": "null"}` branch generates without the
+// `discriminator: not all schemas were mapped` error. Before the fix,
+// the null branch was filtered out of mapping construction but still
+// counted toward the expected-mapping total, so the completeness check
+// `len(Mapping) < len(elements)` falsely tripped for nullable
+// discriminated unions. The fix compares against the number of
+// non-null branches actually processed.
+func TestNullableDiscriminatedUnion_3_1(t *testing.T) {
+	// Cat round-trip via the generated discriminated-union accessors.
+	const catJSON = `{"kind":"Cat","meow":true}`
+	var pet spec31.DiscriminatedPet
+	require.NoError(t, json.Unmarshal([]byte(catJSON), &pet))
+	cat, err := pet.AsCat()
+	require.NoError(t, err)
+	require.NotNil(t, cat.Meow)
+	assert.True(t, *cat.Meow)
+
+	encoded, err := json.Marshal(pet)
+	require.NoError(t, err)
+	assert.JSONEq(t, catJSON, string(encoded))
+
+	// Dog round-trip: the second non-null branch must also map.
+	const dogJSON = `{"kind":"Dog","bark":true}`
+	var pet2 spec31.DiscriminatedPet
+	require.NoError(t, json.Unmarshal([]byte(dogJSON), &pet2))
+	dog, err := pet2.AsDog()
+	require.NoError(t, err)
+	require.NotNil(t, dog.Bark)
+	assert.True(t, *dog.Bark)
+}
+
 // TestJsonRoundTrip_NullableFields_AcrossVersions asserts that a JSON
 // payload with an explicit null nickname unmarshals to (*string)(nil) in
 // both spec versions, and that JSON output omits the field when nil due

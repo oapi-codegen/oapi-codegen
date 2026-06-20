@@ -1446,7 +1446,14 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 		outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
 	}
 
-	if (outSchema.Discriminator != nil) && len(outSchema.Discriminator.Mapping) < len(elements) {
+	// Compare against effectiveCount (non-null branches actually
+	// processed) rather than len(elements). For a nullable
+	// discriminated union (`oneOf: [Cat, Dog, {type: "null"}]`), the
+	// null-branch skip above leaves the discriminator with one fewer
+	// mapping than the raw element count, and we must not flag that as
+	// incomplete -- the null branch is a nullability marker, not a real
+	// variant that needs a mapping.
+	if (outSchema.Discriminator != nil) && len(outSchema.Discriminator.Mapping) < effectiveCount {
 		return errors.New("discriminator: not all schemas were mapped")
 	}
 

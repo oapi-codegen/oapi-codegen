@@ -62,3 +62,38 @@ components:
             - type: string
             - type: "null"
           description: Same as `nicknameAnyOf` but using `oneOf`.
+        favorite:
+          $ref: '#/components/schemas/DiscriminatedPet'
+          description: |
+            Nullable discriminated union (`oneOf: [Cat, Dog, null]` with a
+            discriminator). Before this branch's fix to the union-
+            completeness check, the null branch was skipped during
+            mapping construction but still counted toward the
+            expected-mapping count, so generation failed with
+            `discriminator: not all schemas were mapped`. The two real
+            branches must map and the null branch must be tolerated.
+    DiscriminatedPet:
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+        - type: "null"
+      discriminator:
+        propertyName: kind
+    Cat:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+        meow:
+          type: boolean
+    Dog:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+        bark:
+          type: boolean
