@@ -11,6 +11,7 @@ import (
 
 	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	spec "github.com/oapi-codegen/oapi-codegen/v2/internal/test/openapi31_content_keywords/spec"
 )
@@ -37,15 +38,30 @@ func TestContentMediaTypeImageMapsToFile(t *testing.T) {
 	assert.NotNil(t, fields.ImageFile)
 }
 
-func TestContentEncodingMapsToByteSlice(t *testing.T) {
-	// `contentEncoding: base64` (and other RFC4648 encodings) must
-	// produce []byte, matching 3.0 `format: byte` behavior.
+func TestContentEncodingBase64MapsToByteSlice(t *testing.T) {
+	// `contentEncoding: base64` (standard padded base64) is the one
+	// RFC4648 variant Go's encoding/json handles natively for []byte,
+	// so it maps to []byte -- matching 3.0 `format: byte`.
 	fields := spec.FileUploadFields{
-		Base64Field:    []byte("hello"),
-		Base64UrlField: []byte("world"),
+		Base64Field: []byte("hello"),
 	}
 	assert.Equal(t, "hello", string(fields.Base64Field))
-	assert.Equal(t, "world", string(fields.Base64UrlField))
+}
+
+func TestContentEncodingBase64UrlStaysString(t *testing.T) {
+	// `contentEncoding: base64url` (URL-safe base64) is intentionally
+	// NOT mapped to []byte: Go's JSON codec for []byte uses standard
+	// base64 unconditionally, which would silently corrupt URL-safe
+	// characters (`-`/`_`) on unmarshal and re-emit them as standard
+	// base64 on marshal. The field stays as `string` so the declared
+	// wire encoding is preserved end-to-end and the user can apply
+	// the correct codec. Compile-time check: `*string` assignment.
+	v := "abc-def_ghi"
+	fields := spec.FileUploadFields{
+		Base64UrlField: &v,
+	}
+	require.NotNil(t, fields.Base64UrlField)
+	assert.Equal(t, "abc-def_ghi", *fields.Base64UrlField)
 }
 
 func TestContentMediaTypeWinsOverContentEncoding(t *testing.T) {

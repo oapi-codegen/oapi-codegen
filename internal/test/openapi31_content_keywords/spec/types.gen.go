@@ -13,9 +13,14 @@ type FileUploadFields struct {
 	// 3.0 `format: byte` idiom -- expected Go shape: `[]byte`.
 	Base64Field []byte `json:"base64Field"`
 
-	// Base64UrlField Any RFC4648 encoding triggers the []byte mapping, not just
-	// "base64".
-	Base64UrlField []byte `json:"base64UrlField"`
+	// Base64UrlField base64url is intentionally NOT mapped to []byte: Go's
+	// encoding/json treats []byte as standard padded base64
+	// (RFC4648 section 4), which would silently corrupt URL-safe
+	// characters (`-`/`_`) on unmarshal and re-emit them as
+	// standard base64 on marshal. Expected Go shape: `string`,
+	// so the user retains the declared wire encoding and can
+	// apply the appropriate codec.
+	Base64UrlField *string `json:"base64UrlField,omitempty"`
 
 	// BothKeywords When both are set (base64-encoded binary of a specific
 	// media type), the file mapping wins: openapi_types.File.

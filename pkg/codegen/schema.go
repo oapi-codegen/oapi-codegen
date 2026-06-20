@@ -1146,11 +1146,25 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 				// 3.0 `format: binary`. Routes to openapi_types.File in
 				// the default mapping.
 				resolvedFormat = "binary"
-			case schema.ContentEncoding != "":
-				// String-encoded binary (base64, base64url, etc.) --
-				// equivalent to 3.0 `format: byte`. Routes to []byte in
-				// the default mapping.
+			case schema.ContentEncoding == "base64":
+				// Standard padded base64 is the one RFC4648 variant Go's
+				// encoding/json handles natively for []byte. Map to
+				// `byte` (-> []byte), matching the 3.0 `format: byte`
+				// behavior so the wire encoding is honored on
+				// marshal/unmarshal without user code.
 				resolvedFormat = "byte"
+				// Other contentEncoding values (base64url, base32, base16,
+				// quoted-printable) are intentionally NOT mapped to []byte.
+				// Go's JSON codec for []byte always emits/expects standard
+				// padded base64; using it for base64url would silently
+				// corrupt URL-safe characters (`-`/`_`) on unmarshal and
+				// re-emit them as standard base64 on marshal. Leaving the
+				// field as the default `string` keeps the raw declared
+				// wire encoding in user hands -- they can apply the
+				// correct codec at the application layer. Users who want
+				// a typed mapping can override via `type-mapping` (e.g.
+				// map a custom format to a wrapper type that implements
+				// encoding-aware MarshalJSON/UnmarshalJSON).
 			}
 		}
 		spec := globalState.typeMapping.String.Resolve(resolvedFormat)
