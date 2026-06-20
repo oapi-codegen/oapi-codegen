@@ -688,8 +688,16 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				Schema:   outSchema,
 			}
 			outSchema = Schema{
-				Description:     typeDef.Schema.Description,
-				GoType:          typeName,
+				Description: typeDef.Schema.Description,
+				GoType:      typeName,
+				// Mark the returned schema as a reference to the
+				// hoisted named type. This mirrors the convention
+				// followed by every other hoist path in this file
+				// (additionalProperties-hoist, property-hoist,
+				// array-item-hoist) and prevents any future hoist
+				// caller that asks "has this schema been named yet?"
+				// from re-hoisting under the same path-derived name.
+				RefType:         typeName,
 				AdditionalTypes: append(outSchema.AdditionalTypes, typeDef),
 			}
 		}
