@@ -1045,24 +1045,61 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 
 	// Now, go through all the enums, and figure out if we have conflicts with
 	// any others.
-	for i := range enums {
-		// Look through all other enums not compared so far. Make sure we don't
-		// compare against self.
-		e1 := enums[i]
-		for j := i + 1; j < len(enums); j++ {
-			e2 := enums[j]
-
-			for e1key := range e1.GetValues() {
-				_, found := e2.GetValues()[e1key]
-				if found {
-					e1.PrefixTypeName = true
-					e2.PrefixTypeName = true
-					enums[i] = e1
-					enums[j] = e2
-					break
+	if globalState.options.Compatibility.DisableEnumValueConflictResolution {
+		// Legacy behavior: compare generated constant names via GetValues().
+		// This is order-dependent because GetValues() reflects already-applied
+		// prefixes, so enums processed later (in sorted schema-name order) may
+		// miss conflicts with enums that were prefixed in an earlier iteration.
+		// Preserved here as an escape hatch for users who need to keep their
+		// existing generated output.
+		for i := range enums {
+			e1 := enums[i]
+			for j := i + 1; j < len(enums); j++ {
+				e2 := enums[j]
+				for e1key := range e1.GetValues() {
+					if _, found := e2.GetValues()[e1key]; found {
+						e1.PrefixTypeName = true
+						e2.PrefixTypeName = true
+						enums[i] = e1
+						enums[j] = e2
+						break
+					}
 				}
 			}
 		}
+	} else {
+		// Resolve cross-enum constant-name collisions by prefixing each
+		// conflicting enum's constants with its type name. Prefixing can itself
+		// introduce a new collision — a prefixed name like "Enum1One" matching
+		// another enum's raw value — so we iterate to a fixed point.
+		for {
+			changed := false
+			for i := range enums {
+				for j := i + 1; j < len(enums); j++ {
+					if enums[i].PrefixTypeName && enums[j].PrefixTypeName {
+						continue
+					}
+					if enumsConflict(enums[i], enums[j]) {
+						if !enums[i].PrefixTypeName {
+							enums[i].PrefixTypeName = true
+							changed = true
+						}
+						if !enums[j].PrefixTypeName {
+							enums[j].PrefixTypeName = true
+							changed = true
+						}
+					}
+				}
+			}
+			if !changed {
+				break
+			}
+		}
+	}
+
+	// Check each enum against global type names and self-conflict.
+	for i := range enums {
+		e1 := enums[i]
 
 		// now see if this enum conflicts with any global type names.
 		for _, tp := range types {
@@ -1092,6 +1129,30 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 		EnumDefinitions:  enums,
 		SkipEnumValidate: globalState.options.OutputOptions.SkipEnumValidate,
 	})
+}
+
+// enumsConflict reports whether two enums must be disambiguated by prefixing.
+//
+// They conflict when they share a raw value name, or when their current
+// effective constant names collide. The raw-value check uses Schema.EnumValues,
+// which is immutable, so the result is independent of any prefixing already
+// applied earlier in the same pass — otherwise prefixing one enum could mask
+// its conflict with a third (the order-dependent bug this resolution fixes).
+// The effective-name check uses GetValues() to catch collisions *introduced* by
+// prefixing, e.g. a prefixed "Enum1One" matching another enum's raw value.
+func enumsConflict(a, b EnumDefinition) bool {
+	for name := range a.Schema.EnumValues {
+		if _, ok := b.Schema.EnumValues[name]; ok {
+			return true
+		}
+	}
+	bValues := b.GetValues()
+	for name := range a.GetValues() {
+		if _, ok := bValues[name]; ok {
+			return true
+		}
+	}
+	return false
 }
 
 // GenerateImports generates our import statements and package definition.

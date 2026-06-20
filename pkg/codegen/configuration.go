@@ -288,6 +288,14 @@ type CompatibilityOptions struct {
 	// When set to true, always prefix enum values with their type name instead of only
 	// when typenames would be conflicting.
 	AlwaysPrefixEnumValues bool `yaml:"always-prefix-enum-values,omitempty"`
+	// DisableEnumValueConflictResolution turns off cross-enum value conflict
+	// resolution. By default, when two enums declare the same value, the
+	// generated constants are prefixed with their type name so they don't
+	// collide. Set this to true to disable that resolution and restore the
+	// prior behavior, in which conflict detection compared already-prefixed
+	// constant names and could miss overlaps depending on declaration order.
+	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/2391
+	DisableEnumValueConflictResolution bool `yaml:"disable-enum-value-conflict-resolution,omitempty"`
 	// Our generated code for Chi has historically inverted the order in which Chi middleware is
 	// applied such that the last invoked middleware ends up executing first in the Chi chain
 	// This resolves the behavior such that middlewares are chained in the order they are invoked.

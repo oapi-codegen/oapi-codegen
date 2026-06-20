@@ -59,16 +59,16 @@ func (e TestFieldB) Valid() bool {
 
 // Defines values for TestFieldC1.
 const (
-	Bar TestFieldC1 = "bar"
-	Foo TestFieldC1 = "foo"
+	TestFieldC1Bar TestFieldC1 = "bar"
+	TestFieldC1Foo TestFieldC1 = "foo"
 )
 
 // Valid indicates whether the value is a known member of the TestFieldC1 enum.
 func (e TestFieldC1) Valid() bool {
 	switch e {
-	case Bar:
+	case TestFieldC1Bar:
 		return true
-	case Foo:
+	case TestFieldC1Foo:
 		return true
 	default:
 		return false
