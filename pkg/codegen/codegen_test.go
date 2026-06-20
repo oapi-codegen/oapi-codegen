@@ -390,11 +390,8 @@ components:
 }
 
 // TestEnumConflictDetectionBothOrders verifies that enum conflict detection
-// produces identical output regardless of the order schemas appear in the spec.
-// The old GetValues()-based approach was order-dependent: processing AState
-// before CState caused CState to be left unprefixed, while reversing the order
-// would prefix it. Go map iteration is non-deterministic (randomized since
-// Go 1.12), so this was a latent correctness bug.
+// produces identical, fully-prefixed output regardless of the order the
+// schemas appear in the spec.
 func TestEnumConflictDetectionBothOrders(t *testing.T) {
 	specAFirst := `
 openapi: "3.0.0"

@@ -1045,12 +1045,13 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 
 	// Now, go through all the enums, and figure out if we have conflicts with
 	// any others.
-	if globalState.options.Compatibility.OldEnumConflicts {
-		// Legacy behavior (pre-v2.7.1): compare generated constant names via
-		// GetValues(). This is order-dependent because GetValues() reflects
-		// already-applied prefixes, so enums processed later may miss conflicts
-		// with enums that were prefixed in an earlier iteration. Preserved here
-		// as an escape hatch for users who need to keep existing generated output.
+	if globalState.options.Compatibility.DisableEnumValueConflictResolution {
+		// Legacy behavior: compare generated constant names via GetValues().
+		// This is order-dependent because GetValues() reflects already-applied
+		// prefixes, so enums processed later (in sorted schema-name order) may
+		// miss conflicts with enums that were prefixed in an earlier iteration.
+		// Preserved here as an escape hatch for users who need to keep their
+		// existing generated output.
 		for i := range enums {
 			e1 := enums[i]
 			for j := i + 1; j < len(enums); j++ {
