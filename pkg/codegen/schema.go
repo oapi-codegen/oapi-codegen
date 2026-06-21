@@ -970,7 +970,16 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 
 		return outSchema, nil
-	} else if len(schema.Enum) > 0 || (globalState.is31 && schema.Const != nil) {
+	} else if (len(schema.Enum) > 0 || (globalState.is31 && schema.Const != nil)) && !t.Is("array") {
+		// An `enum` (or 3.1 `const`) is only meaningful on a scalar schema:
+		// it constrains a single value, which we render as a typed constant.
+		// A schema that combines `type: array` with an `enum` is malformed --
+		// the enum members are scalars, not arrays, so no array value could
+		// satisfy it (seen in the wild as a copy of the item enum onto the
+		// array; see issue #2176). Emitting constants there yields
+		// `const X SliceType = ...`, which is not a valid Go constant type.
+		// Fall through to normal array handling so the schema generates as a
+		// plain `[]ItemType`; the item schema carries the real enum.
 		err := oapiSchemaToGoType(schema, path, &outSchema)
 		// Enums need to be typed, so that the values aren't interchangeable,
 		// so no matter what schema conversion thinks, we need to define a
