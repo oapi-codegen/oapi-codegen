@@ -691,17 +691,26 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 					// nor silently decodes into the JSON type when the JSON and
 					// non-JSON schemas differ.
 					if IsGoTypeReference(responseRef.Ref) && util.IsMediaTypeJson(contentTypeName) {
-						if externalPkg := externalPackageFor(o.PathItemRef); externalPkg != "" && strings.HasPrefix(responseRef.Ref, "#") {
-							// The operation came from an externally-ref'd path
-							// item and this response ref is relative to that
-							// external file, so the response type lives in the
-							// imported package (issue #2308). Resolve the name in
-							// the external document's context rather than via
+						// Determine the imported package for an external response.
+						// Either the operation came from an externally-ref'd path
+						// item and the response ref is relative to that file
+						// (issue #2308), or the response ref targets an external
+						// file directly (issue #2422).
+						externalPkg := ""
+						if pkg := externalPackageFor(o.PathItemRef); pkg != "" && strings.HasPrefix(responseRef.Ref, "#") {
+							externalPkg = pkg
+						} else if pkg := externalPackageFor(responseRef.Ref); pkg != "" {
+							externalPkg = pkg
+						}
+
+						if externalPkg != "" {
+							// The client wrapper points at the imported package's
+							// response *model* type. Resolve its name in the
+							// external document's context rather than via
 							// RefPathToGoType / resolvedNameForRefPath, which key
-							// off the root spec. The client wrapper points at the
-							// imported package's response *model* type, whose name
-							// honours x-go-name on the response component the same
-							// way the external package generated it.
+							// off the root spec; in particular honour x-go-name on
+							// the response component the same way the external
+							// package generated it.
 							refParts := strings.Split(responseRef.Ref, "/")
 							refType := SchemaNameToTypeName(refParts[len(refParts)-1])
 							if ext, ok := responseRef.Value.Extensions[extGoName]; ok {
