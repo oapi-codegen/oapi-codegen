@@ -1094,15 +1094,9 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 		// handle media types that conform to JSON. Other responses should
 		// simply be specified as strings or byte arrays.
 		response := responseOrRef.Value
+		content := response.Content
 
-		jsonCount := 0
-		for mediaType := range response.Content {
-			if util.IsMediaTypeJson(mediaType) {
-				jsonCount++
-			}
-		}
-
-		SortedMapKeys := SortedMapKeys(response.Content)
+		SortedMapKeys := SortedMapKeys(content)
 		for _, mediaType := range SortedMapKeys {
 			response := response.Content[mediaType]
 			if !util.IsMediaTypeJson(mediaType) {
@@ -1121,8 +1115,8 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 			// TODO: revisit this at the next major version change —
 			// always include the media type in the schema path.
 			schemaPath := []string{responseName}
-			if jsonCount > 1 && globalState.options.OutputOptions.ResolveTypeNameCollisions {
-				schemaPath = append(schemaPath, mediaTypeToCamelCase(mediaType))
+			if suffix := responseMediaTypeSuffix(content, mediaType); suffix != "" && globalState.options.OutputOptions.ResolveTypeNameCollisions {
+				schemaPath = append(schemaPath, suffix)
 			}
 			goType, err := GenerateGoSchema(response.Schema, schemaPath)
 			if err != nil {
@@ -1153,8 +1147,8 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
 
-			if jsonCount > 1 {
-				typeDef.TypeName = typeDef.TypeName + mediaTypeToCamelCase(mediaType)
+			if suffix := responseMediaTypeSuffix(content, mediaType); suffix != "" {
+				typeDef.TypeName = typeDef.TypeName + suffix
 			}
 
 			types = append(types, typeDef)
