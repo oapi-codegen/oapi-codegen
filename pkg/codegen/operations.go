@@ -565,6 +565,33 @@ func (o *OperationDefinition) DeprecationComment() string {
 	return DeprecationComment(reason)
 }
 
+// responseMediaTypeSuffix returns the media-type discriminator suffix (e.g.
+// "ApplicationJSON") that must be appended to the Go type name generated for a
+// single content entry of a response, or "" when the base name is used as-is.
+//
+// A suffix is required only when one response carries more than one
+// JSON-compatible content type, and only the JSON entries receive one: non-JSON
+// media types (XML, YAML, ...) never get a dedicated generated type, so they
+// reuse the base name. Both the type declaration (GenerateTypesForResponses) and
+// the client response-wrapper field types (GetResponseTypeDefinitions) must make
+// this identical decision — otherwise the wrapper references per-content-type
+// type names that were never declared (see issue #2389).
+func responseMediaTypeSuffix(content openapi3.Content, mediaType string) string {
+	if !util.IsMediaTypeJson(mediaType) {
+		return ""
+	}
+	jsonCount := 0
+	for mt := range content {
+		if util.IsMediaTypeJson(mt) {
+			jsonCount++
+		}
+	}
+	if jsonCount <= 1 {
+		return ""
+	}
+	return mediaTypeToCamelCase(mediaType)
+}
+
 // GetResponseTypeDefinitions produces a list of type definitions for a given Operation for the response
 // types which we know how to parse. These will be turned into fields on a
 // response object for automatic deserialization of responses in the generated
@@ -582,13 +609,6 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 
 		// We can only generate a type if we have a value:
 		if responseRef.Value != nil {
-			supportedCount := 0
-			for mediaType := range responseRef.Value.Content {
-				if isMediaTypeSupported(mediaType) {
-					supportedCount++
-				}
-			}
-
 			sortedContentKeys := SortedMapKeys(responseRef.Value.Content)
 			for _, contentTypeName := range sortedContentKeys {
 				contentType := responseRef.Value.Content[contentTypeName]
@@ -662,16 +682,24 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 						ContentTypeName:           contentTypeName,
 						AdditionalTypeDefinitions: responseSchema.GetAdditionalTypeDefs(),
 					}
-					if IsGoTypeReference(responseRef.Ref) {
+					// A component response only declares a Go type for its JSON
+					// content (GenerateTypesForResponses skips non-JSON media).
+					// Point the wrapper field at that declared component type for
+					// JSON content only; non-JSON content keeps the type derived
+					// from its own schema above, so it neither references an
+					// undeclared base type (e.g. an XML-only component response)
+					// nor silently decodes into the JSON type when the JSON and
+					// non-JSON schemas differ.
+					if IsGoTypeReference(responseRef.Ref) && util.IsMediaTypeJson(contentTypeName) {
 						refType, err := RefPathToGoType(responseRef.Ref)
 						if err != nil {
 							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
 						}
-						if supportedCount > 1 {
+						if suffix := responseMediaTypeSuffix(responseRef.Value.Content, contentTypeName); suffix != "" {
 							if resolved := resolvedNameForRefPath(responseRef.Ref, contentTypeName); resolved != "" {
-								refType = resolved + mediaTypeToCamelCase(contentTypeName)
+								refType = resolved + suffix
 							} else {
-								refType += mediaTypeToCamelCase(contentTypeName)
+								refType += suffix
 							}
 						}
 						td.Schema.RefType = refType
