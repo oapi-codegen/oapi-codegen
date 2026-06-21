@@ -691,18 +691,40 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 					// nor silently decodes into the JSON type when the JSON and
 					// non-JSON schemas differ.
 					if IsGoTypeReference(responseRef.Ref) && util.IsMediaTypeJson(contentTypeName) {
-						refType, err := RefPathToGoType(responseRef.Ref)
-						if err != nil {
-							return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
-						}
-						if suffix := responseMediaTypeSuffix(responseRef.Value.Content, contentTypeName); suffix != "" {
-							if resolved := resolvedNameForRefPath(responseRef.Ref, contentTypeName); resolved != "" {
-								refType = resolved + suffix
-							} else {
-								refType += suffix
+						if externalPkg := externalPackageFor(o.PathItemRef); externalPkg != "" && strings.HasPrefix(responseRef.Ref, "#") {
+							// The operation came from an externally-ref'd path
+							// item and this response ref is relative to that
+							// external file, so the response type lives in the
+							// imported package (issue #2308). Resolve the name in
+							// the external document's context rather than via
+							// RefPathToGoType / resolvedNameForRefPath, which key
+							// off the root spec. The client wrapper points at the
+							// imported package's response *model* type, whose name
+							// honours x-go-name on the response component the same
+							// way the external package generated it.
+							refParts := strings.Split(responseRef.Ref, "/")
+							refType := SchemaNameToTypeName(refParts[len(refParts)-1])
+							if ext, ok := responseRef.Value.Extensions[extGoName]; ok {
+								if name, err := extTypeName(ext); err == nil {
+									refType = name
+								}
 							}
+							refType += responseMediaTypeSuffix(responseRef.Value.Content, contentTypeName)
+							td.Schema.RefType = fmt.Sprintf("%s.%s", externalPkg, refType)
+						} else {
+							refType, err := RefPathToGoType(responseRef.Ref)
+							if err != nil {
+								return nil, fmt.Errorf("error dereferencing response Ref: %w", err)
+							}
+							if suffix := responseMediaTypeSuffix(responseRef.Value.Content, contentTypeName); suffix != "" {
+								if resolved := resolvedNameForRefPath(responseRef.Ref, contentTypeName); resolved != "" {
+									refType = resolved + suffix
+								} else {
+									refType += suffix
+								}
+							}
+							td.Schema.RefType = refType
 						}
-						td.Schema.RefType = refType
 					}
 					tds = append(tds, td)
 				}
@@ -1678,10 +1700,27 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			rd.Description = *response.Description
 		}
 		if IsGoTypeReference(responseOrRef.Ref) {
-			// Convert the reference path to Go type
-			refType, err := RefPathToGoType(responseOrRef.Ref)
-			if err != nil {
-				return nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", responseOrRef.Ref, err)
+			var refType string
+			if externalPkg != "" && strings.HasPrefix(responseOrRef.Ref, "#") {
+				// The operation came from an externally-ref'd path item and this
+				// response ref is relative to that external file, so the
+				// referenced response actually lives in the imported package
+				// (issue #2308). Resolve the name in the context of the external
+				// document: derive it straight from the ref's component name
+				// rather than via RefPathToGoType, which resolves "#" refs
+				// against the *root* spec and would apply the root spec's
+				// collision resolution / x-go-name -- a name the imported
+				// package never generated. Refs that already target another file
+				// (handled below) are qualified by RefPathToGoType itself.
+				refParts := strings.Split(responseOrRef.Ref, "/")
+				refType = fmt.Sprintf("%s.%s", externalPkg, SchemaNameToTypeName(refParts[len(refParts)-1]))
+			} else {
+				// Convert the reference path to Go type
+				var err error
+				refType, err = RefPathToGoType(responseOrRef.Ref)
+				if err != nil {
+					return nil, fmt.Errorf("error turning reference (%s) into a Go type: %w", responseOrRef.Ref, err)
+				}
 			}
 			// Check if this ref is already used by another response definition. If not use the ref
 			// If we let multiple response definitions alias to same response it will break the type switch
