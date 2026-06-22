@@ -64,6 +64,10 @@
         "server-urls": {
           "type": "boolean",
           "description": "Generate types for the `Server` definitions' URLs, instead of needing to provide your own values"
+        },
+        "strict-operation-list": {
+          "type": "boolean",
+          "description": "Generate a var StrictOperationIDs []string containing the normalized operation name passed to every StrictMiddlewareFunc call. Makes it straightforward to write generic tests that assert a behaviour holds for every strict operation."
         }
       }
     },

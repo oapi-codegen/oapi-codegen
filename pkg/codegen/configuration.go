@@ -171,6 +171,8 @@ type GenerateOptions struct {
 	EmbeddedSpec bool `yaml:"embedded-spec,omitempty"`
 	// ServerURLs generates types for the `Server` definitions' URLs, instead of needing to provide your own values
 	ServerURLs bool `yaml:"server-urls,omitempty"`
+	// StrictOperationList generates a slice of all strict operation IDs in the spec, useful for writing generic strict middleware tests
+	StrictOperationList bool `yaml:"strict-operation-list,omitempty"`
 }
 
 // RouterImports returns the framework-specific and strict middleware imports
