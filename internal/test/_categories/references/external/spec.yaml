@@ -1,0 +1,22 @@
+# ==========================================================================
+# Category: references/external
+# Tests:    Cross-file $ref: schema/response/parameter/path-item refs; internal path-item aliasing; filtered/removed refs; documents path-level $ref limitation.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - externalref/ (base spec)
+#   - pathalias/
+#   - issues/issue-1182,issue-1378,issue-2308,issue-2422,issue-removed-external-ref
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: references/external
+  version: "1.0.0"
+  description: |
+    Cross-file $ref: schema/response/parameter/path-item refs; internal path-item aliasing; filtered/removed refs; documents path-level $ref limitation.
+paths: {}
+components:
+  schemas: {}

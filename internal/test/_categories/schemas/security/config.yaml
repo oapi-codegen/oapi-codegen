@@ -1,0 +1,4 @@
+package: schemassecurity
+output: security.gen.go
+generate:
+  models: true

@@ -1,0 +1,5 @@
+package: parametersheadernilcheck
+output: nilcheck.gen.go
+generate:
+  models: true
+  client: true

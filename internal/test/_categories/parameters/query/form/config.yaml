@@ -1,0 +1,5 @@
+package: parametersqueryform
+output: form.gen.go
+generate:
+  models: true
+  client: true

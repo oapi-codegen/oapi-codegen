@@ -1,0 +1,5 @@
+package: eventscallbacks
+output: callbacks.gen.go
+generate:
+  models: true
+  std-http-server: true

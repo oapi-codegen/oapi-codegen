@@ -1,0 +1,21 @@
+# ==========================================================================
+# Category: extensions/x_go_type
+# Tests:    x-go-type, x-go-type-import, x-go-type-name (objects/enums/array items); combined with skip-optional-pointer + import.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - extensions/x-go-type
+#   - issues/issue-832 (enums),issue-1397 (nested objects),issue1957 (combined)
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: extensions/x_go_type
+  version: "1.0.0"
+  description: |
+    x-go-type, x-go-type-import, x-go-type-name (objects/enums/array items); combined with skip-optional-pointer + import.
+paths: {}
+components:
+  schemas: {}

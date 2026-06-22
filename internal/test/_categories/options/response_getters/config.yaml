@@ -1,0 +1,5 @@
+package: optionsresponsegetters
+output: response_getters.gen.go
+generate:
+  models: true
+  client: true

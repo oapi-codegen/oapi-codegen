@@ -1,0 +1,20 @@
+# ==========================================================================
+# Category: options/type_aliases
+# Tests:    disable-type-aliases-for-type (e.g. array -> struct, not alias).
+#
+# Folds in (provenance — to migrate from current tree):
+#   - outputoptions/disabletypealiases
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: options/type_aliases
+  version: "1.0.0"
+  description: |
+    disable-type-aliases-for-type (e.g. array -> struct, not alias).
+paths: {}
+components:
+  schemas: {}

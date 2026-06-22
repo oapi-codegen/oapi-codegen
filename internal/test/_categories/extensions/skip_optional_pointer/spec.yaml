@@ -1,0 +1,21 @@
+# ==========================================================================
+# Category: extensions/skip_optional_pointer
+# Tests:    x-go-type-skip-optional-pointer on scalars/containers/maps/slices; nil omitted not `null`; $ref & property-level overrides.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - extensions/x-go-type-skip-optional-pointer
+#   - issues/issue1561,issue-2031,issue-2329
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: extensions/skip_optional_pointer
+  version: "1.0.0"
+  description: |
+    x-go-type-skip-optional-pointer on scalars/containers/maps/slices; nil omitted not `null`; $ref & property-level overrides.
+paths: {}
+components:
+  schemas: {}

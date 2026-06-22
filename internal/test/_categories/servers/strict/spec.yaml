@@ -1,0 +1,22 @@
+# ==========================================================================
+# Category: servers/strict
+# Tests:    Strict-server semantics: typed request/response marshaling (json/form/multipart), response buffering & error handling.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - strict-server/{chi,echo,fiber,gin,gorilla,iris,stdhttp,client}
+#   - issues/issue-1529,issue-1963
+#   - issues/issue-1277,issue-1298 (strict context)
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: servers/strict
+  version: "1.0.0"
+  description: |
+    Strict-server semantics: typed request/response marshaling (json/form/multipart), response buffering & error handling.
+paths: {}
+components:
+  schemas: {}

@@ -1,0 +1,20 @@
+# ==========================================================================
+# Category: extensions/x_go_name
+# Tests:    x-go-name renames a generated schema/field type.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - components.yaml RenameMe/ReferenceToRenameMe
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: extensions/x_go_name
+  version: "1.0.0"
+  description: |
+    x-go-name renames a generated schema/field type.
+paths: {}
+components:
+  schemas: {}

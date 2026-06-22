@@ -1,0 +1,20 @@
+# ==========================================================================
+# Category: events/callbacks
+# Tests:    OpenAPI 3.0 callbacks: receiver/initiator codegen; payload roundtrip; RequestEditor composition.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - callbacks/
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: events/callbacks
+  version: "1.0.0"
+  description: |
+    OpenAPI 3.0 callbacks: receiver/initiator codegen; payload roundtrip; RequestEditor composition.
+paths: {}
+components:
+  schemas: {}

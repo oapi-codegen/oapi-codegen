@@ -1,0 +1,4 @@
+package: optionscompatibility
+output: compatibility.gen.go
+generate:
+  models: true

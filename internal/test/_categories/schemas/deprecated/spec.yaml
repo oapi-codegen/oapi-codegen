@@ -1,0 +1,21 @@
+# ==========================================================================
+# Category: schemas/deprecated
+# Tests:    Deprecated fields/operations/parameters; Go `Deprecated:` doc comments; x-deprecated-reason.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - deprecation/api.yaml
+#   - schemas.yaml Issue975
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: schemas/deprecated
+  version: "1.0.0"
+  description: |
+    Deprecated fields/operations/parameters; Go `Deprecated:` doc comments; x-deprecated-reason.
+paths: {}
+components:
+  schemas: {}

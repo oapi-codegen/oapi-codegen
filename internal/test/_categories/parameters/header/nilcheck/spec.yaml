@@ -1,0 +1,21 @@
+# ==========================================================================
+# Category: parameters/header/nilcheck
+# Tests:    Optional array header params: nil -> not sent, non-nil -> serialized.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - issues/issue-2238 (header side)
+#   - refactor-branch parameters/header/nilcheck
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: parameters/header/nilcheck
+  version: "1.0.0"
+  description: |
+    Optional array header params: nil -> not sent, non-nil -> serialized.
+paths: {}
+components:
+  schemas: {}

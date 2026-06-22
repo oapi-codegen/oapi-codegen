@@ -1,0 +1,23 @@
+# ==========================================================================
+# Category: servers/routers
+# Tests:    Server interface generation across chi/echo/echov5/gin/fiber/gorilla/iris/stdhttp; handler signatures; go1.22 dashed path params; handler registration.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - server/
+#   - server-specific/stdhttp/
+#   - issues/issue1469 (fiber)
+#   - issues/issue1799 (all frameworks)
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: servers/routers
+  version: "1.0.0"
+  description: |
+    Server interface generation across chi/echo/echov5/gin/fiber/gorilla/iris/stdhttp; handler signatures; go1.22 dashed path params; handler registration.
+paths: {}
+components:
+  schemas: {}

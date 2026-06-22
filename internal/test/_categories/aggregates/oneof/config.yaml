@@ -1,0 +1,4 @@
+package: aggregatesoneof
+output: oneof.gen.go
+generate:
+  models: true

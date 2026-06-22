@@ -1,0 +1,5 @@
+package: parameterscookienilcheck
+output: nilcheck.gen.go
+generate:
+  models: true
+  client: true

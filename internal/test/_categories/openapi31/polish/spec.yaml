@@ -1,0 +1,20 @@
+# ==========================================================================
+# Category: openapi31/polish
+# Tests:    3.1 idiom: `const` on a scalar -> typed enum; plural `examples` -> Go doc comments.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - openapi31_polish/
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.1.0
+info:
+  title: openapi31/polish
+  version: "1.0.0"
+  description: |
+    3.1 idiom: `const` on a scalar -> typed enum; plural `examples` -> Go doc comments.
+paths: {}
+components:
+  schemas: {}

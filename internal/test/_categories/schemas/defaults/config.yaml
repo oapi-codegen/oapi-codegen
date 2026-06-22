@@ -1,0 +1,4 @@
+package: schemasdefaults
+output: defaults.gen.go
+generate:
+  models: true

@@ -1,0 +1,20 @@
+# ==========================================================================
+# Category: options/name_normalizer
+# Tests:    name-normalizer variants (table-driven): unset, ToCamelCase, ToCamelCaseWithInitialisms, +AdditionalInitialisms, ToCamelCaseWithDigits.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - outputoptions/name-normalizer/{unset,to-camel-case,...,with-digits}
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: options/name_normalizer
+  version: "1.0.0"
+  description: |
+    name-normalizer variants (table-driven): unset, ToCamelCase, ToCamelCaseWithInitialisms, +AdditionalInitialisms, ToCamelCaseWithDigits.
+paths: {}
+components:
+  schemas: {}

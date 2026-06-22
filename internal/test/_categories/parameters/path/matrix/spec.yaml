@@ -1,0 +1,21 @@
+# ==========================================================================
+# Category: parameters/path/matrix
+# Tests:    Path params, matrix style (`;id=`): primitives/arrays/objects, explode variants.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - parameters.yaml
+#   - refactor-branch parameters/path/matrix
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: parameters/path/matrix
+  version: "1.0.0"
+  description: |
+    Path params, matrix style (`;id=`): primitives/arrays/objects, explode variants.
+paths: {}
+components:
+  schemas: {}

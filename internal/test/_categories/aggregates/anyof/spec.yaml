@@ -1,0 +1,22 @@
+# ==========================================================================
+# Category: aggregates/anyof
+# Tests:    anyOf unions: inline vs $ref response schemas, anyOf/oneOf query params, combined anyOf+allOf+oneOf in one schema.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - any_of/codegen/{inline,ref_schema}
+#   - any_of/param
+#   - issues/issue-1189
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: aggregates/anyof
+  version: "1.0.0"
+  description: |
+    anyOf unions: inline vs $ref response schemas, anyOf/oneOf query params, combined anyOf+allOf+oneOf in one schema.
+paths: {}
+components:
+  schemas: {}

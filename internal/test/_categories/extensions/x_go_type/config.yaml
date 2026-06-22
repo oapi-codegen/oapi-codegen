@@ -1,0 +1,4 @@
+package: extensionsxgotype
+output: x_go_type.gen.go
+generate:
+  models: true

@@ -1,0 +1,22 @@
+# ==========================================================================
+# Category: schemas/recursive
+# Tests:    Self-referential & cyclic schemas: via additionalProperties, via cyclic oneOf, via allOf self-reference.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - issues/issue-52 (recursive additionalProperties)
+#   - issues/issue-936 (deep cyclic oneOf)
+#   - issues/issue-1373 (recursive $ref through allOf)
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: schemas/recursive
+  version: "1.0.0"
+  description: |
+    Self-referential & cyclic schemas: via additionalProperties, via cyclic oneOf, via allOf self-reference.
+paths: {}
+components:
+  schemas: {}

@@ -1,0 +1,4 @@
+package: schemasrecursive
+output: recursive.gen.go
+generate:
+  models: true

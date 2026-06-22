@@ -1,0 +1,4 @@
+package: schemasnullable
+output: nullable.gen.go
+generate:
+  models: true

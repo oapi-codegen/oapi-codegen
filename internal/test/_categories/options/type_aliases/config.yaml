@@ -1,0 +1,4 @@
+package: optionstypealiases
+output: type_aliases.gen.go
+generate:
+  models: true

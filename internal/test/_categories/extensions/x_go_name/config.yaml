@@ -1,0 +1,4 @@
+package: extensionsxgoname
+output: x_go_name.gen.go
+generate:
+  models: true

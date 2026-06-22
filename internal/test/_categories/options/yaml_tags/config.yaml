@@ -1,0 +1,4 @@
+package: optionsyamltags
+output: yaml_tags.gen.go
+generate:
+  models: true

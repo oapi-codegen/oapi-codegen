@@ -1,0 +1,4 @@
+package: extensionsstructtags
+output: struct_tags.gen.go
+generate:
+  models: true

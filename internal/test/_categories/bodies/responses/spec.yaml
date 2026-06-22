@@ -1,0 +1,21 @@
+# ==========================================================================
+# Category: bodies/responses
+# Tests:    Response shapes: response headers per content type, one component schema under multiple content types, status-code variants.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - issues/issue-1676
+#   - issues/issue-2389
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: bodies/responses
+  version: "1.0.0"
+  description: |
+    Response shapes: response headers per content type, one component schema under multiple content types, status-code variants.
+paths: {}
+components:
+  schemas: {}

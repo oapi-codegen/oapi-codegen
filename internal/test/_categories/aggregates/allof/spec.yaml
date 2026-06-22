@@ -1,0 +1,22 @@
+# ==========================================================================
+# Category: aggregates/allof
+# Tests:    allOf composition & merge: multi-level inheritance, old-merge-schemas vs new merge, additionalProperties merge, x-go-type through allOf.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - all_of/ (v1 old-merge, v2 new)
+#   - issues/issue193 (allOf + additionalProperties)
+#   - issues/issue-1219 (additionalProperties merge precedence)
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: aggregates/allof
+  version: "1.0.0"
+  description: |
+    allOf composition & merge: multi-level inheritance, old-merge-schemas vs new merge, additionalProperties merge, x-go-type through allOf.
+paths: {}
+components:
+  schemas: {}
