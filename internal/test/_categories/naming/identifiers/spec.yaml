@@ -1,0 +1,21 @@
+# ==========================================================================
+# Category: naming/identifiers
+# Tests:    Identifier normalization: digit-leading operationIds & header names, underscore-prefixed fields, reserved keywords.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - issues/issue-head-digit-of-operation-id,issue-head-digit-of-httpheader,issue1767
+#   - schemas.yaml Issue30/Issue41
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: naming/identifiers
+  version: "1.0.0"
+  description: |
+    Identifier normalization: digit-leading operationIds & header names, underscore-prefixed fields, reserved keywords.
+paths: {}
+components:
+  schemas: {}

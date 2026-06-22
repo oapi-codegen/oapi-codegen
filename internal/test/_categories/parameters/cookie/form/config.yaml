@@ -1,0 +1,5 @@
+package: parameterscookieform
+output: form.gen.go
+generate:
+  models: true
+  client: true

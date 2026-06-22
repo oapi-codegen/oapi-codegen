@@ -1,0 +1,5 @@
+package: parametersencoding
+output: encoding.gen.go
+generate:
+  models: true
+  client: true

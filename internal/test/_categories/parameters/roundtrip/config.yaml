@@ -1,0 +1,8 @@
+package: parametersroundtrip
+output: roundtrip.gen.go
+generate:
+  models: true
+  client: true
+# NOTE: the roundtrip harness generates a server per framework in sibling
+#       subdirs (echo/, chi/, ...) plus one shared client; this config is the
+#       client. See doc.go for the generation plan.

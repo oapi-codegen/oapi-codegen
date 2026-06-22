@@ -1,0 +1,4 @@
+package: schemasreadonlywriteonly
+output: readonly_writeonly.gen.go
+generate:
+  models: true

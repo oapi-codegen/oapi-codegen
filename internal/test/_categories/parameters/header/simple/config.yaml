@@ -1,0 +1,5 @@
+package: parametersheadersimple
+output: simple.gen.go
+generate:
+  models: true
+  client: true

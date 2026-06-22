@@ -1,0 +1,20 @@
+# ==========================================================================
+# Category: extensions/x_order
+# Tests:    x-order controls struct field ordering (full & partial).
+#
+# Folds in (provenance — to migrate from current tree):
+#   - extensions/x-order
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: extensions/x_order
+  version: "1.0.0"
+  description: |
+    x-order controls struct field ordering (full & partial).
+paths: {}
+components:
+  schemas: {}

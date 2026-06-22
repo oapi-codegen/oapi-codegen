@@ -1,0 +1,4 @@
+package: extensionsxorder
+output: x_order.gen.go
+generate:
+  models: true

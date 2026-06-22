@@ -1,0 +1,21 @@
+# ==========================================================================
+# Category: parameters/query/form
+# Tests:    Query params, form style: primitives/arrays/objects, explode variants; runtime style/explode serialization.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - parameters.yaml
+#   - issues/issue-2183 (runtime serialization, currently spec-less)
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: parameters/query/form
+  version: "1.0.0"
+  description: |
+    Query params, form style: primitives/arrays/objects, explode variants; runtime style/explode serialization.
+paths: {}
+components:
+  schemas: {}

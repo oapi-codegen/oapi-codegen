@@ -1,0 +1,21 @@
+# ==========================================================================
+# Category: parameters/roundtrip
+# Tests:    HARNESS: table-driven parameter-binding roundtrip across echo/echov5/chi/gin/fiber/gorilla/iris/stdhttp + client over one shared spec. Replaces the 9 per-router dirs.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - parameters/{chi,client,echo,echov5,fiber,gin,gorilla,iris,stdhttp}
+#   - param_roundtrip_test.go
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: parameters/roundtrip
+  version: "1.0.0"
+  description: |
+    HARNESS: table-driven parameter-binding roundtrip across echo/echov5/chi/gin/fiber/gorilla/iris/stdhttp + client over one shared spec. Replaces the 9 per-router dirs.
+paths: {}
+components:
+  schemas: {}

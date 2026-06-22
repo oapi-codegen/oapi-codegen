@@ -1,0 +1,5 @@
+package: optionsnamenormalizer
+output: name_normalizer.gen.go
+generate:
+  models: true
+  client: true

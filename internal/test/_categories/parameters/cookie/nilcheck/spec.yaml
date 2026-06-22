@@ -1,0 +1,21 @@
+# ==========================================================================
+# Category: parameters/cookie/nilcheck
+# Tests:    Optional array cookie params: nil / null handling.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - issues/issue-2238 (cookie side)
+#   - refactor-branch parameters/cookie/nilcheck
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: parameters/cookie/nilcheck
+  version: "1.0.0"
+  description: |
+    Optional array cookie params: nil / null handling.
+paths: {}
+components:
+  schemas: {}

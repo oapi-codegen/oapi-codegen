@@ -1,0 +1,4 @@
+package: referencesoverlays
+output: overlays.gen.go
+generate:
+  models: true

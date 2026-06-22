@@ -1,0 +1,5 @@
+package: bodiesresponses
+output: responses.gen.go
+generate:
+  models: true
+  client: true

@@ -1,0 +1,21 @@
+# ==========================================================================
+# Category: references/overlays
+# Tests:    OpenAPI Overlay applied before code generation.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - issues/issue1825
+#   - extensions/allof-merge-extensions (overlay side)
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: references/overlays
+  version: "1.0.0"
+  description: |
+    OpenAPI Overlay applied before code generation.
+paths: {}
+components:
+  schemas: {}

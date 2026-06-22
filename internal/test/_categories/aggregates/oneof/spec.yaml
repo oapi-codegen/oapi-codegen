@@ -1,0 +1,22 @@
+# ==========================================================================
+# Category: aggregates/oneof
+# Tests:    oneOf unions: discriminator + ValueByDiscriminator, As/From accessors, union response marshaling.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - components.yaml (oneOf)
+#   - issues/issue-1530 (discriminator)
+#   - issues/issue-970 (union response marshaling)
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: aggregates/oneof
+  version: "1.0.0"
+  description: |
+    oneOf unions: discriminator + ValueByDiscriminator, As/From accessors, union response marshaling.
+paths: {}
+components:
+  schemas: {}

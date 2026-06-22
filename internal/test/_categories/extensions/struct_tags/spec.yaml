@@ -1,0 +1,21 @@
+# ==========================================================================
+# Category: extensions/struct_tags
+# Tests:    Struct-tag extensions: x-oapi-codegen-extra-tags, x-omitempty (incl. on a parameter $ref sibling).
+#
+# Folds in (provenance — to migrate from current tree):
+#   - extensions/{x-oapi-codegen-extra-tags,x-omitempty,param-ref-sibling-omitempty}
+#   - issues/issue-2232
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: extensions/struct_tags
+  version: "1.0.0"
+  description: |
+    Struct-tag extensions: x-oapi-codegen-extra-tags, x-omitempty (incl. on a parameter $ref sibling).
+paths: {}
+components:
+  schemas: {}

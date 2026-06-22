@@ -1,0 +1,4 @@
+package: openapi31contentkeywords
+output: content_keywords.gen.go
+generate:
+  models: true

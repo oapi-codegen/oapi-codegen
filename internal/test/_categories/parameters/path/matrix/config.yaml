@@ -1,0 +1,5 @@
+package: parameterspathmatrix
+output: matrix.gen.go
+generate:
+  models: true
+  client: true

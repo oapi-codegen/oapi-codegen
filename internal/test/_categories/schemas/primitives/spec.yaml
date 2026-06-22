@@ -1,0 +1,23 @@
+# ==========================================================================
+# Category: schemas/primitives
+# Tests:    Basic types & formats: string/int(32/64)/number(float/double)/bool, date, date-time, uuid, email, byte, custom formats, type aliases, untyped/empty schemas.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - components.yaml (primitive fields)
+#   - schemas.yaml Issue185 (partial)
+#   - issues/issue-579 (aliased Date type)
+#   - issues/issue609 (untyped field -> interface{}, no optional pointer)
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: schemas/primitives
+  version: "1.0.0"
+  description: |
+    Basic types & formats: string/int(32/64)/number(float/double)/bool, date, date-time, uuid, email, byte, custom formats, type aliases, untyped/empty schemas.
+paths: {}
+components:
+  schemas: {}

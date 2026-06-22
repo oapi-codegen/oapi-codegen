@@ -1,0 +1,5 @@
+package: optionsskipprune
+output: skip_prune.gen.go
+generate:
+  models: true
+  client: true

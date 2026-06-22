@@ -1,0 +1,5 @@
+package: referencesexternal
+output: external.gen.go
+generate:
+  models: true
+  std-http-server: true

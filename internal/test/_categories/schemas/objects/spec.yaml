@@ -1,0 +1,22 @@
+# ==========================================================================
+# Category: schemas/objects
+# Tests:    Object properties (required/optional), additionalProperties (typed / false / true), nested objects, maps, arrays-of-maps.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - components.yaml AdditionalProperties1-7
+#   - issues/issue-1168 (partial)
+#   - issues/issue-1277 (additionalProperties:true in array item)
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: schemas/objects
+  version: "1.0.0"
+  description: |
+    Object properties (required/optional), additionalProperties (typed / false / true), nested objects, maps, arrays-of-maps.
+paths: {}
+components:
+  schemas: {}

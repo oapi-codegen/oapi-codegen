@@ -1,0 +1,20 @@
+# ==========================================================================
+# Category: openapi31/enum_via_oneof
+# Tests:    3.1 idiom: scalar schema + oneOf branches with title+const -> Go typed enum; falls through to standard union when a branch lacks title.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - enum_via_oneof/
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.1.0
+info:
+  title: openapi31/enum_via_oneof
+  version: "1.0.0"
+  description: |
+    3.1 idiom: scalar schema + oneOf branches with title+const -> Go typed enum; falls through to standard union when a branch lacks title.
+paths: {}
+components:
+  schemas: {}

@@ -1,0 +1,20 @@
+# ==========================================================================
+# Category: options/compatibility
+# Tests:    Backward-compat flags, e.g. preserve-original-operation-id-casing-in-embedded-spec.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - compatibility/preserve-original-operation-id-casing-in-embedded-spec
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: options/compatibility
+  version: "1.0.0"
+  description: |
+    Backward-compat flags, e.g. preserve-original-operation-id-casing-in-embedded-spec.
+paths: {}
+components:
+  schemas: {}

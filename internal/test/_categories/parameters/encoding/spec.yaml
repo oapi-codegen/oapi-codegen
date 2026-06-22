@@ -1,0 +1,20 @@
+# ==========================================================================
+# Category: parameters/encoding
+# Tests:    Escaping / special chars in params & paths: colons, reserved chars, URL encoding.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - issues/issue-312
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: parameters/encoding
+  version: "1.0.0"
+  description: |
+    Escaping / special chars in params & paths: colons, reserved chars, URL encoding.
+paths: {}
+components:
+  schemas: {}

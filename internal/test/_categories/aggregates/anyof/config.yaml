@@ -1,0 +1,5 @@
+package: aggregatesanyof
+output: anyof.gen.go
+generate:
+  models: true
+  client: true

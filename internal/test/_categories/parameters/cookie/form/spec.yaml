@@ -1,0 +1,22 @@
+# ==========================================================================
+# Category: parameters/cookie/form
+# Tests:    Cookie params, form style: primitives/arrays/objects.
+#
+# Folds in (provenance — to migrate from current tree):
+#   - cookies/
+#   - parameters.yaml
+#   - refactor-branch parameters/cookie/form
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: parameters/cookie/form
+  version: "1.0.0"
+  description: |
+    Cookie params, form style: primitives/arrays/objects.
+paths: {}
+components:
+  schemas: {}

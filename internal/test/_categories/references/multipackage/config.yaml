@@ -1,0 +1,4 @@
+package: referencesmultipackage
+output: multipackage.gen.go
+generate:
+  models: true

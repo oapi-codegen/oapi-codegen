@@ -1,0 +1,21 @@
+# ==========================================================================
+# Category: servers/middleware
+# Tests:    Per-operation middleware keyed by raw operationId (kebab-case & distinct ids).
+#
+# Folds in (provenance — to migrate from current tree):
+#   - issues/issue-518
+#   - issues/issue518
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: servers/middleware
+  version: "1.0.0"
+  description: |
+    Per-operation middleware keyed by raw operationId (kebab-case & distinct ids).
+paths: {}
+components:
+  schemas: {}

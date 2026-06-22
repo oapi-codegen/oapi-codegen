@@ -1,0 +1,20 @@
+# ==========================================================================
+# Category: options/skip_prune
+# Tests:    skip-prune: include schemas not referenced by any operation; (+ client-response-bytes-function).
+#
+# Folds in (provenance — to migrate from current tree):
+#   - issues/issue240
+#
+# SCAFFOLD STUB — spec content not yet migrated.
+# Each folded case becomes a named schema/operation below with its own
+# `# issue #NNNN: ...` provenance comment.
+# ==========================================================================
+openapi: 3.0.3
+info:
+  title: options/skip_prune
+  version: "1.0.0"
+  description: |
+    skip-prune: include schemas not referenced by any operation; (+ client-response-bytes-function).
+paths: {}
+components:
+  schemas: {}
