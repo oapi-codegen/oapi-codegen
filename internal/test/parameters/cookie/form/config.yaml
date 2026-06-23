@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: parameterscookieform
+generate:
+  chi-server: true
+  models: true
+output: form.gen.go

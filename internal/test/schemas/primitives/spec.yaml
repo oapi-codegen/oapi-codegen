@@ -1,0 +1,41 @@
+# ==========================================================================
+# Category: schemas/primitives
+# Tests:    aliased scalar types (Date via $ref vs inline); untyped schema {}
+#           generating interface{} without an optional pointer.
+#
+# Folds in (provenance):
+#   - issues/issue-579  (aliased Date type: AliasedDate = openapi_types.Date)
+#   - issues/issue609   (untyped schema -> interface{})
+# ==========================================================================
+openapi: "3.0.0"
+info:
+  title: schemas/primitives
+  version: "1.0.0"
+  description: |
+    Primitive schema behaviours: type aliases for scalar formats (Date) so that
+    a $ref field and an inline field share the same underlying Go type; and
+    an empty/untyped schema that must generate interface{} rather than a pointer.
+paths: {}
+components:
+  schemas:
+    # issue #579: AliasedDate must be a Go type alias (= openapi_types.Date) so
+    # that Pet.Born (*AliasedDate) and Pet.BornAt (*openapi_types.Date) are
+    # compatible and JSON unmarshalling works for both fields.
+    AliasedDate:
+      type: string
+      format: date
+    Pet:
+      type: object
+      properties:
+        born:
+          $ref: "#/components/schemas/AliasedDate"
+        born_at:
+          type: string
+          format: date
+
+    # issue #609: a schema with no type information (empty object `{}`) must
+    # generate `interface{}` — not a pointer — for the field type.
+    ResponseBody:
+      type: object
+      properties:
+        unknown: {}

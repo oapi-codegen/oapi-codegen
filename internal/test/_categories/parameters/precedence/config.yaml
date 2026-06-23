@@ -1,4 +1,0 @@
-package: parametersprecedence
-output: precedence.gen.go
-generate:
-  models: true

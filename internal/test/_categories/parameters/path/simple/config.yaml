@@ -1,5 +1,0 @@
-package: parameterspathsimple
-output: simple.gen.go
-generate:
-  models: true
-  client: true

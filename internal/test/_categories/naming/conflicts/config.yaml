@@ -1,5 +1,0 @@
-package: namingconflicts
-output: conflicts.gen.go
-generate:
-  models: true
-  client: true

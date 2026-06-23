@@ -1,4 +1,0 @@
-package: openapi31polish
-output: polish.gen.go
-generate:
-  models: true

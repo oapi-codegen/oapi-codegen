@@ -1,4 +1,0 @@
-package: schemasobjects
-output: objects.gen.go
-generate:
-  models: true

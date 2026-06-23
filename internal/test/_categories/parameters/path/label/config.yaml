@@ -1,5 +1,0 @@
-package: parameterspathlabel
-output: label.gen.go
-generate:
-  models: true
-  client: true

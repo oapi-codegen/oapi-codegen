@@ -1,5 +1,0 @@
-package: serversstrict
-output: strict.gen.go
-generate:
-  models: true
-  std-http-server: true

@@ -1,5 +1,0 @@
-package: parameterscontent
-output: content.gen.go
-generate:
-  models: true
-  client: true

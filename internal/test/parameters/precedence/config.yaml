@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: parametersprecedence
+generate:
+  echo-server: true
+  client: true
+  models: true
+  embedded-spec: true
+output: precedence.gen.go

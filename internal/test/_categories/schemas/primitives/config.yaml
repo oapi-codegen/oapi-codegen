@@ -1,4 +1,0 @@
-package: schemasprimitives
-output: primitives.gen.go
-generate:
-  models: true

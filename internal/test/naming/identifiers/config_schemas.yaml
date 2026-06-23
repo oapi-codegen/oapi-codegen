@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: namingidentifiers
+output: identifiers_schemas.gen.go
+generate:
+  echo-server: true
+  client: true
+  models: true
+  embedded-spec: true
+output-options:
+  skip-prune: true
