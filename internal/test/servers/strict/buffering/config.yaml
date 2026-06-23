@@ -1,0 +1,6 @@
+package: serversstrictbuffering
+output: serversstrictbuffering.gen.go
+generate:
+  std-http-server: true
+  strict-server: true
+  models: true

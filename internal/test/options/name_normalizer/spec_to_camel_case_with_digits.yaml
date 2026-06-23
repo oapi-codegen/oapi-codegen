@@ -1,0 +1,71 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Example code for the `name-normalizer` output option (ToCamelCaseWithDigits)
+  description: |
+    Spec for the ToCamelCaseWithDigits name-normalizer triple.
+    Digit sequences are treated as word boundaries so OneOf2things → OneOf2Things,
+    but common initialisms are NOT expanded (uuid stays Uuid, http stays Http).
+paths:
+  /api/pets/{petId}:
+    get:
+      summary: Get pet given identifier.
+      # ToCamelCaseWithDigits: getHttpPet → GetHttpPet (http not expanded, no initialism)
+      operationId: getHttpPet
+      parameters:
+      - name: petId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: valid pet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DigitsPet'
+components:
+  schemas:
+    DigitsPet:
+      type: object
+      required:
+        - uuid
+        - name
+      properties:
+        uuid:
+          type: string
+          description: The pet uuid.
+        name:
+          type: string
+          description: The name of the pet.
+    DigitsError:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+        message:
+          type: string
+          description: Error message
+    # ToCamelCaseWithDigits: "2" treated as word boundary → OneOf2Things;
+    # no initialism expansion, so "things" → "Things" (just title-cased).
+    DigitsOneOf2things:
+      description: "Notice that the `things` is not capitalised in the source"
+      oneOf:
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              format: uuid

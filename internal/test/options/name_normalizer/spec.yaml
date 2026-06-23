@@ -1,0 +1,71 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Example code for the `name-normalizer` output option (unset)
+  description: |
+    Shared spec for the "unset" name-normalizer triple.
+    With no name-normalizer set, default Go casing applies:
+    uuid stays Uuid, http stays Http, digit "2" is not a word boundary
+    (OneOf2things stays OneOf2things).
+paths:
+  /api/pets/{petId}:
+    get:
+      summary: Get pet given identifier.
+      # unset: operationId getHttpPet → GetHttpPet (default casing)
+      operationId: getHttpPet
+      parameters:
+      - name: petId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: valid pet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnsetPet'
+components:
+  schemas:
+    UnsetPet:
+      type: object
+      required:
+        - uuid
+        - name
+      properties:
+        uuid:
+          type: string
+          description: The pet uuid.
+        name:
+          type: string
+          description: The name of the pet.
+    UnsetError:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+        message:
+          type: string
+          description: Error message
+    # unset: "2" is not a word boundary → stays OneOf2things (not OneOf2Things)
+    UnsetOneOf2things:
+      description: "Notice that the `things` is not capitalised"
+      oneOf:
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              format: uuid

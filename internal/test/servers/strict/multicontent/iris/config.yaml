@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../../../configuration-schema.json
+package: serversstrictmulticontentiris
+generate:
+  client: true
+  models: true
+  embedded-spec: true
+  iris-server: true
+  strict-server: true
+output: serversstrictmulticontentiris.gen.go
