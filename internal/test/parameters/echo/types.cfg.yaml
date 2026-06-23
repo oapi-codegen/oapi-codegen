@@ -1,5 +1,0 @@
-# yaml-language-server: $schema=../../../../configuration-schema.json
-package: echoparamsgen
-generate:
-  models: true
-output: gen/types.gen.go

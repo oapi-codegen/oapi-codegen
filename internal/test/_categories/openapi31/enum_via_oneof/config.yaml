@@ -1,4 +1,0 @@
-package: openapi31enumviaoneof
-output: enum_via_oneof.gen.go
-generate:
-  models: true

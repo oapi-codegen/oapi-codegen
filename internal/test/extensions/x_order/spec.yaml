@@ -1,0 +1,61 @@
+# ==========================================================================
+# Category: extensions/x_order
+# Tests:    x-order controls struct field ordering (full & partial).
+#
+# Folds in (provenance):
+#   - extensions/x-order  (x-order property ordering on scalars, date fields, $ref fields)
+# ==========================================================================
+openapi: "3.0.0"
+info:
+  title: extensions/x_order
+  version: "1.0.0"
+  description: |
+    x-order controls struct field ordering in generated Go types. Properties
+    with x-order annotations appear first (in ascending order of their value);
+    unannotated properties follow. Works with plain scalar fields, date fields,
+    and $ref-typed fields.
+paths: {}
+components:
+  schemas:
+    # extensions/x-order: date fields with x-order; alphabetical (end, start)
+    # becomes ordered by x-order value (start=1, end=2).
+    DateInterval:
+      type: object
+      required:
+        - name
+      properties:
+        end:
+          type: string
+          format: date
+          x-order: 2
+        start:
+          type: string
+          format: date
+          x-order: 1
+
+    # extensions/x-order: plain integer type used as $ref target.
+    Port:
+      type: integer
+
+    # extensions/x-order: x-order on a top-level schema (not a property) gives
+    # this type a low sort priority when ordering sibling schemas.
+    LowPriorityPort:
+      type: integer
+      x-order: 50
+
+    # extensions/x-order: $ref-typed properties with x-order; an unannotated
+    # property (very_end) appears last regardless of alphabetical position.
+    PortInterval:
+      type: object
+      required:
+        - start
+        - end
+      properties:
+        end:
+          $ref: '#/components/schemas/Port'
+          x-order: 2
+        very_end:
+          $ref: '#/components/schemas/LowPriorityPort'
+        start:
+          $ref: '#/components/schemas/Port'
+          x-order: 1

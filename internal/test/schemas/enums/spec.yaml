@@ -1,0 +1,44 @@
+openapi: "3.0.2"
+info:
+  title: schemas/enums
+  version: "1.0.0"
+  description: |
+    Enum sanitization: codegen must produce valid Go identifiers for enum values
+    that are empty strings, contain spaces, hyphens, leading digits,
+    leading/trailing underscores, or collide after normalization.
+
+paths:
+  # issue-illegal_enum_names: endpoint returning a Bar enum array, exercising
+  # server + client generation with pathological enum values.
+  /foo:
+    get:
+      operationId: GetFoo
+      responses:
+        "200":
+          description: List of Bar values
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bar'
+
+components:
+  schemas:
+    # issue-illegal_enum_names: sanitizing illegal enum identifier names —
+    # empty string, spaces, hyphens, leading digits, underscores, duplicates
+    # after normalization.
+    Bar:
+      type: string
+      enum:
+        - ''
+        - Foo
+        - Bar
+        - Foo Bar
+        - Foo-Bar
+        - 1Foo
+        - Bar  # A swagger validator would catch this duplicate value
+        - ' Foo'
+        - ' Foo '
+        - _Foo_
+        - "1"

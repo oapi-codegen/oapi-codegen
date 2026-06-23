@@ -1,4 +1,0 @@
-package: schemasdeprecated
-output: deprecated.gen.go
-generate:
-  models: true

@@ -1,0 +1,19 @@
+# issue #2238: an optional (required:false) array HEADER param must NOT be sent when nil,
+# and must be sent when non-nil. (The companion cookie case lives in parameters/cookie/nilcheck.)
+openapi: "3.0.0"
+info:
+  version: "1.0.0"
+  title: parameters/header/nilcheck
+  description: |
+    Optional array header parameter nil-omission in the generated client.
+paths:
+  /test:
+    get:
+      parameters:
+        - name: X-Tags
+          in: header
+          schema:
+            type: array
+            items:
+              type: string
+          required: false

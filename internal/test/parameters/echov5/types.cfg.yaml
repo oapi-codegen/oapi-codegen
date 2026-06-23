@@ -1,5 +1,0 @@
-# yaml-language-server: $schema=../../../../configuration-schema.json
-package: echov5paramsgen
-generate:
-  models: true
-output: gen/types.gen.go

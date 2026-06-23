@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: serversroutersfibermw
+generate:
+  fiber-server: true
+output: fibermw.gen.go

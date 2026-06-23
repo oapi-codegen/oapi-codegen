@@ -1,5 +1,0 @@
-package: aggregateshoisting
-output: hoisting.gen.go
-generate:
-  models: true
-  client: true

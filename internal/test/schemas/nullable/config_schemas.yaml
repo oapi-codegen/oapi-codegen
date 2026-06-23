@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: schemasnullable
+output: nullable_schemas.gen.go
+generate:
+  models: true
+output-options:
+  skip-prune: true

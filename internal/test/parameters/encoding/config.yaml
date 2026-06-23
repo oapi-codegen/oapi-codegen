@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: parametersencoding
+generate:
+  echo-server: true
+  client: true
+  models: true
+  embedded-spec: true
+output: encoding.gen.go

@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: extensionsxorder
+output: x_order.gen.go
+generate:
+  models: true
+output-options:
+  # skip-prune: keep schemas that no path references (all schemas here are standalone types)
+  skip-prune: true

@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: optionsnamenormalizer
+output: to_camel_case_with_initialisms.gen.go
+# name-normalizer: ToCamelCaseWithInitialisms — expands common Go initialisms:
+#   uuid → UUID, http → HTTP, id → ID; digit "2" treated as word boundary
+#   so InitialismOneOf2things → InitialismOneOf2Things.
+# models-only: gorilla-server/client/embedded-spec cannot be combined across
+# multiple triples in the same package (shared client/server types collide).
+# skip-prune: retain InitialismError schema which is not referenced from any path.
+generate:
+  models: true
+output-options:
+  skip-prune: true
+  name-normalizer: ToCamelCaseWithInitialisms

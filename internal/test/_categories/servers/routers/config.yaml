@@ -1,5 +1,0 @@
-package: serversrouters
-output: routers.gen.go
-generate:
-  models: true
-  std-http-server: true

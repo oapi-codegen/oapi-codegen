@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: aggregatesanyof
+output: anyof.gen.go
+# Union of flags used across all folded sources:
+#   - models  : base for all cases
+#   - client  : all four sources generate a client
+#   - echo-server: issue-1189, any_of/codegen/inline, any_of/codegen/ref_schema all use echo-server
+generate:
+  models: true
+  client: true
+  echo-server: true

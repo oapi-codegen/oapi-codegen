@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: parametersheadernilcheck
+output: nilcheck.gen.go
+generate:
+  models: true
+  client: true
+output-options:
+  prefer-skip-optional-pointer: true

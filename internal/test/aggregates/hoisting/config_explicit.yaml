@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: aggregateshoisting
+output: hoisting_explicit.gen.go
+# anonymous_inner_hoisting/global: generate-types-for-anonymous-schemas is the behavior under
+# test — inline allOf/sibling schemas and top-level array items must be emitted as named Go
+# types rather than anonymous structs. client is omitted: the tests only exercise model types
+# and JSON round-trips; omitting client avoids HttpRequestDoer/Client/RequestEditorFn
+# redeclaration collisions when both triples share one Go package.
+generate:
+  models: true
+output-options:
+  generate-types-for-anonymous-schemas: true

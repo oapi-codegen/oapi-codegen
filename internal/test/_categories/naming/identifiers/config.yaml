@@ -1,4 +1,0 @@
-package: namingidentifiers
-output: identifiers.gen.go
-generate:
-  models: true

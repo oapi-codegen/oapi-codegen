@@ -1,4 +1,0 @@
-package: aggregatesallof
-output: allof.gen.go
-generate:
-  models: true

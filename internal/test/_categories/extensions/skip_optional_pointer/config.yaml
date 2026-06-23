@@ -1,4 +1,0 @@
-package: extensionsskipoptionalpointer
-output: skip_optional_pointer.gen.go
-generate:
-  models: true

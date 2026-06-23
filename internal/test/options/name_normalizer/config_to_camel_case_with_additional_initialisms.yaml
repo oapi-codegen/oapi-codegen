@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: optionsnamenormalizer
+output: to_camel_case_with_additional_initialisms.gen.go
+# name-normalizer: ToCamelCaseWithInitialisms + additional-initialisms: [NAME].
+#   Builds on ToCamelCaseWithInitialisms so uuid → UUID, http → HTTP, id → ID,
+#   and the extra initialism NAME causes the "name" field to be rendered as NAME.
+# models-only: gorilla-server/client/embedded-spec cannot be combined across
+# multiple triples in the same package (shared client/server types collide).
+# skip-prune: retain ExtraError schema which is not referenced from any path.
+generate:
+  models: true
+output-options:
+  skip-prune: true
+  name-normalizer: ToCamelCaseWithInitialisms
+  additional-initialisms:
+    - NAME

@@ -1,0 +1,29 @@
+# ==========================================================================
+# Category: schemas/security
+# Tests:    undefined security scheme referenced at the global level is
+#           tolerated by codegen and the generated package compiles.
+#
+# Folds in (provenance):
+#   - issues/issue-2367  (undefined security scheme tolerated)
+# ==========================================================================
+openapi: "3.0.0"
+info:
+  title: schemas/security
+  version: "1.0.0"
+  description: |
+    OpenAPI security scheme handling: a global security reference naming a
+    scheme not defined under components/securitySchemes must be tolerated by
+    the code generator and produce a package that compiles without error.
+# issue #2367: security references a scheme ("api_key") that is NOT declared
+# under components/securitySchemes; the generator must not emit a dangling
+# context-key constant that references an undeclared type.
+security:
+  - api_key: []
+paths:
+  /hello:
+    get:
+      # issue #2367: getHello operation — exercising the server interface path
+      operationId: getHello
+      responses:
+        "200":
+          description: ok

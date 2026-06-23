@@ -1,5 +1,0 @@
-package: parametersquerydeepobject
-output: deep_object.gen.go
-generate:
-  models: true
-  client: true

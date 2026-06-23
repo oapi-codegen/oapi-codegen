@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: optionsnamenormalizer
+output: to_camel_case_with_digits.gen.go
+# name-normalizer: ToCamelCaseWithDigits — treats digit sequences as word boundaries
+#   so DigitsOneOf2things → DigitsOneOf2Things, but does NOT expand initialisms
+#   (uuid stays Uuid, http stays Http).
+# models-only: gorilla-server/client/embedded-spec cannot be combined across
+# multiple triples in the same package (shared client/server types collide).
+# skip-prune: retain DigitsError schema which is not referenced from any path.
+generate:
+  models: true
+output-options:
+  skip-prune: true
+  name-normalizer: ToCamelCaseWithDigits

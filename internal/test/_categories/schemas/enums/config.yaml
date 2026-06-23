@@ -1,4 +1,0 @@
-package: schemasenums
-output: enums.gen.go
-generate:
-  models: true

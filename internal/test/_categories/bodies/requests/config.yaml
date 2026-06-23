@@ -1,5 +1,0 @@
-package: bodiesrequests
-output: requests.gen.go
-generate:
-  models: true
-  std-http-server: true

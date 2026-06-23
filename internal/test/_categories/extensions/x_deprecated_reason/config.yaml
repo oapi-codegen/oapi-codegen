@@ -1,4 +1,0 @@
-package: extensionsxdeprecatedreason
-output: x_deprecated_reason.gen.go
-generate:
-  models: true
