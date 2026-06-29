@@ -151,7 +151,7 @@ type GenerateOptions struct {
 	ChiServer bool `yaml:"chi-server,omitempty"`
 	// FiberServer specifies whether to generate fiber server boilerplate
 	FiberServer bool `yaml:"fiber-server,omitempty"`
-	// FiberServer specifies whether to generate fiber server boilerplate
+	// FiberV3Server specifies whether to generate fiber v3 server boilerplate
 	FiberV3Server bool `yaml:"fiber-v3-server,omitempty"`
 	// EchoServer specifies whether to generate echo server boilerplate
 	EchoServer bool `yaml:"echo-server,omitempty"`
