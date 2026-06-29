@@ -2,6 +2,7 @@
 type FiberServerOptions struct {
     BaseURL string
     Middlewares []MiddlewareFunc
+    HandlerMiddlewares []HandlerMiddlewareFunc
 }
 
 // RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
@@ -13,6 +14,7 @@ func RegisterHandlers(router fiber.Router, si ServerInterface) {
 func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, options FiberServerOptions) {
 {{if .}}wrapper := ServerInterfaceWrapper{
 Handler: si,
+HandlerMiddlewares: options.HandlerMiddlewares,
 }
 
 for _, m := range options.Middlewares {
@@ -20,6 +22,6 @@ for _, m := range options.Middlewares {
 }
 {{end}}
 {{range .}}
-router.{{.Method | lower | title }}(options.BaseURL+"{{.Path | swaggerUriToFiberUri}}", wrapper.{{.OperationId}})
+router.{{.Method | lower | title }}(options.BaseURL+"{{.Path | swaggerUriToFiberUri}}", wrapper.{{.HandlerName}})
 {{end}}
 }

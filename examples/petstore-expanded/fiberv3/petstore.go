@@ -32,7 +32,7 @@ func main() {
 
 func NewFiberPetServer(petStore *api.PetStore) *fiber.App {
 
-	swagger, err := api.GetSwagger()
+	swagger, err := api.GetSpec()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading swagger spec\n: %s", err)
 		os.Exit(1)

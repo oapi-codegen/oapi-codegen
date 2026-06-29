@@ -505,7 +505,7 @@ To implement this, check out [the Fiber docs](#impl-fiber).
 
 </td>
 <td>
-<code>fiber-server</code>
+<code>fiber-v3-server</code>
 </td>
 
 <td>
@@ -516,7 +516,7 @@ For a Fiber v3 server, you will want a configuration file such as:
 # yaml-language-server: ...
 package: api
 generate:
-  fiber-server: true
+  fiber-v3-server: true
   models: true
 output: gen.go
 ```
@@ -1284,7 +1284,7 @@ func main() {
 > This doesn't include [validation of incoming requests](#requestresponse-validation-middleware).
 
 ### Fiber V3 server
-<a name="impl-fibe-v3r"></a>
+<a name="impl-fiber-v3"></a>
 
 For instance, let's take this straightforward specification:
 

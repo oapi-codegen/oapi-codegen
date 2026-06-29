@@ -4,11 +4,19 @@ go 1.25.0
 
 replace github.com/oapi-codegen/oapi-codegen/v2 => ../
 
+// The fiber v3 OpenAPI validation middleware has not yet been released
+// upstream (oapi-codegen/fiber-middleware is still v1 / fiber v2 only), so
+// the petstore-expanded/fiberv3 example consumes the v3-capable fork until
+// an official `github.com/oapi-codegen/fiber-middleware/v2` is published.
+// See https://github.com/oapi-codegen/oapi-codegen/pull/1937
+replace github.com/oapi-codegen/fiber-middleware/v2 => github.com/kerak19/fiber-middleware/v2 v2.0.0-20250323205111-59ed66807d2f
+
 require (
 	github.com/getkin/kin-openapi v0.140.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/gofiber/fiber/v2 v2.52.13
+	github.com/gofiber/fiber/v3 v3.3.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/kataras/iris/v12 v12.2.11
@@ -17,6 +25,7 @@ require (
 	github.com/lestrrat-go/jwx/v3 v3.1.0
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/fiber-middleware v1.0.2
+	github.com/oapi-codegen/fiber-middleware/v2 v2.0.0-00010101000000-000000000000
 	github.com/oapi-codegen/gin-middleware v1.0.2
 	github.com/oapi-codegen/iris-middleware v1.0.5
 	github.com/oapi-codegen/nethttp-middleware v1.1.2
@@ -54,6 +63,8 @@ require (
 	github.com/go-playground/validator/v10 v10.30.2 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
+	github.com/gofiber/schema v1.7.1 // indirect
+	github.com/gofiber/utils/v2 v2.0.6 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/gomarkdown/markdown v0.0.0-20260417124207-7d523f7318df // indirect
 	github.com/gorilla/css v1.0.1 // indirect
@@ -86,6 +97,7 @@ require (
 	github.com/oasdiff/yaml v0.1.0 // indirect
 	github.com/oasdiff/yaml3 v0.0.13 // indirect
 	github.com/pelletier/go-toml/v2 v2.3.0 // indirect
+	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.59.0 // indirect
@@ -98,10 +110,11 @@ require (
 	github.com/speakeasy-api/openapi v1.23.1 // indirect
 	github.com/tdewolff/minify/v2 v2.24.13 // indirect
 	github.com/tdewolff/parse/v2 v2.8.12 // indirect
+	github.com/tinylib/msgp v1.6.4 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.70.0 // indirect
+	github.com/valyala/fasthttp v1.71.0 // indirect
 	github.com/valyala/fastjson v1.6.10 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect

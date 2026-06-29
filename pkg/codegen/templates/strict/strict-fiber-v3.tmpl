@@ -12,6 +12,7 @@ type strictHandler struct {
 }
 
 {{range .}}
+    {{if not .IsAlias}}
     {{$opid := .OperationId}}
     // {{$opid}} operation middleware
     func (sh *strictHandler) {{.OperationId}}(ctx fiber.Ctx{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error {
@@ -35,13 +36,13 @@ type strictHandler struct {
             {{if $multipleBodies}}if strings.HasPrefix(string(ctx.Request().Header.ContentType()), "{{.ContentType}}") { {{end}}
                 {{if .IsJSON }}
                     var body {{$opid}}{{.NameTag}}RequestBody
-                    if err := ctx.BodyParser(&body); err != nil {
+                    if err := ctx.Bind().Body(&body); err != nil {
                         return fiber.NewError(fiber.StatusBadRequest, err.Error())
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                 {{else if eq .NameTag "Formdata" -}}
                     var body {{$opid}}{{.NameTag}}RequestBody
-                    if err := ctx.BodyParser(&body); err != nil {
+                    if err := ctx.Bind().Body(&body); err != nil {
                         return fiber.NewError(fiber.StatusBadRequest, err.Error())
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
@@ -68,7 +69,7 @@ type strictHandler struct {
         {{end}}{{/* range .Bodies */}}
 
         handler := func(ctx fiber.Ctx, request interface{}) (interface{}, error) {
-            return sh.ssi.{{.OperationId}}(ctx.UserContext(), request.({{$opid | ucFirst}}RequestObject))
+            return sh.ssi.{{.OperationId}}(ctx.Context(), request.({{$opid | ucFirst}}RequestObject))
         }
         for _, middleware := range sh.middlewares {
             handler = middleware(handler, "{{.OperationId}}")
@@ -87,4 +88,5 @@ type strictHandler struct {
         }
         return nil
     }
+    {{end}}
 {{end}}
