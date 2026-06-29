@@ -151,6 +151,8 @@ type GenerateOptions struct {
 	ChiServer bool `yaml:"chi-server,omitempty"`
 	// FiberServer specifies whether to generate fiber server boilerplate
 	FiberServer bool `yaml:"fiber-server,omitempty"`
+	// FiberV3Server specifies whether to generate fiber v3 server boilerplate
+	FiberV3Server bool `yaml:"fiber-v3-server,omitempty"`
 	// EchoServer specifies whether to generate echo server boilerplate
 	EchoServer bool `yaml:"echo-server,omitempty"`
 	// Echo5Server specifies whether to generate echo v5 server boilerplate
@@ -191,6 +193,8 @@ func (g GenerateOptions) RouterImports() []AdditionalImport {
 		imports = append(imports, AdditionalImport{Package: "github.com/gorilla/mux"})
 	case g.FiberServer:
 		imports = append(imports, AdditionalImport{Package: "github.com/gofiber/fiber/v2"})
+	case g.FiberV3Server:
+		imports = append(imports, AdditionalImport{Package: "github.com/gofiber/fiber/v3"})
 	case g.IrisServer:
 		imports = append(imports, AdditionalImport{Package: "github.com/kataras/iris/v12"})
 		imports = append(imports, AdditionalImport{Package: "github.com/kataras/iris/v12/core/router"})
@@ -206,7 +210,7 @@ func (g GenerateOptions) RouterImports() []AdditionalImport {
 // references would be emitted without a corresponding declaration.
 func (g GenerateOptions) AnyOperationGenerator() bool {
 	return g.Client || g.IrisServer || g.EchoServer || g.Echo5Server ||
-		g.ChiServer || g.FiberServer || g.GinServer || g.GorillaServer ||
+		g.ChiServer || g.FiberServer || g.FiberV3Server || g.GinServer || g.GorillaServer ||
 		g.StdHTTPServer || g.Strict
 }
 
