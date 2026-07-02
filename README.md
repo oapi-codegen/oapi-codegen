@@ -3353,6 +3353,10 @@ If you're using a specification with [Security Schemes](https://spec.openapis.or
 
 To see how this can work, check out the [authenticated API example](examples/authenticated-api/echo).
 
+If an operation includes an empty `{}` security alternative, generated server
+middleware treats that operation as allowing anonymous requests and does not set
+scope context for that operation.
+
 ### On the client
 
 With a generated client, you'll want to use the client's generated `WithRequestEditorFn` function to pass in a given request editor `RequestEditorFn`.
