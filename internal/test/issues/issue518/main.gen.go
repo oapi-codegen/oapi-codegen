@@ -7,10 +7,6 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-const (
-	BearerAuthScopes bearerAuthContextKey = "bearerAuth.Scopes"
-)
-
 // bearerAuthContextKey is the context key for bearerAuth security scheme
 type bearerAuthContextKey string
 
@@ -35,8 +31,6 @@ type HandlerMiddlewareFunc func(c *fiber.Ctx, next fiber.Handler) error
 
 // AuthCheck operation middleware
 func (siw *ServerInterfaceWrapper) AuthCheck(c *fiber.Ctx) error {
-
-	c.Context().SetUserValue((BearerAuthScopes), []string{})
 
 	handler := func(c *fiber.Ctx) error {
 		return siw.Handler.AuthCheck(c)
