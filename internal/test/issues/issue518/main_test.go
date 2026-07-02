@@ -11,6 +11,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type impl struct{}
@@ -83,6 +84,6 @@ func TestIssue518AnonymousSecurityAlternativeDoesNotEmitScopes(t *testing.T) {
 
 	generatedPath := filepath.Join(filepath.Dir(testFile), "main.gen.go")
 	generated, err := os.ReadFile(generatedPath)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, strings.Contains(string(generated), "SetUserValue"))
 }
