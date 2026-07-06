@@ -1,0 +1,33 @@
+openapi: 3.1.0
+info:
+  title: issue-2430
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    # A property whose schema is the bare OpenAPI 3.1 null type: the only
+    # valid JSON value for `challenger` is null. Maps to `any` in Go.
+    ChallengeOpenJson:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+          format: uri
+        challenger:
+          type: "null"
+    # A required null-typed property: must not be wrapped in a pointer,
+    # since `any` already has nil as its zero value.
+    RequiredNull:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: "null"
+    # A named component that is itself the bare null type.
+    NullOnly:
+      type: "null"
