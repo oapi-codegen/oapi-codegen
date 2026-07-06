@@ -527,3 +527,15 @@ func TestProperty_ZeroValueIsNil(t *testing.T) {
 		})
 	}
 }
+
+// A bare OpenAPI 3.1 `type: "null"` schema validates exactly the JSON
+// value null. Go has no such type, so it maps to `any`, with the optional
+// pointer skipped (nil is already `any`'s zero value). Issue #2430.
+func TestOapiSchemaToGoType_NullType(t *testing.T) {
+	schema := &openapi3.Schema{Type: &openapi3.Types{"null"}}
+	var out Schema
+	require.NoError(t, oapiSchemaToGoType(schema, []string{"Challenger"}, &out))
+	assert.Equal(t, "any", out.GoType)
+	assert.True(t, out.SkipOptionalPointer)
+	assert.True(t, out.DefineViaAlias)
+}
