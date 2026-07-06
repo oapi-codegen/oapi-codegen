@@ -589,7 +589,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// i.e. the parent schema defines a type:array, but the array has
 	// no items defined. Therefore, we have at least valid Go-Code.
 	if sref == nil {
-		return Schema{GoType: "interface{}"}, nil
+		return Schema{GoType: "any"}, nil
 	}
 
 	schema := sref.Value
@@ -774,13 +774,13 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			if t.Is("object") {
 				// We have an object with no properties. This is a generic object
 				// expressed as a map.
-				outType = "map[string]interface{}"
+				outType = "map[string]any"
 				setSkipOptionalPointerForContainerType(&outSchema)
 			} else { // t == ""
 				// If we don't even have the object designator, we're a completely
 				// generic type.
-				outType = "interface{}"
-				// this should never have an "optional pointer", as it doesn't make sense to be a `*interface{}`
+				outType = "any"
+				// this should never have an "optional pointer", as it doesn't make sense to be a `*any`
 				outSchema.SkipOptionalPointer = true
 			}
 			outSchema.GoType = outType
@@ -797,7 +797,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			// Until we have a concrete additional properties type, we default to
 			// any schema.
 			outSchema.AdditionalPropertiesType = &Schema{
-				GoType: "interface{}",
+				GoType: "any",
 			}
 
 			// If additional properties are defined, we will override the default

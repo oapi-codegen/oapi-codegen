@@ -156,7 +156,7 @@ components:
       description: |
         AnyType2 represents any type.
 
-        This should be an interface{}
+        This should be `any`
     CustomStringType:
       type: string
       format: custom

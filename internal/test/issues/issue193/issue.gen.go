@@ -10,15 +10,15 @@ import (
 
 // Person defines model for Person.
 type Person struct {
-	Age                  *float32               `json:"age,omitempty"`
-	Metadata             string                 `json:"metadata"`
-	Name                 *string                `json:"name,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Age                  *float32       `json:"age,omitempty"`
+	Metadata             string         `json:"metadata"`
+	Name                 *string        `json:"name,omitempty"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // Getter for additional properties for Person. Returns the specified
 // element and whether it was found
-func (a Person) Get(fieldName string) (value interface{}, found bool) {
+func (a Person) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -26,9 +26,9 @@ func (a Person) Get(fieldName string) (value interface{}, found bool) {
 }
 
 // Setter for additional properties for Person
-func (a *Person) Set(fieldName string, value interface{}) {
+func (a *Person) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -66,9 +66,9 @@ func (a *Person) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)

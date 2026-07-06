@@ -11,12 +11,12 @@ type Pong struct {
 
 // ResponseBody defines model for ResponseBody.
 type ResponseBody struct {
-	AMap                      map[string]Pong        `json:"a_map,omitempty"`
-	ASlice                    []Pong                 `json:"a_slice,omitempty"`
-	ASliceWithAdditionalProps []map[string]Pong      `json:"a_slice_with_additional_props,omitempty"`
-	AdditionalProps           map[string]Pong        `json:"additional_props,omitempty"`
-	Bytes                     []byte                 `json:"bytes,omitempty"`
-	BytesWithOverride         *[]byte                `json:"bytes_with_override,omitempty"`
-	RequiredSlice             []Pong                 `json:"required_slice"`
-	UnknownObject             map[string]interface{} `json:"unknown_object,omitempty"`
+	AMap                      map[string]Pong   `json:"a_map,omitempty"`
+	ASlice                    []Pong            `json:"a_slice,omitempty"`
+	ASliceWithAdditionalProps []map[string]Pong `json:"a_slice_with_additional_props,omitempty"`
+	AdditionalProps           map[string]Pong   `json:"additional_props,omitempty"`
+	Bytes                     []byte            `json:"bytes,omitempty"`
+	BytesWithOverride         *[]byte           `json:"bytes_with_override,omitempty"`
+	RequiredSlice             []Pong            `json:"required_slice"`
+	UnknownObject             map[string]any    `json:"unknown_object,omitempty"`
 }

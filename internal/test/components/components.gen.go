@@ -270,21 +270,21 @@ type AdditionalPropertiesObject2 struct {
 
 // AdditionalPropertiesObject3 Allows any additional property
 type AdditionalPropertiesObject3 struct {
-	Name                 string                 `json:"name"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Name                 string         `json:"name"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // AdditionalPropertiesObject4 Has anonymous field which has additional properties
 type AdditionalPropertiesObject4 struct {
 	Inner                AdditionalPropertiesObject4_Inner `json:"inner"`
 	Name                 string                            `json:"name"`
-	AdditionalProperties map[string]interface{}            `json:"-"`
+	AdditionalProperties map[string]any                    `json:"-"`
 }
 
 // AdditionalPropertiesObject4_Inner defines model for AdditionalPropertiesObject4.Inner.
 type AdditionalPropertiesObject4_Inner struct {
-	Name                 string                 `json:"name"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Name                 string         `json:"name"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // AdditionalPropertiesObject5 Has additional properties with schema for dictionaries
@@ -349,10 +349,10 @@ type OneOfObject10 struct {
 }
 
 // OneOfObject100 defines model for .
-type OneOfObject100 = interface{}
+type OneOfObject100 = any
 
 // OneOfObject101 defines model for .
-type OneOfObject101 = interface{}
+type OneOfObject101 = any
 
 // OneOfObject11 additional properties of oneOf
 type OneOfObject11 map[string]OneOfObject11_AdditionalProperties
@@ -384,8 +384,8 @@ type OneOfObject121 = float32
 
 // OneOfObject13 oneOf with fixed discriminator and other fields allowed
 type OneOfObject13 struct {
-	Type                 string                 `json:"type"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Type                 string         `json:"type"`
+	AdditionalProperties map[string]any `json:"-"`
 	union                json.RawMessage
 }
 
@@ -562,7 +562,7 @@ type EnsureEverythingIsReferencedTextBody = string
 // ParamsWithAddPropsParams defines parameters for ParamsWithAddProps.
 type ParamsWithAddPropsParams struct {
 	// P1 This parameter has additional properties
-	P1 map[string]interface{} `json:"p1"`
+	P1 map[string]any `json:"p1"`
 
 	// P2 This parameter has an anonymous inner property which needs to be
 	// turned into a proper type for additionalProperties to work
@@ -573,9 +573,9 @@ type ParamsWithAddPropsParams struct {
 
 // BodyWithAddPropsJSONBody defines parameters for BodyWithAddProps.
 type BodyWithAddPropsJSONBody struct {
-	Inner                map[string]int         `json:"inner"`
-	Name                 string                 `json:"name"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Inner                map[string]int `json:"inner"`
+	Name                 string         `json:"name"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // EnsureEverythingIsReferencedJSONRequestBody defines body for EnsureEverythingIsReferenced for application/json ContentType.
@@ -683,7 +683,7 @@ func (a AdditionalPropertiesObject1) MarshalJSON() ([]byte, error) {
 
 // Getter for additional properties for AdditionalPropertiesObject3. Returns the specified
 // element and whether it was found
-func (a AdditionalPropertiesObject3) Get(fieldName string) (value interface{}, found bool) {
+func (a AdditionalPropertiesObject3) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -691,9 +691,9 @@ func (a AdditionalPropertiesObject3) Get(fieldName string) (value interface{}, f
 }
 
 // Setter for additional properties for AdditionalPropertiesObject3
-func (a *AdditionalPropertiesObject3) Set(fieldName string, value interface{}) {
+func (a *AdditionalPropertiesObject3) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -715,9 +715,9 @@ func (a *AdditionalPropertiesObject3) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
@@ -749,7 +749,7 @@ func (a AdditionalPropertiesObject3) MarshalJSON() ([]byte, error) {
 
 // Getter for additional properties for AdditionalPropertiesObject4. Returns the specified
 // element and whether it was found
-func (a AdditionalPropertiesObject4) Get(fieldName string) (value interface{}, found bool) {
+func (a AdditionalPropertiesObject4) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -757,9 +757,9 @@ func (a AdditionalPropertiesObject4) Get(fieldName string) (value interface{}, f
 }
 
 // Setter for additional properties for AdditionalPropertiesObject4
-func (a *AdditionalPropertiesObject4) Set(fieldName string, value interface{}) {
+func (a *AdditionalPropertiesObject4) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -789,9 +789,9 @@ func (a *AdditionalPropertiesObject4) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
@@ -828,7 +828,7 @@ func (a AdditionalPropertiesObject4) MarshalJSON() ([]byte, error) {
 
 // Getter for additional properties for AdditionalPropertiesObject4_Inner. Returns the specified
 // element and whether it was found
-func (a AdditionalPropertiesObject4_Inner) Get(fieldName string) (value interface{}, found bool) {
+func (a AdditionalPropertiesObject4_Inner) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -836,9 +836,9 @@ func (a AdditionalPropertiesObject4_Inner) Get(fieldName string) (value interfac
 }
 
 // Setter for additional properties for AdditionalPropertiesObject4_Inner
-func (a *AdditionalPropertiesObject4_Inner) Set(fieldName string, value interface{}) {
+func (a *AdditionalPropertiesObject4_Inner) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -860,9 +860,9 @@ func (a *AdditionalPropertiesObject4_Inner) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
@@ -894,7 +894,7 @@ func (a AdditionalPropertiesObject4_Inner) MarshalJSON() ([]byte, error) {
 
 // Getter for additional properties for OneOfObject13. Returns the specified
 // element and whether it was found
-func (a OneOfObject13) Get(fieldName string) (value interface{}, found bool) {
+func (a OneOfObject13) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -902,16 +902,16 @@ func (a OneOfObject13) Get(fieldName string) (value interface{}, found bool) {
 }
 
 // Setter for additional properties for OneOfObject13
-func (a *OneOfObject13) Set(fieldName string, value interface{}) {
+func (a *OneOfObject13) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
 
 // Getter for additional properties for BodyWithAddPropsJSONBody. Returns the specified
 // element and whether it was found
-func (a BodyWithAddPropsJSONBody) Get(fieldName string) (value interface{}, found bool) {
+func (a BodyWithAddPropsJSONBody) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -919,9 +919,9 @@ func (a BodyWithAddPropsJSONBody) Get(fieldName string) (value interface{}, foun
 }
 
 // Setter for additional properties for BodyWithAddPropsJSONBody
-func (a *BodyWithAddPropsJSONBody) Set(fieldName string, value interface{}) {
+func (a *BodyWithAddPropsJSONBody) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -951,9 +951,9 @@ func (a *BodyWithAddPropsJSONBody) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
@@ -1534,7 +1534,7 @@ func (t OneOfObject13) Discriminator() (string, error) {
 	return discriminator.Discriminator, err
 }
 
-func (t OneOfObject13) ValueByDiscriminator() (interface{}, error) {
+func (t OneOfObject13) ValueByDiscriminator() (any, error) {
 	discriminator, err := t.Discriminator()
 	if err != nil {
 		return nil, err
@@ -1911,7 +1911,7 @@ func (t OneOfObject5) Discriminator() (string, error) {
 	return discriminator.Discriminator, err
 }
 
-func (t OneOfObject5) ValueByDiscriminator() (interface{}, error) {
+func (t OneOfObject5) ValueByDiscriminator() (any, error) {
 	discriminator, err := t.Discriminator()
 	if err != nil {
 		return nil, err
@@ -2000,7 +2000,7 @@ func (t OneOfObject6) Discriminator() (string, error) {
 	return discriminator.Discriminator, err
 }
 
-func (t OneOfObject6) ValueByDiscriminator() (interface{}, error) {
+func (t OneOfObject6) ValueByDiscriminator() (any, error) {
 	discriminator, err := t.Discriminator()
 	if err != nil {
 		return nil, err
@@ -2089,7 +2089,7 @@ func (t OneOfObject61) Discriminator() (string, error) {
 	return discriminator.Discriminator, err
 }
 
-func (t OneOfObject61) ValueByDiscriminator() (interface{}, error) {
+func (t OneOfObject61) ValueByDiscriminator() (any, error) {
 	discriminator, err := t.Discriminator()
 	if err != nil {
 		return nil, err
@@ -2178,7 +2178,7 @@ func (t OneOfObject62) Discriminator() (string, error) {
 	return discriminator.Discriminator, err
 }
 
-func (t OneOfObject62) ValueByDiscriminator() (interface{}, error) {
+func (t OneOfObject62) ValueByDiscriminator() (any, error) {
 	discriminator, err := t.Discriminator()
 	if err != nil {
 		return nil, err
@@ -2429,7 +2429,7 @@ func (t OneOfObject9) Discriminator() (string, error) {
 	return discriminator.Discriminator, err
 }
 
-func (t OneOfObject9) ValueByDiscriminator() (interface{}, error) {
+func (t OneOfObject9) ValueByDiscriminator() (any, error) {
 	discriminator, err := t.Discriminator()
 	if err != nil {
 		return nil, err
@@ -2508,9 +2508,9 @@ func (a *OneOfObject13) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)

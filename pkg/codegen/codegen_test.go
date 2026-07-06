@@ -65,9 +65,9 @@ type GetTestByNameResponse struct {
 	// XML200 the response for an HTTP 200 `+"`application/xml`"+` response
 	XML200 *[]Test
 	// JSON422 the response for an HTTP 422 `+"`application/json`"+` response
-	JSON422 *[]interface{}
+	JSON422 *[]any
 	// XML422 the response for an HTTP 422 `+"`application/xml`"+` response
-	XML422 *[]interface{}
+	XML422 *[]any
 	// JSONDefault the response for an HTTP default `+"`application/json`"+` response
 	JSONDefault *Error
 }`)

@@ -366,7 +366,7 @@ type strictHandler struct {
 func (sh *strictHandler) TestGet(ctx echo.Context) error {
 	var request TestGetRequestObject
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx echo.Context, request any) (any, error) {
 		return sh.ssi.TestGet(ctx.Request().Context(), request.(TestGetRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

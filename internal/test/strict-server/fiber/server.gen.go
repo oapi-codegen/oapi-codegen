@@ -1166,7 +1166,7 @@ func (sh *strictHandler) JSONExample(ctx *fiber.Ctx) error {
 		request.Body = &body
 	}
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.JSONExample(ctx.UserContext(), request.(JSONExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1193,7 +1193,7 @@ func (sh *strictHandler) MultipartExample(ctx *fiber.Ctx) error {
 
 	request.Body = multipart.NewReader(bytes.NewReader(ctx.Request().Body()), string(ctx.Request().Header.MultipartFormBoundary()))
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.MultipartExample(ctx.UserContext(), request.(MultipartExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1226,7 +1226,7 @@ func (sh *strictHandler) MultipartRelatedExample(ctx *fiber.Ctx) error {
 		request.Body = multipart.NewReader(bytes.NewReader(ctx.Request().Body()), boundary)
 	}
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.MultipartRelatedExample(ctx.UserContext(), request.(MultipartRelatedExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1283,7 +1283,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *fiber.Ctx) error {
 		}
 	}
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.MultipleRequestAndResponseTypes(ctx.UserContext(), request.(MultipleRequestAndResponseTypesRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1308,7 +1308,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *fiber.Ctx) error {
 func (sh *strictHandler) NoContentHeaders(ctx *fiber.Ctx) error {
 	var request NoContentHeadersRequestObject
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.NoContentHeaders(ctx.UserContext(), request.(NoContentHeadersRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1339,7 +1339,7 @@ func (sh *strictHandler) RequiredJSONBody(ctx *fiber.Ctx) error {
 	}
 	request.Body = &body
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.RequiredJSONBody(ctx.UserContext(), request.(RequiredJSONBodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1368,7 +1368,7 @@ func (sh *strictHandler) RequiredTextBody(ctx *fiber.Ctx) error {
 	body := RequiredTextBodyTextRequestBody(data)
 	request.Body = &body
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.RequiredTextBody(ctx.UserContext(), request.(RequiredTextBodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1395,7 +1395,7 @@ func (sh *strictHandler) ReservedGoKeywordParameters(ctx *fiber.Ctx, pType strin
 
 	request.Type = pType
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.ReservedGoKeywordParameters(ctx.UserContext(), request.(ReservedGoKeywordParametersRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1429,7 +1429,7 @@ func (sh *strictHandler) ReusableResponses(ctx *fiber.Ctx) error {
 		request.Body = &body
 	}
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.ReusableResponses(ctx.UserContext(), request.(ReusableResponsesRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1460,7 +1460,7 @@ func (sh *strictHandler) TextExample(ctx *fiber.Ctx) error {
 		request.Body = &body
 	}
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.TextExample(ctx.UserContext(), request.(TextExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1487,7 +1487,7 @@ func (sh *strictHandler) UnknownExample(ctx *fiber.Ctx) error {
 
 	request.Body = bytes.NewReader(ctx.Request().Body())
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.UnknownExample(ctx.UserContext(), request.(UnknownExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1516,7 +1516,7 @@ func (sh *strictHandler) UnspecifiedContentType(ctx *fiber.Ctx) error {
 
 	request.Body = bytes.NewReader(ctx.Request().Body())
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.UnspecifiedContentType(ctx.UserContext(), request.(UnspecifiedContentTypeRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1547,7 +1547,7 @@ func (sh *strictHandler) URLEncodedExample(ctx *fiber.Ctx) error {
 	}
 	request.Body = &body
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.URLEncodedExample(ctx.UserContext(), request.(URLEncodedExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1583,7 +1583,7 @@ func (sh *strictHandler) HeadersExample(ctx *fiber.Ctx, params HeadersExamplePar
 		request.Body = &body
 	}
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.HeadersExample(ctx.UserContext(), request.(HeadersExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1617,7 +1617,7 @@ func (sh *strictHandler) UnionExample(ctx *fiber.Ctx) error {
 		request.Body = &body
 	}
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.UnionExample(ctx.UserContext(), request.(UnionExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

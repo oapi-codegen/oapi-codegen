@@ -96,7 +96,7 @@ func (t ConfigSaveReq) Discriminator() (string, error) {
 	return discriminator.Discriminator, err
 }
 
-func (t ConfigSaveReq) ValueByDiscriminator() (interface{}, error) {
+func (t ConfigSaveReq) ValueByDiscriminator() (any, error) {
 	discriminator, err := t.Discriminator()
 	if err != nil {
 		return nil, err

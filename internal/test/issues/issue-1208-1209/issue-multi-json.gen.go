@@ -521,7 +521,7 @@ type strictHandler struct {
 func (sh *strictHandler) Test(ctx *gin.Context) {
 	var request TestRequestObject
 
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *gin.Context, request any) (any, error) {
 		return sh.ssi.Test(ctx, request.(TestRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

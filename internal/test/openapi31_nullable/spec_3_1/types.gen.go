@@ -35,7 +35,7 @@ type Pet struct {
 	// primary type as "object", routing the schema away from
 	// the unspecified-object code path. Expected shape:
 	// `*map[string]interface{}`.
-	Extras *map[string]interface{} `json:"extras,omitempty"`
+	Extras *map[string]any `json:"extras,omitempty"`
 
 	// Favorite Nullable discriminated union (`oneOf: [Cat, Dog, null]` with a
 	// discriminator). Before this branch's fix to the union-
@@ -50,7 +50,7 @@ type Pet struct {
 	// Both orderings must resolve identically; this guards
 	// against any code path that inspects only the first
 	// element of the type array.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Metadata *map[string]any `json:"metadata,omitempty"`
 
 	// Name Required, non-nullable.
 	Name string `json:"name"`
@@ -141,7 +141,7 @@ func (t DiscriminatedPet) Discriminator() (string, error) {
 	return discriminator.Discriminator, err
 }
 
-func (t DiscriminatedPet) ValueByDiscriminator() (interface{}, error) {
+func (t DiscriminatedPet) ValueByDiscriminator() (any, error) {
 	discriminator, err := t.Discriminator()
 	if err != nil {
 		return nil, err

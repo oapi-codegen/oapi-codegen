@@ -308,7 +308,7 @@ func (sh *strictHandler) GetBionicleName(w http.ResponseWriter, r *http.Request,
 
 	request.Name = name
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.GetBionicleName(ctx, request.(GetBionicleNameRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

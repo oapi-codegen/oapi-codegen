@@ -47,15 +47,15 @@ func (e EnumInObjInArrayVal) Valid() bool {
 }
 
 // N5StartsWithNumber This schema name starts with a number
-type N5StartsWithNumber = map[string]interface{}
+type N5StartsWithNumber = map[string]any
 
 // AnyType1 defines model for AnyType1.
-type AnyType1 = interface{}
+type AnyType1 = any
 
 // AnyType2 AnyType2 represents any type.
 //
 // This should be an interface{}
-type AnyType2 = interface{}
+type AnyType2 = any
 
 // CustomStringType defines model for CustomStringType.
 type CustomStringType = string
@@ -87,7 +87,7 @@ type EnumInObjInArray = []struct {
 type EnumInObjInArrayVal string
 
 // GenericObject defines model for GenericObject.
-type GenericObject = map[string]interface{}
+type GenericObject = map[string]any
 
 // NullableProperties defines model for NullableProperties.
 type NullableProperties struct {
@@ -115,7 +115,7 @@ type StringInPath = string
 type accessTokenContextKey string
 
 // Issue9JSONBody defines parameters for Issue9.
-type Issue9JSONBody = interface{}
+type Issue9JSONBody = any
 
 // Issue9Params defines parameters for Issue9.
 type Issue9Params struct {
@@ -987,18 +987,18 @@ type Issue1051Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *map[string]interface{}
+	JSON200 *map[string]any
 	// ApplicationvndSomethingV1JSON200 the response for an HTTP 200 `application/vnd.something.v1+json` response
-	ApplicationvndSomethingV1JSON200 *map[string]interface{}
+	ApplicationvndSomethingV1JSON200 *map[string]any
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r Issue1051Response) GetJSON200() *map[string]interface{} {
+func (r Issue1051Response) GetJSON200() *map[string]any {
 	return r.JSON200
 }
 
 // GetApplicationvndSomethingV1JSON200 returns the response for an HTTP 200 `application/vnd.something.v1+json` response
-func (r Issue1051Response) GetApplicationvndSomethingV1JSON200() *map[string]interface{} {
+func (r Issue1051Response) GetApplicationvndSomethingV1JSON200() *map[string]any {
 	return r.ApplicationvndSomethingV1JSON200
 }
 
@@ -1552,14 +1552,14 @@ func ParseIssue1051Response(rsp *http.Response) (*Issue1051Response, error) {
 
 	switch {
 	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
-		var dest map[string]interface{}
+		var dest map[string]any
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/vnd.something.v1+json" && rsp.StatusCode == 200:
-		var dest map[string]interface{}
+		var dest map[string]any
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

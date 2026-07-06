@@ -20,10 +20,10 @@ import (
 
 // Container defines model for Container.
 type Container struct {
-	ObjectA *externalRef0.ObjectA   `json:"object_a,omitempty"`
-	ObjectB *package_b.ObjectB      `json:"object_b,omitempty"`
-	ObjectC *map[string]interface{} `json:"object_c,omitempty"`
-	Pet     *externalRef1.Pet       `json:"pet,omitempty"`
+	ObjectA *externalRef0.ObjectA `json:"object_a,omitempty"`
+	ObjectB *package_b.ObjectB    `json:"object_b,omitempty"`
+	ObjectC *map[string]any       `json:"object_c,omitempty"`
+	Pet     *externalRef1.Pet     `json:"pet,omitempty"`
 }
 
 // Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.

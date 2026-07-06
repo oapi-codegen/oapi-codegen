@@ -33,7 +33,7 @@ type Roles_Item struct {
 // SuccessfulResponse defines model for SuccessfulResponse.
 type SuccessfulResponse struct {
 	// Data If successful, response from api
-	Data map[string]interface{} `json:"data"`
+	Data map[string]any `json:"data"`
 
 	// Ok Indicated whether the response is successful.
 	Ok bool `json:"ok"`

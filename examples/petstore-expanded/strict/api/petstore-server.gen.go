@@ -558,7 +558,7 @@ func (sh *strictHandler) FindPets(w http.ResponseWriter, r *http.Request, params
 
 	request.Params = params
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.FindPets(ctx, request.(FindPetsRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -589,7 +589,7 @@ func (sh *strictHandler) AddPet(w http.ResponseWriter, r *http.Request) {
 	}
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.AddPet(ctx, request.(AddPetRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -615,7 +615,7 @@ func (sh *strictHandler) DeletePet(w http.ResponseWriter, r *http.Request, id in
 
 	request.Id = id
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.DeletePet(ctx, request.(DeletePetRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -641,7 +641,7 @@ func (sh *strictHandler) FindPetByID(w http.ResponseWriter, r *http.Request, id 
 
 	request.Id = id
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.FindPetByID(ctx, request.(FindPetByIDRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

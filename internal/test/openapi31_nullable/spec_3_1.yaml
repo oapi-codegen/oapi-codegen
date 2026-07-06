@@ -39,7 +39,7 @@ components:
             equality on a 3.1 type-array failed to recognize the
             primary type as "object", routing the schema away from
             the unspecified-object code path. Expected shape:
-            `*map[string]interface{}`.
+            `*map[string]any`.
         metadata:
           type: ["null", "object"]
           description: |

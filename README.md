@@ -291,7 +291,7 @@ func (sh *strictHandler) FindPets(w http.ResponseWriter, r *http.Request, params
 
 	request.Params = params
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.FindPets(ctx, request.(FindPetsRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -3532,7 +3532,7 @@ Will generate:
 // Thing defines model for Thing.
 type Thing struct {
 	Id                   int                    `json:"id"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // with generated boilerplate below
@@ -3546,7 +3546,7 @@ type Thing struct {
 
 // Getter for additional properties for Thing. Returns the specified
 // element and whether it was found
-func (a Thing) Get(fieldName string) (value interface{}, found bool) {
+func (a Thing) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -3554,9 +3554,9 @@ func (a Thing) Get(fieldName string) (value interface{}, found bool) {
 }
 
 // Setter for additional properties for Thing
-func (a *Thing) Set(fieldName string, value interface{}) {
+func (a *Thing) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -3578,9 +3578,9 @@ func (a *Thing) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)

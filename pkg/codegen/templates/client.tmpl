@@ -177,7 +177,7 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
         }
         bodyReader = strings.NewReader(bodyStr.Encode())
     {{else if eq .NameTag "Text" -}}
-        if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+        if stringer, ok := any(body).(fmt.Stringer); ok {
             bodyReader = strings.NewReader(stringer.String())
         } else {
         {{if .Schema.IsPrimitive -}}

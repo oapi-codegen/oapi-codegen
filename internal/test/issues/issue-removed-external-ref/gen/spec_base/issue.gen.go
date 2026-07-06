@@ -300,7 +300,7 @@ type strictHandler struct {
 func (sh *strictHandler) PostInvalidExtRefTrouble(w http.ResponseWriter, r *http.Request) {
 	var request PostInvalidExtRefTroubleRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.PostInvalidExtRefTrouble(ctx, request.(PostInvalidExtRefTroubleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -324,7 +324,7 @@ func (sh *strictHandler) PostInvalidExtRefTrouble(w http.ResponseWriter, r *http
 func (sh *strictHandler) PostNoTrouble(w http.ResponseWriter, r *http.Request) {
 	var request PostNoTroubleRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.PostNoTrouble(ctx, request.(PostNoTroubleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
