@@ -49,7 +49,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc: options.ErrorHandlerFunc,
 	}
 {{end}}
-{{range .}}m.HandleFunc({{.Method | httpMethodConstant}}+" "+options.BaseURL+"{{.Path | swaggerUriToStdHttpUri}}", wrapper.{{.HandlerName}})
+{{range .}}m.HandleFunc({{.Method | httpMethodConstant}}+" "+options.BaseURL+{{.Path | swaggerUriToStdHttpUri | toGoString}}, wrapper.{{.HandlerName}})
 {{end}}
 	return m
 }
