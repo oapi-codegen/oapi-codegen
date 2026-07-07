@@ -112,7 +112,7 @@ For full details of what is supported, it's worth checking out [the GoDoc for `c
 We also have [a JSON Schema](configuration-schema.json) that can be used by IDEs/editors with the Language Server Protocol (LSP) to perform intelligent suggestions, i.e.:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 package: api
 # ...
 ```
@@ -4124,7 +4124,7 @@ type ClientInterface interface {
 </details>
 
 
-For more details of what the resulting code looks like, check out [the test cases](internal/test/outputoptions/name-normalizer/).
+For more details of what the resulting code looks like, check out [the test cases](internal/test/options/name_normalizer/).
 
 ## Examples
 

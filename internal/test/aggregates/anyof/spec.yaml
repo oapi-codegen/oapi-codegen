@@ -1,0 +1,248 @@
+# ==========================================================================
+# Category: aggregates/anyof
+# Tests:    anyOf/oneOf/allOf union types — inline, $ref, combined, and
+#           in query parameters.
+#
+# Folds in (provenance):
+#   - issues/issue-1189           (combined anyOf+allOf+oneOf in object fields)
+#   - any_of/codegen/inline       (inline anyOf in response-body array items)
+#   - any_of/codegen/ref_schema   (anyOf via $ref to named schemas)
+#   - any_of/param                (anyOf/oneOf as query-parameter types)
+# ==========================================================================
+openapi: "3.0.0"
+info:
+  title: aggregates/anyof
+  version: "1.0.0"
+  description: |
+    Union types exercised in four distinct forms: inline anyOf in a response body
+    (no named schema), anyOf via named $ref schemas, combined anyOf+allOf+oneOf on
+    object properties (issue #1189), and anyOf/oneOf used as query-parameter types
+    with proper serialization (any_of/param).
+security:
+  - ApiKeyAuth: []
+paths:
+  # any_of/codegen/inline: inline anyOf in response body array items (no named union schema)
+  /inline/pets:
+    get:
+      summary: Get a list of pets (inline anyOf)
+      description: Response body array items are an inline anyOf — no separate named schema.
+      operationId: getInlinePets
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      anyOf:
+                        - $ref: '#/components/schemas/InlineCat'
+                        - $ref: '#/components/schemas/InlineDog'
+                        - $ref: '#/components/schemas/InlineRat'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+
+  # any_of/codegen/ref_schema: anyOf via named $ref schema property
+  /ref/pets:
+    get:
+      summary: Get a list of pets ($ref anyOf)
+      description: Response body references a named DTO whose data field is an anyOf $ref.
+      operationId: getRefPets
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetRefPetsDto'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+
+  # issue #1189: combined anyOf+allOf+oneOf as properties of a single object
+  /issue1189/test:
+    get:
+      operationId: getIssue1189Test
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Issue1189Test'
+
+  # any_of/param: anyOf/oneOf used as query-parameter types
+  /param/test:
+    get:
+      operationId: getParamTest
+      parameters:
+        - name: test
+          in: query
+          schema:
+            $ref: '#/components/schemas/ParamAnyOf'
+        - name: test2
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/ParamOneOf'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    # --- any_of/codegen/inline: named component types referenced inline ---
+    InlineCat:
+      type: object
+      description: This is a cat (inline anyOf case)
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        breed:
+          type: string
+        color:
+          type: string
+        purrs:
+          type: boolean
+
+    InlineDog:
+      type: object
+      description: This is a dog (inline anyOf case)
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        breed:
+          type: string
+        color:
+          type: string
+        barks:
+          type: boolean
+
+    InlineRat:
+      type: object
+      description: This is a rat (inline anyOf case)
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          type: string
+        squeaks:
+          type: boolean
+
+    # --- any_of/codegen/ref_schema: DTO wrapping anyOf via $ref ---
+    GetRefPetsDto:
+      type: object
+      properties:
+        data:
+          anyOf:
+            - $ref: '#/components/schemas/RefCat'
+            - $ref: '#/components/schemas/RefDog'
+            - $ref: '#/components/schemas/RefRat'
+
+    RefCat:
+      type: object
+      description: This is a cat ($ref anyOf case)
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        breed:
+          type: string
+        color:
+          type: string
+        purrs:
+          type: boolean
+
+    RefDog:
+      type: object
+      description: This is a dog ($ref anyOf case)
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        breed:
+          type: string
+        color:
+          type: string
+        barks:
+          type: boolean
+
+    RefRat:
+      type: object
+      description: This is a rat ($ref anyOf case)
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        color:
+          type: string
+        squeaks:
+          type: boolean
+
+    # issue #1189: object with anyOf, allOf, oneOf fields — all three combiners
+    Issue1189Test:
+      properties:
+        fieldA:
+          anyOf:
+            - type: string
+            - type: string
+              enum:
+                - foo
+                - bar
+        fieldB:
+          allOf:
+            - type: string
+            - type: string
+              enum:
+                - foo
+                - bar
+        fieldC:
+          oneOf:
+            - type: string
+            - type: string
+              enum:
+                - foo
+                - bar
+
+    # any_of/param: anyOf used as a query parameter schema
+    ParamAnyOf:
+      anyOf:
+        - type: object
+          required:
+            - item1
+            - item2
+          properties:
+            item1:
+              type: string
+            item2:
+              type: string
+        - type: object
+          properties:
+            item2:
+              type: string
+            item3:
+              type: string
+
+    # any_of/param: oneOf used as array item type for a query parameter
+    ParamOneOf:
+      oneOf:
+        - type: integer
+        - type: string

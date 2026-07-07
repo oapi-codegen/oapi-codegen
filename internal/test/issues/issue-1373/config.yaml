@@ -1,4 +1,0 @@
-package: issue1373
-generate:
-  models: true
-output: issue.gen.go

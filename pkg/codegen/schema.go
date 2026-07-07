@@ -1186,6 +1186,18 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 			outSchema.SkipOptionalPointer = true
 		}
 		outSchema.DefineViaAlias = true
+	} else if t.Is("null") {
+		// OpenAPI 3.1 allows a schema whose only type is "null", which
+		// validates exactly the JSON value null. Go has no type whose only
+		// value is null, so map it to `any` — the same permissive mapping
+		// used for typeless schemas — rather than rejecting an otherwise
+		// valid spec. An optional pointer makes no sense for `any`, whose
+		// zero value is already nil, so skip it — mirroring the
+		// typeless-schema handling in GenerateGoSchema.
+		// See https://github.com/oapi-codegen/oapi-codegen/issues/2430
+		outSchema.GoType = "any"
+		outSchema.SkipOptionalPointer = true
+		outSchema.DefineViaAlias = true
 	} else {
 		return fmt.Errorf("unhandled Schema type: %v", t)
 	}

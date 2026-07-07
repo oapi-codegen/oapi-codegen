@@ -1,8 +1,0 @@
-# yaml-language-server: $schema=../../../../../configuration-schema.json
-package: skipped
-generate:
-  client: true
-  models: true
-output: response_body_getters.gen.go
-output-options:
-  skip-response-body-getters: true

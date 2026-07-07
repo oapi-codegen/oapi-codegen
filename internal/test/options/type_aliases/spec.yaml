@@ -1,0 +1,31 @@
+# ==========================================================================
+# Category: options/type_aliases
+# Tests:    output-options.disable-type-aliases-for-type: [array]
+#
+# Folds in (provenance):
+#   - outputoptions/disabletypealiases  (array schema emitted as named type, not alias)
+# ==========================================================================
+openapi: "3.0.0"
+info:
+  title: options/type_aliases
+  version: "1.0.0"
+  description: |
+    output-options.disable-type-aliases-for-type controls whether array (and other)
+    schemas are emitted as type aliases (type Foo = []Bar) or as distinct named types
+    (type Foo []Bar). When set to ["array"], methods may be defined on array-based
+    types, which is exercised by the compile-only MustCompile helper in the test file.
+components:
+  schemas:
+    # outputoptions/disabletypealiases: array schema whose alias is disabled so that
+    # a method can be defined on the resulting named type.
+    MyItem:
+      type: object
+      properties:
+        name:
+          type: string
+        age:
+          type: integer
+    Example:
+      type: array
+      items:
+        $ref: '#/components/schemas/MyItem'

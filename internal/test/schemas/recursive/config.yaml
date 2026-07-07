@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: schemasrecursive
+output: recursive.gen.go
+generate:
+  models: true
+# circular-reference-limit: issue #936 uses deeply cyclic oneOf schemas that
+# exceed the default depth limit; 4 is the value used by the original issue.
+compatibility:
+  circular-reference-limit: 4
+# skip-prune: schemas are not referenced from any path (paths: {}) so pruning
+# would silently drop them; this preserves all declared schemas.
+output-options:
+  skip-prune: true

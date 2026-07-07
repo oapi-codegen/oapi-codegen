@@ -1,0 +1,31 @@
+# From issue-removed-external-ref (PR #752): external spec whose schemas/responses are referenced by spec-base.yaml.
+openapi: 3.0.2
+info:
+  version: "0.0.1"
+components:
+  schemas:
+    CamelSchema:
+      type: object
+      properties:
+        id:
+          type: string
+    pascalSchema:
+      type: object
+      properties:
+        id:
+          type: string
+    Foo:
+      type: object
+      properties:
+        internalAttr:
+          type: string
+        CamelSchema:
+          $ref: "#/components/schemas/CamelSchema"
+        pascalSchema:
+          $ref: "#/components/schemas/pascalSchema"
+  responses:
+    "pascal":
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/pascalSchema"

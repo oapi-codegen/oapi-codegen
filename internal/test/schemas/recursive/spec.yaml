@@ -1,0 +1,110 @@
+# ==========================================================================
+# Category: schemas/recursive
+# Tests:    recursive and cyclic schema patterns (models-only).
+#
+# Folds in (provenance):
+#   - issues/issue-52   (recursion via additionalProperties)
+#   - issues/issue-936  (cyclic oneOf)
+#   - issues/issue-1373 (recursive $ref via allOf)
+# ==========================================================================
+openapi: "3.0.3"
+info:
+  title: schemas/recursive
+  version: "1.0.0"
+  description: |
+    Recursive and cyclic schema patterns: self-referencing types via
+    additionalProperties; cyclic oneOf references (requires
+    circular-reference-limit); and recursive $ref inside allOf. All
+    cases verify that code generation and compilation succeed without
+    infinite loops.
+paths: {}
+components:
+  schemas:
+    # --- issue #52: recursion via additionalProperties ---
+    # Document -> fields: map of Value; Value -> ArrayValue; ArrayValue -> []Value
+    Document:
+      type: object
+      properties:
+        fields:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Value'
+    Value:
+      type: object
+      properties:
+        stringValue:
+          type: string
+        arrayValue:
+          $ref: '#/components/schemas/ArrayValue'
+    ArrayValue:
+      type: array
+      items:
+        $ref: '#/components/schemas/Value'
+
+    # --- issue #936: cyclic oneOf (deep recursive oneOf that requires circular-reference-limit) ---
+    # Via https://github.com/getkin/kin-openapi/blob/b31a4bb2dcd523b1477da8854f0f75859cd314b3/openapi3/testdata/recursiveRef/issue615.yml
+    FilterColumnIncludes:
+      type: object
+      properties:
+        $includes:
+          $ref: '#/components/schemas/FilterPredicate'
+      additionalProperties: false
+      maxProperties: 1
+      minProperties: 1
+    FilterPredicate:
+      oneOf:
+        - $ref: '#/components/schemas/FilterValue'
+        - type: array
+          items:
+            $ref: '#/components/schemas/FilterPredicate'
+          minLength: 1
+        - $ref: '#/components/schemas/FilterPredicateOp'
+        - $ref: '#/components/schemas/FilterPredicateRangeOp'
+    FilterPredicateOp:
+      type: object
+      properties:
+        $any:
+          oneOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/FilterPredicate'
+        $none:
+          oneOf:
+            - $ref: '#/components/schemas/FilterPredicate'
+            - type: array
+              items:
+                $ref: '#/components/schemas/FilterPredicate'
+      additionalProperties: false
+      maxProperties: 1
+      minProperties: 1
+    FilterPredicateRangeOp:
+      type: object
+      properties:
+        $lt:
+          $ref: '#/components/schemas/FilterRangeValue'
+      additionalProperties: false
+      maxProperties: 2
+      minProperties: 2
+    FilterRangeValue:
+      oneOf:
+        - type: number
+        - type: string
+    FilterValue:
+      oneOf:
+        - type: number
+        - type: string
+        - type: boolean
+
+    # --- issue #1373: recursive $ref via allOf ---
+    # RecursiveObject allOf-includes itself; codegen must not infinite-loop.
+    RecursiveObject:
+      allOf:
+        - $ref: "#/components/schemas/NonRecursiveObject"
+        - $ref: "#/components/schemas/RecursiveObject"
+        - properties:
+            FieldInRecursive::
+              type: string
+    NonRecursiveObject:
+      properties:
+        FieldInNonRecursive:
+          type: string

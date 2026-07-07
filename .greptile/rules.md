@@ -64,8 +64,32 @@ Be pragmatic: do not demand identical changes in seven places. Do your best to a
 - Watch out for users making `go.mod` changes which advance the Go version to a new minor release. We want these to be explicitly justified in the commit message. Maintenance version bumps are ok. Mention that the maintainers would prefer to do a minor version bump themselves.
 - Watch out for unnecessary dependency changes that creep into code reviews, just because people tend to do it out of habit. Every dependency update should have a reason if it's bundled with codegen changes.
 
-## 6. General
+## 6. Test case placement in `internal/test/`
+
+`internal/test/` is organized **by feature category**, not by GitHub issue. The top-level categories are:
+
+- `aggregates/` — allOf/anyOf/oneOf composition, anonymous-schema hoisting
+- `bodies/` — request/response bodies and content types
+- `clients/` — client construction and options
+- `events/` — webhooks and callbacks
+- `extensions/` — `x-go-*`, `x-oapi-codegen-*`, `x-order`, `x-omitempty` extensions
+- `naming/` — identifier generation and type-name collision handling
+- `openapi31/` — OpenAPI 3.1-specific behavior
+- `options/` — output-options flags (name-normalizer, filters, skip-prune, yaml-tags, …)
+- `parameters/` — parameter binding, styles, encoding, nil handling (incl. the cross-framework `roundtrip/` harness)
+- `references/` — external `$ref`s, import-mapping, multi-package generation, overlays
+- `schemas/` — schema-to-type mapping (primitives, objects, enums, nullable, recursive, …)
+- `servers/` — server codegen (routers, middleware, strict servers)
+- `spec_validation/` — pre-generation spec validation
+
+When a PR adds a test, enforce the following:
+
+- **Do not allow issue-numbered test directories to come back.** Flag any new directory named after a GitHub issue (`internal/test/issues/…`, `issue-1234/`, `issueNNNN/`, and similar) anywhere under `internal/test/`. The old `issues/` tree was deliberately dissolved into the categories above.
+- **Prefer extending an existing test case.** If the scenario fits an existing category leaf — same OpenAPI construct, same generation config — the new schemas/operations belong in that leaf's `spec.yaml` and its `*_test.go`, marked with a provenance comment (`# From issue-NNNN: <one-line summary>`) so the issue context is not lost. Suggest the specific leaf to extend when you can identify one.
+- **A new leaf is fine when nothing matches.** A new subdirectory under the right category is the correct move when the scenario needs a *different generation config* (other `generate:` targets or `output-options:`) or inherently needs its own files (multi-file external-ref layouts). It should follow the standard layout — `doc.go` (with the `//go:generate` line), `config.yaml`, `spec.yaml`, `<name>_test.go` — with a snake_case scenario-named directory (never an issue number) and the issue reference in a comment.
+- **Regression tests for bug fixes are still expected** — they just live in the category matching the feature, not in an issue-named directory.
+
+## 7. General
 
 - The repo is a multi-module monorepo. Cross-module changes (e.g., to `runtime/` consumers) deserve extra scrutiny.
-- `internal/test/` contains regression tests keyed to GitHub issues. New bug fixes should generally include a regression test there.
 - Generated files are committed; CI fails if `make generate` produces a diff. If a PR's generated files look stale, that will fail CI regardless — but flagging it in review saves a round-trip.

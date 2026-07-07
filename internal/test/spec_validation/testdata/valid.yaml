@@ -1,0 +1,21 @@
+openapi: "3.0.0"
+info: {title: valid, version: "1.0.0"}
+paths:
+  /things:
+    post:
+      operationId: createThing
+      requestBody:
+        content:
+          'application/ld+json; profile="https://www.w3.org/ns/activitystreams"':
+            schema: {$ref: '#/components/schemas/Thing'}
+      responses:
+        '200': {description: ok}
+components:
+  schemas:
+    Thing:
+      type: object
+      description: |
+        A multi-line description
+        spanning several lines is fine.
+      properties:
+        name: {type: string}

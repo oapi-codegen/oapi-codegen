@@ -1,6 +1,0 @@
-# yaml-language-server: $schema=../../../configuration-schema.json
-package: issuevndjson
-output: schema.gen.go
-generate:
-  models: true
-  client: true
