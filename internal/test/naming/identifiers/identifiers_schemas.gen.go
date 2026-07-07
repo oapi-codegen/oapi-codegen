@@ -20,18 +20,11 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-const (
-	Access_tokenScopes accessTokenContextKey = "access_token.Scopes"
-)
-
 // N5StartsWithNumber This schema name starts with a number
 type N5StartsWithNumber = map[string]interface{}
 
 // StringInPath defines model for StringInPath.
 type StringInPath = string
-
-// accessTokenContextKey is the context key for access-token security scheme
-type accessTokenContextKey string
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -546,8 +539,6 @@ func (w *ServerInterfaceWrapper) Issue209(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter str: %s", err))
 	}
 
-	ctx.Set(string(Access_tokenScopes), []string{})
-
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue209(ctx, str)
 	return err
@@ -564,8 +555,6 @@ func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err))
 	}
 
-	ctx.Set(string(Access_tokenScopes), []string{})
-
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue30(ctx, pFallthrough)
 	return err
@@ -581,8 +570,6 @@ func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1param: %s", err))
 	}
-
-	ctx.Set(string(Access_tokenScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.Issue41(ctx, n1param)

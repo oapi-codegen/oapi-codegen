@@ -35,9 +35,11 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
 {{end}}
 {{end}}
 
+{{if opts.Compatibility.EnableAuthScopesOnContext -}}
 {{range .SecurityDefinitions}}
     ctx.Set(string({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes), {{toStringArray .Scopes}})
 {{end}}
+{{- end}}
 
 {{if .RequiresParamObject}}
     // Parameter object where we will unmarshal all parameters from the context

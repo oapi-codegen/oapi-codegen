@@ -1,4 +1,4 @@
-{{- if gt (len .SecuritySchemeProviderNames) 0 }}
+{{- if and (gt (len .SecuritySchemeProviderNames) 0) opts.Compatibility.EnableAuthScopesOnContext }}
 const (
 {{range $ProviderName := .SecuritySchemeProviderNames}}
     {{- $ProviderName | sanitizeGoIdentity | ucFirst}}Scopes {{$ProviderName | schemaNameToTypeName | lcFirst}}ContextKey = "{{$ProviderName}}.Scopes"

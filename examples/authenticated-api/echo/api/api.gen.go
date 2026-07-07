@@ -20,10 +20,6 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-const (
-	BearerAuthScopes bearerAuthContextKey = "BearerAuth.Scopes"
-)
-
 // Error defines model for Error.
 type Error struct {
 	// Code Error code
@@ -43,9 +39,6 @@ type ThingWithID struct {
 	Id   int64  `json:"id"`
 	Name string `json:"name"`
 }
-
-// bearerAuthContextKey is the context key for BearerAuth security scheme
-type bearerAuthContextKey string
 
 // AddThingJSONRequestBody defines body for AddThing for application/json ContentType.
 type AddThingJSONRequestBody = Thing
@@ -534,8 +527,6 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) ListThings(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(string(BearerAuthScopes), []string{})
-
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ListThings(ctx)
 	return err
@@ -544,8 +535,6 @@ func (w *ServerInterfaceWrapper) ListThings(ctx echo.Context) error {
 // AddThing converts echo context to params.
 func (w *ServerInterfaceWrapper) AddThing(ctx echo.Context) error {
 	var err error
-
-	ctx.Set(string(BearerAuthScopes), []string{"things:w"})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.AddThing(ctx)
