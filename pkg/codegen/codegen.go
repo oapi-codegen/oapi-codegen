@@ -926,9 +926,12 @@ func collectComponentTypes(t *template.Template, swagger *openapi3.T, excludeSch
 	if err != nil {
 		return nil, fmt.Errorf("error generating Go types for component request bodies: %w", err)
 	}
-	securitySchemeTypes, err := GenerateTypesForSecuritySchemes(t, swagger.Components.SecuritySchemes)
-	if err != nil {
-		return nil, fmt.Errorf("error generating Go types for component security schemes: %w", err)
+	var securitySchemeTypes []TypeDefinition
+	if globalState.options.Compatibility.EnableAuthScopesOnContext {
+		securitySchemeTypes, err = GenerateTypesForSecuritySchemes(t, swagger.Components.SecuritySchemes)
+		if err != nil {
+			return nil, fmt.Errorf("error generating Go types for component security schemes: %w", err)
+		}
 	}
 	allTypes := append(schemaTypes, paramTypes...)
 	allTypes = append(allTypes, responseTypes...)

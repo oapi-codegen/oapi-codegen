@@ -39,7 +39,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
 
   {{end}}
 
-  {{if .SecurityDefinitions -}}
+  {{if and .SecurityDefinitions opts.Compatibility.EnableAuthScopesOnContext -}}
   ctx := r.Context()
 {{range .SecurityDefinitions}}
   ctx = context.WithValue(ctx, {{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes, {{toStringArray .Scopes}})

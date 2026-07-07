@@ -127,6 +127,10 @@
         "headers-implicitly-required": {
           "type": "boolean",
           "description": "Treats all response headers as required, ignoring the `required` property from the header definition. Prior to v2.6.0, oapi-codegen generated all response headers as direct values (implicitly required). The OpenAPI specification defaults headers to optional (required: false), so the corrected behavior generates optional headers as pointers. Set this to true to restore the old behavior where all headers are treated as required.\nPlease see https://github.com/oapi-codegen/oapi-codegen/issues/2267"
+        },
+        "enable-auth-scopes-on-context": {
+          "type": "boolean",
+          "description": "Re-enables the legacy emission of security scheme scopes by generated server code: the per-scheme context key types (e.g. `bearerAuthContextKey`), the scope constants (e.g. `BearerAuthScopes`), and the per-operation calls that store the operation's scopes into the request context.\nThis mechanism is deprecated and off by default: it flattens the OpenAPI `security` requirements into a per-scheme list of scopes, and cannot represent alternative schemes (OR), combined schemes (AND), or anonymous (`{}`) alternatives. Authentication and authorization should instead be performed at runtime using the request validation middleware, which evaluates the spec's security requirements directly.\nPlease see https://github.com/oapi-codegen/oapi-codegen/issues/1524"
         }
       }
     },

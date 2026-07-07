@@ -21,10 +21,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-const (
-	BearerAuthScopes bearerAuthContextKey = "BearerAuth.Scopes"
-)
-
 // Error defines model for Error.
 type Error struct {
 	// Code Error code
@@ -44,9 +40,6 @@ type ThingWithID struct {
 	Id   int64  `json:"id"`
 	Name string `json:"name"`
 }
-
-// bearerAuthContextKey is the context key for BearerAuth security scheme
-type bearerAuthContextKey string
 
 // AddThingJSONRequestBody defines body for AddThing for application/json ContentType.
 type AddThingJSONRequestBody = Thing
@@ -538,12 +531,6 @@ type MiddlewareFunc func(http.Handler) http.Handler
 // ListThings operation middleware
 func (siw *ServerInterfaceWrapper) ListThings(w http.ResponseWriter, r *http.Request) {
 
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{})
-
-	r = r.WithContext(ctx)
-
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListThings(w, r)
 	}))
@@ -557,12 +544,6 @@ func (siw *ServerInterfaceWrapper) ListThings(w http.ResponseWriter, r *http.Req
 
 // AddThing operation middleware
 func (siw *ServerInterfaceWrapper) AddThing(w http.ResponseWriter, r *http.Request) {
-
-	ctx := r.Context()
-
-	ctx = context.WithValue(ctx, BearerAuthScopes, []string{"things:w"})
-
-	r = r.WithContext(ctx)
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AddThing(w, r)

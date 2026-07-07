@@ -3,4 +3,9 @@ package: serversmiddlewarefiber
 generate:
   fiber-server: true
   models: true
+# Opt into the deprecated scope-emission behavior so the issue-518 regression
+# stays meaningful: even with scopes enabled, an operation with an anonymous
+# `{}` security alternative must not embed scopes into the request context.
+compatibility:
+  enable-auth-scopes-on-context: true
 output: middleware.gen.go

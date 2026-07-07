@@ -16,11 +16,6 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-const (
-	Api_keyScopes       apiKeyContextKey       = "api_key.Scopes"
-	Petstore_authScopes petstoreAuthContextKey = "petstore_auth.Scopes"
-)
-
 // Defines values for OrderStatus.
 const (
 	Approved  OrderStatus = "approved"
@@ -207,12 +202,6 @@ type User struct {
 
 // UserArray defines model for UserArray.
 type UserArray = []User
-
-// apiKeyContextKey is the context key for api_key security scheme
-type apiKeyContextKey string
-
-// petstoreAuthContextKey is the context key for petstore_auth security scheme
-type petstoreAuthContextKey string
 
 // FindPetsByStatusParams defines parameters for FindPetsByStatus.
 type FindPetsByStatusParams struct {

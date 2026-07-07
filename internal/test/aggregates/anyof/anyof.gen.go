@@ -16,10 +16,6 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-const (
-	ApiKeyAuthScopes apiKeyAuthContextKey = "ApiKeyAuth.Scopes"
-)
-
 // Defines values for Issue1189TestFieldA1.
 const (
 	Issue1189TestFieldA1Bar Issue1189TestFieldA1 = "bar"
@@ -195,9 +191,6 @@ type RefRat struct {
 	Name    *string `json:"name,omitempty"`
 	Squeaks *bool   `json:"squeaks,omitempty"`
 }
-
-// apiKeyAuthContextKey is the context key for ApiKeyAuth security scheme
-type apiKeyAuthContextKey string
 
 // GetInlinePets200JSONResponseBody_Data_Item defines parameters for GetInlinePets.
 type GetInlinePets200JSONResponseBody_Data_Item struct {
@@ -1343,8 +1336,6 @@ type ServerInterfaceWrapper struct {
 func (w *ServerInterfaceWrapper) GetInlinePets(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(string(ApiKeyAuthScopes), []string{})
-
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetInlinePets(ctx)
 	return err
@@ -1354,8 +1345,6 @@ func (w *ServerInterfaceWrapper) GetInlinePets(ctx echo.Context) error {
 func (w *ServerInterfaceWrapper) GetIssue1189Test(ctx echo.Context) error {
 	var err error
 
-	ctx.Set(string(ApiKeyAuthScopes), []string{})
-
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetIssue1189Test(ctx)
 	return err
@@ -1364,8 +1353,6 @@ func (w *ServerInterfaceWrapper) GetIssue1189Test(ctx echo.Context) error {
 // GetParamTest converts echo context to params.
 func (w *ServerInterfaceWrapper) GetParamTest(ctx echo.Context) error {
 	var err error
-
-	ctx.Set(string(ApiKeyAuthScopes), []string{})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetParamTestParams
@@ -1391,8 +1378,6 @@ func (w *ServerInterfaceWrapper) GetParamTest(ctx echo.Context) error {
 // GetRefPets converts echo context to params.
 func (w *ServerInterfaceWrapper) GetRefPets(ctx echo.Context) error {
 	var err error
-
-	ctx.Set(string(ApiKeyAuthScopes), []string{})
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.GetRefPets(ctx)

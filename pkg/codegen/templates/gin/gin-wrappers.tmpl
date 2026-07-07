@@ -40,9 +40,11 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
 
   {{end}}
 
+{{if opts.Compatibility.EnableAuthScopesOnContext -}}
 {{range .SecurityDefinitions}}
   c.Set(string({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes), {{toStringArray .Scopes}})
 {{end}}
+{{- end}}
 
   {{if .RequiresParamObject}}
     // Parameter object where we will unmarshal all parameters from the context
