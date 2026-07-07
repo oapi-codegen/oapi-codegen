@@ -16,6 +16,13 @@ type Cat struct {
 	Meow *bool  `json:"meow,omitempty"`
 }
 
+// ChallengeOpenJson defines model for ChallengeOpenJson.
+type ChallengeOpenJson struct {
+	Challenger any     `json:"challenger,omitempty"`
+	Id         string  `json:"id"`
+	Url        *string `json:"url,omitempty"`
+}
+
 // DiscriminatedPet defines model for DiscriminatedPet.
 type DiscriminatedPet struct {
 	union json.RawMessage
@@ -26,6 +33,9 @@ type Dog struct {
 	Bark *bool  `json:"bark,omitempty"`
 	Kind string `json:"kind"`
 }
+
+// NullOnly defines model for NullOnly.
+type NullOnly = any
 
 // Pet defines model for Pet.
 type Pet struct {
@@ -75,6 +85,11 @@ type Pet struct {
 
 	// Tags Optional, nullable array.
 	Tags *[]string `json:"tags,omitempty"`
+}
+
+// RequiredNull defines model for RequiredNull.
+type RequiredNull struct {
+	Value any `json:"value"`
 }
 
 // AsCat returns the union data inside the DiscriminatedPet as a Cat
