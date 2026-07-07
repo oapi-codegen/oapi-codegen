@@ -3357,6 +3357,14 @@ If an operation includes an empty `{}` security alternative, generated server
 middleware treats that operation as allowing anonymous requests and does not set
 scope context for that operation.
 
+> [!WARNING]
+> This is a behavior change for specs that already list an anonymous `{}` alternative
+> alongside named schemes, in any position (e.g. `security: [{bearerAuth: []}, {}]`).
+> Previously, the generated middleware still set the scheme's scopes context key (such as
+> `BearerAuthScopes`); after regenerating, that key is no longer set for such operations,
+> so authentication middleware that enforces auth based on its presence will treat those
+> requests as anonymous.
+
 ### On the client
 
 With a generated client, you'll want to use the client's generated `WithRequestEditorFn` function to pass in a given request editor `RequestEditorFn`.
