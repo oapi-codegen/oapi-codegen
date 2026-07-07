@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+# issue #1039: default behaviour (nullable-type DISABLED) — uses pointer *T instead of nullable.Nullable[T].
+# Separate subpackage because the generated type names collide with the nullable-type=true output.
+package: defaultbehaviour
+output: defaultbehaviour/types.gen.go
+generate:
+  models: true

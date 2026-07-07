@@ -4120,7 +4120,7 @@ type ClientInterface interface {
 </details>
 
 
-For more details of what the resulting code looks like, check out [the test cases](internal/test/outputoptions/name-normalizer/).
+For more details of what the resulting code looks like, check out [the test cases](internal/test/options/name_normalizer/).
 
 ## Examples
 
