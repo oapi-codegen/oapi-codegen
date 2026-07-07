@@ -18,14 +18,14 @@ import (
 
 // Test200JSONResponseBody_Item defines parameters for Test.
 type Test200JSONResponseBody_Item struct {
-	Field1               *string                `json:"field1,omitempty"`
-	Field2               *string                `json:"field2,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Field1               *string        `json:"field1,omitempty"`
+	Field2               *string        `json:"field2,omitempty"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // Getter for additional properties for Test200JSONResponseBody_Item. Returns the specified
 // element and whether it was found
-func (a Test200JSONResponseBody_Item) Get(fieldName string) (value interface{}, found bool) {
+func (a Test200JSONResponseBody_Item) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -33,9 +33,9 @@ func (a Test200JSONResponseBody_Item) Get(fieldName string) (value interface{}, 
 }
 
 // Setter for additional properties for Test200JSONResponseBody_Item
-func (a *Test200JSONResponseBody_Item) Set(fieldName string, value interface{}) {
+func (a *Test200JSONResponseBody_Item) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -65,9 +65,9 @@ func (a *Test200JSONResponseBody_Item) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
@@ -572,7 +572,7 @@ type strictHandler struct {
 func (sh *strictHandler) Test(w http.ResponseWriter, r *http.Request) {
 	var request TestRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.Test(ctx, request.(TestRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

@@ -156,8 +156,8 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 
 		for _, contentTypeName := range SortedMapKeys {
 
-			// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
-			if typeDefinition.TypeName == "interface{}" {
+			// We get "any" when using "anyOf" or "oneOf" (which doesn't work with Go types):
+			if typeDefinition.TypeName == "any" {
 				// Unable to unmarshal this, so we leave it out:
 				continue
 			}

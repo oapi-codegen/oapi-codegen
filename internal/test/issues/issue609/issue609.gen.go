@@ -5,5 +5,5 @@ package issue609
 
 // ResponseBody defines model for ResponseBody.
 type ResponseBody struct {
-	Unknown interface{} `json:"unknown,omitempty"`
+	Unknown any `json:"unknown,omitempty"`
 }

@@ -29,8 +29,8 @@ type ProblemDetails struct {
 	// Type An absolute URI that identifies the problem type.  When dereferenced, it SHOULD provide human-readable documentation for the problem type (e.g., using HTML).
 	//
 	// Example: https://zalando.github.io/problem/constraint-violation
-	Type                 *string                `json:"type,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Type                 *string        `json:"type,omitempty"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // Misc400Error defines model for Misc400Error.
@@ -41,7 +41,7 @@ type Misc404Error = ProblemDetails
 
 // Getter for additional properties for ProblemDetails. Returns the specified
 // element and whether it was found
-func (a ProblemDetails) Get(fieldName string) (value interface{}, found bool) {
+func (a ProblemDetails) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -49,9 +49,9 @@ func (a ProblemDetails) Get(fieldName string) (value interface{}, found bool) {
 }
 
 // Setter for additional properties for ProblemDetails
-func (a *ProblemDetails) Set(fieldName string, value interface{}) {
+func (a *ProblemDetails) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -105,9 +105,9 @@ func (a *ProblemDetails) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)

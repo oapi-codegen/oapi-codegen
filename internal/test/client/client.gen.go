@@ -28,7 +28,7 @@ type SchemaObject struct {
 type openIdContextKey string
 
 // PostVendorJsonApplicationVndAPIPlusJSONBody defines parameters for PostVendorJson.
-type PostVendorJsonApplicationVndAPIPlusJSONBody = map[string]interface{}
+type PostVendorJsonApplicationVndAPIPlusJSONBody = map[string]any
 
 // PostBothJSONRequestBody defines body for PostBoth for application/json ContentType.
 type PostBothJSONRequestBody = SchemaObject

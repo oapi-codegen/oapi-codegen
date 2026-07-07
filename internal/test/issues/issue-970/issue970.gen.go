@@ -354,7 +354,7 @@ type strictHandler struct {
 func (sh *strictHandler) GetEvent(w http.ResponseWriter, r *http.Request) {
 	var request GetEventRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.GetEvent(ctx, request.(GetEventRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

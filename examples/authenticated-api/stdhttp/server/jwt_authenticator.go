@@ -95,7 +95,7 @@ func GetClaimsFromToken(t jwt.Token) ([]string, error) {
 		return make([]string, 0), nil
 	}
 
-	var rawList []interface{}
+	var rawList []any
 	if err := t.Get(PermissionsClaim, &rawList); err != nil {
 		return nil, fmt.Errorf("getting %q claim: %w", PermissionsClaim, err)
 	}

@@ -251,7 +251,7 @@ type strictHandler struct {
 func (sh *strictHandler) GetGetMultibody(ctx *fiber.Ctx) error {
 	var request GetGetMultibodyRequestObject
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.GetGetMultibody(ctx.UserContext(), request.(GetGetMultibodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -276,7 +276,7 @@ func (sh *strictHandler) GetGetMultibody(ctx *fiber.Ctx) error {
 func (sh *strictHandler) GetObject(ctx *fiber.Ctx) error {
 	var request GetObjectRequestObject
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.GetObject(ctx.UserContext(), request.(GetObjectRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -324,7 +324,7 @@ func (sh *strictHandler) PostPostMultibody(ctx *fiber.Ctx) error {
 		}
 	}
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.PostPostMultibody(ctx.UserContext(), request.(PostPostMultibodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -358,7 +358,7 @@ func (sh *strictHandler) PostPostObject(ctx *fiber.Ctx) error {
 		request.Body = &body
 	}
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.PostPostObject(ctx.UserContext(), request.(PostPostObjectRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

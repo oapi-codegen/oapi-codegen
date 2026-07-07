@@ -104,7 +104,7 @@ func TestNullableArrayAndObjectFields_3_0(t *testing.T) {
 
 // TestNullableUnspecifiedObject_3_1 asserts that a bare nullable
 // object (`type: ["object","null"]` with no `properties:`) generates
-// as `*map[string]interface{}`. This is the gap flagged in the
+// as `*map[string]any`. This is the gap flagged in the
 // kin-openapi-3.1 PR review: `Schema.Is(...)` strict equality on a
 // 3.1 type-array failed to recognize the primary type as "object",
 // routing the schema away from the unspecified-object code path.
@@ -112,8 +112,8 @@ func TestNullableArrayAndObjectFields_3_0(t *testing.T) {
 // (`type: ["null","object"]`) resolves identically -- no code path
 // may peek only at the first element of the array.
 func TestNullableUnspecifiedObject_3_1(t *testing.T) {
-	extras := map[string]interface{}{"k": "v"}
-	metadata := map[string]interface{}{"j": float64(1)}
+	extras := map[string]any{"k": "v"}
+	metadata := map[string]any{"j": float64(1)}
 	p := spec31.Pet{
 		Name:     "fluffy",
 		Extras:   &extras,
@@ -133,7 +133,7 @@ func TestNullableUnspecifiedObject_3_1(t *testing.T) {
 // TestNullableUnspecifiedObject_3_0 is the matching 3.0 control case
 // asserting parity with the 3.1 type-array form.
 func TestNullableUnspecifiedObject_3_0(t *testing.T) {
-	extras := map[string]interface{}{"k": "v"}
+	extras := map[string]any{"k": "v"}
 	p := spec30.Pet{
 		Name:   "fluffy",
 		Extras: &extras,

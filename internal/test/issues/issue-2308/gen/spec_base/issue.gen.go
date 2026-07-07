@@ -662,7 +662,7 @@ type strictHandler struct {
 func (sh *strictHandler) GetV1Outcome(w http.ResponseWriter, r *http.Request) {
 	var request GetV1OutcomeRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.GetV1Outcome(ctx, request.(GetV1OutcomeRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -686,7 +686,7 @@ func (sh *strictHandler) GetV1Outcome(w http.ResponseWriter, r *http.Request) {
 func (sh *strictHandler) GetV1Version(w http.ResponseWriter, r *http.Request) {
 	var request GetV1VersionRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.GetV1Version(ctx, request.(GetV1VersionRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

@@ -8,7 +8,7 @@ type Pet struct {
 	// Extras Optional, nullable *unspecified* object (no `properties:`).
 	// 3.0 control case for the 3.1 `type: ["object","null"]`
 	// equivalent; expected shape: `*map[string]interface{}`.
-	Extras *map[string]interface{} `json:"extras,omitempty"`
+	Extras *map[string]any `json:"extras,omitempty"`
 
 	// Name Required, non-nullable.
 	Name string `json:"name"`

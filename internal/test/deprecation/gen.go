@@ -1977,7 +1977,7 @@ func (sh *strictHandler) PostClients(w http.ResponseWriter, r *http.Request) {
 	}
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.PostClients(ctx, request.(PostClientsRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -2001,7 +2001,7 @@ func (sh *strictHandler) PostClients(w http.ResponseWriter, r *http.Request) {
 func (sh *strictHandler) GetDeprecatedEndpoint(w http.ResponseWriter, r *http.Request) {
 	var request GetDeprecatedEndpointRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.GetDeprecatedEndpoint(ctx, request.(GetDeprecatedEndpointRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -2032,7 +2032,7 @@ func (sh *strictHandler) PostDeprecatedEndpointWithNonDeprecatedBody(w http.Resp
 	}
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.PostDeprecatedEndpointWithNonDeprecatedBody(ctx, request.(PostDeprecatedEndpointWithNonDeprecatedBodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -2058,7 +2058,7 @@ func (sh *strictHandler) GetDeprecatedField(w http.ResponseWriter, r *http.Reque
 
 	request.Params = params
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.GetDeprecatedField(ctx, request.(GetDeprecatedFieldRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -2085,7 +2085,7 @@ func (sh *strictHandler) GetDeprecatedParamsOldId(w http.ResponseWriter, r *http
 	request.OldId = oldId
 	request.Params = params
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.GetDeprecatedParamsOldId(ctx, request.(GetDeprecatedParamsOldIdRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -2116,7 +2116,7 @@ func (sh *strictHandler) PostDeprecatedRequestBody(w http.ResponseWriter, r *htt
 	}
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.PostDeprecatedRequestBody(ctx, request.(PostDeprecatedRequestBodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -2140,7 +2140,7 @@ func (sh *strictHandler) PostDeprecatedRequestBody(w http.ResponseWriter, r *htt
 func (sh *strictHandler) GetLegacy(w http.ResponseWriter, r *http.Request) {
 	var request GetLegacyRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.GetLegacy(ctx, request.(GetLegacyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

@@ -267,7 +267,7 @@ type strictHandler struct {
 func (sh *strictHandler) ListThings(w http.ResponseWriter, r *http.Request) {
 	var request ListThingsRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.ListThings(ctx, request.(ListThingsRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

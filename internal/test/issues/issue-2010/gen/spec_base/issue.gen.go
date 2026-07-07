@@ -250,7 +250,7 @@ type strictHandler struct {
 func (sh *strictHandler) GetExample(w http.ResponseWriter, r *http.Request) {
 	var request GetExampleRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.GetExample(ctx, request.(GetExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

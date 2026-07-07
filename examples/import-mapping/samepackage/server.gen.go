@@ -251,7 +251,7 @@ func (sh *strictHandler) GetUserById(w http.ResponseWriter, r *http.Request, id 
 
 	request.Id = id
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.GetUserById(ctx, request.(GetUserByIdRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

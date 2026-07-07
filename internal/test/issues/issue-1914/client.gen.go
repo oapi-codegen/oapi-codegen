@@ -192,7 +192,7 @@ func (c *Client) PostPet1234WithTextBody(ctx context.Context, body PostPet1234Te
 // NewPostPetRequestWithTextBody calls the generic PostPet builder with text/plain body
 func NewPostPetRequestWithTextBody(server string, body PostPetTextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+	if stringer, ok := any(body).(fmt.Stringer); ok {
 		bodyReader = strings.NewReader(stringer.String())
 	} else {
 		bodyReader = strings.NewReader(fmt.Sprint(body))
@@ -232,7 +232,7 @@ func NewPostPetRequestWithBody(server string, contentType string, body io.Reader
 // NewPostPet1234RequestWithTextBody calls the generic PostPet1234 builder with text/plain body
 func NewPostPet1234RequestWithTextBody(server string, body PostPet1234TextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+	if stringer, ok := any(body).(fmt.Stringer); ok {
 		bodyReader = strings.NewReader(stringer.String())
 	} else {
 		bodyReader = strings.NewReader(fmt.Sprint(body))

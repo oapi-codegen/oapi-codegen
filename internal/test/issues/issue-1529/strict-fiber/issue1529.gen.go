@@ -21,7 +21,7 @@ import (
 )
 
 // Test defines model for Test.
-type Test = map[string]interface{}
+type Test = map[string]any
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -415,7 +415,7 @@ type strictHandler struct {
 func (sh *strictHandler) Test(ctx *fiber.Ctx) error {
 	var request TestRequestObject
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.Test(ctx.UserContext(), request.(TestRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

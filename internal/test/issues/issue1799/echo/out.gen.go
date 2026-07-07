@@ -250,7 +250,7 @@ type strictHandler struct {
 func (sh *strictHandler) GetGetMultibody(ctx echo.Context) error {
 	var request GetGetMultibodyRequestObject
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx echo.Context, request any) (any, error) {
 		return sh.ssi.GetGetMultibody(ctx.Request().Context(), request.(GetGetMultibodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -273,7 +273,7 @@ func (sh *strictHandler) GetGetMultibody(ctx echo.Context) error {
 func (sh *strictHandler) GetObject(ctx echo.Context) error {
 	var request GetObjectRequestObject
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx echo.Context, request any) (any, error) {
 		return sh.ssi.GetObject(ctx.Request().Context(), request.(GetObjectRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -317,7 +317,7 @@ func (sh *strictHandler) PostPostMultibody(ctx echo.Context) error {
 		}
 	}
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx echo.Context, request any) (any, error) {
 		return sh.ssi.PostPostMultibody(ctx.Request().Context(), request.(PostPostMultibodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -349,7 +349,7 @@ func (sh *strictHandler) PostPostObject(ctx echo.Context) error {
 		request.Body = &body
 	}
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx echo.Context, request any) (any, error) {
 		return sh.ssi.PostPostObject(ctx.Request().Context(), request.(PostPostObjectRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
