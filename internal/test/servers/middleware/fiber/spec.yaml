@@ -9,6 +9,7 @@ paths:
     get:
       operationId: authCheck
       security:
+        - {}
         - bearerAuth: []
       responses:
         200:
