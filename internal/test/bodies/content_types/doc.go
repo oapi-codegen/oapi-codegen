@@ -10,7 +10,7 @@
 //   - issue #1914:      text/plain request body coerces UUID/number to string.
 //
 // Strict-server content-type regressions that need per-framework server codegen
-// live in the multi_json, json_suffix, and text_and_json sub-packages.
+// live in the multi_json and text_and_json sub-packages.
 package bodiescontenttypes
 
 //go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml spec.yaml

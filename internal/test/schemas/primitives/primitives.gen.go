@@ -10,6 +10,17 @@ import (
 // AliasedDate defines model for AliasedDate.
 type AliasedDate = openapi_types.Date
 
+// AnyType1 defines model for AnyType1.
+type AnyType1 = interface{}
+
+// AnyType2 AnyType2 represents any type.
+//
+// This should be an interface{}
+type AnyType2 = interface{}
+
+// CustomStringType defines model for CustomStringType.
+type CustomStringType = string
+
 // Pet defines model for Pet.
 type Pet struct {
 	Born   *AliasedDate        `json:"born,omitempty"`

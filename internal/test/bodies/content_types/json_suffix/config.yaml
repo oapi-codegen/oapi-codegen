@@ -1,9 +1,0 @@
-# yaml-language-server: $schema=../../../../../configuration-schema.json
-# From issue-1298
-package: jsonsuffix
-generate:
-  models: true
-  client: true
-  gin-server: true
-  strict-server: true
-output: json_suffix.gen.go

@@ -86,3 +86,25 @@ func TestIssue518(t *testing.T) {
 		assert.Equal(t, fiber.StatusOK, resp.StatusCode)
 	})
 }
+
+// From issue-1469: registering fiber handlers (with and without options) for
+// an operation with an empty-object requestBody must not panic.
+func TestIssue1469(t *testing.T) {
+	server := &impl{}
+
+	r := fiber.New()
+
+	assert.NotPanics(t, func() {
+		RegisterHandlers(r, server)
+	})
+
+	assert.NotPanics(t, func() {
+		RegisterHandlersWithOptions(r, server, FiberServerOptions{
+			Middlewares: []MiddlewareFunc{
+				func(c *fiber.Ctx) error {
+					return nil
+				},
+			},
+		})
+	})
+}

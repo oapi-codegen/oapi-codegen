@@ -1,4 +1,4 @@
-package parametersencoding
+package parameterspathedgecases
 
 import (
 	"context"
@@ -14,6 +14,8 @@ import (
 )
 
 const hostname = "http://host"
+
+// From issue-312: client URL construction and server unescaping.
 
 func TestClient_WhenPathHasColon_RequestHasCorrectPath(t *testing.T) {
 	doer := &HTTPRequestDoerMock{}
@@ -92,6 +94,13 @@ func TestClient_ServerUnescapesEscapedArg(t *testing.T) {
 	assert.Equal(t, petID, receivedPetID)
 }
 
+// From issue-1180: TestParameterPrecedence validates that the parameter `param`
+// is a string type, rather than an int, as we should prioritise the `param`
+// definition closest to the operation.
+func TestParameterPrecedence(t *testing.T) {
+	_, _ = NewGetSimplePrimitiveRequest("http://example.com/", "test-string")
+}
+
 // HTTPRequestDoerMock mocks the interface HttpRequestDoerMock.
 type HTTPRequestDoerMock struct {
 	mock.Mock
@@ -108,8 +117,9 @@ func (m *HTTPRequestDoerMock) Do(req *http.Request) (*http.Response, error) {
 // An implementation of the server interface which helps us check server
 // expectations for funky paths and parameters.
 type MockClient struct {
-	getPet       func(ctx echo.Context, petId string) error
-	validatePets func(ctx echo.Context) error
+	getPet             func(ctx echo.Context, petId string) error
+	validatePets       func(ctx echo.Context) error
+	getSimplePrimitive func(ctx echo.Context, param string) error
 }
 
 func (m *MockClient) GetPet(ctx echo.Context, petId string) error {
@@ -122,6 +132,13 @@ func (m *MockClient) GetPet(ctx echo.Context, petId string) error {
 func (m *MockClient) ValidatePets(ctx echo.Context) error {
 	if m.validatePets != nil {
 		return m.validatePets(ctx)
+	}
+	return ctx.NoContent(http.StatusNotImplemented)
+}
+
+func (m *MockClient) GetSimplePrimitive(ctx echo.Context, param string) error {
+	if m.getSimplePrimitive != nil {
+		return m.getSimplePrimitive(ctx, param)
 	}
 	return ctx.NoContent(http.StatusNotImplemented)
 }

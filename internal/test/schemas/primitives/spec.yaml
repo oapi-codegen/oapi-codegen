@@ -1,11 +1,13 @@
 # ==========================================================================
 # Category: schemas/primitives
 # Tests:    aliased scalar types (Date via $ref vs inline); untyped schema {}
-#           generating interface{} without an optional pointer.
+#           generating interface{} without an optional pointer; custom-format
+#           string with extra struct tags.
 #
 # Folds in (provenance):
 #   - issues/issue-579  (aliased Date type: AliasedDate = openapi_types.Date)
 #   - issues/issue609   (untyped schema -> interface{})
+#   - schemas/schemas.yaml (AnyType1/AnyType2 untyped -> any; CustomStringType)
 # ==========================================================================
 openapi: "3.0.0"
 info:
@@ -39,3 +41,18 @@ components:
       type: object
       properties:
         unknown: {}
+
+    # Folded from schemas/schemas.yaml (compile-only):
+    # AnyType1 / AnyType2: schemas with no type -> Go interface{} (any).
+    AnyType1: { }
+    AnyType2:
+      description: |
+        AnyType2 represents any type.
+
+        This should be an interface{}
+    # CustomStringType: string with a custom format and x-oapi-codegen-extra-tags.
+    CustomStringType:
+      type: string
+      format: custom
+      x-oapi-codegen-extra-tags:
+        foo: bar

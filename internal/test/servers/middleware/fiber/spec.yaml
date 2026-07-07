@@ -13,6 +13,8 @@ paths:
       responses:
         200:
           description: good
+  # From issue-1469: registering fiber handlers for an operation with an
+  # empty-object requestBody must not panic.
   /test:
     get:
       operationId: test

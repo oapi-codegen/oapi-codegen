@@ -3,6 +3,8 @@ package: schemasobjects
 output: objects.gen.go
 # issue #1277: exercises models, client, chi-server, and strict-server generation
 # for a response whose content schema is an array of objects with additionalProperties:true.
+output-options:
+  skip-prune: true
 generate:
   models: true
   client: true

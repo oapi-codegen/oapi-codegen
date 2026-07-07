@@ -1,10 +1,8 @@
 # yaml-language-server: $schema=../../../../../configuration-schema.json
-package: packagea
+package: petstore
 generate:
   models: true
   embedded-spec: true
 output-options:
   skip-prune: true
-import-mapping:
-  ../packageB/spec.yaml: github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/packageB
-output: externalref.gen.go
+output: petstore.gen.go

@@ -1,8 +1,0 @@
-# yaml-language-server: $schema=../../../../configuration-schema.json
-package: schemasobjects
-output: components.gen.go
-# components.yaml fold: additionalProperties variants + readOnly/writeOnly + format:json.
-generate:
-  models: true
-output-options:
-  skip-prune: true

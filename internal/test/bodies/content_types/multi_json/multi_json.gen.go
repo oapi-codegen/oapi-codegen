@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -19,6 +20,12 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
 )
+
+// SuffixBody defines model for SuffixBody.
+type SuffixBody struct {
+	Field1 string `json:"field1"`
+	Field2 string `json:"field2"`
+}
 
 // Bar defines model for bar.
 type Bar struct {
@@ -35,6 +42,9 @@ type BazApplicationBarPlusJSON = Bar
 
 // BazApplicationFooPlusJSON defines model for baz.
 type BazApplicationFooPlusJSON = Foo
+
+// SuffixTestApplicationTestPlusJSONRequestBody defines body for SuffixTest for application/test+json ContentType.
+type SuffixTestApplicationTestPlusJSONRequestBody = SuffixBody
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -110,8 +120,44 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 // The interface specification for the client above.
 type ClientInterface interface {
 
+	// SuffixTestWithBody performs a GET /suffix (the `SuffixTest` operationId) request,
+	// with any type of body and a specified content type.
+	SuffixTestWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SuffixTestWithApplicationTestPlusJSONBody performs a GET /suffix (the `SuffixTest` operationId) request.
+	// Takes a body of the `application/test+json` content type.
+	SuffixTestWithApplicationTestPlusJSONBody(ctx context.Context, body SuffixTestApplicationTestPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// Test performs a GET /test (the `Test` operationId) request.
 	Test(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+// SuffixTestWithBody performs a GET /suffix (the `SuffixTest` operationId) request,
+// with any type of body and a specified content type.
+func (c *Client) SuffixTestWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSuffixTestRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SuffixTestWithApplicationTestPlusJSONBody performs a GET /suffix (the `SuffixTest` operationId) request.
+// Takes a body of the `application/test+json` content type.
+func (c *Client) SuffixTestWithApplicationTestPlusJSONBody(ctx context.Context, body SuffixTestApplicationTestPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSuffixTestRequestWithApplicationTestPlusJSONBody(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 // Test performs a GET /test (the `Test` operationId) request.
@@ -125,6 +171,46 @@ func (c *Client) Test(ctx context.Context, reqEditors ...RequestEditorFn) (*http
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewSuffixTestRequestWithApplicationTestPlusJSONBody calls the generic SuffixTest builder with application/test+json body
+func NewSuffixTestRequestWithApplicationTestPlusJSONBody(server string, body SuffixTestApplicationTestPlusJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSuffixTestRequestWithBody(server, "application/test+json", bodyReader)
+}
+
+// NewSuffixTestRequestWithBody constructs an http.Request for the SuffixTest method, with any body, and a specified content type
+func NewSuffixTestRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/suffix")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
 }
 
 // NewTestRequest constructs an http.Request for the Test method
@@ -198,10 +284,54 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 
+	// SuffixTestWithBodyWithResponse performs a GET /suffix (the `SuffixTest` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	SuffixTestWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SuffixTestResponse, error)
+
+	// SuffixTestWithApplicationTestPlusJSONBodyWithResponse performs a GET /suffix (the `SuffixTest` operationId) request.
+	// Takes a body of the `application/test+json` content type, and returns a wrapper object for the known response body format(s).
+	SuffixTestWithApplicationTestPlusJSONBodyWithResponse(ctx context.Context, body SuffixTestApplicationTestPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*SuffixTestResponse, error)
+
 	// TestWithResponse performs a GET /test (the `Test` operationId) request.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	TestWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*TestResponse, error)
+}
+
+type SuffixTestResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes
+func (r SuffixTestResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SuffixTestResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SuffixTestResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SuffixTestResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type TestResponse struct {
@@ -266,6 +396,28 @@ func (r TestResponse) ContentType() string {
 	return ""
 }
 
+// SuffixTestWithBodyWithResponse performs a GET /suffix (the `SuffixTest` operationId) request,
+// with any type of body and a specified content type.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) SuffixTestWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SuffixTestResponse, error) {
+	rsp, err := c.SuffixTestWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSuffixTestResponse(rsp)
+}
+
+// SuffixTestWithApplicationTestPlusJSONBodyWithResponse performs a GET /suffix (the `SuffixTest` operationId) request.
+// Takes a body of the `application/test+json` content type, and returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) SuffixTestWithApplicationTestPlusJSONBodyWithResponse(ctx context.Context, body SuffixTestApplicationTestPlusJSONRequestBody, reqEditors ...RequestEditorFn) (*SuffixTestResponse, error) {
+	rsp, err := c.SuffixTestWithApplicationTestPlusJSONBody(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSuffixTestResponse(rsp)
+}
+
 // TestWithResponse performs a GET /test (the `Test` operationId) request.
 //
 // Returns a wrapper object for the known response body format(s).
@@ -275,6 +427,22 @@ func (c *ClientWithResponses) TestWithResponse(ctx context.Context, reqEditors .
 		return nil, err
 	}
 	return ParseTestResponse(rsp)
+}
+
+// ParseSuffixTestResponse parses an HTTP response from a SuffixTestWithResponse call
+func ParseSuffixTestResponse(rsp *http.Response) (*SuffixTestResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SuffixTestResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
 }
 
 // ParseTestResponse parses an HTTP response from a TestWithResponse call
@@ -327,6 +495,9 @@ func ParseTestResponse(rsp *http.Response) (*TestResponse, error) {
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
+	// (GET /suffix)
+	SuffixTest(c *gin.Context)
+
 	// (GET /test)
 	Test(c *gin.Context)
 }
@@ -339,6 +510,19 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(c *gin.Context)
+
+// SuffixTest operation middleware
+func (siw *ServerInterfaceWrapper) SuffixTest(c *gin.Context) {
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SuffixTest(c)
+}
 
 // Test operation middleware
 func (siw *ServerInterfaceWrapper) Test(c *gin.Context) {
@@ -380,11 +564,28 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 		ErrorHandler:       errorHandler,
 	}
 
+	router.GET(options.BaseURL+"/suffix", wrapper.SuffixTest)
 	router.GET(options.BaseURL+"/test", wrapper.Test)
 }
 
 type BazApplicationBarPlusJSONResponse Bar
 type BazApplicationFooPlusJSONResponse Foo
+
+type SuffixTestRequestObject struct {
+	Body *SuffixTestApplicationTestPlusJSONRequestBody
+}
+
+type SuffixTestResponseObject interface {
+	VisitSuffixTestResponse(w http.ResponseWriter) error
+}
+
+type SuffixTest204Response struct {
+}
+
+func (response SuffixTest204Response) VisitSuffixTestResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
 
 type TestRequestObject struct {
 }
@@ -456,6 +657,9 @@ func (response Test201ApplicationFooPlusJSONResponse) VisitTestResponse(w http.R
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
+	// (GET /suffix)
+	SuffixTest(ctx context.Context, request SuffixTestRequestObject) (SuffixTestResponseObject, error)
+
 	// (GET /test)
 	Test(ctx context.Context, request TestRequestObject) (TestResponseObject, error)
 }
@@ -517,6 +721,40 @@ type strictHandler struct {
 	options     StrictGinServerOptions
 }
 
+// SuffixTest operation middleware
+func (sh *strictHandler) SuffixTest(ctx *gin.Context) {
+	var request SuffixTestRequestObject
+
+	var body SuffixTestApplicationTestPlusJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(ctx, err)
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.SuffixTest(ctx, request.(SuffixTestRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SuffixTest")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(SuffixTestResponseObject); ok {
+		if err := validResponse.VisitSuffixTestResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // Test operation middleware
 func (sh *strictHandler) Test(ctx *gin.Context) {
 	var request TestRequestObject
@@ -546,10 +784,12 @@ func (sh *strictHandler) Test(ctx *gin.Context) {
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"zJJBTgMxDEXv8mFH1KTDLjdgzwXSqdMGTW0rCQuo5u7IaQWqVBbsmI09cd5P/lfOmOWkwsS9IZ5Rqalw",
-	"o/GzS59WZuFO3K1NqkuZUy/Cfpfq01sTtvU2H+mUrHuslBHx4H90/WXajMC6uhuVLPJHlSyC1T53Ba53",
-	"rVa0ilLt5WIgF1r2k3X9QwkRrdfCBwzYdO4T27uEMYWzIPL7sjiIEictiHjehE2Ag6Z+HCq+Uxt5HWgU",
-	"O2HYfdkj4tWG7jbqKYR/HLXDFLa/bf724e29jKDWrwAAAP//",
+	"zFOxUsMwDP0XwYavSQuTRzZm2DgGN5Fb91LLWOodpZd/52S3hd61QzayWI6s9/T07AN0tE0UMQqDPUBG",
+	"ThQZy2bpvnXpKApG0dClNITOSaDYLF1+2DBF/c/dGrdOo/uMHizcNb+4Tc2yVsA4mgsUTzQRxRPBqJ85",
+	"FpReX3feh69n6ve6S5kSZglVhw849HONZJ8QLLDkEFcwmppaXEmNBjJ+7kLGHuz7CeJc8GFOBbTcYCeK",
+	"pfKuc18lUHaiCd1WzSF6Aht3w2CAEkaXAlh4nLWzFgwkJ+uC0nAZiIYrLN4pR5n5Sw/2OK83ZIGqFFlO",
+	"07thuCDLRK/+uFK7v7hfi/ZJlx65yyEpB1hYEfXHw4XxpoJz7xeI7T++sQYW7fzW4bOORp9dMXv8CQAA",
+	"//8=",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

@@ -14,7 +14,7 @@
 #
 # Models + client only (compile-only except the issue-1914 client assertions).
 # The strict-server content-type regressions live in sibling sub-packages
-# (multi_json, json_suffix, text_and_json) because each needs server codegen
+# (multi_json, text_and_json) because each needs server codegen
 # for a specific framework and they would collide in one package.
 # ==========================================================================
 openapi: 3.0.3
