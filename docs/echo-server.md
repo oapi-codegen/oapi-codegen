@@ -1,5 +1,8 @@
 # Echo Server
 
+> [!NOTE]
+> This page covers Echo v4. Echo v5 is also supported — see the [Echo v5 documentation](echo5-server.md).
+
 For an Echo server, you will want a configuration file such as:
 
 ```yaml

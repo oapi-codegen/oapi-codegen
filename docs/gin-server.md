@@ -1,5 +1,8 @@
 # Gin Server
 
+> [!NOTE]
+> Gin (v1.12.0+) requires Go 1.25+.
+
 For a Gin server, you will want a configuration file such as:
 
 ```yaml

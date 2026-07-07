@@ -4,13 +4,13 @@
 
 `oapi-codegen` is a command-line tool and library to convert OpenAPI specifications to Go code, be it [server-side implementations](#generating-server-side-boilerplate), [API clients](#generating-api-clients), or simply [HTTP models](#generating-api-models).
 
-Using `oapi-codegen` allows you to reduce the boilerplate required to create or integrate with services based on [OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md), and instead focus on writing your business logic, and working on the real value-add for your organisation.
+Using `oapi-codegen` allows you to reduce the boilerplate required to create or integrate with services based on [OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md) and [OpenAPI 3.1](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md), and instead focus on writing your business logic, and working on the real value-add for your organisation.
 
 With `oapi-codegen`, there are a few [Key Design Decisions](#key-design-decisions) we've made, including:
 
 - idiomatic Go, where possible
 - fairly simple generated code, erring on the side of verbose code over complex modular code
-- supporting as much of OpenAPI 3.0 as is possible, alongside Go's type system
+- supporting as much of OpenAPI 3.0 and 3.1 as is possible, alongside Go's type system
 
 `oapi-codegen` is one part of a wider ecosystem, which can be found described in further detail in the [oapi-codegen organisation on GitHub](https://github.com/oapi-codegen).
 
@@ -21,7 +21,7 @@ With `oapi-codegen`, there are a few [Key Design Decisions](#key-design-decision
 <!-- toc -->
 - [Installation](#installation)
   - [Action Required: The repository for this project has changed](#action-required-the-repository-for-this-project-has-changed)
-  - [For Go 1.24+](#for-go-124)
+  - [Installing](#installing)
   - [Pinning to commits](#pinning-to-commits)
 - [Usage](#usage)
   - [Backwards compatibility](#backwards-compatibility)
@@ -44,6 +44,7 @@ With `oapi-codegen`, there are a few [Key Design Decisions](#key-design-decision
 - [Request/response validation middleware](#requestresponse-validation-middleware)
 - [Implementing security](#implementing-security)
   - [On the server](#on-the-server)
+    - [Deprecated: auth scopes on the request context](#deprecated-auth-scopes-on-the-request-context)
   - [On the client](#on-the-client)
 - [Custom code generation](#custom-code-generation)
   - [Local paths](#local-paths)
@@ -96,9 +97,11 @@ If you are using `v2.3.0` or above, please install like so, using the new module
 go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 ```
 
-### For Go 1.24+
+### Installing
 
-It is recommended to follow [the `go tool` support available from Go 1.24+](https://www.jvt.me/posts/2025/01/27/go-tools-124/) for managing the dependency of `oapi-codegen` alongside your core application.
+`oapi-codegen` requires Go 1.25+ to build and install. Note that the *generated* code has its own, lower requirements — see [Supported Servers](#supported-servers).
+
+It is recommended to use [`go tool` support](https://www.jvt.me/posts/2025/01/27/go-tools-124/) for managing the dependency of `oapi-codegen` alongside your core application.
 
 To do this, you run `go get -tool`:
 
@@ -125,8 +128,6 @@ Which then means you can invoke it like so:
 ```go
 //go:generate oapi-codegen --config=config.yaml ../../api.yaml
 ```
-
-Note that you can also [move your `tools.go` into its own sub-module](https://www.jvt.me/posts/2024/09/30/go-tools-module/) to reduce the impact on your top-level `go.mod`.
 
 ### Pinning to commits
 
@@ -427,10 +428,8 @@ We can see that this provides the best means to focus on the implementation of t
 - Resulting output is using Go's `text/template`s, which are user-overridable
 - Attempts to produce idiomatic Go
 - Support multiple OpenAPI files by having a package per OpenAPI file
-- Support of OpenAPI 3.0
-  - OpenAPI 3.1 support is [awaiting upstream support](https://github.com/oapi-codegen/oapi-codegen/issues/373)
-    However, we do have an experimental version using a different OpenAPI parser which does support 3.1 and 3.2, which
-    you can play around with in our [experimental repo](https://github.com/oapi-codegen/oapi-codegen-exp/tree/main/experimental)
+- Support of OpenAPI 3.0 and 3.1
+  - OpenAPI 3.1 support includes [webhooks](https://spec.openapis.org/oas/v3.1.0#oasWebhooks) and version-aware handling of 3.1 idioms such as `type: [T, "null"]` nullability and enums declared via `oneOf` + `const`
   - Note that this does not include OpenAPI 2.0 (aka Swagger). If you have an old Swagger
     specification, you can use a [converter](https://converter.swagger.io/) before
     using oapi-codegen.
@@ -457,9 +456,9 @@ older version of Go, we don't promise that it'll work.
 | --- | --- |------------| --- |
 | [Chi](https://github.com/go-chi/chi) | `chi-server` | 1.24+      | [Chi documentation](docs/chi-server.md) |
 | [Echo](https://github.com/labstack/echo) | `echo-server` | 1.24+      | [Echo documentation](docs/echo-server.md) |
-| [Echo v5](https://github.com/labstack/echo) | `echo5-server` | 1.24+      | [Echo v5 documentation](docs/echo5-server.md) |
+| [Echo v5](https://github.com/labstack/echo) | `echo5-server` | 1.25+      | [Echo v5 documentation](docs/echo5-server.md) |
 | [Fiber](https://github.com/gofiber/fiber) | `fiber-server` | 1.24+      | [Fiber documentation](docs/fiber-server.md) |
-| [Gin](https://github.com/gin-gonic/gin) | `gin-server` | 1.24+      | [Gin documentation](docs/gin-server.md) |
+| [Gin](https://github.com/gin-gonic/gin) | `gin-server` | 1.25+      | [Gin documentation](docs/gin-server.md) |
 | [gorilla/mux](https://github.com/gorilla/mux) | `gorilla-server` | 1.24+      | [gorilla/mux documentation](docs/gorilla-server.md) |
 | [Iris](https://github.com/kataras/iris) | `iris-server` | 1.24+      | [Iris documentation](docs/iris-server.md) |
 | [1.22+ `net/http`](https://pkg.go.dev/net/http) | `std-http-server` | 1.24+      | [`net/http` documentation](docs/stdhttp-server.md) |
@@ -2297,11 +2296,9 @@ Got one to add? Please raise a PR!
 
 ### Does `oapi-codegen` support OpenAPI 3.1?
 
-No, we don't currently.
+Yes. Initial OpenAPI 3.1 support landed with [#2336](https://github.com/oapi-codegen/oapi-codegen/pull/2336), including [webhooks](https://spec.openapis.org/oas/v3.1.0#oasWebhooks) and version-aware handling of 3.1 idioms such as `type: [T, "null"]` nullability and enums declared via `oneOf` + `const`.
 
-OpenAPI 3.1 support is [awaiting upstream support](https://github.com/oapi-codegen/oapi-codegen/issues/373).
-
-In the meantime, you could follow [steps from this blog post](https://www.jvt.me/posts/2025/05/04/oapi-codegen-trick-openapi-3-1/) to [use OpenAPI Overlay](#modifying-the-input-openapi-specification-with-openapi-overlay) to "downgrade" the OpenAPI 3.1 spec to OpenAPI 3.0.
+If you're on an older release that predates this, you can [use OpenAPI Overlay](#modifying-the-input-openapi-specification-with-openapi-overlay) to "downgrade" an OpenAPI 3.1 spec to OpenAPI 3.0, following [steps from this blog post](https://www.jvt.me/posts/2025/05/04/oapi-codegen-trick-openapi-3-1/).
 
 ### How does `oapi-codegen` handle `anyOf`, `allOf` and `oneOf`?
 

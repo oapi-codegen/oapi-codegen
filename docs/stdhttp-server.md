@@ -138,8 +138,10 @@ func main() {
 > This doesn't include [validation of incoming requests](../README.md#requestresponse-validation-middleware).
 
 > [!NOTE]
-> If you feel like you've done everything right, but are still receiving `404 page not found` errors, make sure that you've got the `go` directive in your `go.mod` updated to:
+> If you feel like you've done everything right, but are still receiving `404 page not found` errors, make sure that you've got the `go` directive in your `go.mod` set to at least `1.22`, which enables the enhanced `net/http` routing. In practice it should be at least:
 
 ```go.mod
-go 1.22
+go 1.24
 ```
+
+> (the `github.com/oapi-codegen/runtime` module imported by the generated code requires Go 1.24+.)

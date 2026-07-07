@@ -1,5 +1,8 @@
 # Echo v5 Server
 
+> [!NOTE]
+> Echo v5 requires Go 1.25+.
+
 For an Echo v5 server, you will want a configuration file such as:
 
 ```yaml
