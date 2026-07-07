@@ -465,6 +465,7 @@ func TestProperty_ZeroValueIsNil(t *testing.T) {
 	tests := []struct {
 		name        string
 		oapiSchema  *openapi3.Schema
+		goType      string
 		expectIsNil bool
 	}{
 		{
@@ -476,6 +477,12 @@ func TestProperty_ZeroValueIsNil(t *testing.T) {
 			name:        "when an object, returns false",
 			oapiSchema:  &openapi3.Schema{Type: newType("object")},
 			expectIsNil: false,
+		},
+		{
+			name:        "when an object rendered as a map, returns true",
+			oapiSchema:  &openapi3.Schema{Type: newType("object")},
+			goType:      "map[string]string",
+			expectIsNil: true,
 		},
 		{
 			name:        "when a string, returns false",
@@ -509,6 +516,7 @@ func TestProperty_ZeroValueIsNil(t *testing.T) {
 			prop := Property{
 				Schema: Schema{
 					OAPISchema: tt.oapiSchema,
+					GoType:     tt.goType,
 				},
 			}
 			if tt.expectIsNil {
@@ -518,4 +526,16 @@ func TestProperty_ZeroValueIsNil(t *testing.T) {
 			}
 		})
 	}
+}
+
+// A bare OpenAPI 3.1 `type: "null"` schema validates exactly the JSON
+// value null. Go has no such type, so it maps to `any`, with the optional
+// pointer skipped (nil is already `any`'s zero value). Issue #2430.
+func TestOapiSchemaToGoType_NullType(t *testing.T) {
+	schema := &openapi3.Schema{Type: &openapi3.Types{"null"}}
+	var out Schema
+	require.NoError(t, oapiSchemaToGoType(schema, []string{"Challenger"}, &out))
+	assert.Equal(t, "any", out.GoType)
+	assert.True(t, out.SkipOptionalPointer)
+	assert.True(t, out.DefineViaAlias)
 }

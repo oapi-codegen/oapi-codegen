@@ -1,0 +1,12 @@
+openapi: "3.0.0"
+info: {title: t, version: "1.0.0"}
+paths:
+  /foo:
+    get:
+      operationId: getFoo
+      parameters:
+        - name: 'ev"il'
+          in: query
+          schema: {type: string}
+      responses:
+        '200': {description: ok}

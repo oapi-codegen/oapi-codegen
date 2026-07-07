@@ -88,6 +88,11 @@ These are also run in GitHub Actions, across a number of Go releases.
 
 It's recommended to raise a draft PR first, so you can get feedback on the PR from GitHub, and review your own changes, before getting the attention of a maintainer.
 
+Once your draft PR passes basic CI, remove the draft status, and at that point, the [Greptile](https://www.greptile.com/) code review system, in addition to the maintainers, will go over your code.
+It doesn't re-review updates, to save on costs, so if you would like a second review, tag `@greptileai` in one of your responses to the comments, and ask it
+to redo the review, or push back if you think it's wrong. We've got it set very conservatively, but we've configured it with guidance on what to
+watch for in PR's, since over the years, we've learned the pain points.
+
 ### "Should I @-mention the maintainers on an issue"
 
 Please try to avoid pinging the maintainers in an issue, Pull Request, or discussion.

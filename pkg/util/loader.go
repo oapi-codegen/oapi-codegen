@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/speakeasy-api/openapi-overlay/pkg/loader"
+	"github.com/speakeasy-api/openapi/overlay/loader"
 	"gopkg.in/yaml.v3"
 )
 
@@ -74,7 +74,7 @@ func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (s
 	}
 
 	if opts.Strict {
-		err, vs := overlay.ApplyToStrict(&node)
+		vs, err := overlay.ApplyToStrict(&node)
 		if err != nil {
 			return nil, fmt.Errorf("failed to apply Overlay %#v to specification %#v: %v\nAdditionally, the following validation errors were found:\n- %s", opts.Path, filePath, err, strings.Join(vs, "\n- "))
 		}

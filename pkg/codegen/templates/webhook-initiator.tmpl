@@ -1,0 +1,235 @@
+// WebhookInitiator sends OpenAPI 3.1 webhook requests to target URLs.
+// Modeled on the generated Client, but with no stored Server -- the full
+// target URL is provided per-call by the caller (typically discovered
+// from a subscription registration).
+type WebhookInitiator struct {
+	// Doer for performing requests, typically a *http.Client with any
+	// customized settings, such as certificate chains.
+	Client HttpRequestDoer
+
+	// A list of callbacks for modifying requests which are generated before sending over
+	// the network.
+	RequestEditors []RequestEditorFn
+}
+
+// WebhookInitiatorOption allows setting custom parameters during construction.
+type WebhookInitiatorOption func(*WebhookInitiator) error
+
+// NewWebhookInitiator creates a new WebhookInitiator with reasonable defaults.
+func NewWebhookInitiator(opts ...WebhookInitiatorOption) (*WebhookInitiator, error) {
+	initiator := WebhookInitiator{}
+	for _, o := range opts {
+		if err := o(&initiator); err != nil {
+			return nil, err
+		}
+	}
+	if initiator.Client == nil {
+		initiator.Client = &http.Client{}
+	}
+	return &initiator, nil
+}
+
+// WithWebhookHTTPClient allows overriding the default Doer, which is
+// automatically created using http.Client. This is useful for tests.
+func WithWebhookHTTPClient(doer HttpRequestDoer) WebhookInitiatorOption {
+	return func(p *WebhookInitiator) error {
+		p.Client = doer
+		return nil
+	}
+}
+
+// WithWebhookRequestEditorFn allows setting up a callback function, which
+// will be called right before sending the webhook request. This can be
+// used to mutate the request, e.g. to add signature headers.
+func WithWebhookRequestEditorFn(fn RequestEditorFn) WebhookInitiatorOption {
+	return func(p *WebhookInitiator) error {
+		p.RequestEditors = append(p.RequestEditors, fn)
+		return nil
+	}
+}
+
+func (p *WebhookInitiator) applyWebhookEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
+	for _, r := range p.RequestEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	for _, r := range additionalEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// WebhookInitiatorInterface is the interface specification for the webhook initiator.
+type WebhookInitiatorInterface interface {
+{{range . -}}
+{{$hasParams := .RequiresParamObject -}}
+{{$opid := .OperationId -}}
+    // {{$opid}}{{if .HasBody}}WithBody{{end}} fires the {{.WebhookName}} webhook{{if .HasBody}} with any body{{end}}
+    {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context, targetURL string{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error)
+{{range .Bodies}}
+    {{if .IsSupportedByClient -}}
+    {{$opid}}{{.Suffix}}(ctx context.Context, targetURL string{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error)
+    {{end -}}
+{{end}}{{/* range .Bodies */}}
+{{end}}{{/* range . */}}
+}
+
+
+{{/* Generate webhook initiator methods */}}
+{{range . -}}
+{{$hasParams := .RequiresParamObject -}}
+{{$opid := .OperationId -}}
+
+func (p *WebhookInitiator) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context, targetURL string{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error) {
+    req, err := New{{$opid}}WebhookRequest{{if .HasBody}}WithBody{{end}}(targetURL{{if $hasParams}}, params{{end}}{{if .HasBody}}, contentType, body{{end}})
+    if err != nil {
+        return nil, err
+    }
+    req = req.WithContext(ctx)
+    if err := p.applyWebhookEditors(ctx, req, reqEditors); err != nil {
+        return nil, err
+    }
+    return p.Client.Do(req)
+}
+
+{{range .Bodies}}
+{{if .IsSupportedByClient -}}
+func (p *WebhookInitiator) {{$opid}}{{.Suffix}}(ctx context.Context, targetURL string{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error) {
+    req, err := New{{$opid}}WebhookRequest{{.Suffix}}(targetURL{{if $hasParams}}, params{{end}}, body)
+    if err != nil {
+        return nil, err
+    }
+    req = req.WithContext(ctx)
+    if err := p.applyWebhookEditors(ctx, req, reqEditors); err != nil {
+        return nil, err
+    }
+    return p.Client.Do(req)
+}
+{{end -}}
+{{end}}{{/* range .Bodies */}}
+{{end}}{{/* range . */}}
+
+{{/* Generate webhook request builders */}}
+{{range . -}}
+{{$hasParams := .RequiresParamObject -}}
+{{$opid := .OperationId -}}
+{{$method := .Method -}}
+{{$webhookName := .WebhookName -}}
+
+{{range .Bodies}}
+{{if .IsSupportedByClient -}}
+// New{{$opid}}WebhookRequest{{.Suffix}} builds a {{.ContentType}} {{$method}} request for the {{$webhookName}} webhook
+func New{{$opid}}WebhookRequest{{.Suffix}}(targetURL string{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Request, error) {
+    var bodyReader io.Reader
+    {{if .IsJSON -}}
+        buf, err := json.Marshal(body)
+        if err != nil {
+            return nil, err
+        }
+        bodyReader = bytes.NewReader(buf)
+    {{else if eq .NameTag "Formdata" -}}
+        bodyStr, err := runtime.MarshalForm(body, nil)
+        if err != nil {
+            return nil, err
+        }
+        bodyReader = strings.NewReader(bodyStr.Encode())
+    {{else if eq .NameTag "Text" -}}
+        if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+            bodyReader = strings.NewReader(stringer.String())
+        } else {
+        {{if .Schema.IsPrimitive -}}
+            bodyReader = strings.NewReader(fmt.Sprint(body))
+        {{else -}}
+            return nil, fmt.Errorf("text/plain is not supported for complex types, define a String() method on {{.Schema.TypeDecl}} to marshal it as text")
+        {{end -}}
+        }
+    {{end -}}
+    return New{{$opid}}WebhookRequestWithBody(targetURL{{if $hasParams}}, params{{end}}, "{{.ContentType}}", bodyReader)
+}
+{{end -}}
+{{end}}
+
+// New{{$opid}}WebhookRequest{{if .HasBody}}WithBody{{end}} builds a {{.Method}} request for the {{.WebhookName}} webhook{{if .HasBody}} with any body{{end}}
+func New{{$opid}}WebhookRequest{{if .HasBody}}WithBody{{end}}(targetURL string{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*http.Request, error) {
+    var err error
+    _ = err
+
+    reqURL, err := url.Parse(targetURL)
+    if err != nil {
+        return nil, err
+    }
+
+{{if .QueryParams}}
+    if params != nil {
+        queryValues := reqURL.Query()
+        var rawQueryFragments []string
+            {{range $paramIdx, $param := .QueryParams}}
+            {{if .RequiresNilCheck}} if params.{{.GoName}} != nil { {{end}}
+            {{if .IsPassThrough}}
+            queryValues.Add("{{.ParamName}}", {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}})
+            {{end}}
+            {{if .IsJson}}
+            if queryParamBuf, err := json.Marshal({{if .HasOptionalPointer}}*{{end}}params.{{.GoName}}); err != nil {
+                return nil, err
+            } else {
+                queryValues.Add("{{.ParamName}}", string(queryParamBuf))
+            }
+            {{end}}
+            {{if .IsStyled}}
+            if queryFrag, err := runtime.StyleParamWithOptions("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if and .RequiresNilCheck .HasOptionalPointer}}*{{end}}params.{{.GoName}}, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"}); err != nil {
+                return nil, err
+            } else {
+                for _, qp := range strings.Split(queryFrag, "&") {
+                    rawQueryFragments = append(rawQueryFragments, qp)
+                }
+            }
+            {{end}}
+            {{if .RequiresNilCheck}}}{{end}}
+        {{end}}
+        if encoded := queryValues.Encode(); encoded != "" {
+            rawQueryFragments = append(rawQueryFragments, encoded)
+        }
+        reqURL.RawQuery = strings.Join(rawQueryFragments, "&")
+    }
+{{end}}{{/* if .QueryParams */}}
+
+    req, err := http.NewRequest({{.Method | httpMethodConstant}}, reqURL.String(), {{if .HasBody}}body{{else}}nil{{end}})
+    if err != nil {
+        return nil, err
+    }
+
+    {{if .HasBody}}req.Header.Add("Content-Type", contentType){{end}}
+{{ if .HeaderParams }}
+    if params != nil {
+    {{range $paramIdx, $param := .HeaderParams}}
+        {{if .RequiresNilCheck}} if params.{{.GoName}} != nil { {{end}}
+        var headerParam{{$paramIdx}} string
+        {{if .IsPassThrough}}
+        headerParam{{$paramIdx}} = {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}}
+        {{end}}
+        {{if .IsJson}}
+        var headerParamBuf{{$paramIdx}} []byte
+        headerParamBuf{{$paramIdx}}, err = json.Marshal({{if .HasOptionalPointer}}*{{end}}params.{{.GoName}})
+        if err != nil {
+            return nil, err
+        }
+        headerParam{{$paramIdx}} = string(headerParamBuf{{$paramIdx}})
+        {{end}}
+        {{if .IsStyled}}
+        headerParam{{$paramIdx}}, err = runtime.StyleParamWithOptions("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}}, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+        if err != nil {
+            return nil, err
+        }
+        {{end}}
+        req.Header.Set("{{.ParamName}}", headerParam{{$paramIdx}})
+        {{if .RequiresNilCheck}}}{{end}}
+    {{end}}
+    }
+{{- end }}{{/* if .HeaderParams */}}
+    return req, nil
+}
+
+{{end}}{{/* Range */}}

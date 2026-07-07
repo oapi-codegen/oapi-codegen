@@ -27,6 +27,7 @@ import (
 	"maps"
 	"net/http"
 	"os"
+	"regexp"
 	"runtime/debug"
 	"slices"
 	"sort"
@@ -48,8 +49,16 @@ var templates embed.FS
 // globalState stores all global state. Please don't put global state anywhere
 // else so that we can easily track it.
 var globalState struct {
-	options       Configuration
-	spec          *openapi3.T
+	options Configuration
+	spec    *openapi3.T
+	// is31 is true when the loaded spec declares OpenAPI version >=3.1.
+	// All version-aware behavior (e.g. nullable detection, webhook emission)
+	// reads from this field. Do NOT expose this field to templates --
+	// templates are version-blind and consume pre-computed derived fields
+	// (e.g. Schema.Nullable) populated by version-aware Go helpers.
+	// Adding `is31` to TemplateFunctions or branching on the OpenAPI
+	// version inside a template is a layering violation.
+	is31          bool
 	importMapping importMap
 	// initialismsMap stores initialisms as "lower(initialism) -> initialism" map.
 	// List of initialisms was taken from https://staticcheck.io/docs/configuration/options/#initialisms.
@@ -62,6 +71,9 @@ var globalState struct {
 	// resolvedClientWrapperNames maps operationID to the resolved Go type name
 	// for client response wrapper types (e.g., "createChatCompletion" -> "CreateChatCompletionResponseWrapper").
 	resolvedClientWrapperNames map[string]string
+	// streamingContentTypeRegexes are the compiled regexes (defaults + user)
+	// used by ResponseContentDefinition.IsStreamingContentType.
+	streamingContentTypeRegexes []*regexp.Regexp
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -146,6 +158,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	// This is global state
 	globalState.options = opts
 	globalState.spec = spec
+	globalState.is31 = spec.IsOpenAPI31OrLater()
 	globalState.importMapping = constructImportMapping(opts.ImportMapping)
 	if opts.OutputOptions.TypeMapping != nil {
 		globalState.typeMapping = DefaultTypeMapping.Merge(*opts.OutputOptions.TypeMapping)
@@ -157,6 +170,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	filterOperationsByOperationID(spec, opts)
 	if !opts.OutputOptions.SkipPrune {
 		pruneUnusedComponents(spec)
+	}
+
+	// Reject spec values that cannot be represented in the generated Go source
+	// (names, media types, enum values, extension hints containing quotes,
+	// backticks, or control characters). Run after filtering/pruning so only
+	// values that will actually be emitted are considered.
+	if err := ValidateSpec(spec); err != nil {
+		return "", err
 	}
 
 	// if we are provided an override for the response type suffix update it
@@ -180,6 +201,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	}
 
 	globalState.initialismsMap = makeInitialismsMap(opts.OutputOptions.AdditionalInitialisms)
+
+	// Compile streaming-content-type patterns (defaults merged with user-supplied).
+	// Validate() already caught syntax errors, but surface any regression here too.
+	streamingRegexes, err := compileStreamingContentTypes(opts.OutputOptions.StreamingContentTypes)
+	if err != nil {
+		return "", err
+	}
+	globalState.streamingContentTypeRegexes = streamingRegexes
 
 	// Multi-pass name resolution: gather all schemas, then resolve names globally.
 	// Only enabled when resolve-type-name-collisions is set.
@@ -208,7 +237,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above
-	err := LoadTemplates(templates, t)
+	err = LoadTemplates(templates, t)
 	if err != nil {
 		return "", fmt.Errorf("error parsing oapi-codegen templates: %w", err)
 	}
@@ -233,19 +262,62 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", fmt.Errorf("error creating operation definitions: %w", err)
 	}
 
-	xGoTypeImports, err := OperationImports(ops)
+	// Webhooks (OpenAPI 3.1+) flow through the same OperationDefinition
+	// shape as paths but render via webhook-specific templates. The
+	// gather walks swagger.Webhooks unconditionally -- the map is only
+	// populated by kin-openapi for 3.1+ documents, so 3.0 specs return
+	// an empty slice naturally. allOps is used for cross-cutting passes
+	// (type defs, import gathering); ops and webhookOps are passed
+	// separately to path-vs-webhook template generators.
+	webhookOps, err := WebhookOperationDefinitions(spec)
+	if err != nil {
+		return "", fmt.Errorf("error creating webhook operation definitions: %w", err)
+	}
+
+	// Callbacks (OpenAPI 3.0+) are nested under path operations. Like
+	// webhooks they render via initiator/receiver templates, but they
+	// are NOT version-gated -- callbacks have been part of the spec
+	// since 3.0. Gather is no-op for specs without any callbacks.
+	callbackOps, err := CallbackOperationDefinitions(spec)
+	if err != nil {
+		return "", fmt.Errorf("error creating callback operation definitions: %w", err)
+	}
+	allOps := append(append(append([]OperationDefinition{}, ops...), webhookOps...), callbackOps...)
+
+	xGoTypeImports, err := OperationImports(allOps)
 	if err != nil {
 		return "", fmt.Errorf("error getting operation imports: %w", err)
 	}
 
+	// Type and constant emission is gated by Generate.Models. Both
+	// component-derived types (from #/components) and op-derived types
+	// (Params/RequestBody/hoisted-ResponseBody) flow through this gate
+	// today; that conflation is historical but kept for backwards
+	// compatibility (changing it would alter the symbols emitted by
+	// `models: true`-alone configs and break downstream code in the wild).
 	var typeDefinitions, constantDefinitions string
 	if opts.Generate.Models {
-		typeDefinitions, err = GenerateTypeDefinitions(t, spec, ops, opts.OutputOptions.ExcludeSchemas)
+		componentTypes, err := collectComponentTypes(t, spec, opts.OutputOptions.ExcludeSchemas)
 		if err != nil {
-			return "", fmt.Errorf("error generating type definitions: %w", err)
+			return "", fmt.Errorf("error collecting component types: %w", err)
+		}
+		componentDecls, err := GenerateTypes(t, componentTypes)
+		if err != nil {
+			return "", fmt.Errorf("error generating code for type definitions: %w", err)
 		}
 
-		constantDefinitions, err = GenerateConstants(t, ops)
+		// Pass allOps (regular paths + webhooks + callbacks) so op-derived
+		// types from webhook/callback operations are emitted too.
+		opTypes, err := collectOperationTypes(allOps)
+		if err != nil {
+			return "", fmt.Errorf("error collecting operation types: %w", err)
+		}
+		opDecls, err := GenerateTypesForOperations(t, allOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go types for operations: %w", err)
+		}
+
+		constantDefinitions, err = GenerateConstants(t, allOps)
 		if err != nil {
 			return "", fmt.Errorf("error generating constants: %w", err)
 		}
@@ -255,14 +327,47 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 			return "", fmt.Errorf("error getting type definition imports: %w", err)
 		}
 		maps.Copy(xGoTypeImports, imprts)
+
+		// Boilerplate (enum Valid(), union accessors, additionalProperties
+		// marshalers) scans the union of all declared types so methods are
+		// emitted for inline types living inside operations too.
+		allEmitted := slices.Concat(componentTypes, opTypes)
+		enumsOut, allOfOut, unionOut, unionAndAdditionalOut, err := renderBoilerplate(t, allEmitted)
+		if err != nil {
+			return "", err
+		}
+		// Preserve historical concatenation order:
+		// enums, component decls, op decls, allOf, union, union+additional.
+		typeDefinitions = strings.Join([]string{enumsOut, componentDecls, opDecls, allOfOut, unionOut, unionAndAdditionalOut}, "")
 	}
 
 	var serverURLsDefinitions string
 	if opts.Generate.ServerURLs {
-		serverURLsDefinitions, err = GenerateServerURLs(t, spec)
+		// Server-URL enum-typed variables are routed through the same
+		// typedef.tmpl + constants.tmpl pipelines as any other
+		// enum-bearing schema, so they get matching `type X string`,
+		// `const ( … )` block, and `Valid()` method. We do this here
+		// (rather than in collectComponentTypes) so the types are
+		// emitted even when `generate.models` is disabled.
+		serverURLEnumTypes, err := BuildServerURLTypeDefinitions(spec)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go types for server URL variables: %w", err)
+		}
+		serverURLEnumTypeDecls, err := GenerateTypes(t, serverURLEnumTypes)
+		if err != nil {
+			return "", fmt.Errorf("error generating type declarations for server URL variables: %w", err)
+		}
+		serverURLEnumConstants, err := GenerateEnums(t, serverURLEnumTypes)
+		if err != nil {
+			return "", fmt.Errorf("error generating enums for server URL variables: %w", err)
+		}
+
+		serverURLsBody, err := GenerateServerURLs(t, spec)
 		if err != nil {
 			return "", fmt.Errorf("error generating Server URLs: %w", err)
 		}
+
+		serverURLsDefinitions = serverURLEnumTypeDecls + serverURLEnumConstants + serverURLsBody
 	}
 
 	var irisServerOut string
@@ -333,7 +438,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	if opts.Generate.Strict {
 		var responses []ResponseDefinition
 		if spec.Components != nil {
-			responses, err = GenerateResponseDefinitions("", spec.Components.Responses)
+			responses, err = GenerateResponseDefinitions("", spec.Components.Responses, "")
 			if err != nil {
 				return "", fmt.Errorf("error generation response definitions for schema: %w", err)
 			}
@@ -362,6 +467,179 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		clientWithResponsesOut, err = GenerateClientWithResponses(t, ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating client with responses: %w", err)
+		}
+	}
+
+	// Webhook initiator pairs with the path Client. Emitted only when
+	// Generate.Client is on AND the spec has webhooks (3.1+).
+	var webhookInitiatorOut string
+	if opts.Generate.Client && len(webhookOps) > 0 {
+		webhookInitiatorOut, err = GenerateWebhookInitiator(t, webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating webhook initiator: %w", err)
+		}
+	}
+
+	// Webhook receiver (stdhttp) pairs with the path StdHTTPServer.
+	// Emitted only when Generate.StdHTTPServer is on AND the spec has
+	// webhooks (3.1+). Uses the unified stdhttp receiver template,
+	// parameterized with prefix "Webhook".
+	var stdHTTPWebhookReceiverOut string
+	if opts.Generate.StdHTTPServer && len(webhookOps) > 0 {
+		stdHTTPWebhookReceiverOut, err = GenerateStdHTTPReceiver(t, "Webhook", webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating stdhttp webhook receiver: %w", err)
+		}
+	}
+
+	// Webhook receiver (chi) -- chi shares stdhttp's (w, r) handler
+	// signature, so the receiver shape is identical; only the template
+	// path differs. Emitted only when Generate.ChiServer is on.
+	var chiWebhookReceiverOut string
+	if opts.Generate.ChiServer && len(webhookOps) > 0 {
+		chiWebhookReceiverOut, err = GenerateChiReceiver(t, "Webhook", webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating chi webhook receiver: %w", err)
+		}
+	}
+
+	// Webhook receiver (gorilla/mux) -- same (w, r) signature as
+	// stdhttp/chi.
+	var gorillaWebhookReceiverOut string
+	if opts.Generate.GorillaServer && len(webhookOps) > 0 {
+		gorillaWebhookReceiverOut, err = GenerateGorillaReceiver(t, "Webhook", webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating gorilla webhook receiver: %w", err)
+		}
+	}
+
+	// Webhook receiver (echo v4) -- (ctx echo.Context) error signature.
+	var echoWebhookReceiverOut string
+	if opts.Generate.EchoServer && len(webhookOps) > 0 {
+		echoWebhookReceiverOut, err = GenerateEchoReceiver(t, "Webhook", webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating echo webhook receiver: %w", err)
+		}
+	}
+
+	// Webhook receiver (echo v5) -- (ctx *echo.Context) error signature.
+	var echo5WebhookReceiverOut string
+	if opts.Generate.Echo5Server && len(webhookOps) > 0 {
+		echo5WebhookReceiverOut, err = GenerateEcho5Receiver(t, "Webhook", webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating echo5 webhook receiver: %w", err)
+		}
+	}
+
+	// Webhook receiver (gin) -- (c *gin.Context) signature.
+	var ginWebhookReceiverOut string
+	if opts.Generate.GinServer && len(webhookOps) > 0 {
+		ginWebhookReceiverOut, err = GenerateGinReceiver(t, "Webhook", webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating gin webhook receiver: %w", err)
+		}
+	}
+
+	// Webhook receiver (fiber v2) -- (c *fiber.Ctx) error signature.
+	var fiberWebhookReceiverOut string
+	if opts.Generate.FiberServer && len(webhookOps) > 0 {
+		fiberWebhookReceiverOut, err = GenerateFiberReceiver(t, "Webhook", webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating fiber webhook receiver: %w", err)
+		}
+	}
+
+	// Webhook receiver (iris) -- (ctx iris.Context) signature.
+	var irisWebhookReceiverOut string
+	if opts.Generate.IrisServer && len(webhookOps) > 0 {
+		irisWebhookReceiverOut, err = GenerateIrisReceiver(t, "Webhook", webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating iris webhook receiver: %w", err)
+		}
+	}
+
+	// Callback initiator pairs with the path Client. Emitted whenever
+	// Generate.Client is on and the spec declares any callbacks --
+	// callbacks predate 3.1 so this is not version-gated.
+	var callbackInitiatorOut string
+	if opts.Generate.Client && len(callbackOps) > 0 {
+		callbackInitiatorOut, err = GenerateCallbackInitiator(t, callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating callback initiator: %w", err)
+		}
+	}
+
+	// Callback receiver (stdhttp) pairs with the path StdHTTPServer.
+	// Same reasoning as the initiator: not version-gated. Uses the
+	// unified stdhttp receiver template with prefix "Callback".
+	var stdHTTPCallbackReceiverOut string
+	if opts.Generate.StdHTTPServer && len(callbackOps) > 0 {
+		stdHTTPCallbackReceiverOut, err = GenerateStdHTTPReceiver(t, "Callback", callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating stdhttp callback receiver: %w", err)
+		}
+	}
+
+	// Callback receiver (chi).
+	var chiCallbackReceiverOut string
+	if opts.Generate.ChiServer && len(callbackOps) > 0 {
+		chiCallbackReceiverOut, err = GenerateChiReceiver(t, "Callback", callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating chi callback receiver: %w", err)
+		}
+	}
+
+	// Callback receiver (gorilla/mux).
+	var gorillaCallbackReceiverOut string
+	if opts.Generate.GorillaServer && len(callbackOps) > 0 {
+		gorillaCallbackReceiverOut, err = GenerateGorillaReceiver(t, "Callback", callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating gorilla callback receiver: %w", err)
+		}
+	}
+
+	// Callback receiver (echo v4).
+	var echoCallbackReceiverOut string
+	if opts.Generate.EchoServer && len(callbackOps) > 0 {
+		echoCallbackReceiverOut, err = GenerateEchoReceiver(t, "Callback", callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating echo callback receiver: %w", err)
+		}
+	}
+
+	// Callback receiver (echo v5).
+	var echo5CallbackReceiverOut string
+	if opts.Generate.Echo5Server && len(callbackOps) > 0 {
+		echo5CallbackReceiverOut, err = GenerateEcho5Receiver(t, "Callback", callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating echo5 callback receiver: %w", err)
+		}
+	}
+
+	// Callback receiver (gin).
+	var ginCallbackReceiverOut string
+	if opts.Generate.GinServer && len(callbackOps) > 0 {
+		ginCallbackReceiverOut, err = GenerateGinReceiver(t, "Callback", callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating gin callback receiver: %w", err)
+		}
+	}
+
+	// Callback receiver (fiber v2).
+	var fiberCallbackReceiverOut string
+	if opts.Generate.FiberServer && len(callbackOps) > 0 {
+		fiberCallbackReceiverOut, err = GenerateFiberReceiver(t, "Callback", callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating fiber callback receiver: %w", err)
+		}
+	}
+
+	// Callback receiver (iris).
+	var irisCallbackReceiverOut string
+	if opts.Generate.IrisServer && len(callbackOps) > 0 {
+		irisCallbackReceiverOut, err = GenerateIrisReceiver(t, "Callback", callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating iris callback receiver: %w", err)
 		}
 	}
 
@@ -416,6 +694,18 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error writing client: %w", err)
 		}
+		if webhookInitiatorOut != "" {
+			_, err = w.WriteString(webhookInitiatorOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing webhook initiator: %w", err)
+			}
+		}
+		if callbackInitiatorOut != "" {
+			_, err = w.WriteString(callbackInitiatorOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing callback initiator: %w", err)
+			}
+		}
 	}
 
 	if opts.Generate.IrisServer {
@@ -423,13 +713,36 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}
-
+		if irisWebhookReceiverOut != "" {
+			_, err = w.WriteString(irisWebhookReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing iris webhook receiver: %w", err)
+			}
+		}
+		if irisCallbackReceiverOut != "" {
+			_, err = w.WriteString(irisCallbackReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing iris callback receiver: %w", err)
+			}
+		}
 	}
 
 	if opts.Generate.EchoServer {
 		_, err = w.WriteString(echoServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+		if echoWebhookReceiverOut != "" {
+			_, err = w.WriteString(echoWebhookReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing echo webhook receiver: %w", err)
+			}
+		}
+		if echoCallbackReceiverOut != "" {
+			_, err = w.WriteString(echoCallbackReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing echo callback receiver: %w", err)
+			}
 		}
 	}
 
@@ -438,12 +751,36 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}
+		if echo5WebhookReceiverOut != "" {
+			_, err = w.WriteString(echo5WebhookReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing echo5 webhook receiver: %w", err)
+			}
+		}
+		if echo5CallbackReceiverOut != "" {
+			_, err = w.WriteString(echo5CallbackReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing echo5 callback receiver: %w", err)
+			}
+		}
 	}
 
 	if opts.Generate.ChiServer {
 		_, err = w.WriteString(chiServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+		if chiWebhookReceiverOut != "" {
+			_, err = w.WriteString(chiWebhookReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing chi webhook receiver: %w", err)
+			}
+		}
+		if chiCallbackReceiverOut != "" {
+			_, err = w.WriteString(chiCallbackReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing chi callback receiver: %w", err)
+			}
 		}
 	}
 
@@ -452,12 +789,36 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}
+		if fiberWebhookReceiverOut != "" {
+			_, err = w.WriteString(fiberWebhookReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing fiber webhook receiver: %w", err)
+			}
+		}
+		if fiberCallbackReceiverOut != "" {
+			_, err = w.WriteString(fiberCallbackReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing fiber callback receiver: %w", err)
+			}
+		}
 	}
 
 	if opts.Generate.GinServer {
 		_, err = w.WriteString(ginServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+		if ginWebhookReceiverOut != "" {
+			_, err = w.WriteString(ginWebhookReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing gin webhook receiver: %w", err)
+			}
+		}
+		if ginCallbackReceiverOut != "" {
+			_, err = w.WriteString(ginCallbackReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing gin callback receiver: %w", err)
+			}
 		}
 	}
 
@@ -466,12 +827,36 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
 		}
+		if gorillaWebhookReceiverOut != "" {
+			_, err = w.WriteString(gorillaWebhookReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing gorilla webhook receiver: %w", err)
+			}
+		}
+		if gorillaCallbackReceiverOut != "" {
+			_, err = w.WriteString(gorillaCallbackReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing gorilla callback receiver: %w", err)
+			}
+		}
 	}
 
 	if opts.Generate.StdHTTPServer {
 		_, err = w.WriteString(stdHTTPServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+		if stdHTTPWebhookReceiverOut != "" {
+			_, err = w.WriteString(stdHTTPWebhookReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing stdhttp webhook receiver: %w", err)
+			}
+		}
+		if stdHTTPCallbackReceiverOut != "" {
+			_, err = w.WriteString(stdHTTPCallbackReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing stdhttp callback receiver: %w", err)
+			}
 		}
 	}
 
@@ -505,110 +890,104 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	outBytes, err := imports.Process(opts.PackageName+".go", []byte(goCode), nil)
 	if err != nil {
-		// if we don't get a line number
 		errLine := -1
 		var scanErr scanner.ErrorList
 		if errors.As(err, &scanErr) && scanErr.Len() > 0 {
-			// for now, only return the first error's information
 			errLine = scanErr[0].Pos.Line
 		}
-		return "", fmt.Errorf("error formatting Go code:\n%s\nerror was: %w", addLineNumbers(goCode, errLine), err)
+		if errLine > 0 {
+			return goCode, fmt.Errorf("error formatting Go code at line %d: %w", errLine, err)
+		}
+		return goCode, fmt.Errorf("error formatting Go code: %w", err)
 	}
 	return string(outBytes), nil
 }
 
-func addLineNumbers(goCode string, lineWithError int) string {
-	var out []string
-	lines := strings.Split(goCode, "\n")
-	for i, line := range lines {
-		// lines for humans start at 1
-		lineNumber := i + 1
-
-		errLine := "  "
-		if lineNumber == lineWithError {
-			errLine = "❗"
-		}
-
-		out = append(out, fmt.Sprintf("%s%5d: %s", errLine, lineNumber, line))
+// collectComponentTypes returns the TypeDefinitions collected from
+// components/{schemas,parameters,responses,requestBodies,securitySchemes}.
+// These are the "outer" types gated by Generate.Models.
+func collectComponentTypes(t *template.Template, swagger *openapi3.T, excludeSchemas []string) ([]TypeDefinition, error) {
+	if swagger.Components == nil {
+		return nil, nil
 	}
-
-	return strings.Join(out, "\n")
+	schemaTypes, err := GenerateTypesForSchemas(t, swagger.Components.Schemas, excludeSchemas)
+	if err != nil {
+		return nil, fmt.Errorf("error generating Go types for component schemas: %w", err)
+	}
+	paramTypes, err := GenerateTypesForParameters(t, swagger.Components.Parameters)
+	if err != nil {
+		return nil, fmt.Errorf("error generating Go types for component parameters: %w", err)
+	}
+	responseTypes, err := GenerateTypesForResponses(t, swagger.Components.Responses)
+	if err != nil {
+		return nil, fmt.Errorf("error generating Go types for component responses: %w", err)
+	}
+	bodyTypes, err := GenerateTypesForRequestBodies(t, swagger.Components.RequestBodies)
+	if err != nil {
+		return nil, fmt.Errorf("error generating Go types for component request bodies: %w", err)
+	}
+	var securitySchemeTypes []TypeDefinition
+	if globalState.options.Compatibility.EnableAuthScopesOnContext {
+		securitySchemeTypes, err = GenerateTypesForSecuritySchemes(t, swagger.Components.SecuritySchemes)
+		if err != nil {
+			return nil, fmt.Errorf("error generating Go types for component security schemes: %w", err)
+		}
+	}
+	allTypes := append(schemaTypes, paramTypes...)
+	allTypes = append(allTypes, responseTypes...)
+	allTypes = append(allTypes, bodyTypes...)
+	allTypes = append(allTypes, securitySchemeTypes...)
+	return allTypes, nil
 }
 
-func GenerateTypeDefinitions(t *template.Template, swagger *openapi3.T, ops []OperationDefinition, excludeSchemas []string) (string, error) {
-	var allTypes []TypeDefinition
-	if swagger.Components != nil {
-		schemaTypes, err := GenerateTypesForSchemas(t, swagger.Components.Schemas, excludeSchemas)
-		if err != nil {
-			return "", fmt.Errorf("error generating Go types for component schemas: %w", err)
-		}
-
-		paramTypes, err := GenerateTypesForParameters(t, swagger.Components.Parameters)
-		if err != nil {
-			return "", fmt.Errorf("error generating Go types for component parameters: %w", err)
-		}
-		allTypes = append(schemaTypes, paramTypes...)
-
-		responseTypes, err := GenerateTypesForResponses(t, swagger.Components.Responses)
-		if err != nil {
-			return "", fmt.Errorf("error generating Go types for component responses: %w", err)
-		}
-		allTypes = append(allTypes, responseTypes...)
-
-		bodyTypes, err := GenerateTypesForRequestBodies(t, swagger.Components.RequestBodies)
-		if err != nil {
-			return "", fmt.Errorf("error generating Go types for component request bodies: %w", err)
-		}
-		allTypes = append(allTypes, bodyTypes...)
-
-		securitySchemeTypes, err := GenerateTypesForSecuritySchemes(t, swagger.Components.SecuritySchemes)
-		if err != nil {
-			return "", fmt.Errorf("error generating Go types for component security schemes: %w", err)
-		}
-		allTypes = append(allTypes, securitySchemeTypes...)
-	}
-
-	// Go through all operations, and add their types to allTypes, so that we can
-	// scan all of them for enums. Operation definitions are handled differently
-	// from the rest, so let's keep track of enumTypes separately, which will contain
-	// all types needed to be scanned for enums, which includes those within operations.
-	enumTypes := allTypes
+// collectOperationTypes returns the operation-derived TypeDefinitions that
+// flow into the boilerplate scan: op.TypeDefinitions (Params, hoisted
+// AdditionalTypes from params/bodies/response schemas) plus the per-
+// response AdditionalTypeDefinitions from client response wrappers.
+// These are the "outer" types gated by AnyOperationGenerator.
+//
+// Note: these are NOT the same set of types that param-types.tmpl /
+// request-bodies.tmpl declare — those templates iterate ops directly.
+// The slice returned here is what the *boilerplate* (enums, union and
+// additionalProperties marshalers) must scan so methods don't go missing
+// for inline types living inside operations.
+func collectOperationTypes(ops []OperationDefinition) ([]TypeDefinition, error) {
+	var out []TypeDefinition
 	for _, op := range ops {
-		enumTypes = append(enumTypes, op.TypeDefinitions...)
+		out = append(out, op.TypeDefinitions...)
+		respDefs, err := op.GetResponseTypeDefinitions()
+		if err != nil {
+			return nil, fmt.Errorf("error collecting response type definitions for %s: %w", op.OperationId, err)
+		}
+		for _, rd := range respDefs {
+			out = append(out, rd.AdditionalTypeDefinitions...)
+		}
 	}
+	return out, nil
+}
 
-	operationsOut, err := GenerateTypesForOperations(t, ops)
+// renderBoilerplate runs the enum, additionalProperties, union, and
+// union+additionalProperties passes over the union of all emitted types.
+// These passes are "inner" — they emit methods/constants subordinate to
+// whichever outer types were declared.
+func renderBoilerplate(t *template.Template, allEmitted []TypeDefinition) (enumsOut, allOfOut, unionOut, unionAndAdditionalOut string, err error) {
+	enumsOut, err = GenerateEnums(t, allEmitted)
 	if err != nil {
-		return "", fmt.Errorf("error generating Go types for component request bodies: %w", err)
+		return "", "", "", "", fmt.Errorf("error generating code for type enums: %w", err)
 	}
-
-	enumsOut, err := GenerateEnums(t, enumTypes)
+	allOfOut, err = GenerateAdditionalPropertyBoilerplate(t, allEmitted)
 	if err != nil {
-		return "", fmt.Errorf("error generating code for type enums: %w", err)
+		return "", "", "", "", fmt.Errorf("error generating allOf boilerplate: %w", err)
 	}
-
-	typesOut, err := GenerateTypes(t, allTypes)
+	unionOut, err = GenerateUnionBoilerplate(t, allEmitted)
 	if err != nil {
-		return "", fmt.Errorf("error generating code for type definitions: %w", err)
+		return "", "", "", "", fmt.Errorf("error generating union boilerplate: %w", err)
 	}
-
-	allOfBoilerplate, err := GenerateAdditionalPropertyBoilerplate(t, allTypes)
+	unionAndAdditionalOut, err = GenerateUnionAndAdditionalProopertiesBoilerplate(t, allEmitted)
 	if err != nil {
-		return "", fmt.Errorf("error generating allOf boilerplate: %w", err)
+		return "", "", "", "", fmt.Errorf("error generating boilerplate for union types with additionalProperties: %w", err)
 	}
-
-	unionBoilerplate, err := GenerateUnionBoilerplate(t, allTypes)
-	if err != nil {
-		return "", fmt.Errorf("error generating union boilerplate: %w", err)
-	}
-
-	unionAndAdditionalBoilerplate, err := GenerateUnionAndAdditionalProopertiesBoilerplate(t, allTypes)
-	if err != nil {
-		return "", fmt.Errorf("error generating boilerplate for union types with additionalProperties: %w", err)
-	}
-
-	typeDefinitions := strings.Join([]string{enumsOut, typesOut, operationsOut, allOfBoilerplate, unionBoilerplate, unionAndAdditionalBoilerplate}, "")
-	return typeDefinitions, nil
+	return enumsOut, allOfOut, unionOut, unionAndAdditionalOut, nil
 }
 
 // GenerateConstants generates operation ids, context keys, paths, etc. to be exported as constants
@@ -726,15 +1105,9 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 		// handle media types that conform to JSON. Other responses should
 		// simply be specified as strings or byte arrays.
 		response := responseOrRef.Value
+		content := response.Content
 
-		jsonCount := 0
-		for mediaType := range response.Content {
-			if util.IsMediaTypeJson(mediaType) {
-				jsonCount++
-			}
-		}
-
-		SortedMapKeys := SortedMapKeys(response.Content)
+		SortedMapKeys := SortedMapKeys(content)
 		for _, mediaType := range SortedMapKeys {
 			response := response.Content[mediaType]
 			if !util.IsMediaTypeJson(mediaType) {
@@ -753,8 +1126,8 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 			// TODO: revisit this at the next major version change —
 			// always include the media type in the schema path.
 			schemaPath := []string{responseName}
-			if jsonCount > 1 && globalState.options.OutputOptions.ResolveTypeNameCollisions {
-				schemaPath = append(schemaPath, mediaTypeToCamelCase(mediaType))
+			if suffix := responseMediaTypeSuffix(content, mediaType); suffix != "" && globalState.options.OutputOptions.ResolveTypeNameCollisions {
+				schemaPath = append(schemaPath, suffix)
 			}
 			goType, err := GenerateGoSchema(response.Schema, schemaPath)
 			if err != nil {
@@ -785,8 +1158,8 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				typeDef.TypeName = SchemaNameToTypeName(refType)
 			}
 
-			if jsonCount > 1 {
-				typeDef.TypeName = typeDef.TypeName + mediaTypeToCamelCase(mediaType)
+			if suffix := responseMediaTypeSuffix(content, mediaType); suffix != "" {
+				typeDef.TypeName = typeDef.TypeName + suffix
 			}
 
 			types = append(types, typeDef)
@@ -983,31 +1356,68 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 				Schema:         tp.Schema,
 				TypeName:       tp.TypeName,
 				ValueWrapper:   wrapper,
-				PrefixTypeName: globalState.options.Compatibility.AlwaysPrefixEnumValues,
+				PrefixTypeName: globalState.options.Compatibility.AlwaysPrefixEnumValues || tp.ForceEnumPrefix,
 			})
 		}
 	}
 
 	// Now, go through all the enums, and figure out if we have conflicts with
 	// any others.
-	for i := range enums {
-		// Look through all other enums not compared so far. Make sure we don't
-		// compare against self.
-		e1 := enums[i]
-		for j := i + 1; j < len(enums); j++ {
-			e2 := enums[j]
-
-			for e1key := range e1.GetValues() {
-				_, found := e2.GetValues()[e1key]
-				if found {
-					e1.PrefixTypeName = true
-					e2.PrefixTypeName = true
-					enums[i] = e1
-					enums[j] = e2
-					break
+	if globalState.options.Compatibility.DisableEnumValueConflictResolution {
+		// Legacy behavior: compare generated constant names via GetValues().
+		// This is order-dependent because GetValues() reflects already-applied
+		// prefixes, so enums processed later (in sorted schema-name order) may
+		// miss conflicts with enums that were prefixed in an earlier iteration.
+		// Preserved here as an escape hatch for users who need to keep their
+		// existing generated output.
+		for i := range enums {
+			e1 := enums[i]
+			for j := i + 1; j < len(enums); j++ {
+				e2 := enums[j]
+				for e1key := range e1.GetValues() {
+					if _, found := e2.GetValues()[e1key]; found {
+						e1.PrefixTypeName = true
+						e2.PrefixTypeName = true
+						enums[i] = e1
+						enums[j] = e2
+						break
+					}
 				}
 			}
 		}
+	} else {
+		// Resolve cross-enum constant-name collisions by prefixing each
+		// conflicting enum's constants with its type name. Prefixing can itself
+		// introduce a new collision — a prefixed name like "Enum1One" matching
+		// another enum's raw value — so we iterate to a fixed point.
+		for {
+			changed := false
+			for i := range enums {
+				for j := i + 1; j < len(enums); j++ {
+					if enums[i].PrefixTypeName && enums[j].PrefixTypeName {
+						continue
+					}
+					if enumsConflict(enums[i], enums[j]) {
+						if !enums[i].PrefixTypeName {
+							enums[i].PrefixTypeName = true
+							changed = true
+						}
+						if !enums[j].PrefixTypeName {
+							enums[j].PrefixTypeName = true
+							changed = true
+						}
+					}
+				}
+			}
+			if !changed {
+				break
+			}
+		}
+	}
+
+	// Check each enum against global type names and self-conflict.
+	for i := range enums {
+		e1 := enums[i]
 
 		// now see if this enum conflicts with any global type names.
 		for _, tp := range types {
@@ -1033,7 +1443,34 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 
 	// Now see if enums conflict with any non-enum typenames
 
-	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{EnumDefinitions: enums})
+	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{
+		EnumDefinitions:  enums,
+		SkipEnumValidate: globalState.options.OutputOptions.SkipEnumValidate,
+	})
+}
+
+// enumsConflict reports whether two enums must be disambiguated by prefixing.
+//
+// They conflict when they share a raw value name, or when their current
+// effective constant names collide. The raw-value check uses Schema.EnumValues,
+// which is immutable, so the result is independent of any prefixing already
+// applied earlier in the same pass — otherwise prefixing one enum could mask
+// its conflict with a third (the order-dependent bug this resolution fixes).
+// The effective-name check uses GetValues() to catch collisions *introduced* by
+// prefixing, e.g. a prefixed "Enum1One" matching another enum's raw value.
+func enumsConflict(a, b EnumDefinition) bool {
+	for name := range a.Schema.EnumValues {
+		if _, ok := b.Schema.EnumValues[name]; ok {
+			return true
+		}
+	}
+	bValues := b.GetValues()
+	for name := range a.GetValues() {
+		if _, ok := bValues[name]; ok {
+			return true
+		}
+	}
+	return false
 }
 
 // GenerateImports generates our import statements and package definition.
@@ -1105,7 +1542,12 @@ func GenerateAdditionalPropertyBoilerplate(t *template.Template, typeDefs []Type
 
 func GenerateUnionBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
 	var filteredTypes []TypeDefinition
+	seen := map[string]bool{}
 	for _, t := range typeDefs {
+		if seen[t.TypeName] {
+			continue
+		}
+		seen[t.TypeName] = true
 		if len(t.Schema.UnionElements) != 0 {
 			filteredTypes = append(filteredTypes, t)
 		}
@@ -1126,7 +1568,12 @@ func GenerateUnionBoilerplate(t *template.Template, typeDefs []TypeDefinition) (
 
 func GenerateUnionAndAdditionalProopertiesBoilerplate(t *template.Template, typeDefs []TypeDefinition) (string, error) {
 	var filteredTypes []TypeDefinition
+	seen := map[string]bool{}
 	for _, t := range typeDefs {
+		if seen[t.TypeName] {
+			continue
+		}
+		seen[t.TypeName] = true
 		if len(t.Schema.UnionElements) != 0 && t.Schema.HasAdditionalProperties {
 			filteredTypes = append(filteredTypes, t)
 		}
@@ -1319,19 +1766,22 @@ func GetTypeDefinitionsImports(swagger *openapi3.T, excludeSchemas []string) (ma
 func GoSchemaImports(schemas ...*openapi3.SchemaRef) (map[string]goImport, error) {
 	res := map[string]goImport{}
 	for _, sref := range schemas {
-		if sref == nil || sref.Value == nil || IsGoTypeReference(sref.Ref) {
+		if sref == nil {
 			return nil, nil
 		}
+
 		if gi, err := ParseGoImportExtension(sref); err != nil {
 			return nil, err
-		} else {
-			if gi != nil {
-				res[gi.String()] = *gi
-			}
+		} else if gi != nil {
+			res[gi.String()] = *gi
+		}
+
+		if sref.Value == nil || IsGoTypeReference(sref.Ref) {
+			continue
 		}
 		schemaVal := sref.Value
 
-		t := schemaVal.Type
+		t := schemaPrimaryType(schemaVal.Type)
 		if t.Slice() == nil || t.Is("object") {
 			for _, v := range schemaVal.Properties {
 				imprts, err := GoSchemaImports(v)

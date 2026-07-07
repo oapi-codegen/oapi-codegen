@@ -60,11 +60,16 @@ func TestExampleOpenAPICodeGeneration(t *testing.T) {
 type GetTestByNameResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]Test
-	XML200       *[]Test
-	JSON422      *[]interface{}
-	XML422       *[]interface{}
-	JSONDefault  *Error
+	// JSON200 the response for an HTTP 200 `+"`application/json`"+` response
+	JSON200 *[]Test
+	// XML200 the response for an HTTP 200 `+"`application/xml`"+` response
+	XML200 *[]Test
+	// JSON422 the response for an HTTP 422 `+"`application/json`"+` response
+	JSON422 *[]interface{}
+	// XML422 the response for an HTTP 422 `+"`application/xml`"+` response
+	XML422 *[]interface{}
+	// JSONDefault the response for an HTTP default `+"`application/json`"+` response
+	JSONDefault *Error
 }`)
 
 	// Check that the helper methods are generated correctly:
@@ -170,6 +175,41 @@ func TestGoTypeImport(t *testing.T) {
 	// Check import
 	for _, imp := range imports {
 		assert.Contains(t, code, imp)
+	}
+}
+
+func TestGoAllofTypeOverride(t *testing.T) {
+	packageName := "api"
+	opts := Configuration{
+		PackageName: packageName,
+		Generate: GenerateOptions{
+			EchoServer:   true,
+			Models:       true,
+			EmbeddedSpec: true,
+		},
+	}
+	spec := "test_specs/x-go-type-pet-allof.yaml"
+	swagger, err := util.LoadSwagger(spec)
+	require.NoError(t, err)
+
+	// Run our code generation:
+	code, err := Generate(swagger, opts)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, code)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	assert.NoError(t, err)
+
+	for _, expected := range []string{
+		"type Cat = cat.Cat",
+		"type Dog = dog.Dog",
+		"type Pet = pet.Pet",
+		"github.com/somepetproject/pkg/cat",
+		"github.com/somepetproject/pkg/dog",
+		"github.com/somepetproject/pkg/pet",
+	} {
+		assert.Contains(t, code, expected)
 	}
 }
 
@@ -292,6 +332,186 @@ paths:
 	assert.Contains(t, code, "realm string")
 	assert.Contains(t, code, "clientUuid string")
 	assert.Contains(t, code, "roleName string")
+}
+
+// TestEnumConflictDetectionOrderIndependent checks that conflict detection
+// doesn't miss overlaps because an enum was already marked for prefixing.
+func TestEnumConflictDetectionOrderIndependent(t *testing.T) {
+	// AState+BState share "running" (both prefixed), AState+CState share "migrating".
+	// The bug: once AState was marked, GetValues() returned prefixed names that
+	// no longer matched CState's raw values, so CState's conflict was missed.
+	const spec = `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Test Enum Conflict Detection
+paths: {}
+components:
+  schemas:
+    AState:
+      type: string
+      enum:
+        - running
+        - migrating
+    BState:
+      type: string
+      enum:
+        - running
+    CState:
+      type: string
+      enum:
+        - migrating
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	opts := Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			Models: true,
+		},
+		OutputOptions: OutputOptions{
+			SkipPrune: true,
+		},
+	}
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+
+	_, err = format.Source([]byte(code))
+	require.NoError(t, err)
+
+	// All three enums share values with at least one other enum; all must be prefixed.
+	assert.Contains(t, code, "AStateRunning")
+	assert.Contains(t, code, "AStateMigrating")
+	assert.Contains(t, code, "BStateRunning")
+	assert.Contains(t, code, "CStateMigrating")
+}
+
+// TestEnumConflictDetectionBothOrders verifies that enum conflict detection
+// produces identical, fully-prefixed output regardless of the order the
+// schemas appear in the spec.
+func TestEnumConflictDetectionBothOrders(t *testing.T) {
+	specAFirst := `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Test
+paths: {}
+components:
+  schemas:
+    AState:
+      type: string
+      enum: [running, migrating]
+    BState:
+      type: string
+      enum: [running]
+    CState:
+      type: string
+      enum: [migrating]
+`
+	specCFirst := `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Test
+paths: {}
+components:
+  schemas:
+    CState:
+      type: string
+      enum: [migrating]
+    BState:
+      type: string
+      enum: [running]
+    AState:
+      type: string
+      enum: [running, migrating]
+`
+	opts := Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{Models: true},
+		OutputOptions: OutputOptions{
+			SkipPrune: true,
+		},
+	}
+
+	loader := openapi3.NewLoader()
+
+	swaggerA, err := loader.LoadFromData([]byte(specAFirst))
+	require.NoError(t, err)
+	codeA, err := Generate(swaggerA, opts)
+	require.NoError(t, err)
+
+	swaggerC, err := loader.LoadFromData([]byte(specCFirst))
+	require.NoError(t, err)
+	codeC, err := Generate(swaggerC, opts)
+	require.NoError(t, err)
+
+	// Both orderings must produce fully prefixed constants.
+	for _, code := range []string{codeA, codeC} {
+		assert.Contains(t, code, "AStateRunning")
+		assert.Contains(t, code, "AStateMigrating")
+		assert.Contains(t, code, "BStateRunning")
+		assert.Contains(t, code, "CStateMigrating")
+		// Unprefixed names must not appear as standalone constants.
+		assert.NotContains(t, code, "\tRunning ")
+		assert.NotContains(t, code, "\tMigrating ")
+	}
+}
+
+// TestEnableAuthScopesOnContext verifies that generated server code embeds
+// security scheme scopes into the request context only when the deprecated
+// enable-auth-scopes-on-context compatibility option is set.
+// Please see https://github.com/oapi-codegen/oapi-codegen/issues/1524
+func TestEnableAuthScopesOnContext(t *testing.T) {
+	const spec = `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Test Auth Scopes Emission
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+paths:
+  /secured:
+    get:
+      operationId: secured
+      security:
+        - bearerAuth: ["read"]
+      responses:
+        '200':
+          description: ok
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	opts := Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			StdHTTPServer: true,
+			Models:        true,
+		},
+	}
+
+	// By default, no context key types, scope constants, or context values
+	// are generated.
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+	assert.NotContains(t, code, "BearerAuthScopes")
+	assert.NotContains(t, code, "bearerAuthContextKey")
+	assert.NotContains(t, code, "context.WithValue")
+
+	// With the compatibility option set, the legacy scope emission returns.
+	opts.Compatibility.EnableAuthScopesOnContext = true
+	code, err = Generate(swagger, opts)
+	require.NoError(t, err)
+	assert.Contains(t, code, `BearerAuthScopes bearerAuthContextKey = "bearerAuth.Scopes"`)
+	assert.Contains(t, code, `ctx = context.WithValue(ctx, BearerAuthScopes, []string{"read"})`)
 }
 
 //go:embed test_spec.yaml

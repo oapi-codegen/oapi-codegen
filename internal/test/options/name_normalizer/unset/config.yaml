@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: optionsnamenormalizerunset
+output: name_normalizer.gen.go
+# name-normalizer is left UNSET — default Go casing applies (Uuid, GetHttpPet,
+# OneOf2things). gorilla-server + client so the tests can assert the
+# operation-derived names on both ServerInterfaceWrapper and Client.
+# skip-prune: retain the Error schema which is not referenced from any path.
+generate:
+  gorilla-server: true
+  client: true
+  models: true
+output-options:
+  skip-prune: true

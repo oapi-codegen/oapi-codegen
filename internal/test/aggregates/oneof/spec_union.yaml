@@ -1,0 +1,33 @@
+openapi: 3.0.0
+info:
+  title: Issue 970 Regression
+  version: "1.0"
+paths:
+  /event:
+    get:
+      operationId: getEvent
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+components:
+  schemas:
+    Event:
+      oneOf:
+        - $ref: '#/components/schemas/OnetimeEvent'
+        - $ref: '#/components/schemas/RepeatableEvent'
+    OnetimeEvent:
+      type: object
+      required: [kind, name]
+      properties:
+        kind: { type: string, enum: [onetime] }
+        name: { type: string }
+    RepeatableEvent:
+      type: object
+      required: [kind, interval]
+      properties:
+        kind: { type: string, enum: [repeatable] }
+        interval: { type: string }

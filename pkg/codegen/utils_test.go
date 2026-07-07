@@ -454,6 +454,13 @@ func TestSwaggerUriToStdHttpUriUri(t *testing.T) {
 	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{;arg*}/foo"))
 	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{?arg}/foo"))
 	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{?arg*}/foo"))
+
+	// Parameter names that are not valid Go identifiers must be sanitized (issue #2278)
+	assert.Equal(t, "/path/{addressing_identifier}", SwaggerUriToStdHttpUri("/path/{addressing-identifier}"))
+	assert.Equal(t, "/path/{my_param}/{other_param}", SwaggerUriToStdHttpUri("/path/{my-param}/{other-param}"))
+
+	// Go keywords are valid ServeMux wildcard names and should not be prefixed
+	assert.Equal(t, "/path/{type}", SwaggerUriToStdHttpUri("/path/{type}"))
 }
 
 func TestOrderedParamsFromUri(t *testing.T) {
@@ -536,6 +543,19 @@ func TestStringToGoStringValue(t *testing.T) {
 			input:    `application/json; foo="bar"`,
 			expected: `"application/json; foo=\"bar\""`,
 			message:  "string with quotes should include escape characters",
+		},
+		{
+			// The previous implementation only escaped `"`, so a backslash
+			// before a quote (`\"`) escaped the escaping and let untrusted
+			// spec text break out of the generated string literal.
+			input:    `a\"; var Evil = 1; var _ = "`,
+			expected: `"a\\\"; var Evil = 1; var _ = \""`,
+			message:  "backslashes must be escaped so a quote cannot break out of the literal",
+		},
+		{
+			input:    "line1\nline2",
+			expected: `"line1\nline2"`,
+			message:  "newlines must be escaped so they cannot terminate the literal",
 		},
 	}
 	for _, testCase := range testCases {
