@@ -1085,7 +1085,7 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 			if err != nil {
 				return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", paramOrRef.Ref, paramName, err)
 			}
-			typeDef.TypeName = SchemaNameToTypeName(refType)
+			typeDef.Schema.GoType = refType
 		}
 
 		types = append(types, typeDef)
@@ -1155,7 +1155,7 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				if err != nil {
 					return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", responseOrRef.Ref, responseName, err)
 				}
-				typeDef.TypeName = SchemaNameToTypeName(refType)
+				typeDef.Schema.GoType = refType
 			}
 
 			if suffix := responseMediaTypeSuffix(content, mediaType); suffix != "" {
@@ -1212,7 +1212,7 @@ func GenerateTypesForRequestBodies(t *template.Template, bodies map[string]*open
 				if err != nil {
 					return nil, fmt.Errorf("error generating Go type for (%s) in body %s: %w", requestBodyRef.Ref, requestBodyName, err)
 				}
-				typeDef.TypeName = SchemaNameToTypeName(refType)
+				typeDef.Schema.GoType = refType
 			}
 			types = append(types, typeDef)
 			types = append(types, goType.AdditionalTypes...)
