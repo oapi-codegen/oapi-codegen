@@ -305,7 +305,7 @@ Force the presence of the JSON tag `omitzero` on a field.
 > [!NOTE]
 > `omitzero` was added in Go 1.24. If you're not using Go 1.24 in your project, this won't work.
 
-In a case that you may want to add the JSON struct tag `omitzero` to types, you can use the `x-omitempty` extension.
+In a case that you may want to add the JSON struct tag `omitzero` to types, you can use the `x-omitzero` extension.
 
 We can see this at play with the following schemas:
 
@@ -313,7 +313,7 @@ We can see this at play with the following schemas:
 openapi: "3.0.0"
 info:
   version: 1.0.0
-  title: x-omitempty
+  title: x-omitzero
 components:
   schemas:
     Client:

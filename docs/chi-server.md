@@ -59,7 +59,7 @@ type ServerInterface interface {
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *mux.Router) http.Handler {
+func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
 	return HandlerWithOptions(si, ChiServerOptions{
 		BaseRouter: r,
 	})
