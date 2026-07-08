@@ -1,0 +1,45 @@
+openapi: "3.0.1"
+info:
+  version: 1.0.0
+  title: Operation List Test
+paths:
+  /users:
+    get:
+      summary: List users
+      operationId: listUsers
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Create user
+      operationId: createUser
+      responses:
+        '201':
+          description: Created
+  /users-alias:
+    $ref: "#/paths/~1users"
+  /users/{id}:
+    get:
+      summary: Get user
+      operationId: getUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Delete user
+      operationId: deleteUser
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: No Content

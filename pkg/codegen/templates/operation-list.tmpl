@@ -1,0 +1,9 @@
+// StrictOperationIDs lists the operation name string passed as the second
+// argument to every StrictMiddlewareFunc call. Each entry is the normalized
+// Go identifier for the operation (e.g. "ListUsers"), matching exactly what
+// the strict handler passes when it invokes the middleware chain.
+var StrictOperationIDs = []string{
+{{- range .OperationIDs}}
+    "{{.}}",
+{{- end}}
+}

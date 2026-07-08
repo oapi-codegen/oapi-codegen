@@ -651,6 +651,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	var operationListOut string
+	if opts.Generate.StrictOperationList {
+		operationListOut, err = GenerateStrictOperationList(t, ops)
+		if err != nil {
+			return "", fmt.Errorf("error generating operation list: %w", err)
+		}
+	}
+
 	var buf bytes.Buffer
 	w := bufio.NewWriter(&buf)
 
@@ -874,6 +882,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	if opts.Generate.StrictOperationList {
+		_, err = w.WriteString(operationListOut)
+		if err != nil {
+			return "", fmt.Errorf("error writing operation list: %w", err)
+		}
+	}
+
 	err = w.Flush()
 	if err != nil {
 		return "", fmt.Errorf("error flushing output buffer: %w", err)
@@ -1010,6 +1025,25 @@ func GenerateConstants(t *template.Template, ops []OperationDefinition) (string,
 	constants.SecuritySchemeProviderNames = append(constants.SecuritySchemeProviderNames, providerNames...)
 
 	return GenerateTemplates([]string{"constants.tmpl"}, t, constants)
+}
+
+// StrictOperationList is the data model passed to the operation-list.tmpl template.
+type StrictOperationList struct {
+	OperationIDs []string
+}
+
+// GenerateStrictOperationList generates a slice of the normalized operation IDs
+// passed to StrictMiddlewareFunc at runtime. Each value is the Go-identifier form
+// of the operation (e.g. "ListUsers"), matching what the strict handler emits verbatim.
+func GenerateStrictOperationList(t *template.Template, ops []OperationDefinition) (string, error) {
+	ids := make([]string, 0, len(ops))
+	for _, op := range ops {
+		if op.IsAlias {
+			continue
+		}
+		ids = append(ids, op.OperationId)
+	}
+	return GenerateTemplates([]string{"operation-list.tmpl"}, t, StrictOperationList{OperationIDs: ids})
 }
 
 // GenerateTypesForSchemas generates type definitions for any custom types defined in the
