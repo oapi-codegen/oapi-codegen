@@ -461,7 +461,7 @@ older version of Go, we don't promise that it'll work.
 | [Gin](https://github.com/gin-gonic/gin) | `gin-server` | 1.25+      | [Gin documentation](docs/gin-server.md) |
 | [gorilla/mux](https://github.com/gorilla/mux) | `gorilla-server` | 1.24+      | [gorilla/mux documentation](docs/gorilla-server.md) |
 | [Iris](https://github.com/kataras/iris) | `iris-server` | 1.24+      | [Iris documentation](docs/iris-server.md) |
-| [1.22+ `net/http`](https://pkg.go.dev/net/http) | `std-http-server` | 1.24+      | [`net/http` documentation](docs/stdhttp-server.md) |
+| [`net/http`](https://pkg.go.dev/net/http) | `std-http-server` | 1.24+      | [`net/http` documentation](docs/stdhttp-server.md) |
 
 ### Strict server
 
@@ -490,7 +490,7 @@ You can see a little more detail of the generated code in the ["What does it loo
 > To configure the strict server generation, you must specify another server to be generated. For instance:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 package: api
 generate:
   # NOTE another server must be added!
@@ -568,7 +568,7 @@ components:
 And a `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 package: client
 output: client.gen.go
 generate:
@@ -729,7 +729,7 @@ servers:
 It is possible to opt-in to the generation of these Server URLs with the following configuration:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 package: serverurls
 output: gen.go
 generate:
@@ -814,7 +814,7 @@ components:
 If you were to generate with this configuration:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 package: client
 output: client.gen.go
 generate:
@@ -840,7 +840,7 @@ This would then result in `go build` failures:
 To fix this, use the `response-type-suffix` Output Option:
 
 ```diff
- # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+ # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
  package: client
  output: client.gen.go
  generate:
@@ -930,7 +930,7 @@ components:
 And a `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 package: onlymodels
 output: only-models.gen.go
 generate:
@@ -959,7 +959,7 @@ type Client struct {
 If you wish to also generate the `Unreferenced` type, you would need the following `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 package: onlymodels
 output: only-models.gen.go
 generate:
@@ -1068,7 +1068,7 @@ $ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg-us
 This therefore means that we need multiple configuration files, such as `cfg-api.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 package: samepackage
 output: server.gen.go
 generate:
@@ -1085,7 +1085,7 @@ import-mapping:
 And then our `cfg-user.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 package: samepackage
 output: user.gen.go
 generate:
@@ -1115,7 +1115,7 @@ To get `oapi-codegen`'s multi-package support working, we need to set up our dir
 We could start with our configuration file for our admin API spec:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 # admin/cfg.yaml
 package: admin
 output: server.gen.go
@@ -1137,7 +1137,7 @@ error generating code: error creating operation definitions: error generating re
 This is because `oapi-codegen` requires the `import-mapping`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 package: admin
 output: server.gen.go
 generate:
@@ -1249,7 +1249,7 @@ actions:
 And our configuration file for `oapi-codegen`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 package: api
 output: ping.gen.go
 generate:
@@ -1440,7 +1440,7 @@ Middleware library
 <tr>
 <td>
 
-[1.22+ `net/http`](https://pkg.go.dev/net/http)
+[`net/http`](https://pkg.go.dev/net/http)
 
 </td>
 <td>
@@ -1552,7 +1552,7 @@ You can specify, through your configuration file, the `output-options.user-templ
 Within your configuration file, you can specify relative or absolute paths to a file to reference for the template, such as:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 # ...
 output-options:
   user-templates:
@@ -1580,7 +1580,7 @@ It is also possible to use HTTPS URLs.
 To use it, you can use the following configuration:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 # ...
 output-options:
   user-templates:
@@ -1602,7 +1602,7 @@ output-options:
 It's also possible to set the templates inline in the configuration file:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 # ...
 output-options:
   user-templates:
@@ -2000,7 +2000,7 @@ In both cases, there is control on a per-field level to set `x-go-type-skip-opti
 For example, when combining both options:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 package: preferskipoptionalpointerwithomitzero
 output: gen.go
 generate:
@@ -2576,7 +2576,7 @@ By default, `oapi-codegen` will generate everything from the specification.
 If you'd like to reduce what's generated, you can use one of a few options in [the configuration file](#usage) to tune the generation of the resulting output:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
 output-options:
   include-tags: []
   exclude-tags: []
