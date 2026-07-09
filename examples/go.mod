@@ -4,19 +4,12 @@ go 1.25.0
 
 replace github.com/oapi-codegen/oapi-codegen/v2 => ../
 
-// The fiber v3 OpenAPI validation middleware has not yet been released
-// upstream (oapi-codegen/fiber-middleware is still v1 / fiber v2 only), so
-// the petstore-expanded/fiberv3 example consumes the v3-capable fork until
-// an official `github.com/oapi-codegen/fiber-middleware/v2` is published.
-// See https://github.com/oapi-codegen/oapi-codegen/pull/1937
-replace github.com/oapi-codegen/fiber-middleware/v2 => github.com/kerak19/fiber-middleware/v2 v2.0.0-20250323205111-59ed66807d2f
-
 require (
 	github.com/getkin/kin-openapi v0.140.0
 	github.com/gin-gonic/gin v1.12.0
 	github.com/go-chi/chi/v5 v5.2.5
 	github.com/gofiber/fiber/v2 v2.52.13
-	github.com/gofiber/fiber/v3 v3.3.0
+	github.com/gofiber/fiber/v3 v3.4.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/kataras/iris/v12 v12.2.11
@@ -26,7 +19,7 @@ require (
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/echo-v5-middleware v0.1.0
 	github.com/oapi-codegen/fiber-middleware v1.0.2
-	github.com/oapi-codegen/fiber-middleware/v2 v2.0.0-00010101000000-000000000000
+	github.com/oapi-codegen/fiber-v3-middleware v0.1.0
 	github.com/oapi-codegen/gin-middleware v1.0.2
 	github.com/oapi-codegen/iris-middleware v1.0.5
 	github.com/oapi-codegen/nethttp-middleware v1.1.2
@@ -42,7 +35,7 @@ require (
 	github.com/CloudyKit/jet/v6 v6.3.2 // indirect
 	github.com/Joker/jade v1.1.3 // indirect
 	github.com/Shopify/goreferrer v0.0.0-20250617153402-88c1d9a79b05 // indirect
-	github.com/andybalholm/brotli v1.2.1 // indirect
+	github.com/andybalholm/brotli v1.2.2 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
 	github.com/bytedance/gopkg v0.1.4 // indirect
@@ -63,8 +56,8 @@ require (
 	github.com/go-playground/validator/v10 v10.30.2 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
-	github.com/gofiber/schema v1.7.1 // indirect
-	github.com/gofiber/utils/v2 v2.0.6 // indirect
+	github.com/gofiber/schema v1.8.1 // indirect
+	github.com/gofiber/utils/v2 v2.1.1 // indirect
 	github.com/golang/snappy v1.0.0 // indirect
 	github.com/gomarkdown/markdown v0.0.0-20260417124207-7d523f7318df // indirect
 	github.com/gorilla/css v1.0.1 // indirect
@@ -76,7 +69,7 @@ require (
 	github.com/kataras/pio v0.0.13 // indirect
 	github.com/kataras/sitemap v0.0.6 // indirect
 	github.com/kataras/tunnel v0.0.4 // indirect
-	github.com/klauspost/compress v1.18.6 // indirect
+	github.com/klauspost/compress v1.19.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.3.0 // indirect
 	github.com/labstack/gommon v0.5.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
@@ -88,7 +81,7 @@ require (
 	github.com/lestrrat-go/option/v2 v2.0.0 // indirect
 	github.com/mailgun/raymond/v2 v2.0.48 // indirect
 	github.com/mailru/easyjson v0.9.2 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
+	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/mattn/go-runewidth v0.0.23 // indirect
 	github.com/microcosm-cc/bluemonday v1.0.27 // indirect
@@ -114,7 +107,7 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.1 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.71.0 // indirect
+	github.com/valyala/fasthttp v1.72.0 // indirect
 	github.com/valyala/fastjson v1.6.10 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
@@ -124,12 +117,12 @@ require (
 	go.mongodb.org/mongo-driver/v2 v2.6.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/arch v0.26.0 // indirect
-	golang.org/x/crypto v0.53.0 // indirect
+	golang.org/x/crypto v0.54.0 // indirect
 	golang.org/x/exp v0.0.0-20260410095643-746e56fc9e2f // indirect
 	golang.org/x/mod v0.37.0 // indirect
-	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
 	golang.org/x/text v0.40.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.47.0 // indirect
