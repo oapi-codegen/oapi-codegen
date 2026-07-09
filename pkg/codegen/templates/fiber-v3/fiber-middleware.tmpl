@@ -131,8 +131,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c fiber.Ctx) error {
           params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
 
         } {{if .Required}}else {
-            err = fmt.Errorf("Header parameter {{.ParamName}} is required, but not found: %w", err)
-            return fiber.NewError(fiber.StatusBadRequest, err.Error())
+            return fiber.NewError(fiber.StatusBadRequest, "Header parameter {{.ParamName}} is required, but not found")
         }{{end}}
 
       {{end}}

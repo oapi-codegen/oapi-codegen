@@ -385,8 +385,7 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c *fiber.Ctx) error {
 		params.Header1 = Header1
 
 	} else {
-		err = fmt.Errorf("Header parameter header1 is required, but not found: %w", err)
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return fiber.NewError(fiber.StatusBadRequest, "Header parameter header1 is required, but not found")
 	}
 
 	// ------------- Optional header parameter "header2" -------------
