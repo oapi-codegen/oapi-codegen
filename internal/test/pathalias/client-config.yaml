@@ -1,5 +1,0 @@
-# yaml-language-server: $schema=../../../../configuration-schema.json
-package: pathalias
-generate:
-  client: true
-output: client.gen.go

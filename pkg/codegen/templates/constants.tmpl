@@ -1,4 +1,4 @@
-{{- if gt (len .SecuritySchemeProviderNames) 0 }}
+{{- if and (gt (len .SecuritySchemeProviderNames) 0) opts.Compatibility.EnableAuthScopesOnContext }}
 const (
 {{range $ProviderName := .SecuritySchemeProviderNames}}
     {{- $ProviderName | sanitizeGoIdentity | ucFirst}}Scopes {{$ProviderName | schemaNameToTypeName | lcFirst}}ContextKey = "{{$ProviderName}}.Scopes"
@@ -9,7 +9,7 @@ const (
 // Defines values for {{$Enum.TypeName}}.
 const (
 {{range $name, $value := $Enum.GetValues}}
-  {{$name}} {{$Enum.TypeName}} = {{$Enum.ValueWrapper}}{{$value}}{{$Enum.ValueWrapper -}}
+  {{$name}} {{$Enum.TypeName}} = {{if $Enum.ValueWrapper}}{{$value | toGoString}}{{else}}{{$value}}{{end -}}
 {{end}}
 )
 {{if not $.SkipEnumValidate}}

@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: bodiescontenttypes
+output: content_types.gen.go
+generate:
+  models: true
+  client: true
+output-options:
+  skip-prune: true

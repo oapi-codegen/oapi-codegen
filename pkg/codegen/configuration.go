@@ -57,6 +57,9 @@ func (o Configuration) Validate() error {
 	if o.Generate.FiberServer {
 		nServers++
 	}
+	if o.Generate.FiberV3Server {
+		nServers++
+	}
 	if o.Generate.EchoServer {
 		nServers++
 	}
@@ -151,6 +154,8 @@ type GenerateOptions struct {
 	ChiServer bool `yaml:"chi-server,omitempty"`
 	// FiberServer specifies whether to generate fiber server boilerplate
 	FiberServer bool `yaml:"fiber-server,omitempty"`
+	// FiberV3Server specifies whether to generate fiber v3 server boilerplate
+	FiberV3Server bool `yaml:"fiber-v3-server,omitempty"`
 	// EchoServer specifies whether to generate echo server boilerplate
 	EchoServer bool `yaml:"echo-server,omitempty"`
 	// Echo5Server specifies whether to generate echo v5 server boilerplate
@@ -191,6 +196,8 @@ func (g GenerateOptions) RouterImports() []AdditionalImport {
 		imports = append(imports, AdditionalImport{Package: "github.com/gorilla/mux"})
 	case g.FiberServer:
 		imports = append(imports, AdditionalImport{Package: "github.com/gofiber/fiber/v2"})
+	case g.FiberV3Server:
+		imports = append(imports, AdditionalImport{Package: "github.com/gofiber/fiber/v3"})
 	case g.IrisServer:
 		imports = append(imports, AdditionalImport{Package: "github.com/kataras/iris/v12"})
 		imports = append(imports, AdditionalImport{Package: "github.com/kataras/iris/v12/core/router"})
@@ -206,7 +213,7 @@ func (g GenerateOptions) RouterImports() []AdditionalImport {
 // references would be emitted without a corresponding declaration.
 func (g GenerateOptions) AnyOperationGenerator() bool {
 	return g.Client || g.IrisServer || g.EchoServer || g.Echo5Server ||
-		g.ChiServer || g.FiberServer || g.GinServer || g.GorillaServer ||
+		g.ChiServer || g.FiberServer || g.FiberV3Server || g.GinServer || g.GorillaServer ||
 		g.StdHTTPServer || g.Strict
 }
 
@@ -345,6 +352,20 @@ type CompatibilityOptions struct {
 	// are treated as required.
 	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/2267
 	HeadersImplicitlyRequired bool `yaml:"headers-implicitly-required,omitempty"`
+
+	// EnableAuthScopesOnContext re-enables the legacy emission of security
+	// scheme scopes by generated server code: the per-scheme context key
+	// types (e.g. `bearerAuthContextKey`), the scope constants (e.g.
+	// `BearerAuthScopes`), and the per-operation calls that store the
+	// operation's scopes into the request context.
+	// This mechanism is deprecated and off by default: it flattens the
+	// OpenAPI `security` requirements into a per-scheme list of scopes, and
+	// cannot represent alternative schemes (OR), combined schemes (AND), or
+	// anonymous (`{}`) alternatives. Authentication and authorization should
+	// instead be performed at runtime using the request validation
+	// middleware, which evaluates the spec's security requirements directly.
+	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/1524
+	EnableAuthScopesOnContext bool `yaml:"enable-auth-scopes-on-context,omitempty"`
 }
 
 func (co CompatibilityOptions) Validate() map[string]string {

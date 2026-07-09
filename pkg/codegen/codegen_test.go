@@ -509,5 +509,58 @@ func indexOf(s, substr string) int {
 	return -1
 }
 
+// TestEnableAuthScopesOnContext verifies that generated server code embeds
+// security scheme scopes into the request context only when the deprecated
+// enable-auth-scopes-on-context compatibility option is set.
+// Please see https://github.com/oapi-codegen/oapi-codegen/issues/1524
+func TestEnableAuthScopesOnContext(t *testing.T) {
+	const spec = `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Test Auth Scopes Emission
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+paths:
+  /secured:
+    get:
+      operationId: secured
+      security:
+        - bearerAuth: ["read"]
+      responses:
+        '200':
+          description: ok
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	opts := Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			StdHTTPServer: true,
+			Models:        true,
+		},
+	}
+
+	// By default, no context key types, scope constants, or context values
+	// are generated.
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+	assert.NotContains(t, code, "BearerAuthScopes")
+	assert.NotContains(t, code, "bearerAuthContextKey")
+	assert.NotContains(t, code, "context.WithValue")
+
+	// With the compatibility option set, the legacy scope emission returns.
+	opts.Compatibility.EnableAuthScopesOnContext = true
+	code, err = Generate(swagger, opts)
+	require.NoError(t, err)
+	assert.Contains(t, code, `BearerAuthScopes bearerAuthContextKey = "bearerAuth.Scopes"`)
+	assert.Contains(t, code, `ctx = context.WithValue(ctx, BearerAuthScopes, []string{"read"})`)
+}
+
 //go:embed test_spec.yaml
 var testOpenAPIDefinition string

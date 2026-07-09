@@ -45,6 +45,18 @@ tidy:
 	# then, for all child modules, use a module-managed `Makefile`
 	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && make tidy'
 
+$(GOBIN)/mdtoc:
+	env GOBIN=$(GOBIN) go install sigs.k8s.io/mdtoc@v1.4.0
+
+# Generate/update the Table of Contents in Markdown files.
+# Files must contain <!-- toc --> / <!-- /toc --> sentinel comments.
+# Use "make readme-toc-check" in CI to verify TOCs are up-to-date.
+readme-toc: $(GOBIN)/mdtoc
+	$(GOBIN)/mdtoc --inplace README.md
+
+readme-toc-check: $(GOBIN)/mdtoc
+	$(GOBIN)/mdtoc --inplace --dryrun README.md
+
 tidy-ci:
 	# for the root module, explicitly run the step, to prevent recursive calls
 	tidied -verbose

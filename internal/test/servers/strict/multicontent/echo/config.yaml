@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../../../configuration-schema.json
+package: serversstrictmulticontentecho
+generate:
+  client: true
+  models: true
+  embedded-spec: true
+  echo-server: true
+  strict-server: true
+output: serversstrictmulticontentecho.gen.go

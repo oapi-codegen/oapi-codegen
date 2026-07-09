@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: schemasenums
+output: enums.gen.go
+# Union of flags the folded source uses:
+#   - models       : type definitions for Bar enum
+#   - client       : exercises the client-side generation path
+#   - echo-server  : exercises server-side generation with enum types
+#   - embedded-spec: source (issue-illegal_enum_names) embeds the spec
+generate:
+  models: true
+  client: true
+  echo-server: true
+  embedded-spec: true
