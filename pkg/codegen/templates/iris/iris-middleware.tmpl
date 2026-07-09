@@ -90,7 +90,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
             return
         }
 {{if .IsPassThrough}}
-        params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}valueList[0]
+        {{.GoName}} = valueList[0]
 {{end}}
 {{if .IsJson}}
         err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})

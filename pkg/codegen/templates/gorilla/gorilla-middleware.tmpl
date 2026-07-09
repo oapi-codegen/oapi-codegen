@@ -104,7 +104,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           }
 
         {{if .IsPassThrough}}
-          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}valueList[0]
+          {{.GoName}} = valueList[0]
         {{end}}
 
         {{if .IsJson}}

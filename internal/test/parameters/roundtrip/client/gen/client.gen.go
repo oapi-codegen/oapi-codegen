@@ -105,6 +105,9 @@ type GetHeaderParams struct {
 	// XComplexObject complex object
 	XComplexObject *ComplexObject `json:"X-Complex-Object,omitempty"`
 
+	// XPassThrough non-JSON content, bound as the raw header string
+	XPassThrough *string `json:"X-Pass-Through,omitempty"`
+
 	// N1StartingWithNumber name starting with number
 	N1StartingWithNumber *string `json:"1-Starting-With-Number,omitempty"`
 }
@@ -1007,15 +1010,23 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 			req.Header.Set("X-Complex-Object", headerParam6)
 		}
 
-		if params.N1StartingWithNumber != nil {
+		if params.XPassThrough != nil {
 			var headerParam7 string
 
-			headerParam7, err = runtime.StyleParamWithOptions("simple", false, "1-Starting-With-Number", *params.N1StartingWithNumber, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			headerParam7 = *params.XPassThrough
+
+			req.Header.Set("X-Pass-Through", headerParam7)
+		}
+
+		if params.N1StartingWithNumber != nil {
+			var headerParam8 string
+
+			headerParam8, err = runtime.StyleParamWithOptions("simple", false, "1-Starting-With-Number", *params.N1StartingWithNumber, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
 			if err != nil {
 				return nil, err
 			}
 
-			req.Header.Set("1-Starting-With-Number", headerParam7)
+			req.Header.Set("1-Starting-With-Number", headerParam8)
 		}
 
 	}

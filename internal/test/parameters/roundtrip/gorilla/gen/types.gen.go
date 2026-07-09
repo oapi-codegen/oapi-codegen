@@ -93,6 +93,9 @@ type GetHeaderParams struct {
 	// XComplexObject complex object
 	XComplexObject *ComplexObject `json:"X-Complex-Object,omitempty"`
 
+	// XPassThrough non-JSON content, bound as the raw header string
+	XPassThrough *string `json:"X-Pass-Through,omitempty"`
+
 	// N1StartingWithNumber name starting with number
 	N1StartingWithNumber *string `json:"1-Starting-With-Number,omitempty"`
 }

@@ -509,6 +509,14 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ComplexObject"
+        - name: X-Pass-Through
+          description: non-JSON content, bound as the raw header string
+          in: header
+          required: false
+          content:
+            text/plain:
+              schema:
+                type: string
         - name: 1-Starting-With-Number
           description: name starting with number
           in: header
