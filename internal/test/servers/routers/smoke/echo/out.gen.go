@@ -298,7 +298,17 @@ func (sh *strictHandler) PostPostMultibody(ctx echo.Context) error {
 
 	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"") {
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
-		if err := (&echo.DefaultBinder{}).BindBody(ctx, &body); err != nil {
+		var err error
+		if binder, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
+			// Bind only the request body, so that path and query parameters
+			// are not also bound into the body struct.
+			err = binder.BindBody(ctx, &body)
+		} else {
+			// A custom binder is installed on the Echo instance; defer to it
+			// entirely, since echo.Binder does not expose body-only binding.
+			err = ctx.Bind(&body)
+		}
+		if err != nil {
 			if !errors.Is(err, io.EOF) {
 				return err
 			}
@@ -308,7 +318,17 @@ func (sh *strictHandler) PostPostMultibody(ctx echo.Context) error {
 	}
 	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"") {
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody
-		if err := (&echo.DefaultBinder{}).BindBody(ctx, &body); err != nil {
+		var err error
+		if binder, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
+			// Bind only the request body, so that path and query parameters
+			// are not also bound into the body struct.
+			err = binder.BindBody(ctx, &body)
+		} else {
+			// A custom binder is installed on the Echo instance; defer to it
+			// entirely, since echo.Binder does not expose body-only binding.
+			err = ctx.Bind(&body)
+		}
+		if err != nil {
 			if !errors.Is(err, io.EOF) {
 				return err
 			}
@@ -341,7 +361,17 @@ func (sh *strictHandler) PostPostObject(ctx echo.Context) error {
 	var request PostPostObjectRequestObject
 
 	var body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
-	if err := (&echo.DefaultBinder{}).BindBody(ctx, &body); err != nil {
+	var err error
+	if binder, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
+		// Bind only the request body, so that path and query parameters
+		// are not also bound into the body struct.
+		err = binder.BindBody(ctx, &body)
+	} else {
+		// A custom binder is installed on the Echo instance; defer to it
+		// entirely, since echo.Binder does not expose body-only binding.
+		err = ctx.Bind(&body)
+	}
+	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			return err
 		}
