@@ -57,6 +57,9 @@ func (o Configuration) Validate() error {
 	if o.Generate.FiberServer {
 		nServers++
 	}
+	if o.Generate.FiberV3Server {
+		nServers++
+	}
 	if o.Generate.EchoServer {
 		nServers++
 	}
