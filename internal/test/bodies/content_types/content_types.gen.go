@@ -1481,13 +1481,6 @@ func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 		}
 		response.JSON200 = &dest
 
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
-		var dest GenericObject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSONDefault = &dest
-
 	case strings.Contains(rsp.Header.Get("Content-Type"), "xml") && rsp.StatusCode == 200:
 		var dest GenericObject
 		if err := xml.Unmarshal(bodyBytes, &dest); err != nil {
@@ -1501,6 +1494,13 @@ func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 			return nil, err
 		}
 		response.YAML200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
+		var dest GenericObject
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSONDefault = &dest
 
 	case rsp.StatusCode == 200:
 	// Content-type (text/markdown) unsupported

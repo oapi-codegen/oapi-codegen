@@ -57,6 +57,36 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /widgets:
+    post:
+      operationId: createWidget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        "200":
+          description: Created with XML body.
+          content:
+            application/xml:
+              schema:
+                $ref: "#/components/schemas/Thing"
+        "2XX":
+          description: Other success, no body.
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
 components:
   schemas:
     Thing:

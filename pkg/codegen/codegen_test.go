@@ -498,6 +498,22 @@ func TestBodylessResponseWithDefaultCatchAll(t *testing.T) {
 	json200Idx := indexOf(code, `rsp.StatusCode == 200`)
 	range2XXIdx := indexOf(code, `rsp.StatusCode/100 == 2`)
 	assert.Greater(t, range2XXIdx, json200Idx, "explicit 200 content case must appear before bodyless 2XX range")
+
+	// Within ParseCreateWidgetResponse: the bodyless 2XX guard must not shadow
+	// the explicit 200 XML case, and must itself short-circuit before the
+	// strict (exact Content-Type match) default JSON catch-alls emitted when
+	// the default response declares multiple JSON content types.
+	widgetIdx := indexOf(code, "func ParseCreateWidgetResponse")
+	require.NotEqual(t, -1, widgetIdx)
+	widgetCode := code[widgetIdx:]
+	xml200Idx := indexOf(widgetCode, `strings.Contains(rsp.Header.Get("Content-Type"), "xml") && rsp.StatusCode == 200`)
+	widgetRangeIdx := indexOf(widgetCode, `rsp.StatusCode/100 == 2`)
+	strictDefaultIdx := indexOf(widgetCode, `rsp.Header.Get("Content-Type") == "application/json" && true`)
+	require.NotEqual(t, -1, xml200Idx)
+	require.NotEqual(t, -1, widgetRangeIdx)
+	require.NotEqual(t, -1, strictDefaultIdx)
+	assert.Greater(t, widgetRangeIdx, xml200Idx, "explicit 200 XML case must appear before bodyless 2XX guard")
+	assert.Greater(t, strictDefaultIdx, widgetRangeIdx, "bodyless 2XX guard must appear before strict default catch-all")
 }
 
 func indexOf(s, substr string) int {

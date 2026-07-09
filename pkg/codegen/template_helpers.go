@@ -231,19 +231,15 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	// catch-all (which matches with "&& true") would attempt to unmarshal an
 	// empty body and fail.
 	//
-	// Sort key selection ensures correct precedence in the generated switch:
-	//   - Exact status codes (e.g. "204") use prefix "0" so they appear before
-	//     all content-handling cases. This is safe because an exact code can
-	//     only match its own status and cannot shadow other responses.
-	//   - Range wildcards (e.g. "2XX") use key "9.json.B_nocontent_{range}" which
-	//     sorts after explicit numeric content cases (e.g. "9.json.400") but
-	//     before the default catch-all ("9.json.default"), since uppercase 'B'
-	//     falls between digits and lowercase 'd' in ASCII. This prevents ranges
-	//     from shadowing explicit content cases within the range while still
-	//     short-circuiting before the default catch-all.
-	//   - "default" is skipped — a bodyless default would emit "case true:"
-	//     which shadows everything. Such a spec is degenerate and the existing
-	//     behaviour (no guard) is acceptable.
+	// Keys follow the same "<responseName>.<detail>" scheme as
+	// buildUnmarshalCase, so an exact bodyless code (e.g. "204") sorts among
+	// its numeric peers, a range wildcard (e.g. "2XX") sorts after every
+	// explicit content case it covers (preventing it from shadowing them) but
+	// before the default catch-all, which sorts last.
+	//
+	// "default" itself is skipped — a bodyless default would emit "case true:"
+	// which shadows everything. Such a spec is degenerate and the existing
+	// behaviour (no guard) is acceptable.
 	if responses != nil {
 		for _, responseName := range SortedMapKeys(responses.Map()) {
 			if _, handled := handledResponseNames[responseName]; handled {
@@ -259,18 +255,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			if len(responseRef.Value.Content) == 0 {
 				caseCondition := getConditionOfResponseName("rsp.StatusCode", responseName)
 				caseClause := fmt.Sprintf("case %s:\nbreak // No content-type\n", caseCondition)
-
-				var caseKey string
-				switch responseName {
-				case "1XX", "2XX", "3XX", "4XX", "5XX":
-					// Ranges sort after explicit numeric content cases but before
-					// the default catch-all. "9.json.B_" is between "9.json.4XX"
-					// (digits) and "9.json.default" (lowercase) in ASCII order.
-					caseKey = fmt.Sprintf("%s.json.B_nocontent_%s", prefixLeastSpecific, responseName)
-				default:
-					// Exact codes sort before all content-handling cases.
-					caseKey = fmt.Sprintf("0.nocontent.%s", responseName)
-				}
+				caseKey := fmt.Sprintf("%s.%s.nocontent", prefixLeastSpecific, responseName)
 				handledCaseClauses[caseKey] = caseClause
 			}
 		}
@@ -298,17 +283,25 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	return buffer.String()
 }
 
-// buildUnmarshalCase builds an unmarshaling case clause for different content-types:
+// buildUnmarshalCase builds an unmarshaling case clause for different content-types.
+//
+// The sort key puts the response name before the content type so that
+// lexicographic ordering of the keys yields most-specific-first case clauses:
+// exact codes sort numerically ("200" < "204"), range wildcards sort after the
+// exact codes they cover ("204" < "2XX" since 'X' > '9') and before the next
+// tier ("2XX" < "300"), and "default" sorts after everything ('d' > 'X').
 func buildUnmarshalCase(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
-	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
+	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, typeDefinition.ResponseName, contentType)
 	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
 	contentTypeLiteral := StringToGoString(contentType)
 	caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), %s) && %s:\n%s\n", "Content-Type", contentTypeLiteral, caseClauseKey, caseAction)
 	return caseKey, caseClause
 }
 
+// buildUnmarshalCaseStrict is buildUnmarshalCase with an exact Content-Type
+// match; it uses the same "<responseName>.<contentType>" key scheme.
 func buildUnmarshalCaseStrict(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
-	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
+	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, typeDefinition.ResponseName, contentType)
 	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
 	contentTypeLiteral := StringToGoString(contentType)
 	caseClause = fmt.Sprintf("case rsp.Header.Get(\"%s\") == %s && %s:\n%s\n", "Content-Type", contentTypeLiteral, caseClauseKey, caseAction)
