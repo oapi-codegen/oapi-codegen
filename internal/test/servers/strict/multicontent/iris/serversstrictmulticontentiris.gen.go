@@ -411,15 +411,15 @@ func (sh *strictHandler) Test(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(TestResponseObject); ok {
 		if err := validResponse.VisitTestResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }

@@ -1047,15 +1047,15 @@ func (sh *strictHandler) JSONExample(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(JSONExampleResponseObject); ok {
 		if err := validResponse.VisitJSONExampleResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -1081,15 +1081,15 @@ func (sh *strictHandler) MultipartExample(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(MultipartExampleResponseObject); ok {
 		if err := validResponse.VisitMultipartExampleResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -1118,15 +1118,15 @@ func (sh *strictHandler) MultipartRelatedExample(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(MultipartRelatedExampleResponseObject); ok {
 		if err := validResponse.VisitMultipartRelatedExampleResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -1192,15 +1192,15 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(MultipleRequestAndResponseTypesResponseObject); ok {
 		if err := validResponse.VisitMultipleRequestAndResponseTypesResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -1219,15 +1219,15 @@ func (sh *strictHandler) NoContentHeaders(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(NoContentHeadersResponseObject); ok {
 		if err := validResponse.VisitNoContentHeadersResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -1253,15 +1253,15 @@ func (sh *strictHandler) RequiredJSONBody(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(RequiredJSONBodyResponseObject); ok {
 		if err := validResponse.VisitRequiredJSONBodyResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -1288,15 +1288,15 @@ func (sh *strictHandler) RequiredTextBody(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(RequiredTextBodyResponseObject); ok {
 		if err := validResponse.VisitRequiredTextBodyResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -1317,15 +1317,15 @@ func (sh *strictHandler) ReservedGoKeywordParameters(ctx iris.Context, pType str
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(ReservedGoKeywordParametersResponseObject); ok {
 		if err := validResponse.VisitReservedGoKeywordParametersResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -1354,15 +1354,15 @@ func (sh *strictHandler) ReusableResponses(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(ReusableResponsesResponseObject); ok {
 		if err := validResponse.VisitReusableResponsesResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -1393,15 +1393,15 @@ func (sh *strictHandler) SameNameParamAndBodyProperty(ctx iris.Context, name str
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(SameNameParamAndBodyPropertyResponseObject); ok {
 		if err := validResponse.VisitSameNameParamAndBodyPropertyResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -1430,15 +1430,15 @@ func (sh *strictHandler) TextExample(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(TextExampleResponseObject); ok {
 		if err := validResponse.VisitTextExampleResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -1459,15 +1459,15 @@ func (sh *strictHandler) UnknownExample(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(UnknownExampleResponseObject); ok {
 		if err := validResponse.VisitUnknownExampleResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -1490,15 +1490,15 @@ func (sh *strictHandler) UnspecifiedContentType(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(UnspecifiedContentTypeResponseObject); ok {
 		if err := validResponse.VisitUnspecifiedContentTypeResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -1528,15 +1528,15 @@ func (sh *strictHandler) URLEncodedExample(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(URLEncodedExampleResponseObject); ok {
 		if err := validResponse.VisitURLEncodedExampleResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -1567,15 +1567,15 @@ func (sh *strictHandler) HeadersExample(ctx iris.Context, params HeadersExampleP
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(HeadersExampleResponseObject); ok {
 		if err := validResponse.VisitHeadersExampleResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -1604,15 +1604,15 @@ func (sh *strictHandler) UnionExample(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(UnionExampleResponseObject); ok {
 		if err := validResponse.VisitUnionExampleResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }

@@ -261,10 +261,10 @@ func (sh *strictHandler) GetGetMultibody(ctx *fiber.Ctx) error {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	} else if validResponse, ok := response.(GetGetMultibodyResponseObject); ok {
 		if err := validResponse.VisitGetGetMultibodyResponse(ctx); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+			return err
 		}
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
@@ -286,10 +286,10 @@ func (sh *strictHandler) GetObject(ctx *fiber.Ctx) error {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	} else if validResponse, ok := response.(GetObjectResponseObject); ok {
 		if err := validResponse.VisitGetObjectResponse(ctx); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+			return err
 		}
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
@@ -334,10 +334,10 @@ func (sh *strictHandler) PostPostMultibody(ctx *fiber.Ctx) error {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	} else if validResponse, ok := response.(PostPostMultibodyResponseObject); ok {
 		if err := validResponse.VisitPostPostMultibodyResponse(ctx); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+			return err
 		}
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
@@ -368,10 +368,10 @@ func (sh *strictHandler) PostPostObject(ctx *fiber.Ctx) error {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, err.Error())
+		return err
 	} else if validResponse, ok := response.(PostPostObjectResponseObject); ok {
 		if err := validResponse.VisitPostPostObjectResponse(ctx); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, err.Error())
+			return err
 		}
 	} else if response != nil {
 		return fmt.Errorf("unexpected response type: %T", response)
