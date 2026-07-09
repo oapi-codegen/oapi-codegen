@@ -156,3 +156,10 @@ func (s StrictServer) UnionExample(ctx context.Context, request UnionExampleRequ
 		},
 	}, nil
 }
+
+func (s StrictServer) SameNameParamAndBodyProperty(ctx context.Context, request SameNameParamAndBodyPropertyRequestObject) (SameNameParamAndBodyPropertyResponseObject, error) {
+	if request.Body == nil {
+		return SameNameParamAndBodyProperty200JSONResponse{}, nil
+	}
+	return SameNameParamAndBodyProperty200JSONResponse(*request.Body), nil
+}

@@ -332,6 +332,30 @@ paths:
               text/plain:
                 schema:
                   type: string
+  /same-name-param-and-body-property/{name}:
+    post:
+      operationId: SameNameParamAndBodyProperty
+      description: |
+        Regression test for issue #1757: a path parameter must not be bound
+        into a request body property just because they share a name.
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/sameName"
+      responses:
+        200:
+          description: Echoes the request body back
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/sameName"
   /with-union:
     post:
       operationId: UnionExample
@@ -391,3 +415,12 @@ components:
       properties:
         value:
           type: string
+    sameName:
+      type: object
+      properties:
+        name:
+          type: string
+          # The param tag is what makes Echo's full Bind copy a same-named
+          # path parameter into this property; binders skip untagged fields.
+          x-oapi-codegen-extra-tags:
+            param: name

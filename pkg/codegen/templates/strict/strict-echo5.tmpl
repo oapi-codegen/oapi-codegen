@@ -45,9 +45,16 @@ type strictHandler struct {
                         err = ctx.Bind(&body)
                     }
                     if err != nil {
+                        {{if not .Required -}}
+                        if !errors.Is(err, io.EOF) {
+                            return err
+                        }
+                        {{else -}}
                         return err
-                    }
+                        {{end -}}
+                    } {{if not .Required -}} else { {{end}}
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
+                    {{if not .Required -}} } {{end}}
                 {{else if eq .NameTag "Formdata" -}}
                     if form, err := ctx.FormValues(); err == nil {
                         var body {{$opid}}{{.NameTag}}RequestBody

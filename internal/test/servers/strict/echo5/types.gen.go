@@ -14,6 +14,11 @@ type Example struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// SameName defines model for sameName.
+type SameName struct {
+	Name *string `json:"name,omitempty" param:"name"`
+}
+
 // Reusableresponse defines model for reusableresponse.
 type Reusableresponse = Example
 
@@ -69,6 +74,9 @@ type RequiredTextBodyTextRequestBody = RequiredTextBodyTextBody
 
 // ReusableResponsesJSONRequestBody defines body for ReusableResponses for application/json ContentType.
 type ReusableResponsesJSONRequestBody = Example
+
+// SameNameParamAndBodyPropertyJSONRequestBody defines body for SameNameParamAndBodyProperty for application/json ContentType.
+type SameNameParamAndBodyPropertyJSONRequestBody = SameName
 
 // TextExampleTextRequestBody defines body for TextExample for text/plain ContentType.
 type TextExampleTextRequestBody = TextExampleTextBody

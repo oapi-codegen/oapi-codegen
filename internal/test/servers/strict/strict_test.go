@@ -82,6 +82,16 @@ func testImpl(t *testing.T, handler http.Handler) {
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
 	})
+	t.Run("SameNameParamAndBodyProperty", func(t *testing.T) {
+		// Regression test for issue #1757: the "name" path parameter must not
+		// be bound into the request body's same-named "name" property.
+		rr := testutil.NewRequest().Post("/same-name-param-and-body-property/path-value").WithJsonBody(clientAPI.SameName{}).GoWithHTTPHandler(t, handler).Recorder
+		assert.Equal(t, http.StatusOK, rr.Code)
+		var responseBody clientAPI.SameName
+		err := json.NewDecoder(rr.Body).Decode(&responseBody)
+		assert.NoError(t, err)
+		assert.Nil(t, responseBody.Name)
+	})
 	t.Run("URLEncodedExample", func(t *testing.T) {
 		value := "456"
 		requestBody := clientAPI.Example{Value: &value}
