@@ -6,7 +6,6 @@ import (
 	"net"
 
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 	"github.com/oapi-codegen/oapi-codegen/v2/examples/authenticated-api/echo/api"
 	"github.com/oapi-codegen/oapi-codegen/v2/examples/authenticated-api/echo/server"
 )
@@ -28,7 +27,6 @@ func main() {
 	if err != nil {
 		log.Fatalln("error creating middleware:", err)
 	}
-	e.Use(middleware.Logger())
 	e.Use(mw...)
 
 	svr := server.NewServer()

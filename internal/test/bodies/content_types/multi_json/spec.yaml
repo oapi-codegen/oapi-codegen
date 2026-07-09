@@ -1,0 +1,59 @@
+openapi: 3.0.0
+paths:
+  /test:
+    get:
+      operationId: Test
+      responses:
+        "200":
+          content:
+            application/foo+json:
+              schema:
+                $ref: '#/components/schemas/foo'
+            application/bar+json:
+              schema:
+                $ref: '#/components/schemas/bar'
+        "201":
+          $ref: '#/components/responses/baz'
+  # From issue-1298: a custom +json suffix content type (application/test+json)
+  # in a request body must round-trip through the strict server and generate a
+  # typed client body method.
+  /suffix:
+    get:
+      operationId: suffixTest
+      requestBody:
+        content:
+          application/test+json:
+            schema:
+              $ref: "#/components/schemas/SuffixBody"
+      responses:
+        204:
+          description: good
+components:
+  schemas:
+    foo:
+      properties:
+        field1:
+          type: string
+    bar:
+      properties:
+        field2:
+          type: string
+    SuffixBody:
+      type: object
+      properties:
+        field1:
+          type: string
+        field2:
+          type: string
+      required:
+        - field1
+        - field2
+  responses:
+    baz:
+      content:
+        application/foo+json:
+          schema:
+            $ref: '#/components/schemas/foo'
+        application/bar+json:
+          schema:
+            $ref: '#/components/schemas/bar'

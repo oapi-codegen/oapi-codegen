@@ -1,0 +1,14 @@
+openapi: "3.0.0"
+info: {title: t, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Pet:
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+      discriminator:
+        propertyName: 'ev"il'
+    Cat:
+      type: object
+      properties:
+        name: {type: string}

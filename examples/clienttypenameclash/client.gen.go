@@ -18,7 +18,7 @@ type UpdateClientResponse struct {
 	Name string `json:"name"`
 }
 
-// RequestEditorFn  is the function signature for the RequestEditor callback function
+// RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
 // Doer performs HTTP requests.
@@ -91,10 +91,12 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// UpdateClient request
+
+	// UpdateClient performs a PUT /client (the `UpdateClient` operationId) request.
 	UpdateClient(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
+// UpdateClient performs a PUT /client (the `UpdateClient` operationId) request.
 func (c *Client) UpdateClient(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewUpdateClientRequest(c.Server)
 	if err != nil {
@@ -107,7 +109,7 @@ func (c *Client) UpdateClient(ctx context.Context, reqEditors ...RequestEditorFn
 	return c.Client.Do(req)
 }
 
-// NewUpdateClientRequest generates requests for UpdateClient
+// NewUpdateClientRequest constructs an http.Request for the UpdateClient method
 func NewUpdateClientRequest(server string) (*http.Request, error) {
 	var err error
 
@@ -126,7 +128,7 @@ func NewUpdateClientRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	req, err := http.NewRequest("PUT", queryURL.String(), nil)
+	req, err := http.NewRequest(http.MethodPut, queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -177,14 +179,28 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-	// UpdateClientWithResponse request
+
+	// UpdateClientWithResponse performs a PUT /client (the `UpdateClient` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
 	UpdateClientWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*UpdateClientResp, error)
 }
 
 type UpdateClientResp struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON400      *UpdateClientResponse
+	// JSON400 the response for an HTTP 400 `application/json` response
+	JSON400 *UpdateClientResponse
+}
+
+// GetJSON400 returns the response for an HTTP 400 `application/json` response
+func (r UpdateClientResp) GetJSON400() *UpdateClientResponse {
+	return r.JSON400
+}
+
+// GetBody returns the raw response body bytes
+func (r UpdateClientResp) GetBody() []byte {
+	return r.Body
 }
 
 // Status returns HTTPResponse.Status
@@ -203,7 +219,17 @@ func (r UpdateClientResp) StatusCode() int {
 	return 0
 }
 
-// UpdateClientWithResponse request returning *UpdateClientResp
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r UpdateClientResp) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+// UpdateClientWithResponse performs a PUT /client (the `UpdateClient` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
 func (c *ClientWithResponses) UpdateClientWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*UpdateClientResp, error) {
 	rsp, err := c.UpdateClient(ctx, reqEditors...)
 	if err != nil {

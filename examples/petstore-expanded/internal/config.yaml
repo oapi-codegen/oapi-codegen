@@ -1,6 +1,0 @@
-# yaml-language-server: $schema=../../../configuration-schema.json
-package: petstore
-generate:
-  client: true
-  models: true
-output: ../petstore-client.gen.go

@@ -1,0 +1,103 @@
+openapi: "3.0.0"
+info:
+  title: Bodyless response with default catch-all
+  version: "1.0"
+paths:
+  /events:
+    post:
+      operationId: createEvent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        "204":
+          description: Event received.
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /things:
+    post:
+      operationId: createThing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        "200":
+          description: Created with body.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Thing"
+        "2XX":
+          description: Other success, no body.
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /widgets:
+    post:
+      operationId: createWidget
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        "200":
+          description: Created with XML body.
+          content:
+            application/xml:
+              schema:
+                $ref: "#/components/schemas/Thing"
+        "2XX":
+          description: Other success, no body.
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    Thing:
+      type: object
+      properties:
+        id:
+          type: string
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string

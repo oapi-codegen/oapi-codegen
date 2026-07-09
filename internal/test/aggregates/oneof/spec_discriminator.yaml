@@ -1,0 +1,57 @@
+paths: 
+  /config:
+    post:
+      summary: Save configuration
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfigSaveReq"
+      responses:
+        "200":
+          description: Configuration saved successfully
+components:
+  schemas:
+    ConfigHttp:
+      type: object
+      properties:
+        config_type:
+          type: string
+        host:
+          type: string
+        port:
+          type: integer
+        user:
+          type: string
+        password:
+          type: string
+      required:
+        - config_type
+        - host
+        - port
+    ConfigSaveReq:
+      oneOf:
+        - $ref: "#/components/schemas/ConfigHttp"
+        - $ref: "#/components/schemas/ConfigSsh"
+      discriminator:
+        propertyName: config_type
+        mapping:
+          ssh_server: "#/components/schemas/ConfigSsh"
+          apache_server: "#/components/schemas/ConfigHttp"
+          web_server: "#/components/schemas/ConfigHttp"
+          another_server: "#/components/schemas/ConfigHttp"
+    ConfigSsh:
+      type: object
+      properties:
+        config_type:
+          type: string
+        host:
+          type: string
+        port:
+          type: integer
+        user:
+          type: string
+        private_key:
+          type: string
+      required:
+        - config_type

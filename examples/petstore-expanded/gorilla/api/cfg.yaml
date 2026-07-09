@@ -1,9 +1,0 @@
-# yaml-language-server: $schema=../../../../configuration-schema.json
-package: api
-generate:
-  gorilla-server: true
-  models: true
-  embedded-spec: true
-output: petstore.gen.go
-compatibility:
-  apply-gorilla-middleware-first-to-last: true

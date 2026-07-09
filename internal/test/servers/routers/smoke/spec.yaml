@@ -1,0 +1,53 @@
+# From issue-1799: the same spec must compile when generated for every supported
+# server framework (chi, echo, fiber, gin, gorilla, iris, std-http) plus the client.
+openapi: "3.0.0"
+
+info:
+  version: 0.0.1
+  title: example
+
+paths:
+  /object:
+    get:
+      responses:
+        '200':
+          description: something
+          content:
+            "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"":
+              schema:
+                type: string
+  /get-multibody:
+    get:
+      responses:
+        '200':
+          description: something
+          content:
+            "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"":
+              schema:
+                type: string
+            "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"":
+              schema:
+                type: string
+  /post-object:
+    post:
+      requestBody:
+        content:
+          "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"":
+            schema:
+              type: string
+      responses: {}
+
+  /post-multibody:
+    post:
+      requestBody:
+        content:
+          "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"":
+            schema:
+              type: string
+          "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"":
+            schema:
+              type: string
+
+      responses: {}
+
+

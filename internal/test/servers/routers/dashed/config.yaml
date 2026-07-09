@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: serversroutersdashed
+generate:
+  std-http-server: true
+  models: true
+output: dashed.gen.go
