@@ -3506,6 +3506,13 @@ func ParsePatchResourceResponse(rsp *http.Response) (*PatchResourceResponse, err
 	}
 
 	switch {
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
+		var dest N200ResourcePatchResponseJSONApplicationJSON
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
 	case rsp.Header.Get("Content-Type") == "application/json-patch+json" && rsp.StatusCode == 200:
 		var dest N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -3519,13 +3526,6 @@ func ParsePatchResourceResponse(rsp *http.Response) (*PatchResourceResponse, err
 			return nil, err
 		}
 		response.ApplicationjsonPatchQueryJSON200 = &dest
-
-	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
-		var dest N200ResourcePatchResponseJSONApplicationJSON
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/merge-patch+json" && rsp.StatusCode == 200:
 		var dest N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON

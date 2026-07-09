@@ -318,6 +318,9 @@ func ParseGetThingsResponse(rsp *http.Response) (*GetThingsResponse, error) {
 		}
 		response.JSON200 = &dest
 
+	case rsp.StatusCode == 304:
+		break // No content-type
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
 		var dest externalRef0.N401
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {

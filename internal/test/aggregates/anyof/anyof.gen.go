@@ -1238,6 +1238,12 @@ func ParseGetInlinePetsResponse(rsp *http.Response) (*GetInlinePetsResponse, err
 		}
 		response.JSON200 = &dest
 
+	case rsp.StatusCode == 401:
+		break // No content-type
+
+	case rsp.StatusCode == 500:
+		break // No content-type
+
 	}
 
 	return response, nil
@@ -1305,6 +1311,12 @@ func ParseGetRefPetsResponse(rsp *http.Response) (*GetRefPetsResponse, error) {
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case rsp.StatusCode == 401:
+		break // No content-type
+
+	case rsp.StatusCode == 500:
+		break // No content-type
 
 	}
 

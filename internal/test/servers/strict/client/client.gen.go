@@ -2470,6 +2470,9 @@ func ParseJSONExampleResponse(rsp *http.Response) (*JSONExampleResponse, error) 
 		}
 		response.JSON200 = &dest
 
+	case rsp.StatusCode == 400:
+		break // No content-type
+
 	}
 
 	return response, nil
@@ -2528,6 +2531,9 @@ func ParseMultipleRequestAndResponseTypesResponse(rsp *http.Response) (*Multiple
 		}
 		response.JSON200 = &dest
 
+	case rsp.StatusCode == 400:
+		break // No content-type
+
 	case rsp.StatusCode == 200:
 		// Content-type (text/plain) unsupported
 
@@ -2572,6 +2578,9 @@ func ParseRequiredJSONBodyResponse(rsp *http.Response) (*RequiredJSONBodyRespons
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case rsp.StatusCode == 400:
+		break // No content-type
 
 	}
 
@@ -2630,6 +2639,9 @@ func ParseReusableResponsesResponse(rsp *http.Response) (*ReusableResponsesRespo
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case rsp.StatusCode == 400:
+		break // No content-type
 
 	}
 
@@ -2721,6 +2733,9 @@ func ParseHeadersExampleResponse(rsp *http.Response) (*HeadersExampleResponse, e
 		}
 		response.JSON200 = &dest
 
+	case rsp.StatusCode == 400:
+		break // No content-type
+
 	}
 
 	return response, nil
@@ -2753,6 +2768,9 @@ func ParseUnionExampleResponse(rsp *http.Response) (*UnionExampleResponse, error
 			return nil, err
 		}
 		response.JSON200 = &dest
+
+	case rsp.StatusCode == 400:
+		break // No content-type
 
 	}
 

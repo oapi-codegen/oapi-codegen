@@ -461,6 +461,70 @@ components:
 	}
 }
 
+func TestBodylessResponseWithDefaultCatchAll(t *testing.T) {
+	// Regression test: when a spec declares a response without content (e.g. 204)
+	// alongside a "default" error response with JSON content, the generated parser
+	// must emit a case clause for the bodyless response that short-circuits before
+	// the default catch-all ("&& true") attempts to unmarshal an empty body.
+	opts := Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			Client: true,
+			Models: true,
+		},
+	}
+
+	swagger, err := util.LoadSwagger("test_specs/bodyless-response-default.yaml")
+	require.NoError(t, err)
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+
+	// Check that we have valid (formattable) code:
+	_, err = format.Source([]byte(code))
+	require.NoError(t, err)
+
+	// The 204 case must appear before the default catch-all so it short-circuits.
+	assert.Contains(t, code, "case rsp.StatusCode == 204:\n\t\tbreak // No content-type")
+
+	// The default catch-all must still be present for non-matching status codes.
+	assert.Contains(t, code, `strings.Contains(rsp.Header.Get("Content-Type"), "json") && true`)
+
+	// For the range wildcard case (2XX without content alongside 200 with content),
+	// the explicit 200 JSON case must appear before the 2XX break to avoid shadowing.
+	assert.Contains(t, code, "case rsp.StatusCode/100 == 2:\n\t\tbreak // No content-type")
+
+	// Verify ordering: 200 JSON case appears before the 2XX no-content case.
+	json200Idx := indexOf(code, `rsp.StatusCode == 200`)
+	range2XXIdx := indexOf(code, `rsp.StatusCode/100 == 2`)
+	assert.Greater(t, range2XXIdx, json200Idx, "explicit 200 content case must appear before bodyless 2XX range")
+
+	// Within ParseCreateWidgetResponse: the bodyless 2XX guard must not shadow
+	// the explicit 200 XML case, and must itself short-circuit before the
+	// strict (exact Content-Type match) default JSON catch-alls emitted when
+	// the default response declares multiple JSON content types.
+	widgetIdx := indexOf(code, "func ParseCreateWidgetResponse")
+	require.NotEqual(t, -1, widgetIdx)
+	widgetCode := code[widgetIdx:]
+	xml200Idx := indexOf(widgetCode, `strings.Contains(rsp.Header.Get("Content-Type"), "xml") && rsp.StatusCode == 200`)
+	widgetRangeIdx := indexOf(widgetCode, `rsp.StatusCode/100 == 2`)
+	strictDefaultIdx := indexOf(widgetCode, `rsp.Header.Get("Content-Type") == "application/json" && true`)
+	require.NotEqual(t, -1, xml200Idx)
+	require.NotEqual(t, -1, widgetRangeIdx)
+	require.NotEqual(t, -1, strictDefaultIdx)
+	assert.Greater(t, widgetRangeIdx, xml200Idx, "explicit 200 XML case must appear before bodyless 2XX guard")
+	assert.Greater(t, strictDefaultIdx, widgetRangeIdx, "bodyless 2XX guard must appear before strict default catch-all")
+}
+
+func indexOf(s, substr string) int {
+	for i := 0; i <= len(s)-len(substr); i++ {
+		if s[i:i+len(substr)] == substr {
+			return i
+		}
+	}
+	return -1
+}
+
 // TestEnableAuthScopesOnContext verifies that generated server code embeds
 // security scheme scopes into the request context only when the deprecated
 // enable-auth-scopes-on-context compatibility option is set.
