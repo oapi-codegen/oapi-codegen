@@ -1063,7 +1063,7 @@ func (sh *strictHandler) JSONExample(ctx echo.Context) error {
 	var request JSONExampleRequestObject
 
 	var body JSONExampleJSONRequestBody
-	if err := ctx.Bind(&body); err != nil {
+	if err := (&echo.DefaultBinder{}).BindBody(ctx, &body); err != nil {
 		if !errors.Is(err, io.EOF) {
 			return err
 		}
@@ -1156,7 +1156,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx echo.Context) error
 
 	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "application/json") {
 		var body MultipleRequestAndResponseTypesJSONRequestBody
-		if err := ctx.Bind(&body); err != nil {
+		if err := (&echo.DefaultBinder{}).BindBody(ctx, &body); err != nil {
 			if !errors.Is(err, io.EOF) {
 				return err
 			}
@@ -1243,7 +1243,7 @@ func (sh *strictHandler) RequiredJSONBody(ctx echo.Context) error {
 	var request RequiredJSONBodyRequestObject
 
 	var body RequiredJSONBodyJSONRequestBody
-	if err := ctx.Bind(&body); err != nil {
+	if err := (&echo.DefaultBinder{}).BindBody(ctx, &body); err != nil {
 		return err
 	}
 	request.Body = &body
@@ -1327,7 +1327,7 @@ func (sh *strictHandler) ReusableResponses(ctx echo.Context) error {
 	var request ReusableResponsesRequestObject
 
 	var body ReusableResponsesJSONRequestBody
-	if err := ctx.Bind(&body); err != nil {
+	if err := (&echo.DefaultBinder{}).BindBody(ctx, &body); err != nil {
 		if !errors.Is(err, io.EOF) {
 			return err
 		}
@@ -1478,7 +1478,7 @@ func (sh *strictHandler) HeadersExample(ctx echo.Context, params HeadersExampleP
 	request.Params = params
 
 	var body HeadersExampleJSONRequestBody
-	if err := ctx.Bind(&body); err != nil {
+	if err := (&echo.DefaultBinder{}).BindBody(ctx, &body); err != nil {
 		if !errors.Is(err, io.EOF) {
 			return err
 		}
@@ -1510,7 +1510,7 @@ func (sh *strictHandler) UnionExample(ctx echo.Context) error {
 	var request UnionExampleRequestObject
 
 	var body UnionExampleJSONRequestBody
-	if err := ctx.Bind(&body); err != nil {
+	if err := (&echo.DefaultBinder{}).BindBody(ctx, &body); err != nil {
 		if !errors.Is(err, io.EOF) {
 			return err
 		}

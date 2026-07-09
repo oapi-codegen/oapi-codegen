@@ -298,7 +298,7 @@ func (sh *strictHandler) PostPostMultibody(ctx echo.Context) error {
 
 	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"") {
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
-		if err := ctx.Bind(&body); err != nil {
+		if err := (&echo.DefaultBinder{}).BindBody(ctx, &body); err != nil {
 			if !errors.Is(err, io.EOF) {
 				return err
 			}
@@ -308,7 +308,7 @@ func (sh *strictHandler) PostPostMultibody(ctx echo.Context) error {
 	}
 	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"") {
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody
-		if err := ctx.Bind(&body); err != nil {
+		if err := (&echo.DefaultBinder{}).BindBody(ctx, &body); err != nil {
 			if !errors.Is(err, io.EOF) {
 				return err
 			}
@@ -341,7 +341,7 @@ func (sh *strictHandler) PostPostObject(ctx echo.Context) error {
 	var request PostPostObjectRequestObject
 
 	var body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
-	if err := ctx.Bind(&body); err != nil {
+	if err := (&echo.DefaultBinder{}).BindBody(ctx, &body); err != nil {
 		if !errors.Is(err, io.EOF) {
 			return err
 		}
