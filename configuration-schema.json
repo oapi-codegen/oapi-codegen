@@ -25,6 +25,10 @@
           "type": "boolean",
           "description": "FiberServer specifies whether to generate fiber server boilerplate"
         },
+        "fiber-v3-server": {
+          "type": "boolean",
+          "description": "FiberV3Server specifies whether to generate fiber-v3 server boilerplate"
+        },
         "echo-server": {
           "type": "boolean",
           "description": "EchoServer specifies whether to generate echo server boilerplate"

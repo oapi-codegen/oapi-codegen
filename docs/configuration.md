@@ -32,6 +32,7 @@ generate:
   echo-server: false
   echo5-server: false      # requires Go 1.25+
   fiber-server: false
+  fiber-v3-server: false   # requires Go 1.25+
   gin-server: false
   gorilla-server: false
   iris-server: false
