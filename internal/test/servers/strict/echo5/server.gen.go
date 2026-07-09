@@ -20,7 +20,7 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/oapi-codegen/runtime"
 )
 
@@ -28,52 +28,52 @@ import (
 type ServerInterface interface {
 
 	// (POST /json)
-	JSONExample(ctx echo.Context) error
+	JSONExample(ctx *echo.Context) error
 
 	// (POST /multipart)
-	MultipartExample(ctx echo.Context) error
+	MultipartExample(ctx *echo.Context) error
 
 	// (POST /multipart-related)
-	MultipartRelatedExample(ctx echo.Context) error
+	MultipartRelatedExample(ctx *echo.Context) error
 
 	// (POST /multiple)
-	MultipleRequestAndResponseTypes(ctx echo.Context) error
+	MultipleRequestAndResponseTypes(ctx *echo.Context) error
 
 	// (POST /no-content-headers)
-	NoContentHeaders(ctx echo.Context) error
+	NoContentHeaders(ctx *echo.Context) error
 
 	// (POST /required-json-body)
-	RequiredJSONBody(ctx echo.Context) error
+	RequiredJSONBody(ctx *echo.Context) error
 
 	// (POST /required-text-body)
-	RequiredTextBody(ctx echo.Context) error
+	RequiredTextBody(ctx *echo.Context) error
 
 	// (GET /reserved-go-keyword-parameters/{type})
-	ReservedGoKeywordParameters(ctx echo.Context, pType string) error
+	ReservedGoKeywordParameters(ctx *echo.Context, pType string) error
 
 	// (POST /reusable-responses)
-	ReusableResponses(ctx echo.Context) error
+	ReusableResponses(ctx *echo.Context) error
 
 	// (POST /same-name-param-and-body-property/{name})
-	SameNameParamAndBodyProperty(ctx echo.Context, name string) error
+	SameNameParamAndBodyProperty(ctx *echo.Context, name string) error
 
 	// (POST /text)
-	TextExample(ctx echo.Context) error
+	TextExample(ctx *echo.Context) error
 
 	// (POST /unknown)
-	UnknownExample(ctx echo.Context) error
+	UnknownExample(ctx *echo.Context) error
 
 	// (POST /unspecified-content-type)
-	UnspecifiedContentType(ctx echo.Context) error
+	UnspecifiedContentType(ctx *echo.Context) error
 
 	// (POST /urlencoded)
-	URLEncodedExample(ctx echo.Context) error
+	URLEncodedExample(ctx *echo.Context) error
 
 	// (POST /with-headers)
-	HeadersExample(ctx echo.Context, params HeadersExampleParams) error
+	HeadersExample(ctx *echo.Context, params HeadersExampleParams) error
 
 	// (POST /with-union)
-	UnionExample(ctx echo.Context) error
+	UnionExample(ctx *echo.Context) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -82,7 +82,7 @@ type ServerInterfaceWrapper struct {
 }
 
 // JSONExample converts echo context to params.
-func (w *ServerInterfaceWrapper) JSONExample(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) JSONExample(ctx *echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -91,7 +91,7 @@ func (w *ServerInterfaceWrapper) JSONExample(ctx echo.Context) error {
 }
 
 // MultipartExample converts echo context to params.
-func (w *ServerInterfaceWrapper) MultipartExample(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) MultipartExample(ctx *echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -100,7 +100,7 @@ func (w *ServerInterfaceWrapper) MultipartExample(ctx echo.Context) error {
 }
 
 // MultipartRelatedExample converts echo context to params.
-func (w *ServerInterfaceWrapper) MultipartRelatedExample(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) MultipartRelatedExample(ctx *echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -109,7 +109,7 @@ func (w *ServerInterfaceWrapper) MultipartRelatedExample(ctx echo.Context) error
 }
 
 // MultipleRequestAndResponseTypes converts echo context to params.
-func (w *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(ctx *echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -118,7 +118,7 @@ func (w *ServerInterfaceWrapper) MultipleRequestAndResponseTypes(ctx echo.Contex
 }
 
 // NoContentHeaders converts echo context to params.
-func (w *ServerInterfaceWrapper) NoContentHeaders(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) NoContentHeaders(ctx *echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -127,7 +127,7 @@ func (w *ServerInterfaceWrapper) NoContentHeaders(ctx echo.Context) error {
 }
 
 // RequiredJSONBody converts echo context to params.
-func (w *ServerInterfaceWrapper) RequiredJSONBody(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) RequiredJSONBody(ctx *echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -136,7 +136,7 @@ func (w *ServerInterfaceWrapper) RequiredJSONBody(ctx echo.Context) error {
 }
 
 // RequiredTextBody converts echo context to params.
-func (w *ServerInterfaceWrapper) RequiredTextBody(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) RequiredTextBody(ctx *echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -145,7 +145,7 @@ func (w *ServerInterfaceWrapper) RequiredTextBody(ctx echo.Context) error {
 }
 
 // ReservedGoKeywordParameters converts echo context to params.
-func (w *ServerInterfaceWrapper) ReservedGoKeywordParameters(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) ReservedGoKeywordParameters(ctx *echo.Context) error {
 	var err error
 	// ------------- Path parameter "type" -------------
 	var pType string
@@ -161,7 +161,7 @@ func (w *ServerInterfaceWrapper) ReservedGoKeywordParameters(ctx echo.Context) e
 }
 
 // ReusableResponses converts echo context to params.
-func (w *ServerInterfaceWrapper) ReusableResponses(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) ReusableResponses(ctx *echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -170,7 +170,7 @@ func (w *ServerInterfaceWrapper) ReusableResponses(ctx echo.Context) error {
 }
 
 // SameNameParamAndBodyProperty converts echo context to params.
-func (w *ServerInterfaceWrapper) SameNameParamAndBodyProperty(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) SameNameParamAndBodyProperty(ctx *echo.Context) error {
 	var err error
 	// ------------- Path parameter "name" -------------
 	var name string
@@ -186,7 +186,7 @@ func (w *ServerInterfaceWrapper) SameNameParamAndBodyProperty(ctx echo.Context) 
 }
 
 // TextExample converts echo context to params.
-func (w *ServerInterfaceWrapper) TextExample(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) TextExample(ctx *echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -195,7 +195,7 @@ func (w *ServerInterfaceWrapper) TextExample(ctx echo.Context) error {
 }
 
 // UnknownExample converts echo context to params.
-func (w *ServerInterfaceWrapper) UnknownExample(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) UnknownExample(ctx *echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -204,7 +204,7 @@ func (w *ServerInterfaceWrapper) UnknownExample(ctx echo.Context) error {
 }
 
 // UnspecifiedContentType converts echo context to params.
-func (w *ServerInterfaceWrapper) UnspecifiedContentType(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) UnspecifiedContentType(ctx *echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -213,7 +213,7 @@ func (w *ServerInterfaceWrapper) UnspecifiedContentType(ctx echo.Context) error 
 }
 
 // URLEncodedExample converts echo context to params.
-func (w *ServerInterfaceWrapper) URLEncodedExample(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) URLEncodedExample(ctx *echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -222,7 +222,7 @@ func (w *ServerInterfaceWrapper) URLEncodedExample(ctx echo.Context) error {
 }
 
 // HeadersExample converts echo context to params.
-func (w *ServerInterfaceWrapper) HeadersExample(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) HeadersExample(ctx *echo.Context) error {
 	var err error
 
 	// Parameter object where we will unmarshal all parameters from the context
@@ -268,7 +268,7 @@ func (w *ServerInterfaceWrapper) HeadersExample(ctx echo.Context) error {
 }
 
 // UnionExample converts echo context to params.
-func (w *ServerInterfaceWrapper) UnionExample(ctx echo.Context) error {
+func (w *ServerInterfaceWrapper) UnionExample(ctx *echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -280,15 +280,15 @@ func (w *ServerInterfaceWrapper) UnionExample(ctx echo.Context) error {
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
 type EchoRouter interface {
-	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) echo.RouteInfo
 }
 
 // RegisterHandlersOptions configures RegisterHandlersWithOptions.
@@ -1092,7 +1092,7 @@ type StrictServerInterface interface {
 	UnionExample(ctx context.Context, request UnionExampleRequestObject) (UnionExampleResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx echo.Context, request any) (any, error)
+type StrictHandlerFunc func(ctx *echo.Context, request any) (any, error)
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
@@ -1105,15 +1105,15 @@ type strictHandler struct {
 }
 
 // JSONExample operation middleware
-func (sh *strictHandler) JSONExample(ctx echo.Context) error {
+func (sh *strictHandler) JSONExample(ctx *echo.Context) error {
 	var request JSONExampleRequestObject
 
 	var body JSONExampleJSONRequestBody
 	var err error
-	if binder, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
+	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
 		// Bind only the request body, so that path and query parameters
 		// are not also bound into the body struct.
-		err = binder.BindBody(ctx, &body)
+		err = echo.BindBody(ctx, &body)
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
 		// entirely, since echo.Binder does not expose body-only binding.
@@ -1127,7 +1127,7 @@ func (sh *strictHandler) JSONExample(ctx echo.Context) error {
 		request.Body = &body
 	}
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.JSONExample(ctx.Request().Context(), request.(JSONExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1147,7 +1147,7 @@ func (sh *strictHandler) JSONExample(ctx echo.Context) error {
 }
 
 // MultipartExample operation middleware
-func (sh *strictHandler) MultipartExample(ctx echo.Context) error {
+func (sh *strictHandler) MultipartExample(ctx *echo.Context) error {
 	var request MultipartExampleRequestObject
 
 	if reader, err := ctx.Request().MultipartReader(); err != nil {
@@ -1156,7 +1156,7 @@ func (sh *strictHandler) MultipartExample(ctx echo.Context) error {
 		request.Body = reader
 	}
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.MultipartExample(ctx.Request().Context(), request.(MultipartExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1176,7 +1176,7 @@ func (sh *strictHandler) MultipartExample(ctx echo.Context) error {
 }
 
 // MultipartRelatedExample operation middleware
-func (sh *strictHandler) MultipartRelatedExample(ctx echo.Context) error {
+func (sh *strictHandler) MultipartRelatedExample(ctx *echo.Context) error {
 	var request MultipartRelatedExampleRequestObject
 
 	if _, params, err := mime.ParseMediaType(ctx.Request().Header.Get("Content-Type")); err != nil {
@@ -1187,7 +1187,7 @@ func (sh *strictHandler) MultipartRelatedExample(ctx echo.Context) error {
 		request.Body = multipart.NewReader(ctx.Request().Body, boundary)
 	}
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.MultipartRelatedExample(ctx.Request().Context(), request.(MultipartRelatedExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1207,16 +1207,16 @@ func (sh *strictHandler) MultipartRelatedExample(ctx echo.Context) error {
 }
 
 // MultipleRequestAndResponseTypes operation middleware
-func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx echo.Context) error {
+func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *echo.Context) error {
 	var request MultipleRequestAndResponseTypesRequestObject
 
 	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "application/json") {
 		var body MultipleRequestAndResponseTypesJSONRequestBody
 		var err error
-		if binder, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
+		if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
 			// Bind only the request body, so that path and query parameters
 			// are not also bound into the body struct.
-			err = binder.BindBody(ctx, &body)
+			err = echo.BindBody(ctx, &body)
 		} else {
 			// A custom binder is installed on the Echo instance; defer to it
 			// entirely, since echo.Binder does not expose body-only binding.
@@ -1231,7 +1231,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx echo.Context) error
 		}
 	}
 	if strings.HasPrefix(ctx.Request().Header.Get("Content-Type"), "application/x-www-form-urlencoded") {
-		if form, err := ctx.FormParams(); err == nil {
+		if form, err := ctx.FormValues(); err == nil {
 			var body MultipleRequestAndResponseTypesFormdataRequestBody
 			if err := runtime.BindForm(&body, form, nil, nil); err != nil {
 				return err
@@ -1256,13 +1256,11 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx echo.Context) error
 		if err != nil {
 			return err
 		}
-		if len(data) > 0 {
-			body := MultipleRequestAndResponseTypesTextRequestBody(data)
-			request.TextBody = &body
-		}
+		body := MultipleRequestAndResponseTypesTextRequestBody(data)
+		request.TextBody = &body
 	}
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.MultipleRequestAndResponseTypes(ctx.Request().Context(), request.(MultipleRequestAndResponseTypesRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1282,10 +1280,10 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx echo.Context) error
 }
 
 // NoContentHeaders operation middleware
-func (sh *strictHandler) NoContentHeaders(ctx echo.Context) error {
+func (sh *strictHandler) NoContentHeaders(ctx *echo.Context) error {
 	var request NoContentHeadersRequestObject
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.NoContentHeaders(ctx.Request().Context(), request.(NoContentHeadersRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1305,15 +1303,15 @@ func (sh *strictHandler) NoContentHeaders(ctx echo.Context) error {
 }
 
 // RequiredJSONBody operation middleware
-func (sh *strictHandler) RequiredJSONBody(ctx echo.Context) error {
+func (sh *strictHandler) RequiredJSONBody(ctx *echo.Context) error {
 	var request RequiredJSONBodyRequestObject
 
 	var body RequiredJSONBodyJSONRequestBody
 	var err error
-	if binder, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
+	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
 		// Bind only the request body, so that path and query parameters
 		// are not also bound into the body struct.
-		err = binder.BindBody(ctx, &body)
+		err = echo.BindBody(ctx, &body)
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
 		// entirely, since echo.Binder does not expose body-only binding.
@@ -1324,7 +1322,7 @@ func (sh *strictHandler) RequiredJSONBody(ctx echo.Context) error {
 	}
 	request.Body = &body
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.RequiredJSONBody(ctx.Request().Context(), request.(RequiredJSONBodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1344,7 +1342,7 @@ func (sh *strictHandler) RequiredJSONBody(ctx echo.Context) error {
 }
 
 // RequiredTextBody operation middleware
-func (sh *strictHandler) RequiredTextBody(ctx echo.Context) error {
+func (sh *strictHandler) RequiredTextBody(ctx *echo.Context) error {
 	var request RequiredTextBodyRequestObject
 
 	data, err := io.ReadAll(ctx.Request().Body)
@@ -1354,7 +1352,7 @@ func (sh *strictHandler) RequiredTextBody(ctx echo.Context) error {
 	body := RequiredTextBodyTextRequestBody(data)
 	request.Body = &body
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.RequiredTextBody(ctx.Request().Context(), request.(RequiredTextBodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1374,12 +1372,12 @@ func (sh *strictHandler) RequiredTextBody(ctx echo.Context) error {
 }
 
 // ReservedGoKeywordParameters operation middleware
-func (sh *strictHandler) ReservedGoKeywordParameters(ctx echo.Context, pType string) error {
+func (sh *strictHandler) ReservedGoKeywordParameters(ctx *echo.Context, pType string) error {
 	var request ReservedGoKeywordParametersRequestObject
 
 	request.Type = pType
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.ReservedGoKeywordParameters(ctx.Request().Context(), request.(ReservedGoKeywordParametersRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1399,15 +1397,15 @@ func (sh *strictHandler) ReservedGoKeywordParameters(ctx echo.Context, pType str
 }
 
 // ReusableResponses operation middleware
-func (sh *strictHandler) ReusableResponses(ctx echo.Context) error {
+func (sh *strictHandler) ReusableResponses(ctx *echo.Context) error {
 	var request ReusableResponsesRequestObject
 
 	var body ReusableResponsesJSONRequestBody
 	var err error
-	if binder, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
+	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
 		// Bind only the request body, so that path and query parameters
 		// are not also bound into the body struct.
-		err = binder.BindBody(ctx, &body)
+		err = echo.BindBody(ctx, &body)
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
 		// entirely, since echo.Binder does not expose body-only binding.
@@ -1421,7 +1419,7 @@ func (sh *strictHandler) ReusableResponses(ctx echo.Context) error {
 		request.Body = &body
 	}
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.ReusableResponses(ctx.Request().Context(), request.(ReusableResponsesRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1441,17 +1439,17 @@ func (sh *strictHandler) ReusableResponses(ctx echo.Context) error {
 }
 
 // SameNameParamAndBodyProperty operation middleware
-func (sh *strictHandler) SameNameParamAndBodyProperty(ctx echo.Context, name string) error {
+func (sh *strictHandler) SameNameParamAndBodyProperty(ctx *echo.Context, name string) error {
 	var request SameNameParamAndBodyPropertyRequestObject
 
 	request.Name = name
 
 	var body SameNameParamAndBodyPropertyJSONRequestBody
 	var err error
-	if binder, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
+	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
 		// Bind only the request body, so that path and query parameters
 		// are not also bound into the body struct.
-		err = binder.BindBody(ctx, &body)
+		err = echo.BindBody(ctx, &body)
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
 		// entirely, since echo.Binder does not expose body-only binding.
@@ -1465,7 +1463,7 @@ func (sh *strictHandler) SameNameParamAndBodyProperty(ctx echo.Context, name str
 		request.Body = &body
 	}
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.SameNameParamAndBodyProperty(ctx.Request().Context(), request.(SameNameParamAndBodyPropertyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1485,19 +1483,17 @@ func (sh *strictHandler) SameNameParamAndBodyProperty(ctx echo.Context, name str
 }
 
 // TextExample operation middleware
-func (sh *strictHandler) TextExample(ctx echo.Context) error {
+func (sh *strictHandler) TextExample(ctx *echo.Context) error {
 	var request TextExampleRequestObject
 
 	data, err := io.ReadAll(ctx.Request().Body)
 	if err != nil {
 		return err
 	}
-	if len(data) > 0 {
-		body := TextExampleTextRequestBody(data)
-		request.Body = &body
-	}
+	body := TextExampleTextRequestBody(data)
+	request.Body = &body
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.TextExample(ctx.Request().Context(), request.(TextExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1517,12 +1513,12 @@ func (sh *strictHandler) TextExample(ctx echo.Context) error {
 }
 
 // UnknownExample operation middleware
-func (sh *strictHandler) UnknownExample(ctx echo.Context) error {
+func (sh *strictHandler) UnknownExample(ctx *echo.Context) error {
 	var request UnknownExampleRequestObject
 
 	request.Body = ctx.Request().Body
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.UnknownExample(ctx.Request().Context(), request.(UnknownExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1542,14 +1538,14 @@ func (sh *strictHandler) UnknownExample(ctx echo.Context) error {
 }
 
 // UnspecifiedContentType operation middleware
-func (sh *strictHandler) UnspecifiedContentType(ctx echo.Context) error {
+func (sh *strictHandler) UnspecifiedContentType(ctx *echo.Context) error {
 	var request UnspecifiedContentTypeRequestObject
 
 	request.ContentType = ctx.Request().Header.Get("Content-Type")
 
 	request.Body = ctx.Request().Body
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.UnspecifiedContentType(ctx.Request().Context(), request.(UnspecifiedContentTypeRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1569,10 +1565,10 @@ func (sh *strictHandler) UnspecifiedContentType(ctx echo.Context) error {
 }
 
 // URLEncodedExample operation middleware
-func (sh *strictHandler) URLEncodedExample(ctx echo.Context) error {
+func (sh *strictHandler) URLEncodedExample(ctx *echo.Context) error {
 	var request URLEncodedExampleRequestObject
 
-	if form, err := ctx.FormParams(); err == nil {
+	if form, err := ctx.FormValues(); err == nil {
 		var body URLEncodedExampleFormdataRequestBody
 		if err := runtime.BindForm(&body, form, nil, nil); err != nil {
 			return err
@@ -1582,7 +1578,7 @@ func (sh *strictHandler) URLEncodedExample(ctx echo.Context) error {
 		return err
 	}
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.URLEncodedExample(ctx.Request().Context(), request.(URLEncodedExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1602,17 +1598,17 @@ func (sh *strictHandler) URLEncodedExample(ctx echo.Context) error {
 }
 
 // HeadersExample operation middleware
-func (sh *strictHandler) HeadersExample(ctx echo.Context, params HeadersExampleParams) error {
+func (sh *strictHandler) HeadersExample(ctx *echo.Context, params HeadersExampleParams) error {
 	var request HeadersExampleRequestObject
 
 	request.Params = params
 
 	var body HeadersExampleJSONRequestBody
 	var err error
-	if binder, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
+	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
 		// Bind only the request body, so that path and query parameters
 		// are not also bound into the body struct.
-		err = binder.BindBody(ctx, &body)
+		err = echo.BindBody(ctx, &body)
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
 		// entirely, since echo.Binder does not expose body-only binding.
@@ -1626,7 +1622,7 @@ func (sh *strictHandler) HeadersExample(ctx echo.Context, params HeadersExampleP
 		request.Body = &body
 	}
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.HeadersExample(ctx.Request().Context(), request.(HeadersExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1646,15 +1642,15 @@ func (sh *strictHandler) HeadersExample(ctx echo.Context, params HeadersExampleP
 }
 
 // UnionExample operation middleware
-func (sh *strictHandler) UnionExample(ctx echo.Context) error {
+func (sh *strictHandler) UnionExample(ctx *echo.Context) error {
 	var request UnionExampleRequestObject
 
 	var body UnionExampleJSONRequestBody
 	var err error
-	if binder, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
+	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
 		// Bind only the request body, so that path and query parameters
 		// are not also bound into the body struct.
-		err = binder.BindBody(ctx, &body)
+		err = echo.BindBody(ctx, &body)
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
 		// entirely, since echo.Binder does not expose body-only binding.
@@ -1668,7 +1664,7 @@ func (sh *strictHandler) UnionExample(ctx echo.Context) error {
 		request.Body = &body
 	}
 
-	handler := func(ctx echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.UnionExample(ctx.Request().Context(), request.(UnionExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

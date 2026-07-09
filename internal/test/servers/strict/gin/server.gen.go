@@ -54,6 +54,9 @@ type ServerInterface interface {
 	// (POST /reusable-responses)
 	ReusableResponses(c *gin.Context)
 
+	// (POST /same-name-param-and-body-property/{name})
+	SameNameParamAndBodyProperty(c *gin.Context, name string)
+
 	// (POST /text)
 	TextExample(c *gin.Context)
 
@@ -209,6 +212,31 @@ func (siw *ServerInterfaceWrapper) ReusableResponses(c *gin.Context) {
 	}
 
 	siw.Handler.ReusableResponses(c)
+}
+
+// SameNameParamAndBodyProperty operation middleware
+func (siw *ServerInterfaceWrapper) SameNameParamAndBodyProperty(c *gin.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "name" -------------
+	var name string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "name", c.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter name: %w", err), http.StatusBadRequest)
+		return
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.SameNameParamAndBodyProperty(c, name)
 }
 
 // TextExample operation middleware
@@ -374,6 +402,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/required-text-body", wrapper.RequiredTextBody)
 	router.GET(options.BaseURL+"/reserved-go-keyword-parameters/:type", wrapper.ReservedGoKeywordParameters)
 	router.POST(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
+	router.POST(options.BaseURL+"/same-name-param-and-body-property/:name", wrapper.SameNameParamAndBodyProperty)
 	router.POST(options.BaseURL+"/text", wrapper.TextExample)
 	router.POST(options.BaseURL+"/unknown", wrapper.UnknownExample)
 	router.POST(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
@@ -754,6 +783,29 @@ func (response ReusableResponsesdefaultResponse) VisitReusableResponsesResponse(
 	return nil
 }
 
+type SameNameParamAndBodyPropertyRequestObject struct {
+	Name string `json:"name"`
+	Body *SameNameParamAndBodyPropertyJSONRequestBody
+}
+
+type SameNameParamAndBodyPropertyResponseObject interface {
+	VisitSameNameParamAndBodyPropertyResponse(w http.ResponseWriter) error
+}
+
+type SameNameParamAndBodyProperty200JSONResponse SameName
+
+func (response SameNameParamAndBodyProperty200JSONResponse) VisitSameNameParamAndBodyPropertyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type TextExampleRequestObject struct {
 	Body *TextExampleTextRequestBody
 }
@@ -1086,6 +1138,9 @@ type StrictServerInterface interface {
 
 	// (POST /reusable-responses)
 	ReusableResponses(ctx context.Context, request ReusableResponsesRequestObject) (ReusableResponsesResponseObject, error)
+
+	// (POST /same-name-param-and-body-property/{name})
+	SameNameParamAndBodyProperty(ctx context.Context, request SameNameParamAndBodyPropertyRequestObject) (SameNameParamAndBodyPropertyResponseObject, error)
 
 	// (POST /text)
 	TextExample(ctx context.Context, request TextExampleRequestObject) (TextExampleResponseObject, error)
@@ -1480,6 +1535,42 @@ func (sh *strictHandler) ReusableResponses(ctx *gin.Context) {
 	}
 }
 
+// SameNameParamAndBodyProperty operation middleware
+func (sh *strictHandler) SameNameParamAndBodyProperty(ctx *gin.Context, name string) {
+	var request SameNameParamAndBodyPropertyRequestObject
+
+	request.Name = name
+
+	var body SameNameParamAndBodyPropertyJSONRequestBody
+	if err := ctx.ShouldBindJSON(&body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(ctx, err)
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.SameNameParamAndBodyProperty(ctx, request.(SameNameParamAndBodyPropertyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SameNameParamAndBodyProperty")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		sh.options.HandlerErrorFunc(ctx, err)
+	} else if validResponse, ok := response.(SameNameParamAndBodyPropertyResponseObject); ok {
+		if err := validResponse.VisitSameNameParamAndBodyPropertyResponse(ctx.Writer); err != nil {
+			sh.options.ResponseErrorHandlerFunc(ctx, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(ctx, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // TextExample operation middleware
 func (sh *strictHandler) TextExample(ctx *gin.Context) {
 	var request TextExampleRequestObject
@@ -1678,27 +1769,30 @@ func (sh *strictHandler) UnionExample(ctx *gin.Context) {
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
+	"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",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

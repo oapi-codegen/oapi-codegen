@@ -21,6 +21,11 @@ type Example struct {
 	Value *string `json:"value,omitempty"`
 }
 
+// SameName defines model for sameName.
+type SameName struct {
+	Name *string `json:"name,omitempty" param:"name"`
+}
+
 // Reusableresponse defines model for reusableresponse.
 type Reusableresponse = Example
 
@@ -76,6 +81,9 @@ type RequiredTextBodyTextRequestBody = RequiredTextBodyTextBody
 
 // ReusableResponsesJSONRequestBody defines body for ReusableResponses for application/json ContentType.
 type ReusableResponsesJSONRequestBody = Example
+
+// SameNameParamAndBodyPropertyJSONRequestBody defines body for SameNameParamAndBodyProperty for application/json ContentType.
+type SameNameParamAndBodyPropertyJSONRequestBody = SameName
 
 // TextExampleTextRequestBody defines body for TextExample for text/plain ContentType.
 type TextExampleTextRequestBody = TextExampleTextBody
@@ -314,6 +322,20 @@ type ClientInterface interface {
 	//
 	// Responses can be refs to components/responses.
 	ReusableResponses(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SameNameParamAndBodyPropertyWithBody performs a POST /same-name-param-and-body-property/{name} (the `SameNameParamAndBodyProperty` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Regression test for issue #1757: a path parameter must not be bound
+	// into a request body property just because they share a name.
+	SameNameParamAndBodyPropertyWithBody(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// SameNameParamAndBodyProperty performs a POST /same-name-param-and-body-property/{name} (the `SameNameParamAndBodyProperty` operationId) request.
+	// Takes a body of the `application/json` content type.
+	//
+	// Regression test for issue #1757: a path parameter must not be bound
+	// into a request body property just because they share a name.
+	SameNameParamAndBodyProperty(ctx context.Context, name string, body SameNameParamAndBodyPropertyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// TextExampleWithBody performs a POST /text (the `TextExample` operationId) request,
 	// with any type of body and a specified content type.
@@ -606,6 +628,40 @@ func (c *Client) ReusableResponsesWithBody(ctx context.Context, contentType stri
 // Responses can be refs to components/responses.
 func (c *Client) ReusableResponses(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewReusableResponsesRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SameNameParamAndBodyPropertyWithBody performs a POST /same-name-param-and-body-property/{name} (the `SameNameParamAndBodyProperty` operationId) request,
+// with any type of body and a specified content type.
+//
+// Regression test for issue #1757: a path parameter must not be bound
+// into a request body property just because they share a name.
+func (c *Client) SameNameParamAndBodyPropertyWithBody(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSameNameParamAndBodyPropertyRequestWithBody(c.Server, name, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// SameNameParamAndBodyProperty performs a POST /same-name-param-and-body-property/{name} (the `SameNameParamAndBodyProperty` operationId) request.
+// Takes a body of the `application/json` content type.
+//
+// Regression test for issue #1757: a path parameter must not be bound
+// into a request body property just because they share a name.
+func (c *Client) SameNameParamAndBodyProperty(ctx context.Context, name string, body SameNameParamAndBodyPropertyJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewSameNameParamAndBodyPropertyRequest(c.Server, name, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1107,6 +1163,53 @@ func NewReusableResponsesRequestWithBody(server string, contentType string, body
 	return req, nil
 }
 
+// NewSameNameParamAndBodyPropertyRequest calls the generic SameNameParamAndBodyProperty builder with application/json body
+func NewSameNameParamAndBodyPropertyRequest(server string, name string, body SameNameParamAndBodyPropertyJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewSameNameParamAndBodyPropertyRequestWithBody(server, name, "application/json", bodyReader)
+}
+
+// NewSameNameParamAndBodyPropertyRequestWithBody constructs an http.Request for the SameNameParamAndBodyProperty method, with any body, and a specified content type
+func NewSameNameParamAndBodyPropertyRequestWithBody(server string, name string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "name", name, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/same-name-param-and-body-property/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewTextExampleRequestWithTextBody calls the generic TextExample builder with text/plain body
 func NewTextExampleRequestWithTextBody(server string, body TextExampleTextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -1501,6 +1604,22 @@ type ClientWithResponsesInterface interface {
 	// Responses can be refs to components/responses.
 	ReusableResponsesWithResponse(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*ReusableResponsesResponse, error)
 
+	// SameNameParamAndBodyPropertyWithBodyWithResponse performs a POST /same-name-param-and-body-property/{name} (the `SameNameParamAndBodyProperty` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// Regression test for issue #1757: a path parameter must not be bound
+	// into a request body property just because they share a name.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	SameNameParamAndBodyPropertyWithBodyWithResponse(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SameNameParamAndBodyPropertyResponse, error)
+
+	// SameNameParamAndBodyPropertyWithResponse performs a POST /same-name-param-and-body-property/{name} (the `SameNameParamAndBodyProperty` operationId) request.
+	// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Regression test for issue #1757: a path parameter must not be bound
+	// into a request body property just because they share a name.
+	SameNameParamAndBodyPropertyWithResponse(ctx context.Context, name string, body SameNameParamAndBodyPropertyJSONRequestBody, reqEditors ...RequestEditorFn) (*SameNameParamAndBodyPropertyResponse, error)
+
 	// TextExampleWithBodyWithResponse performs a POST /text (the `TextExample` operationId) request,
 	// with any type of body and a specified content type.
 	//
@@ -1892,6 +2011,47 @@ func (r ReusableResponsesResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r ReusableResponsesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type SameNameParamAndBodyPropertyResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *SameName
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r SameNameParamAndBodyPropertyResponse) GetJSON200() *SameName {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes
+func (r SameNameParamAndBodyPropertyResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r SameNameParamAndBodyPropertyResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r SameNameParamAndBodyPropertyResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r SameNameParamAndBodyPropertyResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -2327,6 +2487,34 @@ func (c *ClientWithResponses) ReusableResponsesWithResponse(ctx context.Context,
 	return ParseReusableResponsesResponse(rsp)
 }
 
+// SameNameParamAndBodyPropertyWithBodyWithResponse performs a POST /same-name-param-and-body-property/{name} (the `SameNameParamAndBodyProperty` operationId) request,
+// with any type of body and a specified content type.
+//
+// Regression test for issue #1757: a path parameter must not be bound
+// into a request body property just because they share a name.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) SameNameParamAndBodyPropertyWithBodyWithResponse(ctx context.Context, name string, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*SameNameParamAndBodyPropertyResponse, error) {
+	rsp, err := c.SameNameParamAndBodyPropertyWithBody(ctx, name, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSameNameParamAndBodyPropertyResponse(rsp)
+}
+
+// SameNameParamAndBodyPropertyWithResponse performs a POST /same-name-param-and-body-property/{name} (the `SameNameParamAndBodyProperty` operationId) request.
+// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).
+//
+// Regression test for issue #1757: a path parameter must not be bound
+// into a request body property just because they share a name.
+func (c *ClientWithResponses) SameNameParamAndBodyPropertyWithResponse(ctx context.Context, name string, body SameNameParamAndBodyPropertyJSONRequestBody, reqEditors ...RequestEditorFn) (*SameNameParamAndBodyPropertyResponse, error) {
+	rsp, err := c.SameNameParamAndBodyProperty(ctx, name, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseSameNameParamAndBodyPropertyResponse(rsp)
+}
+
 // TextExampleWithBodyWithResponse performs a POST /text (the `TextExample` operationId) request,
 // with any type of body and a specified content type.
 //
@@ -2642,6 +2830,32 @@ func ParseReusableResponsesResponse(rsp *http.Response) (*ReusableResponsesRespo
 
 	case rsp.StatusCode == 400:
 		break // No content-type
+
+	}
+
+	return response, nil
+}
+
+// ParseSameNameParamAndBodyPropertyResponse parses an HTTP response from a SameNameParamAndBodyPropertyWithResponse call
+func ParseSameNameParamAndBodyPropertyResponse(rsp *http.Response) (*SameNameParamAndBodyPropertyResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &SameNameParamAndBodyPropertyResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest SameName
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	}
 

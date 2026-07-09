@@ -15,11 +15,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/kataras/iris/v12"
 	"github.com/labstack/echo/v4"
+	echov5 "github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/assert"
 
 	chiAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/chi"
 	clientAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/client"
 	echoAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/echo"
+	echo5API "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/echo5"
 	ginAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/gin"
 	irisAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/iris"
 
@@ -51,6 +53,14 @@ func TestEchoServer(t *testing.T) {
 	testImpl(t, e)
 }
 
+func TestEcho5Server(t *testing.T) {
+	server := echo5API.StrictServer{}
+	strictHandler := echo5API.NewStrictHandler(server, nil)
+	e := echov5.New()
+	echo5API.RegisterHandlers(e, strictHandler)
+	testImpl(t, e)
+}
+
 func TestGinServer(t *testing.T) {
 	server := ginAPI.StrictServer{}
 	strictHandler := ginAPI.NewStrictHandler(server, nil)
@@ -71,6 +81,16 @@ func testImpl(t *testing.T, handler http.Handler) {
 		err := json.NewDecoder(rr.Body).Decode(&responseBody)
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
+	})
+	t.Run("SameNameParamAndBodyProperty", func(t *testing.T) {
+		// Regression test for issue #1757: the "name" path parameter must not
+		// be bound into the request body's same-named "name" property.
+		rr := testutil.NewRequest().Post("/same-name-param-and-body-property/path-value").WithJsonBody(clientAPI.SameName{}).GoWithHTTPHandler(t, handler).Recorder
+		assert.Equal(t, http.StatusOK, rr.Code)
+		var responseBody clientAPI.SameName
+		err := json.NewDecoder(rr.Body).Decode(&responseBody)
+		assert.NoError(t, err)
+		assert.Nil(t, responseBody.Name)
 	})
 	t.Run("URLEncodedExample", func(t *testing.T) {
 		value := "456"
