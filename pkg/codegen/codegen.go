@@ -172,6 +172,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		pruneUnusedComponents(spec)
 	}
 
+	// Reject spec values that cannot be represented in the generated Go source
+	// (names, media types, enum values, extension hints containing quotes,
+	// backticks, or control characters). Run after filtering/pruning so only
+	// values that will actually be emitted are considered.
+	if err := ValidateSpec(spec); err != nil {
+		return "", err
+	}
+
 	// if we are provided an override for the response type suffix update it
 	if opts.OutputOptions.ResponseTypeSuffix != "" {
 		responseTypeSuffix = opts.OutputOptions.ResponseTypeSuffix
@@ -932,9 +940,12 @@ func collectComponentTypes(t *template.Template, swagger *openapi3.T, excludeSch
 	if err != nil {
 		return nil, fmt.Errorf("error generating Go types for component request bodies: %w", err)
 	}
-	securitySchemeTypes, err := GenerateTypesForSecuritySchemes(t, swagger.Components.SecuritySchemes)
-	if err != nil {
-		return nil, fmt.Errorf("error generating Go types for component security schemes: %w", err)
+	var securitySchemeTypes []TypeDefinition
+	if globalState.options.Compatibility.EnableAuthScopesOnContext {
+		securitySchemeTypes, err = GenerateTypesForSecuritySchemes(t, swagger.Components.SecuritySchemes)
+		if err != nil {
+			return nil, fmt.Errorf("error generating Go types for component security schemes: %w", err)
+		}
 	}
 	allTypes := append(schemaTypes, paramTypes...)
 	allTypes = append(allTypes, responseTypes...)

@@ -349,6 +349,20 @@ type CompatibilityOptions struct {
 	// are treated as required.
 	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/2267
 	HeadersImplicitlyRequired bool `yaml:"headers-implicitly-required,omitempty"`
+
+	// EnableAuthScopesOnContext re-enables the legacy emission of security
+	// scheme scopes by generated server code: the per-scheme context key
+	// types (e.g. `bearerAuthContextKey`), the scope constants (e.g.
+	// `BearerAuthScopes`), and the per-operation calls that store the
+	// operation's scopes into the request context.
+	// This mechanism is deprecated and off by default: it flattens the
+	// OpenAPI `security` requirements into a per-scheme list of scopes, and
+	// cannot represent alternative schemes (OR), combined schemes (AND), or
+	// anonymous (`{}`) alternatives. Authentication and authorization should
+	// instead be performed at runtime using the request validation
+	// middleware, which evaluates the spec's security requirements directly.
+	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/1524
+	EnableAuthScopesOnContext bool `yaml:"enable-auth-scopes-on-context,omitempty"`
 }
 
 func (co CompatibilityOptions) Validate() map[string]string {

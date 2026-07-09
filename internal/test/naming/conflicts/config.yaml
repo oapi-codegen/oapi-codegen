@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: namingconflicts
+output: conflicts.gen.go
+# Union of the flags every folded case needs (see name_conflict_resolution):
+#   - models : all cross-section collision patterns (A-M) emit types
+#   - client : client wrappers are required to prove wrapper-vs-schema collision
+#   - resolve-type-name-collisions: the feature under test throughout this spec
+generate:
+  models: true
+  client: true
+output-options:
+  resolve-type-name-collisions: true

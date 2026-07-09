@@ -47,9 +47,11 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
 
   {{end}}
 
+{{if opts.Compatibility.EnableAuthScopesOnContext -}}
 {{range .SecurityDefinitions}}
   c.Context().SetUserValue(({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes), {{toStringArray .Scopes}})
 {{end}}
+{{- end}}
 
   {{if .RequiresParamObject}}
     // Parameter object where we will unmarshal all parameters from the context

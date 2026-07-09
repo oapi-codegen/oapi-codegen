@@ -1,0 +1,410 @@
+package codegen
+
+import (
+	"errors"
+	"fmt"
+	"go/token"
+	"unicode"
+
+	"github.com/getkin/kin-openapi/openapi3"
+)
+
+// ValidateSpec walks a loaded OpenAPI document and rejects values that cannot be
+// represented in the generated Go source.
+//
+// oapi-codegen copies many spec strings verbatim into the code it emits:
+// parameter names, property names, media types and enum values become Go string
+// literals and struct-tag contents; the `x-go-name`/`x-go-type`/`x-go-type-name`
+// extensions become Go identifiers and type expressions. A value containing a
+// quote, a backtick or a control character (such as a newline) would produce Go
+// that does not compile. Catching that here turns an obscure compiler error on
+// generated code into a clear message that points at the offending part of the
+// spec.
+//
+// It is meant to run after any overlay has been applied and after tag/operation
+// filtering and component pruning, so only values that will actually be emitted
+// are checked. `$ref`s are not followed: every ref resolves to a component that
+// is validated at its own definition, and the contents of external documents are
+// never copied into the generated output, so they cannot affect it.
+func ValidateSpec(spec *openapi3.T) error {
+	if spec == nil {
+		return nil
+	}
+	v := &specValidator{}
+	v.walkDocument(spec)
+	return errors.Join(v.errs...)
+}
+
+type specValidator struct {
+	errs []error
+}
+
+func (v *specValidator) addf(format string, args ...any) {
+	v.errs = append(v.errs, fmt.Errorf(format, args...))
+}
+
+// checkText validates a free-form string that is copied verbatim into the
+// generated code (a name, media type, enum value, path, or tag content). Such a
+// value ends up inside Go string literals, backtick-delimited struct tags and
+// line comments, so it may not contain a double quote, a backtick, or a control
+// character (newlines included). `what` describes the location for the message.
+func (v *specValidator) checkText(value, what string) {
+	for _, r := range value {
+		if r == '"' || r == '`' || unicode.IsControl(r) {
+			v.addf("%s may not contain %s: %q", what, describeRune(r), value)
+			return
+		}
+	}
+}
+
+// checkNoControl validates a string that is copied into the generated code but
+// may legitimately contain quotes — for example a media type, whose parameters
+// use quoted-strings (`application/ld+json; profile="…"`). Such values are
+// emitted through strconv.Quote at their string-literal sinks, which handles the
+// quotes safely, so only control characters (newlines that would break out of a
+// line comment) are rejected here.
+func (v *specValidator) checkNoControl(value, what string) {
+	for _, r := range value {
+		if unicode.IsControl(r) {
+			v.addf("%s may not contain %s: %q", what, describeRune(r), value)
+			return
+		}
+	}
+}
+
+// checkIdentifier validates a value that becomes a Go identifier (the `x-go-name`
+// and `x-go-type-name` extensions). It must be a valid, non-keyword Go
+// identifier, which by definition excludes quotes, backticks and control
+// characters.
+func (v *specValidator) checkIdentifier(value, what string) {
+	if !token.IsIdentifier(value) {
+		v.addf("%s must be a valid Go identifier: %q", what, value)
+	}
+}
+
+// checkGoType validates a value that becomes a Go type expression (the `x-go-type`
+// extension). It legitimately contains characters an identifier cannot (`.`,
+// `[]`, `*`, `map[...]`, `struct{}`, …), so instead of an identifier check it
+// forbids the characters that would let the value escape the type position and
+// introduce a new declaration or statement: quotes, backticks, semicolons and
+// control characters.
+func (v *specValidator) checkGoType(value, what string) {
+	for _, r := range value {
+		if r == '"' || r == '`' || r == ';' || unicode.IsControl(r) {
+			v.addf("%s must be a Go type expression and may not contain %s: %q", what, describeRune(r), value)
+			return
+		}
+	}
+}
+
+// checkTagKey validates the key of an `x-oapi-codegen-extra-tags` entry. Struct
+// tag keys are space-separated tokens terminated by ':', so they may not contain
+// spaces, colons, quotes, backticks or control characters, and may not be empty.
+func (v *specValidator) checkTagKey(key, what string) {
+	if key == "" {
+		v.addf("%s may not be empty", what)
+		return
+	}
+	for _, r := range key {
+		if r == '"' || r == '`' || r == ':' || r == ' ' || unicode.IsControl(r) {
+			v.addf("%s may not contain %s: %q", what, describeRune(r), key)
+			return
+		}
+	}
+}
+
+// checkSecurity validates the scopes named in security requirements. The
+// provider names are emitted only after identifier sanitization, but scopes are
+// copied verbatim into a generated `[]string` literal (via toStringArray), so
+// they are checked as text.
+func (v *specValidator) checkSecurity(reqs openapi3.SecurityRequirements, where string) {
+	for _, req := range reqs {
+		for _, provider := range SortedMapKeys(req) {
+			for _, scope := range req[provider] {
+				v.checkText(scope, fmt.Sprintf("security scope for %q in %s", provider, where))
+			}
+		}
+	}
+}
+
+func describeRune(r rune) string {
+	switch r {
+	case '"':
+		return "a double quote"
+	case '`':
+		return "a backtick"
+	case '\n':
+		return "a newline"
+	case '\r':
+		return "a carriage return"
+	case '\t':
+		return "a tab"
+	case ';':
+		return "a semicolon"
+	case ':':
+		return "a colon"
+	case ' ':
+		return "a space"
+	}
+	if unicode.IsControl(r) {
+		return fmt.Sprintf("a control character (%U)", r)
+	}
+	return fmt.Sprintf("%q", r)
+}
+
+// checkExtensions validates the code-affecting extensions on any spec object.
+// Values are parsed with the same helpers code generation uses, and only checked
+// when the parse succeeds — a malformed extension is ignored during generation,
+// so it cannot inject anything and need not be rejected here.
+func (v *specValidator) checkExtensions(ext map[string]any, where string) {
+	if ext == nil {
+		return
+	}
+	if raw, ok := ext[extGoName]; ok {
+		if s, err := extParseGoFieldName(raw); err == nil {
+			v.checkIdentifier(s, "x-go-name in "+where)
+		}
+	}
+	if raw, ok := ext[extGoTypeName]; ok {
+		if s, err := extTypeName(raw); err == nil {
+			v.checkIdentifier(s, "x-go-type-name in "+where)
+		}
+	}
+	if raw, ok := ext[extPropGoType]; ok {
+		if s, err := extString(raw); err == nil {
+			v.checkGoType(s, "x-go-type in "+where)
+		}
+	}
+	if raw, ok := ext[extPropExtraTags]; ok {
+		if tags, err := extExtraTags(raw); err == nil {
+			for _, k := range SortedMapKeys(tags) {
+				v.checkTagKey(k, "x-oapi-codegen-extra-tags key in "+where)
+				v.checkText(tags[k], fmt.Sprintf("x-oapi-codegen-extra-tags value for %q in %s", k, where))
+			}
+		}
+	}
+}
+
+func (v *specValidator) walkDocument(spec *openapi3.T) {
+	v.checkSecurity(spec.Security, "the root security requirements")
+	if spec.Paths != nil {
+		paths := spec.Paths.Map()
+		for _, path := range SortedMapKeys(paths) {
+			where := fmt.Sprintf("path %q", path)
+			v.checkText(path, "OpenAPI path")
+			v.walkPathItem(paths[path], where)
+		}
+	}
+	for _, name := range SortedMapKeys(spec.Webhooks) {
+		where := fmt.Sprintf("webhook %q", name)
+		v.checkText(name, "webhook name")
+		v.walkPathItem(spec.Webhooks[name], where)
+	}
+	if spec.Components != nil {
+		v.walkComponents(spec.Components)
+	}
+}
+
+func (v *specValidator) walkComponents(c *openapi3.Components) {
+	for _, name := range SortedMapKeys(c.Schemas) {
+		v.walkSchemaRef(c.Schemas[name], fmt.Sprintf("schema %q", name))
+	}
+	for _, name := range SortedMapKeys(c.Parameters) {
+		v.walkParameterRef(c.Parameters[name], fmt.Sprintf("component parameter %q", name))
+	}
+	for _, name := range SortedMapKeys(c.RequestBodies) {
+		v.walkRequestBodyRef(c.RequestBodies[name], fmt.Sprintf("component request body %q", name))
+	}
+	for _, name := range SortedMapKeys(c.Responses) {
+		v.walkResponseRef(c.Responses[name], fmt.Sprintf("component response %q", name))
+	}
+	for _, name := range SortedMapKeys(c.Headers) {
+		v.walkHeaderRef(c.Headers[name], fmt.Sprintf("component header %q", name))
+	}
+	for _, name := range SortedMapKeys(c.Callbacks) {
+		v.walkCallbackRef(c.Callbacks[name], fmt.Sprintf("component callback %q", name))
+	}
+}
+
+func (v *specValidator) walkPathItem(item *openapi3.PathItem, where string) {
+	if item == nil {
+		return
+	}
+	for _, p := range item.Parameters {
+		v.walkParameterRef(p, where)
+	}
+	for method, op := range item.Operations() {
+		v.walkOperation(op, fmt.Sprintf("%s %s", method, where))
+	}
+}
+
+func (v *specValidator) walkOperation(op *openapi3.Operation, where string) {
+	if op == nil {
+		return
+	}
+	v.checkExtensions(op.Extensions, where)
+	if op.Security != nil {
+		v.checkSecurity(*op.Security, where)
+	}
+	for _, p := range op.Parameters {
+		v.walkParameterRef(p, where)
+	}
+	v.walkRequestBodyRef(op.RequestBody, where)
+	if op.Responses != nil {
+		responses := op.Responses.Map()
+		for _, name := range SortedMapKeys(responses) {
+			v.walkResponseRef(responses[name], fmt.Sprintf("response %q in %s", name, where))
+		}
+	}
+	for _, name := range SortedMapKeys(op.Callbacks) {
+		v.checkText(name, fmt.Sprintf("callback name in %s", where))
+		v.walkCallbackRef(op.Callbacks[name], fmt.Sprintf("callback %q in %s", name, where))
+	}
+}
+
+func (v *specValidator) walkParameterRef(ref *openapi3.ParameterRef, where string) {
+	if ref == nil {
+		return
+	}
+	v.checkExtensions(ref.Extensions, where)
+	if ref.Ref != "" || ref.Value == nil {
+		return
+	}
+	p := ref.Value
+	loc := fmt.Sprintf("parameter %q in %s", p.Name, where)
+	v.checkText(p.Name, "parameter name in "+where)
+	v.checkText(p.Style, "style of "+loc)
+	v.checkExtensions(p.Extensions, loc)
+	v.walkContent(p.Content, loc)
+	v.walkSchemaRef(p.Schema, loc)
+}
+
+func (v *specValidator) walkRequestBodyRef(ref *openapi3.RequestBodyRef, where string) {
+	if ref == nil {
+		return
+	}
+	v.checkExtensions(ref.Extensions, where)
+	if ref.Ref != "" || ref.Value == nil {
+		return
+	}
+	loc := "request body in " + where
+	v.checkExtensions(ref.Value.Extensions, loc)
+	v.walkContent(ref.Value.Content, loc)
+}
+
+func (v *specValidator) walkResponseRef(ref *openapi3.ResponseRef, where string) {
+	if ref == nil {
+		return
+	}
+	v.checkExtensions(ref.Extensions, where)
+	if ref.Ref != "" || ref.Value == nil {
+		return
+	}
+	r := ref.Value
+	for _, name := range SortedMapKeys(r.Headers) {
+		v.checkText(name, "response header name in "+where)
+		v.walkHeaderRef(r.Headers[name], fmt.Sprintf("header %q in %s", name, where))
+	}
+	v.walkContent(r.Content, where)
+	v.checkExtensions(r.Extensions, where)
+}
+
+func (v *specValidator) walkHeaderRef(ref *openapi3.HeaderRef, where string) {
+	if ref == nil {
+		return
+	}
+	v.checkExtensions(ref.Extensions, where)
+	if ref.Ref != "" || ref.Value == nil {
+		return
+	}
+	v.checkExtensions(ref.Value.Extensions, where)
+	v.walkContent(ref.Value.Content, where)
+	v.walkSchemaRef(ref.Value.Schema, where)
+}
+
+func (v *specValidator) walkCallbackRef(ref *openapi3.CallbackRef, where string) {
+	if ref == nil {
+		return
+	}
+	v.checkExtensions(ref.Extensions, where)
+	if ref.Ref != "" || ref.Value == nil {
+		return
+	}
+	items := ref.Value.Map()
+	for _, expr := range SortedMapKeys(items) {
+		v.walkPathItem(items[expr], where)
+	}
+}
+
+func (v *specValidator) walkContent(content openapi3.Content, where string) {
+	for _, mediaType := range SortedMapKeys(content) {
+		v.checkNoControl(mediaType, "content type in "+where)
+		media := content[mediaType]
+		if media == nil {
+			continue
+		}
+		loc := fmt.Sprintf("content type %q in %s", mediaType, where)
+		v.checkExtensions(media.Extensions, loc)
+		v.walkSchemaRef(media.Schema, loc)
+	}
+}
+
+func (v *specValidator) walkSchemaRef(ref *openapi3.SchemaRef, where string) {
+	if ref == nil {
+		return
+	}
+	// Extensions on the ref node itself are honoured by code generation even for
+	// a $ref — e.g. an `x-go-type` sibling next to a `$ref` overrides the
+	// referenced type — so they must be checked here. The referenced target is
+	// validated at its own definition, so we still do not follow the ref, which
+	// also keeps inline schemas a finite tree with no cycle tracking needed.
+	v.checkExtensions(ref.Extensions, where)
+	if ref.Ref != "" || ref.Value == nil {
+		return
+	}
+	v.walkSchema(ref.Value, where)
+}
+
+func (v *specValidator) walkSchema(s *openapi3.Schema, where string) {
+	if s == nil {
+		return
+	}
+	v.checkExtensions(s.Extensions, where)
+	v.checkText(s.Format, "format in "+where)
+	if s.Type != nil {
+		for _, t := range s.Type.Slice() {
+			v.checkText(t, "type in "+where)
+		}
+	}
+	// Enum values are emitted through strconv.Quote in the const block, so quotes
+	// in a value are handled safely; only control characters are rejected.
+	for _, enumValue := range s.Enum {
+		if str, ok := enumValue.(string); ok {
+			v.checkNoControl(str, "enum value in "+where)
+		}
+	}
+	if s.Discriminator != nil {
+		v.checkText(s.Discriminator.PropertyName, "discriminator propertyName in "+where)
+		for _, key := range SortedMapKeys(s.Discriminator.Mapping) {
+			v.checkText(key, "discriminator mapping key in "+where)
+		}
+	}
+	for _, name := range SortedMapKeys(s.Properties) {
+		v.checkText(name, "property name in "+where)
+		v.walkSchemaRef(s.Properties[name], fmt.Sprintf("property %q in %s", name, where))
+	}
+	v.walkSchemaRef(s.Items, "items in "+where)
+	if s.AdditionalProperties.Schema != nil {
+		v.walkSchemaRef(s.AdditionalProperties.Schema, "additionalProperties in "+where)
+	}
+	for i, sub := range s.AllOf {
+		v.walkSchemaRef(sub, fmt.Sprintf("allOf[%d] in %s", i, where))
+	}
+	for i, sub := range s.AnyOf {
+		v.walkSchemaRef(sub, fmt.Sprintf("anyOf[%d] in %s", i, where))
+	}
+	for i, sub := range s.OneOf {
+		v.walkSchemaRef(sub, fmt.Sprintf("oneOf[%d] in %s", i, where))
+	}
+	v.walkSchemaRef(s.Not, "not in "+where)
+}

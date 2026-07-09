@@ -1,7 +1,0 @@
-# yaml-language-server: $schema=../../../configuration-schema.json
-package: spec
-generate:
-  models: true
-output-options:
-  skip-prune: true
-output: spec/types.gen.go

@@ -76,7 +76,8 @@
 		{
 			"customType": "regex",
 			"managerFilePatterns": [
-				"README.md"
+				"README.md",
+				"docs/*.md"
 			],
 			"matchStrings": [
 				"# yaml-language-server: \\$schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/(?<currentValue>[^/]+)/configuration-schema.json"
