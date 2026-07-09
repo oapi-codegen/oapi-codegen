@@ -2029,6 +2029,14 @@ func GenerateFiberReceiver(t *template.Template, prefix string, ops []OperationD
 	return GenerateTemplates([]string{"fiber/fiber-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
 }
 
+// GenerateFiberV3Receiver renders the fiber (v3) receiver template.
+// Same shape as v2 but with `fiber.Ctx` (interface, by value) -- the
+// only API difference between fiber v2 and v3 that affects the
+// receiver.
+func GenerateFiberV3Receiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
+	return GenerateTemplates([]string{"fiber-v3/fiber-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+}
+
 // GenerateIrisReceiver renders the iris receiver template. Iris's
 // handler shape is `(ctx iris.Context)` (no error return); binding
 // errors set ctx.StatusCode(400) plus ctx.WriteString and return.
