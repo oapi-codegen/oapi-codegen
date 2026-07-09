@@ -15,11 +15,13 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/kataras/iris/v12"
 	"github.com/labstack/echo/v4"
+	echov5 "github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/assert"
 
 	chiAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/chi"
 	clientAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/client"
 	echoAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/echo"
+	echo5API "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/echo5"
 	ginAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/gin"
 	irisAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/iris"
 
@@ -48,6 +50,14 @@ func TestEchoServer(t *testing.T) {
 	strictHandler := echoAPI.NewStrictHandler(server, nil)
 	e := echo.New()
 	echoAPI.RegisterHandlers(e, strictHandler)
+	testImpl(t, e)
+}
+
+func TestEcho5Server(t *testing.T) {
+	server := echo5API.StrictServer{}
+	strictHandler := echo5API.NewStrictHandler(server, nil)
+	e := echov5.New()
+	echo5API.RegisterHandlers(e, strictHandler)
 	testImpl(t, e)
 }
 
