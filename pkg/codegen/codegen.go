@@ -557,6 +557,15 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	// Webhook receiver (fiber v3) -- (c fiber.Ctx) error signature.
+	var fiberV3WebhookReceiverOut string
+	if opts.Generate.FiberV3Server && len(webhookOps) > 0 {
+		fiberV3WebhookReceiverOut, err = GenerateFiberV3Receiver(t, "Webhook", webhookOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating fiber v3 webhook receiver: %w", err)
+		}
+	}
+
 	// Webhook receiver (iris) -- (ctx iris.Context) signature.
 	var irisWebhookReceiverOut string
 	if opts.Generate.IrisServer && len(webhookOps) > 0 {
@@ -639,6 +648,15 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		fiberCallbackReceiverOut, err = GenerateFiberReceiver(t, "Callback", callbackOps)
 		if err != nil {
 			return "", fmt.Errorf("error generating fiber callback receiver: %w", err)
+		}
+	}
+
+	// Callback receiver (fiber v3).
+	var fiberV3CallbackReceiverOut string
+	if opts.Generate.FiberV3Server && len(callbackOps) > 0 {
+		fiberV3CallbackReceiverOut, err = GenerateFiberV3Receiver(t, "Callback", callbackOps)
+		if err != nil {
+			return "", fmt.Errorf("error generating fiber v3 callback receiver: %w", err)
 		}
 	}
 
@@ -815,6 +833,18 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		_, err = w.WriteString(fiberV3ServerOut)
 		if err != nil {
 			return "", fmt.Errorf("error writing server path handlers: %w", err)
+		}
+		if fiberV3WebhookReceiverOut != "" {
+			_, err = w.WriteString(fiberV3WebhookReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing fiber v3 webhook receiver: %w", err)
+			}
+		}
+		if fiberV3CallbackReceiverOut != "" {
+			_, err = w.WriteString(fiberV3CallbackReceiverOut)
+			if err != nil {
+				return "", fmt.Errorf("error writing fiber v3 callback receiver: %w", err)
+			}
 		}
 	}
 

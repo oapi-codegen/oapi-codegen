@@ -2,7 +2,9 @@ package api
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"mime"
 	"mime/multipart"
@@ -26,6 +28,26 @@ func TestFiberServer(t *testing.T) {
 	r := fiber.New()
 	RegisterHandlers(r, strictHandler)
 	testImpl(t, adaptor.FiberApp(r))
+}
+
+type erroringServer struct{ StrictServer }
+
+func (erroringServer) JSONExample(ctx context.Context, request JSONExampleRequestObject) (JSONExampleResponseObject, error) {
+	return nil, errors.New("handler failure")
+}
+
+// Errors returned by strict handlers used to be wrapped in
+// fiber.NewError(StatusBadRequest, ...); they must reach fiber's error
+// chain untouched, where the default handler reports them as 500.
+func TestFiberHandlerErrorIsServerError(t *testing.T) {
+	strictHandler := NewStrictHandler(erroringServer{}, nil)
+	r := fiber.New()
+	RegisterHandlers(r, strictHandler)
+
+	value := "123"
+	requestBody := clientAPI.Example{Value: &value}
+	rr := testutil.NewRequest().Post("/json").WithJsonBody(requestBody).GoWithHTTPHandler(t, adaptor.FiberApp(r)).Recorder
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
 }
 
 func testImpl(t *testing.T, handler http.Handler) {

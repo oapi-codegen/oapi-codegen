@@ -99,7 +99,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
           }
 
         {{if .IsPassThrough}}
-          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}valueList[0]
+          {{.GoName}} = valueList[0]
         {{end}}
 
         {{if .IsJson}}

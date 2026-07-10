@@ -47,9 +47,11 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c fiber.Ctx) error {
 
   {{end}}
 
+{{if opts.Compatibility.EnableAuthScopesOnContext -}}
 {{range .SecurityDefinitions}}
   c.RequestCtx().SetUserValue(({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes), {{toStringArray .Scopes}})
 {{end}}
+{{- end}}
 
   {{if .RequiresParamObject}}
     // Parameter object where we will unmarshal all parameters from the context
@@ -84,9 +86,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c fiber.Ctx) error {
           params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
         {{end}}
         }{{if .Required}} else {
-            err = fmt.Errorf("Query argument {{.ParamName}} is required, but not found")
-            c.Status(fiber.StatusBadRequest).JSON(err)
-            return err
+            return fiber.NewError(fiber.StatusBadRequest, "Query argument {{.ParamName}} is required, but not found")
         }{{end}}
       {{end}}
       {{if .IsStyled}}
@@ -109,7 +109,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c fiber.Ctx) error {
          }
 
         {{if .IsPassThrough}}
-          params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}valueList[0]
+          {{.GoName}} = valueList[0]
         {{end}}
 
         {{if .IsJson}}
@@ -129,8 +129,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c fiber.Ctx) error {
           params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
 
         } {{if .Required}}else {
-            err = fmt.Errorf("Header parameter {{.ParamName}} is required, but not found: %w", err)
-            return fiber.NewError(fiber.StatusBadRequest, err.Error())
+            return fiber.NewError(fiber.StatusBadRequest, "Header parameter {{.ParamName}} is required, but not found")
         }{{end}}
 
       {{end}}

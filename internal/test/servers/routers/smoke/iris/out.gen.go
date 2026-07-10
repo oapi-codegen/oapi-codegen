@@ -6,6 +6,7 @@ package iris
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -95,6 +96,9 @@ func RegisterHandlers(router *iris.Application, si ServerInterface) {
 
 // RegisterHandlersWithOptions creates http.Handler with additional options
 func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, options IrisServerOptions) {
+	for _, m := range options.Middlewares {
+		router.Use(m)
+	}
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
@@ -208,15 +212,15 @@ func (sh *strictHandler) GetGetMultibody(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(GetGetMultibodyResponseObject); ok {
 		if err := validResponse.VisitGetGetMultibodyResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -235,15 +239,15 @@ func (sh *strictHandler) GetObject(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(GetObjectResponseObject); ok {
 		if err := validResponse.VisitGetObjectResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -287,15 +291,15 @@ func (sh *strictHandler) PostPostMultibody(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(PostPostMultibodyResponseObject); ok {
 		if err := validResponse.VisitPostPostMultibodyResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }
@@ -324,15 +328,15 @@ func (sh *strictHandler) PostPostObject(ctx iris.Context) {
 	response, err := handler(ctx, request)
 
 	if err != nil {
-		ctx.StopWithError(http.StatusBadRequest, err)
+		ctx.StopWithError(http.StatusInternalServerError, err)
 		return
 	} else if validResponse, ok := response.(PostPostObjectResponseObject); ok {
 		if err := validResponse.VisitPostPostObjectResponse(ctx); err != nil {
-			ctx.StopWithError(http.StatusBadRequest, err)
+			ctx.StopWithError(http.StatusInternalServerError, err)
 			return
 		}
 	} else if response != nil {
-		ctx.Writef("Unexpected response type: %T", response)
+		ctx.StopWithError(http.StatusInternalServerError, fmt.Errorf("unexpected response type: %T", response))
 		return
 	}
 }

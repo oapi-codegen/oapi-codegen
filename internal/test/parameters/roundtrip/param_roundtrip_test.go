@@ -440,6 +440,7 @@ func testImpl(t *testing.T, handler http.Handler) {
 		expectedObject2 := paramclient.Object{FirstName: "Marcin", Role: "annoyed_at_swagger"}
 		var expectedPrimitive2 int32 = 100
 		var expectedN1s = "111"
+		var expectedPassThrough = "raw header value"
 
 		t.Run("all params at once", func(t *testing.T) {
 			params := paramclient.GetHeaderParams{
@@ -450,6 +451,7 @@ func testImpl(t *testing.T, handler http.Handler) {
 				XObjectExploded:      &expectedObject,
 				XObject:              &expectedObject2,
 				XComplexObject:       &expectedComplexObject,
+				XPassThrough:         &expectedPassThrough,
 				N1StartingWithNumber: &expectedN1s,
 			}
 			req, err := paramclient.NewGetHeaderRequest(server, &params)
@@ -487,6 +489,19 @@ func testImpl(t *testing.T, handler http.Handler) {
 			doRoundTrip(t, req, &got)
 			require.NotNil(t, got.XObject)
 			assert.Equal(t, expectedObject, *got.XObject)
+		})
+
+		// Regression: pass-through (non-JSON content) header params used to be
+		// clobbered with the zero value by the wrapper templates' trailing
+		// assignment, so the handler always saw "".
+		t.Run("pass-through only", func(t *testing.T) {
+			params := paramclient.GetHeaderParams{XPassThrough: &expectedPassThrough}
+			req, err := paramclient.NewGetHeaderRequest(server, &params)
+			require.NoError(t, err)
+			var got paramclient.GetHeaderParams
+			doRoundTrip(t, req, &got)
+			require.NotNil(t, got.XPassThrough)
+			assert.Equal(t, expectedPassThrough, *got.XPassThrough)
 		})
 	})
 
