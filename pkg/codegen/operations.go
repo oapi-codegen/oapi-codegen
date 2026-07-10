@@ -69,19 +69,19 @@ func (pd ParameterDefinition) ZeroValueIsNil() bool {
 	return strings.HasPrefix(pd.Schema.GoType, "map[")
 }
 
-// JsonTag generates the JSON annotation to map GoType to json type name. If Parameter
-// Foo is marshaled to json as "foo", this will create the annotation
-// 'json:"foo"'
+// JsonTag generates the struct tag annotation for a parameter field on a
+// strict RequestObject struct. If Parameter Foo is marshaled to json as "foo",
+// this will create the annotation 'json:"foo"'. Tags configured via
+// output-options.struct-tags are rendered too (the legacy yaml-tags flag does
+// not apply to these fields).
 // It also includes any additional struct tags from x-oapi-codegen-extra-tags
 // at the parameter or schema level (parameter-level takes precedence).
 func (pd *ParameterDefinition) JsonTag() string {
-	fieldTags := make(map[string]string)
-
-	if pd.Required {
-		fieldTags["json"] = pd.ParamName
-	} else {
-		fieldTags["json"] = pd.ParamName + ",omitempty"
-	}
+	fieldTags := paramFieldTagGenerator().generateTagsMap(StructTagInfo{
+		FieldName:  pd.ParamName,
+		IsOptional: !pd.Required,
+		OmitEmpty:  !pd.Required,
+	})
 
 	// Merge x-oapi-codegen-extra-tags from schema level first, then parameter level
 	// so that parameter-level takes precedence.

@@ -74,6 +74,15 @@ var globalState struct {
 	// streamingContentTypeRegexes are the compiled regexes (defaults + user)
 	// used by ResponseContentDefinition.IsStreamingContentType.
 	streamingContentTypeRegexes []*regexp.Regexp
+	// schemaFieldTagGenerator renders struct tags for schema property
+	// fields (defaults + output-options.struct-tags, including the legacy
+	// yaml-tags injection). Built in Generate; lazily built for direct
+	// callers via schemaFieldTagGenerator().
+	schemaFieldTagGenerator *structTagGenerator
+	// paramFieldTagGenerator renders struct tags for path parameter fields
+	// on strict RequestObject structs; identical to the schema generator
+	// except the legacy yaml-tags flag does not apply.
+	paramFieldTagGenerator *structTagGenerator
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -165,6 +174,22 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	} else {
 		globalState.typeMapping = DefaultTypeMapping
 	}
+
+	// Build the struct tag generators eagerly so invalid user templates in
+	// output-options.struct-tags are reported as errors instead of being
+	// skipped. Assigning here also resets any state from a prior Generate.
+	schemaTagGen, err := newStructTagGenerator(
+		defaultStructTagsConfig(opts.OutputOptions.EnableYamlTags).Merge(opts.OutputOptions.StructTags))
+	if err != nil {
+		return "", fmt.Errorf("error in output-options.struct-tags: %w", err)
+	}
+	globalState.schemaFieldTagGenerator = schemaTagGen
+	paramTagGen, err := newStructTagGenerator(
+		defaultStructTagsConfig(false).Merge(opts.OutputOptions.StructTags))
+	if err != nil {
+		return "", fmt.Errorf("error in output-options.struct-tags: %w", err)
+	}
+	globalState.paramFieldTagGenerator = paramTagGen
 
 	filterOperationsByTag(spec, opts)
 	filterOperationsByOperationID(spec, opts)

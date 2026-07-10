@@ -124,7 +124,24 @@ output-options:
         json:      { type: json.RawMessage, import: encoding/json }
         uuid:      { type: openapi_types.UUID }
         binary:    { type: openapi_types.File }
+  # Superseded by struct-tags: a `yaml` entry there takes precedence over this flag
   yaml-tags: false
+  # Configure generated struct tags. Entries are merged by name on top of the
+  # defaults shown below, so redefining `json` replaces its template while new
+  # names add tags. Values are Go text/templates over the variables
+  # .FieldName, .IsOptional, .OmitEmpty, .OmitZero and .NeedsFormTag; a
+  # template that renders empty suppresses the tag on that field. Tags are
+  # emitted in alphabetical order. Per-field x-oapi-codegen-extra-tags and
+  # x-go-json-ignore are applied on top of the rendered tags.
+  struct-tags:
+    tags:
+      - name: json
+        template: '{{.FieldName}}{{if .OmitEmpty}},omitempty{{end}}{{if .OmitZero}},omitzero{{end}}'
+      - name: form
+        template: '{{if .NeedsFormTag}}{{.FieldName}}{{if .OmitEmpty}},omitempty{{end}}{{end}}'
+      # Additional tags can be added, e.g.:
+      # - name: db
+      #   template: '{{.FieldName}}'
   client-response-bytes-function: false
   skip-client-response-content-type: false
   skip-response-body-getters: false

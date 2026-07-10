@@ -1219,13 +1219,6 @@ type FieldDescriptor struct {
 	IsRef    bool   // Is this schema a reference to predefined object?
 }
 
-func stringOrEmpty(b bool, s string) string {
-	if b {
-		return s
-	}
-	return ""
-}
-
 // GenFieldsFromProperties produce corresponding field names with JSON annotations,
 // given a list of schema descriptors
 func GenFieldsFromProperties(props []Property) []string {
@@ -1292,18 +1285,13 @@ func GenFieldsFromProperties(props []Property) []string {
 			}
 		}
 
-		fieldTags := make(map[string]string)
-
-		fieldTags["json"] = p.JsonFieldName +
-			stringOrEmpty(omitEmpty, ",omitempty") +
-			stringOrEmpty(omitZero, ",omitzero")
-
-		if globalState.options.OutputOptions.EnableYamlTags {
-			fieldTags["yaml"] = p.JsonFieldName + stringOrEmpty(omitEmpty, ",omitempty")
-		}
-		if p.NeedsFormTag {
-			fieldTags["form"] = p.JsonFieldName + stringOrEmpty(omitEmpty, ",omitempty")
-		}
+		fieldTags := schemaFieldTagGenerator().generateTagsMap(StructTagInfo{
+			FieldName:    p.JsonFieldName,
+			IsOptional:   !p.Required,
+			OmitEmpty:    omitEmpty,
+			OmitZero:     omitZero,
+			NeedsFormTag: p.NeedsFormTag,
+		})
 
 		// Support x-go-json-ignore
 		if extension, ok := p.Extensions[extPropGoJsonIgnore]; ok {
