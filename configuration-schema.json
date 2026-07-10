@@ -223,6 +223,16 @@
             "type": "string"
           }
         },
+        "content-types": {
+          "type": "object",
+          "description": "Maps a short name (used as the tag in generated type names, e.g. the `JSON` in `FindPetsJSONRequestBody`) to a list of regex patterns matched against request/response media types. Matching media types get models generated and named with the short name. Note that typed fields on client response structs are only generated for media types the client knows how to deserialize (JSON-like, YAML and XML); mapping any other media type (e.g. `CSV: ['^text/csv$']`) generates models and named request bodies, but client responses for it expose only the raw body. Entries are merged on top of the built-in defaults by key replacement (`JSON: ['^application/json$']`, `Formdata: ['^application/x-www-form-urlencoded$']`, `Multipart: ['^multipart/']`, `Text: ['^text/plain$']`); an empty list disables a key. A media type matching patterns under two different short names is a generation-time error; unmatched media types keep the remaining built-in behavior.",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
         "nullable-type": {
           "type": "boolean",
           "description": "Whether to generate nullable type for nullable fields"

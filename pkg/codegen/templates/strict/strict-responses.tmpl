@@ -12,7 +12,7 @@
 
     {{range .Contents -}}
         {{if and (not $hasHeaders) (.IsSupported) -}}
-            type {{$name}}{{.NameTagOrContentType}}Response {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if .Schema.IsRef}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+            type {{$name}}{{.NameTagOrContentType}}Response {{if .IsMultipart}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if .Schema.IsRef}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
             {{- if and .IsJSON .Schema.HasCustomMarshalJSON}}
 
             func (t {{$name}}{{.NameTagOrContentType}}Response) MarshalJSON() ([]byte, error) {
@@ -25,7 +25,7 @@
             {{- end}}
         {{else -}}
             type {{$name}}{{.NameTagOrContentType}}Response struct {
-                Body {{if eq .NameTag "Multipart"}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
+                Body {{if .IsMultipart}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
 
                 {{if $hasHeaders -}}
                     Headers {{$name}}ResponseHeaders

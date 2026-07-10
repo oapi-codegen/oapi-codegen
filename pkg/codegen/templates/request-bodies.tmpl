@@ -1,6 +1,6 @@
 {{range .}}{{$opid := .OperationId}}
 {{range .Bodies}}
-{{if .IsSupported -}}
+{{if .HasModel -}}
 {{$contentType := .ContentType -}}
 {{with .TypeDef $opid}}
 // {{.TypeName}} defines body for {{$opid}} for {{$contentType}} ContentType.
