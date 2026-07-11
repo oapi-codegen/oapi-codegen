@@ -3,7 +3,7 @@ module github.com/oapi-codegen/oapi-codegen/v2
 go 1.25.0
 
 require (
-	github.com/getkin/kin-openapi v0.141.0
+	github.com/getkin/kin-openapi v0.142.0
 	github.com/speakeasy-api/openapi v1.24.0
 	github.com/stretchr/testify v1.11.1
 	go.yaml.in/yaml/v3 v3.0.4
