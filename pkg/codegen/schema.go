@@ -924,6 +924,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 			newTypeDef := TypeDefinition{
 				TypeName: typeName,
+				JsonName: strings.Join(path, "."),
 				Schema:   outSchema,
 			}
 			outSchema = Schema{

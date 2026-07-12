@@ -80,7 +80,7 @@ type QueryResponse struct {
 // Qux defines model for Qux.
 type Qux = CustomQux
 
-// CustomQux defines model for .
+// CustomQux defines model for Qux.
 type CustomQux struct {
 	Label *string `json:"label,omitempty"`
 }
