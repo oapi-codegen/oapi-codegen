@@ -104,7 +104,7 @@ type MyTestRequestNestedField struct {
 	Field2 string `json:"field2"`
 }
 
-// MyTestRequest defines model for .
+// MyTestRequest defines model for Test.
 type MyTestRequest struct {
 	// Field1 A array of enum values
 	Field1 *[]TestField1 `json:"field1,omitempty"`

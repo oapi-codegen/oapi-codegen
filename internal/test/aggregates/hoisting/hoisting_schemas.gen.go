@@ -9,7 +9,7 @@ type OuterTypeWithAnonymousInner struct {
 	Name  string                      `json:"name"`
 }
 
-// InnerRenamedAnonymousObject defines model for .
+// InnerRenamedAnonymousObject defines model for OuterTypeWithAnonymousInner.inner.
 type InnerRenamedAnonymousObject struct {
 	Id int `json:"id"`
 }
