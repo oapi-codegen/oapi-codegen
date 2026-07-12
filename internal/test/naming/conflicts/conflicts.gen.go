@@ -120,10 +120,10 @@ type N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON struct {
 	union json.RawMessage
 }
 
-// N200ResourcePatchApplicationJSONPatchPlusJSON1 defines model for .
+// N200ResourcePatchApplicationJSONPatchPlusJSON1 defines model for 200ResourcePatch.ApplicationJSONPatchPlusJSON.1.
 type N200ResourcePatchApplicationJSONPatchPlusJSON1 = []Resource
 
-// N200ResourcePatchApplicationJSONPatchPlusJSON2 defines model for .
+// N200ResourcePatchApplicationJSONPatchPlusJSON2 defines model for 200ResourcePatch.ApplicationJSONPatchPlusJSON.2.
 type N200ResourcePatchApplicationJSONPatchPlusJSON2 = string
 
 // N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON defines model for 200Resource_Patch.
@@ -131,10 +131,10 @@ type N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON struct {
 	union json.RawMessage
 }
 
-// N200ResourcePatchApplicationJSONPatchQueryPlusJSON1 defines model for .
+// N200ResourcePatchApplicationJSONPatchQueryPlusJSON1 defines model for 200ResourcePatch.ApplicationJSONPatchQueryPlusJSON.1.
 type N200ResourcePatchApplicationJSONPatchQueryPlusJSON1 = []Resource
 
-// N200ResourcePatchApplicationJSONPatchQueryPlusJSON2 defines model for .
+// N200ResourcePatchApplicationJSONPatchQueryPlusJSON2 defines model for 200ResourcePatch.ApplicationJSONPatchQueryPlusJSON.2.
 type N200ResourcePatchApplicationJSONPatchQueryPlusJSON2 = string
 
 // N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON defines model for 200Resource_Patch.

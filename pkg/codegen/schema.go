@@ -1480,7 +1480,7 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 			if elementSchema.TypeDecl() == elementName {
 				elementSchema.GoType = elementName
 			} else {
-				td := TypeDefinition{Schema: elementSchema, TypeName: elementName}
+				td := TypeDefinition{Schema: elementSchema, TypeName: elementName, JsonName: strings.Join(elementPath, ".")}
 				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
 				elementSchema.GoType = td.TypeName
 			}
