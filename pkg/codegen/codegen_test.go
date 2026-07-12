@@ -581,6 +581,47 @@ paths:
 	assert.Contains(t, code, `ctx = context.WithValue(ctx, BearerAuthScopes, []string{"read"})`)
 }
 
+// TestEnumValueEscaping verifies that a string enum value containing a
+// backslash is emitted as a valid, properly escaped Go string literal
+// (the constants go through strconv.Quote).
+// Please see https://github.com/oapi-codegen/oapi-codegen/issues/2180
+func TestEnumValueEscaping(t *testing.T) {
+	const spec = `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Enum escaping
+paths: {}
+components:
+  schemas:
+    AutoAccident:
+      type: object
+      properties:
+        significant_injury:
+          type: string
+          enum: ["YES", "NO", "N\\A"]
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	opts := Configuration{
+		PackageName:   "api",
+		Generate:      GenerateOptions{Models: true},
+		OutputOptions: OutputOptions{SkipPrune: true},
+	}
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+
+	// The spec-level value is the three characters N, \, A; the generated
+	// constant must escape the backslash.
+	assert.Contains(t, code, `= "N\\A"`)
+
+	_, err = format.Source([]byte(code))
+	require.NoError(t, err)
+}
+
 const securityScopesSharedSpec = `
 openapi: "3.0.0"
 info:
