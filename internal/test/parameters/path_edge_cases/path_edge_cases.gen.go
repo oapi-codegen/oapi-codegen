@@ -655,7 +655,7 @@ func (w *ServerInterfaceWrapper) GetPet(ctx echo.Context) error {
 	// ------------- Path parameter "petId" -------------
 	var petId string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "petId", ctx.Param("petId"), &petId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "petId", ctx.Param("petId"), &petId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: ctx.Request().URL.RawPath == ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter petId: %s", err))
 	}
@@ -680,7 +680,7 @@ func (w *ServerInterfaceWrapper) GetSimplePrimitive(ctx echo.Context) error {
 	// ------------- Path parameter "param" -------------
 	var param string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Param("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Param("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "int32", ValueIsUnescaped: ctx.Request().URL.RawPath == ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter param: %s", err))
 	}

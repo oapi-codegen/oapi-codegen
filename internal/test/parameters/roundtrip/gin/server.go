@@ -32,6 +32,7 @@ func (s *Server) GetMatrixNoExplodeArray(c *gin.Context, id []int32)            
 func (s *Server) GetMatrixNoExplodeObject(c *gin.Context, id gen.Object)                  { c.JSON(http.StatusOK, id) }
 func (s *Server) GetMatrixPrimitive(c *gin.Context, id int32)                             { c.JSON(http.StatusOK, id) }
 func (s *Server) GetPassThrough(c *gin.Context, param string)                             { c.JSON(http.StatusOK, param) }
+func (s *Server) GetSimpleString(c *gin.Context, param string)                             { c.JSON(http.StatusOK, param) }
 func (s *Server) GetDeepObject(c *gin.Context, params gen.GetDeepObjectParams)             { c.JSON(http.StatusOK, params) }
 func (s *Server) GetQueryDelimited(c *gin.Context, params gen.GetQueryDelimitedParams)     { c.JSON(http.StatusOK, params) }
 func (s *Server) GetQueryForm(c *gin.Context, params gen.GetQueryFormParams)               { c.JSON(http.StatusOK, params) }

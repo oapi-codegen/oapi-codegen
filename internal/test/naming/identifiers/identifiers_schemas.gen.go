@@ -534,7 +534,7 @@ func (w *ServerInterfaceWrapper) Issue209(ctx echo.Context) error {
 	// ------------- Path parameter "str" -------------
 	var str StringInPath
 
-	err = runtime.BindStyledParameterWithOptions("simple", "str", ctx.Param("str"), &str, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "str", ctx.Param("str"), &str, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: ctx.Request().URL.RawPath == ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter str: %s", err))
 	}
@@ -550,7 +550,7 @@ func (w *ServerInterfaceWrapper) Issue30(ctx echo.Context) error {
 	// ------------- Path parameter "fallthrough" -------------
 	var pFallthrough string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "fallthrough", ctx.Param("fallthrough"), &pFallthrough, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "fallthrough", ctx.Param("fallthrough"), &pFallthrough, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: ctx.Request().URL.RawPath == ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter fallthrough: %s", err))
 	}
@@ -566,7 +566,7 @@ func (w *ServerInterfaceWrapper) Issue41(ctx echo.Context) error {
 	// ------------- Path parameter "1param" -------------
 	var n1param N5StartsWithNumber
 
-	err = runtime.BindStyledParameterWithOptions("simple", "1param", ctx.Param("1param"), &n1param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "object", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "1param", ctx.Param("1param"), &n1param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "object", Format: "", ValueIsUnescaped: ctx.Request().URL.RawPath == ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter 1param: %s", err))
 	}

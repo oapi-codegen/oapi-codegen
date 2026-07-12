@@ -309,6 +309,9 @@ type ClientInterface interface {
 	// GetSimplePrimitive performs a GET /simplePrimitive/{param} (the `GetSimplePrimitive` operationId) request.
 	GetSimplePrimitive(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetSimpleString performs a GET /simpleString/{param} (the `GetSimpleString` operationId) request.
+	GetSimpleString(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetStartingWithNumber performs a GET /startingWithNumber/{1param} (the `GetStartingWithNumber` operationId) request.
 	GetStartingWithNumber(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
@@ -641,6 +644,19 @@ func (c *Client) GetSimpleNoExplodeObject(ctx context.Context, param Object, req
 // GetSimplePrimitive performs a GET /simplePrimitive/{param} (the `GetSimplePrimitive` operationId) request.
 func (c *Client) GetSimplePrimitive(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSimplePrimitiveRequest(c.Server, param)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetSimpleString performs a GET /simpleString/{param} (the `GetSimpleString` operationId) request.
+func (c *Client) GetSimpleString(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSimpleStringRequest(c.Server, param)
 	if err != nil {
 		return nil, err
 	}
@@ -1941,6 +1957,40 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 	return req, nil
 }
 
+// NewGetSimpleStringRequest constructs an http.Request for the GetSimpleString method
+func NewGetSimpleStringRequest(server string, param string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "param", param, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/simpleString/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewGetStartingWithNumberRequest constructs an http.Request for the GetStartingWithNumber method
 func NewGetStartingWithNumberRequest(server string, n1param string) (*http.Request, error) {
 	var err error
@@ -2145,6 +2195,11 @@ type ClientWithResponsesInterface interface {
 	//
 	// Returns a wrapper object for the known response body format(s).
 	GetSimplePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetSimplePrimitiveResponse, error)
+
+	// GetSimpleStringWithResponse performs a GET /simpleString/{param} (the `GetSimpleString` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	GetSimpleStringWithResponse(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*GetSimpleStringResponse, error)
 
 	// GetStartingWithNumberWithResponse performs a GET /startingWithNumber/{1param} (the `GetStartingWithNumber` operationId) request.
 	//
@@ -3036,6 +3091,40 @@ func (r GetSimplePrimitiveResponse) ContentType() string {
 	return ""
 }
 
+type GetSimpleStringResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes
+func (r GetSimpleStringResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetSimpleStringResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetSimpleStringResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetSimpleStringResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetStartingWithNumberResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -3354,6 +3443,17 @@ func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParseGetSimplePrimitiveResponse(rsp)
+}
+
+// GetSimpleStringWithResponse performs a GET /simpleString/{param} (the `GetSimpleString` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) GetSimpleStringWithResponse(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*GetSimpleStringResponse, error) {
+	rsp, err := c.GetSimpleString(ctx, param, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSimpleStringResponse(rsp)
 }
 
 // GetStartingWithNumberWithResponse performs a GET /startingWithNumber/{1param} (the `GetStartingWithNumber` operationId) request.
@@ -3776,6 +3876,22 @@ func ParseGetSimplePrimitiveResponse(rsp *http.Response) (*GetSimplePrimitiveRes
 	}
 
 	response := &GetSimplePrimitiveResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetSimpleStringResponse parses an HTTP response from a GetSimpleStringWithResponse call
+func ParseGetSimpleStringResponse(rsp *http.Response) (*GetSimpleStringResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSimpleStringResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

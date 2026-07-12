@@ -36,6 +36,7 @@ func (s *Server) GetMatrixNoExplodeArray(w http.ResponseWriter, r *http.Request,
 func (s *Server) GetMatrixNoExplodeObject(w http.ResponseWriter, r *http.Request, id gen.Object) { writeJSON(w, id) }
 func (s *Server) GetMatrixPrimitive(w http.ResponseWriter, r *http.Request, id int32) { writeJSON(w, id) }
 func (s *Server) GetPassThrough(w http.ResponseWriter, r *http.Request, param string) { writeJSON(w, param) }
+func (s *Server) GetSimpleString(w http.ResponseWriter, r *http.Request, param string) { writeJSON(w, param) }
 func (s *Server) GetDeepObject(w http.ResponseWriter, r *http.Request, params gen.GetDeepObjectParams) { writeJSON(w, params) }
 func (s *Server) GetQueryDelimited(w http.ResponseWriter, r *http.Request, params gen.GetQueryDelimitedParams) { writeJSON(w, params) }
 func (s *Server) GetQueryForm(w http.ResponseWriter, r *http.Request, params gen.GetQueryFormParams) { writeJSON(w, params) }

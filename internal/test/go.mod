@@ -17,7 +17,7 @@ require (
 	github.com/labstack/echo/v5 v5.1.0
 	github.com/oapi-codegen/nullable v1.1.0
 	github.com/oapi-codegen/oapi-codegen/v2 v2.0.0-00010101000000-000000000000
-	github.com/oapi-codegen/runtime v1.4.2
+	github.com/oapi-codegen/runtime v1.5.0
 	github.com/oapi-codegen/testutil v1.1.0
 	github.com/stretchr/testify v1.11.1
 	go.yaml.in/yaml/v3 v3.0.4

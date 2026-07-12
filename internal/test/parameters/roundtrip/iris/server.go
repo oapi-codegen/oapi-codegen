@@ -32,6 +32,7 @@ func (s *Server) GetMatrixNoExplodeArray(ctx iris.Context, id []int32)          
 func (s *Server) GetMatrixNoExplodeObject(ctx iris.Context, id gen.Object)                  { _ = ctx.JSON(id) }
 func (s *Server) GetMatrixPrimitive(ctx iris.Context, id int32)                             { _ = ctx.JSON(id) }
 func (s *Server) GetPassThrough(ctx iris.Context, param string)                             { _ = ctx.JSON(param) }
+func (s *Server) GetSimpleString(ctx iris.Context, param string)                             { _ = ctx.JSON(param) }
 func (s *Server) GetDeepObject(ctx iris.Context, params gen.GetDeepObjectParams)             { _ = ctx.JSON(params) }
 func (s *Server) GetQueryDelimited(ctx iris.Context, params gen.GetQueryDelimitedParams)     { _ = ctx.JSON(params) }
 func (s *Server) GetQueryForm(ctx iris.Context, params gen.GetQueryFormParams)               { _ = ctx.JSON(params) }

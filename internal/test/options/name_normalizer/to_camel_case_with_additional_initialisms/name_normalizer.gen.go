@@ -398,7 +398,7 @@ func (siw *ServerInterfaceWrapper) GetHTTPPet(w http.ResponseWriter, r *http.Req
 	// ------------- Path parameter "petId" -------------
 	var petID string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "petId", mux.Vars(r)["petId"], &petID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "petId", mux.Vars(r)["petId"], &petID, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "petId", Err: err})
 		return

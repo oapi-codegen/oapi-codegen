@@ -129,7 +129,7 @@ func (w *ServerInterfaceWrapper) DeletePet(ctx iris.Context) {
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64"})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter id: %s", err)
@@ -149,7 +149,7 @@ func (w *ServerInterfaceWrapper) FindPetByID(ctx iris.Context) {
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64"})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter id: %s", err)
