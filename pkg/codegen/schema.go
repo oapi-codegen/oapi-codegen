@@ -180,6 +180,13 @@ func (p Property) HasOptionalPointer() bool {
 	return !p.Required && !p.Schema.SkipOptionalPointer
 }
 
+// IsPointer reports whether the generated Go field for this property is
+// pointer-typed, i.e. GoTypeDef renders with a leading `*`. Templates use it
+// when assigning a value to the field requires taking an address first.
+func (p Property) IsPointer() bool {
+	return strings.HasPrefix(p.GoTypeDef(), "*")
+}
+
 // ZeroValueIsNil is a helper function to determine if the given Go type used
 // for this property has `nil` as its Go zero value. Slices (OpenAPI `array`)
 // and maps (OpenAPI `object` with only `additionalProperties`, rendered as

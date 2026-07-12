@@ -1,4 +1,4 @@
-paths: 
+paths:
   /config:
     post:
       summary: Save configuration
@@ -10,6 +10,28 @@ paths:
       responses:
         "200":
           description: Configuration saved successfully
+  # issue-2297: anchor the pointer-discriminator schemas against pruning.
+  /conflict:
+    get:
+      summary: Reproduce issue 2297
+      responses:
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConflictError"
+  /pet:
+    post:
+      summary: Union carrying its own optional discriminator property
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PetByKind"
+      responses:
+        "200":
+          description: OK
 components:
   schemas:
     ConfigHttp:
@@ -55,3 +77,65 @@ components:
           type: string
       required:
         - config_type
+    # issue-2297: the discriminator property is optional on the variants and
+    # narrowed to a single-value enum via allOf, so it renders as a pointer to
+    # a named enum type (*ResourceConflictErrorCode). From*/Merge* must stamp
+    # the discriminator value without assigning a raw string literal to that
+    # field.
+    ErrorBase:
+      type: object
+      required: [error]
+      properties:
+        code:
+          type: string
+        error:
+          type: string
+    ResourceConflictError:
+      allOf:
+        - $ref: "#/components/schemas/ErrorBase"
+        - properties:
+            code:
+              type: string
+              enum: [resource_exists]
+    IdempotencyConflictError:
+      allOf:
+        - $ref: "#/components/schemas/ErrorBase"
+        - properties:
+            code:
+              type: string
+              enum: [idempotency_conflict]
+    ConflictError:
+      oneOf:
+        - $ref: "#/components/schemas/ResourceConflictError"
+        - $ref: "#/components/schemas/IdempotencyConflictError"
+      discriminator:
+        propertyName: code
+        mapping:
+          resource_exists: "#/components/schemas/ResourceConflictError"
+          idempotency_conflict: "#/components/schemas/IdempotencyConflictError"
+    # issue-2297 (union-side variant): the union schema itself declares the
+    # discriminator property, optional, so the field on the union struct is
+    # pointer-typed and must be set through an addressable value.
+    PetByKind:
+      type: object
+      properties:
+        kind:
+          type: string
+      oneOf:
+        - $ref: "#/components/schemas/KindCat"
+        - $ref: "#/components/schemas/KindDog"
+      discriminator:
+        propertyName: kind
+        mapping:
+          cat: "#/components/schemas/KindCat"
+          dog: "#/components/schemas/KindDog"
+    KindCat:
+      type: object
+      properties:
+        meow:
+          type: string
+    KindDog:
+      type: object
+      properties:
+        bark:
+          type: string

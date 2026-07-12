@@ -5,6 +5,34 @@
     {{$numberOfUnionTypes := len .Schema.UnionElements -}}
     {{range .Schema.UnionElements}}
         {{$element := . -}}
+        {{- /* Resolve the discriminator value this element must carry.
+               Stamping only happens for 1:1 value-to-type mappings: when the
+               mapping doesn't cover every element there is nothing reliable
+               to stamp. When the union struct itself declares the
+               discriminator property, the value is assigned to that field
+               (its JSON rendering overwrites the union data); otherwise the
+               value is stamped into the marshaled JSON, which stays correct
+               regardless of how the variant declares the property (pointer,
+               named enum type, renamed or absent field, external package).
+               See https://github.com/oapi-codegen/oapi-codegen/issues/2297 */ -}}
+        {{$discriminatorValue := "" -}}
+        {{$stampDiscriminator := false -}}
+        {{$unionProperty := "" -}}
+        {{if $discriminator -}}
+            {{if eq $numberOfUnionTypes (len $discriminator.Mapping) -}}
+                {{range $value, $type := $discriminator.Mapping -}}
+                    {{if eq $type $element -}}
+                        {{$discriminatorValue = $value -}}
+                        {{$stampDiscriminator = true -}}
+                    {{end -}}
+                {{end -}}
+            {{end -}}
+            {{range $properties -}}
+                {{if eq .GoFieldName $discriminator.PropertyName -}}
+                    {{$unionProperty = . -}}
+                {{end -}}
+            {{end -}}
+        {{end -}}
         // As{{ .Method }} returns the union data inside the {{$typeName}} as a {{.}}
         func (t {{$typeName}}) As{{ .Method }}() ({{.}}, error) {
             var body {{.}}
@@ -14,42 +42,36 @@
 
         // From{{ .Method }} overwrites any union data inside the {{$typeName}} as the provided {{.}}
         func (t *{{$typeName}}) From{{ .Method }} (v {{.}}) error {
-            {{if $discriminator -}}
-                {{if eq $numberOfUnionTypes (len $discriminator.Mapping) -}}
-                    {{range $value, $type := $discriminator.Mapping -}}
-                        {{if eq $type $element -}}
-                            {{$hasProperty := false -}}
-                            {{range $properties -}}
-                                {{if eq .GoFieldName $discriminator.PropertyName -}}
-                                    t.{{$discriminator.PropertyName}} = "{{$value}}"
-                                    {{$hasProperty = true -}}
-                                {{end -}}
-                            {{end -}}
-                            {{if not $hasProperty}}v.{{$discriminator.PropertyName}} = "{{$value}}"{{end}}
-                        {{end -}}
+            {{if $stampDiscriminator -}}
+                {{if $unionProperty -}}
+                    {{if $unionProperty.IsPointer -}}
+                        var discriminator {{$unionProperty.Schema.TypeDecl}} = "{{$discriminatorValue}}"
+                        t.{{$unionProperty.GoFieldName}} = &discriminator
+                    {{else -}}
+                        t.{{$unionProperty.GoFieldName}} = "{{$discriminatorValue}}"
                     {{end -}}
                 {{end -}}
             {{end -}}
             b, err := json.Marshal(v)
+            {{if and $stampDiscriminator (not $unionProperty) -}}
+                if err != nil {
+                    return err
+                }
+                b, err = runtime.JSONMerge(b, []byte(`{"{{$discriminator.Property}}":"{{$discriminatorValue}}"}`))
+            {{end -}}
             t.union = b
             return err
         }
 
         // Merge{{ .Method }} performs a merge with any union data inside the {{$typeName}}, using the provided {{.}}
         func (t *{{$typeName}}) Merge{{ .Method }} (v {{.}}) error {
-            {{if $discriminator -}}
-                {{if eq $numberOfUnionTypes (len $discriminator.Mapping) -}}
-                    {{range $value, $type := $discriminator.Mapping -}}
-                        {{if eq $type $element -}}
-                            {{$hasProperty := false -}}
-                            {{range $properties -}}
-                                {{if eq .GoFieldName $discriminator.PropertyName -}}
-                                    t.{{$discriminator.PropertyName}} = "{{$value}}"
-                                    {{$hasProperty = true -}}
-                                {{end -}}
-                            {{end -}}
-                            {{if not $hasProperty}}v.{{$discriminator.PropertyName}} = "{{$value}}"{{end}}
-                        {{end -}}
+            {{if $stampDiscriminator -}}
+                {{if $unionProperty -}}
+                    {{if $unionProperty.IsPointer -}}
+                        var discriminator {{$unionProperty.Schema.TypeDecl}} = "{{$discriminatorValue}}"
+                        t.{{$unionProperty.GoFieldName}} = &discriminator
+                    {{else -}}
+                        t.{{$unionProperty.GoFieldName}} = "{{$discriminatorValue}}"
                     {{end -}}
                 {{end -}}
             {{end -}}
@@ -57,7 +79,12 @@
             if err != nil {
               return err
             }
-
+            {{if and $stampDiscriminator (not $unionProperty) -}}
+                b, err = runtime.JSONMerge(b, []byte(`{"{{$discriminator.Property}}":"{{$discriminatorValue}}"}`))
+                if err != nil {
+                    return err
+                }
+            {{end}}
             merged, err := runtime.JSONMerge(t.union, b)
             t.union = merged
             return err
