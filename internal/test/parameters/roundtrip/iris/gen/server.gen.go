@@ -100,6 +100,9 @@ type ServerInterface interface {
 	// (GET /simplePrimitive/{param})
 	GetSimplePrimitive(ctx iris.Context, param int32)
 
+	// (GET /simpleString/{param})
+	GetSimpleString(ctx iris.Context, param string)
+
 	// (GET /startingWithNumber/{1param})
 	GetStartingWithNumber(ctx iris.Context, n1param string)
 }
@@ -466,7 +469,7 @@ func (w *ServerInterfaceWrapper) GetLabelExplodeArray(ctx iris.Context) {
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("label", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter param: %s", err)
@@ -486,7 +489,7 @@ func (w *ServerInterfaceWrapper) GetLabelExplodeObject(ctx iris.Context) {
 	// ------------- Path parameter "param" -------------
 	var param Object
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("label", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter param: %s", err)
@@ -506,7 +509,7 @@ func (w *ServerInterfaceWrapper) GetLabelExplodePrimitive(ctx iris.Context) {
 	// ------------- Path parameter "param" -------------
 	var param int32
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("label", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter param: %s", err)
@@ -526,7 +529,7 @@ func (w *ServerInterfaceWrapper) GetLabelNoExplodeArray(ctx iris.Context) {
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("label", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter param: %s", err)
@@ -546,7 +549,7 @@ func (w *ServerInterfaceWrapper) GetLabelNoExplodeObject(ctx iris.Context) {
 	// ------------- Path parameter "param" -------------
 	var param Object
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("label", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter param: %s", err)
@@ -566,7 +569,7 @@ func (w *ServerInterfaceWrapper) GetLabelPrimitive(ctx iris.Context) {
 	// ------------- Path parameter "param" -------------
 	var param int32
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("label", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter param: %s", err)
@@ -586,7 +589,7 @@ func (w *ServerInterfaceWrapper) GetMatrixExplodeArray(ctx iris.Context) {
 	// ------------- Path parameter "id" -------------
 	var id []int32
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter id: %s", err)
@@ -606,7 +609,7 @@ func (w *ServerInterfaceWrapper) GetMatrixExplodeObject(ctx iris.Context) {
 	// ------------- Path parameter "id" -------------
 	var id Object
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter id: %s", err)
@@ -626,7 +629,7 @@ func (w *ServerInterfaceWrapper) GetMatrixExplodePrimitive(ctx iris.Context) {
 	// ------------- Path parameter "id" -------------
 	var id int32
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter id: %s", err)
@@ -646,7 +649,7 @@ func (w *ServerInterfaceWrapper) GetMatrixNoExplodeArray(ctx iris.Context) {
 	// ------------- Path parameter "id" -------------
 	var id []int32
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter id: %s", err)
@@ -666,7 +669,7 @@ func (w *ServerInterfaceWrapper) GetMatrixNoExplodeObject(ctx iris.Context) {
 	// ------------- Path parameter "id" -------------
 	var id Object
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter id: %s", err)
@@ -686,7 +689,7 @@ func (w *ServerInterfaceWrapper) GetMatrixPrimitive(ctx iris.Context) {
 	// ------------- Path parameter "id" -------------
 	var id int32
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter id: %s", err)
@@ -871,7 +874,7 @@ func (w *ServerInterfaceWrapper) GetSimpleExplodeArray(ctx iris.Context) {
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter param: %s", err)
@@ -891,7 +894,7 @@ func (w *ServerInterfaceWrapper) GetSimpleExplodeObject(ctx iris.Context) {
 	// ------------- Path parameter "param" -------------
 	var param Object
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter param: %s", err)
@@ -911,7 +914,7 @@ func (w *ServerInterfaceWrapper) GetSimpleExplodePrimitive(ctx iris.Context) {
 	// ------------- Path parameter "param" -------------
 	var param int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter param: %s", err)
@@ -931,7 +934,7 @@ func (w *ServerInterfaceWrapper) GetSimpleNoExplodeArray(ctx iris.Context) {
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter param: %s", err)
@@ -951,7 +954,7 @@ func (w *ServerInterfaceWrapper) GetSimpleNoExplodeObject(ctx iris.Context) {
 	// ------------- Path parameter "param" -------------
 	var param Object
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter param: %s", err)
@@ -971,7 +974,7 @@ func (w *ServerInterfaceWrapper) GetSimplePrimitive(ctx iris.Context) {
 	// ------------- Path parameter "param" -------------
 	var param int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter param: %s", err)
@@ -980,6 +983,26 @@ func (w *ServerInterfaceWrapper) GetSimplePrimitive(ctx iris.Context) {
 
 	// Invoke the callback with all the unmarshaled arguments
 	w.Handler.GetSimplePrimitive(ctx, param)
+}
+
+// GetSimpleString converts iris context to params.
+func (w *ServerInterfaceWrapper) GetSimpleString(ctx iris.Context) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "param" -------------
+	var param string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "param", ctx.Params().Get("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		ctx.StatusCode(http.StatusBadRequest)
+		ctx.Writef("Invalid format for parameter param: %s", err)
+		return
+	}
+
+	// Invoke the callback with all the unmarshaled arguments
+	w.Handler.GetSimpleString(ctx, param)
 }
 
 // GetStartingWithNumber converts iris context to params.
@@ -1044,6 +1067,7 @@ func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, o
 	router.Get(options.BaseURL+"/simpleNoExplodeArray/:param", wrapper.GetSimpleNoExplodeArray)
 	router.Get(options.BaseURL+"/simpleNoExplodeObject/:param", wrapper.GetSimpleNoExplodeObject)
 	router.Get(options.BaseURL+"/simplePrimitive/:param", wrapper.GetSimplePrimitive)
+	router.Get(options.BaseURL+"/simpleString/:param", wrapper.GetSimpleString)
 	router.Get(options.BaseURL+"/startingWithNumber/:1param", wrapper.GetStartingWithNumber)
 
 	router.Build()
@@ -1074,8 +1098,9 @@ var swaggerSpec = []string{
 	"qqNVGAKw9t6P1ScNjeujNWO1TYqFEhaYxz7uZ8zFShEQthH3Z9WygzzBcABOmJs7rZ09i0cx1hVLwaCG",
 	"U4Bv6M0SdixcNj5chaaEdmyl/EJ50jnV2qhjlnt1k+3bhPHpUkPRwG6yherFQPXrKtucTX/HZ0UcI+A+",
 	"1a6LDzvbaa602yQ8WkCrY2zHab8wfOX+uwX2uDtSy8nAK9ITKpv5jqh6wOjRYFzVhr3dzrVJEU3GWuXL",
-	"ngG0vZ3e9dQMlc4a3W/Xq8aRr968nowj+3jfl6F3076enrn+39atmga+iQb2ZCwdIb4W1b1HmWX77hci",
-	"I3Mz7G2XPaioDZvwsL+c+LSvGNbfrxrcGx4jH0VSMt/zso9XJQg5V2fmBLM5Jmh3t/s3AAD//w==",
+	"ngG0vZ3e9dQMlc4a3W/Xq8aRr968nowj+3jfl6F3076enrn+39atmga+iQb2ZCwdIb4W1b1bma305tmf",
+	"g1X+RjIGAbXvVqdMN3vN+EJkZC7Cve2yR9a1YRP2NpYTNzcUw/pzXYN7w2Pko0hK5nte9q2uBCHnIQBL",
+	"MJtjgnZ3u38DAAD//w==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

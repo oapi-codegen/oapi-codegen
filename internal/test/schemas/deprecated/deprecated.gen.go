@@ -1517,7 +1517,7 @@ func (siw *ServerInterfaceWrapper) GetDeprecatedParamsOldId(w http.ResponseWrite
 	// ------------- Path parameter "old_id" -------------
 	var oldId string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "old_id", r.PathValue("old_id"), &oldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "old_id", r.PathValue("old_id"), &oldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "old_id", Err: err})
 		return

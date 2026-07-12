@@ -21,6 +21,24 @@ paths:
       responses:
         '200':
           $ref: "#/components/responses/SimpleResponse"
+  # issue-2455: a styled string path parameter exercises percent-escaping
+  # through the whole stack: the client percent-encodes the value, the
+  # router delivers it raw or decoded (framework-dependent), and the
+  # generated wrapper must tell the runtime which, so that values
+  # containing literal percent signs survive the round trip.
+  /simpleString/{param}:
+    get:
+      operationId: getSimpleString
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: simple
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
   /simpleNoExplodeArray/{param}:
     get:
       operationId: getSimpleNoExplodeArray
