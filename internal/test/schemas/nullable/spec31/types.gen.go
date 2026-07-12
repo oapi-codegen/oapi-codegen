@@ -101,16 +101,22 @@ func (t DiscriminatedPet) AsCat() (Cat, error) {
 
 // FromCat overwrites any union data inside the DiscriminatedPet as the provided Cat
 func (t *DiscriminatedPet) FromCat(v Cat) error {
-	v.Kind = "Cat"
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"Cat"}`))
 	t.union = b
 	return err
 }
 
 // MergeCat performs a merge with any union data inside the DiscriminatedPet, using the provided Cat
 func (t *DiscriminatedPet) MergeCat(v Cat) error {
-	v.Kind = "Cat"
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"Cat"}`))
 	if err != nil {
 		return err
 	}
@@ -129,16 +135,22 @@ func (t DiscriminatedPet) AsDog() (Dog, error) {
 
 // FromDog overwrites any union data inside the DiscriminatedPet as the provided Dog
 func (t *DiscriminatedPet) FromDog(v Dog) error {
-	v.Kind = "Dog"
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"Dog"}`))
 	t.union = b
 	return err
 }
 
 // MergeDog performs a merge with any union data inside the DiscriminatedPet, using the provided Dog
 func (t *DiscriminatedPet) MergeDog(v Dog) error {
-	v.Kind = "Dog"
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"Dog"}`))
 	if err != nil {
 		return err
 	}

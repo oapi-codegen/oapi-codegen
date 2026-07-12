@@ -180,6 +180,13 @@ func (p Property) HasOptionalPointer() bool {
 	return !p.Required && !p.Schema.SkipOptionalPointer
 }
 
+// IsPointer reports whether the generated Go field for this property is
+// pointer-typed, i.e. GoTypeDef renders with a leading `*`. Templates use it
+// when assigning a value to the field requires taking an address first.
+func (p Property) IsPointer() bool {
+	return strings.HasPrefix(p.GoTypeDef(), "*")
+}
+
 // ZeroValueIsNil is a helper function to determine if the given Go type used
 // for this property has `nil` as its Go zero value. Slices (OpenAPI `array`)
 // and maps (OpenAPI `object` with only `additionalProperties`, rendered as
@@ -366,6 +373,63 @@ func (d *Discriminator) JSONTag() string {
 
 func (d *Discriminator) PropertyName() string {
 	return SchemaNameToTypeName(d.Property)
+}
+
+// DiscriminatorStamp describes how the generated From*/Merge* union helpers
+// record the discriminator value for one union element.
+//
+// The value is always merged into the marshaled JSON via JSONPatch, so
+// Discriminator() and ValueByDiscriminator() — which read the union data —
+// see it immediately after From*/Merge*. Stamping at the JSON level stays
+// correct regardless of how the variant declares the property — pointer,
+// named enum type, renamed or absent field, or a type in an imported
+// package — none of which is knowable from the union's side (see issue
+// #2297). When the union struct itself declares the discriminator property,
+// the helpers additionally assign Value to that field: its JSON rendering
+// overwrites the union data in MarshalJSON, so the field is load-bearing.
+type DiscriminatorStamp struct {
+	// Value is the discriminator value mapped to this union element.
+	Value string
+	// Property is the union struct's own discriminator field, matched by
+	// JSON property name, when it declares one; nil when it doesn't.
+	Property *Property
+	// JSONPatch is the JSON object literal merged into the union data,
+	// e.g. {"code":"resource_exists"}. Safe to embed in a backtick string
+	// literal: spec validation rejects discriminator property names and
+	// mapping keys containing quotes, backticks or control characters.
+	JSONPatch string
+}
+
+// DiscriminatorStampFor resolves the discriminator stamp for the given union
+// element, or nil when nothing should be stamped: there is no discriminator,
+// the mapping doesn't cover every element, or several mapping values share
+// one element type, making the value ambiguous (the 1:1 gate keeps parity
+// with issue #2071).
+func (s Schema) DiscriminatorStampFor(element UnionElement) *DiscriminatorStamp {
+	d := s.Discriminator
+	if d == nil || len(d.Mapping) != len(s.UnionElements) {
+		return nil
+	}
+	stamp := DiscriminatorStamp{}
+	found := false
+	for _, value := range SortedMapKeys(d.Mapping) {
+		if d.Mapping[value] == element.String() {
+			stamp.Value = value
+			found = true
+		}
+	}
+	if !found {
+		return nil
+	}
+	stamp.JSONPatch = fmt.Sprintf(`{"%s":"%s"}`, d.Property, stamp.Value)
+	// Match by JSON property name: the discriminator is a JSON-level
+	// concept, and the Go field may be renamed via x-go-name.
+	for i := range s.Properties {
+		if s.Properties[i].JsonFieldName == d.Property {
+			stamp.Property = &s.Properties[i]
+		}
+	}
+	return &stamp
 }
 
 // UnionElement describe union element, based on prefix externalRef\d+ and real ref name from external schema.

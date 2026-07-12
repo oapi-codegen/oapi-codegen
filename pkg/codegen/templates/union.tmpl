@@ -1,10 +1,9 @@
 {{range .Types}}
     {{$typeName := .TypeName -}}
     {{$discriminator := .Schema.Discriminator}}
-    {{$properties := .Schema.Properties -}}
-    {{$numberOfUnionTypes := len .Schema.UnionElements -}}
+    {{$schema := .Schema -}}
     {{range .Schema.UnionElements}}
-        {{$element := . -}}
+        {{$stamp := $schema.DiscriminatorStampFor . -}}
         // As{{ .Method }} returns the union data inside the {{$typeName}} as a {{.}}
         func (t {{$typeName}}) As{{ .Method }}() ({{.}}, error) {
             var body {{.}}
@@ -14,50 +13,45 @@
 
         // From{{ .Method }} overwrites any union data inside the {{$typeName}} as the provided {{.}}
         func (t *{{$typeName}}) From{{ .Method }} (v {{.}}) error {
-            {{if $discriminator -}}
-                {{if eq $numberOfUnionTypes (len $discriminator.Mapping) -}}
-                    {{range $value, $type := $discriminator.Mapping -}}
-                        {{if eq $type $element -}}
-                            {{$hasProperty := false -}}
-                            {{range $properties -}}
-                                {{if eq .GoFieldName $discriminator.PropertyName -}}
-                                    t.{{$discriminator.PropertyName}} = "{{$value}}"
-                                    {{$hasProperty = true -}}
-                                {{end -}}
-                            {{end -}}
-                            {{if not $hasProperty}}v.{{$discriminator.PropertyName}} = "{{$value}}"{{end}}
-                        {{end -}}
-                    {{end -}}
+            {{if and $stamp $stamp.Property -}}
+                {{if $stamp.Property.IsPointer -}}
+                    var discriminator {{$stamp.Property.Schema.TypeDecl}} = "{{$stamp.Value}}"
+                    t.{{$stamp.Property.GoFieldName}} = &discriminator
+                {{else -}}
+                    t.{{$stamp.Property.GoFieldName}} = "{{$stamp.Value}}"
                 {{end -}}
             {{end -}}
             b, err := json.Marshal(v)
+            {{if $stamp -}}
+                if err != nil {
+                    return err
+                }
+                b, err = runtime.JSONMerge(b, []byte(`{{$stamp.JSONPatch}}`))
+            {{end -}}
             t.union = b
             return err
         }
 
         // Merge{{ .Method }} performs a merge with any union data inside the {{$typeName}}, using the provided {{.}}
         func (t *{{$typeName}}) Merge{{ .Method }} (v {{.}}) error {
-            {{if $discriminator -}}
-                {{if eq $numberOfUnionTypes (len $discriminator.Mapping) -}}
-                    {{range $value, $type := $discriminator.Mapping -}}
-                        {{if eq $type $element -}}
-                            {{$hasProperty := false -}}
-                            {{range $properties -}}
-                                {{if eq .GoFieldName $discriminator.PropertyName -}}
-                                    t.{{$discriminator.PropertyName}} = "{{$value}}"
-                                    {{$hasProperty = true -}}
-                                {{end -}}
-                            {{end -}}
-                            {{if not $hasProperty}}v.{{$discriminator.PropertyName}} = "{{$value}}"{{end}}
-                        {{end -}}
-                    {{end -}}
+            {{if and $stamp $stamp.Property -}}
+                {{if $stamp.Property.IsPointer -}}
+                    var discriminator {{$stamp.Property.Schema.TypeDecl}} = "{{$stamp.Value}}"
+                    t.{{$stamp.Property.GoFieldName}} = &discriminator
+                {{else -}}
+                    t.{{$stamp.Property.GoFieldName}} = "{{$stamp.Value}}"
                 {{end -}}
             {{end -}}
             b, err := json.Marshal(v)
             if err != nil {
               return err
             }
-
+            {{if $stamp -}}
+                b, err = runtime.JSONMerge(b, []byte(`{{$stamp.JSONPatch}}`))
+                if err != nil {
+                    return err
+                }
+            {{end}}
             merged, err := runtime.JSONMerge(t.union, b)
             t.union = merged
             return err
