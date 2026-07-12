@@ -229,9 +229,28 @@ func (e *EnumDefinition) GetValues() map[string]string {
 	return newValues
 }
 
+// SecuritySchemeProvider describes one security scheme from
+// components/securitySchemes for which a scopes context-key constant is
+// generated.
+type SecuritySchemeProvider struct {
+	// Name is the sanitized scheme name; templates derive the constant name
+	// (<Name>Scopes), the context key type name and the key's string value
+	// from it.
+	Name string
+	// ImportedScopes, when non-empty, is the scopes constant declared by the
+	// package that import-mapping assigns this scheme's $ref to (e.g.
+	// "externalRef0.BearerAuthScopes", or unqualified for the current
+	// package). The local constant is declared as an alias of it, so the
+	// context key — which context.Value compares by type and value — is
+	// shared across the generated packages. Empty means the scheme is
+	// declared locally with its own context key type.
+	ImportedScopes string
+}
+
 type Constants struct {
-	// SecuritySchemeProviderNames holds all provider names for security schemes.
-	SecuritySchemeProviderNames []string
+	// SecuritySchemeProviders holds all security schemes for which scopes
+	// context-key constants are generated.
+	SecuritySchemeProviders []SecuritySchemeProvider
 	// EnumDefinitions holds type and value information for all enums
 	EnumDefinitions []EnumDefinition
 	// SkipEnumValidate suppresses generation of the `Valid()` method on

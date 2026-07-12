@@ -358,7 +358,16 @@ type CompatibilityOptions struct {
 	// types (e.g. `bearerAuthContextKey`), the scope constants (e.g.
 	// `BearerAuthScopes`), and the per-operation calls that store the
 	// operation's scopes into the request context.
-	// This mechanism is deprecated and off by default: it flattens the
+	//
+	// A security scheme that is a $ref into a spec covered by import-mapping
+	// does not declare its own context key type; its scopes constant is an
+	// alias of the one in the mapped package, so `context.Value` lookups use
+	// the same key across the generated packages. This requires the mapped
+	// spec's config to also set this flag, so that the referenced constant
+	// exists. Please see
+	// https://github.com/oapi-codegen/oapi-codegen/issues/2383
+	//
+	// Deprecated: this mechanism is off by default because it flattens the
 	// OpenAPI `security` requirements into a per-scheme list of scopes, and
 	// cannot represent alternative schemes (OR), combined schemes (AND), or
 	// anonymous (`{}`) alternatives. Authentication and authorization should

@@ -3,6 +3,9 @@ package codegen
 import (
 	_ "embed"
 	"go/format"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -576,6 +579,164 @@ paths:
 	require.NoError(t, err)
 	assert.Contains(t, code, `BearerAuthScopes bearerAuthContextKey = "bearerAuth.Scopes"`)
 	assert.Contains(t, code, `ctx = context.WithValue(ctx, BearerAuthScopes, []string{"read"})`)
+}
+
+const securityScopesSharedSpec = `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Common
+paths: {}
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+`
+
+const securityScopesUserSpec = `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: User API
+paths:
+  /user:
+    get:
+      operationId: getUser
+      security:
+        - BearerAuth: ["read"]
+        - LocalAuth: []
+      responses:
+        '200':
+          description: ok
+components:
+  securitySchemes:
+    BearerAuth:
+      $ref: './common.yml#/components/securitySchemes/BearerAuth'
+    LocalAuth:
+      type: http
+      scheme: basic
+`
+
+// loadSecurityScopesUserSpec writes the shared/user spec pair to disk and
+// loads the user spec, resolving the cross-file security scheme $ref.
+func loadSecurityScopesUserSpec(t *testing.T) *openapi3.T {
+	t.Helper()
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "common.yml"), []byte(securityScopesSharedSpec), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "user.yml"), []byte(securityScopesUserSpec), 0o600))
+
+	loader := openapi3.NewLoader()
+	loader.IsExternalRefsAllowed = true
+	swagger, err := loader.LoadFromFile(filepath.Join(dir, "user.yml"))
+	require.NoError(t, err)
+	return swagger
+}
+
+// TestSecuritySchemeScopesWithImportMapping verifies that a security scheme
+// $ref'd from an import-mapped spec aliases the scopes constant declared by
+// the mapped package instead of declaring its own context key type, so
+// shared middleware sees a single context key across generated packages.
+// Please see https://github.com/oapi-codegen/oapi-codegen/issues/2383
+func TestSecuritySchemeScopesWithImportMapping(t *testing.T) {
+	swagger := loadSecurityScopesUserSpec(t)
+
+	opts := Configuration{
+		PackageName: "user",
+		Generate: GenerateOptions{
+			StdHTTPServer: true,
+			Models:        true,
+		},
+		Compatibility: CompatibilityOptions{EnableAuthScopesOnContext: true},
+		ImportMapping: map[string]string{"./common.yml": "example.com/common"},
+	}
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+
+	// The const block is column-aligned by gofmt, so collapse runs of
+	// whitespace before matching the declarations.
+	normalized := strings.Join(strings.Fields(code), " ")
+
+	// The imported scheme aliases the shared constant — carrying the shared
+	// package's context key type — and declares no local type; middleware
+	// still references the constant by its local name.
+	assert.Contains(t, normalized, "BearerAuthScopes = externalRef0.BearerAuthScopes")
+	assert.NotContains(t, code, "bearerAuthContextKey")
+	assert.Contains(t, code, `ctx = context.WithValue(ctx, BearerAuthScopes, []string{"read"})`)
+
+	// The locally declared scheme keeps its own typed constant.
+	assert.Contains(t, normalized, `LocalAuthScopes localAuthContextKey = "LocalAuth.Scopes"`)
+}
+
+// TestSecuritySchemeScopesWithoutImportMapping verifies that an external
+// scheme $ref without an import-mapping entry keeps the historical behavior
+// of declaring the context key type and constant locally.
+func TestSecuritySchemeScopesWithoutImportMapping(t *testing.T) {
+	swagger := loadSecurityScopesUserSpec(t)
+
+	opts := Configuration{
+		PackageName: "user",
+		Generate: GenerateOptions{
+			StdHTTPServer: true,
+			Models:        true,
+		},
+		Compatibility: CompatibilityOptions{EnableAuthScopesOnContext: true},
+	}
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+
+	assert.Contains(t, code, `BearerAuthScopes bearerAuthContextKey = "BearerAuth.Scopes"`)
+}
+
+// TestSecuritySchemeScopesCurrentPackageMapping verifies that a scheme $ref'd
+// from a spec mapped to the current package ("-") emits neither the type nor
+// the constant: the sibling config generating that spec into the same package
+// declares both.
+func TestSecuritySchemeScopesCurrentPackageMapping(t *testing.T) {
+	swagger := loadSecurityScopesUserSpec(t)
+
+	opts := Configuration{
+		PackageName: "user",
+		Generate: GenerateOptions{
+			StdHTTPServer: true,
+			Models:        true,
+		},
+		Compatibility: CompatibilityOptions{EnableAuthScopesOnContext: true},
+		ImportMapping: map[string]string{"./common.yml": "-"},
+	}
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+
+	// No local declarations for the shared scheme...
+	assert.NotContains(t, code, "bearerAuthContextKey")
+	assert.NotContains(t, code, `= "BearerAuth.Scopes"`)
+	// ...but middleware references the sibling-declared constant.
+	assert.Contains(t, code, `ctx = context.WithValue(ctx, BearerAuthScopes, []string{"read"})`)
+}
+
+// TestSecuritySchemeScopesWithoutOperations verifies that a spec holding only
+// shared definitions (no paths) still exports the scopes constants, so that
+// other packages can alias them via import-mapping.
+func TestSecuritySchemeScopesWithoutOperations(t *testing.T) {
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(securityScopesSharedSpec))
+	require.NoError(t, err)
+
+	opts := Configuration{
+		PackageName: "common",
+		Generate: GenerateOptions{
+			Models: true,
+		},
+		Compatibility: CompatibilityOptions{EnableAuthScopesOnContext: true},
+	}
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+
+	assert.Contains(t, code, `BearerAuthScopes bearerAuthContextKey = "BearerAuth.Scopes"`)
 }
 
 //go:embed test_spec.yaml

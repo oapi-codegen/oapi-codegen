@@ -2,6 +2,12 @@ openapi: "3.0.0"
 info: { }
 paths: { }
 components:
+  # Reproduces https://github.com/oapi-codegen/oapi-codegen/issues/2383
+  # The scopes constant for a $ref'd security scheme must alias the one
+  # declared by the import-mapped package, sharing the context key.
+  securitySchemes:
+    BearerAuth:
+      $ref: ./packageA/spec.yaml#/components/securitySchemes/BearerAuth
   schemas:
     Container:
       properties:

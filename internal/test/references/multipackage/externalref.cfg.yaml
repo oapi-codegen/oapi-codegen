@@ -10,3 +10,7 @@ import-mapping:
 output: externalref.gen.go
 output-options:
   skip-prune: true
+# issue-2383: the BearerAuth scopes constant must alias packageA's instead of
+# declaring a distinct context key type.
+compatibility:
+  enable-auth-scopes-on-context: true
