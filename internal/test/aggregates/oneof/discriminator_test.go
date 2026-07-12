@@ -79,7 +79,9 @@ func TestIssue2297PointerDiscriminatorOnVariant(t *testing.T) {
 
 // TestIssue2297PointerDiscriminatorOnUnion covers the union schema declaring
 // the discriminator property itself, optional, so the field on the union
-// struct is pointer-typed and is set through an addressable value.
+// struct is pointer-typed and is set through an addressable value. The value
+// is also stamped into the union data, so Discriminator() and
+// ValueByDiscriminator() work immediately after From*.
 func TestIssue2297PointerDiscriminatorOnUnion(t *testing.T) {
 	var pet PetByKind
 	meow := "prrr"
@@ -88,12 +90,38 @@ func TestIssue2297PointerDiscriminatorOnUnion(t *testing.T) {
 	require.NotNil(t, pet.Kind)
 	require.Equal(t, "cat", *pet.Kind)
 
+	d, err := pet.Discriminator()
+	require.NoError(t, err)
+	require.Equal(t, "cat", d)
+
+	v, err := pet.ValueByDiscriminator()
+	require.NoError(t, err)
+	cat, ok := v.(KindCat)
+	require.True(t, ok)
+	require.NotNil(t, cat.Meow)
+	require.Equal(t, meow, *cat.Meow)
+
 	b, err := pet.MarshalJSON()
 	require.NoError(t, err)
 	require.Contains(t, string(b), `"kind":"cat"`)
+}
 
-	cat, err := pet.AsKindCat()
+// TestIssue2297RenamedDiscriminatorField covers a union whose discriminator
+// property is renamed via x-go-name: the field is matched by its JSON name,
+// assigned through the renamed Go field, and stamped into the union data.
+func TestIssue2297RenamedDiscriminatorField(t *testing.T) {
+	var pet RenamedPetByKind
+	bark := "woof"
+	require.NoError(t, pet.FromKindDog(KindDog{Bark: &bark}))
+
+	require.NotNil(t, pet.Species)
+	require.Equal(t, "dog", *pet.Species)
+
+	d, err := pet.Discriminator()
 	require.NoError(t, err)
-	require.NotNil(t, cat.Meow)
-	require.Equal(t, meow, *cat.Meow)
+	require.Equal(t, "dog", d)
+
+	b, err := pet.MarshalJSON()
+	require.NoError(t, err)
+	require.Contains(t, string(b), `"kind":"dog"`)
 }

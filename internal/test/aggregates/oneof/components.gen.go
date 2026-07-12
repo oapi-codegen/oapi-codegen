@@ -680,6 +680,10 @@ func (t OneOfObject13) AsOneOfVariant1() (OneOfVariant1, error) {
 func (t *OneOfObject13) FromOneOfVariant1(v OneOfVariant1) error {
 	t.Type = "v1"
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"v1"}`))
 	t.union = b
 	return err
 }
@@ -688,6 +692,10 @@ func (t *OneOfObject13) FromOneOfVariant1(v OneOfVariant1) error {
 func (t *OneOfObject13) MergeOneOfVariant1(v OneOfVariant1) error {
 	t.Type = "v1"
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"v1"}`))
 	if err != nil {
 		return err
 	}
@@ -708,6 +716,10 @@ func (t OneOfObject13) AsOneOfVariant6() (OneOfVariant6, error) {
 func (t *OneOfObject13) FromOneOfVariant6(v OneOfVariant6) error {
 	t.Type = "v6"
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"v6"}`))
 	t.union = b
 	return err
 }
@@ -716,6 +728,10 @@ func (t *OneOfObject13) FromOneOfVariant6(v OneOfVariant6) error {
 func (t *OneOfObject13) MergeOneOfVariant6(v OneOfVariant6) error {
 	t.Type = "v6"
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"v6"}`))
 	if err != nil {
 		return err
 	}
@@ -1619,6 +1635,10 @@ func (t OneOfObject9) AsOneOfVariant1() (OneOfVariant1, error) {
 func (t *OneOfObject9) FromOneOfVariant1(v OneOfVariant1) error {
 	t.Type = "v1"
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"v1"}`))
 	t.union = b
 	return err
 }
@@ -1627,6 +1647,10 @@ func (t *OneOfObject9) FromOneOfVariant1(v OneOfVariant1) error {
 func (t *OneOfObject9) MergeOneOfVariant1(v OneOfVariant1) error {
 	t.Type = "v1"
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"v1"}`))
 	if err != nil {
 		return err
 	}
@@ -1647,6 +1671,10 @@ func (t OneOfObject9) AsOneOfVariant6() (OneOfVariant6, error) {
 func (t *OneOfObject9) FromOneOfVariant6(v OneOfVariant6) error {
 	t.Type = "v6"
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"v6"}`))
 	t.union = b
 	return err
 }
@@ -1655,6 +1683,10 @@ func (t *OneOfObject9) FromOneOfVariant6(v OneOfVariant6) error {
 func (t *OneOfObject9) MergeOneOfVariant6(v OneOfVariant6) error {
 	t.Type = "v6"
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"type":"v6"}`))
 	if err != nil {
 		return err
 	}

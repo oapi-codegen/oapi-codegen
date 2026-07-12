@@ -100,6 +100,12 @@ type PetByKind struct {
 	union json.RawMessage
 }
 
+// RenamedPetByKind defines model for RenamedPetByKind.
+type RenamedPetByKind struct {
+	Species *string `json:"kind,omitempty"`
+	union   json.RawMessage
+}
+
 // ResourceConflictError defines model for ResourceConflictError.
 type ResourceConflictError struct {
 	Code  *ResourceConflictErrorCode `json:"code,omitempty"`
@@ -114,6 +120,9 @@ type PostConfigJSONRequestBody = ConfigSaveReq
 
 // PostPetJSONRequestBody defines body for PostPet for application/json ContentType.
 type PostPetJSONRequestBody = PetByKind
+
+// PostRenamedPetJSONRequestBody defines body for PostRenamedPet for application/json ContentType.
+type PostRenamedPetJSONRequestBody = RenamedPetByKind
 
 // AsConfigHttp returns the union data inside the ConfigSaveReq as a ConfigHttp
 func (t ConfigSaveReq) AsConfigHttp() (ConfigHttp, error) {
@@ -317,6 +326,10 @@ func (t *PetByKind) FromKindCat(v KindCat) error {
 	var discriminator string = "cat"
 	t.Kind = &discriminator
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"cat"}`))
 	t.union = b
 	return err
 }
@@ -326,6 +339,10 @@ func (t *PetByKind) MergeKindCat(v KindCat) error {
 	var discriminator string = "cat"
 	t.Kind = &discriminator
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"cat"}`))
 	if err != nil {
 		return err
 	}
@@ -347,6 +364,10 @@ func (t *PetByKind) FromKindDog(v KindDog) error {
 	var discriminator string = "dog"
 	t.Kind = &discriminator
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"dog"}`))
 	t.union = b
 	return err
 }
@@ -356,6 +377,10 @@ func (t *PetByKind) MergeKindDog(v KindDog) error {
 	var discriminator string = "dog"
 	t.Kind = &discriminator
 	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"dog"}`))
 	if err != nil {
 		return err
 	}
@@ -424,6 +449,149 @@ func (t *PetByKind) UnmarshalJSON(b []byte) error {
 
 	if raw, found := object["kind"]; found {
 		err = json.Unmarshal(raw, &t.Kind)
+		if err != nil {
+			return fmt.Errorf("error reading 'kind': %w", err)
+		}
+	}
+
+	return err
+}
+
+// AsKindCat returns the union data inside the RenamedPetByKind as a KindCat
+func (t RenamedPetByKind) AsKindCat() (KindCat, error) {
+	var body KindCat
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromKindCat overwrites any union data inside the RenamedPetByKind as the provided KindCat
+func (t *RenamedPetByKind) FromKindCat(v KindCat) error {
+	var discriminator string = "cat"
+	t.Species = &discriminator
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"cat"}`))
+	t.union = b
+	return err
+}
+
+// MergeKindCat performs a merge with any union data inside the RenamedPetByKind, using the provided KindCat
+func (t *RenamedPetByKind) MergeKindCat(v KindCat) error {
+	var discriminator string = "cat"
+	t.Species = &discriminator
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"cat"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsKindDog returns the union data inside the RenamedPetByKind as a KindDog
+func (t RenamedPetByKind) AsKindDog() (KindDog, error) {
+	var body KindDog
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromKindDog overwrites any union data inside the RenamedPetByKind as the provided KindDog
+func (t *RenamedPetByKind) FromKindDog(v KindDog) error {
+	var discriminator string = "dog"
+	t.Species = &discriminator
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"dog"}`))
+	t.union = b
+	return err
+}
+
+// MergeKindDog performs a merge with any union data inside the RenamedPetByKind, using the provided KindDog
+func (t *RenamedPetByKind) MergeKindDog(v KindDog) error {
+	var discriminator string = "dog"
+	t.Species = &discriminator
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+	b, err = runtime.JSONMerge(b, []byte(`{"kind":"dog"}`))
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RenamedPetByKind) Discriminator() (string, error) {
+	var discriminator struct {
+		Discriminator string `json:"kind"`
+	}
+	err := json.Unmarshal(t.union, &discriminator)
+	return discriminator.Discriminator, err
+}
+
+func (t RenamedPetByKind) ValueByDiscriminator() (interface{}, error) {
+	discriminator, err := t.Discriminator()
+	if err != nil {
+		return nil, err
+	}
+	switch discriminator {
+	case "cat":
+		return t.AsKindCat()
+	case "dog":
+		return t.AsKindDog()
+	default:
+		return nil, errors.New("unknown discriminator value: " + discriminator)
+	}
+}
+
+func (t RenamedPetByKind) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if t.Species != nil {
+		object["kind"], err = json.Marshal(t.Species)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'kind': %w", err)
+		}
+	}
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *RenamedPetByKind) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["kind"]; found {
+		err = json.Unmarshal(raw, &t.Species)
 		if err != nil {
 			return fmt.Errorf("error reading 'kind': %w", err)
 		}

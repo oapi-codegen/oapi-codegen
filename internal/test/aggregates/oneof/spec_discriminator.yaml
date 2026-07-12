@@ -32,6 +32,17 @@ paths:
       responses:
         "200":
           description: OK
+  /renamed-pet:
+    post:
+      summary: Union whose discriminator property is renamed via x-go-name
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RenamedPetByKind"
+      responses:
+        "200":
+          description: OK
 components:
   schemas:
     ConfigHttp:
@@ -139,3 +150,20 @@ components:
       properties:
         bark:
           type: string
+    # The union's discriminator field is renamed with x-go-name: the field
+    # detection must match on the JSON property name, and the assignment
+    # must use the renamed Go field.
+    RenamedPetByKind:
+      type: object
+      properties:
+        kind:
+          type: string
+          x-go-name: Species
+      oneOf:
+        - $ref: "#/components/schemas/KindCat"
+        - $ref: "#/components/schemas/KindDog"
+      discriminator:
+        propertyName: kind
+        mapping:
+          cat: "#/components/schemas/KindCat"
+          dog: "#/components/schemas/KindDog"

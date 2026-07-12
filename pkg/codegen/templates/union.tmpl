@@ -22,7 +22,7 @@
                 {{end -}}
             {{end -}}
             b, err := json.Marshal(v)
-            {{if and $stamp (not $stamp.Property) -}}
+            {{if $stamp -}}
                 if err != nil {
                     return err
                 }
@@ -46,7 +46,7 @@
             if err != nil {
               return err
             }
-            {{if and $stamp (not $stamp.Property) -}}
+            {{if $stamp -}}
                 b, err = runtime.JSONMerge(b, []byte(`{{$stamp.JSONPatch}}`))
                 if err != nil {
                     return err
