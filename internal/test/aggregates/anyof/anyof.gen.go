@@ -113,7 +113,7 @@ type Issue1189Test struct {
 	FieldC *Issue1189Test_FieldC `json:"fieldC,omitempty"`
 }
 
-// Issue1189TestFieldA0 defines model for .
+// Issue1189TestFieldA0 defines model for Issue1189Test.FieldA.0.
 type Issue1189TestFieldA0 = string
 
 // Issue1189TestFieldA1 defines model for Issue1189Test.FieldA.1.
@@ -127,7 +127,7 @@ type Issue1189Test_FieldA struct {
 // Issue1189TestFieldB defines model for Issue1189Test.FieldB.
 type Issue1189TestFieldB string
 
-// Issue1189TestFieldC0 defines model for .
+// Issue1189TestFieldC0 defines model for Issue1189Test.FieldC.0.
 type Issue1189TestFieldC0 = string
 
 // Issue1189TestFieldC1 defines model for Issue1189Test.FieldC.1.
@@ -143,13 +143,13 @@ type ParamAnyOf struct {
 	union json.RawMessage
 }
 
-// ParamAnyOf0 defines model for .
+// ParamAnyOf0 defines model for ParamAnyOf.0.
 type ParamAnyOf0 struct {
 	Item1 string `json:"item1"`
 	Item2 string `json:"item2"`
 }
 
-// ParamAnyOf1 defines model for .
+// ParamAnyOf1 defines model for ParamAnyOf.1.
 type ParamAnyOf1 struct {
 	Item2 *string `json:"item2,omitempty"`
 	Item3 *string `json:"item3,omitempty"`
@@ -160,10 +160,10 @@ type ParamOneOf struct {
 	union json.RawMessage
 }
 
-// ParamOneOf0 defines model for .
+// ParamOneOf0 defines model for ParamOneOf.0.
 type ParamOneOf0 = int
 
-// ParamOneOf1 defines model for .
+// ParamOneOf1 defines model for ParamOneOf.1.
 type ParamOneOf1 = string
 
 // RefCat This is a cat ($ref anyOf case)

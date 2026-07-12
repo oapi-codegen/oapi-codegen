@@ -29,22 +29,22 @@ type OneOfObject10 struct {
 	union json.RawMessage
 }
 
-// OneOfObject100 defines model for .
+// OneOfObject100 defines model for OneOfObject10.0.
 type OneOfObject100 = interface{}
 
-// OneOfObject101 defines model for .
+// OneOfObject101 defines model for OneOfObject10.1.
 type OneOfObject101 = interface{}
 
 // OneOfObject11 additional properties of oneOf
 type OneOfObject11 map[string]OneOfObject11_AdditionalProperties
 
-// OneOfObject110 defines model for .
+// OneOfObject110 defines model for OneOfObject11.0.
 type OneOfObject110 = bool
 
-// OneOfObject111 defines model for .
+// OneOfObject111 defines model for OneOfObject11.1.
 type OneOfObject111 = float32
 
-// OneOfObject112 defines model for .
+// OneOfObject112 defines model for OneOfObject11.2.
 type OneOfObject112 = string
 
 // OneOfObject11_AdditionalProperties defines model for OneOfObject11.AdditionalProperties.
@@ -57,10 +57,10 @@ type OneOfObject12 struct {
 	union json.RawMessage
 }
 
-// OneOfObject120 defines model for .
+// OneOfObject120 defines model for OneOfObject12.0.
 type OneOfObject120 = string
 
-// OneOfObject121 defines model for .
+// OneOfObject121 defines model for OneOfObject12.1.
 type OneOfObject121 = float32
 
 // OneOfObject13 oneOf with fixed discriminator and other fields allowed
@@ -75,15 +75,15 @@ type OneOfObject2 struct {
 	union json.RawMessage
 }
 
-// OneOfObject20 defines model for .
+// OneOfObject20 defines model for OneOfObject2.0.
 type OneOfObject20 struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// OneOfObject21 defines model for .
+// OneOfObject21 defines model for OneOfObject2.1.
 type OneOfObject21 = []float32
 
-// OneOfObject22 defines model for .
+// OneOfObject22 defines model for OneOfObject2.2.
 type OneOfObject22 = bool
 
 // OneOfObject3 inline OneOf

@@ -31,12 +31,12 @@ type OneOf2things struct {
 	union json.RawMessage
 }
 
-// OneOf2things0 defines model for .
+// OneOf2things0 defines model for OneOf2things.0.
 type OneOf2things0 struct {
 	Id int `json:"id"`
 }
 
-// OneOf2things1 defines model for .
+// OneOf2things1 defines model for OneOf2things.1.
 type OneOf2things1 struct {
 	Id openapi_types.UUID `json:"id"`
 }
