@@ -18,6 +18,10 @@ import (
 	externalRef1 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/petstore"
 )
 
+const (
+	BearerAuthScopes = externalRef0.BearerAuthScopes
+)
+
 // Container defines model for Container.
 type Container struct {
 	ObjectA *externalRef0.ObjectA   `json:"object_a,omitempty"`
@@ -31,15 +35,16 @@ type Container struct {
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"vFVNb9swDP0rAbej62bYsINvbXdfDtupKAxGZhxt1scouk1R+L8PkmPHjTs0G7JeEkUUn/jeI5UnUM54",
-	"Z8lKgOIJgtqSwbS8cVZQW+L4w7PzxKIphdz6BykpMa7fM22ggHeXB6DLPcqlR/UTa7oqgydVfk1ZV9Bl",
-	"A8D6RIDrKcD1BEC9BjCe6zLwJK8dDw9Y18QX6HU5rD1JEMdUMm1CuSWsQmkwCHEZWJUGtS2ZgmtZUSid",
-	"JxuzVyTQdUeVYlVp0c5is5roKdxSBvLoCYr98VTui+LNvLBoKH7v84OwtvUZNO4OJRyFTi0hIpxP0BsU",
-	"qh0/zq/XVfykHRrfEBQfMtg4NihQgLby+ROM4morVBNHdYaaxzT44upwODqSOHYmg93FwIRdK8QXxlXU",
-	"RHiX7yP5wDFPsXwsPoOdaQ6agRoC5xVr1bf6c53URMG3GYKRdpfNXFr+o02Vq2tNc6My8Fsn7js3fVMI",
-	"mTBvymP9h5yp0ciME6ceGL2nqp/TZJOgtAm7oqBY+zjSEYtk0ccW2i5kS4skGWRAtjVQ3ALeo25w3cQ9",
-	"T7bqKwquqeDuBUKC9XMub+PaN+xvP0WNLgOmX63muHXbqzp14u4s4xPbeeZcemDPOTSR9x8el7/o1P/y",
-	"fsTSjgUQTG9sHC27celqLWlEIIN74tB3Zfor6BlCAR/zZb6MDqFsI7+u+x0AAP//",
+	"vFXBbtswDP2VgNvRdTts2MG3truvwLZTURiMzNjabEmj6LZB4X8fJMeOY7doNmS9tIooPj++R0pPoGzj",
+	"rCEjHrIn8KqiBuPy2hpBbYjDD8fWEYumGLLrn6Qkx7B+z7SBDN6d74HOdyjnDtUvLOky945U/jVmXUKX",
+	"DADrIwGupgBXEwD1GsB4rkvAkbx23D9gWRKfodP5sHYkXixTzrTxeUVY+LxBL8S5Z5U3qE3O5G3Linxu",
+	"HZmQfUMCXTdjikWhRVuD9c1ET+GWEpCtI8h2xyPdZ8VbeGGwofB/l++FtSlPoHG3pzALHUshIJxO0GsU",
+	"Ki1vl5/XRfhLj9i4miD7kMDGcoMCGWgjnz/BKK42QiVxUGfgPKbBF1v6/dGxiLkzCTyeDZWwbYX4rLEF",
+	"1QHeprtIOtSYxlg6kk/gsan3moEaAqcV66Zv9UOd1ETBtxmCsewuWbh08Y82FbYsNS2NSsBVVuwPrvum",
+	"EGr8sinn+g85U6ORGSdOPTA6R0U/p9EmQWkjdkFesXZhpAMWyaqPrbRZSUWrKBkkQKZtILsFvEdd47oO",
+	"e45M0TPyti7g7pmCBMvDWt7Gte/Yf/0YNboEmH63msPWba/q1Im7k4xPaOeFc/GCPeXQhLpfuFz+olP/",
+	"y/0RqM0FEBzuWFIta9l+C53Qs74iZOLLVqoX2+YwafZUT/IXL9Ehdmy/QGcdt/fSVCKu56fNxkZltMQJ",
+	"hgTuiX0/NPGl6g2ADD6mF+lFaCCUKhTSdX8CAAD//w==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

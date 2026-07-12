@@ -1,4 +1,11 @@
 components:
+  # Reproduces https://github.com/oapi-codegen/oapi-codegen/issues/2383
+  # A security scheme shared via $ref must share its scopes context key
+  # across the packages generated from the referencing specs.
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
   schemas:
     ObjectA:
       properties:
