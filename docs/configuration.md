@@ -129,6 +129,18 @@ output-options:
   skip-client-response-content-type: false
   skip-response-body-getters: false
   streaming-content-types: []
+  # Short names for media types, used in generated type names. Keys are the
+  # tag spliced into type names (e.g. the JSON in FindPetsJSONRequestBody),
+  # values are regex patterns matched against request/response media types.
+  # Matching media types get models generated and named with the short name.
+  # User entries are merged on top of these defaults by key replacement
+  # (an empty list disables a key); unmatched media types keep the
+  # remaining built-in behavior.
+  content-types:
+    JSON:      ['^application/json$']
+    Formdata:  ['^application/x-www-form-urlencoded$']
+    Multipart: ['^multipart/']
+    Text:      ['^text/plain$']
   user-templates: {}
   # OpenAPI Overlay applied to the spec before generation
   overlay:

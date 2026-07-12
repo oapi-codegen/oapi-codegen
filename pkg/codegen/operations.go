@@ -617,17 +617,35 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 				contentType := responseRef.Value.Content[contentTypeName]
 				// We can only generate a type if we have a schema:
 				if contentType.Schema != nil {
+					// The content-types mapping (defaults merged with
+					// output-options.content-types) is consulted first; media
+					// types it doesn't cover fall through to the cases below.
+					mappedTag, err := activeContentTypeNameTags().TagFor(contentTypeName)
+					if err != nil {
+						return nil, fmt.Errorf("resolving content-types short name for %s.%s: %w", o.OperationId, responseName, err)
+					}
+
 					var typeName, tag string
 					switch {
+
+					// Mapped media types only get a typed response field when
+					// we know how to deserialize them; anything else is
+					// skipped (the raw body remains available).
+					case mappedTag != "":
+						if !util.IsMediaTypeJson(contentTypeName) &&
+							!slices.Contains(contentTypesJSON, contentTypeName) &&
+							!slices.Contains(contentTypesHalJSON, contentTypeName) &&
+							!slices.Contains(contentTypesYAML, contentTypeName) &&
+							!slices.Contains(contentTypesXML, contentTypeName) {
+							continue
+						}
+						typeName = fmt.Sprintf("%s%s", mappedTag, nameNormalizer(responseName))
+						tag = mappedTag
 
 					// HAL+JSON:
 					case slices.Contains(contentTypesHalJSON, contentTypeName):
 						typeName = fmt.Sprintf("HALJSON%s", nameNormalizer(responseName))
 						tag = "HALJSON"
-					case contentTypeName == "application/json":
-						// if it's the standard application/json
-						typeName = fmt.Sprintf("JSON%s", nameNormalizer(responseName))
-						tag = "JSON"
 					// Vendored JSON
 					case slices.Contains(contentTypesJSON, contentTypeName) || util.IsMediaTypeJson(contentTypeName):
 						baseTypeName := fmt.Sprintf("%s%s", nameNormalizer(contentTypeName), nameNormalizer(responseName))
@@ -862,7 +880,7 @@ func (r RequestBodyDefinition) Suffix() string {
 
 // IsSupportedByClient returns true if we support this content type for client. Otherwise only generic method will ge generated
 func (r RequestBodyDefinition) IsSupportedByClient() bool {
-	return r.IsJSON() || r.NameTag == "Formdata" || r.NameTag == "Text"
+	return r.IsJSON() || r.IsFormdata() || r.IsText()
 }
 
 // IsJSON returns whether this is a JSON media type, for instance:
@@ -873,8 +891,33 @@ func (r RequestBodyDefinition) IsJSON() bool {
 	return util.IsMediaTypeJson(r.ContentType)
 }
 
-// IsSupported returns true if we support this content type for server. Otherwise io.Reader will be generated
+// IsFormdata returns whether this body is form-urlencoded
+func (r RequestBodyDefinition) IsFormdata() bool {
+	return r.ContentType == "application/x-www-form-urlencoded"
+}
+
+// IsMultipart returns whether this body is a multipart media type
+func (r RequestBodyDefinition) IsMultipart() bool {
+	return strings.HasPrefix(r.ContentType, "multipart/")
+}
+
+// IsText returns whether this body is plain text
+func (r RequestBodyDefinition) IsText() bool {
+	return r.ContentType == "text/plain"
+}
+
+// IsSupported returns true if we support this content type for server. Otherwise io.Reader will be generated.
+// Wire-level support is derived from the media type, not from NameTag, so
+// user-configured short names (output-options.content-types) don't change
+// how a body is bound.
 func (r RequestBodyDefinition) IsSupported() bool {
+	return r.IsJSON() || r.IsFormdata() || r.IsMultipart() || r.IsText()
+}
+
+// HasModel returns true when a Go model type is generated for this body —
+// either a built-in supported media type or one matched by
+// output-options.content-types.
+func (r RequestBodyDefinition) HasModel() bool {
 	return r.NameTag != ""
 }
 
@@ -937,8 +980,12 @@ func (r ResponseContentDefinition) TypeDef(opID string, statusCode int) *TypeDef
 	}
 }
 
+// IsSupported returns true if we know how to serialize this content type.
+// Otherwise io.Reader will be generated. Wire-level support is derived from
+// the media type, not from NameTag, so user-configured short names
+// (output-options.content-types) don't change how a response is written.
 func (r ResponseContentDefinition) IsSupported() bool {
-	return r.NameTag != ""
+	return r.IsJSON() || r.IsFormdata() || r.IsMultipart() || r.IsText()
 }
 
 // HasFixedContentType returns true if content type has fixed content type, i.e. contains no "*" symbol
@@ -959,6 +1006,21 @@ func (r ResponseContentDefinition) NameTagOrContentType() string {
 // - application/*+json
 func (r ResponseContentDefinition) IsJSON() bool {
 	return util.IsMediaTypeJson(r.ContentType)
+}
+
+// IsFormdata returns whether this content is form-urlencoded
+func (r ResponseContentDefinition) IsFormdata() bool {
+	return r.ContentType == "application/x-www-form-urlencoded"
+}
+
+// IsMultipart returns whether this content is a multipart media type
+func (r ResponseContentDefinition) IsMultipart() bool {
+	return strings.HasPrefix(r.ContentType, "multipart/")
+}
+
+// IsText returns whether this content is plain text
+func (r ResponseContentDefinition) IsText() bool {
+	return r.ContentType == "text/plain"
 }
 
 // IsStreamingContentType reports whether this response's media type matches
@@ -1492,28 +1554,30 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 
 	for _, contentType := range SortedMapKeys(body.Content) {
 		content := body.Content[contentType]
-		var tag string
-		var defaultBody bool
 
-		switch {
-		case contentType == "application/json":
-			tag = "JSON"
-			defaultBody = true
-		case util.IsMediaTypeJson(contentType):
-			tag = mediaTypeToCamelCase(contentType)
-		case strings.HasPrefix(contentType, "multipart/"):
-			tag = "Multipart"
-		case contentType == "application/x-www-form-urlencoded":
-			tag = "Formdata"
-		case contentType == "text/plain":
-			tag = "Text"
-		default:
-			bd := RequestBodyDefinition{
-				Required:    body.Required,
-				ContentType: contentType,
+		// application/json stays the unsuffixed default body even when
+		// renamed via output-options.content-types.
+		defaultBody := contentType == "application/json"
+
+		// The content-types mapping (defaults merged with
+		// output-options.content-types) names the body type; vendored JSON
+		// media types it doesn't cover get a name derived from the media
+		// type, and anything else is passed through untyped.
+		tag, err := activeContentTypeNameTags().TagFor(contentType)
+		if err != nil {
+			return nil, nil, fmt.Errorf("resolving content-types short name for %s: %w", operationID, err)
+		}
+		if tag == "" {
+			if util.IsMediaTypeJson(contentType) {
+				tag = mediaTypeToCamelCase(contentType)
+			} else {
+				bd := RequestBodyDefinition{
+					Required:    body.Required,
+					ContentType: contentType,
+				}
+				bodyDefinitions = append(bodyDefinitions, bd)
+				continue
 			}
-			bodyDefinitions = append(bodyDefinitions, bd)
-			continue
 		}
 
 		bodyTypeName := operationID + tag + "Body"
@@ -1605,19 +1669,21 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 
 		for _, contentType := range SortedMapKeys(response.Content) {
 			content := response.Content[contentType]
-			var tag string
-			switch {
-			case contentType == "application/json":
-				tag = "JSON"
-			case util.IsMediaTypeJson(contentType):
+
+			// The content-types mapping (defaults merged with
+			// output-options.content-types) names the response content;
+			// vendored JSON media types it doesn't cover get a name derived
+			// from the media type, and anything else is passed through
+			// untyped. Wire-level handling always follows from the media
+			// type itself, not the name.
+			tag, err := activeContentTypeNameTags().TagFor(contentType)
+			if err != nil {
+				return nil, fmt.Errorf("resolving content-types short name for %s.%s: %w", operationID, statusCode, err)
+			}
+			if tag == "" && util.IsMediaTypeJson(contentType) {
 				tag = mediaTypeToCamelCase(contentType)
-			case contentType == "application/x-www-form-urlencoded":
-				tag = "Formdata"
-			case strings.HasPrefix(contentType, "multipart/"):
-				tag = "Multipart"
-			case contentType == "text/plain":
-				tag = "Text"
-			default:
+			}
+			if tag == "" {
 				rcd := ResponseContentDefinition{
 					ContentType: contentType,
 				}
