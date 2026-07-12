@@ -375,6 +375,60 @@ func (d *Discriminator) PropertyName() string {
 	return SchemaNameToTypeName(d.Property)
 }
 
+// DiscriminatorStamp describes how the generated From*/Merge* union helpers
+// record the discriminator value for one union element.
+//
+// When the union struct itself declares the discriminator property, the
+// helpers assign Value to that field: its JSON rendering overwrites the
+// union data, so the field is load-bearing. Otherwise the value is merged
+// into the marshaled JSON via JSONPatch, which stays correct regardless of
+// how the variant declares the property — pointer, named enum type, renamed
+// or absent field, or a type in an imported package — none of which is
+// knowable from the union's side (see issue #2297).
+type DiscriminatorStamp struct {
+	// Value is the discriminator value mapped to this union element.
+	Value string
+	// Property is the union struct's own discriminator field, when it
+	// declares one; nil means the value is merged into the JSON instead.
+	Property *Property
+	// JSONPatch is the JSON object literal merged into the union data when
+	// Property is nil, e.g. {"code":"resource_exists"}. Safe to embed in a
+	// backtick string literal: spec validation rejects discriminator
+	// property names and mapping keys containing quotes, backticks or
+	// control characters.
+	JSONPatch string
+}
+
+// DiscriminatorStampFor resolves the discriminator stamp for the given union
+// element, or nil when nothing should be stamped: there is no discriminator,
+// the mapping doesn't cover every element, or several mapping values share
+// one element type, making the value ambiguous (the 1:1 gate keeps parity
+// with issue #2071).
+func (s Schema) DiscriminatorStampFor(element UnionElement) *DiscriminatorStamp {
+	d := s.Discriminator
+	if d == nil || len(d.Mapping) != len(s.UnionElements) {
+		return nil
+	}
+	stamp := DiscriminatorStamp{}
+	found := false
+	for _, value := range SortedMapKeys(d.Mapping) {
+		if d.Mapping[value] == element.String() {
+			stamp.Value = value
+			found = true
+		}
+	}
+	if !found {
+		return nil
+	}
+	stamp.JSONPatch = fmt.Sprintf(`{"%s":"%s"}`, d.Property, stamp.Value)
+	for i := range s.Properties {
+		if s.Properties[i].GoFieldName() == d.PropertyName() {
+			stamp.Property = &s.Properties[i]
+		}
+	}
+	return &stamp
+}
+
 // UnionElement describe union element, based on prefix externalRef\d+ and real ref name from external schema.
 type UnionElement string
 
