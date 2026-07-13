@@ -1383,61 +1383,61 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/contentObject/{param}", wrapper.GetContentObject).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/cookie", wrapper.GetCookie).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/enums", wrapper.EnumParams).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/header", wrapper.GetHeader).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/labelExplodeArray/{param}", wrapper.GetLabelExplodeArray).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/labelExplodeObject/{param}", wrapper.GetLabelExplodeObject).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/labelExplodePrimitive/{param}", wrapper.GetLabelExplodePrimitive).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/labelNoExplodeArray/{param}", wrapper.GetLabelNoExplodeArray).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/labelNoExplodeObject/{param}", wrapper.GetLabelNoExplodeObject).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/labelPrimitive/{param}", wrapper.GetLabelPrimitive).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/matrixExplodeArray/{id}", wrapper.GetMatrixExplodeArray).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/matrixExplodeObject/{id}", wrapper.GetMatrixExplodeObject).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/matrixExplodePrimitive/{id}", wrapper.GetMatrixExplodePrimitive).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/matrixNoExplodeArray/{id}", wrapper.GetMatrixNoExplodeArray).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/matrixNoExplodeObject/{id}", wrapper.GetMatrixNoExplodeObject).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/matrixPrimitive/{id}", wrapper.GetMatrixPrimitive).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/passThrough/{param}", wrapper.GetPassThrough).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/queryDeepObject", wrapper.GetDeepObject).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/queryDelimited", wrapper.GetQueryDelimited).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/queryForm", wrapper.GetQueryForm).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/simpleExplodeArray/{param}", wrapper.GetSimpleExplodeArray).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/simpleExplodeObject/{param}", wrapper.GetSimpleExplodeObject).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/simpleExplodePrimitive/{param}", wrapper.GetSimpleExplodePrimitive).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/simpleNoExplodeArray/{param}", wrapper.GetSimpleNoExplodeArray).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/simpleNoExplodeObject/{param}", wrapper.GetSimpleNoExplodeObject).Methods(http.MethodGet)
-
 	r.HandleFunc(options.BaseURL+"/simplePrimitive/{param}", wrapper.GetSimplePrimitive).Methods(http.MethodGet)
 
 	r.HandleFunc(options.BaseURL+"/simpleString/{param}", wrapper.GetSimpleString).Methods(http.MethodGet)
 
+	r.HandleFunc(options.BaseURL+"/simpleNoExplodeArray/{param}", wrapper.GetSimpleNoExplodeArray).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/simpleExplodeArray/{param}", wrapper.GetSimpleExplodeArray).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/simpleNoExplodeObject/{param}", wrapper.GetSimpleNoExplodeObject).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/simpleExplodeObject/{param}", wrapper.GetSimpleExplodeObject).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/labelNoExplodeArray/{param}", wrapper.GetLabelNoExplodeArray).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/labelExplodeArray/{param}", wrapper.GetLabelExplodeArray).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/labelNoExplodeObject/{param}", wrapper.GetLabelNoExplodeObject).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/labelExplodeObject/{param}", wrapper.GetLabelExplodeObject).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/matrixNoExplodeArray/{id}", wrapper.GetMatrixNoExplodeArray).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/matrixExplodeArray/{id}", wrapper.GetMatrixExplodeArray).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/matrixNoExplodeObject/{id}", wrapper.GetMatrixNoExplodeObject).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/matrixExplodeObject/{id}", wrapper.GetMatrixExplodeObject).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/simpleExplodePrimitive/{param}", wrapper.GetSimpleExplodePrimitive).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/labelPrimitive/{param}", wrapper.GetLabelPrimitive).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/labelExplodePrimitive/{param}", wrapper.GetLabelExplodePrimitive).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/matrixPrimitive/{id}", wrapper.GetMatrixPrimitive).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/matrixExplodePrimitive/{id}", wrapper.GetMatrixExplodePrimitive).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/contentObject/{param}", wrapper.GetContentObject).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/passThrough/{param}", wrapper.GetPassThrough).Methods(http.MethodGet)
+
 	r.HandleFunc(options.BaseURL+"/startingWithNumber/{1param}", wrapper.GetStartingWithNumber).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/queryForm", wrapper.GetQueryForm).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/queryDelimited", wrapper.GetQueryDelimited).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/queryDeepObject", wrapper.GetDeepObject).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/header", wrapper.GetHeader).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/cookie", wrapper.GetCookie).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/enums", wrapper.EnumParams).Methods(http.MethodGet)
 
 	return r
 }

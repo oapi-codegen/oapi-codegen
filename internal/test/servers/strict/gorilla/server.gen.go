@@ -498,13 +498,25 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 
 	r.HandleFunc(options.BaseURL+"/json", wrapper.JSONExample).Methods(http.MethodPost)
 
+	r.HandleFunc(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample).Methods(http.MethodPost)
+
 	r.HandleFunc(options.BaseURL+"/multipart", wrapper.MultipartExample).Methods(http.MethodPost)
 
 	r.HandleFunc(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample).Methods(http.MethodPost)
 
+	r.HandleFunc(options.BaseURL+"/text", wrapper.TextExample).Methods(http.MethodPost)
+
+	r.HandleFunc(options.BaseURL+"/unknown", wrapper.UnknownExample).Methods(http.MethodPost)
+
 	r.HandleFunc(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes).Methods(http.MethodPost)
 
+	r.HandleFunc(options.BaseURL+"/with-headers", wrapper.HeadersExample).Methods(http.MethodPost)
+
 	r.HandleFunc(options.BaseURL+"/no-content-headers", wrapper.NoContentHeaders).Methods(http.MethodPost)
+
+	r.HandleFunc(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses).Methods(http.MethodPost)
+
+	r.HandleFunc(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType).Methods(http.MethodPost)
 
 	r.HandleFunc(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody).Methods(http.MethodPost)
 
@@ -512,19 +524,7 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 
 	r.HandleFunc(options.BaseURL+"/reserved-go-keyword-parameters/{type}", wrapper.ReservedGoKeywordParameters).Methods(http.MethodGet)
 
-	r.HandleFunc(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses).Methods(http.MethodPost)
-
 	r.HandleFunc(options.BaseURL+"/same-name-param-and-body-property/{name}", wrapper.SameNameParamAndBodyProperty).Methods(http.MethodPost)
-
-	r.HandleFunc(options.BaseURL+"/text", wrapper.TextExample).Methods(http.MethodPost)
-
-	r.HandleFunc(options.BaseURL+"/unknown", wrapper.UnknownExample).Methods(http.MethodPost)
-
-	r.HandleFunc(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType).Methods(http.MethodPost)
-
-	r.HandleFunc(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample).Methods(http.MethodPost)
-
-	r.HandleFunc(options.BaseURL+"/with-headers", wrapper.HeadersExample).Methods(http.MethodPost)
 
 	r.HandleFunc(options.BaseURL+"/with-union", wrapper.UnionExample).Methods(http.MethodPost)
 

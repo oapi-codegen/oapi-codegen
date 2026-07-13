@@ -1444,8 +1444,8 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
 	}
 
 	router.GET(options.BaseURL+"/inline/pets", wrapper.GetInlinePets, options.OperationMiddlewares["getInlinePets"]...)
+	router.GET(options.BaseURL+"/ref/pets", wrapper.GetRefPets, options.OperationMiddlewares["getRefPets"]...)
 	router.GET(options.BaseURL+"/issue1189/test", wrapper.GetIssue1189Test, options.OperationMiddlewares["getIssue1189Test"]...)
 	router.GET(options.BaseURL+"/param/test", wrapper.GetParamTest, options.OperationMiddlewares["getParamTest"]...)
-	router.GET(options.BaseURL+"/ref/pets", wrapper.GetRefPets, options.OperationMiddlewares["getRefPets"]...)
 
 }

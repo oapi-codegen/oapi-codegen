@@ -1771,12 +1771,12 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/clients", wrapper.PostClients)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/deprecated_endpoint", wrapper.GetDeprecatedEndpoint)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/deprecated_endpoint_with_non_deprecated_body", wrapper.PostDeprecatedEndpointWithNonDeprecatedBody)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/deprecated_field", wrapper.GetDeprecatedField)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/deprecated_params/{old_id}", wrapper.GetDeprecatedParamsOldId)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/deprecated_request_body", wrapper.PostDeprecatedRequestBody)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/clients", wrapper.PostClients)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/deprecated_endpoint_with_non_deprecated_body", wrapper.PostDeprecatedEndpointWithNonDeprecatedBody)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/legacy", wrapper.GetLegacy)
 
 	return m

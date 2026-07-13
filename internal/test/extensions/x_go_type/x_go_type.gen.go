@@ -915,8 +915,8 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
 
 	router.GET(options.BaseURL+"/example", wrapper.ExampleGet, options.OperationMiddlewares["exampleGet"]...)
 	router.GET(options.BaseURL+"/example2", wrapper.ExampleGet2, options.OperationMiddlewares["exampleGet2"]...)
-	router.GET(options.BaseURL+"/root", wrapper.GetRoot, options.OperationMiddlewares["getRoot"]...)
 	router.GET(options.BaseURL+"/test", wrapper.Test, options.OperationMiddlewares["test"]...)
+	router.GET(options.BaseURL+"/root", wrapper.GetRoot, options.OperationMiddlewares["getRoot"]...)
 
 }
 

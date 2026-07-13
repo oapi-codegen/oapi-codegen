@@ -966,8 +966,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/webhook/{id}", wrapper.DeregisterWebhook)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/webhook/{kind}", wrapper.RegisterWebhook)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/webhook/{id}", wrapper.DeregisterWebhook)
 
 	return m
 }

@@ -623,9 +623,9 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
 		Handler: si,
 	}
 
-	router.GET(options.BaseURL+"/issues/209/$:str", wrapper.Issue209, options.OperationMiddlewares["Issue209"]...)
 	router.GET(options.BaseURL+"/issues/30/:fallthrough", wrapper.Issue30, options.OperationMiddlewares["Issue30"]...)
 	router.GET(options.BaseURL+"/issues/41/:1param", wrapper.Issue41, options.OperationMiddlewares["Issue41"]...)
+	router.GET(options.BaseURL+"/issues/209/$:str", wrapper.Issue209, options.OperationMiddlewares["Issue209"]...)
 
 }
 
