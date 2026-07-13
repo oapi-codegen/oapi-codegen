@@ -14,6 +14,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/pruned_deps/deps"
+	"github.com/oapi-codegen/runtime"
 )
 
 // Thing defines model for Thing.
@@ -213,6 +214,12 @@ type ClientWithResponsesInterface interface {
 	GetThingsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetThingsResponse, error)
 }
 
+// GetThingsResponse304Headers the declared response headers of an HTTP 304 response for GetThings
+type GetThingsResponse304Headers struct {
+	CacheControl *string
+	ETag         *string
+}
+
 type GetThingsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -226,6 +233,8 @@ type GetThingsResponse struct {
 	JSON404 *N404
 	// JSON500 the response for an HTTP 500 `application/json` response
 	JSON500 *externalRef0.DefaultError
+	// Headers304 the parsed response headers for an HTTP 304 response
+	Headers304 *GetThingsResponse304Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -355,6 +364,26 @@ func ParseGetThingsResponse(rsp *http.Response) (*GetThingsResponse, error) {
 	case rsp.StatusCode == 403:
 		// Content-type (text/plain) unsupported
 
+	}
+
+	switch {
+	case rsp.StatusCode == 304:
+		var headers GetThingsResponse304Headers
+		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.CacheControl = &value
+		}
+		if values := rsp.Header.Values("ETag"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.ETag = &value
+		}
+		response.Headers304 = &headers
 	}
 
 	return response, nil

@@ -948,6 +948,12 @@ func (r GetDeprecatedFieldResponse) ContentType() string {
 	return ""
 }
 
+// GetDeprecatedParamsOldIdResponse200Headers the declared response headers of an HTTP 200 response for GetDeprecatedParamsOldId
+type GetDeprecatedParamsOldIdResponse200Headers struct {
+	// Deprecated: Use the Authorization header instead.
+	XOldToken *string
+}
+
 type GetDeprecatedParamsOldIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -955,6 +961,8 @@ type GetDeprecatedParamsOldIdResponse struct {
 	JSON200 *struct {
 		Result *string `json:"result,omitempty"`
 	}
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetDeprecatedParamsOldIdResponse200Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1034,11 +1042,20 @@ func (r PostDeprecatedRequestBodyResponse) ContentType() string {
 	return ""
 }
 
+// GetLegacyResponse200Headers the declared response headers of an HTTP 200 response for GetLegacy
+type GetLegacyResponse200Headers struct {
+	XCorrelationId *string
+	// Deprecated: Use X-Trace-Id instead.
+	XOldTrace *string
+}
+
 type GetLegacyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *LegacyResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetLegacyResponse200Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1325,6 +1342,19 @@ func ParseGetDeprecatedParamsOldIdResponse(rsp *http.Response) (*GetDeprecatedPa
 
 	}
 
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetDeprecatedParamsOldIdResponse200Headers
+		if values := rsp.Header.Values("X-Old-Token"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Old-Token", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XOldToken = &value
+		}
+		response.Headers200 = &headers
+	}
+
 	return response, nil
 }
 
@@ -1375,6 +1405,26 @@ func ParseGetLegacyResponse(rsp *http.Response) (*GetLegacyResponse, error) {
 		}
 		response.JSON200 = &dest
 
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetLegacyResponse200Headers
+		if values := rsp.Header.Values("X-Correlation-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Correlation-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XCorrelationId = &value
+		}
+		if values := rsp.Header.Values("X-Old-Trace"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Old-Trace", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XOldTrace = &value
+		}
+		response.Headers200 = &headers
 	}
 
 	return response, nil

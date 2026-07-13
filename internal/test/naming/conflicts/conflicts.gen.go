@@ -2106,11 +2106,18 @@ func (r ListEntitiesResponse) ContentType() string {
 	return ""
 }
 
+// PostFooResponse200Headers the declared response headers of an HTTP 200 response for PostFoo
+type PostFooResponse200Headers struct {
+	XBar *bool
+}
+
 type PostFooResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *BarResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *PostFooResponse200Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -3205,6 +3212,19 @@ func ParsePostFooResponse(rsp *http.Response) (*PostFooResponse, error) {
 		}
 		response.JSON200 = &dest
 
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers PostFooResponse200Headers
+		if values := rsp.Header.Values("X-Bar"); len(values) > 0 {
+			var value bool
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Bar", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XBar = &value
+		}
+		response.Headers200 = &headers
 	}
 
 	return response, nil

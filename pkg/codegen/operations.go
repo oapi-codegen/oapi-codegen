@@ -1028,6 +1028,26 @@ func (h ResponseHeaderDefinition) IsNullable() bool {
 	return globalState.options.OutputOptions.NullableType && h.Nullable
 }
 
+// SchemaType returns the first OpenAPI type string for this header's schema
+// (e.g. "string", "integer"), or empty string if unavailable.
+func (h ResponseHeaderDefinition) SchemaType() string {
+	if h.Schema.OAPISchema != nil && h.Schema.OAPISchema.Type != nil {
+		if s := h.Schema.OAPISchema.Type.Slice(); len(s) > 0 {
+			return s[0]
+		}
+	}
+	return ""
+}
+
+// SchemaFormat returns the OpenAPI format string for this header's schema
+// (e.g. "date-time", "duration"), or empty string if unavailable.
+func (h ResponseHeaderDefinition) SchemaFormat() string {
+	if h.Schema.OAPISchema != nil {
+		return h.Schema.OAPISchema.Format
+	}
+	return ""
+}
+
 // FilterParameterDefinitionByType returns the subset of the specified parameters which are of the
 // specified type.
 func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []ParameterDefinition {

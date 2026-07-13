@@ -338,6 +338,24 @@ func getConditionOfResponseName(statusCodeVar, responseName string) string {
 	}
 }
 
+// responsesWithHeaders returns the subset of responses that declare headers,
+// ordered most-specific-first for emission as switch case clauses: exact
+// status codes sort numerically, range wildcards after the exact codes they
+// cover ("204" < "2XX" since 'X' > '9'), and "default" (which compiles to
+// `case true:`) after everything ('d' > 'X').
+func responsesWithHeaders(responses []ResponseDefinition) []ResponseDefinition {
+	var out []ResponseDefinition
+	for _, response := range responses {
+		if len(response.Headers) > 0 {
+			out = append(out, response)
+		}
+	}
+	slices.SortFunc(out, func(a, b ResponseDefinition) int {
+		return strings.Compare(a.StatusCode, b.StatusCode)
+	})
+	return out
+}
+
 // This outputs a string array
 func toStringArray(sarr []string) string {
 	s := strings.Join(sarr, `","`)
@@ -427,6 +445,8 @@ var TemplateFunctions = template.FuncMap{
 	"genResponsePayload":         genResponsePayload,
 	"genResponseTypeName":        genResponseTypeName,
 	"genResponseUnmarshal":       genResponseUnmarshal,
+	"getConditionOfResponseName": getConditionOfResponseName,
+	"responsesWithHeaders":       responsesWithHeaders,
 	"getResponseTypeDefinitions": getResponseTypeDefinitions,
 	"toStringArray":              toStringArray,
 	"lower":                      strings.ToLower,
