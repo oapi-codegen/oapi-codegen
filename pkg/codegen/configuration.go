@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"strings"
 )
 
 // defaultStreamingContentTypes are the regex patterns matched against
@@ -95,6 +96,16 @@ func (o Configuration) Validate() error {
 	if problems := o.OutputOptions.Validate(); problems != nil {
 		for k, v := range problems {
 			errs = append(errs, fmt.Errorf("`output-options` configuration for %v was incorrect: %v", k, v))
+		}
+	}
+
+	// import-mapping keys are the paths of $ref'd documents (a relative
+	// file path or URL). A JSON pointer key can never match anything —
+	// references within the same document always resolve to the package
+	// being generated — so it is a configuration mistake, not a mapping.
+	for _, specPath := range SortedMapKeys(o.ImportMapping) {
+		if strings.HasPrefix(specPath, "#") {
+			errs = append(errs, fmt.Errorf("`import-mapping` key %q is a JSON pointer, but keys must be the path or URL of a $ref'd document; references within the same document cannot be remapped to another package — see https://github.com/oapi-codegen/oapi-codegen/tree/main/examples/import-mapping", specPath))
 		}
 	}
 
