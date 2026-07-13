@@ -1701,6 +1701,20 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			if err != nil {
 				return nil, fmt.Errorf("error generating response header definition: %w", err)
 			}
+			// When the header component itself is an external `$ref` (it lives
+			// in another file) and its schema references a named type, that
+			// type is generated into the imported package, not this one. The
+			// schema `$ref` is written relative to the external file (e.g.
+			// "#/components/schemas/ETagSchema"), so GenerateGoSchema resolved
+			// it as a bare local name; qualify it with the header's external
+			// package so we emit "externalRef0.ETagSchema" instead of an
+			// undefined local "ETagSchema" (issue #2060). Guard on the schema
+			// being a reference so an external header with an inline primitive
+			// schema (e.g. `type: string`) is not turned into
+			// "externalRef0.string".
+			if header.Value.Schema != nil && header.Value.Schema.Ref != "" {
+				ensureExternalRefsInSchema(&contentSchema, header.Ref)
+			}
 			var nullable bool
 			if header.Value.Schema != nil {
 				nullable = schemaIsNullable(header.Value.Schema.Value)
