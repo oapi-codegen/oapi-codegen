@@ -1327,7 +1327,7 @@ func (sh *strictHandler) JSONExample(w http.ResponseWriter, r *http.Request) {
 		request.Body = &body
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.JSONExample(ctx, request.(JSONExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1358,7 +1358,7 @@ func (sh *strictHandler) MultipartExample(w http.ResponseWriter, r *http.Request
 		request.Body = reader
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.MultipartExample(ctx, request.(MultipartExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1392,7 +1392,7 @@ func (sh *strictHandler) MultipartRelatedExample(w http.ResponseWriter, r *http.
 		request.Body = multipart.NewReader(r.Body, boundary)
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.MultipartRelatedExample(ctx, request.(MultipartRelatedExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1463,7 +1463,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 		}
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.MultipleRequestAndResponseTypes(ctx, request.(MultipleRequestAndResponseTypesRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1487,7 +1487,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 func (sh *strictHandler) NoContentHeaders(w http.ResponseWriter, r *http.Request) {
 	var request NoContentHeadersRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.NoContentHeaders(ctx, request.(NoContentHeadersRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1518,7 +1518,7 @@ func (sh *strictHandler) RequiredJSONBody(w http.ResponseWriter, r *http.Request
 	}
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.RequiredJSONBody(ctx, request.(RequiredJSONBodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1550,7 +1550,7 @@ func (sh *strictHandler) RequiredTextBody(w http.ResponseWriter, r *http.Request
 	body := RequiredTextBodyTextRequestBody(data)
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.RequiredTextBody(ctx, request.(RequiredTextBodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1576,7 +1576,7 @@ func (sh *strictHandler) ReservedGoKeywordParameters(w http.ResponseWriter, r *h
 
 	request.Type = pType
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.ReservedGoKeywordParameters(ctx, request.(ReservedGoKeywordParametersRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1610,7 +1610,7 @@ func (sh *strictHandler) ReusableResponses(w http.ResponseWriter, r *http.Reques
 		request.Body = &body
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.ReusableResponses(ctx, request.(ReusableResponsesRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1646,7 +1646,7 @@ func (sh *strictHandler) SameNameParamAndBodyProperty(w http.ResponseWriter, r *
 		request.Body = &body
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.SameNameParamAndBodyProperty(ctx, request.(SameNameParamAndBodyPropertyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1680,7 +1680,7 @@ func (sh *strictHandler) TextExample(w http.ResponseWriter, r *http.Request) {
 		request.Body = &body
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.TextExample(ctx, request.(TextExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1706,7 +1706,7 @@ func (sh *strictHandler) UnknownExample(w http.ResponseWriter, r *http.Request) 
 
 	request.Body = r.Body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.UnknownExample(ctx, request.(UnknownExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1734,7 +1734,7 @@ func (sh *strictHandler) UnspecifiedContentType(w http.ResponseWriter, r *http.R
 
 	request.Body = r.Body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.UnspecifiedContentType(ctx, request.(UnspecifiedContentTypeRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1769,7 +1769,7 @@ func (sh *strictHandler) URLEncodedExample(w http.ResponseWriter, r *http.Reques
 	}
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.URLEncodedExample(ctx, request.(URLEncodedExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1805,7 +1805,7 @@ func (sh *strictHandler) HeadersExample(w http.ResponseWriter, r *http.Request, 
 		request.Body = &body
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.HeadersExample(ctx, request.(HeadersExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1839,7 +1839,7 @@ func (sh *strictHandler) UnionExample(w http.ResponseWriter, r *http.Request) {
 		request.Body = &body
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.UnionExample(ctx, request.(UnionExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

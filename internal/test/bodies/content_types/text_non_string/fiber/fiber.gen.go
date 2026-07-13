@@ -137,7 +137,7 @@ type strictHandler struct {
 func (sh *strictHandler) GetPing(ctx *fiber.Ctx) error {
 	var request GetPingRequestObject
 
-	handler := func(ctx *fiber.Ctx, request interface{}) (interface{}, error) {
+	handler := func(ctx *fiber.Ctx, request any) (any, error) {
 		return sh.ssi.GetPing(ctx.UserContext(), request.(GetPingRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

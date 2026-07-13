@@ -124,7 +124,7 @@ type strictHandler struct {
 func (sh *strictHandler) GetPing(ctx iris.Context) {
 	var request GetPingRequestObject
 
-	handler := func(ctx iris.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx iris.Context, request any) (any, error) {
 		return sh.ssi.GetPing(ctx, request.(GetPingRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

@@ -11,12 +11,12 @@ import (
 type AliasedDate = openapi_types.Date
 
 // AnyType1 defines model for AnyType1.
-type AnyType1 = interface{}
+type AnyType1 = any
 
 // AnyType2 AnyType2 represents any type.
 //
-// This should be an interface{}
-type AnyType2 = interface{}
+// This should be an any
+type AnyType2 = any
 
 // CustomStringType defines model for CustomStringType.
 type CustomStringType = string
@@ -29,5 +29,5 @@ type Pet struct {
 
 // ResponseBody defines model for ResponseBody.
 type ResponseBody struct {
-	Unknown interface{} `json:"unknown,omitempty"`
+	Unknown any `json:"unknown,omitempty"`
 }

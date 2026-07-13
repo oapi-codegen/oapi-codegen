@@ -21,7 +21,7 @@ import (
 )
 
 // GenericObject defines model for GenericObject.
-type GenericObject = map[string]interface{}
+type GenericObject = map[string]any
 
 // ProblemDetails defines model for ProblemDetails.
 type ProblemDetails struct {
@@ -44,8 +44,8 @@ type ProblemDetails struct {
 	// Type An absolute URI that identifies the problem type.  When dereferenced, it SHOULD provide human-readable documentation for the problem type (e.g., using HTML).
 	//
 	// Example: https://zalando.github.io/problem/constraint-violation
-	Type                 *string                `json:"type,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Type                 *string        `json:"type,omitempty"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // Whatever defines model for Whatever.
@@ -102,7 +102,7 @@ type CreateWhateverApplicationJSONPatchPlusJSONRequestBody = Whatever
 
 // Getter for additional properties for ProblemDetails. Returns the specified
 // element and whether it was found
-func (a ProblemDetails) Get(fieldName string) (value interface{}, found bool) {
+func (a ProblemDetails) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -110,9 +110,9 @@ func (a ProblemDetails) Get(fieldName string) (value interface{}, found bool) {
 }
 
 // Setter for additional properties for ProblemDetails
-func (a *ProblemDetails) Set(fieldName string, value interface{}) {
+func (a *ProblemDetails) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -166,9 +166,9 @@ func (a *ProblemDetails) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
@@ -685,7 +685,7 @@ func NewCreateItemRequest(server string) (*http.Request, error) {
 // NewPostPetRequestWithTextBody calls the generic PostPet builder with text/plain body
 func NewPostPetRequestWithTextBody(server string, body PostPetTextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+	if stringer, ok := any(body).(fmt.Stringer); ok {
 		bodyReader = strings.NewReader(stringer.String())
 	} else {
 		bodyReader = strings.NewReader(fmt.Sprint(body))
@@ -725,7 +725,7 @@ func NewPostPetRequestWithBody(server string, contentType string, body io.Reader
 // NewPostPet1234RequestWithTextBody calls the generic PostPet1234 builder with text/plain body
 func NewPostPet1234RequestWithTextBody(server string, body PostPet1234TextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+	if stringer, ok := any(body).(fmt.Stringer); ok {
 		bodyReader = strings.NewReader(stringer.String())
 	} else {
 		bodyReader = strings.NewReader(fmt.Sprint(body))
@@ -972,18 +972,18 @@ type Issue1051Response struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *map[string]interface{}
+	JSON200 *map[string]any
 	// ApplicationvndSomethingV1JSON200 the response for an HTTP 200 `application/vnd.something.v1+json` response
-	ApplicationvndSomethingV1JSON200 *map[string]interface{}
+	ApplicationvndSomethingV1JSON200 *map[string]any
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r Issue1051Response) GetJSON200() *map[string]interface{} {
+func (r Issue1051Response) GetJSON200() *map[string]any {
 	return r.JSON200
 }
 
 // GetApplicationvndSomethingV1JSON200 returns the response for an HTTP 200 `application/vnd.something.v1+json` response
-func (r Issue1051Response) GetApplicationvndSomethingV1JSON200() *map[string]interface{} {
+func (r Issue1051Response) GetApplicationvndSomethingV1JSON200() *map[string]any {
 	return r.ApplicationvndSomethingV1JSON200
 }
 
@@ -1442,14 +1442,14 @@ func ParseIssue1051Response(rsp *http.Response) (*Issue1051Response, error) {
 
 	switch {
 	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
-		var dest map[string]interface{}
+		var dest map[string]any
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/vnd.something.v1+json" && rsp.StatusCode == 200:
-		var dest map[string]interface{}
+		var dest map[string]any
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

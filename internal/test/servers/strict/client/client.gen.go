@@ -945,7 +945,7 @@ func NewMultipleRequestAndResponseTypesRequestWithFormdataBody(server string, bo
 // NewMultipleRequestAndResponseTypesRequestWithTextBody calls the generic MultipleRequestAndResponseTypes builder with text/plain body
 func NewMultipleRequestAndResponseTypesRequestWithTextBody(server string, body MultipleRequestAndResponseTypesTextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+	if stringer, ok := any(body).(fmt.Stringer); ok {
 		bodyReader = strings.NewReader(stringer.String())
 	} else {
 		bodyReader = strings.NewReader(fmt.Sprint(body))
@@ -1052,7 +1052,7 @@ func NewRequiredJSONBodyRequestWithBody(server string, contentType string, body 
 // NewRequiredTextBodyRequestWithTextBody calls the generic RequiredTextBody builder with text/plain body
 func NewRequiredTextBodyRequestWithTextBody(server string, body RequiredTextBodyTextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+	if stringer, ok := any(body).(fmt.Stringer); ok {
 		bodyReader = strings.NewReader(stringer.String())
 	} else {
 		bodyReader = strings.NewReader(fmt.Sprint(body))
@@ -1213,7 +1213,7 @@ func NewSameNameParamAndBodyPropertyRequestWithBody(server string, name string, 
 // NewTextExampleRequestWithTextBody calls the generic TextExample builder with text/plain body
 func NewTextExampleRequestWithTextBody(server string, body TextExampleTextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+	if stringer, ok := any(body).(fmt.Stringer); ok {
 		bodyReader = strings.NewReader(stringer.String())
 	} else {
 		bodyReader = strings.NewReader(fmt.Sprint(body))

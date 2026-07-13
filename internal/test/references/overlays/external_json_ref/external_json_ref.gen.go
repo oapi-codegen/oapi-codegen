@@ -18,8 +18,8 @@ import (
 
 // Container defines model for Container.
 type Container struct {
-	ObjectA *externalRef0.ObjectA   `json:"object_a,omitempty"`
-	ObjectB *map[string]interface{} `json:"object_b,omitempty"`
+	ObjectA *externalRef0.ObjectA `json:"object_a,omitempty"`
+	ObjectB *map[string]any       `json:"object_b,omitempty"`
 }
 
 // Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.

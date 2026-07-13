@@ -735,7 +735,7 @@ func (sh *strictHandler) SuffixTest(ctx *gin.Context) {
 		request.Body = &body
 	}
 
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *gin.Context, request any) (any, error) {
 		return sh.ssi.SuffixTest(ctx, request.(SuffixTestRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -759,7 +759,7 @@ func (sh *strictHandler) SuffixTest(ctx *gin.Context) {
 func (sh *strictHandler) Test(ctx *gin.Context) {
 	var request TestRequestObject
 
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *gin.Context, request any) (any, error) {
 		return sh.ssi.Test(ctx, request.(TestRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

@@ -401,7 +401,7 @@ type strictHandler struct {
 func (sh *strictHandler) GetGetMultibody(w http.ResponseWriter, r *http.Request) {
 	var request GetGetMultibodyRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.GetGetMultibody(ctx, request.(GetGetMultibodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -425,7 +425,7 @@ func (sh *strictHandler) GetGetMultibody(w http.ResponseWriter, r *http.Request)
 func (sh *strictHandler) GetObject(w http.ResponseWriter, r *http.Request) {
 	var request GetObjectRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.GetObject(ctx, request.(GetObjectRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -474,7 +474,7 @@ func (sh *strictHandler) PostPostMultibody(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.PostPostMultibody(ctx, request.(PostPostMultibodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -508,7 +508,7 @@ func (sh *strictHandler) PostPostObject(w http.ResponseWriter, r *http.Request) 
 		request.Body = &body
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.PostPostObject(ctx, request.(PostPostObjectRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

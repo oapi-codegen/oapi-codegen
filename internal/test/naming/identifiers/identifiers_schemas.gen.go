@@ -21,7 +21,7 @@ import (
 )
 
 // N5StartsWithNumber This schema name starts with a number
-type N5StartsWithNumber = map[string]interface{}
+type N5StartsWithNumber = map[string]any
 
 // StringInPath defines model for StringInPath.
 type StringInPath = string

@@ -153,7 +153,7 @@ type strictHandler struct {
 func (sh *strictHandler) GetHello(ctx *gin.Context) {
 	var request GetHelloRequestObject
 
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *gin.Context, request any) (any, error) {
 		return sh.ssi.GetHello(ctx, request.(GetHelloRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

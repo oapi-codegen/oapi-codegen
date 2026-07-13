@@ -449,7 +449,7 @@ func (sh *strictHandler) BinaryEndpoint(w http.ResponseWriter, r *http.Request) 
 
 	request.Body = r.Body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.BinaryEndpoint(ctx, request.(BinaryEndpointRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -484,7 +484,7 @@ func (sh *strictHandler) FormdataEndpoint(w http.ResponseWriter, r *http.Request
 	}
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.FormdataEndpoint(ctx, request.(FormdataEndpointRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -515,7 +515,7 @@ func (sh *strictHandler) JsonEndpoint(w http.ResponseWriter, r *http.Request) {
 	}
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.JsonEndpoint(ctx, request.(JsonEndpointRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -546,7 +546,7 @@ func (sh *strictHandler) MultipartEndpoint(w http.ResponseWriter, r *http.Reques
 		request.Body = reader
 	}
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.MultipartEndpoint(ctx, request.(MultipartEndpointRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -578,7 +578,7 @@ func (sh *strictHandler) TextEndpoint(w http.ResponseWriter, r *http.Request) {
 	body := TextEndpointTextRequestBody(data)
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.TextEndpoint(ctx, request.(TextEndpointRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

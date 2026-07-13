@@ -16,7 +16,7 @@ import (
 )
 
 // Issue9JSONBody defines parameters for Issue9.
-type Issue9JSONBody = interface{}
+type Issue9JSONBody = any
 
 // Issue9Params defines parameters for Issue9.
 type Issue9Params struct {

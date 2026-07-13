@@ -69,7 +69,7 @@
 
         {{$cases := $schema.DiscriminatorCases -}}
         {{if $cases}}
-            func (t {{.TypeName}}) ValueByDiscriminator() (interface{}, error) {
+            func (t {{.TypeName}}) ValueByDiscriminator() (any, error) {
                 discriminator, err := t.Discriminator()
                 if err != nil {
                     return nil, err

@@ -1127,7 +1127,7 @@ func (sh *strictHandler) JSONExample(ctx *echo.Context) error {
 		request.Body = &body
 	}
 
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request any) (any, error) {
 		return sh.ssi.JSONExample(ctx.Request().Context(), request.(JSONExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1156,7 +1156,7 @@ func (sh *strictHandler) MultipartExample(ctx *echo.Context) error {
 		request.Body = reader
 	}
 
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request any) (any, error) {
 		return sh.ssi.MultipartExample(ctx.Request().Context(), request.(MultipartExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1187,7 +1187,7 @@ func (sh *strictHandler) MultipartRelatedExample(ctx *echo.Context) error {
 		request.Body = multipart.NewReader(ctx.Request().Body, boundary)
 	}
 
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request any) (any, error) {
 		return sh.ssi.MultipartRelatedExample(ctx.Request().Context(), request.(MultipartRelatedExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1262,7 +1262,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *echo.Context) erro
 		}
 	}
 
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request any) (any, error) {
 		return sh.ssi.MultipleRequestAndResponseTypes(ctx.Request().Context(), request.(MultipleRequestAndResponseTypesRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1285,7 +1285,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *echo.Context) erro
 func (sh *strictHandler) NoContentHeaders(ctx *echo.Context) error {
 	var request NoContentHeadersRequestObject
 
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request any) (any, error) {
 		return sh.ssi.NoContentHeaders(ctx.Request().Context(), request.(NoContentHeadersRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1324,7 +1324,7 @@ func (sh *strictHandler) RequiredJSONBody(ctx *echo.Context) error {
 	}
 	request.Body = &body
 
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request any) (any, error) {
 		return sh.ssi.RequiredJSONBody(ctx.Request().Context(), request.(RequiredJSONBodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1354,7 +1354,7 @@ func (sh *strictHandler) RequiredTextBody(ctx *echo.Context) error {
 	body := RequiredTextBodyTextRequestBody(data)
 	request.Body = &body
 
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request any) (any, error) {
 		return sh.ssi.RequiredTextBody(ctx.Request().Context(), request.(RequiredTextBodyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1379,7 +1379,7 @@ func (sh *strictHandler) ReservedGoKeywordParameters(ctx *echo.Context, pType st
 
 	request.Type = pType
 
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request any) (any, error) {
 		return sh.ssi.ReservedGoKeywordParameters(ctx.Request().Context(), request.(ReservedGoKeywordParametersRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1421,7 +1421,7 @@ func (sh *strictHandler) ReusableResponses(ctx *echo.Context) error {
 		request.Body = &body
 	}
 
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request any) (any, error) {
 		return sh.ssi.ReusableResponses(ctx.Request().Context(), request.(ReusableResponsesRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1465,7 +1465,7 @@ func (sh *strictHandler) SameNameParamAndBodyProperty(ctx *echo.Context, name st
 		request.Body = &body
 	}
 
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request any) (any, error) {
 		return sh.ssi.SameNameParamAndBodyProperty(ctx.Request().Context(), request.(SameNameParamAndBodyPropertyRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1497,7 +1497,7 @@ func (sh *strictHandler) TextExample(ctx *echo.Context) error {
 		request.Body = &body
 	}
 
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request any) (any, error) {
 		return sh.ssi.TextExample(ctx.Request().Context(), request.(TextExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1522,7 +1522,7 @@ func (sh *strictHandler) UnknownExample(ctx *echo.Context) error {
 
 	request.Body = ctx.Request().Body
 
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request any) (any, error) {
 		return sh.ssi.UnknownExample(ctx.Request().Context(), request.(UnknownExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1549,7 +1549,7 @@ func (sh *strictHandler) UnspecifiedContentType(ctx *echo.Context) error {
 
 	request.Body = ctx.Request().Body
 
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request any) (any, error) {
 		return sh.ssi.UnspecifiedContentType(ctx.Request().Context(), request.(UnspecifiedContentTypeRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1582,7 +1582,7 @@ func (sh *strictHandler) URLEncodedExample(ctx *echo.Context) error {
 		return err
 	}
 
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request any) (any, error) {
 		return sh.ssi.URLEncodedExample(ctx.Request().Context(), request.(URLEncodedExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1626,7 +1626,7 @@ func (sh *strictHandler) HeadersExample(ctx *echo.Context, params HeadersExample
 		request.Body = &body
 	}
 
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request any) (any, error) {
 		return sh.ssi.HeadersExample(ctx.Request().Context(), request.(HeadersExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -1668,7 +1668,7 @@ func (sh *strictHandler) UnionExample(ctx *echo.Context) error {
 		request.Body = &body
 	}
 
-	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *echo.Context, request any) (any, error) {
 		return sh.ssi.UnionExample(ctx.Request().Context(), request.(UnionExampleRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

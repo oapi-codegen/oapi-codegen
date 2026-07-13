@@ -199,7 +199,7 @@ func NewXRequest(server string, body XJSONRequestBody) (*http.Request, error) {
 // NewXRequestWithTextBody calls the generic X builder with text/plain body
 func NewXRequestWithTextBody(server string, body XTextRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+	if stringer, ok := any(body).(fmt.Stringer); ok {
 		bodyReader = strings.NewReader(stringer.String())
 	} else {
 		bodyReader = strings.NewReader(fmt.Sprint(body))

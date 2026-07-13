@@ -32,21 +32,21 @@ type AdditionalPropertiesObject2 struct {
 
 // AdditionalPropertiesObject3 Allows any additional property
 type AdditionalPropertiesObject3 struct {
-	Name                 string                 `json:"name"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Name                 string         `json:"name"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // AdditionalPropertiesObject4 Has anonymous field which has additional properties
 type AdditionalPropertiesObject4 struct {
 	Inner                AdditionalPropertiesObject4_Inner `json:"inner"`
 	Name                 string                            `json:"name"`
-	AdditionalProperties map[string]interface{}            `json:"-"`
+	AdditionalProperties map[string]any                    `json:"-"`
 }
 
 // AdditionalPropertiesObject4_Inner defines model for AdditionalPropertiesObject4.Inner.
 type AdditionalPropertiesObject4_Inner struct {
-	Name                 string                 `json:"name"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Name                 string         `json:"name"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // AdditionalPropertiesObject5 Has additional properties with schema for dictionaries
@@ -89,9 +89,9 @@ type SchemaObjectNullable struct {
 
 // Test200JSONResponseBody_Item defines parameters for Test.
 type Test200JSONResponseBody_Item struct {
-	Field1               *string                `json:"field1,omitempty"`
-	Field2               *string                `json:"field2,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Field1               *string        `json:"field1,omitempty"`
+	Field2               *string        `json:"field2,omitempty"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // Getter for additional properties for AdditionalPropertiesObject1. Returns the specified
@@ -190,7 +190,7 @@ func (a AdditionalPropertiesObject1) MarshalJSON() ([]byte, error) {
 
 // Getter for additional properties for AdditionalPropertiesObject3. Returns the specified
 // element and whether it was found
-func (a AdditionalPropertiesObject3) Get(fieldName string) (value interface{}, found bool) {
+func (a AdditionalPropertiesObject3) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -198,9 +198,9 @@ func (a AdditionalPropertiesObject3) Get(fieldName string) (value interface{}, f
 }
 
 // Setter for additional properties for AdditionalPropertiesObject3
-func (a *AdditionalPropertiesObject3) Set(fieldName string, value interface{}) {
+func (a *AdditionalPropertiesObject3) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -222,9 +222,9 @@ func (a *AdditionalPropertiesObject3) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
@@ -256,7 +256,7 @@ func (a AdditionalPropertiesObject3) MarshalJSON() ([]byte, error) {
 
 // Getter for additional properties for AdditionalPropertiesObject4. Returns the specified
 // element and whether it was found
-func (a AdditionalPropertiesObject4) Get(fieldName string) (value interface{}, found bool) {
+func (a AdditionalPropertiesObject4) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -264,9 +264,9 @@ func (a AdditionalPropertiesObject4) Get(fieldName string) (value interface{}, f
 }
 
 // Setter for additional properties for AdditionalPropertiesObject4
-func (a *AdditionalPropertiesObject4) Set(fieldName string, value interface{}) {
+func (a *AdditionalPropertiesObject4) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -296,9 +296,9 @@ func (a *AdditionalPropertiesObject4) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
@@ -335,7 +335,7 @@ func (a AdditionalPropertiesObject4) MarshalJSON() ([]byte, error) {
 
 // Getter for additional properties for AdditionalPropertiesObject4_Inner. Returns the specified
 // element and whether it was found
-func (a AdditionalPropertiesObject4_Inner) Get(fieldName string) (value interface{}, found bool) {
+func (a AdditionalPropertiesObject4_Inner) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -343,9 +343,9 @@ func (a AdditionalPropertiesObject4_Inner) Get(fieldName string) (value interfac
 }
 
 // Setter for additional properties for AdditionalPropertiesObject4_Inner
-func (a *AdditionalPropertiesObject4_Inner) Set(fieldName string, value interface{}) {
+func (a *AdditionalPropertiesObject4_Inner) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -367,9 +367,9 @@ func (a *AdditionalPropertiesObject4_Inner) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
@@ -401,7 +401,7 @@ func (a AdditionalPropertiesObject4_Inner) MarshalJSON() ([]byte, error) {
 
 // Getter for additional properties for Test200JSONResponseBody_Item. Returns the specified
 // element and whether it was found
-func (a Test200JSONResponseBody_Item) Get(fieldName string) (value interface{}, found bool) {
+func (a Test200JSONResponseBody_Item) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -409,9 +409,9 @@ func (a Test200JSONResponseBody_Item) Get(fieldName string) (value interface{}, 
 }
 
 // Setter for additional properties for Test200JSONResponseBody_Item
-func (a *Test200JSONResponseBody_Item) Set(fieldName string, value interface{}) {
+func (a *Test200JSONResponseBody_Item) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -441,9 +441,9 @@ func (a *Test200JSONResponseBody_Item) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
@@ -959,7 +959,7 @@ type strictHandler struct {
 func (sh *strictHandler) Test(w http.ResponseWriter, r *http.Request) {
 	var request TestRequestObject
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.Test(ctx, request.(TestRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

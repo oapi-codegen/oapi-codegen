@@ -32,11 +32,11 @@ type MergeDefaultDefault struct {
 
 // MergeDefaultWithAny defines model for MergeDefaultWithAny.
 type MergeDefaultWithAny struct {
-	Field1               *int                   `json:"field1,omitempty"`
-	Field2               *string                `json:"field2,omitempty"`
-	FieldA               *int                   `json:"fieldA,omitempty"`
-	FieldB               *string                `json:"fieldB,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Field1               *int           `json:"field1,omitempty"`
+	Field2               *string        `json:"field2,omitempty"`
+	FieldA               *int           `json:"fieldA,omitempty"`
+	FieldB               *string        `json:"fieldB,omitempty"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // MergeDefaultWithString defines model for MergeDefaultWithString.
@@ -58,20 +58,20 @@ type MergeDefaultWithout struct {
 
 // MergeWithAnyDefault defines model for MergeWithAnyDefault.
 type MergeWithAnyDefault struct {
-	Field1               *int                   `json:"field1,omitempty"`
-	Field2               *string                `json:"field2,omitempty"`
-	FieldA               *int                   `json:"fieldA,omitempty"`
-	FieldB               *string                `json:"fieldB,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Field1               *int           `json:"field1,omitempty"`
+	Field2               *string        `json:"field2,omitempty"`
+	FieldA               *int           `json:"fieldA,omitempty"`
+	FieldB               *string        `json:"fieldB,omitempty"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // MergeWithAnyWithAny defines model for MergeWithAnyWithAny.
 type MergeWithAnyWithAny struct {
-	Field1               *int                   `json:"field1,omitempty"`
-	Field2               *string                `json:"field2,omitempty"`
-	FieldA               *int                   `json:"fieldA,omitempty"`
-	FieldB               *string                `json:"fieldB,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Field1               *int           `json:"field1,omitempty"`
+	Field2               *string        `json:"field2,omitempty"`
+	FieldA               *int           `json:"fieldA,omitempty"`
+	FieldB               *string        `json:"fieldB,omitempty"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // MergeWithAnyWithString defines model for MergeWithAnyWithString.
@@ -167,24 +167,24 @@ type NestedOneOfInAllOf1 struct {
 
 // PersonAllOfAdditional defines model for PersonAllOfAdditional.
 type PersonAllOfAdditional struct {
-	Age                  *float32               `json:"age,omitempty"`
-	Metadata             string                 `json:"metadata"`
-	Name                 *string                `json:"name,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Age                  *float32       `json:"age,omitempty"`
+	Metadata             string         `json:"metadata"`
+	Name                 *string        `json:"name,omitempty"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // WithAnyAdditional1 defines model for WithAnyAdditional1.
 type WithAnyAdditional1 struct {
-	Field1               *int                   `json:"field1,omitempty"`
-	Field2               *string                `json:"field2,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Field1               *int           `json:"field1,omitempty"`
+	Field2               *string        `json:"field2,omitempty"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // WithAnyAdditional2 defines model for WithAnyAdditional2.
 type WithAnyAdditional2 struct {
-	FieldA               *int                   `json:"fieldA,omitempty"`
-	FieldB               *string                `json:"fieldB,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	FieldA               *int           `json:"fieldA,omitempty"`
+	FieldB               *string        `json:"fieldB,omitempty"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // WithStringAdditional1 defines model for WithStringAdditional1.
@@ -215,7 +215,7 @@ type WithoutAdditional2 struct {
 
 // Getter for additional properties for MergeDefaultWithAny. Returns the specified
 // element and whether it was found
-func (a MergeDefaultWithAny) Get(fieldName string) (value interface{}, found bool) {
+func (a MergeDefaultWithAny) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -223,9 +223,9 @@ func (a MergeDefaultWithAny) Get(fieldName string) (value interface{}, found boo
 }
 
 // Setter for additional properties for MergeDefaultWithAny
-func (a *MergeDefaultWithAny) Set(fieldName string, value interface{}) {
+func (a *MergeDefaultWithAny) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -271,9 +271,9 @@ func (a *MergeDefaultWithAny) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
@@ -441,7 +441,7 @@ func (a MergeDefaultWithString) MarshalJSON() ([]byte, error) {
 
 // Getter for additional properties for MergeWithAnyDefault. Returns the specified
 // element and whether it was found
-func (a MergeWithAnyDefault) Get(fieldName string) (value interface{}, found bool) {
+func (a MergeWithAnyDefault) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -449,9 +449,9 @@ func (a MergeWithAnyDefault) Get(fieldName string) (value interface{}, found boo
 }
 
 // Setter for additional properties for MergeWithAnyDefault
-func (a *MergeWithAnyDefault) Set(fieldName string, value interface{}) {
+func (a *MergeWithAnyDefault) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -497,9 +497,9 @@ func (a *MergeWithAnyDefault) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
@@ -554,7 +554,7 @@ func (a MergeWithAnyDefault) MarshalJSON() ([]byte, error) {
 
 // Getter for additional properties for MergeWithAnyWithAny. Returns the specified
 // element and whether it was found
-func (a MergeWithAnyWithAny) Get(fieldName string) (value interface{}, found bool) {
+func (a MergeWithAnyWithAny) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -562,9 +562,9 @@ func (a MergeWithAnyWithAny) Get(fieldName string) (value interface{}, found boo
 }
 
 // Setter for additional properties for MergeWithAnyWithAny
-func (a *MergeWithAnyWithAny) Set(fieldName string, value interface{}) {
+func (a *MergeWithAnyWithAny) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -610,9 +610,9 @@ func (a *MergeWithAnyWithAny) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
@@ -1006,7 +1006,7 @@ func (a MergeWithStringWithAny) MarshalJSON() ([]byte, error) {
 
 // Getter for additional properties for PersonAllOfAdditional. Returns the specified
 // element and whether it was found
-func (a PersonAllOfAdditional) Get(fieldName string) (value interface{}, found bool) {
+func (a PersonAllOfAdditional) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -1014,9 +1014,9 @@ func (a PersonAllOfAdditional) Get(fieldName string) (value interface{}, found b
 }
 
 // Setter for additional properties for PersonAllOfAdditional
-func (a *PersonAllOfAdditional) Set(fieldName string, value interface{}) {
+func (a *PersonAllOfAdditional) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -1054,9 +1054,9 @@ func (a *PersonAllOfAdditional) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
@@ -1102,7 +1102,7 @@ func (a PersonAllOfAdditional) MarshalJSON() ([]byte, error) {
 
 // Getter for additional properties for WithAnyAdditional1. Returns the specified
 // element and whether it was found
-func (a WithAnyAdditional1) Get(fieldName string) (value interface{}, found bool) {
+func (a WithAnyAdditional1) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -1110,9 +1110,9 @@ func (a WithAnyAdditional1) Get(fieldName string) (value interface{}, found bool
 }
 
 // Setter for additional properties for WithAnyAdditional1
-func (a *WithAnyAdditional1) Set(fieldName string, value interface{}) {
+func (a *WithAnyAdditional1) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -1142,9 +1142,9 @@ func (a *WithAnyAdditional1) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
@@ -1185,7 +1185,7 @@ func (a WithAnyAdditional1) MarshalJSON() ([]byte, error) {
 
 // Getter for additional properties for WithAnyAdditional2. Returns the specified
 // element and whether it was found
-func (a WithAnyAdditional2) Get(fieldName string) (value interface{}, found bool) {
+func (a WithAnyAdditional2) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -1193,9 +1193,9 @@ func (a WithAnyAdditional2) Get(fieldName string) (value interface{}, found bool
 }
 
 // Setter for additional properties for WithAnyAdditional2
-func (a *WithAnyAdditional2) Set(fieldName string, value interface{}) {
+func (a *WithAnyAdditional2) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -1225,9 +1225,9 @@ func (a *WithAnyAdditional2) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)

@@ -33,8 +33,8 @@ func TestIssue1219(t *testing.T) {
 	var exist bool
 
 	// When both schemas have additionalProperties: true, the merged schema must have
-	// additionalProperties: true (map[string]interface{}).
-	assert.IsType(t, map[string]interface{}{}, MergeWithAnyWithAny{}.AdditionalProperties)
+	// additionalProperties: true (map[string]any).
+	assert.IsType(t, map[string]any{}, MergeWithAnyWithAny{}.AdditionalProperties)
 
 	// When one schema has additionalProperties: true and the other specifies a sub-schema,
 	// the merged schema uses the sub-schema (the more specific wins).
@@ -43,8 +43,8 @@ func TestIssue1219(t *testing.T) {
 
 	// When one schema has additionalProperties: true and the other is unspecified,
 	// the merged schema has additionalProperties: true (both treated as "true" per spec).
-	assert.IsType(t, map[string]interface{}{}, MergeWithAnyDefault{}.AdditionalProperties)
-	assert.IsType(t, map[string]interface{}{}, MergeDefaultWithAny{}.AdditionalProperties)
+	assert.IsType(t, map[string]any{}, MergeWithAnyDefault{}.AdditionalProperties)
+	assert.IsType(t, map[string]any{}, MergeDefaultWithAny{}.AdditionalProperties)
 
 	// When one schema has additionalProperties: true and the other has false,
 	// the merged schema must have no AdditionalProperties field (false wins).

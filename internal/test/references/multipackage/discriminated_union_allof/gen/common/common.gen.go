@@ -103,7 +103,7 @@ func (t DiffFile) Discriminator() (string, error) {
 	return discriminator.Discriminator, err
 }
 
-func (t DiffFile) ValueByDiscriminator() (interface{}, error) {
+func (t DiffFile) ValueByDiscriminator() (any, error) {
 	discriminator, err := t.Discriminator()
 	if err != nil {
 		return nil, err
