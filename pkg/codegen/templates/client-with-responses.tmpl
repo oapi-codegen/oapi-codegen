@@ -60,12 +60,26 @@ type ClientWithResponsesInterface interface {
 
 {{range .}}{{$opid := .OperationId}}{{$op := .}}
 {{$responseTypeDefinitions := getResponseTypeDefinitions .}}
+{{$headerResponses := responsesWithHeaders .Responses}}
+{{- range $headerResponses}}
+// {{genResponseTypeName $opid | ucFirst}}{{.StatusCode | ucFirst}}Headers the declared response headers of an HTTP {{.StatusCode}} response for {{$opid}}
+type {{genResponseTypeName $opid | ucFirst}}{{.StatusCode | ucFirst}}Headers struct {
+    {{range .Headers -}}
+        {{with .DeprecationComment}}{{.}}
+        {{end -}}{{.GoName}} {{.GoTypeDef}}
+    {{end -}}
+}
+{{end}}
 type {{genResponseTypeName $opid | ucFirst}} struct {
     Body         []byte
 	HTTPResponse *http.Response
     {{- range $responseTypeDefinitions}}
     // {{.TypeName}} the response for an HTTP {{ .ResponseName }} `{{ .ContentTypeName }}` response
     {{.TypeName}} *{{.Schema.TypeDecl}}
+    {{- end}}
+    {{- range $headerResponses}}
+    // Headers{{.StatusCode | ucFirst}} the parsed response headers for an HTTP {{.StatusCode}} response
+    Headers{{.StatusCode | ucFirst}} *{{genResponseTypeName $opid | ucFirst}}{{.StatusCode | ucFirst}}Headers
     {{- end}}
 }
 
@@ -177,6 +191,36 @@ func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genRes
     response := {{genResponsePayload $opid}}
 
     {{genResponseUnmarshal .}}
+    {{- /* Bind declared response headers into the typed Headers<StatusCode>
+    fields. Binding is lenient: an absent header (even a required one) leaves
+    the field at its zero value rather than failing the parse, mirroring the
+    body unmarshal's tolerance of spec-violating servers. A present header
+    that fails to bind to its declared type is an error. */ -}}
+    {{$headerResponses := responsesWithHeaders .Responses}}
+    {{- if $headerResponses}}
+    switch {
+    {{- range $headerResponses}}
+    case {{getConditionOfResponseName "rsp.StatusCode" .StatusCode}}:
+        var headers {{genResponseTypeName $opid | ucFirst}}{{.StatusCode | ucFirst}}Headers
+        {{- range .Headers}}
+        if values := rsp.Header.Values({{.Name | toGoString}}); len(values) > 0 {
+            var value {{.Schema.TypeDecl}}
+            if err := runtime.BindStyledParameterWithOptions("simple", {{.Name | toGoString}}, values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"}); err != nil {
+                return nil, err
+            }
+            {{- if .IsNullable}}
+            headers.{{.GoName}}.Set(value)
+            {{- else if .IsOptional}}
+            headers.{{.GoName}} = &value
+            {{- else}}
+            headers.{{.GoName}} = value
+            {{- end}}
+        }
+        {{- end}}
+        response.Headers{{.StatusCode | ucFirst}} = &headers
+    {{- end}}
+    }
+    {{- end}}
 
     return response, nil
 }
