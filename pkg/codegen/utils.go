@@ -641,16 +641,25 @@ func SwaggerUriToGorillaUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToStdHttpUri(uri string) string {
-	// https://pkg.go.dev/net/http#hdr-Patterns-ServeMux
-	// The special wildcard {$} matches only the end of the URL. For example, the pattern "/{$}" matches only the path "/", whereas the pattern "/" matches every path.
-	if uri == "/" {
-		return "/{$}"
-	}
-
-	return pathParamRE.ReplaceAllStringFunc(uri, func(match string) string {
+	uri = pathParamRE.ReplaceAllStringFunc(uri, func(match string) string {
 		sub := pathParamRE.FindStringSubmatch(match)
 		return "{" + SanitizeGoIdentifier(sub[1]) + "}"
 	})
+
+	// https://pkg.go.dev/net/http#hdr-Patterns-ServeMux
+	// A ServeMux pattern ending in '/' matches the whole subtree below it,
+	// while an OpenAPI path ending in '/' means exactly that path. The
+	// special wildcard {$} anchors the pattern to the end of the URL:
+	// "/foo/{$}" matches only "/foo/", whereas "/foo/" matches every path
+	// under it. Anchoring also prevents registration panics when subtree
+	// patterns from independent spec paths overlap ambiguously (#2065).
+	// Appended after parameter sanitization so the '$' is not treated as a
+	// parameter name.
+	if strings.HasSuffix(uri, "/") {
+		uri += "{$}"
+	}
+
+	return uri
 }
 
 // OrderedParamsFromUri returns the argument names, in order, in a given URI string, so for
