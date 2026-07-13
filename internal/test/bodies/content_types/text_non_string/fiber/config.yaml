@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../../../../../../configuration-schema.json
+# From issue-1897 — fiber (ctx.WriteString) backend coverage
+package: textnonstringfiber
+output: fiber.gen.go
+generate:
+  fiber-server: true
+  strict-server: true
+  models: true
+output-options:
+  skip-prune: true

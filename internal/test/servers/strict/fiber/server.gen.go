@@ -682,7 +682,7 @@ func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequ
 	ctx.Response().Header.Set("Content-Type", "text/plain")
 	ctx.Status(200)
 
-	_, err := ctx.WriteString(string(response))
+	_, err := ctx.WriteString(fmt.Sprint(response))
 	return err
 }
 
@@ -767,7 +767,7 @@ func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(ct
 	ctx.Response().Header.Set("Content-Type", "text/plain")
 	ctx.Status(200)
 
-	_, err := ctx.WriteString(string(response))
+	_, err := ctx.WriteString(fmt.Sprint(response))
 	return err
 }
 
@@ -801,7 +801,7 @@ func (response ReservedGoKeywordParameters200TextResponse) VisitReservedGoKeywor
 	ctx.Response().Header.Set("Content-Type", "text/plain")
 	ctx.Status(200)
 
-	_, err := ctx.WriteString(string(response))
+	_, err := ctx.WriteString(fmt.Sprint(response))
 	return err
 }
 
@@ -872,7 +872,7 @@ func (response TextExample200TextResponse) VisitTextExampleResponse(ctx *fiber.C
 	ctx.Response().Header.Set("Content-Type", "text/plain")
 	ctx.Status(200)
 
-	_, err := ctx.WriteString(string(response))
+	_, err := ctx.WriteString(fmt.Sprint(response))
 	return err
 }
 

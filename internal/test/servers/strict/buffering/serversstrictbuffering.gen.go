@@ -381,7 +381,7 @@ func (response TextEndpoint200TextResponse) VisitTextEndpointResponse(w http.Res
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 

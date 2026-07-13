@@ -452,7 +452,7 @@ func (response GetTest401TextResponse) VisitGetTestResponse(w http.ResponseWrite
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(401)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 

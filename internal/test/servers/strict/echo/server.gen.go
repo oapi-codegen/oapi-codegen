@@ -544,7 +544,7 @@ func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequ
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 
@@ -635,7 +635,7 @@ func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(w 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 
@@ -670,7 +670,7 @@ func (response ReservedGoKeywordParameters200TextResponse) VisitReservedGoKeywor
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 
@@ -752,7 +752,7 @@ func (response TextExample200TextResponse) VisitTextExampleResponse(w http.Respo
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 
