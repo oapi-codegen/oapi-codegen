@@ -1144,11 +1144,6 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 	for _, paramName := range SortedMapKeys(params) {
 		paramOrRef := params[paramName]
 
-		goType, err := paramToGoType(paramOrRef.Value, nil)
-		if err != nil {
-			return nil, fmt.Errorf("error generating Go type for schema in parameter %s: %w", paramName, err)
-		}
-
 		goTypeName, err := renameParameter(paramName, paramOrRef)
 		if err != nil {
 			return nil, fmt.Errorf("error making name for components/parameters/%s: %w", paramName, err)
@@ -1156,6 +1151,16 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 
 		if resolved := resolvedNameForComponent("parameters", paramName); resolved != "" {
 			goTypeName = resolved
+		}
+
+		// Root the schema path at the parameter's Go type name so any helper
+		// types the schema needs (e.g. anyOf union members) are named after the
+		// parameter — GoTypeName0, GoTypeName1 — matching the union accessors
+		// generated on the parameter type, rather than an unrelated
+		// numeric-derived name (issue #2090).
+		goType, err := paramToGoType(paramOrRef.Value, []string{goTypeName})
+		if err != nil {
+			return nil, fmt.Errorf("error generating Go type for schema in parameter %s: %w", paramName, err)
 		}
 
 		typeDef := TypeDefinition{
@@ -1174,6 +1179,10 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 		}
 
 		types = append(types, typeDef)
+		// Declare the parameter's helper types (union members, ...) once here,
+		// with the component, so operations that reference the parameter do not
+		// each redeclare them (issue #2090).
+		types = append(types, goType.AdditionalTypes...)
 	}
 	return types, nil
 }
