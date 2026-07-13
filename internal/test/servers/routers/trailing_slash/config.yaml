@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: serversrouterstrailingslash
+generate:
+  std-http-server: true
+  models: true
+output: trailing_slash.gen.go

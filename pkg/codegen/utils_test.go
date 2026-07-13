@@ -461,6 +461,14 @@ func TestSwaggerUriToStdHttpUriUri(t *testing.T) {
 
 	// Go keywords are valid ServeMux wildcard names and should not be prefixed
 	assert.Equal(t, "/path/{type}", SwaggerUriToStdHttpUri("/path/{type}"))
+
+	// OpenAPI paths with a trailing slash mean exactly that path, but a
+	// ServeMux pattern ending in '/' matches the whole subtree — and
+	// overlapping subtree patterns panic at registration. Anchor with {$}.
+	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/2065
+	assert.Equal(t, "/path/{$}", SwaggerUriToStdHttpUri("/path/"))
+	assert.Equal(t, "/api/test/{id}/test2/{$}", SwaggerUriToStdHttpUri("/api/test/{id}/test2/"))
+	assert.Equal(t, "/api/test/test3/{$}", SwaggerUriToStdHttpUri("/api/test/test3/"))
 }
 
 func TestOrderedParamsFromUri(t *testing.T) {
