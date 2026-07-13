@@ -989,6 +989,11 @@ When you've got a large OpenAPI specification, you may find it useful to split t
 
 This is supported by `oapi-codegen`, through the ability to perform "Import Mapping".
 
+> [!NOTE]
+> The keys of `import-mapping` are the paths of the `$ref`'d documents — a relative file path or a URL, exactly as it is written in the `$ref` — and the values are the Go packages their types are generated into.
+>
+> A key cannot be a JSON pointer such as `#/components/schemas`. References within a single document always resolve to the package being generated, so there's nothing to map — if you want your models in a different Go package to your server, split them into their own spec file and map that file, as shown below.
+
 For instance, let's say that we have a large API, which has a user-facing API and an admin API, both of which use a common set of API models.
 
 In this case, we may have an Admin API that looks like:
