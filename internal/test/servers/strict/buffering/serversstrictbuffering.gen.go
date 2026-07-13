@@ -265,11 +265,11 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/binary", wrapper.BinaryEndpoint)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/formdata", wrapper.FormdataEndpoint)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/json", wrapper.JsonEndpoint)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/multipart", wrapper.MultipartEndpoint)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/text", wrapper.TextEndpoint)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/formdata", wrapper.FormdataEndpoint)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/multipart", wrapper.MultipartEndpoint)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/binary", wrapper.BinaryEndpoint)
 
 	return m
 }

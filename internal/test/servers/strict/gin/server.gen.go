@@ -394,20 +394,20 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	}
 
 	router.POST(options.BaseURL+"/json", wrapper.JSONExample)
+	router.POST(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
 	router.POST(options.BaseURL+"/multipart", wrapper.MultipartExample)
 	router.POST(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample)
+	router.POST(options.BaseURL+"/text", wrapper.TextExample)
+	router.POST(options.BaseURL+"/unknown", wrapper.UnknownExample)
 	router.POST(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
+	router.POST(options.BaseURL+"/with-headers", wrapper.HeadersExample)
 	router.POST(options.BaseURL+"/no-content-headers", wrapper.NoContentHeaders)
+	router.POST(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
+	router.POST(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
 	router.POST(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody)
 	router.POST(options.BaseURL+"/required-text-body", wrapper.RequiredTextBody)
 	router.GET(options.BaseURL+"/reserved-go-keyword-parameters/:type", wrapper.ReservedGoKeywordParameters)
-	router.POST(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
 	router.POST(options.BaseURL+"/same-name-param-and-body-property/:name", wrapper.SameNameParamAndBodyProperty)
-	router.POST(options.BaseURL+"/text", wrapper.TextExample)
-	router.POST(options.BaseURL+"/unknown", wrapper.UnknownExample)
-	router.POST(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
-	router.POST(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
-	router.POST(options.BaseURL+"/with-headers", wrapper.HeadersExample)
 	router.POST(options.BaseURL+"/with-union", wrapper.UnionExample)
 }
 

@@ -1528,88 +1528,88 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/contentObject/{param}", wrapper.GetContentObject)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/cookie", wrapper.GetCookie)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/enums", wrapper.EnumParams)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/header", wrapper.GetHeader)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/labelExplodeArray/{param}", wrapper.GetLabelExplodeArray)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/labelExplodeObject/{param}", wrapper.GetLabelExplodeObject)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/labelExplodePrimitive/{param}", wrapper.GetLabelExplodePrimitive)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/labelNoExplodeArray/{param}", wrapper.GetLabelNoExplodeArray)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/labelNoExplodeObject/{param}", wrapper.GetLabelNoExplodeObject)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/labelPrimitive/{param}", wrapper.GetLabelPrimitive)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/matrixExplodeArray/{id}", wrapper.GetMatrixExplodeArray)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/matrixExplodeObject/{id}", wrapper.GetMatrixExplodeObject)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/matrixExplodePrimitive/{id}", wrapper.GetMatrixExplodePrimitive)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/matrixNoExplodeArray/{id}", wrapper.GetMatrixNoExplodeArray)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/matrixNoExplodeObject/{id}", wrapper.GetMatrixNoExplodeObject)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/matrixPrimitive/{id}", wrapper.GetMatrixPrimitive)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/passThrough/{param}", wrapper.GetPassThrough)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/queryDeepObject", wrapper.GetDeepObject)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/queryDelimited", wrapper.GetQueryDelimited)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/queryForm", wrapper.GetQueryForm)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/simpleExplodeArray/{param}", wrapper.GetSimpleExplodeArray)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/simpleExplodeObject/{param}", wrapper.GetSimpleExplodeObject)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/simpleExplodePrimitive/{param}", wrapper.GetSimpleExplodePrimitive)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/simpleNoExplodeArray/{param}", wrapper.GetSimpleNoExplodeArray)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/simpleNoExplodeObject/{param}", wrapper.GetSimpleNoExplodeObject)
-	})
-	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/simplePrimitive/{param}", wrapper.GetSimplePrimitive)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/simpleString/{param}", wrapper.GetSimpleString)
 	})
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/simpleNoExplodeArray/{param}", wrapper.GetSimpleNoExplodeArray)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/simpleExplodeArray/{param}", wrapper.GetSimpleExplodeArray)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/simpleNoExplodeObject/{param}", wrapper.GetSimpleNoExplodeObject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/simpleExplodeObject/{param}", wrapper.GetSimpleExplodeObject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/labelNoExplodeArray/{param}", wrapper.GetLabelNoExplodeArray)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/labelExplodeArray/{param}", wrapper.GetLabelExplodeArray)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/labelNoExplodeObject/{param}", wrapper.GetLabelNoExplodeObject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/labelExplodeObject/{param}", wrapper.GetLabelExplodeObject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/matrixNoExplodeArray/{id}", wrapper.GetMatrixNoExplodeArray)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/matrixExplodeArray/{id}", wrapper.GetMatrixExplodeArray)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/matrixNoExplodeObject/{id}", wrapper.GetMatrixNoExplodeObject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/matrixExplodeObject/{id}", wrapper.GetMatrixExplodeObject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/simpleExplodePrimitive/{param}", wrapper.GetSimpleExplodePrimitive)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/labelPrimitive/{param}", wrapper.GetLabelPrimitive)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/labelExplodePrimitive/{param}", wrapper.GetLabelExplodePrimitive)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/matrixPrimitive/{id}", wrapper.GetMatrixPrimitive)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/matrixExplodePrimitive/{id}", wrapper.GetMatrixExplodePrimitive)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/contentObject/{param}", wrapper.GetContentObject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/passThrough/{param}", wrapper.GetPassThrough)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/startingWithNumber/{1param}", wrapper.GetStartingWithNumber)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/queryForm", wrapper.GetQueryForm)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/queryDelimited", wrapper.GetQueryDelimited)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/queryDeepObject", wrapper.GetDeepObject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/header", wrapper.GetHeader)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/cookie", wrapper.GetCookie)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/enums", wrapper.EnumParams)
 	})
 
 	return r

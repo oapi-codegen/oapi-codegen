@@ -564,8 +564,8 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 		ErrorHandler:       errorHandler,
 	}
 
-	router.GET(options.BaseURL+"/suffix", wrapper.SuffixTest)
 	router.GET(options.BaseURL+"/test", wrapper.Test)
+	router.GET(options.BaseURL+"/suffix", wrapper.SuffixTest)
 }
 
 type BazApplicationBarPlusJSONResponse Bar

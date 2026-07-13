@@ -584,16 +584,34 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/json", wrapper.JSONExample)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/multipart", wrapper.MultipartExample)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/text", wrapper.TextExample)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/unknown", wrapper.UnknownExample)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/with-headers", wrapper.HeadersExample)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/no-content-headers", wrapper.NoContentHeaders)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody)
@@ -605,25 +623,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/reserved-go-keyword-parameters/{type}", wrapper.ReservedGoKeywordParameters)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
-	})
-	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/same-name-param-and-body-property/{name}", wrapper.SameNameParamAndBodyProperty)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/text", wrapper.TextExample)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/unknown", wrapper.UnknownExample)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/with-headers", wrapper.HeadersExample)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/with-union", wrapper.UnionExample)

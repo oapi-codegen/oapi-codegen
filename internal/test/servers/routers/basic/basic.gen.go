@@ -641,22 +641,25 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/response-with-reference", wrapper.GetResponseWithReference)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/reserved-keyword", wrapper.GetReservedKeyword)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/every-type-optional", wrapper.GetEveryTypeOptional)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/get-simple", wrapper.GetSimple)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/get-with-args", wrapper.GetWithArgs)
+		r.Get(options.BaseURL+"/get-with-type/{content_type}", wrapper.GetWithContentType)
 	})
 	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/get-with-references/{global_argument}/{argument}", wrapper.GetWithReferences)
 	})
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/get-with-type/{content_type}", wrapper.GetWithContentType)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/reserved-keyword", wrapper.GetReservedKeyword)
+		r.Get(options.BaseURL+"/get-with-args", wrapper.GetWithArgs)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/resource/{argument}", wrapper.CreateResource)
@@ -666,9 +669,6 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	})
 	r.Group(func(r chi.Router) {
 		r.Put(options.BaseURL+"/resource3/{fallthrough}", wrapper.UpdateResource3)
-	})
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/response-with-reference", wrapper.GetResponseWithReference)
 	})
 
 	return r

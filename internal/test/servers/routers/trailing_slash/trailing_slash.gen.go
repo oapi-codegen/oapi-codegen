@@ -191,8 +191,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/test/test3/{$}", wrapper.Test2)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/test/{id}/test2/{$}", wrapper.Test1)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api/test/test3/{$}", wrapper.Test2)
 
 	return m
 }

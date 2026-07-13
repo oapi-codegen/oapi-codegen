@@ -235,10 +235,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/get-multibody", wrapper.GetGetMultibody)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/object", wrapper.GetObject)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/post-multibody", wrapper.PostPostMultibody)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/get-multibody", wrapper.GetGetMultibody)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/post-object", wrapper.PostPostObject)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/post-multibody", wrapper.PostPostMultibody)
 
 	return m
 }

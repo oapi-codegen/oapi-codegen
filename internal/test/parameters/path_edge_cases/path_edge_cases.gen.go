@@ -737,8 +737,8 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
 		Handler: si,
 	}
 
-	router.GET(options.BaseURL+"/pets/:petId", wrapper.GetPet, options.OperationMiddlewares["getPet"]...)
 	router.POST(options.BaseURL+"/pets:validate", wrapper.ValidatePets, options.OperationMiddlewares["validatePets"]...)
+	router.GET(options.BaseURL+"/pets/:petId", wrapper.GetPet, options.OperationMiddlewares["getPet"]...)
 	router.GET(options.BaseURL+"/simplePrimitive/:param", wrapper.GetSimplePrimitive, options.OperationMiddlewares["getSimplePrimitive"]...)
 
 }

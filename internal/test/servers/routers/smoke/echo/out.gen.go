@@ -138,10 +138,10 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
 		Handler: si,
 	}
 
-	router.GET(options.BaseURL+"/get-multibody", wrapper.GetGetMultibody, options.OperationMiddlewares["GetGetMultibody"]...)
 	router.GET(options.BaseURL+"/object", wrapper.GetObject, options.OperationMiddlewares["GetObject"]...)
-	router.POST(options.BaseURL+"/post-multibody", wrapper.PostPostMultibody, options.OperationMiddlewares["PostPostMultibody"]...)
+	router.GET(options.BaseURL+"/get-multibody", wrapper.GetGetMultibody, options.OperationMiddlewares["GetGetMultibody"]...)
 	router.POST(options.BaseURL+"/post-object", wrapper.PostPostObject, options.OperationMiddlewares["PostPostObject"]...)
+	router.POST(options.BaseURL+"/post-multibody", wrapper.PostPostMultibody, options.OperationMiddlewares["PostPostMultibody"]...)
 
 }
 

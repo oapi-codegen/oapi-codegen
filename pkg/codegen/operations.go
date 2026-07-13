@@ -346,7 +346,13 @@ type OperationDefinition struct {
 	Summary             string                  // Summary string from Swagger, used to generate a comment
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
-	Spec                *openapi3.Operation
+	// SpecOrder is the source line on which this operation's path is
+	// declared in the spec, used to register routes in the order the paths
+	// appear in the spec rather than sorted (issue #1887). Zero when the
+	// source location is unavailable (e.g. a programmatically-built spec),
+	// in which case route registration falls back to the default order.
+	SpecOrder int
+	Spec      *openapi3.Operation
 	IsAlias             bool   // True when this path is a $ref alias of another path item
 	AliasTarget         string // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
 	PathItemRef         string // The path item's $ref (if any); used to qualify externally-loaded schemas referenced from this operation's responses
@@ -1061,6 +1067,17 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
+// pathItemSourceLine returns the 1-based source line on which a path item's
+// key is declared, when the spec was loaded with origin tracking enabled
+// (see LoadSwagger). Returns 0 when the location is unavailable — e.g. a
+// spec built in memory or one whose loader did not record origins.
+func pathItemSourceLine(pathItem *openapi3.PathItem) int {
+	if pathItem == nil || pathItem.Origin == nil || pathItem.Origin.Key == nil {
+		return 0
+	}
+	return pathItem.Origin.Key.Line
+}
+
 func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
 
@@ -1084,6 +1101,9 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 
 	for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
 		pathItem := swagger.Paths.Value(requestPath)
+		// Source line of this path's key, so route registration can follow
+		// spec declaration order (issue #1887). Zero when unavailable.
+		pathSpecOrder := pathItemSourceLine(pathItem)
 		// These are parameters defined for all methods on a given path. They
 		// are shared by all methods.
 		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
@@ -1192,6 +1212,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				Summary:         op.Summary,
 				Method:          opName,
 				Path:            requestPath,
+				SpecOrder:       pathSpecOrder,
 				Spec:            op,
 				Bodies:          bodyDefinitions,
 				Responses:       responseDefinitions,
@@ -1886,58 +1907,146 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	return buf.String(), nil
 }
 
+// sortOperationsBySpecOrder returns a copy of ops reordered to follow the
+// order paths are declared in the spec (by source line, OperationDefinition
+// .SpecOrder), with a stable fallback to the incoming order when source
+// locations are unavailable (e.g. an in-memory spec) or shared by several
+// operations (the methods of one path). This is used only for route
+// registration (issue #1887); the rest of the pipeline keeps the sorted
+// order so name-collision resolution and type emission are unaffected.
+func sortOperationsBySpecOrder(ops []OperationDefinition) []OperationDefinition {
+	out := make([]OperationDefinition, len(ops))
+	copy(out, ops)
+	slices.SortStableFunc(out, func(a, b OperationDefinition) int {
+		return a.SpecOrder - b.SpecOrder
+	})
+	return out
+}
+
 // GenerateIrisServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateIrisServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"iris/iris-interface.tmpl", "iris/iris-middleware.tmpl", "iris/iris-handler.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"iris/iris-interface.tmpl", "iris/iris-middleware.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"iris/iris-handler.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // GenerateChiServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateChiServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"chi/chi-interface.tmpl", "chi/chi-middleware.tmpl", "chi/chi-handler.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"chi/chi-interface.tmpl", "chi/chi-middleware.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"chi/chi-handler.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // GenerateFiberServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateFiberServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"fiber/fiber-interface.tmpl", "fiber/fiber-middleware.tmpl", "fiber/fiber-handler.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber/fiber-interface.tmpl", "fiber/fiber-middleware.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber/fiber-handler.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // GenerateFiberV3Server generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateFiberV3Server(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"fiber-v3/fiber-interface.tmpl", "fiber-v3/fiber-middleware.tmpl", "fiber-v3/fiber-handler.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber-v3/fiber-interface.tmpl", "fiber-v3/fiber-middleware.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber-v3/fiber-handler.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // GenerateEchoServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl", "echo/echo-register.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/echo-register.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // GenerateEcho5Server generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateEcho5Server(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"echo/v5/echo-interface.tmpl", "echo/v5/echo-wrappers.tmpl", "echo/v5/echo-register.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/v5/echo-interface.tmpl", "echo/v5/echo-wrappers.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/v5/echo-register.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // GenerateGinServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl", "gin/gin-register.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"gin/gin-register.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // GenerateGorillaServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateGorillaServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"gorilla/gorilla-interface.tmpl", "gorilla/gorilla-middleware.tmpl", "gorilla/gorilla-register.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"gorilla/gorilla-interface.tmpl", "gorilla/gorilla-middleware.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"gorilla/gorilla-register.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // GenerateStdHTTPServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateStdHTTPServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"stdhttp/std-http-interface.tmpl", "stdhttp/std-http-middleware.tmpl", "stdhttp/std-http-handler.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"stdhttp/std-http-interface.tmpl", "stdhttp/std-http-middleware.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"stdhttp/std-http-handler.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
@@ -2080,23 +2189,30 @@ func GenerateIrisReceiver(t *template.Template, prefix string, ops []OperationDe
 	return GenerateTemplates([]string{"iris/iris-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
 }
 
+// GenerateTemplatesIntoBuffer executes the named templates against ops and
+// writes the results to buf, separating consecutive templates with a newline.
+// Rendering into a caller-owned buffer lets a caller compose several passes —
+// e.g. feeding spec-ordered operations to the registration template while the
+// rest of a server uses the pipeline's default order (issue #1887).
+func GenerateTemplatesIntoBuffer(buf *bytes.Buffer, templates []string, t *template.Template, ops any) error {
+	for i, tmpl := range templates {
+		if i > 0 {
+			buf.WriteString("\n")
+		}
+		if err := t.ExecuteTemplate(buf, tmpl, ops); err != nil {
+			return fmt.Errorf("error generating %s: %s", tmpl, err)
+		}
+	}
+	return nil
+}
+
 // GenerateTemplates used to generate templates
 func GenerateTemplates(templates []string, t *template.Template, ops any) (string, error) {
-	var generatedTemplates []string
-	for _, tmpl := range templates {
-		var buf bytes.Buffer
-		w := bufio.NewWriter(&buf)
-
-		if err := t.ExecuteTemplate(w, tmpl, ops); err != nil {
-			return "", fmt.Errorf("error generating %s: %s", tmpl, err)
-		}
-		if err := w.Flush(); err != nil {
-			return "", fmt.Errorf("error flushing output buffer for %s: %s", tmpl, err)
-		}
-		generatedTemplates = append(generatedTemplates, buf.String())
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, templates, t, ops); err != nil {
+		return "", err
 	}
-
-	return strings.Join(generatedTemplates, "\n"), nil
+	return buf.String(), nil
 }
 
 // CombineOperationParameters combines the Parameters defined at a global level (Parameters defined for all methods on a given path) with the Parameters defined at a local level (Parameters defined for a specific path), preferring the locally defined parameter over the global one
