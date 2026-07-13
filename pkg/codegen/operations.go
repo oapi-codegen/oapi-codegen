@@ -36,6 +36,12 @@ type ParameterDefinition struct {
 	Required  bool   // Is this a required parameter?
 	Spec      *openapi3.Parameter
 	Schema    Schema
+
+	// Shared is true for a parameter declared at the path-item level, which
+	// is inherited by every method on the path. Its helper types are
+	// generated once for the path item rather than once per operation, so
+	// operation type collection skips them (issue #2090).
+	Shared bool
 }
 
 // TypeDef is here as an adapter after a large refactoring so that I don't
@@ -284,7 +290,14 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 				return nil, fmt.Errorf("error dereferencing (%s) for param (%s): %s",
 					paramOrRef.Ref, param.Name, err)
 			}
+			// The parameter references a component parameter, whose type and
+			// any helper types (e.g. anyOf union members) are declared once
+			// with the component. Point at it and drop the inline schema this
+			// operation would otherwise redeclare per operation (issue #2090).
 			pd.Schema.GoType = goType
+			pd.Schema.RefType = goType
+			pd.Schema.AdditionalTypes = nil
+			pd.Schema.UnionElements = nil
 		}
 		outParams = append(outParams, pd)
 	}
@@ -351,11 +364,11 @@ type OperationDefinition struct {
 	// appear in the spec rather than sorted (issue #1887). Zero when the
 	// source location is unavailable (e.g. a programmatically-built spec),
 	// in which case route registration falls back to the default order.
-	SpecOrder int
-	Spec      *openapi3.Operation
-	IsAlias             bool   // True when this path is a $ref alias of another path item
-	AliasTarget         string // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
-	PathItemRef         string // The path item's $ref (if any); used to qualify externally-loaded schemas referenced from this operation's responses
+	SpecOrder   int
+	Spec        *openapi3.Operation
+	IsAlias     bool   // True when this path is a $ref alias of another path item
+	AliasTarget string // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
+	PathItemRef string // The path item's $ref (if any); used to qualify externally-loaded schemas referenced from this operation's responses
 
 	// IsWebhook is true when this OperationDefinition was sourced from
 	// spec.Webhooks (OpenAPI 3.1+). Webhook operations have no path
@@ -1105,12 +1118,17 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 		// spec declaration order (issue #1887). Zero when unavailable.
 		pathSpecOrder := pathItemSourceLine(pathItem)
 		// These are parameters defined for all methods on a given path. They
-		// are shared by all methods.
+		// are shared by all methods, so their helper types are declared once
+		// for the path item (on its first operation) rather than once per
+		// operation (issue #2090).
 		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
 		if err != nil {
 			return nil, fmt.Errorf("error describing global parameters for %s: %s",
 				requestPath, err)
 		}
+		markShared(globalParams)
+		sharedParamTypeDefs := sharedParameterTypeDefs(globalParams)
+		sharedTypeDefsEmitted := false
 
 		// Each path can have a number of operations, POST, GET, OPTIONS, etc.
 		pathOps := pathItem.Operations()
@@ -1257,6 +1275,13 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			// Generate all the type definitions needed for this operation
 			opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
 
+			// Declare the shared (path-item-level) parameter helper types once,
+			// on the first operation of the path item (issue #2090).
+			if !sharedTypeDefsEmitted {
+				opDef.TypeDefinitions = append(opDef.TypeDefinitions, sharedParamTypeDefs...)
+				sharedTypeDefsEmitted = true
+			}
+
 			operations = append(operations, opDef)
 		}
 	}
@@ -1289,11 +1314,15 @@ func WebhookOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, er
 		}
 
 		// Path-item-level parameters apply to every method on the
-		// webhook (rare for webhooks, but honored defensively).
+		// webhook (rare for webhooks, but honored defensively). Their helper
+		// types are declared once for the path item (issue #2090).
 		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
 		if err != nil {
 			return nil, fmt.Errorf("error describing webhook %q parameters: %w", webhookName, err)
 		}
+		markShared(globalParams)
+		sharedParamTypeDefs := sharedParameterTypeDefs(globalParams)
+		sharedTypeDefsEmitted := false
 
 		pathOps := pathItem.Operations()
 		for _, opName := range SortedMapKeys(pathOps) {
@@ -1355,6 +1384,10 @@ func WebhookOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, er
 			}
 
 			opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
+			if !sharedTypeDefsEmitted {
+				opDef.TypeDefinitions = append(opDef.TypeDefinitions, sharedParamTypeDefs...)
+				sharedTypeDefsEmitted = true
+			}
 			operations = append(operations, opDef)
 		}
 	}
@@ -1429,6 +1462,12 @@ func CallbackOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, e
 						return nil, fmt.Errorf("error describing callback %q parameters: %w", callbackName, err)
 					}
 
+					// Shared callback path-item parameters: declare helper
+					// types once for the path item (issue #2090).
+					markShared(globalParams)
+					sharedParamTypeDefs := sharedParameterTypeDefs(globalParams)
+					sharedTypeDefsEmitted := false
+
 					cbOps := cbPathItem.Operations()
 					for _, opName := range SortedMapKeys(cbOps) {
 						op := cbOps[opName]
@@ -1486,6 +1525,10 @@ func CallbackOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, e
 						}
 
 						opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
+						if !sharedTypeDefsEmitted {
+							opDef.TypeDefinitions = append(opDef.TypeDefinitions, sharedParamTypeDefs...)
+							sharedTypeDefsEmitted = true
+						}
 						operations = append(operations, opDef)
 					}
 				}
@@ -1809,6 +1852,26 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 	return responseDefinitions, nil
 }
 
+// markShared flags every parameter as shared at the path-item level, so its
+// helper types are declared once for the path item rather than once per
+// operation (issue #2090).
+func markShared(params []ParameterDefinition) {
+	for i := range params {
+		params[i].Shared = true
+	}
+}
+
+// sharedParameterTypeDefs returns the helper TypeDefinitions produced by
+// path-item-level parameters. These are emitted once for the path item
+// (attributed to its first operation) instead of once per operation.
+func sharedParameterTypeDefs(sharedParams []ParameterDefinition) []TypeDefinition {
+	var typeDefs []TypeDefinition
+	for _, param := range sharedParams {
+		typeDefs = append(typeDefs, param.Schema.AdditionalTypes...)
+	}
+	return typeDefs
+}
+
 func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 	var typeDefs []TypeDefinition
 	// Start with the params object itself
@@ -1816,8 +1879,14 @@ func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 		typeDefs = append(typeDefs, GenerateParamsTypes(op)...)
 	}
 
-	// Now, go through all the additional types we need to declare.
+	// Now, go through all the additional types we need to declare. Skip
+	// parameters shared at the path-item level: their helper types are
+	// declared once for the path item (see sharedParameterTypeDefs), not once
+	// per operation, which would redeclare them (issue #2090).
 	for _, param := range op.AllParams() {
+		if param.Shared {
+			continue
+		}
 		typeDefs = append(typeDefs, param.Schema.AdditionalTypes...)
 	}
 
