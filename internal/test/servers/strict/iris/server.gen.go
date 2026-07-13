@@ -498,7 +498,7 @@ func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequ
 	ctx.ResponseWriter().Header().Set("Content-Type", "text/plain")
 	ctx.StatusCode(200)
 
-	_, err := ctx.WriteString(string(response))
+	_, err := ctx.WriteString(fmt.Sprint(response))
 	return err
 }
 
@@ -583,7 +583,7 @@ func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(ct
 	ctx.ResponseWriter().Header().Set("Content-Type", "text/plain")
 	ctx.StatusCode(200)
 
-	_, err := ctx.WriteString(string(response))
+	_, err := ctx.WriteString(fmt.Sprint(response))
 	return err
 }
 
@@ -617,7 +617,7 @@ func (response ReservedGoKeywordParameters200TextResponse) VisitReservedGoKeywor
 	ctx.ResponseWriter().Header().Set("Content-Type", "text/plain")
 	ctx.StatusCode(200)
 
-	_, err := ctx.WriteString(string(response))
+	_, err := ctx.WriteString(fmt.Sprint(response))
 	return err
 }
 
@@ -688,7 +688,7 @@ func (response TextExample200TextResponse) VisitTextExampleResponse(ctx iris.Con
 	ctx.ResponseWriter().Header().Set("Content-Type", "text/plain")
 	ctx.StatusCode(200)
 
-	_, err := ctx.WriteString(string(response))
+	_, err := ctx.WriteString(fmt.Sprint(response))
 	return err
 }
 
