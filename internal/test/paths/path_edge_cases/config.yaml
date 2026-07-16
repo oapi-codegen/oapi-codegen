@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=../../../../configuration-schema.json
-package: parameterspathedgecases
+package: pathedgecases
 generate:
   echo-server: true
   client: true

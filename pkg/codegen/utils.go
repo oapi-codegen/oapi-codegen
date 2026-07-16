@@ -547,6 +547,23 @@ func SwaggerUriToIrisUri(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
+// escapeLiteralPathColons escapes literal ':' characters in an OpenAPI path so
+// that routers which use ':' to introduce a path parameter (Echo, Gin, Fiber)
+// treat them as literals rather than parameter delimiters. Without this, a path
+// like "/pets:validate" registers a parameter named "validate", so multiple
+// such paths collide on the same prefix (issue #1726).
+//
+// The escaped form is a single backslash before the colon (`\:`). The register
+// templates render the result through toGoString (strconv.Quote), which turns
+// the backslash into `\\` in the emitted Go source, so the value the router
+// sees at runtime is exactly `\:` — the escape those routers understand.
+//
+// It must run before parameter substitution, which introduces its own ':'
+// delimiters that must stay unescaped.
+func escapeLiteralPathColons(uri string) string {
+	return strings.ReplaceAll(uri, ":", `\:`)
+}
+
 // SwaggerUriToEchoUri converts a OpenAPI style path URI with parameters to an
 // Echo compatible path URI. We need to replace all of OpenAPI parameters with
 // ":param". Valid input parameters are:
@@ -560,7 +577,7 @@ func SwaggerUriToIrisUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToEchoUri(uri string) string {
-	uri = strings.ReplaceAll(uri, ":", "\\\\:")
+	uri = escapeLiteralPathColons(uri)
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
@@ -577,6 +594,7 @@ func SwaggerUriToEchoUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToFiberUri(uri string) string {
+	uri = escapeLiteralPathColons(uri)
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
@@ -609,7 +627,7 @@ func SwaggerUriToChiUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToGinUri(uri string) string {
-	uri = strings.ReplaceAll(uri, ":", "\\\\:")
+	uri = escapeLiteralPathColons(uri)
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
