@@ -258,7 +258,11 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	// TODO: Check for collisions
 	maps.Copy(result.Extensions, s2.Extensions)
 
-	result.OneOf = append(s1.OneOf, s2.OneOf...)
+	// Capture top-level OneOf/AnyOf before overwriting s1/s2 with transitive
+	// AllOf merges. The merges may surface additional OneOf/AnyOf members from
+	// nested allOf members (issue #1905), so we accumulate from both sources.
+	oneOf := append(s1.OneOf, s2.OneOf...)
+	anyOf := append(s1.AnyOf, s2.AnyOf...)
 
 	// We are going to make AllOf transitive, so that merging an AllOf that
 	// contains AllOf's will result in a flat object.
@@ -269,6 +273,8 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 1")
 		}
+		oneOf = append(oneOf, merged.OneOf...)
+		anyOf = append(anyOf, merged.AnyOf...)
 		s1 = merged
 	}
 	if s2.AllOf != nil {
@@ -277,9 +283,13 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 2")
 		}
+		oneOf = append(oneOf, merged.OneOf...)
+		anyOf = append(anyOf, merged.AnyOf...)
 		s2 = merged
 	}
 
+	result.OneOf = oneOf
+	result.AnyOf = anyOf
 	result.AllOf = append(s1.AllOf, s2.AllOf...)
 
 	if s1.Type.Slice() != nil && s2.Type.Slice() != nil && !equalTypes(s1.Type, s2.Type) {

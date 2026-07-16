@@ -2,11 +2,13 @@
 # Category: aggregates/allof
 # Tests:    allOf composition with additionalProperties on constituent schemas;
 #           additionalProperties merge-precedence across all combinations of
-#           true/false/schema/default in allOf members.
+#           true/false/schema/default in allOf members;
+#           deeply nested oneOf inside allOf-of-allOf (issue #1905).
 #
 # Folds in (provenance):
 #   - issues/issue193   (allOf + additionalProperties)
 #   - issues/issue-1219 (additionalProperties merge precedence)
+#   - issues/issue-1905 (nested oneOf lost in allOf-of-allOf merge)
 # ==========================================================================
 openapi: "3.0.1"
 info:
@@ -174,3 +176,23 @@ components:
       allOf:
         - $ref: '#/components/schemas/DefaultAdditional1'
         - $ref: '#/components/schemas/DefaultAdditional2'
+
+    # --- issue #1905: deeply nested oneOf inside allOf-of-allOf ---
+    # The outer allOf merges two members: an inner allOf (which itself wraps a
+    # oneOf with two variants) and a plain object with a_foo.  The bug: the
+    # merge walk stops after one level, so the oneOf inside the inner allOf is
+    # silently dropped and neither the union field nor the variant types appear
+    # in the generated output.
+    NestedOneOfInAllOf:
+      allOf:
+        - allOf:
+            - oneOf:
+                - properties:
+                    a_foo_one_of_0:
+                      type: string
+                - properties:
+                    a_foo_one_of_1:
+                      type: string
+        - properties:
+            a_foo:
+              type: string
