@@ -164,15 +164,45 @@ components:
           format: date-time
 
     CatDead:
+      required:
+        - sliced_birds
+        - very_dead_since
+        - very_memorable_birds
       properties:
         name:
           type: string
+        favourite_birds:
+          type: array
+          items:
+            type: string
+            nullable: true
+        detested_birds:
+          type: array
+          items:
+            type: string
+        sliced_birds:
+          type: array
+          items:
+            type: string
+        forgettable_birds:
+          additionalProperties:
+            type: string
+            nullable: true
+        memorable_birds:
+          additionalProperties:
+            type: string
+        very_memorable_birds:
+          additionalProperties:
+            type: string
         dead_since:
           type: string
           format: date-time
           x-oapi-codegen-extra-tags:
             tag1: value1
             tag2: value2
+        very_dead_since:
+          type: string
+          format: date-time
         cause:
           type: string
           enum: [ car, dog, oldage ]

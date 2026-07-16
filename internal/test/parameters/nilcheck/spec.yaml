@@ -1,0 +1,61 @@
+# Optional array parameters must be omitted from requests when nil, sent when
+# non-nil (issue #2238 for header/cookie), and — under prefer-skip-optional-pointer —
+# an explicitly initialised empty slice must still be sent (issue #2031 for query).
+openapi: "3.0.0"
+info:
+  version: "1.0.0"
+  title: parameters/nilcheck
+  description: |
+    Nil / empty / populated handling of optional array parameters in the
+    generated client, across header, cookie, and query locations.
+paths:
+  # From issue-2238: an optional array HEADER param must NOT be sent when nil,
+  # and must be sent when non-nil.
+  /header:
+    get:
+      operationId: getHeader
+      parameters:
+        - name: X-Tags
+          in: header
+          schema:
+            type: array
+            items:
+              type: string
+          required: false
+      responses:
+        '204':
+          description: no content
+  # From issue-2238: the same for an optional array COOKIE param.
+  /cookie:
+    get:
+      operationId: getCookie
+      parameters:
+        - name: tags
+          in: cookie
+          schema:
+            type: array
+            items:
+              type: string
+          required: false
+      responses:
+        '204':
+          description: no content
+  # From issue-2031: under prefer-skip-optional-pointer, an optional array QUERY
+  # param is a bare slice; nil must be omitted, but an explicitly initialised
+  # empty slice must still be serialized (nil-vs-empty distinction).
+  /query:
+    get:
+      operationId: getQuery
+      parameters:
+        - name: "user_ids[]"
+          in: query
+          schema:
+            type: array
+            items:
+              type: integer
+          style: form
+          explode: true
+          required: false
+      responses:
+        '204':
+          description: no content

@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: aggregatesallof
+output: allof_old_merge.gen.go
+# Union of the flags the folded all_of/v1 case uses:
+#   - models         : generate model types
+#   - embedded-spec  : all_of/v1 embedded the spec (retained for fidelity)
+#   - skip-prune     : keep schemas not directly referenced by a path
+#   - old-merge-schemas: the BEHAVIOR UNDER TEST — produces struct embedding
+#                        for allOf members rather than the flat struct used in v2
+generate:
+  models: true
+  # embedded-spec is intentionally omitted: the original all_of/v1 had it, but since
+  # all three triples share one Go package the embedded-spec helpers (swaggerSpec,
+  # decodeSpec, etc.) would be redeclared. models-only is sufficient to test the
+  # struct-embedding behavior under old-merge-schemas.
+output-options:
+  skip-prune: true
+compatibility:
+  old-merge-schemas: true

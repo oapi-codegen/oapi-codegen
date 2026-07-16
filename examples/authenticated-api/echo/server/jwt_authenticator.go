@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3filter"
-	"github.com/lestrrat-go/jwx/jwt"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 	middleware "github.com/oapi-codegen/echo-middleware"
 )
 
@@ -21,9 +21,9 @@ type JWSValidator interface {
 const JWTClaimsContextKey = "jwt_claims"
 
 var (
-	ErrNoAuthHeader      = errors.New("Authorization header is missing")
-	ErrInvalidAuthHeader = errors.New("Authorization header is malformed")
-	ErrClaimsInvalid     = errors.New("Provided claims do not match expected scopes")
+	ErrNoAuthHeader      = errors.New("authorization header is missing")
+	ErrInvalidAuthHeader = errors.New("authorization header is malformed")
+	ErrClaimsInvalid     = errors.New("provided claims do not match expected scopes")
 )
 
 // GetJWSFromRequest extracts a JWS string from an Authorization: Bearer <jws> header
@@ -89,30 +89,27 @@ func Authenticate(v JWSValidator, ctx context.Context, input *openapi3filter.Aut
 // as a list under the "perms" claim, short for permissions, to keep the token
 // shorter.
 func GetClaimsFromToken(t jwt.Token) ([]string, error) {
-	rawPerms, found := t.Get(PermissionsClaim)
-	if !found {
+	if !t.Has(PermissionsClaim) {
 		// If the perms aren't found, it means that the token has none, but it has
 		// passed signature validation by now, so it's a valid token, so we return
 		// the empty list.
 		return make([]string, 0), nil
 	}
 
-	// rawPerms will be an untyped JSON list, so we need to convert it to
-	// a string list.
-	rawList, ok := rawPerms.([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("'%s' claim is unexpected type'", PermissionsClaim)
+	var rawList []interface{}
+	if err := t.Get(PermissionsClaim, &rawList); err != nil {
+		return nil, fmt.Errorf("getting %q claim: %w", PermissionsClaim, err)
 	}
 
 	claims := make([]string, len(rawList))
-
 	for i, rawClaim := range rawList {
-		var ok bool
-		claims[i], ok = rawClaim.(string)
+		claim, ok := rawClaim.(string)
 		if !ok {
 			return nil, fmt.Errorf("%s[%d] is not a string", PermissionsClaim, i)
 		}
+		claims[i] = claim
 	}
+
 	return claims, nil
 }
 

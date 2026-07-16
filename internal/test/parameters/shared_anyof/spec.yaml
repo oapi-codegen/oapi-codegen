@@ -1,0 +1,63 @@
+openapi: 3.1.0
+info:
+  title: shared-anyof-param
+  version: "1.0.0"
+# Path-level anyOf parameters shared across multiple methods. The union member
+# types (Id0/Id1, ...) are declared once for the path item rather than once per
+# method, so this compiles (issue #2090). Distinct parameter names across the
+# regular path, webhook, and callback avoid a cross-path collision.
+paths:
+  /v1/resource/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          anyOf:
+            - {type: string, format: uuid}
+            - {type: string, pattern: '^[a-z0-9_-]+$'}
+    get: {operationId: getResource, responses: {'200': {description: ok}}}
+    post: {operationId: postResource, responses: {'200': {description: ok}}}
+    delete: {operationId: deleteResource, responses: {'200': {description: ok}}}
+  /subscribe:
+    post:
+      operationId: subscribe
+      responses: {'200': {description: ok}}
+      callbacks:
+        resourceEvent:
+          '{$request.body#/callbackUrl}':
+            parameters:
+              - name: cbid
+                in: query
+                required: true
+                schema:
+                  anyOf: [{type: string, format: uuid}, {type: string, pattern: '^[a-z0-9_-]+$'}]
+            post: {operationId: onResourcePost, responses: {'200': {description: ok}}}
+            get: {operationId: onResourceGet, responses: {'200': {description: ok}}}
+  # A component parameter with an anyOf schema, referenced from two different
+  # paths: its union member types are declared once with the component, so the
+  # two references do not collide (issue #2090).
+  /widgets/{wid}:
+    parameters: [{$ref: '#/components/parameters/WidgetId'}]
+    get: {operationId: getWidget, responses: {'200': {description: ok}}}
+  /gadgets/{wid}:
+    parameters: [{$ref: '#/components/parameters/WidgetId'}]
+    get: {operationId: getGadget, responses: {'200': {description: ok}}}
+components:
+  parameters:
+    WidgetId:
+      name: wid
+      in: path
+      required: true
+      schema:
+        anyOf: [{type: string, format: uuid}, {type: string, pattern: '^[a-z0-9_-]+$'}]
+webhooks:
+  resourceWebhook:
+    parameters:
+      - name: whid
+        in: query
+        required: true
+        schema:
+          anyOf: [{type: string, format: uuid}, {type: string, pattern: '^[a-z0-9_-]+$'}]
+    post: {operationId: onWebhookPost, responses: {'200': {description: ok}}}
+    get: {operationId: onWebhookGet, responses: {'200': {description: ok}}}

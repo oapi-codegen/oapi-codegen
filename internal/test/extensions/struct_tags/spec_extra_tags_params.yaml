@@ -1,0 +1,64 @@
+# ==========================================================================
+# Category: extensions/struct_tags — extra-tags on query parameters
+# Tests:    x-oapi-codegen-extra-tags at the parameter level, at the schema
+#           level within a parameter, and at the schema level on an optional
+#           parameter.
+#
+# Folds in (provenance):
+#   - issues/issue-2232 (extra-tags on params — param-level and schema-level)
+# ==========================================================================
+openapi: "3.0.3"
+info:
+  title: extensions/struct_tags — extra-tags on query parameters
+  version: "1.0.0"
+  description: |
+    Regression test for x-oapi-codegen-extra-tags applied to query parameters
+    rather than schema properties. The extension may appear at the parameter
+    level (siblings of name/in/schema) or inside the schema object of the
+    parameter. Both placements must produce the correct struct tag on the
+    generated params struct field. Covers issue #2232.
+paths:
+  # issue #2232: x-oapi-codegen-extra-tags on query parameters must produce
+  # validate tags on the generated params struct whether the extension is at
+  # the parameter level or at the schema level within the parameter.
+  /v1/endpoint:
+    get:
+      operationId: GetEndpoint
+      parameters:
+        - name: env_param_level
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - dev
+              - live
+          x-oapi-codegen-extra-tags:
+            validate: "required,oneof=dev live"
+        - name: env_schema_level
+          in: query
+          required: true
+          schema:
+            type: string
+            enum:
+              - dev
+              - live
+            x-oapi-codegen-extra-tags:
+              validate: "required,oneof=dev live"
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            x-oapi-codegen-extra-tags:
+              validate: "min=0,max=100"
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string

@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: additionalinitialisms
+output: gen.go
+generate:
+  models: true
+output-options:
+  # to make sure that all types are generated, even if they're unreferenced
+  skip-prune: true
+  name-normalizer: ToCamelCaseWithInitialisms
+  additional-initialisms:
+    - CSP

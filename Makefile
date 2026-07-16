@@ -10,7 +10,7 @@ help:
 	@echo "    lint         lint the project"
 
 $(GOBIN)/golangci-lint:
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOBIN) v1.62.2
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/main/install.sh | sh -s -- -b $(GOBIN) v2.12.2
 
 .PHONY: tools
 tools: $(GOBIN)/golangci-lint
@@ -23,7 +23,7 @@ lint: tools
 
 lint-ci: tools
 	# for the root module, explicitly run the step, to prevent recursive calls
-	$(GOBIN)/golangci-lint run ./... --out-format=colored-line-number --timeout=5m
+	$(GOBIN)/golangci-lint run ./... --output.text.path=stdout --timeout=5m
 	# then, for all child modules, use a module-managed `Makefile`
 	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && env GOBIN=$(GOBIN) make lint-ci'
 
@@ -44,6 +44,18 @@ tidy:
 	go mod tidy
 	# then, for all child modules, use a module-managed `Makefile`
 	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && make tidy'
+
+$(GOBIN)/mdtoc:
+	env GOBIN=$(GOBIN) go install sigs.k8s.io/mdtoc@v1.4.0
+
+# Generate/update the Table of Contents in Markdown files.
+# Files must contain <!-- toc --> / <!-- /toc --> sentinel comments.
+# Use "make readme-toc-check" in CI to verify TOCs are up-to-date.
+readme-toc: $(GOBIN)/mdtoc
+	$(GOBIN)/mdtoc --inplace README.md
+
+readme-toc-check: $(GOBIN)/mdtoc
+	$(GOBIN)/mdtoc --inplace --dryrun README.md
 
 tidy-ci:
 	# for the root module, explicitly run the step, to prevent recursive calls

@@ -14,6 +14,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"os"
@@ -23,13 +24,13 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"gopkg.in/yaml.v2"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
 
-func errExit(format string, args ...interface{}) {
+func errExit(format string, args ...any) {
 	if !strings.HasSuffix(format, "\n") {
 		format = format + "\n"
 	}
@@ -58,7 +59,6 @@ var (
 	flagExcludeSchemas      string
 	flagResponseTypeSuffix  string
 	flagAliasTypes          bool
-	flagInitialismOverrides bool
 )
 
 type configuration struct {
@@ -102,7 +102,7 @@ func main() {
 	// All flags below are deprecated, and will be removed in a future release. Please do not
 	// update their behavior.
 	flag.StringVar(&flagGenerate, "generate", "types,client,server,spec",
-		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "gin", "gorilla", "spec", "skip-fmt", "skip-prune", "fiber", "iris", "std-http".`)
+		`Comma-separated list of code to generate; valid options: "types", "client", "chi-server", "server", "gin", "gorilla", "spec", "skip-fmt", "skip-prune", "fiber", "fiber-v3", "iris", "std-http".`)
 	flag.StringVar(&flagIncludeTags, "include-tags", "", "Only include operations with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagExcludeTags, "exclude-tags", "", "Exclude operations that are tagged with the given tags. Comma-separated list of tags.")
 	flag.StringVar(&flagIncludeOperationIDs, "include-operation-ids", "", "Only include operations with the given operation-ids. Comma-separated list of operation-ids.")
@@ -112,7 +112,6 @@ func main() {
 	flag.StringVar(&flagExcludeSchemas, "exclude-schemas", "", "A comma separated list of schemas which must be excluded from generation.")
 	flag.StringVar(&flagResponseTypeSuffix, "response-type-suffix", "", "The suffix used for responses types.")
 	flag.BoolVar(&flagAliasTypes, "alias-types", false, "Alias type declarations if possible.")
-	flag.BoolVar(&flagInitialismOverrides, "initialism-overrides", false, "Use initialism overrides.")
 
 	flag.Parse()
 
@@ -158,10 +157,14 @@ func main() {
 			errExit("error reading config file '%s': %v\n", flagConfigFile, err)
 		}
 		var oldConfig oldConfiguration
-		oldErr := yaml.UnmarshalStrict(configFile, &oldConfig)
+		oldDec := yaml.NewDecoder(bytes.NewReader(configFile))
+		oldDec.KnownFields(true)
+		oldErr := oldDec.Decode(&oldConfig)
 
 		var newConfig configuration
-		newErr := yaml.UnmarshalStrict(configFile, &newConfig)
+		newDec := yaml.NewDecoder(bytes.NewReader(configFile))
+		newDec.KnownFields(true)
+		newErr := newDec.Decode(&newConfig)
 
 		// If one of the two files parses, but the other fails, we know the
 		// answer.
@@ -271,13 +274,37 @@ func main() {
 		errExit("configuration error: %v\n", err)
 	}
 
+	if warnings := opts.Generate.Warnings(); len(warnings) > 0 {
+		var out strings.Builder
+		out.WriteString("WARNING: A number of warning(s) were returned when validating the GenerateOptions:")
+		for k, v := range warnings {
+			out.WriteString("\n- " + k + ": " + v)
+		}
+
+		_, _ = fmt.Fprint(os.Stderr, out.String())
+	}
+
+	if warnings := opts.Warnings(); len(warnings) > 0 {
+		var out strings.Builder
+		out.WriteString("WARNING: A number of cross-field configuration warning(s) were returned:")
+		for k, v := range warnings {
+			out.WriteString("\n- " + k + ": " + v)
+		}
+		out.WriteString("\n")
+
+		_, _ = fmt.Fprint(os.Stderr, out.String())
+	}
+
 	// If the user asked to output configuration, output it to stdout and exit
 	if flagOutputConfig {
-		buf, err := yaml.Marshal(opts)
-		if err != nil {
+		var buf bytes.Buffer
+		enc := yaml.NewEncoder(&buf)
+		enc.SetIndent(2)
+		if err := enc.Encode(opts); err != nil {
 			errExit("error YAML marshaling configuration: %v\n", err)
 		}
-		fmt.Print(string(buf))
+		_ = enc.Close()
+		fmt.Print(buf.String())
 		return
 	}
 
@@ -296,26 +323,31 @@ func main() {
 		errExit("error loading swagger spec in %s\n: %s\n", flag.Arg(0), err)
 	}
 
-	if strings.HasPrefix(swagger.OpenAPI, "3.1.") {
-		fmt.Println("WARNING: You are using an OpenAPI 3.1.x specification, which is not yet supported by oapi-codegen (https://github.com/oapi-codegen/oapi-codegen/issues/373) and so some functionality may not be available. Until oapi-codegen supports OpenAPI 3.1, it is recommended to downgrade your spec to 3.0.x")
-	}
-
 	if len(noVCSVersionOverride) > 0 {
-		opts.Configuration.NoVCSVersionOverride = &noVCSVersionOverride
+		opts.NoVCSVersionOverride = &noVCSVersionOverride
 	}
 
-	code, err := codegen.Generate(swagger, opts.Configuration)
-	if err != nil {
-		errExit("error generating code: %s\n", err)
-	}
+	code, genErr := codegen.Generate(swagger, opts.Configuration)
 
-	if opts.OutputFile != "" {
-		err = os.WriteFile(opts.OutputFile, []byte(code), 0o644)
-		if err != nil {
-			errExit("error writing generated code to file: %s\n", err)
+	// Always emit any generated code to the requested destination, even when
+	// generation returned an error (e.g. the formatter rejected the output).
+	// Writing to the output file lets the user inspect the broken source
+	// directly instead of having it interleaved with stderr.
+	if code != "" {
+		if opts.OutputFile != "" {
+			if err := os.MkdirAll(filepath.Dir(opts.OutputFile), 0o755); err != nil {
+				errExit("error unable to create directory: %s\n", err)
+			}
+			if err := os.WriteFile(opts.OutputFile, []byte(code), 0o644); err != nil {
+				errExit("error writing generated code to file: %s\n", err)
+			}
+		} else {
+			fmt.Print(code)
 		}
-	} else {
-		fmt.Print(code)
+	}
+
+	if genErr != nil {
+		errExit("error generating code: %s\n", genErr)
 	}
 }
 
@@ -446,8 +478,6 @@ func updateConfigFromFlags(cfg *configuration) error {
 		cfg.OutputFile = flagOutputFile
 	}
 
-	cfg.OutputOptions.InitialismOverrides = flagInitialismOverrides
-
 	return nil
 }
 
@@ -497,8 +527,12 @@ func generationTargets(cfg *codegen.Configuration, targets []string) error {
 			opts.ChiServer = true
 		case "fiber-server", "fiber":
 			opts.FiberServer = true
+		case "fiber-v3-server", "fiber-v3":
+			opts.FiberV3Server = true
 		case "server", "echo-server", "echo":
 			opts.EchoServer = true
+		case "echo5", "echo5-server":
+			opts.Echo5Server = true
 		case "gin", "gin-server":
 			opts.GinServer = true
 		case "gorilla", "gorilla-server":

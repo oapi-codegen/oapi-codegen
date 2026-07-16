@@ -1,0 +1,30 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 1.0.0
+servers:
+  - url: https://te.st
+paths:
+  /v1/test:
+    get:
+      operationId: GetTest
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+components:
+  responses:
+    Success:
+      description: Success
+      content:
+        application/json:
+          schema:
+            type: string
+    Unauthorized:
+      description: Unauthorized
+      content:
+        text/plain:
+          schema:
+            type: string
+          example: "Unauthorized"

@@ -1,0 +1,54 @@
+openapi: 3.0.2
+info:
+  version: "0.0.1"
+  title: response-headers
+paths:
+  /foo:
+    get:
+      operationId: getFoo
+      responses:
+        200:
+          description: "endpoint"
+          headers:
+            "bar":
+              schema:
+                type: string
+            "x-next-cursor":
+              schema:
+                type: string
+                nullable: true
+            "x-request-id":
+              required: true
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/data"
+        404:
+          $ref: "#/components/responses/NotFound"
+        default:
+          description: "error"
+          headers:
+            "retry-after":
+              schema:
+                type: integer
+components:
+  responses:
+    NotFound:
+      description: "not found"
+      headers:
+        "trace-id":
+          required: true
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/data"
+  schemas:
+    data:
+      type: object
+      properties:
+        foo:
+          type: string

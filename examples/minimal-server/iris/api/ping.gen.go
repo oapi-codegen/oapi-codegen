@@ -9,6 +9,7 @@ import (
 
 // Pong defines model for Pong.
 type Pong struct {
+	// Ping Example: pong
 	Ping string `json:"ping"`
 }
 
@@ -46,6 +47,9 @@ func RegisterHandlers(router *iris.Application, si ServerInterface) {
 
 // RegisterHandlersWithOptions creates http.Handler with additional options
 func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, options IrisServerOptions) {
+	for _, m := range options.Middlewares {
+		router.Use(m)
+	}
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,

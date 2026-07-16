@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: parameterspathedgecases
+generate:
+  echo-server: true
+  client: true
+  models: true
+  embedded-spec: true
+output: path_edge_cases.gen.go

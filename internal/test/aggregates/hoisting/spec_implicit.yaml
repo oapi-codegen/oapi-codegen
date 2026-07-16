@@ -1,0 +1,242 @@
+# ==========================================================================
+# Category: aggregates/hoisting (implicit/default)
+# Tests:    Default hoisting of inline oneOf/anyOf schemas at every operation
+#           position: response root, array items, nested property, request body
+#           root, request body property, webhook, and callback. Each hoisted
+#           wrapper type receives As<Branch>()/From<Branch>()/Merge<Branch>()
+#           accessor methods.
+#
+# Folds in (provenance):
+#   - anonymous_inner_hoisting/implicit  (default/implicit hoisting, OpenAPI 3.1)
+# ==========================================================================
+openapi: 3.1.0
+info:
+  title: aggregates/hoisting (implicit/default)
+  version: "1.0.0"
+  description: |
+    Exercises inline oneOf / anyOf schemas at every operation root and at
+    nested positions. Each generated wrapper type should receive
+    As<Branch>() / From<Branch>() / Merge<Branch>() accessor methods.
+
+    Coverage spans regular paths, OpenAPI 3.1 webhooks, and callbacks
+    so the hoisting pipeline is verified for all three operation sources.
+paths:
+  # anonymous_inner_hoisting/implicit: inline oneOf as the response body root
+  /response-root-oneof:
+    get:
+      operationId: getResponseRootOneOf
+      responses:
+        '200':
+          description: inline oneOf as the response body root
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/ImplicitCat'
+                  - $ref: '#/components/schemas/ImplicitDog'
+
+  # anonymous_inner_hoisting/implicit: inline anyOf as the response body root
+  /response-root-anyof:
+    get:
+      operationId: getResponseRootAnyOf
+      responses:
+        '200':
+          description: inline anyOf as the response body root
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: '#/components/schemas/ImplicitCat'
+                  - $ref: '#/components/schemas/ImplicitDog'
+
+  # anonymous_inner_hoisting/implicit: inline oneOf as items of an array property
+  /response-items-oneof:
+    get:
+      operationId: getResponseItemsOneOf
+      responses:
+        '200':
+          description: inline oneOf as items of an array property
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - items
+                properties:
+                  items:
+                    type: array
+                    items:
+                      oneOf:
+                        - $ref: '#/components/schemas/ImplicitCat'
+                        - $ref: '#/components/schemas/ImplicitDog'
+
+  # anonymous_inner_hoisting/implicit: inline oneOf nested inside a property of a property
+  /response-deep-nested:
+    get:
+      operationId: getResponseDeepNested
+      responses:
+        '200':
+          description: inline oneOf nested inside a property of a property
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  wrapper:
+                    type: object
+                    properties:
+                      inner:
+                        oneOf:
+                          - $ref: '#/components/schemas/ImplicitCat'
+                          - $ref: '#/components/schemas/ImplicitDog'
+
+  # anonymous_inner_hoisting/implicit: inline oneOf as the request body root
+  /body-root-oneof:
+    post:
+      operationId: postBodyRootOneOf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/ImplicitCat'
+                - $ref: '#/components/schemas/ImplicitDog'
+      responses:
+        '200':
+          description: ok
+
+  # anonymous_inner_hoisting/implicit: inline oneOf as a property of the request body
+  /body-property-oneof:
+    post:
+      operationId: postBodyPropertyOneOf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pet:
+                  oneOf:
+                    - $ref: '#/components/schemas/ImplicitCat'
+                    - $ref: '#/components/schemas/ImplicitDog'
+      responses:
+        '200':
+          description: ok
+
+  # anonymous_inner_hoisting/implicit: trigger endpoint that registers callbacks with inline oneOf bodies
+  /callback-trigger:
+    post:
+      operationId: triggerCallback
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - callbackUrl
+              properties:
+                callbackUrl:
+                  type: string
+                  format: uri
+      responses:
+        '202':
+          description: accepted
+      callbacks:
+        callbackBodyRootOneOf:
+          '{$request.body#/callbackUrl}':
+            post:
+              operationId: callbackBodyRootOneOf
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      oneOf:
+                        - $ref: '#/components/schemas/ImplicitCat'
+                        - $ref: '#/components/schemas/ImplicitDog'
+              responses:
+                '204':
+                  description: ack
+        callbackBodyPropertyOneOf:
+          '{$request.body#/callbackUrl}':
+            post:
+              operationId: callbackBodyPropertyOneOf
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        pet:
+                          oneOf:
+                            - $ref: '#/components/schemas/ImplicitCat'
+                            - $ref: '#/components/schemas/ImplicitDog'
+              responses:
+                '204':
+                  description: ack
+
+webhooks:
+  # anonymous_inner_hoisting/implicit: inline oneOf as the webhook request body root
+  webhookBodyRootOneOf:
+    post:
+      operationId: webhookBodyRootOneOf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - $ref: '#/components/schemas/ImplicitCat'
+                - $ref: '#/components/schemas/ImplicitDog'
+      responses:
+        '204':
+          description: ack
+
+  # anonymous_inner_hoisting/implicit: inline oneOf as a property of the webhook request body
+  webhookBodyPropertyOneOf:
+    post:
+      operationId: webhookBodyPropertyOneOf
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pet:
+                  oneOf:
+                    - $ref: '#/components/schemas/ImplicitCat'
+                    - $ref: '#/components/schemas/ImplicitDog'
+      responses:
+        '204':
+          description: ack
+
+components:
+  schemas:
+    # anonymous_inner_hoisting/implicit: discriminator branches for all oneOf/anyOf unions
+    ImplicitCat:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+          enum:
+            - cat
+        name:
+          type: string
+    ImplicitDog:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+          enum:
+            - dog
+        name:
+          type: string

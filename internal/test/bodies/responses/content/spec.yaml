@@ -1,0 +1,98 @@
+openapi: "3.0.0"
+info:
+  title: issue-2389
+  version: 1.0.0
+paths:
+  /thing:
+    get:
+      operationId: getThing
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          $ref: '#/components/responses/error'
+  /xml-only:
+    get:
+      operationId: getXMLOnly
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          $ref: '#/components/responses/xmlOnlyError'
+  /mixed:
+    get:
+      operationId: getMixed
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          $ref: '#/components/responses/mixedError'
+components:
+  schemas:
+    errorResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
+    jsonError:
+      type: object
+      properties:
+        code:
+          type: integer
+    xmlError:
+      type: object
+      properties:
+        reason:
+          type: string
+  responses:
+    error:
+      description: Error response
+      x-go-name: ErrorResponse
+      # A single response component exposing the same schema under more than
+      # one content type. Both content types must reference the one declared
+      # Go type (ErrorResponse); the regression generated undefined
+      # per-content-type names (ErrorResponseApplicationJSON / ...XML).
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/errorResponse'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/errorResponse'
+    xmlOnlyError:
+      description: XML-only response component
+      # No JSON content. GenerateTypesForResponses only declares a Go type for
+      # JSON media, so the wrapper field must point at the XML content's own
+      # schema type (XmlError), not the (never-declared) component base type.
+      content:
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/xmlError'
+    mixedError:
+      description: JSON and XML content with different schemas
+      # The JSON and XML content types resolve to different schemas. The JSON
+      # field uses the declared component type; the XML field must keep its own
+      # schema type (XmlError) rather than silently decoding XML into the JSON
+      # type.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/jsonError'
+        application/xml:
+          schema:
+            $ref: '#/components/schemas/xmlError'

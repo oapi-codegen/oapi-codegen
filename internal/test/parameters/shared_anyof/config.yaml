@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+# From issue-2090
+package: sharedanyof
+generate:
+  echo-server: true
+  client: true
+  models: true
+output: shared_anyof.gen.go
