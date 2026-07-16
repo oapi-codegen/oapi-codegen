@@ -468,8 +468,40 @@ func PropertiesEqual(a, b Property) bool {
 // using `type: [..., "null"]`) is documented as invalid input -- this
 // helper trusts its input to use the version-appropriate idiom.
 func schemaIsNullable(s *openapi3.Schema) bool {
+	return schemaIsNullableRec(s, nil)
+}
+
+// schemaIsNullableRec is schemaIsNullable's implementation, carrying a
+// `seen` set of already-visited schema values so that a cyclic allOf (a
+// $ref member resolving back to an ancestor — the same cycles
+// mergeOpenapiSchemas guards against) cannot cause unbounded recursion.
+// The set is allocated lazily: the common case (no allOf) never touches it.
+func schemaIsNullableRec(s *openapi3.Schema, seen map[*openapi3.Schema]bool) bool {
 	if s == nil {
 		return false
+	}
+	// A nullable member inside an allOf makes the whole schema nullable.
+	// In OpenAPI 3.0, allOf is the only place a sibling (`nullable: true`)
+	// may sit next to a $ref, so wrapping a $ref in allOf is the idiomatic
+	// way to decorate a referenced schema as nullable (issue #1898). This
+	// is where the flag lives — the outer schema's own Nullable is unset —
+	// so descend into the members. Descent is transitive to match the
+	// transitive allOf flattening in mergeOpenapiSchemas, and equally valid
+	// under 3.1's type-array idiom, hence checked before the version
+	// branch. mergeOpenapiSchemas unions nullability into the merged type;
+	// this surfaces it at the use site so the field is wrapped in a pointer
+	// / nullable.Nullable[T].
+	for _, member := range s.AllOf {
+		if member == nil || member.Value == nil || seen[member.Value] {
+			continue
+		}
+		if seen == nil {
+			seen = make(map[*openapi3.Schema]bool)
+		}
+		seen[member.Value] = true
+		if schemaIsNullableRec(member.Value, seen) {
+			return true
+		}
 	}
 	if globalState.is31 {
 		if s.Type != nil && s.Type.Includes("null") {

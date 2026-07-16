@@ -356,11 +356,24 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	// without needing to touch result.Nullable. The result.Nullable copy
 	// below is a no-op in 3.1 (s1.Nullable is always false there) but kept
 	// for 3.0 correctness, where Nullable is the only nullability carrier.
-	if schemaIsNullable(&s1) != schemaIsNullable(&s2) {
-		return openapi3.Schema{}, errors.New("merging two schemas with different Nullable")
-
+	//
+	// Nullability is UNIONed rather than required to match: if any member
+	// is nullable, the merged schema is nullable. This supports the common
+	// OpenAPI 3.0 idiom of decorating a $ref with nullability, which is only
+	// expressible through allOf because 3.0 forbids siblings next to $ref
+	// (issue #1898):
+	//
+	//   allOf:
+	//     - $ref: "#/components/schemas/user"
+	//     - nullable: true
+	//
+	// kin-openapi represents Nullable as a plain bool, so an unset value is
+	// indistinguishable from an explicit `nullable: false`; erroring on a
+	// mismatch made this widely-used idiom unusable. Union is also
+	// consistent with how Required is merged below.
+	if schemaIsNullable(&s1) || schemaIsNullable(&s2) {
+		result.Nullable = true
 	}
-	result.Nullable = s1.Nullable
 
 	if s1.ReadOnly != s2.ReadOnly {
 		return openapi3.Schema{}, errors.New("merging two schemas with different ReadOnly")
