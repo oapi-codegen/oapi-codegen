@@ -432,6 +432,40 @@ func (s Schema) DiscriminatorStampFor(element UnionElement) *DiscriminatorStamp 
 	return &stamp
 }
 
+// DiscriminatorCase is one arm of a union's ValueByDiscriminator() switch: a
+// discriminator value and the As* helper it dispatches to.
+type DiscriminatorCase struct {
+	// Value is the discriminator value that selects this element, e.g. "GitDiffFile".
+	Value string
+	// Method is the union element method suffix, e.g. "ExternalRef0GitDiffFile",
+	// so the generated call is t.As<Method>().
+	Method string
+}
+
+// DiscriminatorCases returns the ValueByDiscriminator() switch arms for the
+// union, sorted by discriminator value for deterministic output. Each mapping
+// value is the Go type of a union element (generateUnion writes both from the
+// same elementSchema.GoType), so it resolves to that element's Method(). A
+// mapping value not found among the union elements is skipped: it has no As*
+// helper to dispatch to, so no case is emitted and it falls through to the
+// switch default.
+func (s Schema) DiscriminatorCases() []DiscriminatorCase {
+	if s.Discriminator == nil {
+		return nil
+	}
+	known := make(map[string]UnionElement, len(s.UnionElements))
+	for _, el := range s.UnionElements {
+		known[el.String()] = el
+	}
+	cases := make([]DiscriminatorCase, 0, len(s.Discriminator.Mapping))
+	for _, value := range SortedMapKeys(s.Discriminator.Mapping) {
+		if el, ok := known[s.Discriminator.Mapping[value]]; ok {
+			cases = append(cases, DiscriminatorCase{Value: value, Method: el.Method()})
+		}
+	}
+	return cases
+}
+
 // UnionElement describe union element, based on prefix externalRef\d+ and real ref name from external schema.
 type UnionElement string
 

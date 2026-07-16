@@ -67,16 +67,17 @@
             return discriminator.Discriminator, err
         }
 
-        {{if ne 0 (len $discriminator.Mapping)}}
+        {{$cases := $schema.DiscriminatorCases -}}
+        {{if $cases}}
             func (t {{.TypeName}}) ValueByDiscriminator() (interface{}, error) {
                 discriminator, err := t.Discriminator()
                 if err != nil {
                     return nil, err
                 }
                 switch discriminator{
-                    {{range $value, $type := $discriminator.Mapping -}}
-                        case "{{$value}}":
-                            return t.As{{$type}}()
+                    {{range $cases -}}
+                        case "{{.Value}}":
+                            return t.As{{.Method}}()
                     {{end -}}
                     default:
                         return nil, errors.New("unknown discriminator value: "+discriminator)
