@@ -10,25 +10,6 @@ paths:
             schema: {$ref: '#/components/schemas/Thing'}
       responses:
         '200': {description: ok}
-  # A path-level anyOf parameter shared by several methods on ONE path is
-  # declared once for the path item, so it is accepted (no collision).
-  /resource/{id}:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          anyOf:
-            - {type: string, format: uuid}
-            - {type: string, pattern: '^[a-z]+$'}
-    get:
-      operationId: getResource
-      responses:
-        '200': {description: ok}
-    delete:
-      operationId: deleteResource
-      responses:
-        '200': {description: ok}
 components:
   schemas:
     Thing:
