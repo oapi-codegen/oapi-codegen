@@ -368,6 +368,10 @@ func TestSwaggerUriToEchoUri(t *testing.T) {
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToEchoUri("/path/{;arg*}/foo"))
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToEchoUri("/path/{?arg}/foo"))
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToEchoUri("/path/{?arg*}/foo"))
+
+	// Make sure literal colons are escaped (issue #1726)
+	assert.Equal(t, `/path\:foo`, SwaggerUriToEchoUri("/path:foo"))
+	assert.Equal(t, `/path/:arg\:foo`, SwaggerUriToEchoUri("/path/{arg}:foo"))
 }
 
 func TestSwaggerUriToGinUri(t *testing.T) {
@@ -385,6 +389,10 @@ func TestSwaggerUriToGinUri(t *testing.T) {
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToGinUri("/path/{;arg*}/foo"))
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToGinUri("/path/{?arg}/foo"))
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToGinUri("/path/{?arg*}/foo"))
+
+	// Make sure literal colons are escaped (issue #1726)
+	assert.Equal(t, `/path\:foo`, SwaggerUriToGinUri("/path:foo"))
+	assert.Equal(t, `/path/:arg\:foo`, SwaggerUriToGinUri("/path/{arg}:foo"))
 }
 
 func TestSwaggerUriToGorillaUri(t *testing.T) { // TODO
@@ -419,6 +427,10 @@ func TestSwaggerUriToFiberUri(t *testing.T) {
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{;arg*}/foo"))
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{?arg}/foo"))
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{?arg*}/foo"))
+
+	// Make sure literal colons are escaped (issue #1726)
+	assert.Equal(t, `/path\:foo`, SwaggerUriToFiberUri("/path:foo"))
+	assert.Equal(t, `/path/:arg\:foo`, SwaggerUriToFiberUri("/path/{arg}:foo"))
 }
 
 func TestSwaggerUriToChiUri(t *testing.T) {

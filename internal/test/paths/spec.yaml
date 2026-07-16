@@ -1,0 +1,29 @@
+# issue-1726: two paths sharing a prefix but ending in different literal-colon
+# segments must route independently. Routers that use ':' to introduce a path
+# parameter (Echo, Gin, Fiber) would otherwise treat ":validate"/":generate" as
+# the same parameter and collide, always dispatching to the first route.
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Literal colon paths
+paths:
+  /pets:validate:
+    post:
+      operationId: validatePets
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
+  /pets:generate:
+    post:
+      operationId: generatePets
+      responses:
+        '200':
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string
