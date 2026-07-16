@@ -219,6 +219,46 @@ func TestContainer_UsesNullableType(t *testing.T) {
 	require.True(t, c.MayBeNull[0].IsNull())
 }
 
+// ---- issue #1898: allOf decorating a $ref with `nullable: true` ----
+
+// TestDecoratedRef_AllOfNullable covers the OpenAPI 3.0 idiom of making a
+// referenced schema nullable by wrapping it in an allOf next to an inline
+// `{nullable: true}` (issue #1898). Before the fix this failed generation
+// with "merging two schemas with different Nullable"; now the decorated
+// $ref is generated as a nullable.Nullable[T] field under nullable-type:true,
+// for both required and optional properties.
+func TestDecoratedRef_AllOfNullable(t *testing.T) {
+	// Compile-time proof of the field types: these only assign if both
+	// fields are nullable.Nullable[string].
+	d := DecoratedRef{
+		RequiredNullableRef: nullable.NewNullableWithValue("present"),
+		OptionalNullableRef: nullable.NewNullNullable[string](),
+	}
+
+	val, err := d.RequiredNullableRef.Get()
+	require.NoError(t, err)
+	assert.Equal(t, "present", val)
+	assert.True(t, d.OptionalNullableRef.IsNull())
+
+	// Explicit null on the required field marshals to JSON null; the
+	// optional-but-unset field is omitted.
+	d = DecoratedRef{
+		RequiredNullableRef: nullable.NewNullNullable[string](),
+	}
+	actual, err := json.Marshal(d)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"required_nullable_ref":null}`, string(actual))
+
+	// A value on the required field round-trips.
+	d = DecoratedRef{
+		RequiredNullableRef: nullable.NewNullableWithValue("hello"),
+		OptionalNullableRef: nullable.NewNullableWithValue("world"),
+	}
+	actual, err = json.Marshal(d)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"required_nullable_ref":"hello","optional_nullable_ref":"world"}`, string(actual))
+}
+
 // ---- openapi31_nullable: 3.0 vs 3.1 nullable idiom equivalence ----
 
 // TestNicknameIsPointer_3_0 asserts that the 3.0 spec's `nullable: true`

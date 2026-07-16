@@ -37,6 +37,15 @@ type Container struct {
 	MayBeNull []nullable.Nullable[string] `json:"may-be-null"`
 }
 
+// DecoratableValue defines model for DecoratableValue.
+type DecoratableValue = string
+
+// DecoratedRef defines model for DecoratedRef.
+type DecoratedRef struct {
+	OptionalNullableRef nullable.Nullable[string] `json:"optional_nullable_ref,omitempty"`
+	RequiredNullableRef nullable.Nullable[string] `json:"required_nullable_ref"`
+}
+
 // PatchRequest A request to patch an existing user object.
 type PatchRequest struct {
 	// ComplexOptionalNullable Complex, optional and nullable
