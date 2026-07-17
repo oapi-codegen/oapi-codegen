@@ -303,6 +303,13 @@ type TypeDefinition struct {
 	// DeprecationReason is the human-readable reason for deprecation, used
 	// when Deprecated is true. If empty, a generic message is emitted.
 	DeprecationReason string
+
+	// Comment, when set, is the full doc comment (including the leading "//")
+	// emitted above the type in the operation parameter template, replacing the
+	// default "<name> defines parameters for <op>." line. Used to explain
+	// non-obvious generated names, e.g. the per-path hash prefix on a shared
+	// parameter disambiguated across paths (issue #2090).
+	Comment string
 }
 
 // DeprecationComment returns a Go-style deprecation comment if the type is

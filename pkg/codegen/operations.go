@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"cmp"
 	"fmt"
+	"hash/fnv"
 	"maps"
 	"slices"
 	"strconv"
@@ -36,6 +37,12 @@ type ParameterDefinition struct {
 	Required  bool   // Is this a required parameter?
 	Spec      *openapi3.Parameter
 	Schema    Schema
+
+	// Shared is true for a parameter declared at the path-item level, which
+	// is inherited by every method on the path. Its helper types are declared
+	// once for the path item rather than once per operation, so operation type
+	// collection skips them (issue #2090).
+	Shared bool
 }
 
 // TypeDef is here as an adapter after a large refactoring so that I don't
@@ -289,6 +296,253 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 		outParams = append(outParams, pd)
 	}
 	return outParams, nil
+}
+
+// paramNeedsHoisting reports whether a parameter's schema produces a named
+// helper type — an anyOf/oneOf union member, an inline object, etc. — as
+// opposed to a bare primitive. Only such parameters can cause the redeclaration
+// collision fixed for issue #2090, so only they participate in collision
+// detection. The check is exact: it describes the parameter and asks whether it
+// hoisted anything, rather than second-guessing which schema shapes hoist.
+func paramNeedsHoisting(paramRef *openapi3.ParameterRef) (bool, error) {
+	if paramRef == nil || paramRef.Value == nil {
+		return false, nil
+	}
+	described, err := DescribeParameters(openapi3.Parameters{paramRef}, nil)
+	if err != nil {
+		return false, err
+	}
+	for _, pd := range described {
+		if len(pd.Schema.AdditionalTypes) > 0 {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// sharedParamScope is one path item whose path-item-level parameters are shared
+// by every method on it. hashKey is a string unique to the scope, hashed to
+// disambiguate colliding names; source is a human-readable identifier for the
+// scope used in generated doc comments.
+type sharedParamScope struct {
+	item    *openapi3.PathItem
+	hashKey string
+	source  string
+}
+
+// enumerateSharedParamScopes returns every path item in the spec that can
+// declare path-item-level (shared) parameters: regular paths, webhooks, and
+// callback path items. All three share the one global Go type namespace, so
+// they must be considered together when detecting and resolving collisions.
+func enumerateSharedParamScopes(swagger *openapi3.T) []sharedParamScope {
+	var scopes []sharedParamScope
+
+	if swagger.Paths != nil {
+		for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
+			item := swagger.Paths.Value(requestPath)
+			if item != nil {
+				scopes = append(scopes, sharedParamScope{item: item, hashKey: requestPath, source: requestPath})
+			}
+		}
+	}
+	for _, webhookName := range SortedMapKeys(swagger.Webhooks) {
+		if item := swagger.Webhooks[webhookName]; item != nil {
+			scopes = append(scopes, sharedParamScope{item: item, hashKey: "webhook:" + webhookName, source: "webhook " + webhookName})
+		}
+	}
+	if swagger.Paths != nil {
+		for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
+			pathItem := swagger.Paths.Value(requestPath)
+			if pathItem == nil {
+				continue
+			}
+			for _, parentMethod := range SortedMapKeys(pathItem.Operations()) {
+				parentOp := pathItem.Operations()[parentMethod]
+				for _, cbName := range SortedMapKeys(parentOp.Callbacks) {
+					cbRef := parentOp.Callbacks[cbName]
+					if cbRef == nil || cbRef.Value == nil {
+						continue
+					}
+					cb := cbRef.Value
+					cbKeys := append([]string(nil), cb.Keys()...)
+					slices.Sort(cbKeys)
+					for _, urlExpr := range cbKeys {
+						if item := cb.Value(urlExpr); item != nil {
+							scopes = append(scopes, sharedParamScope{
+								item:    item,
+								hashKey: "callback:" + requestPath + ":" + parentMethod + ":" + cbName + ":" + urlExpr,
+								source:  "callback " + cbName + " " + urlExpr,
+							})
+						}
+					}
+				}
+			}
+		}
+	}
+	return scopes
+}
+
+// resolveSharedParameters is the pre-pass for shared (path-item-level)
+// parameter naming (issue #2090). It describes each scope's shared parameters
+// once and returns them keyed by path item, ready for the operation loops to
+// attach.
+//
+// A shared parameter's helper types are declared once for its path item, so
+// two methods on the same path never collide. Names still collide *across*
+// path items, though — the same `{id}` reused by sibling paths is the common
+// case — so a helper-type name produced by more than one scope is disambiguated
+// by prefixing every colliding scope's parameters with a short, stable hash of
+// the scope (git-style: extended to the full hash only if two scopes' short
+// hashes clash). A parameter that doesn't collide keeps its historical
+// undecorated name, so existing generated code is unaffected.
+func resolveSharedParameters(swagger *openapi3.T) (map[*openapi3.PathItem][]ParameterDefinition, error) {
+	scopes := enumerateSharedParamScopes(swagger)
+
+	// Count, per shared-parameter name, how many scopes hoist a helper type
+	// under it. A name produced by two or more scopes collides.
+	nameCounts := map[string]int{}
+	for _, scope := range scopes {
+		if len(scope.item.Operations()) == 0 {
+			continue
+		}
+		for _, paramRef := range scope.item.Parameters {
+			hoists, err := paramNeedsHoisting(paramRef)
+			if err != nil {
+				return nil, err
+			}
+			if hoists {
+				nameCounts[paramRef.Value.Name]++
+			}
+		}
+	}
+	colliding := map[string]bool{}
+	for name, n := range nameCounts {
+		if n >= 2 {
+			colliding[name] = true
+		}
+	}
+
+	// Assign a disambiguating token to every scope that carries a colliding
+	// parameter. Tokens are hashes of the scope key; a short prefix is used
+	// unless two scopes' short prefixes clash, in which case both fall back to
+	// the full hash.
+	tokenScopeKeys := map[*openapi3.PathItem]string{}
+	var needToken []string
+	for _, scope := range scopes {
+		if len(scope.item.Operations()) == 0 {
+			continue
+		}
+		for _, paramRef := range scope.item.Parameters {
+			if paramRef.Value != nil && colliding[paramRef.Value.Name] {
+				tokenScopeKeys[scope.item] = scope.hashKey
+				needToken = append(needToken, scope.hashKey)
+				break
+			}
+		}
+	}
+	tokens := assignScopeTokens(needToken)
+
+	result := map[*openapi3.PathItem][]ParameterDefinition{}
+	for _, scope := range scopes {
+		if _, done := result[scope.item]; done {
+			continue
+		}
+		token := ""
+		if key, ok := tokenScopeKeys[scope.item]; ok {
+			token = tokens[key]
+		}
+		described, err := describeSharedParameters(scope.item.Parameters, scope.source, token, colliding)
+		if err != nil {
+			return nil, err
+		}
+		markShared(described)
+		result[scope.item] = described
+	}
+	return result, nil
+}
+
+// assignScopeTokens maps each scope key to a stable identifier token derived
+// from an FNV hash of the key. It uses a short prefix of the hash, extending
+// any keys whose short prefixes collide to the full hash (git-style). The
+// tokens are lowercase so they camel-case cleanly when threaded through type
+// naming (e.g. "a1b2c3d" becomes the "A1b2c3d" prefix of "A1b2c3dId0").
+func assignScopeTokens(keys []string) map[string]string {
+	const shortLen = 7
+	full := map[string]string{}
+	short := map[string]string{}
+	for _, key := range keys {
+		h := fnv.New64a()
+		_, _ = h.Write([]byte(key))
+		sum := fmt.Sprintf("h%x", h.Sum64())
+		full[key] = sum
+		short[key] = sum[:min(shortLen+1, len(sum))]
+	}
+	shortCounts := map[string]int{}
+	for _, key := range keys {
+		shortCounts[short[key]]++
+	}
+	tokens := map[string]string{}
+	for _, key := range keys {
+		if shortCounts[short[key]] > 1 {
+			tokens[key] = full[key]
+		} else {
+			tokens[key] = short[key]
+		}
+	}
+	return tokens
+}
+
+// describeSharedParameters describes a scope's shared parameters once. A
+// parameter whose name collides across scopes is prefixed with the scope's
+// disambiguating token so its helper types are uniquely named; a parameter
+// that does not collide keeps its historical undecorated name (issue #2090).
+// For the disambiguated types, a doc comment is set explaining the otherwise
+// opaque hash prefix and pointing back to the source path.
+func describeSharedParameters(params openapi3.Parameters, source, token string, colliding map[string]bool) ([]ParameterDefinition, error) {
+	out := make([]ParameterDefinition, 0, len(params))
+	for _, paramRef := range params {
+		collides := token != "" && paramRef.Value != nil && colliding[paramRef.Value.Name]
+		var path []string
+		if collides {
+			path = []string{token}
+		}
+		described, err := DescribeParameters(openapi3.Parameters{paramRef}, path)
+		if err != nil {
+			return nil, err
+		}
+		if collides {
+			for i := range described {
+				for j := range described[i].Schema.AdditionalTypes {
+					td := &described[i].Schema.AdditionalTypes[j]
+					td.Comment = fmt.Sprintf(
+						"// %s is a helper type for the shared %q parameter of %q, prefixed with a per-path hash to disambiguate it from the same-named parameter on another path.",
+						td.TypeName, paramRef.Value.Name, source)
+				}
+			}
+		}
+		out = append(out, described...)
+	}
+	return out, nil
+}
+
+// markShared flags every parameter as shared at the path-item level, so its
+// helper types are declared once for the path item rather than once per
+// operation (issue #2090).
+func markShared(params []ParameterDefinition) {
+	for i := range params {
+		params[i].Shared = true
+	}
+}
+
+// sharedParameterTypeDefs returns the helper TypeDefinitions produced by
+// path-item-level parameters. These are emitted once for the path item
+// (attributed to its first operation) instead of once per operation.
+func sharedParameterTypeDefs(sharedParams []ParameterDefinition) []TypeDefinition {
+	var typeDefs []TypeDefinition
+	for _, param := range sharedParams {
+		typeDefs = append(typeDefs, param.Schema.AdditionalTypes...)
+	}
+	return typeDefs
 }
 
 type SecurityDefinition struct {
@@ -1099,18 +1353,25 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	// when multiple paths $ref the same path item.
 	aliasCounters := map[string]int{}
 
+	// Resolve path-item-level (shared) parameters once for the whole spec, so
+	// their helper types are declared once per path item and colliding names
+	// across paths are disambiguated (issue #2090).
+	sharedParams, err := resolveSharedParameters(swagger)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
 		pathItem := swagger.Paths.Value(requestPath)
 		// Source line of this path's key, so route registration can follow
 		// spec declaration order (issue #1887). Zero when unavailable.
 		pathSpecOrder := pathItemSourceLine(pathItem)
-		// These are parameters defined for all methods on a given path. They
-		// are shared by all methods.
-		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
-		if err != nil {
-			return nil, fmt.Errorf("error describing global parameters for %s: %s",
-				requestPath, err)
-		}
+		// Parameters defined for all methods on this path, resolved by the
+		// pre-pass. Their helper types are emitted once for the path item (on
+		// its first operation) rather than once per operation (issue #2090).
+		globalParams := sharedParams[pathItem]
+		sharedParamTypeDefs := sharedParameterTypeDefs(globalParams)
+		sharedTypeDefsEmitted := false
 
 		// Each path can have a number of operations, POST, GET, OPTIONS, etc.
 		pathOps := pathItem.Operations()
@@ -1257,6 +1518,13 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			// Generate all the type definitions needed for this operation
 			opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
 
+			// Declare the shared (path-item-level) parameter helper types once,
+			// on the first operation of the path item (issue #2090).
+			if !sharedTypeDefsEmitted {
+				opDef.TypeDefinitions = append(opDef.TypeDefinitions, sharedParamTypeDefs...)
+				sharedTypeDefsEmitted = true
+			}
+
 			operations = append(operations, opDef)
 		}
 	}
@@ -1282,18 +1550,23 @@ func WebhookOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, er
 		return operations, nil
 	}
 
+	sharedParams, err := resolveSharedParameters(swagger)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, webhookName := range SortedMapKeys(swagger.Webhooks) {
 		pathItem := swagger.Webhooks[webhookName]
 		if pathItem == nil {
 			continue
 		}
 
-		// Path-item-level parameters apply to every method on the
-		// webhook (rare for webhooks, but honored defensively).
-		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
-		if err != nil {
-			return nil, fmt.Errorf("error describing webhook %q parameters: %w", webhookName, err)
-		}
+		// Path-item-level parameters apply to every method on the webhook
+		// (rare for webhooks, but honored defensively). Their helper types are
+		// declared once for the path item (issue #2090).
+		globalParams := sharedParams[pathItem]
+		sharedParamTypeDefs := sharedParameterTypeDefs(globalParams)
+		sharedTypeDefsEmitted := false
 
 		pathOps := pathItem.Operations()
 		for _, opName := range SortedMapKeys(pathOps) {
@@ -1355,6 +1628,10 @@ func WebhookOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, er
 			}
 
 			opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
+			if !sharedTypeDefsEmitted {
+				opDef.TypeDefinitions = append(opDef.TypeDefinitions, sharedParamTypeDefs...)
+				sharedTypeDefsEmitted = true
+			}
 			operations = append(operations, opDef)
 		}
 	}
@@ -1394,6 +1671,11 @@ func CallbackOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, e
 		return operations, nil
 	}
 
+	sharedParams, err := resolveSharedParameters(swagger)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
 		pathItem := swagger.Paths.Value(requestPath)
 		if pathItem == nil {
@@ -1424,10 +1706,12 @@ func CallbackOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, e
 					if cbPathItem == nil {
 						continue
 					}
-					globalParams, err := DescribeParameters(cbPathItem.Parameters, nil)
-					if err != nil {
-						return nil, fmt.Errorf("error describing callback %q parameters: %w", callbackName, err)
-					}
+					// Path-item-level parameters shared by every method on
+					// the callback path item; helper types declared once
+					// (issue #2090).
+					globalParams := sharedParams[cbPathItem]
+					sharedParamTypeDefs := sharedParameterTypeDefs(globalParams)
+					sharedTypeDefsEmitted := false
 
 					cbOps := cbPathItem.Operations()
 					for _, opName := range SortedMapKeys(cbOps) {
@@ -1486,6 +1770,10 @@ func CallbackOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, e
 						}
 
 						opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
+						if !sharedTypeDefsEmitted {
+							opDef.TypeDefinitions = append(opDef.TypeDefinitions, sharedParamTypeDefs...)
+							sharedTypeDefsEmitted = true
+						}
 						operations = append(operations, opDef)
 					}
 				}
@@ -1816,8 +2104,14 @@ func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 		typeDefs = append(typeDefs, GenerateParamsTypes(op)...)
 	}
 
-	// Now, go through all the additional types we need to declare.
+	// Now, go through all the additional types we need to declare. Skip
+	// parameters shared at the path-item level: their helper types are
+	// declared once for the path item (see sharedParameterTypeDefs), not once
+	// per operation, which would redeclare them (issue #2090).
 	for _, param := range op.AllParams() {
+		if param.Shared {
+			continue
+		}
 		typeDefs = append(typeDefs, param.Schema.AdditionalTypes...)
 	}
 
