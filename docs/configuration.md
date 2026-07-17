@@ -62,6 +62,7 @@ compatibility:
   disable-enum-value-conflict-resolution: false
   headers-implicitly-required: false
   enable-auth-scopes-on-context: false
+  sort-handler-registrations: false
 
 # Output modification options
 # See <a href="https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen#OutputOptions">OutputOptions</a>

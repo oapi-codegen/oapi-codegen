@@ -135,6 +135,10 @@
         "enable-auth-scopes-on-context": {
           "type": "boolean",
           "description": "DEPRECATED: perform authentication and authorization at runtime using the request validation middleware instead, which evaluates the spec's security requirements directly. Please see https://github.com/oapi-codegen/oapi-codegen/issues/1524\nRe-enables the legacy emission of security scheme scopes by generated server code: the per-scheme context key types (e.g. `bearerAuthContextKey`), the scope constants (e.g. `BearerAuthScopes`), and the per-operation calls that store the operation's scopes into the request context.\nThis mechanism is off by default: it flattens the OpenAPI `security` requirements into a per-scheme list of scopes, and cannot represent alternative schemes (OR), combined schemes (AND), or anonymous (`{}`) alternatives.\nA security scheme that is a $ref into a spec covered by import-mapping does not declare its own context key type; its scopes constant is an alias of the one in the mapped package, so `context.Value` lookups use the same key across the generated packages. This requires the mapped spec's config to also set this flag. Please see https://github.com/oapi-codegen/oapi-codegen/issues/2383"
+        },
+        "sort-handler-registrations": {
+          "type": "boolean",
+          "description": "Restores the historical behavior of registering generated route handlers in sorted (lexicographic, by path then method) order. By default handlers are registered in the order their paths are declared in the spec, so that on routers which match in registration order (e.g. Fiber, Gorilla/mux) overlapping paths can be disambiguated by ordering them in the spec. Set this to true to opt out and go back to the old sorted registration order.\nPlease see https://github.com/oapi-codegen/oapi-codegen/issues/1887"
         }
       }
     },

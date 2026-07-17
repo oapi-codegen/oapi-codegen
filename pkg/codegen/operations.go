@@ -2217,6 +2217,34 @@ func sortOperationsBySpecOrder(ops []OperationDefinition) []OperationDefinition 
 	return out
 }
 
+// sortOperationsLexicographically returns a copy of ops sorted by path then
+// method, reproducing the historical (pre-#1887) route-registration order in
+// which OperationDefinitions gathers paths. It is a stable no-op on an
+// already-gathered slice, but re-sorts explicitly so the ordering does not
+// depend on the caller's input.
+func sortOperationsLexicographically(ops []OperationDefinition) []OperationDefinition {
+	out := make([]OperationDefinition, len(ops))
+	copy(out, ops)
+	slices.SortStableFunc(out, func(a, b OperationDefinition) int {
+		if c := cmp.Compare(a.Path, b.Path); c != 0 {
+			return c
+		}
+		return cmp.Compare(a.Method, b.Method)
+	})
+	return out
+}
+
+// operationsInRegistrationOrder returns ops in the order route handlers should
+// be registered. By default this follows spec-declaration order (issue #1887);
+// when the sort-handler-registrations compatibility flag is set it restores the
+// historical lexicographic order.
+func operationsInRegistrationOrder(ops []OperationDefinition) []OperationDefinition {
+	if globalState.options.Compatibility.SortHandlerRegistrations {
+		return sortOperationsLexicographically(ops)
+	}
+	return sortOperationsBySpecOrder(ops)
+}
+
 // GenerateIrisServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateIrisServer(t *template.Template, operations []OperationDefinition) (string, error) {
@@ -2225,7 +2253,7 @@ func GenerateIrisServer(t *template.Template, operations []OperationDefinition) 
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"iris/iris-handler.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"iris/iris-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
@@ -2239,7 +2267,7 @@ func GenerateChiServer(t *template.Template, operations []OperationDefinition) (
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"chi/chi-handler.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"chi/chi-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
@@ -2253,7 +2281,7 @@ func GenerateFiberServer(t *template.Template, operations []OperationDefinition)
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber/fiber-handler.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber/fiber-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
@@ -2267,7 +2295,7 @@ func GenerateFiberV3Server(t *template.Template, operations []OperationDefinitio
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber-v3/fiber-handler.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber-v3/fiber-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
@@ -2281,7 +2309,7 @@ func GenerateEchoServer(t *template.Template, operations []OperationDefinition) 
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/echo-register.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/echo-register.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
@@ -2295,7 +2323,7 @@ func GenerateEcho5Server(t *template.Template, operations []OperationDefinition)
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/v5/echo-register.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/v5/echo-register.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
@@ -2309,7 +2337,7 @@ func GenerateGinServer(t *template.Template, operations []OperationDefinition) (
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"gin/gin-register.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"gin/gin-register.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
@@ -2323,7 +2351,7 @@ func GenerateGorillaServer(t *template.Template, operations []OperationDefinitio
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"gorilla/gorilla-register.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"gorilla/gorilla-register.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
@@ -2337,7 +2365,7 @@ func GenerateStdHTTPServer(t *template.Template, operations []OperationDefinitio
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"stdhttp/std-http-handler.tmpl"}, t, sortOperationsBySpecOrder(operations)); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"stdhttp/std-http-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
