@@ -386,6 +386,16 @@ type CompatibilityOptions struct {
 	// middleware, which evaluates the spec's security requirements directly.
 	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/1524
 	EnableAuthScopesOnContext bool `yaml:"enable-auth-scopes-on-context,omitempty"`
+
+	// SortHandlerRegistrations restores the historical behavior of registering
+	// generated route handlers in sorted (lexicographic, by path then method)
+	// order. By default handlers are registered in the order their paths are
+	// declared in the spec, so that on routers which match in registration
+	// order (e.g. Fiber, Gorilla/mux) overlapping paths can be disambiguated by
+	// ordering them in the spec. Set this to true to opt out and go back to the
+	// old sorted registration order.
+	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/1887
+	SortHandlerRegistrations bool `yaml:"sort-handler-registrations,omitempty"`
 }
 
 func (co CompatibilityOptions) Validate() map[string]string {

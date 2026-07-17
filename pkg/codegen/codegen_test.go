@@ -780,5 +780,61 @@ func TestSecuritySchemeScopesWithoutOperations(t *testing.T) {
 	assert.Contains(t, code, `BearerAuthScopes bearerAuthContextKey = "BearerAuth.Scopes"`)
 }
 
+// TestSortHandlerRegistrations verifies the sort-handler-registrations
+// compatibility flag: by default handlers are registered in spec-declaration
+// order (issue #1887), and setting the flag restores the historical
+// lexicographic (by path) registration order.
+func TestSortHandlerRegistrations(t *testing.T) {
+	// Paths are declared in non-lexicographic order: zebra before apple.
+	const spec = `
+openapi: 3.0.0
+info: { title: t, version: "1.0" }
+paths:
+  /zebra:
+    get:
+      operationId: getZebra
+      responses: { '200': { description: ok } }
+  /apple:
+    get:
+      operationId: getApple
+      responses: { '200': { description: ok } }
+`
+	load := func() *openapi3.T {
+		loader := openapi3.NewLoader()
+		loader.IncludeOrigin = true // recover spec declaration order for SpecOrder
+		swagger, err := loader.LoadFromData([]byte(spec))
+		require.NoError(t, err)
+		return swagger
+	}
+
+	base := Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{FiberServer: true, Models: true},
+	}
+
+	regOrder := func(code string) (zebra, apple int) {
+		return strings.Index(code, `options.BaseURL+"/zebra"`),
+			strings.Index(code, `options.BaseURL+"/apple"`)
+	}
+
+	// Default: registration follows spec order — zebra before apple.
+	code, err := Generate(load(), base)
+	require.NoError(t, err)
+	zebra, apple := regOrder(code)
+	require.NotEqual(t, -1, zebra)
+	require.NotEqual(t, -1, apple)
+	assert.Less(t, zebra, apple, "default registration should follow spec order (zebra before apple)")
+
+	// Flag set: registration restored to lexicographic order — apple before zebra.
+	sorted := base
+	sorted.Compatibility.SortHandlerRegistrations = true
+	code, err = Generate(load(), sorted)
+	require.NoError(t, err)
+	zebra, apple = regOrder(code)
+	require.NotEqual(t, -1, zebra)
+	require.NotEqual(t, -1, apple)
+	assert.Less(t, apple, zebra, "sort-handler-registrations should restore lexicographic order (apple before zebra)")
+}
+
 //go:embed test_spec.yaml
 var testOpenAPIDefinition string
