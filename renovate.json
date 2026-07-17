@@ -70,6 +70,15 @@
 				],
 				"executionMode": "branch"
 			}
+		},
+		{
+			"groupName": "version-in-docs",
+			"matchDepNames": [
+				"github.com/oapi-codegen/oapi-codegen/v2"
+			],
+			"matchFileNames": [
+				"**/*.md"
+			]
 		}
 	],
 	"customManagers": [
