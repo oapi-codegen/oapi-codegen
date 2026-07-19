@@ -1,0 +1,25 @@
+{{/*
+fiber v3 overrides for the shared server skeletons. fiber v3 differs from v2 in
+two tokens: the context is passed by value (fiber.Ctx) rather than by pointer
+(*fiber.Ctx), and the request-context accessor is c.RequestCtx() rather than
+c.Context(). Those show up in the ServerInterface method signature and the
+wrapper's func signatures / SetUserValue call, so this clone overrides
+interface.handlerSignature, fiber.ctxType and fiber.ctxAccessor. Everything
+else is inherited from the shared fiber templates (fiber/fiber-middleware.tmpl,
+fiber-handler.tmpl).
+*/}}
+
+{{/* --- server-interface.tmpl --- */}}
+{{define "interface.handlerSignature"}}(c fiber.Ctx{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error{{end}}
+
+{{/* --- fiber/fiber-middleware.tmpl --- */}}
+{{define "fiber.ctxType"}}fiber.Ctx{{end}}
+{{define "fiber.ctxAccessor"}}RequestCtx{{end}}
+
+{{/* --- strict/strict-fiber.tmpl ---
+fiber v3 binds request bodies through ctx.Bind().Body rather than v2's
+ctx.BodyParser, and the request context comes from ctx.Context() rather than
+ctx.UserContext(). Everything else in the strict glue (including the optional-body
+EOF / len(data) guards) is shared with the v2 shape. */}}
+{{define "strict.fiber.bindBody"}}ctx.Bind().Body(&body){{end}}
+{{define "strict.fiber.reqContext"}}Context{{end}}

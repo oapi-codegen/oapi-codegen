@@ -1256,8 +1256,10 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *echo.Context) erro
 		if err != nil {
 			return err
 		}
-		body := MultipleRequestAndResponseTypesTextRequestBody(data)
-		request.TextBody = &body
+		if len(data) > 0 {
+			body := MultipleRequestAndResponseTypesTextRequestBody(data)
+			request.TextBody = &body
+		}
 	}
 
 	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
@@ -1490,8 +1492,10 @@ func (sh *strictHandler) TextExample(ctx *echo.Context) error {
 	if err != nil {
 		return err
 	}
-	body := TextExampleTextRequestBody(data)
-	request.Body = &body
+	if len(data) > 0 {
+		body := TextExampleTextRequestBody(data)
+		request.Body = &body
+	}
 
 	handler := func(ctx *echo.Context, request interface{}) (interface{}, error) {
 		return sh.ssi.TextExample(ctx.Request().Context(), request.(TextExampleRequestObject))

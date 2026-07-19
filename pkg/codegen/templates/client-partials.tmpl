@@ -1,0 +1,45 @@
+{{/*
+Shared client-side request-building partials. These {{define}} blocks are
+parsed into the base template tree (see LoadTemplates) and are therefore
+available to every template that renders from it -- currently client.tmpl and
+initiator.tmpl. Names are globally unique and prefixed to avoid colliding with
+other templates in the shared define namespace.
+
+The header-param serialization block below is byte-identical between the path
+Client and the webhook/callback Initiator, so both share it. The query-param
+block is NOT shared: the two differ in the URL variable they mutate
+(queryURL vs reqURL) and in their explanatory comments, so each keeps its own.
+
+The partial is invoked with the OperationDefinition as its dot; it emits Go
+statements that reference the enclosing builder's `req`, `params`, and `err`
+locals, which both call sites declare.
+*/ -}}
+{{define "client.headerParams" -}}
+{{ if .HeaderParams }}
+    if params != nil {
+    {{range $paramIdx, $param := .HeaderParams}}
+        {{if .RequiresNilCheck}} if params.{{.GoName}} != nil { {{end}}
+        var headerParam{{$paramIdx}} string
+        {{if .IsPassThrough}}
+        headerParam{{$paramIdx}} = {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}}
+        {{end}}
+        {{if .IsJson}}
+        var headerParamBuf{{$paramIdx}} []byte
+        headerParamBuf{{$paramIdx}}, err = json.Marshal({{if .HasOptionalPointer}}*{{end}}params.{{.GoName}})
+        if err != nil {
+            return nil, err
+        }
+        headerParam{{$paramIdx}} = string(headerParamBuf{{$paramIdx}})
+        {{end}}
+        {{if .IsStyled}}
+        headerParam{{$paramIdx}}, err = runtime.StyleParamWithOptions("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}}, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+        if err != nil {
+            return nil, err
+        }
+        {{end}}
+        req.Header.Set("{{.ParamName}}", headerParam{{$paramIdx}})
+        {{if .RequiresNilCheck}}}{{end}}
+    {{end}}
+    }
+{{- end }}{{/* if .HeaderParams */}}
+{{- end}}{{/* define client.headerParams */}}

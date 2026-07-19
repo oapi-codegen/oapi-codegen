@@ -672,7 +672,13 @@ func (o OperationDefinition) SourceName() string {
 type ReceiverTemplateData struct {
 	Prefix      string // "Webhook" or "Callback"
 	PrefixLower string // lowercase form of Prefix, for prose
-	Operations  []OperationDefinition
+	// CtxType is the framework context type as it appears in the handler
+	// signature: "echo.Context" vs "*echo.Context" for echo v4/v5, and
+	// "*fiber.Ctx" vs "fiber.Ctx" for fiber v2/v3. Only the echo and fiber
+	// receiver templates read it; the other frameworks' templates embed
+	// their fixed context type directly and leave this empty.
+	CtxType    string
+	Operations []OperationDefinition
 }
 
 // NewReceiverTemplateData builds the template input for the given
@@ -683,6 +689,36 @@ func NewReceiverTemplateData(prefix string, ops []OperationDefinition) ReceiverT
 		PrefixLower: strings.ToLower(prefix),
 		Operations:  ops,
 	}
+}
+
+// InitiatorTemplateData is the input to the shared webhook / callback
+// initiator template. Prefix selects between "Webhook" and "Callback"
+// (and the lowercase form for prose), so a single template handles both
+// the OpenAPI 3.1 webhook and OpenAPI callback client-side initiators.
+type InitiatorTemplateData struct {
+	Prefix      string // "Webhook" or "Callback"
+	PrefixLower string // lowercase form of Prefix, for prose
+	Operations  []OperationDefinition
+}
+
+// NewInitiatorTemplateData builds the template input for the given
+// prefix ("Webhook" or "Callback") and operation list.
+func NewInitiatorTemplateData(prefix string, ops []OperationDefinition) InitiatorTemplateData {
+	return InitiatorTemplateData{
+		Prefix:      prefix,
+		PrefixLower: strings.ToLower(prefix),
+		Operations:  ops,
+	}
+}
+
+// EchoRegisterTemplateData is the input to the shared echo route-
+// registration template. RouteReturnType selects between echo v4's
+// "*echo.Route" and echo v5's "echo.RouteInfo" in the EchoRouter
+// interface method signatures -- the only difference between the two
+// echo versions' registration code.
+type EchoRegisterTemplateData struct {
+	RouteReturnType string
+	Operations      []OperationDefinition
 }
 
 // Params returns the list of all parameters except Path parameters. Path parameters
@@ -2249,7 +2285,7 @@ func operationsInRegistrationOrder(ops []OperationDefinition) []OperationDefinit
 // all the wrapper functions around our handlers.
 func GenerateIrisServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	var buf bytes.Buffer
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"iris/iris-interface.tmpl", "iris/iris-middleware.tmpl"}, t, operations); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"server-interface.tmpl", "iris/iris-middleware.tmpl"}, t, operations); err != nil {
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
@@ -2263,11 +2299,11 @@ func GenerateIrisServer(t *template.Template, operations []OperationDefinition) 
 // all the wrapper functions around our handlers.
 func GenerateChiServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	var buf bytes.Buffer
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"chi/chi-interface.tmpl", "chi/chi-middleware.tmpl"}, t, operations); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"server-interface.tmpl", "server-middleware.tmpl"}, t, operations); err != nil {
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"chi/chi-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"server-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
@@ -2277,11 +2313,11 @@ func GenerateChiServer(t *template.Template, operations []OperationDefinition) (
 // all the wrapper functions around our handlers.
 func GenerateFiberServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	var buf bytes.Buffer
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber/fiber-interface.tmpl", "fiber/fiber-middleware.tmpl"}, t, operations); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"server-interface.tmpl", "fiber/fiber-middleware.tmpl"}, t, operations); err != nil {
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber/fiber-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
@@ -2291,11 +2327,11 @@ func GenerateFiberServer(t *template.Template, operations []OperationDefinition)
 // all the wrapper functions around our handlers.
 func GenerateFiberV3Server(t *template.Template, operations []OperationDefinition) (string, error) {
 	var buf bytes.Buffer
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber-v3/fiber-interface.tmpl", "fiber-v3/fiber-middleware.tmpl"}, t, operations); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"server-interface.tmpl", "fiber/fiber-middleware.tmpl"}, t, operations); err != nil {
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber-v3/fiber-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
@@ -2305,11 +2341,12 @@ func GenerateFiberV3Server(t *template.Template, operations []OperationDefinitio
 // all the wrapper functions around our handlers.
 func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	var buf bytes.Buffer
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl"}, t, operations); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"server-interface.tmpl", "echo/echo-wrappers.tmpl"}, t, operations); err != nil {
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/echo-register.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
+	registerData := EchoRegisterTemplateData{RouteReturnType: "*echo.Route", Operations: operationsInRegistrationOrder(operations)}
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/echo-register.tmpl"}, t, registerData); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
@@ -2319,11 +2356,15 @@ func GenerateEchoServer(t *template.Template, operations []OperationDefinition) 
 // all the wrapper functions around our handlers.
 func GenerateEcho5Server(t *template.Template, operations []OperationDefinition) (string, error) {
 	var buf bytes.Buffer
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/v5/echo-interface.tmpl", "echo/v5/echo-wrappers.tmpl"}, t, operations); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"server-interface.tmpl", "echo/echo-wrappers.tmpl"}, t, operations); err != nil {
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/v5/echo-register.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
+	// Echo v5's EchoRouter methods return echo.RouteInfo instead of v4's
+	// *echo.Route; the shared echo/echo-register.tmpl is parameterized on
+	// that return type.
+	registerData := EchoRegisterTemplateData{RouteReturnType: "echo.RouteInfo", Operations: operationsInRegistrationOrder(operations)}
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/echo-register.tmpl"}, t, registerData); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
@@ -2333,7 +2374,7 @@ func GenerateEcho5Server(t *template.Template, operations []OperationDefinition)
 // all the wrapper functions around our handlers.
 func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	var buf bytes.Buffer
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl"}, t, operations); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"server-interface.tmpl", "gin/gin-wrappers.tmpl"}, t, operations); err != nil {
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
@@ -2347,11 +2388,11 @@ func GenerateGinServer(t *template.Template, operations []OperationDefinition) (
 // all the wrapper functions around our handlers.
 func GenerateGorillaServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	var buf bytes.Buffer
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"gorilla/gorilla-interface.tmpl", "gorilla/gorilla-middleware.tmpl"}, t, operations); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"server-interface.tmpl", "server-middleware.tmpl"}, t, operations); err != nil {
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"gorilla/gorilla-register.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"server-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
@@ -2361,43 +2402,66 @@ func GenerateGorillaServer(t *template.Template, operations []OperationDefinitio
 // all the wrapper functions around our handlers.
 func GenerateStdHTTPServer(t *template.Template, operations []OperationDefinition) (string, error) {
 	var buf bytes.Buffer
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"stdhttp/std-http-interface.tmpl", "stdhttp/std-http-middleware.tmpl"}, t, operations); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"server-interface.tmpl", "server-middleware.tmpl"}, t, operations); err != nil {
 		return "", err
 	}
 	// Route registration follows spec-declaration order (issue #1887).
-	if err := GenerateTemplatesIntoBuffer(&buf, []string{"stdhttp/std-http-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"server-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
 		return "", err
 	}
 	return buf.String(), nil
 }
 
-func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
+func GenerateStrictServer(t *template.Template, serverTemplates map[string]*template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
 
-	var templates []string
-
-	if opts.Generate.ChiServer || opts.Generate.GorillaServer || opts.Generate.StdHTTPServer {
-		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-http.tmpl")
-	}
-	if opts.Generate.EchoServer {
-		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-echo.tmpl")
-	}
-	if opts.Generate.GinServer {
-		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-gin.tmpl")
-	}
-	if opts.Generate.FiberServer {
-		templates = append(templates, "strict/strict-fiber-interface.tmpl", "strict/strict-fiber.tmpl")
-	}
-	if opts.Generate.FiberV3Server {
-		templates = append(templates, "strict/strict-fiber-v3-interface.tmpl", "strict/strict-fiber-v3.tmpl")
-	}
-	if opts.Generate.IrisServer {
-		templates = append(templates, "strict/strict-iris-interface.tmpl", "strict/strict-iris.tmpl")
-	}
-	if opts.Generate.Echo5Server {
-		templates = append(templates, "strict/strict-interface.tmpl", "strict/strict-echo5.tmpl")
+	// Each strict framework renders its interface + glue templates against a
+	// specific template tree: the base tree for frameworks that use the
+	// skeleton/base defaults, or a per-framework clone (from serverTemplates)
+	// for those that override strict hooks -- fiber v3 swaps the fiber context
+	// type from *fiber.Ctx to fiber.Ctx via the fiber.ctxType hook, so its
+	// interface template must render against the fiber v3 clone.
+	type strictTarget struct {
+		enabled       bool
+		tree          *template.Template
+		interfaceTmpl string
+		glueTmpl      string
 	}
 
-	return GenerateTemplates(templates, t, operations)
+	targets := []strictTarget{
+		{opts.Generate.ChiServer || opts.Generate.GorillaServer || opts.Generate.StdHTTPServer, t, "strict/strict-interface.tmpl", "strict/strict-http.tmpl"},
+		{opts.Generate.EchoServer, t, "strict/strict-interface.tmpl", "strict/strict-echo.tmpl"},
+		{opts.Generate.GinServer, t, "strict/strict-interface.tmpl", "strict/strict-gin.tmpl"},
+		{opts.Generate.FiberServer, t, "strict/strict-fiber-interface.tmpl", "strict/strict-fiber.tmpl"},
+		{opts.Generate.FiberV3Server, serverTemplates["fiberv3"], "strict/strict-fiber-interface.tmpl", "strict/strict-fiber.tmpl"},
+		{opts.Generate.IrisServer, t, "strict/strict-iris-interface.tmpl", "strict/strict-iris.tmpl"},
+		{opts.Generate.Echo5Server, serverTemplates["echo5"], "strict/strict-interface.tmpl", "strict/strict-echo.tmpl"},
+	}
+
+	// The RequestObject/ResponseObject/StrictServerInterface types come from the
+	// interface template, which several frameworks share (strict-interface.tmpl
+	// is used by chi/gorilla/stdhttp, echo, gin and echo5). When more than one of
+	// those frameworks is enabled at once, emitting the interface template per
+	// framework would redeclare those types and fail to compile, so emit each
+	// distinct interface template only once.
+	var out strings.Builder
+	emittedInterface := make(map[string]bool)
+	for _, tgt := range targets {
+		if !tgt.enabled {
+			continue
+		}
+		names := make([]string, 0, 2)
+		if !emittedInterface[tgt.interfaceTmpl] {
+			emittedInterface[tgt.interfaceTmpl] = true
+			names = append(names, tgt.interfaceTmpl)
+		}
+		names = append(names, tgt.glueTmpl)
+		s, err := GenerateTemplates(names, tgt.tree, operations)
+		if err != nil {
+			return "", err
+		}
+		out.WriteString(s)
+	}
+	return out.String(), nil
 }
 
 func GenerateStrictResponses(t *template.Template, responses []ResponseDefinition) (string, error) {
@@ -2424,7 +2488,7 @@ func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition
 // WebhookOperationDefinitions); path operations are emitted by the
 // regular Client templates.
 func GenerateWebhookInitiator(t *template.Template, webhookOps []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"webhook-initiator.tmpl"}, t, webhookOps)
+	return GenerateTemplates([]string{"initiator.tmpl"}, t, NewInitiatorTemplateData("Webhook", webhookOps))
 }
 
 // GenerateCallbackInitiator generates the CallbackInitiator -- the
@@ -2433,7 +2497,7 @@ func GenerateWebhookInitiator(t *template.Template, webhookOps []OperationDefini
 // gathered via CallbackOperationDefinitions, which walk paths/operations/
 // callbacks rather than spec.Webhooks.
 func GenerateCallbackInitiator(t *template.Template, callbackOps []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"callback-initiator.tmpl"}, t, callbackOps)
+	return GenerateTemplates([]string{"initiator.tmpl"}, t, NewInitiatorTemplateData("Callback", callbackOps))
 }
 
 // GenerateStdHTTPReceiver renders the merged stdhttp receiver template
@@ -2444,22 +2508,21 @@ func GenerateCallbackInitiator(t *template.Template, callbackOps []OperationDefi
 // query/header parameter binding inline (matching the param-binding
 // machinery used by the path-server middleware).
 func GenerateStdHTTPReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"stdhttp/std-http-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+	return GenerateTemplates([]string{"receiver-stdlib.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
 }
 
 // GenerateChiReceiver renders the chi receiver template. Chi shares
-// stdhttp's (w, r) handler signature, so the template is structurally
-// identical -- only the file path and (in the future, if needed)
-// framework-specific helpers differ.
+// stdhttp's (w, r) handler signature, so it renders the same shared
+// receiver-stdlib.tmpl template.
 func GenerateChiReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"chi/chi-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+	return GenerateTemplates([]string{"receiver-stdlib.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
 }
 
 // GenerateGorillaReceiver renders the gorilla/mux receiver template.
-// Gorilla shares stdhttp's (w, r) handler signature, so the template
-// is structurally identical to stdhttp's.
+// Gorilla shares stdhttp's (w, r) handler signature, so it renders the
+// same shared receiver-stdlib.tmpl template.
 func GenerateGorillaReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"gorilla/gorilla-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+	return GenerateTemplates([]string{"receiver-stdlib.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
 }
 
 // GenerateEchoReceiver renders the echo (v4) receiver template. Echo's
@@ -2468,14 +2531,18 @@ func GenerateGorillaReceiver(t *template.Template, prefix string, ops []Operatio
 // reports them as 400 -- there's no errHandler argument like the
 // stdhttp receiver factory has.
 func GenerateEchoReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"echo/echo-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+	data := NewReceiverTemplateData(prefix, ops)
+	data.CtxType = "echo.Context"
+	return GenerateTemplates([]string{"echo/echo-receiver.tmpl"}, t, data)
 }
 
-// GenerateEcho5Receiver renders the echo (v5) receiver template. Same
-// shape as v4 but with `*echo.Context` (pointer) -- the only API
+// GenerateEcho5Receiver renders the shared echo receiver template with
+// echo v5's `*echo.Context` (pointer) context type -- the only API
 // difference between echo v4 and v5 that affects the receiver.
 func GenerateEcho5Receiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"echo/v5/echo-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+	data := NewReceiverTemplateData(prefix, ops)
+	data.CtxType = "*echo.Context"
+	return GenerateTemplates([]string{"echo/echo-receiver.tmpl"}, t, data)
 }
 
 // GenerateGinReceiver renders the gin receiver template. Gin's handler
@@ -2491,15 +2558,18 @@ func GenerateGinReceiver(t *template.Template, prefix string, ops []OperationDef
 // returned via fiber.NewError so fiber's error chain reports them as
 // 400. Per-handler middleware is not generated; use fiber.App.Use().
 func GenerateFiberReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"fiber/fiber-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+	data := NewReceiverTemplateData(prefix, ops)
+	data.CtxType = "*fiber.Ctx"
+	return GenerateTemplates([]string{"fiber/fiber-receiver.tmpl"}, t, data)
 }
 
-// GenerateFiberV3Receiver renders the fiber (v3) receiver template.
-// Same shape as v2 but with `fiber.Ctx` (interface, by value) -- the
-// only API difference between fiber v2 and v3 that affects the
-// receiver.
+// GenerateFiberV3Receiver renders the shared fiber receiver template with
+// fiber v3's `fiber.Ctx` (interface, by value) context type -- the only
+// API difference between fiber v2 and v3 that affects the receiver.
 func GenerateFiberV3Receiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"fiber-v3/fiber-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
+	data := NewReceiverTemplateData(prefix, ops)
+	data.CtxType = "fiber.Ctx"
+	return GenerateTemplates([]string{"fiber/fiber-receiver.tmpl"}, t, data)
 }
 
 // GenerateIrisReceiver renders the iris receiver template. Iris's

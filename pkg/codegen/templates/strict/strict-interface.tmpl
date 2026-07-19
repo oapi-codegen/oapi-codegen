@@ -91,19 +91,7 @@
                         return err
                     }
                     w.Header().Set("Content-Type", {{if .HasFixedContentType }}{{.ContentType | toGoString}}{{else}}response.ContentType{{end}})
-                    {{range $headers -}}
-                        {{if .IsNullable -}}
-                            if response.Headers.{{.GoName}}.IsSpecified() {
-                                w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
-                            }
-                        {{else if .IsOptional -}}
-                            if response.Headers.{{.GoName}} != nil {
-                                w.Header().Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
-                            }
-                        {{else -}}
-                            w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
-                        {{end -}}
-                    {{end -}}
+                    {{template "strict.responseHeaders" (dict "Headers" $headers "Setter" "w.Header().Set") -}}
                     w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                     _, err := buf.WriteTo(w)
                     return err
@@ -113,19 +101,7 @@
                         return err
                     }
                     w.Header().Set("Content-Type", {{if .HasFixedContentType }}{{.ContentType | toGoString}}{{else}}response.ContentType{{end}})
-                    {{range $headers -}}
-                        {{if .IsNullable -}}
-                            if response.Headers.{{.GoName}}.IsSpecified() {
-                                w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
-                            }
-                        {{else if .IsOptional -}}
-                            if response.Headers.{{.GoName}} != nil {
-                                w.Header().Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
-                            }
-                        {{else -}}
-                            w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
-                        {{end -}}
-                    {{end -}}
+                    {{template "strict.responseHeaders" (dict "Headers" $headers "Setter" "w.Header().Set") -}}
                     w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                     _, err = w.Write([]byte(form.Encode()))
                     return err
@@ -136,19 +112,7 @@
                             w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
                         }
                     {{end -}}
-                    {{range $headers -}}
-                        {{if .IsNullable -}}
-                            if response.Headers.{{.GoName}}.IsSpecified() {
-                                w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
-                            }
-                        {{else if .IsOptional -}}
-                            if response.Headers.{{.GoName}} != nil {
-                                w.Header().Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
-                            }
-                        {{else -}}
-                            w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
-                        {{end -}}
-                    {{end -}}
+                    {{template "strict.responseHeaders" (dict "Headers" $headers "Setter" "w.Header().Set") -}}
                     w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
 
                     {{if eq .NameTag "Text" -}}
@@ -210,19 +174,7 @@
                 }
             {{end -}}
             func (response {{$opid}}{{$statusCode}}Response) Visit{{$opid}}Response(w http.ResponseWriter) error {
-                {{range $headers -}}
-                    {{if .IsNullable -}}
-                        if response.Headers.{{.GoName}}.IsSpecified() {
-                            w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
-                        }
-                    {{else if .IsOptional -}}
-                        if response.Headers.{{.GoName}} != nil {
-                            w.Header().Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
-                        }
-                    {{else -}}
-                        w.Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
-                    {{end -}}
-                {{end -}}
+                {{template "strict.responseHeaders" (dict "Headers" $headers "Setter" "w.Header().Set") -}}
                 w.WriteHeader({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 return nil
             }

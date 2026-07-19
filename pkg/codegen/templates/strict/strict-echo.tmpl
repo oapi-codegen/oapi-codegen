@@ -1,4 +1,4 @@
-type StrictHandlerFunc func(ctx echo.Context, request any) (any, error)
+type StrictHandlerFunc func(ctx {{template "echo.ctxType" .}}, request any) (any, error)
 type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
@@ -14,7 +14,7 @@ type strictHandler struct {
     {{$opid := .OperationId}}
     {{if not .IsAlias}}
     // {{$opid}} operation middleware
-    func (sh *strictHandler) {{.OperationId}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error {
+    func (sh *strictHandler) {{.OperationId}}(ctx {{template "echo.ctxType" .}}{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error {
         var request {{$opid | ucFirst}}RequestObject
 
         {{range .PathParams -}}
@@ -35,10 +35,10 @@ type strictHandler struct {
                 {{if .IsJSON -}}
                     var body {{$opid}}{{.NameTag}}RequestBody
                     var err error
-                    if binder, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
+                    if {{block "strict.echo.binderVar" .}}binder{{end}}, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
                         // Bind only the request body, so that path and query parameters
                         // are not also bound into the body struct.
-                        err = binder.BindBody(ctx, &body)
+                        err = {{block "strict.echo.bindBodyCall" .}}binder.BindBody{{end}}(ctx, &body)
                     } else {
                         // A custom binder is installed on the Echo instance; defer to it
                         // entirely, since echo.Binder does not expose body-only binding.
@@ -56,7 +56,7 @@ type strictHandler struct {
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                     {{if not .Required -}} } {{end}}
                 {{else if eq .NameTag "Formdata" -}}
-                    if form, err := ctx.FormParams(); err == nil {
+                    if form, err := ctx.{{block "strict.echo.formValues" .}}FormParams{{end}}(); err == nil {
                         var body {{$opid}}{{.NameTag}}RequestBody
                         if err := runtime.BindForm(&body, form, nil, nil); err != nil {
                             return err
@@ -100,7 +100,7 @@ type strictHandler struct {
             {{if $multipleBodies}}}{{end}}
         {{end}}{{/* range .Bodies */}}
 
-        handler := func(ctx echo.Context, request interface{}) (interface{}, error){
+        handler := func(ctx {{template "echo.ctxType" .}}, request interface{}) (interface{}, error){
             return sh.ssi.{{.OperationId}}(ctx.Request().Context(), request.({{$opid | ucFirst}}RequestObject))
         }
         for _, middleware := range sh.middlewares {

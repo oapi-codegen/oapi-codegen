@@ -1,0 +1,37 @@
+{{/*
+chi overrides for the shared net/http-family server skeletons. This file is NOT
+loaded into the base template tree; it is parsed into a chi-specific clone of the
+tree by buildServerTemplates in codegen.go, where these {{define}} blocks replace
+the skeletons' {{block}} defaults.
+*/}}
+
+{{/* --- server-middleware.tmpl --- */}}
+{{define "middleware.pathParamValue"}}chi.URLParam(r, "{{.ParamName}}"){{end}}
+{{define "middleware.valueIsUnescaped"}}r.URL.RawPath == ""{{end}}
+
+{{/* --- server-handler.tmpl --- */}}
+{{/* The {{""}} action makes this override non-empty: text/template ignores a
+     define whose body is only whitespace/comments and would keep the default. */}}
+{{define "handler.serveMuxInterface"}}{{- "" -}}{{end}}
+{{define "handler.serverOptions"}}ChiServerOptions{{end}}
+{{define "handler.routerType"}}chi.Router{{end}}
+{{define "handler.routerVar"}}r{{end}}
+{{define "handler.newRouter"}}chi.NewRouter(){{end}}
+{{define "handler.register"}}r.Group(func(r chi.Router) {
+r.{{.Method | lower | title }}(options.BaseURL+{{.Path | swaggerUriToChiUri | toGoString}}, wrapper.{{.HandlerName}})
+})
+{{end}}
+
+{{/* --- server-interface.tmpl --- */}}
+{{define "interface.unimplemented"}}
+// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+
+type Unimplemented struct {}
+ {{range .}}{{if not .IsAlias}}{{.SummaryAsComment .OperationId }}
+ // ({{.Method}} {{.Path}})
+{{with .DeprecationComment}}//
+{{.}}
+{{end}} func (_ Unimplemented) {{.OperationId}}(w http.ResponseWriter, r *http.Request{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) {
+	w.WriteHeader(http.StatusNotImplemented)
+ }
+ {{end}}{{end}}{{end}}

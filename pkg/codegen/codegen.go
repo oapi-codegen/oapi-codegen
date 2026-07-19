@@ -256,6 +256,16 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		}
 	}
 
+	// Build per-framework clones of the base tree, layering each framework's
+	// hook overrides over the shared server-*.tmpl skeletons. Must happen after
+	// user templates are parsed (so user overrides propagate into the clones)
+	// and before any template is executed (Clone forbids cloning an executed
+	// tree).
+	serverTemplates, err := buildServerTemplates(templates, t)
+	if err != nil {
+		return "", fmt.Errorf("error building per-framework server templates: %w", err)
+	}
+
 	ops, err := OperationDefinitions(spec)
 	if err != nil {
 		return "", fmt.Errorf("error creating operation definitions: %w", err)
@@ -371,7 +381,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var irisServerOut string
 	if opts.Generate.IrisServer {
-		irisServerOut, err = GenerateIrisServer(t, ops)
+		irisServerOut, err = GenerateIrisServer(serverTemplates["iris"], ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -379,7 +389,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var echoServerOut string
 	if opts.Generate.EchoServer {
-		echoServerOut, err = GenerateEchoServer(t, ops)
+		echoServerOut, err = GenerateEchoServer(serverTemplates["echo"], ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -387,7 +397,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var echo5ServerOut string
 	if opts.Generate.Echo5Server {
-		echo5ServerOut, err = GenerateEcho5Server(t, ops)
+		echo5ServerOut, err = GenerateEcho5Server(serverTemplates["echo5"], ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -395,7 +405,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var chiServerOut string
 	if opts.Generate.ChiServer {
-		chiServerOut, err = GenerateChiServer(t, ops)
+		chiServerOut, err = GenerateChiServer(serverTemplates["chi"], ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -403,7 +413,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var fiberServerOut string
 	if opts.Generate.FiberServer {
-		fiberServerOut, err = GenerateFiberServer(t, ops)
+		fiberServerOut, err = GenerateFiberServer(serverTemplates["fiber"], ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -411,7 +421,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var fiberV3ServerOut string
 	if opts.Generate.FiberV3Server {
-		fiberV3ServerOut, err = GenerateFiberV3Server(t, ops)
+		fiberV3ServerOut, err = GenerateFiberV3Server(serverTemplates["fiberv3"], ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -419,7 +429,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var ginServerOut string
 	if opts.Generate.GinServer {
-		ginServerOut, err = GenerateGinServer(t, ops)
+		ginServerOut, err = GenerateGinServer(serverTemplates["gin"], ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -427,7 +437,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	var gorillaServerOut string
 	if opts.Generate.GorillaServer {
-		gorillaServerOut, err = GenerateGorillaServer(t, ops)
+		gorillaServerOut, err = GenerateGorillaServer(serverTemplates["gorilla"], ops)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -454,7 +464,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error generation response definitions for schema: %w", err)
 		}
-		strictServerOut, err = GenerateStrictServer(t, ops, opts)
+		strictServerOut, err = GenerateStrictServer(t, serverTemplates, ops, opts)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go handlers for Paths: %w", err)
 		}
@@ -1753,6 +1763,15 @@ func LoadTemplates(src embed.FS, t *template.Template) error {
 		if d.IsDir() {
 			return nil
 		}
+		// hooks.tmpl files hold a framework's {{define}} overrides for the
+		// shared server-*.tmpl skeletons. They are intentionally NOT loaded
+		// into the shared base tree: buildServerTemplates parses each one into
+		// a per-framework clone instead. Loading them here would let one
+		// framework's overrides clobber the skeleton defaults that other
+		// frameworks (and unmigrated ones) rely on.
+		if d.Name() == "hooks.tmpl" {
+			return nil
+		}
 
 		buf, err := src.ReadFile(path)
 		if err != nil {
@@ -1767,6 +1786,50 @@ func LoadTemplates(src embed.FS, t *template.Template) error {
 		}
 		return nil
 	})
+}
+
+// serverTemplateHooks maps a server framework key to the embedded path of its
+// hooks file. A hooks file is a set of {{define "..."}} blocks that override the
+// {{block}} defaults in the shared server-*.tmpl skeletons.
+//
+// Only frameworks whose generated code deviates from the skeleton defaults need
+// an entry. The skeleton defaults ARE the stdhttp shape, so stdhttp (and the
+// frameworks not yet migrated to the layering: echo, gin, fiber, iris) run the
+// templates straight from the base tree with no clone.
+var serverTemplateHooks = map[string]string{
+	"chi":     "templates/chi/hooks.tmpl",
+	"gorilla": "templates/gorilla/hooks.tmpl",
+	"echo":    "templates/echo/hooks.tmpl",
+	"echo5":   "templates/echo/v5/hooks.tmpl",
+	"fiber":   "templates/fiber/hooks.tmpl",
+	"fiberv3": "templates/fiber-v3/hooks.tmpl",
+	"gin":     "templates/gin/hooks.tmpl",
+	"iris":    "templates/iris/hooks.tmpl",
+}
+
+// buildServerTemplates clones the base template tree once per framework in
+// serverTemplateHooks and parses that framework's hooks file into the clone.
+// text/template permits redefining a template that has not yet been executed,
+// so parsing the {{define}} overrides replaces the skeleton {{block}} defaults
+// in the clone (last definition wins). It must be called before the base tree
+// is executed, because a template cannot be cloned once it has run.
+func buildServerTemplates(src embed.FS, base *template.Template) (map[string]*template.Template, error) {
+	result := make(map[string]*template.Template, len(serverTemplateHooks))
+	for framework, path := range serverTemplateHooks {
+		clone, err := base.Clone()
+		if err != nil {
+			return nil, fmt.Errorf("cloning base templates for %s: %w", framework, err)
+		}
+		buf, err := src.ReadFile(path)
+		if err != nil {
+			return nil, fmt.Errorf("reading hooks file '%s': %w", path, err)
+		}
+		if _, err := clone.Parse(string(buf)); err != nil {
+			return nil, fmt.Errorf("parsing hooks file '%s': %w", path, err)
+		}
+		result[framework] = clone
+	}
+	return result, nil
 }
 
 func OperationSchemaImports(s *Schema) (map[string]goImport, error) {

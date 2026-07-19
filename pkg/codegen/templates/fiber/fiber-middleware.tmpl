@@ -5,12 +5,12 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc fiber.Handler
-type HandlerMiddlewareFunc func(c *fiber.Ctx, next fiber.Handler) error
+type HandlerMiddlewareFunc func(c {{block "fiber.ctxType" .}}*fiber.Ctx{{end}}, next fiber.Handler) error
 
 {{range .}}{{$opid := .OperationId}}
 {{if not .IsAlias}}
 // {{$opid}} operation middleware
-func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
+func (siw *ServerInterfaceWrapper) {{$opid}}(c {{template "fiber.ctxType" .}}) error {
 
   {{if or .RequiresParamObject (gt (len .PathParams) 0) }}
   var err error
@@ -49,7 +49,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
 
 {{if opts.Compatibility.EnableAuthScopesOnContext -}}
 {{range .SecurityDefinitions}}
-  c.Context().SetUserValue(({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes), {{toStringArray .Scopes}})
+  c.{{block "fiber.ctxAccessor" .}}Context{{end}}().SetUserValue(({{.ProviderName | sanitizeGoIdentity | ucFirst}}Scopes), {{toStringArray .Scopes}})
 {{end}}
 {{- end}}
 
@@ -181,14 +181,14 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *fiber.Ctx) error {
     {{end}}
   {{end}}
 
-  handler := func(c *fiber.Ctx) error {
+  handler := func(c {{template "fiber.ctxType" .}}) error {
     return siw.Handler.{{.OperationId}}(c{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
   }
 
   for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
     m := siw.HandlerMiddlewares[i]
     next := handler
-    handler = func(c *fiber.Ctx) error {
+    handler = func(c {{template "fiber.ctxType" .}}) error {
       return m(c, next)
     }
   }
