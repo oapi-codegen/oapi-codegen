@@ -2455,24 +2455,34 @@ func GenerateStrictServer(t *template.Template, serverTemplates map[string]*temp
 	// is used by chi/gorilla/stdhttp, echo, gin and echo5). When more than one of
 	// those frameworks is enabled at once, emitting the interface template per
 	// framework would redeclare those types and fail to compile, so emit each
-	// distinct interface template only once.
+	// distinct interface template only once. The dedup must compare rendered
+	// output, not filenames: fiber v2 and v3 share strict-fiber-interface.tmpl
+	// but render it with different context types via the fiber.ctxType hook, so
+	// a filename match does not imply the second rendering is skippable.
 	var out strings.Builder
-	emittedInterface := make(map[string]bool)
+	emittedInterface := make(map[string]string)
 	for _, tgt := range targets {
 		if !tgt.enabled {
 			continue
 		}
-		names := make([]string, 0, 2)
-		if !emittedInterface[tgt.interfaceTmpl] {
-			emittedInterface[tgt.interfaceTmpl] = true
-			names = append(names, tgt.interfaceTmpl)
-		}
-		names = append(names, tgt.glueTmpl)
-		s, err := GenerateTemplates(names, tgt.tree, operations)
+		iface, err := GenerateTemplates([]string{tgt.interfaceTmpl}, tgt.tree, operations)
 		if err != nil {
 			return "", err
 		}
-		out.WriteString(s)
+		if prev, seen := emittedInterface[tgt.interfaceTmpl]; !seen {
+			emittedInterface[tgt.interfaceTmpl] = iface
+			out.WriteString(iface)
+			// Same separator GenerateTemplates writes between two templates
+			// rendered in one call.
+			out.WriteString("\n")
+		} else if prev != iface {
+			return "", fmt.Errorf("the enabled strict servers render %s with incompatible types (fiber v2 and v3 differ in context type) and cannot be generated together", tgt.interfaceTmpl)
+		}
+		glue, err := GenerateTemplates([]string{tgt.glueTmpl}, tgt.tree, operations)
+		if err != nil {
+			return "", err
+		}
+		out.WriteString(glue)
 	}
 	return out.String(), nil
 }

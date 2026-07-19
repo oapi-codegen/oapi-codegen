@@ -16,7 +16,9 @@ package codegen
 import (
 	"go/format"
 	"net/http"
+	"strings"
 	"testing"
+	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
@@ -933,4 +935,41 @@ func TestNewInitiatorTemplateDataRejectsPathParams(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "Callback", data.Prefix)
 	assert.Equal(t, "callback", data.PrefixLower)
+}
+
+// buildStrictTestTrees loads the real embedded templates and per-framework
+// clones the same way Generate() does, for exercising GenerateStrictServer.
+func buildStrictTestTrees(t *testing.T) (*template.Template, map[string]*template.Template) {
+	t.Helper()
+	funcs := make(template.FuncMap, len(TemplateFunctions)+1)
+	for k, v := range TemplateFunctions {
+		funcs[k] = v
+	}
+	// Generate() injects "opts" before loading templates; stub it here.
+	funcs["opts"] = func() Configuration { return Configuration{} }
+	base := template.New("codegen").Funcs(funcs)
+	require.NoError(t, LoadTemplates(templates, base))
+	clones, err := buildServerTemplates(templates, base)
+	require.NoError(t, err)
+	return base, clones
+}
+
+func TestGenerateStrictServerInterfaceDedup(t *testing.T) {
+	base, clones := buildStrictTestTrees(t)
+	ops := []OperationDefinition{{OperationId: "Ping"}}
+
+	// Frameworks whose shared interface template renders identically may be
+	// combined; the interface must be emitted exactly once.
+	out, err := GenerateStrictServer(base, clones, ops, Configuration{
+		Generate: GenerateOptions{ChiServer: true, GinServer: true},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 1, strings.Count(out, "type StrictServerInterface interface"))
+
+	// Fiber v2 and v3 render the shared interface template with different
+	// context types; combining them can never compile and must error.
+	_, err = GenerateStrictServer(base, clones, ops, Configuration{
+		Generate: GenerateOptions{FiberServer: true, FiberV3Server: true},
+	})
+	require.ErrorContains(t, err, "cannot be generated together")
 }
