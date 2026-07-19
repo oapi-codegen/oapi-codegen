@@ -973,3 +973,52 @@ func TestGenerateStrictServerInterfaceDedup(t *testing.T) {
 	})
 	require.ErrorContains(t, err, "cannot be generated together")
 }
+
+func TestInitiatorPathParamsRejectedAtExtraction(t *testing.T) {
+	webhookSpec := `
+openapi: "3.1.0"
+info: {title: t, version: "1"}
+webhooks:
+  petUpdated:
+    post:
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200': {description: OK}
+paths: {}
+`
+	callbackSpec := `
+openapi: "3.0.0"
+info: {title: t, version: "1"}
+paths:
+  /subscribe:
+    post:
+      callbacks:
+        petUpdated:
+          '{$request.body#/callbackUrl}':
+            post:
+              parameters:
+                - name: petId
+                  in: path
+                  required: true
+                  schema: {type: string}
+              responses:
+                '200': {description: OK}
+      responses:
+        '200': {description: OK}
+`
+	for name, spec := range map[string]string{"webhook": webhookSpec, "callback": callbackSpec} {
+		t.Run(name, func(t *testing.T) {
+			swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+			require.NoError(t, err)
+			_, err = Generate(swagger, Configuration{
+				PackageName: "api",
+				Generate:    GenerateOptions{Models: true},
+			})
+			require.ErrorContains(t, err, `path parameter "petId"`)
+		})
+	}
+}

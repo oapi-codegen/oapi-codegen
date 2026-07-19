@@ -708,8 +708,9 @@ type InitiatorTemplateData struct {
 // takes an opaque targetURL per call, so there is no route template to
 // substitute into, and the generated request builders accept no path
 // arguments while the initiator methods would forward them (producing
-// uncompilable code). Webhook/CallbackOperationDefinitions uphold this
-// by only binding header/query/cookie parameters.
+// uncompilable code). Webhook/CallbackOperationDefinitions reject
+// in:path parameters at extraction time; this check is defense in depth
+// for direct callers of the exported API.
 func NewInitiatorTemplateData(prefix string, ops []OperationDefinition) (InitiatorTemplateData, error) {
 	for _, op := range ops {
 		if len(op.PathParams) > 0 {
@@ -1640,6 +1641,15 @@ func WebhookOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, er
 				return nil, err
 			}
 
+			// The initiator sends to an opaque caller-supplied target URL, so
+			// there is no route template to substitute a path parameter into.
+			// Rejecting it here beats silently dropping it, which would send
+			// requests to a URL that still contains the placeholder.
+			if pathParams := FilterParameterDefinitionByType(allParams, "path"); len(pathParams) > 0 {
+				return nil, fmt.Errorf("webhook %q operation %s declares path parameter %q: path parameters are not supported for webhooks",
+					webhookName, opName, pathParams[0].ParamName)
+			}
+
 			bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(operationId, op.RequestBody, pathItem.Ref)
 			if err != nil {
 				return nil, fmt.Errorf("error generating body definitions for webhook %q: %w", webhookName, err)
@@ -1780,6 +1790,15 @@ func CallbackOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, e
 						allParams, err := CombineOperationParameters(globalParams, localParams)
 						if err != nil {
 							return nil, err
+						}
+
+						// See the matching check in WebhookOperationDefinitions:
+						// the initiator's target URL is opaque, so a path
+						// parameter has nowhere to go and must not be dropped
+						// silently.
+						if pathParams := FilterParameterDefinitionByType(allParams, "path"); len(pathParams) > 0 {
+							return nil, fmt.Errorf("callback %q operation %s declares path parameter %q: path parameters are not supported for callbacks",
+								callbackName, opName, pathParams[0].ParamName)
 						}
 
 						bodyDefinitions, typeDefinitions, err := GenerateBodyDefinitions(operationId, op.RequestBody, cbPathItem.Ref)
