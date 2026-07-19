@@ -958,20 +958,24 @@ func TestGenerateStrictServerInterfaceDedup(t *testing.T) {
 	base, clones := buildStrictTestTrees(t)
 	ops := []OperationDefinition{{OperationId: "Ping"}}
 
-	// Frameworks whose shared interface template renders identically may be
-	// combined; the interface must be emitted exactly once.
+	// A single enabled server emits the interface exactly once.
 	out, err := GenerateStrictServer(base, clones, ops, Configuration{
-		Generate: GenerateOptions{ChiServer: true, GinServer: true},
+		Generate: GenerateOptions{ChiServer: true},
 	})
 	require.NoError(t, err)
 	assert.Equal(t, 1, strings.Count(out, "type StrictServerInterface interface"))
 
-	// Fiber v2 and v3 render the shared interface template with different
-	// context types; combining them can never compile and must error.
-	_, err = GenerateStrictServer(base, clones, ops, Configuration{
-		Generate: GenerateOptions{FiberServer: true, FiberV3Server: true},
-	})
-	require.ErrorContains(t, err, "cannot be generated together")
+	// Configuration.Validate() permits only one server type; the strict
+	// generator enforces the same invariant for direct API callers, since
+	// every interface template declares the same package-level type names.
+	for name, generate := range map[string]GenerateOptions{
+		"fiber v2+v3": {FiberServer: true, FiberV3Server: true},
+		"echo+fiber":  {EchoServer: true, FiberServer: true},
+		"chi+gin":     {ChiServer: true, GinServer: true},
+	} {
+		_, err = GenerateStrictServer(base, clones, ops, Configuration{Generate: generate})
+		require.ErrorContains(t, err, "only one server type", name)
+	}
 }
 
 func TestInitiatorPathParamsRejectedAtExtraction(t *testing.T) {

@@ -605,11 +605,11 @@ type OperationDefinition struct {
 	// appear in the spec rather than sorted (issue #1887). Zero when the
 	// source location is unavailable (e.g. a programmatically-built spec),
 	// in which case route registration falls back to the default order.
-	SpecOrder int
-	Spec      *openapi3.Operation
-	IsAlias             bool   // True when this path is a $ref alias of another path item
-	AliasTarget         string // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
-	PathItemRef         string // The path item's $ref (if any); used to qualify externally-loaded schemas referenced from this operation's responses
+	SpecOrder   int
+	Spec        *openapi3.Operation
+	IsAlias     bool   // True when this path is a $ref alias of another path item
+	AliasTarget string // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
+	PathItemRef string // The path item's $ref (if any); used to qualify externally-loaded schemas referenced from this operation's responses
 
 	// IsWebhook is true when this OperationDefinition was sourced from
 	// spec.Webhooks (OpenAPI 3.1+). Webhook operations have no path
@@ -2469,41 +2469,28 @@ func GenerateStrictServer(t *template.Template, serverTemplates map[string]*temp
 		{opts.Generate.Echo5Server, serverTemplates["echo5"], "strict/strict-interface.tmpl", "strict/strict-echo.tmpl"},
 	}
 
-	// The RequestObject/ResponseObject/StrictServerInterface types come from the
-	// interface template, which several frameworks share (strict-interface.tmpl
-	// is used by chi/gorilla/stdhttp, echo, gin and echo5). When more than one of
-	// those frameworks is enabled at once, emitting the interface template per
-	// framework would redeclare those types and fail to compile, so emit each
-	// distinct interface template only once. The dedup must compare rendered
-	// output, not filenames: fiber v2 and v3 share strict-fiber-interface.tmpl
-	// but render it with different context types via the fiber.ctxType hook, so
-	// a filename match does not imply the second rendering is skippable.
-	var out strings.Builder
-	emittedInterface := make(map[string]string)
-	for _, tgt := range targets {
-		if !tgt.enabled {
+	// Configuration.Validate() enforces that at most one server type is
+	// enabled, so at most one target can be enabled here. Enforce the same
+	// invariant for direct callers of this exported function: every interface
+	// template declares the same package-level names (StrictServerInterface,
+	// <Op>RequestObject, <Op>ResponseObject), with visitor signatures that
+	// differ per framework, so emitting more than one target can never
+	// compile. (chi/gorilla/stdhttp form a single target: they share both
+	// templates, so any one of them yields identical output.)
+	var chosen *strictTarget
+	for i := range targets {
+		if !targets[i].enabled {
 			continue
 		}
-		iface, err := GenerateTemplates([]string{tgt.interfaceTmpl}, tgt.tree, operations)
-		if err != nil {
-			return "", err
+		if chosen != nil {
+			return "", fmt.Errorf("only one server type is supported at a time for strict server generation")
 		}
-		if prev, seen := emittedInterface[tgt.interfaceTmpl]; !seen {
-			emittedInterface[tgt.interfaceTmpl] = iface
-			out.WriteString(iface)
-			// Same separator GenerateTemplates writes between two templates
-			// rendered in one call.
-			out.WriteString("\n")
-		} else if prev != iface {
-			return "", fmt.Errorf("the enabled strict servers render %s with incompatible types (fiber v2 and v3 differ in context type) and cannot be generated together", tgt.interfaceTmpl)
-		}
-		glue, err := GenerateTemplates([]string{tgt.glueTmpl}, tgt.tree, operations)
-		if err != nil {
-			return "", err
-		}
-		out.WriteString(glue)
+		chosen = &targets[i]
 	}
-	return out.String(), nil
+	if chosen == nil {
+		return "", nil
+	}
+	return GenerateTemplates([]string{chosen.interfaceTmpl, chosen.glueTmpl}, chosen.tree, operations)
 }
 
 func GenerateStrictResponses(t *template.Template, responses []ResponseDefinition) (string, error) {
