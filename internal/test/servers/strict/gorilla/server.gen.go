@@ -334,7 +334,7 @@ func (siw *ServerInterfaceWrapper) HeadersExample(w http.ResponseWriter, r *http
 		params.Header1 = Header1
 
 	} else {
-		err = fmt.Errorf("Header parameter header1 is required, but not found")
+		err := fmt.Errorf("Header parameter header1 is required, but not found")
 		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "header1", Err: err})
 		return
 	}
@@ -490,6 +490,7 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
 	}
+
 	wrapper := ServerInterfaceWrapper{
 		Handler:            si,
 		HandlerMiddlewares: options.Middlewares,

@@ -80,19 +80,7 @@
             {{end}}
 
             func (response {{$receiverTypeName}}) Visit{{$opid}}Response(ctx iris.Context) error {
-                {{range $headers -}}
-                    {{if .IsNullable -}}
-                        if response.Headers.{{.GoName}}.IsSpecified() {
-                            ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
-                        }
-                    {{else if .IsOptional -}}
-                        if response.Headers.{{.GoName}} != nil {
-                            ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
-                        }
-                    {{else -}}
-                        ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
-                    {{end -}}
-                {{end -}}
+                {{template "strict.responseHeaders" (dict "Headers" $headers "Setter" "ctx.ResponseWriter().Header().Set") -}}
                 {{if eq .NameTag "Multipart" -}}
                     writer := multipart.NewWriter(ctx.ResponseWriter())
                 {{end -}}
@@ -172,19 +160,7 @@
                 }
             {{end -}}
             func (response {{$opid}}{{$statusCode}}Response) Visit{{$opid}}Response(ctx iris.Context) error {
-                {{range $headers -}}
-                    {{if .IsNullable -}}
-                        if response.Headers.{{.GoName}}.IsSpecified() {
-                            ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
-                        }
-                    {{else if .IsOptional -}}
-                        if response.Headers.{{.GoName}} != nil {
-                            ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
-                        }
-                    {{else -}}
-                        ctx.ResponseWriter().Header().Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
-                    {{end -}}
-                {{end -}}
+                {{template "strict.responseHeaders" (dict "Headers" $headers "Setter" "ctx.ResponseWriter().Header().Set") -}}
                 ctx.StatusCode({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 return nil
             }

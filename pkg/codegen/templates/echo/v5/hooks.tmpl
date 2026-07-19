@@ -1,0 +1,23 @@
+{{/*
+echo v5 overrides for the shared server skeletons. echo v5 differs from v4 in
+exactly one token: the context type is *echo.Context (pointer) instead of
+echo.Context. That difference shows up in the ServerInterface method signature
+and in the wrapper's per-operation func signature, so this clone overrides both
+interface.handlerSignature and wrapper.ctxType. Everything else is inherited
+from the shared echo templates (echo/echo-wrappers.tmpl, echo/echo-register.tmpl).
+*/}}
+
+{{/* --- server-interface.tmpl --- */}}
+{{define "interface.handlerSignature"}}(ctx *echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error{{end}}
+
+{{/* --- echo/echo-wrappers.tmpl --- */}}
+{{define "echo.ctxType"}}*echo.Context{{end}}
+
+{{/* --- strict/strict-echo.tmpl ---
+echo v5 renames the body-only bind helpers: the *echo.DefaultBinder assertion
+no longer needs a named receiver (the bind goes through the package-level
+echo.BindBody), and form values come from ctx.FormValues rather than
+ctx.FormParams. */}}
+{{define "strict.echo.binderVar"}}_{{end}}
+{{define "strict.echo.bindBodyCall"}}echo.BindBody{{end}}
+{{define "strict.echo.formValues"}}FormValues{{end}}

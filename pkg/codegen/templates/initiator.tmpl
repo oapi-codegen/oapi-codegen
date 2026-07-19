@@ -1,0 +1,202 @@
+{{if eq .Prefix "Webhook" -}}
+// WebhookInitiator sends OpenAPI 3.1 webhook requests to target URLs.
+// Modeled on the generated Client, but with no stored Server -- the full
+// target URL is provided per-call by the caller (typically discovered
+// from a subscription registration).
+{{- else -}}
+// CallbackInitiator sends OpenAPI callback requests to target URLs.
+// Modeled on the generated Client, but with no stored Server -- the full
+// target URL is provided per-call by the caller (typically discovered
+// from a callback expression on the parent operation's request body,
+// e.g. `{$request.body#/callbackUrl}`).
+{{- end}}
+type {{.Prefix}}Initiator struct {
+	// Doer for performing requests, typically a *http.Client with any
+	// customized settings, such as certificate chains.
+	Client HttpRequestDoer
+
+	// A list of callbacks for modifying requests which are generated before sending over
+	// the network.
+	RequestEditors []RequestEditorFn
+}
+
+// {{.Prefix}}InitiatorOption allows setting custom parameters during construction.
+type {{.Prefix}}InitiatorOption func(*{{.Prefix}}Initiator) error
+
+// New{{.Prefix}}Initiator creates a new {{.Prefix}}Initiator with reasonable defaults.
+func New{{.Prefix}}Initiator(opts ...{{.Prefix}}InitiatorOption) (*{{.Prefix}}Initiator, error) {
+	initiator := {{.Prefix}}Initiator{}
+	for _, o := range opts {
+		if err := o(&initiator); err != nil {
+			return nil, err
+		}
+	}
+	if initiator.Client == nil {
+		initiator.Client = &http.Client{}
+	}
+	return &initiator, nil
+}
+
+// With{{.Prefix}}HTTPClient allows overriding the default Doer, which is
+// automatically created using http.Client. This is useful for tests.
+func With{{.Prefix}}HTTPClient(doer HttpRequestDoer) {{.Prefix}}InitiatorOption {
+	return func(p *{{.Prefix}}Initiator) error {
+		p.Client = doer
+		return nil
+	}
+}
+
+// With{{.Prefix}}RequestEditorFn allows setting up a callback function, which
+// will be called right before sending the {{.PrefixLower}} request. This can be
+// used to mutate the request, e.g. to add signature headers.
+func With{{.Prefix}}RequestEditorFn(fn RequestEditorFn) {{.Prefix}}InitiatorOption {
+	return func(p *{{.Prefix}}Initiator) error {
+		p.RequestEditors = append(p.RequestEditors, fn)
+		return nil
+	}
+}
+
+func (p *{{.Prefix}}Initiator) apply{{.Prefix}}Editors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
+	for _, r := range p.RequestEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	for _, r := range additionalEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// {{.Prefix}}InitiatorInterface is the interface specification for the {{.PrefixLower}} initiator.
+type {{.Prefix}}InitiatorInterface interface {
+{{range .Operations -}}
+{{$op := . -}}
+{{$opid := .OperationId -}}
+{{range $i, $v := .ClientMethodVariants -}}
+{{if eq $i 0 -}}
+    // {{$opid}}{{$v.Suffix}} fires the {{$op.SourceName}} {{$.PrefixLower}}{{if $op.HasBody}} with any body{{end}}
+{{else}}
+{{end -}}
+    {{$opid}}{{$v.Suffix}}(ctx context.Context, targetURL string{{$v.ArgsDecl}}, reqEditors... RequestEditorFn) (*http.Response, error)
+{{end -}}{{/* range .ClientMethodVariants */}}
+{{end}}{{/* range .Operations */}}
+}
+
+
+{{/* Generate initiator methods */}}
+{{range .Operations -}}
+{{$opid := .OperationId -}}
+{{range .ClientMethodVariants}}
+func (p *{{$.Prefix}}Initiator) {{$opid}}{{.Suffix}}(ctx context.Context, targetURL string{{.ArgsDecl}}, reqEditors... RequestEditorFn) (*http.Response, error) {
+    req, err := New{{$opid}}{{$.Prefix}}Request{{.Suffix}}(targetURL{{.CallArgs}})
+    if err != nil {
+        return nil, err
+    }
+    req = req.WithContext(ctx)
+    if err := p.apply{{$.Prefix}}Editors(ctx, req, reqEditors); err != nil {
+        return nil, err
+    }
+    return p.Client.Do(req)
+}
+{{end -}}{{/* range .ClientMethodVariants */}}
+{{end}}{{/* range .Operations */}}
+
+{{/* Generate request builders */}}
+{{range .Operations -}}
+{{$hasParams := .RequiresParamObject -}}
+{{$opid := .OperationId -}}
+{{$method := .Method -}}
+{{$srcName := .SourceName -}}
+{{$generic := .GenericClientVariant -}}
+
+{{range .Bodies}}
+{{if .IsSupportedByClient -}}
+// New{{$opid}}{{$.Prefix}}Request{{.Suffix}} builds a {{.ContentType}} {{$method}} request for the {{$srcName}} {{$.PrefixLower}}
+func New{{$opid}}{{$.Prefix}}Request{{.Suffix}}(targetURL string{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Request, error) {
+    var bodyReader io.Reader
+    {{if .IsJSON -}}
+        buf, err := json.Marshal(body)
+        if err != nil {
+            return nil, err
+        }
+        bodyReader = bytes.NewReader(buf)
+    {{else if eq .NameTag "Formdata" -}}
+        bodyStr, err := runtime.MarshalForm(body, nil)
+        if err != nil {
+            return nil, err
+        }
+        bodyReader = strings.NewReader(bodyStr.Encode())
+    {{else if eq .NameTag "Text" -}}
+        if stringer, ok := interface{}(body).(fmt.Stringer); ok {
+            bodyReader = strings.NewReader(stringer.String())
+        } else {
+        {{if .Schema.IsPrimitive -}}
+            bodyReader = strings.NewReader(fmt.Sprint(body))
+        {{else -}}
+            return nil, fmt.Errorf("text/plain is not supported for complex types, define a String() method on {{.Schema.TypeDecl}} to marshal it as text")
+        {{end -}}
+        }
+    {{end -}}
+    return New{{$opid}}{{$.Prefix}}RequestWithBody(targetURL{{if $hasParams}}, params{{end}}, "{{.ContentType}}", bodyReader)
+}
+{{end -}}
+{{end}}
+
+// New{{$opid}}{{$.Prefix}}Request{{$generic.Suffix}} builds a {{.Method}} request for the {{.SourceName}} {{$.PrefixLower}}{{if .HasBody}} with any body{{end}}
+func New{{$opid}}{{$.Prefix}}Request{{$generic.Suffix}}(targetURL string{{$generic.ArgsDecl}}) (*http.Request, error) {
+    var err error
+    _ = err
+
+    reqURL, err := url.Parse(targetURL)
+    if err != nil {
+        return nil, err
+    }
+
+{{if .QueryParams}}
+    if params != nil {
+        queryValues := reqURL.Query()
+        var rawQueryFragments []string
+            {{range $paramIdx, $param := .QueryParams}}
+            {{if .RequiresNilCheck}} if params.{{.GoName}} != nil { {{end}}
+            {{if .IsPassThrough}}
+            queryValues.Add("{{.ParamName}}", {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}})
+            {{end}}
+            {{if .IsJson}}
+            if queryParamBuf, err := json.Marshal({{if .HasOptionalPointer}}*{{end}}params.{{.GoName}}); err != nil {
+                return nil, err
+            } else {
+                queryValues.Add("{{.ParamName}}", string(queryParamBuf))
+            }
+            {{end}}
+            {{if .IsStyled}}
+            if queryFrag, err := runtime.StyleParamWithOptions("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if and .RequiresNilCheck .HasOptionalPointer}}*{{end}}params.{{.GoName}}, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"}); err != nil {
+                return nil, err
+            } else {
+                for _, qp := range strings.Split(queryFrag, "&") {
+                    rawQueryFragments = append(rawQueryFragments, qp)
+                }
+            }
+            {{end}}
+            {{if .RequiresNilCheck}}}{{end}}
+        {{end}}
+        if encoded := queryValues.Encode(); encoded != "" {
+            rawQueryFragments = append(rawQueryFragments, encoded)
+        }
+        reqURL.RawQuery = strings.Join(rawQueryFragments, "&")
+    }
+{{end}}{{/* if .QueryParams */}}
+
+    req, err := http.NewRequest({{.Method | httpMethodConstant}}, reqURL.String(), {{if .HasBody}}body{{else}}nil{{end}})
+    if err != nil {
+        return nil, err
+    }
+
+    {{if .HasBody}}req.Header.Add("Content-Type", contentType){{end}}
+{{template "client.headerParams" .}}
+    return req, nil
+}
+
+{{end}}{{/* range .Operations */}}

@@ -1,0 +1,15 @@
+{{/*
+echo (v4) overrides for the shared server skeletons. This file is NOT loaded
+into the base template tree; it is parsed into an echo-specific clone of the tree
+by buildServerTemplates in codegen.go, where these {{define}} blocks replace the
+skeletons' {{block}} defaults.
+
+echo's wrapper (echo/echo-wrappers.tmpl) and route registration
+(echo/echo-register.tmpl) are echo-specific templates that carry the echo v4
+context type (echo.Context) as their default; only the shared
+server-interface.tmpl skeleton needs an override here. The echo v5 clone
+(templates/echo/v5/hooks.tmpl) additionally overrides wrapper.ctxType.
+*/}}
+
+{{/* --- server-interface.tmpl --- */}}
+{{define "interface.handlerSignature"}}(ctx echo.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error{{end}}

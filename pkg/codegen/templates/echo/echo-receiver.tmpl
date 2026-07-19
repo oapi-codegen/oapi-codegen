@@ -7,7 +7,7 @@ type {{.Prefix}}ReceiverInterface interface {
 {{range .Operations -}}
 {{.SummaryAsComment ""}}
 // Handle{{.OperationId}}{{$.Prefix}} handles the {{.Method}} {{$.PrefixLower}} for {{.SourceName}}.
-Handle{{.OperationId}}{{$.Prefix}}(ctx echo.Context{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
+Handle{{.OperationId}}{{$.Prefix}}(ctx {{$.CtxType}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}
 }
 
@@ -20,7 +20,7 @@ Handle{{.OperationId}}{{$.Prefix}}(ctx echo.Context{{if .RequiresParamObject}}, 
 // error-handling chain reports them as 400. Middlewares are applied in
 // the order provided -- the last argument becomes the outermost wrapper.
 func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface, middlewares ...echo.MiddlewareFunc) echo.HandlerFunc {
-    h := echo.HandlerFunc(func(ctx echo.Context) error {
+    h := echo.HandlerFunc(func(ctx {{$.CtxType}}) error {
 {{- if .RequiresParamObject}}
         var err error
         _ = err

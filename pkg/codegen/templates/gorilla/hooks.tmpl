@@ -1,0 +1,34 @@
+{{/*
+gorilla overrides for the shared net/http-family server skeletons. This file is
+NOT loaded into the base template tree; it is parsed into a gorilla-specific clone
+of the tree by buildServerTemplates in codegen.go, where these {{define}} blocks
+replace the skeletons' {{block}} defaults.
+*/}}
+
+{{/* --- server-middleware.tmpl --- */}}
+{{define "middleware.pathParamValue"}}mux.Vars(r)["{{.ParamName}}"]{{end}}
+{{/*
+gorilla selects middleware order with its own compatibility flag; the stdhttp
+default uses ApplyChiMiddlewareFirstToLast. Only the flag name differs.
+*/}}
+{{define "middleware.applyMiddlewares"}}{{if opts.Compatibility.ApplyGorillaMiddlewareFirstToLast}}
+  for i := len(siw.HandlerMiddlewares) -1; i >= 0; i-- {
+    handler = siw.HandlerMiddlewares[i](handler)
+  }
+  {{else}}
+  for _, middleware := range siw.HandlerMiddlewares {
+    handler = middleware(handler)
+  }
+  {{end}}{{end}}
+
+{{/* --- server-handler.tmpl --- */}}
+{{/* The {{""}} action makes this override non-empty: text/template ignores a
+     define whose body is only whitespace/comments and would keep the default. */}}
+{{define "handler.serveMuxInterface"}}{{- "" -}}{{end}}
+{{define "handler.serverOptions"}}GorillaServerOptions{{end}}
+{{define "handler.routerType"}}*mux.Router{{end}}
+{{define "handler.routerVar"}}r{{end}}
+{{define "handler.newRouter"}}mux.NewRouter(){{end}}
+{{define "handler.register"}}
+r.HandleFunc(options.BaseURL+{{.Path | swaggerUriToGorillaUri | toGoString}}, wrapper.{{.HandlerName}}).Methods({{.Method | httpMethodConstant}})
+{{end}}

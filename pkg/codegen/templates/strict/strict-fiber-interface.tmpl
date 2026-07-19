@@ -17,7 +17,7 @@
     }
 
     type {{$opid | ucFirst}}ResponseObject interface {
-        Visit{{$opid}}Response(ctx *fiber.Ctx) error
+        Visit{{$opid}}Response(ctx {{template "fiber.ctxType" .}}) error
     }
 
     {{range .Responses}}
@@ -79,20 +79,8 @@
                 }
             {{end}}
 
-            func (response {{$receiverTypeName}}) Visit{{$opid}}Response(ctx *fiber.Ctx) error {
-                {{range $headers -}}
-                    {{if .IsNullable -}}
-                        if response.Headers.{{.GoName}}.IsSpecified() {
-                            ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
-                        }
-                    {{else if .IsOptional -}}
-                        if response.Headers.{{.GoName}} != nil {
-                            ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
-                        }
-                    {{else -}}
-                        ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
-                    {{end -}}
-                {{end -}}
+            func (response {{$receiverTypeName}}) Visit{{$opid}}Response(ctx {{template "fiber.ctxType" .}}) error {
+                {{template "strict.responseHeaders" (dict "Headers" $headers "Setter" "ctx.Response().Header.Set") -}}
                 {{if eq .NameTag "Multipart" -}}
                     writer := multipart.NewWriter(ctx.Response().BodyWriter())
                 {{end -}}
@@ -170,20 +158,8 @@
                     {{end -}}
                 }
             {{end -}}
-            func (response {{$opid}}{{$statusCode}}Response) Visit{{$opid}}Response(ctx *fiber.Ctx) error {
-                {{range $headers -}}
-                    {{if .IsNullable -}}
-                        if response.Headers.{{.GoName}}.IsSpecified() {
-                            ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
-                        }
-                    {{else if .IsOptional -}}
-                        if response.Headers.{{.GoName}} != nil {
-                            ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
-                        }
-                    {{else -}}
-                        ctx.Response().Header.Set("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
-                    {{end -}}
-                {{end -}}
+            func (response {{$opid}}{{$statusCode}}Response) Visit{{$opid}}Response(ctx {{template "fiber.ctxType" .}}) error {
+                {{template "strict.responseHeaders" (dict "Headers" $headers "Setter" "ctx.Response().Header.Set") -}}
                 ctx.Status({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 return nil
             }

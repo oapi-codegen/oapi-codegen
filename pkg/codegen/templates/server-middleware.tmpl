@@ -1,3 +1,17 @@
+{{/*
+Shared middleware/wrapper skeleton for the net/http-family server frameworks
+(chi, gorilla, stdhttp). The {{block}} defaults below are the stdhttp shape;
+chi and gorilla override the hooks via templates/<framework>/hooks.tmpl, which
+is parsed into a per-framework clone of the template tree (see
+buildServerTemplates in codegen.go). stdhttp needs no overrides and executes
+this skeleton straight from the base tree.
+
+Hooks:
+  middleware.pathParamValue  - expression reading a path parameter from the request
+  middleware.valueIsUnescaped - value for BindStyledParameterOptions.ValueIsUnescaped
+  middleware.applyMiddlewares - loop that applies per-operation middlewares (differs
+                                only in the compatibility flag name selecting order)
+*/}}
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
     Handler ServerInterface
@@ -20,17 +34,17 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
 
   {{if .IsPassThrough}}
-  {{$varName}} = r.PathValue("{{.SanitizedParamName}}")
+  {{$varName}} = {{block "middleware.pathParamValue" .}}r.PathValue("{{.SanitizedParamName}}"){{end}}
   {{end}}
   {{if .IsJson}}
-  err = json.Unmarshal([]byte(r.PathValue("{{.SanitizedParamName}}")), &{{$varName}})
+  err = json.Unmarshal([]byte({{template "middleware.pathParamValue" .}}), &{{$varName}})
   if err != nil {
     siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
     return
   }
   {{end}}
   {{if .IsStyled}}
-  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", r.PathValue("{{.SanitizedParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}", ValueIsUnescaped: true})
+  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", {{template "middleware.pathParamValue" .}}, &{{$varName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}", ValueIsUnescaped: {{block "middleware.valueIsUnescaped" .}}true{{end}}})
   if err != nil {
     siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
     return
@@ -188,7 +202,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
     siw.Handler.{{.OperationId}}(w, r{{genParamNames .PathParams}}{{if .RequiresParamObject}}, params{{end}})
   }))
 
-  {{if opts.Compatibility.ApplyChiMiddlewareFirstToLast}}
+  {{block "middleware.applyMiddlewares" .}}{{if opts.Compatibility.ApplyChiMiddlewareFirstToLast}}
   for i := len(siw.HandlerMiddlewares) -1; i >= 0; i-- {
     handler = siw.HandlerMiddlewares[i](handler)
   }
@@ -196,7 +210,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   for _, middleware := range siw.HandlerMiddlewares {
     handler = middleware(handler)
   }
-  {{end}}
+  {{end}}{{end}}
 
   handler.ServeHTTP(w, r)
 }
@@ -251,7 +265,7 @@ func (e *RequiredHeaderError) Unwrap() error {
 
 type InvalidParamFormatError struct {
     ParamName string
-	  Err error
+    Err error
 }
 
 func (e *InvalidParamFormatError) Error() string {
