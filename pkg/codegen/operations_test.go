@@ -917,3 +917,20 @@ func TestGenerateFunctionComment_GofmtHeading(t *testing.T) {
 		})
 	}
 }
+
+func TestNewInitiatorTemplateDataRejectsPathParams(t *testing.T) {
+	_, err := NewInitiatorTemplateData("Webhook", []OperationDefinition{
+		{
+			OperationId: "PetUpdated",
+			PathParams:  []ParameterDefinition{{ParamName: "petId"}},
+		},
+	})
+	require.ErrorContains(t, err, "path parameters")
+
+	data, err := NewInitiatorTemplateData("Callback", []OperationDefinition{
+		{OperationId: "PetUpdated"},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Callback", data.Prefix)
+	assert.Equal(t, "callback", data.PrefixLower)
+}

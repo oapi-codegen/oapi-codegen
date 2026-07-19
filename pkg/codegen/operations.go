@@ -703,12 +703,25 @@ type InitiatorTemplateData struct {
 
 // NewInitiatorTemplateData builds the template input for the given
 // prefix ("Webhook" or "Callback") and operation list.
-func NewInitiatorTemplateData(prefix string, ops []OperationDefinition) InitiatorTemplateData {
+//
+// Initiator operations must not carry path parameters: the initiator
+// takes an opaque targetURL per call, so there is no route template to
+// substitute into, and the generated request builders accept no path
+// arguments while the initiator methods would forward them (producing
+// uncompilable code). Webhook/CallbackOperationDefinitions uphold this
+// by only binding header/query/cookie parameters.
+func NewInitiatorTemplateData(prefix string, ops []OperationDefinition) (InitiatorTemplateData, error) {
+	for _, op := range ops {
+		if len(op.PathParams) > 0 {
+			return InitiatorTemplateData{}, fmt.Errorf("%s operation %s has path parameters, which are not supported for %s initiators",
+				strings.ToLower(prefix), op.OperationId, strings.ToLower(prefix))
+		}
+	}
 	return InitiatorTemplateData{
 		Prefix:      prefix,
 		PrefixLower: strings.ToLower(prefix),
 		Operations:  ops,
-	}
+	}, nil
 }
 
 // EchoRegisterTemplateData is the input to the shared echo route-
@@ -2488,7 +2501,11 @@ func GenerateClientWithResponses(t *template.Template, ops []OperationDefinition
 // WebhookOperationDefinitions); path operations are emitted by the
 // regular Client templates.
 func GenerateWebhookInitiator(t *template.Template, webhookOps []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"initiator.tmpl"}, t, NewInitiatorTemplateData("Webhook", webhookOps))
+	data, err := NewInitiatorTemplateData("Webhook", webhookOps)
+	if err != nil {
+		return "", err
+	}
+	return GenerateTemplates([]string{"initiator.tmpl"}, t, data)
 }
 
 // GenerateCallbackInitiator generates the CallbackInitiator -- the
@@ -2497,7 +2514,11 @@ func GenerateWebhookInitiator(t *template.Template, webhookOps []OperationDefini
 // gathered via CallbackOperationDefinitions, which walk paths/operations/
 // callbacks rather than spec.Webhooks.
 func GenerateCallbackInitiator(t *template.Template, callbackOps []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"initiator.tmpl"}, t, NewInitiatorTemplateData("Callback", callbackOps))
+	data, err := NewInitiatorTemplateData("Callback", callbackOps)
+	if err != nil {
+		return "", err
+	}
+	return GenerateTemplates([]string{"initiator.tmpl"}, t, data)
 }
 
 // GenerateStdHTTPReceiver renders the merged stdhttp receiver template
