@@ -463,8 +463,18 @@ type OutputOptions struct {
 	// Overlay defines configuration for the OpenAPI Overlay (https://github.com/OAI/Overlay-Specification) to manipulate the OpenAPI specification before generation. This allows modifying the specification without needing to apply changes directly to it, making it easier to keep it up-to-date.
 	Overlay OutputOptionsOverlay `yaml:"overlay"`
 
-	// EnableYamlTags adds YAML tags to generated structs, in addition to default JSON ones
+	// EnableYamlTags adds YAML tags to generated structs, in addition to default JSON ones.
+	// Superseded by StructTags: when a `yaml` entry is present in `struct-tags`, this flag
+	// has no effect.
 	EnableYamlTags bool `yaml:"yaml-tags,omitempty"`
+
+	// StructTags configures which struct tags are generated on struct fields and how their
+	// values are rendered. Each entry is a tag name plus a Go text/template evaluated
+	// against the field (see StructTagInfo for the available variables). Entries are
+	// merged by name on top of the defaults, so a `json` entry replaces the default json
+	// template while new names add tags. Tags render in alphabetical order; a template
+	// that renders to the empty string suppresses that tag on that field.
+	StructTags StructTagsConfig `yaml:"struct-tags,omitempty"`
 
 	// ClientResponseBytesFunction decides whether to enable the generation of a `Bytes()` method on response objects for `ClientWithResponses`
 	ClientResponseBytesFunction bool `yaml:"client-response-bytes-function,omitempty"`
@@ -536,6 +546,12 @@ func (oo OutputOptions) Validate() map[string]string {
 	if _, err := compileStreamingContentTypes(oo.StreamingContentTypes); err != nil {
 		return map[string]string{
 			"streaming-content-types": err.Error(),
+		}
+	}
+
+	if _, err := newStructTagGenerator(defaultStructTagsConfig(oo.EnableYamlTags).Merge(oo.StructTags)); err != nil {
+		return map[string]string{
+			"struct-tags": err.Error(),
 		}
 	}
 
