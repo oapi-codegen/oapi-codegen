@@ -1329,6 +1329,15 @@ func pathItemSourceLine(pathItem *openapi3.PathItem) int {
 	if pathItem == nil || pathItem.Origin == nil || pathItem.Origin.Key == nil {
 		return 0
 	}
+	// kin-openapi >= v0.143.0 calls attachOriginToResolved for $ref-resolved
+	// path items, giving them an Origin from the *external* file rather than
+	// the base spec. Those line numbers are meaningless for base-spec
+	// declaration order, so treat them as unavailable (return 0), which lets
+	// the stable SortedMapKeys alphabetical order take over — matching the
+	// pre-v0.143.0 behaviour.
+	if pathItem.Ref != "" && !strings.HasPrefix(pathItem.Ref, "#") {
+		return 0
+	}
 	return pathItem.Origin.Key.Line
 }
 
