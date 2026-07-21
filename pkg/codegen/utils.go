@@ -15,6 +15,7 @@ package codegen
 
 import (
 	"bytes"
+	"errors"
 	"cmp"
 	"fmt"
 	"go/token"
@@ -680,6 +681,42 @@ func SwaggerUriToStdHttpUri(uri string) string {
 	}
 
 	return uri
+}
+
+// ValidateStdHTTPPath reports whether an OpenAPI path can be registered with
+// net/http ServeMux. ServeMux wildcards must occupy an entire path segment, so
+// mixed segments such as "{resourceId}:apply" are rejected at codegen time
+// instead of panicking at server startup (see #2488).
+func ValidateStdHTTPPath(path string) error {
+	for _, seg := range strings.Split(path, "/") {
+		if seg == "" || seg == "{$}" {
+			continue
+		}
+		loc := pathParamRE.FindStringIndex(seg)
+		if loc == nil {
+			// pure literal segment
+			continue
+		}
+		// Wildcard must be the entire segment.
+		if loc[0] != 0 || loc[1] != len(seg) {
+			return fmt.Errorf("path %q: segment %q mixes a path parameter with literal text; net/http ServeMux requires wildcards to occupy an entire path segment (std-http-server)", path, seg)
+		}
+	}
+	return nil
+}
+
+// ValidateStdHTTPPaths validates every path in the document for ServeMux.
+func ValidateStdHTTPPaths(spec *openapi3.T) error {
+	if spec == nil || spec.Paths == nil {
+		return nil
+	}
+	var errs []error
+	for _, path := range SortedMapKeys(spec.Paths.Map()) {
+		if err := ValidateStdHTTPPath(path); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
 }
 
 // OrderedParamsFromUri returns the argument names, in order, in a given URI string, so for

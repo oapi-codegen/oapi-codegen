@@ -837,3 +837,62 @@ func Test_replaceInitialism(t *testing.T) {
 		})
 	}
 }
+
+
+func TestValidateStdHTTPPath(t *testing.T) {
+	tests := []struct {
+		path    string
+		wantErr bool
+	}{
+		{"/resources/{resourceId}", false},
+		{"/resources/{resourceId}/apply", false},
+		{"/resources/{resourceId}:apply", true},
+		{"/resources/prefix{resourceId}", true},
+		{"/resources/{resourceId}suffix", true},
+		{"/pets:validate", false}, // pure literal segment with colon is fine for ServeMux
+		{"/path/{arg1}/{arg2}/foo", false},
+	}
+	for _, tt := range tests {
+		err := ValidateStdHTTPPath(tt.path)
+		if tt.wantErr && err == nil {
+			t.Errorf("path %q: expected error", tt.path)
+		}
+		if !tt.wantErr && err != nil {
+			t.Errorf("path %q: unexpected error: %v", tt.path, err)
+		}
+	}
+}
+
+func TestGenerateRejectsMixedServeMuxPathParam(t *testing.T) {
+	spec := `openapi: 3.0.3
+info:
+  title: mixed path param
+  version: 1.0.0
+paths:
+  /resources/{resourceId}:apply:
+    post:
+      operationId: applyResource
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Applied
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	_, err = Generate(swagger, Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			StdHTTPServer: true,
+			Models:        true,
+		},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "mixes a path parameter")
+}
