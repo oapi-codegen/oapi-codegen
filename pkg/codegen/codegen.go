@@ -178,6 +178,11 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	if err := ValidateSpec(spec); err != nil {
 		return "", err
 	}
+	if opts.Generate.StdHTTPServer {
+		if err := ValidateStdHTTPPaths(spec); err != nil {
+			return "", err
+		}
+	}
 
 	// if we are provided an override for the response type suffix update it
 	if opts.OutputOptions.ResponseTypeSuffix != "" {
