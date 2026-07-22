@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: noresponseheaders
+generate:
+  # client: true
+  models: true
+  strict-server: true
+output: issue-response-headers-skipped.gen.go
