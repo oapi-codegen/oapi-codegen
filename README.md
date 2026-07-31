@@ -1293,9 +1293,11 @@ The default behaviour in `oapi-codegen` is to generate:
 
 ```go
 type S struct {
-	Field *string `json:"field,omitempty"`
+	Field *string `json:"field"`
 }
 ```
+
+Note that there is no `omitempty` here: since the field is nullable, a `nil` pointer marshals as an explicit `null`, and `omitempty` would make that `null` impossible to produce.
 
 However, you lose the ability to understand the three cases, as there's no way to distinguish two of the types from each other:
 

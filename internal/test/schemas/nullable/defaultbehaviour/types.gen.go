@@ -6,7 +6,7 @@ package defaultbehaviour
 // ComplexOptionalNullable Complex, optional and nullable
 type ComplexOptionalNullable struct {
 	// AliasName Optional and nullable
-	AliasName *string `json:"alias_name,omitempty"`
+	AliasName *string `json:"alias_name"`
 
 	// Name Optional and non nullable
 	Name *string `json:"name,omitempty"`
@@ -21,7 +21,7 @@ type ComplexRequiredNullable struct {
 // PatchRequest A request to patch an existing user object.
 type PatchRequest struct {
 	// ComplexOptionalNullable Complex, optional and nullable
-	ComplexOptionalNullable *ComplexOptionalNullable `json:"complex_optional_nullable,omitempty"`
+	ComplexOptionalNullable *ComplexOptionalNullable `json:"complex_optional_nullable"`
 
 	// ComplexRequiredNullable Complex required and nullable
 	ComplexRequiredNullable *ComplexRequiredNullable `json:"complex_required_nullable"`
@@ -30,7 +30,7 @@ type PatchRequest struct {
 	SimpleOptionalNonNullable *SimpleOptionalNonNullable `json:"simple_optional_non_nullable,omitempty"`
 
 	// SimpleOptionalNullable Simple optional and nullable
-	SimpleOptionalNullable *SimpleOptionalNullable `json:"simple_optional_nullable,omitempty"`
+	SimpleOptionalNullable *SimpleOptionalNullable `json:"simple_optional_nullable"`
 
 	// SimpleRequiredNullable Simple required and nullable
 	SimpleRequiredNullable *SimpleRequiredNullable `json:"simple_required_nullable"`

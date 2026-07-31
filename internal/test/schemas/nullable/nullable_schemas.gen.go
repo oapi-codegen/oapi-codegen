@@ -6,7 +6,7 @@ package schemasnullable
 // NullableProperties defines model for NullableProperties.
 type NullableProperties struct {
 	Optional            *string `json:"optional,omitempty"`
-	OptionalAndNullable *string `json:"optionalAndNullable,omitempty"`
+	OptionalAndNullable *string `json:"optionalAndNullable"`
 	Required            string  `json:"required"`
 	RequiredAndNullable *string `json:"requiredAndNullable"`
 }
