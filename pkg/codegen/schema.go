@@ -92,6 +92,14 @@ func (s Schema) HasCustomMarshalJSON() bool {
 	return len(s.OAPISchema.OneOf) > 0 || len(s.OAPISchema.AnyOf) > 0
 }
 
+// HasCustomMarshalJSONForRequestBody reports whether a named request body
+// wrapper needs to delegate JSON marshaling to its underlying union type.
+// Unlike strict response types, request body wrappers have no direct union
+// encoding path, so local inline unions need delegation as well.
+func (s Schema) HasCustomMarshalJSONForRequestBody() bool {
+	return len(s.UnionElements) > 0 || s.HasCustomMarshalJSON()
+}
+
 func (s Schema) TypeDecl() string {
 	if s.IsRef() {
 		return s.RefType
