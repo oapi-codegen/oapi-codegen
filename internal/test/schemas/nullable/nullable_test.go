@@ -420,8 +420,10 @@ func TestNullableViaAnyOfOneOf_3_1(t *testing.T) {
 	assert.Nil(t, p2.NicknameOneOf)
 
 	// JSON round-trip: an explicit string in / explicit string out;
-	// missing field decodes to nil and re-encodes as absent (omitempty).
-	const populated = `{"name":"fluffy","nicknameAnyOf":"rex","nicknameOneOf":"rex"}`
+	// missing field decodes to nil and re-encodes as an explicit null —
+	// nullable fields never get omitempty (issue #2503).
+	const populated = `{"name":"fluffy","nicknameAnyOf":"rex","nicknameOneOf":"rex",` +
+		`"nickname":null,"extras":null,"favorite":null,"metadata":null,"owner":null,"tags":null}`
 	encoded, err := json.Marshal(p)
 	require.NoError(t, err)
 	assert.JSONEq(t, populated, string(encoded))
@@ -496,56 +498,56 @@ func TestNullTypeComponentIsAny_3_1(t *testing.T) {
 }
 
 // TestJsonRoundTrip_NullableFields_AcrossVersions asserts that a JSON
-// payload with an explicit null nickname unmarshals to (*string)(nil) in
-// both spec versions, and that JSON output omits the field when nil due
-// to omitempty. The two generated structs must marshal identically for
-// the nullable field.
+// payload unmarshals to the same (*string) nickname in both spec
+// versions, and that nil nullable fields marshal as explicit nulls in
+// both. Nullable fields never get omitempty (issue #2503), so an
+// absent nullable field re-encodes as an explicit null; the two spec
+// versions must agree on that treatment even though their Pet types
+// have different field sets.
 func TestJsonRoundTrip_NullableFields_AcrossVersions(t *testing.T) {
-	const withName = `{"name":"fluffy"}`
-	const withBoth = `{"name":"fluffy","nickname":"rex"}`
+	// The nullable fields shared by both Pet versions, and the extra
+	// nullable fields only present in the 3.1 version.
+	const nulls30 = `"extras":null,"owner":null,"tags":null`
+	const nulls31 = nulls30 + `,"favorite":null,"metadata":null,"nicknameAnyOf":null,"nicknameOneOf":null`
 
 	for _, tc := range []struct {
-		name string
-		// fn30 / fn31 unmarshal the input into each version's Pet type
-		// and return a JSON re-marshal so we can assert equality.
-		fn30 func(input string) (string, *string, error)
-		fn31 func(input string) (string, *string, error)
+		name  string
+		in    string
+		out30 string
+		out31 string
 	}{
 		{
-			name: "unmarshal/marshal symmetric across versions",
-			fn30: func(input string) (string, *string, error) {
-				var p spec30.Pet
-				if err := json.Unmarshal([]byte(input), &p); err != nil {
-					return "", nil, err
-				}
-				out, err := json.Marshal(p)
-				return string(out), p.Nickname, err
-			},
-			fn31: func(input string) (string, *string, error) {
-				var p spec31.Pet
-				if err := json.Unmarshal([]byte(input), &p); err != nil {
-					return "", nil, err
-				}
-				out, err := json.Marshal(p)
-				return string(out), p.Nickname, err
-			},
+			name:  "absent nickname re-encodes as explicit null",
+			in:    `{"name":"fluffy"}`,
+			out30: `{"name":"fluffy","nickname":null,` + nulls30 + `}`,
+			out31: `{"name":"fluffy","nickname":null,` + nulls31 + `}`,
+		},
+		{
+			name:  "populated nickname survives the round-trip",
+			in:    `{"name":"fluffy","nickname":"rex"}`,
+			out30: `{"name":"fluffy","nickname":"rex",` + nulls30 + `}`,
+			out31: `{"name":"fluffy","nickname":"rex",` + nulls31 + `}`,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			for _, in := range []string{withName, withBoth} {
-				out30, n30, err30 := tc.fn30(in)
-				require.NoError(t, err30)
-				out31, n31, err31 := tc.fn31(in)
-				require.NoError(t, err31)
-				assert.JSONEq(t, in, out30, "3.0 round-trip should be lossless")
-				assert.JSONEq(t, in, out31, "3.1 round-trip should be lossless")
-				assert.JSONEq(t, out30, out31, "3.0 and 3.1 must marshal identically")
-				if n30 == nil {
-					assert.Nil(t, n31)
-				} else {
-					require.NotNil(t, n31)
-					assert.Equal(t, *n30, *n31)
-				}
+			var p30 spec30.Pet
+			require.NoError(t, json.Unmarshal([]byte(tc.in), &p30))
+			out30, err := json.Marshal(p30)
+			require.NoError(t, err)
+			assert.JSONEq(t, tc.out30, string(out30))
+
+			var p31 spec31.Pet
+			require.NoError(t, json.Unmarshal([]byte(tc.in), &p31))
+			out31, err := json.Marshal(p31)
+			require.NoError(t, err)
+			assert.JSONEq(t, tc.out31, string(out31))
+
+			// The nullable nickname must decode identically across versions.
+			if p30.Nickname == nil {
+				assert.Nil(t, p31.Nickname)
+			} else {
+				require.NotNil(t, p31.Nickname)
+				assert.Equal(t, *p30.Nickname, *p31.Nickname)
 			}
 		})
 	}
