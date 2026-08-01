@@ -130,13 +130,13 @@ func New{{$opid}}WebhookRequest{{.Suffix}}(targetURL string{{if $hasParams}}, pa
             return nil, err
         }
         bodyReader = bytes.NewReader(buf)
-    {{else if eq .NameTag "Formdata" -}}
+    {{else if .IsFormdata -}}
         bodyStr, err := runtime.MarshalForm(body, nil)
         if err != nil {
             return nil, err
         }
         bodyReader = strings.NewReader(bodyStr.Encode())
-    {{else if eq .NameTag "Text" -}}
+    {{else if .IsText -}}
         if stringer, ok := interface{}(body).(fmt.Stringer); ok {
             bodyReader = strings.NewReader(stringer.String())
         } else {

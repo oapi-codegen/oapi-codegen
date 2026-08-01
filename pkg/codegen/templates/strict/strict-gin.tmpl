@@ -92,7 +92,7 @@ type strictHandler struct {
                     } {{if not .Required -}} else { {{end}}
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
                     {{if not .Required -}} } {{end}}
-                {{else if eq .NameTag "Formdata" -}}
+                {{else if .IsFormdata -}}
                     if err := ctx.Request.ParseForm(); err != nil {
                         sh.options.RequestErrorHandlerFunc(ctx, err)
                         return
@@ -103,7 +103,7 @@ type strictHandler struct {
                         return
                     }
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = &body
-                {{else if eq .NameTag "Multipart" -}}
+                {{else if .IsMultipart -}}
                     {{if eq .ContentType "multipart/form-data" -}}
                     if reader, err := ctx.Request.MultipartReader(); err != nil {
                         sh.options.RequestErrorHandlerFunc(ctx, err)
@@ -122,7 +122,7 @@ type strictHandler struct {
                         request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = multipart.NewReader(ctx.Request.Body, boundary)
                     }
                     {{end -}}
-                {{else if eq .NameTag "Text" -}}
+                {{else if .IsText -}}
                     data, err := io.ReadAll(ctx.Request.Body)
                     if err != nil {
                         sh.options.RequestErrorHandlerFunc(ctx, err)
@@ -138,7 +138,7 @@ type strictHandler struct {
                     {{end -}}
                 {{else -}}
                     request.{{if $multipleBodies}}{{.NameTag}}{{end}}Body = ctx.Request.Body
-                {{end}}{{/* if eq .NameTag "JSON" */ -}}
+                {{end}}{{/* if .IsJSON */ -}}
             {{if $multipleBodies}}}{{end}}
         {{end}}{{/* range .Bodies */}}
 

@@ -1,0 +1,62 @@
+# ==========================================================================
+# Category: options/content_types
+# Tests:    content-types output option: custom short names in generated type
+#           names for vendored JSON, and model generation for a media type
+#           (text/csv) that is not built-in supported.
+#
+# Folds in (provenance):
+#   - pkg/codegen/content_types_test.go (unit-level generation assertions)
+# ==========================================================================
+openapi: "3.0.1"
+info:
+  title: options/content_types
+  version: "1.0.0"
+  description: |
+    Exercises the content-types output option. The V1 mapping renames the
+    vendored application/vnd.mycompany.v1+json media type in all generated
+    identifiers (request bodies, client methods, response fields, strict
+    envelopes). The CSV mapping generates a model for text/csv, whose
+    wire-level handling remains the untyped io.Reader passthrough; client
+    responses for it expose only the raw body.
+paths:
+  /pets:
+    post:
+      operationId: addPet
+      requestBody:
+        required: true
+        content:
+          application/vnd.mycompany.v1+json:
+            schema:
+              $ref: '#/components/schemas/Pet'
+      responses:
+        '200':
+          description: the created pet
+          content:
+            application/vnd.mycompany.v1+json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+  /report:
+    post:
+      operationId: uploadReport
+      requestBody:
+        required: true
+        content:
+          text/csv:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: the processed report
+          content:
+            text/csv:
+              schema:
+                type: string
+components:
+  schemas:
+    Pet:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string

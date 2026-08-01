@@ -73,6 +73,10 @@ var globalState struct {
 	// streamingContentTypeRegexes are the compiled regexes (defaults + user)
 	// used by ResponseContentDefinition.IsStreamingContentType.
 	streamingContentTypeRegexes []*regexp.Regexp
+	// contentTypeNameTags is the compiled output-options.content-types
+	// mapping, resolving media types to user-configured short names for use
+	// in generated type names. Nil-safe: a nil matcher matches nothing.
+	contentTypeNameTags *contentTypeNameTags
 	// schemaFieldTagGenerator renders struct tags for schema property
 	// fields (defaults + output-options.struct-tags, including the legacy
 	// yaml-tags injection). Built in Generate; lazily built for direct
@@ -238,6 +242,14 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		return "", err
 	}
 	globalState.streamingContentTypeRegexes = streamingRegexes
+
+	// Compile the content-types short name mapping. Validate() already caught
+	// syntax errors, but surface any regression here too.
+	contentTypeTags, err := compileContentTypeNameTags(opts.OutputOptions.ContentTypes)
+	if err != nil {
+		return "", err
+	}
+	globalState.contentTypeNameTags = contentTypeTags
 
 	// Multi-pass name resolution: gather all schemas, then resolve names globally.
 	// Only enabled when resolve-type-name-collisions is set.
