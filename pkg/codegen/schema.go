@@ -92,6 +92,14 @@ func (s Schema) HasCustomMarshalJSON() bool {
 	return len(s.OAPISchema.OneOf) > 0 || len(s.OAPISchema.AnyOf) > 0
 }
 
+// HasCustomMarshalJSONForRequestBody reports whether a named request body
+// wrapper needs to delegate JSON marshaling to its underlying union type.
+// Unlike strict response types, request body wrappers have no direct union
+// encoding path, so local inline unions need delegation as well.
+func (s Schema) HasCustomMarshalJSONForRequestBody() bool {
+	return len(s.UnionElements) > 0 || s.HasCustomMarshalJSON()
+}
+
 func (s Schema) TypeDecl() string {
 	if s.IsRef() {
 		return s.RefType
@@ -1427,7 +1435,18 @@ func GenFieldsFromProperties(props []Property) []string {
 		shouldOmitEmpty := (!p.Required || p.ReadOnly || p.WriteOnly) &&
 			(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
 
-		omitEmpty := shouldOmitEmpty
+		// Nullable fields don't get omitempty: `null` is a meaningful wire
+		// value distinct from key absence, and a nil pointer under omitempty
+		// could never produce it. Required+nullable fields must always
+		// serialize their key per JSON Schema `required` semantics. The
+		// nullable-type option is the exception — nullable.Nullable[T]
+		// distinguishes absent from null itself and relies on omitempty for
+		// the absent case. Issue #2503.
+		omitEmpty := !p.Nullable && shouldOmitEmpty
+
+		if p.Nullable && globalState.options.OutputOptions.NullableType {
+			omitEmpty = shouldOmitEmpty
+		}
 
 		omitZero := false
 

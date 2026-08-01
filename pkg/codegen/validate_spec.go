@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go/token"
+	"strings"
 	"unicode"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -113,6 +114,26 @@ func (v *specValidator) checkTagKey(key, what string) {
 	}
 }
 
+// checkGoImportName validates the alias field of an `x-go-type-import` entry.
+// A Go import alias is either absent (empty), the blank identifier `_`, the
+// dot `.` (dot-import), or any valid Go identifier. It is emitted unquoted
+// (%s) into the import block, so a newline or other control character would
+// close the block and allow arbitrary code injection.
+func (v *specValidator) checkGoImportName(value, what string) {
+	if value == "" || value == "." {
+		return
+	}
+	v.checkIdentifier(value, what)
+}
+
+// checkGoImportPath validates the path field of an `x-go-type-import` entry.
+// The path is emitted with %q (strconv.Quote), so control characters and
+// quotes are escaped before they reach the output file. We still reject
+// control characters here to catch obviously malformed inputs early.
+func (v *specValidator) checkGoImportPath(value, what string) {
+	v.checkNoControl(value, what)
+}
+
 // checkSecurity validates the scopes named in security requirements. The
 // provider names are emitted only after identifier sanitization, but scopes are
 // copied verbatim into a generated `[]string` literal (via toStringArray), so
@@ -180,6 +201,20 @@ func (v *specValidator) checkExtensions(ext map[string]any, where string) {
 			for _, k := range SortedMapKeys(tags) {
 				v.checkTagKey(k, "x-oapi-codegen-extra-tags key in "+where)
 				v.checkText(tags[k], fmt.Sprintf("x-oapi-codegen-extra-tags value for %q in %s", k, where))
+			}
+		}
+	}
+	if raw, ok := ext[extPropGoImport]; ok {
+		if importMap, ok := raw.(map[string]any); ok {
+			for k, val := range importMap {
+				if s, ok := val.(string); ok {
+					switch {
+					case strings.EqualFold(k, "name"):
+						v.checkGoImportName(s, "x-go-type-import name in "+where)
+					case strings.EqualFold(k, "path"):
+						v.checkGoImportPath(s, "x-go-type-import path in "+where)
+					}
+				}
 			}
 		}
 	}

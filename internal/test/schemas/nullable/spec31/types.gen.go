@@ -18,7 +18,7 @@ type Cat struct {
 
 // ChallengeOpenJson defines model for ChallengeOpenJson.
 type ChallengeOpenJson struct {
-	Challenger any     `json:"challenger,omitempty"`
+	Challenger any     `json:"challenger"`
 	Id         string  `json:"id"`
 	Url        *string `json:"url,omitempty"`
 }
@@ -45,7 +45,7 @@ type Pet struct {
 	// primary type as "object", routing the schema away from
 	// the unspecified-object code path. Expected shape:
 	// `*map[string]interface{}`.
-	Extras *map[string]interface{} `json:"extras,omitempty"`
+	Extras *map[string]interface{} `json:"extras"`
 
 	// Favorite Nullable discriminated union (`oneOf: [Cat, Dog, null]` with a
 	// discriminator). Before this branch's fix to the union-
@@ -54,37 +54,37 @@ type Pet struct {
 	// expected-mapping count, so generation failed with
 	// `discriminator: not all schemas were mapped`. The two real
 	// branches must map and the null branch must be tolerated.
-	Favorite *DiscriminatedPet `json:"favorite,omitempty"`
+	Favorite *DiscriminatedPet `json:"favorite"`
 
 	// Metadata Same as `extras` but with the type-array order reversed.
 	// Both orderings must resolve identically; this guards
 	// against any code path that inspects only the first
 	// element of the type array.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Metadata *map[string]interface{} `json:"metadata"`
 
 	// Name Required, non-nullable.
 	Name string `json:"name"`
 
 	// Nickname Optional, nullable scalar via 3.1 type-array idiom.
-	Nickname *string `json:"nickname,omitempty"`
+	Nickname *string `json:"nickname"`
 
 	// NicknameAnyOf OpenAPI 3.1: a `{"type": "null"}` branch in `anyOf` is a
 	// nullability marker, not a separate union variant. Should
 	// generate the same shape as `type: ["string","null"]` (i.e.
 	// `*string`). Regression for a previous crash with
 	// "unhandled Schema type: &[null]".
-	NicknameAnyOf *string `json:"nicknameAnyOf,omitempty"`
+	NicknameAnyOf *string `json:"nicknameAnyOf"`
 
 	// NicknameOneOf Same as `nicknameAnyOf` but using `oneOf`.
-	NicknameOneOf *string `json:"nicknameOneOf,omitempty"`
+	NicknameOneOf *string `json:"nicknameOneOf"`
 
 	// Owner Optional, nullable inline object.
 	Owner *struct {
 		Id *string `json:"id,omitempty"`
-	} `json:"owner,omitempty"`
+	} `json:"owner"`
 
 	// Tags Optional, nullable array.
-	Tags *[]string `json:"tags,omitempty"`
+	Tags *[]string `json:"tags"`
 }
 
 // RequiredNull defines model for RequiredNull.
