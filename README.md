@@ -185,6 +185,16 @@ Although we strive to retain backwards compatibility - as a project that's using
 
 In this case, we will expose a [compatibility option](https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen#CompatibilityOptions) to restore old behaviour.
 
+That all being said, we operate in a little bit of a grey area, since we are a code generator, we support template overrides, and
+our code can be imported. So this is how we will try to maintain compatibility:
+
+  - Semver mostly applies to generated code. We strive to avoid breaking your code which depends on the generated code. We will
+    provide compatibility flags for major breaking changes, however, if you're off the beaten path, on a seldom encountered edge
+    case, we'll sometimes decide to make a breaking change to avoid complicating usage or internals.
+  - Our `pkg/` directory is importable. This was a mistake. Importing anything other than the `Generate` function and its related
+    `Configuration` is considered unstable. In the future, we will clean up our import surface.
+  - Template overrides are considered unstable, and you use them at your own risk. These are always drifting and so are their input contexts, so we can't guarantee much here.
+
 ## Features
 
 At a high level, `oapi-codegen` supports:
