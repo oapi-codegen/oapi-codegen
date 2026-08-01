@@ -9,17 +9,53 @@ const (
 	EXP ClientType = "EXP"
 )
 
+// Valid indicates whether the value is a known member of the ClientType enum.
+func (e ClientType) Valid() bool {
+	switch e {
+	case ACT:
+		return true
+	case EXP:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ClientTypeWithNamesExtension.
 const (
 	ClientTypeWithNamesExtensionActive  ClientTypeWithNamesExtension = "ACT"
 	ClientTypeWithNamesExtensionExpired ClientTypeWithNamesExtension = "EXP"
 )
 
+// Valid indicates whether the value is a known member of the ClientTypeWithNamesExtension enum.
+func (e ClientTypeWithNamesExtension) Valid() bool {
+	switch e {
+	case ClientTypeWithNamesExtensionActive:
+		return true
+	case ClientTypeWithNamesExtensionExpired:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ClientTypeWithVarNamesExtension.
 const (
 	ClientTypeWithVarNamesExtensionActive  ClientTypeWithVarNamesExtension = "ACT"
 	ClientTypeWithVarNamesExtensionExpired ClientTypeWithVarNamesExtension = "EXP"
 )
+
+// Valid indicates whether the value is a known member of the ClientTypeWithVarNamesExtension enum.
+func (e ClientTypeWithVarNamesExtension) Valid() bool {
+	switch e {
+	case ClientTypeWithVarNamesExtensionActive:
+		return true
+	case ClientTypeWithVarNamesExtensionExpired:
+		return true
+	default:
+		return false
+	}
+}
 
 // ClientType defines model for ClientType.
 type ClientType string

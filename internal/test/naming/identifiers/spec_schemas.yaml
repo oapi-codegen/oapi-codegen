@@ -1,0 +1,61 @@
+# Identifier-normalization cases folded from schemas/schemas.yaml. Compile-only.
+#   - issue #30:  reserved Go keyword path param ("fallthrough") must be prefixed.
+#   - issue #41:  path param name starting with a digit ("1param") + a schema name
+#                 starting with a digit ("5StartsWithNumber").
+#   - issue #209: a path parameter declared via $ref must be generated properly.
+#   - access-token: a security scheme whose name contains "-" must be remapped to a valid Go id.
+openapi: "3.0.1"
+info:
+  version: "1.0.0"
+  title: naming/identifiers (schemas fold)
+  description: |
+    Generation of valid Go identifiers from reserved keywords, digit-leading names,
+    $ref-declared parameters, and hyphenated security-scheme names.
+paths:
+  /issues/30/{fallthrough}:
+    description: Reserved keywords should be prefixed in variable names.
+    parameters:
+      - name: fallthrough
+        in: path
+        required: true
+        schema:
+          type: string
+    get:
+      operationId: Issue30
+  /issues/41/{1param}:
+    get:
+      operationId: Issue41
+      description: Parameter name starting with number
+      parameters:
+        - name: 1param
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/5StartsWithNumber"
+  /issues/209/${str}:
+    parameters:
+      - $ref: '#/components/parameters/StringInPath'
+    get:
+      operationId: Issue209
+      description: Checks if parameters are declared properly
+components:
+  schemas:
+    5StartsWithNumber:
+      type: object
+      description: This schema name starts with a number
+  parameters:
+    StringInPath:
+      name: str
+      description: A string path parameter
+      in: path
+      required: true
+      schema:
+        type: string
+  securitySchemes:
+    access-token:
+      type: http
+      scheme: bearer
+      bearerFormat: |
+        JWT-format access token.
+security:
+  - access-token: [ ]

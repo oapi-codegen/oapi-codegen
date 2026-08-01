@@ -4,6 +4,7 @@ lint:
 lint-ci:
 	$(GOBIN)/golangci-lint run ./... --output.text.path=stdout --timeout=5m
 
+.PHONY: generate
 generate:
 	go generate ./...
 
@@ -14,4 +15,4 @@ tidy:
 	go mod tidy
 
 tidy-ci:
-	tidied -verbose
+	go mod tidy -diff

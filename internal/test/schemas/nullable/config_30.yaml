@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+# openapi31_nullable/3_0: 3.0 nullable-true control case; output to subpackage spec30.
+# Separate triple because this spec uses OpenAPI 3.0 and the package name differs from spec31.
+package: spec30
+output: spec30/types.gen.go
+generate:
+  models: true
+output-options:
+  skip-prune: true

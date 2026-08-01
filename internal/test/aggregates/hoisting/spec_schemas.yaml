@@ -1,0 +1,25 @@
+# Folded from schemas/schemas.yaml. Compile-only.
+# An anonymous inner object is hoisted to a named type, and x-go-type-name overrides the
+# generated name (InnerRenamedAnonymousObject).
+openapi: "3.0.1"
+info:
+  version: "1.0.0"
+  title: aggregates/hoisting (schemas fold)
+  description: |
+    Hoisting of an anonymous inner object property, with x-go-type-name renaming.
+paths: {}
+components:
+  schemas:
+    OuterTypeWithAnonymousInner:
+      type: object
+      properties:
+        name:
+          type: string
+        inner:
+          type: object
+          x-go-type-name: InnerRenamedAnonymousObject
+          properties:
+            id:
+              type: integer
+          required: [ id ]
+      required: [ name, inner ]

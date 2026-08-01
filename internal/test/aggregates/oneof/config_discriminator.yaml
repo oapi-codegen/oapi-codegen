@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: aggregatesoneof
+output: discriminator.gen.go
+# issue #1530: oneOf with a discriminator -> Discriminator()/ValueByDiscriminator() + As/From/Merge helpers.
+generate:
+  models: true

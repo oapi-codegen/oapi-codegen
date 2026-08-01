@@ -1,0 +1,150 @@
+# ==========================================================================
+# Category: extensions/skip_optional_pointer
+# Tests:    x-go-type-skip-optional-pointer on scalars/containers/maps/slices;
+#           nil omitted not `null`; $ref & property-level overrides.
+#
+# Folds in (provenance):
+#   - extensions/x-go-type-skip-optional-pointer  (base scalar / $ref / override)
+#   - issues/issue-2031                           (nil optional array omitted)
+#   - issues/issue1561                            (container types via global flag)
+#   - issues/issue-2329                           (maps/slices in MarshalJSON + client query params)
+# ==========================================================================
+openapi: "3.0.0"
+info:
+  title: extensions/skip_optional_pointer
+  version: "1.0.0"
+  description: |
+    x-go-type-skip-optional-pointer on scalars/containers/maps/slices; nil omitted
+    not `null`; $ref & property-level overrides; container types via the global
+    prefer-skip-optional-pointer-on-container-types flag; client query-param + custom
+    MarshalJSON nil-omission paths.
+paths:
+  # issue #2329: map/slice optional query params marked skip-optional-pointer must
+  # produce client request code that compiles (no `*params.Tags` / `*params.Labels`),
+  # and nil params must not be sent.
+  /things:
+    get:
+      operationId: listThings
+      parameters:
+        - name: tags
+          in: query
+          style: deepObject
+          x-go-type-skip-optional-pointer: true
+          schema:
+            type: object
+            additionalProperties:
+              type: string
+        - name: labels
+          in: query
+          x-go-type-skip-optional-pointer: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "200":
+          description: OK
+    post:
+      operationId: createThing
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Thing'
+      responses:
+        "200":
+          description: OK
+components:
+  schemas:
+    # --- extensions/x-go-type-skip-optional-pointer: scalar via $ref + property-level overrides ---
+    Default:
+      type: integer
+    SkipOptionalTrue:
+      type: integer
+      x-go-type-skip-optional-pointer: true
+    SomeObject:
+      type: object
+      properties:
+        skip_optional:
+          $ref: '#/components/schemas/SkipOptionalTrue'
+        skip_optional_override_to_false:
+          $ref: '#/components/schemas/SkipOptionalTrue'
+          x-go-type-skip-optional-pointer: false
+        skip_optional_next_to_ref:
+          $ref: '#/components/schemas/Default'
+          x-go-type-skip-optional-pointer: true
+
+    # issue #2031: nil optional array must be OMITTED (omitempty), never marshaled as null.
+    # additionalProperties:true forces the custom-MarshalJSON path that exposes the bug.
+    ArrayContainer:
+      type: object
+      additionalProperties: true
+      properties:
+        values:
+          x-go-type-skip-optional-pointer: true
+          type: array
+          items:
+            type: string
+
+    # issue #1561: with prefer-skip-optional-pointer-on-container-types, container fields
+    # (slices/maps/[]byte) are emitted as non-pointer; property-level false re-enables the pointer.
+    Pong:
+      type: object
+      required:
+        - ping
+      properties:
+        ping:
+          type: string
+          example: pong
+    ResponseBody:
+      type: object
+      required:
+        - required_slice
+      properties:
+        required_slice:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pong'
+        a_slice:
+          type: array
+          items:
+            $ref: '#/components/schemas/Pong'
+        a_map:
+          additionalProperties:
+            $ref: '#/components/schemas/Pong'
+        unknown_object:
+          type: object
+        additional_props:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Pong'
+        a_slice_with_additional_props:
+          type: array
+          items:
+            additionalProperties:
+              $ref: '#/components/schemas/Pong'
+        bytes:
+          type: string
+          format: byte
+        bytes_with_override:
+          type: string
+          format: byte
+          x-go-type-skip-optional-pointer: false
+
+    # issue #2329: map/slice properties marked skip-optional-pointer must both be nil-guarded
+    # in the custom MarshalJSON (additionalProperties triggers it) — nil map must not become `null`.
+    Thing:
+      type: object
+      additionalProperties:
+        type: string
+      properties:
+        tags:
+          x-go-type-skip-optional-pointer: true
+          type: object
+          additionalProperties:
+            type: string
+        labels:
+          x-go-type-skip-optional-pointer: true
+          type: array
+          items:
+            type: string

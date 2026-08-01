@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+# From issue-2190
+package: textandjson
+output: text_and_json.gen.go
+generate:
+  std-http-server: true
+  strict-server: true
+  models: true
+  client: true
+output-options:
+  nullable-type: true

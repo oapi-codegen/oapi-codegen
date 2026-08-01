@@ -1,0 +1,26 @@
+openapi: 3.0.0
+info:
+  title: issue-518 per-operation middleware regression
+  version: '1.0'
+paths:
+  /alpha:
+    get:
+      # Deliberately kebab-case to exercise that OperationMiddlewares is keyed
+      # on the spec's raw operationId, not the normalized Go identifier.
+      operationId: get-alpha
+      responses:
+        '200':
+          description: OK
+  /beta:
+    get:
+      operationId: get-beta
+      responses:
+        '200':
+          description: OK
+  /gamma:
+    # No operationId on this one — codegen generates a default. The map key
+    # falls back to the normalized OperationId in that case.
+    get:
+      responses:
+        '200':
+          description: OK

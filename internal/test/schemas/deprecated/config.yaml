@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: schemasdeprecated
+output: deprecated.gen.go
+generate:
+  models: true
+  client: true
+  strict-server: true
+  std-http-server: true
+output-options:
+  # keep all types even if unreferenced (deprecated fields/objects)
+  skip-prune: true
+  # a schema is named `Client`, so name the generated client struct APIClient
+  client-type-name: APIClient

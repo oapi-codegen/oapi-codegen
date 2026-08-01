@@ -1,0 +1,110 @@
+# ==========================================================================
+# Category: aggregates/hoisting (explicit)
+# Tests:    generate-types-for-anonymous-schemas: inline allOf + sibling
+#           properties become named response-body types; top-level array
+#           items become a named element type.
+#
+# Folds in (provenance):
+#   - anonymous_inner_hoisting/global  (explicit generate-types-for-anonymous-schemas)
+# ==========================================================================
+openapi: "3.0.0"
+info:
+  title: aggregates/hoisting (explicit)
+  version: "1.0.0"
+  description: |
+    With generate-types-for-anonymous-schemas enabled, inline allOf + sibling
+    properties schemas in operation responses become named Go types, and
+    top-level array schemas whose items are inline objects emit a named
+    element type instead of an anonymous struct.
+paths:
+  # anonymous_inner_hoisting/global: get a single role by id; the response body
+  # uses allOf to merge SuccessfulResponse with sibling properties containing an
+  # inline `data` object — both the response root and the `data` field must be
+  # emitted as named types under the flag.
+  /roles/{id}:
+    summary: Get role by id
+    get:
+      operationId: GetRolesId
+      tags:
+        - role
+      parameters:
+        - name: id
+          in: path
+          description: Role ID
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Role
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessfulResponse'
+                  - properties:
+                      data:
+                        type: object
+                        properties:
+                          role:
+                            $ref: '#/components/schemas/Role'
+                        required: [role]
+  # anonymous_inner_hoisting/global: reference the top-level Roles array schema
+  # so the default prune pass keeps it; the array item type (Roles_Item) must be
+  # emitted as a named type rather than an anonymous struct.
+  /roles:
+    get:
+      operationId: GetRoles
+      tags:
+        - role
+      responses:
+        '200':
+          description: All roles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Roles'
+
+components:
+  schemas:
+    # anonymous_inner_hoisting/global: base schemas used by the allOf response
+    SuccessfulResponse:
+      type: object
+      properties:
+        ok:
+          type: boolean
+          default: true
+          description: Indicated whether the response is successful.
+        data:
+          type: object
+          description: If successful, response from api
+      required:
+        - ok
+        - data
+    Role:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      required:
+        - id
+        - name
+    # anonymous_inner_hoisting/global: regression for top-level array of inline objects.
+    # Under generate-types-for-anonymous-schemas this must emit a named element type
+    # (Roles_Item) rather than `type Roles = []struct{...}`. The auto-hoist inside
+    # GenerateGoSchema is gated on len(path)>1, which fails for a top-level component
+    # path, so the array-item hoist in oapiSchemaToGoType covers this case.
+    Roles:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: integer
+          name:
+            type: string
+        required:
+          - id
+          - name

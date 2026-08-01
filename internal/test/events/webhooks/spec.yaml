@@ -1,0 +1,35 @@
+openapi: 3.1.0
+info:
+  title: Webhooks test
+  version: 1.0.0
+  description: |
+    Verifies the OpenAPI 3.1 webhook codegen end-to-end: a service that
+    emits PetStatusChanged webhooks via WebhookInitiator, and a
+    subscriber that receives them via WebhookReceiverInterface.
+paths: {}
+webhooks:
+  petStatusChanged:
+    post:
+      operationId: PetStatusChanged
+      summary: Notifies subscribers that a pet's status changed.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetStatusEvent'
+      responses:
+        '204':
+          description: Acknowledged
+
+components:
+  schemas:
+    PetStatusEvent:
+      type: object
+      required: [id, status]
+      properties:
+        id:
+          type: string
+        status:
+          type: string
+          enum: [available, pending, sold]

@@ -160,7 +160,7 @@ func TestSortedSchemaKeysWithXOrder(t *testing.T) {
 	withOrder := func(i float64) *openapi3.SchemaRef {
 		return &openapi3.SchemaRef{
 			Value: &openapi3.Schema{
-				Extensions: map[string]interface{}{"x-order": i},
+				Extensions: map[string]any{"x-order": i},
 			},
 		}
 	}
@@ -368,6 +368,10 @@ func TestSwaggerUriToEchoUri(t *testing.T) {
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToEchoUri("/path/{;arg*}/foo"))
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToEchoUri("/path/{?arg}/foo"))
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToEchoUri("/path/{?arg*}/foo"))
+
+	// Make sure literal colons are escaped (issue #1726)
+	assert.Equal(t, `/path\:foo`, SwaggerUriToEchoUri("/path:foo"))
+	assert.Equal(t, `/path/:arg\:foo`, SwaggerUriToEchoUri("/path/{arg}:foo"))
 }
 
 func TestSwaggerUriToGinUri(t *testing.T) {
@@ -385,6 +389,10 @@ func TestSwaggerUriToGinUri(t *testing.T) {
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToGinUri("/path/{;arg*}/foo"))
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToGinUri("/path/{?arg}/foo"))
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToGinUri("/path/{?arg*}/foo"))
+
+	// Make sure literal colons are escaped (issue #1726)
+	assert.Equal(t, `/path\:foo`, SwaggerUriToGinUri("/path:foo"))
+	assert.Equal(t, `/path/:arg\:foo`, SwaggerUriToGinUri("/path/{arg}:foo"))
 }
 
 func TestSwaggerUriToGorillaUri(t *testing.T) { // TODO
@@ -419,6 +427,10 @@ func TestSwaggerUriToFiberUri(t *testing.T) {
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{;arg*}/foo"))
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{?arg}/foo"))
 	assert.Equal(t, "/path/:arg/foo", SwaggerUriToFiberUri("/path/{?arg*}/foo"))
+
+	// Make sure literal colons are escaped (issue #1726)
+	assert.Equal(t, `/path\:foo`, SwaggerUriToFiberUri("/path:foo"))
+	assert.Equal(t, `/path/:arg\:foo`, SwaggerUriToFiberUri("/path/{arg}:foo"))
 }
 
 func TestSwaggerUriToChiUri(t *testing.T) {
@@ -454,6 +466,21 @@ func TestSwaggerUriToStdHttpUriUri(t *testing.T) {
 	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{;arg*}/foo"))
 	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{?arg}/foo"))
 	assert.Equal(t, "/path/{arg}/foo", SwaggerUriToStdHttpUri("/path/{?arg*}/foo"))
+
+	// Parameter names that are not valid Go identifiers must be sanitized (issue #2278)
+	assert.Equal(t, "/path/{addressing_identifier}", SwaggerUriToStdHttpUri("/path/{addressing-identifier}"))
+	assert.Equal(t, "/path/{my_param}/{other_param}", SwaggerUriToStdHttpUri("/path/{my-param}/{other-param}"))
+
+	// Go keywords are valid ServeMux wildcard names and should not be prefixed
+	assert.Equal(t, "/path/{type}", SwaggerUriToStdHttpUri("/path/{type}"))
+
+	// OpenAPI paths with a trailing slash mean exactly that path, but a
+	// ServeMux pattern ending in '/' matches the whole subtree — and
+	// overlapping subtree patterns panic at registration. Anchor with {$}.
+	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/2065
+	assert.Equal(t, "/path/{$}", SwaggerUriToStdHttpUri("/path/"))
+	assert.Equal(t, "/api/test/{id}/test2/{$}", SwaggerUriToStdHttpUri("/api/test/{id}/test2/"))
+	assert.Equal(t, "/api/test/test3/{$}", SwaggerUriToStdHttpUri("/api/test/test3/"))
 }
 
 func TestOrderedParamsFromUri(t *testing.T) {
@@ -462,6 +489,53 @@ func TestOrderedParamsFromUri(t *testing.T) {
 
 	result = OrderedParamsFromUri("/path/foo")
 	assert.EqualValues(t, []string{}, result)
+
+	// A parameter can appear more than once in the URI (e.g. Keycloak API).
+	// OrderedParamsFromUri faithfully returns all occurrences.
+	result = OrderedParamsFromUri("/admin/realms/{realm}/clients/{client-uuid}/roles/{role-name}/composites/clients/{client-uuid}")
+	assert.EqualValues(t, []string{"realm", "client-uuid", "role-name", "client-uuid"}, result)
+}
+
+func TestSortParamsByPath(t *testing.T) {
+	strSchema := &openapi3.Schema{Type: &openapi3.Types{"string"}}
+
+	t.Run("reorders params to match path order", func(t *testing.T) {
+		params := []ParameterDefinition{
+			{ParamName: "b", In: "path", Spec: &openapi3.Parameter{Name: "b", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+			{ParamName: "a", In: "path", Spec: &openapi3.Parameter{Name: "a", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+		}
+		sorted, err := SortParamsByPath("/foo/{a}/bar/{b}", params)
+		require.NoError(t, err)
+		require.Len(t, sorted, 2)
+		assert.Equal(t, "a", sorted[0].ParamName)
+		assert.Equal(t, "b", sorted[1].ParamName)
+	})
+
+	t.Run("errors on missing parameter", func(t *testing.T) {
+		params := []ParameterDefinition{
+			{ParamName: "a", In: "path", Spec: &openapi3.Parameter{Name: "a", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+		}
+		_, err := SortParamsByPath("/foo/{a}/bar/{b}", params)
+		assert.Error(t, err)
+	})
+
+	t.Run("handles duplicate path parameters", func(t *testing.T) {
+		// This is the Keycloak-style path where {client-uuid} appears twice.
+		// The spec only declares 3 unique parameters.
+		params := []ParameterDefinition{
+			{ParamName: "realm", In: "path", Spec: &openapi3.Parameter{Name: "realm", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+			{ParamName: "client-uuid", In: "path", Spec: &openapi3.Parameter{Name: "client-uuid", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+			{ParamName: "role-name", In: "path", Spec: &openapi3.Parameter{Name: "role-name", Schema: &openapi3.SchemaRef{Value: strSchema}}},
+		}
+		path := "/admin/realms/{realm}/clients/{client-uuid}/roles/{role-name}/composites/clients/{client-uuid}"
+		sorted, err := SortParamsByPath(path, params)
+		require.NoError(t, err)
+		// Should return 3 unique params in first-occurrence order
+		require.Len(t, sorted, 3)
+		assert.Equal(t, "realm", sorted[0].ParamName)
+		assert.Equal(t, "client-uuid", sorted[1].ParamName)
+		assert.Equal(t, "role-name", sorted[2].ParamName)
+	})
 }
 
 func TestGenPathString(t *testing.T) {
@@ -533,6 +607,49 @@ func Benchmark_concatPath2param(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		_ = "/test/" + pathParam0 + "/test2/" + pathParam1
+	}
+}
+
+func TestStringToGoStringValue(t *testing.T) {
+	testCases := []struct {
+		input    string
+		expected string
+		message  string
+	}{
+		{
+			input:    ``,
+			expected: `""`,
+			message:  "blank string should be converted to empty Go string literal",
+		},
+		{
+			input:    `application/json`,
+			expected: `"application/json"`,
+			message:  "typical string should be returned as-is",
+		},
+		{
+			input:    `application/json; foo="bar"`,
+			expected: `"application/json; foo=\"bar\""`,
+			message:  "string with quotes should include escape characters",
+		},
+		{
+			// The previous implementation only escaped `"`, so a backslash
+			// before a quote (`\"`) escaped the escaping and let untrusted
+			// spec text break out of the generated string literal.
+			input:    `a\"; var Evil = 1; var _ = "`,
+			expected: `"a\\\"; var Evil = 1; var _ = \""`,
+			message:  "backslashes must be escaped so a quote cannot break out of the literal",
+		},
+		{
+			input:    "line1\nline2",
+			expected: `"line1\nline2"`,
+			message:  "newlines must be escaped so they cannot terminate the literal",
+		},
+	}
+	for _, testCase := range testCases {
+		t.Run(testCase.message, func(t *testing.T) {
+			result := StringToGoString(testCase.input)
+			assert.EqualValues(t, testCase.expected, result, testCase.message)
+		})
 	}
 }
 
@@ -671,6 +788,7 @@ func TestSchemaNameToTypeName(t *testing.T) {
 		"=3":           "Equal3",
 		"#Tag":         "HashTag",
 		".com":         "DotCom",
+		"_1":           "Underscore1",
 		">=":           "GreaterThanEqual",
 		"<=":           "LessThanEqual",
 		"<":            "LessThan",
@@ -785,4 +903,109 @@ func Test_replaceInitialism(t *testing.T) {
 			assert.Equalf(t, tt.want, replaceInitialism(tt.args.s), "replaceInitialism(%v)", tt.args.s)
 		})
 	}
+}
+
+
+func TestValidateStdHTTPPath(t *testing.T) {
+	tests := []struct {
+		path    string
+		wantErr bool
+	}{
+		{"/resources/{resourceId}", false},
+		{"/resources/{resourceId}/apply", false},
+		{"/resources/{resourceId}:apply", true},
+		{"/resources/prefix{resourceId}", true},
+		{"/resources/{resourceId}suffix", true},
+		{"/pets:validate", false}, // pure literal segment with colon is fine for ServeMux
+		{"/path/{arg1}/{arg2}/foo", false},
+	}
+	for _, tt := range tests {
+		err := ValidateStdHTTPPath(tt.path)
+		if tt.wantErr && err == nil {
+			t.Errorf("path %q: expected error", tt.path)
+		}
+		if !tt.wantErr && err != nil {
+			t.Errorf("path %q: unexpected error: %v", tt.path, err)
+		}
+	}
+}
+
+func TestGenerateRejectsMixedServeMuxPathParam(t *testing.T) {
+	spec := `openapi: 3.0.3
+info:
+  title: mixed path param
+  version: 1.0.0
+paths:
+  /resources/{resourceId}:apply:
+    post:
+      operationId: applyResource
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Applied
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	_, err = Generate(swagger, Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			StdHTTPServer: true,
+			Models:        true,
+		},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "mixes a path parameter")
+}
+
+func TestGenerateAllowsMixedServeMuxPathParamWhenFilteredOut(t *testing.T) {
+	spec := `openapi: 3.0.3
+info:
+  title: mixed path param filtered out
+  version: 1.0.0
+paths:
+  /resources/{resourceId}:apply:
+    post:
+      operationId: applyResource
+      tags: [excluded]
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Applied
+  /pets:
+    get:
+      operationId: listPets
+      responses:
+        "200":
+          description: OK
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	// Tag filtering removes the only operation on the mixed segment but leaves
+	// the path key in the spec; no route is emitted for it, so generation must
+	// succeed.
+	_, err = Generate(swagger, Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			StdHTTPServer: true,
+			Models:        true,
+		},
+		OutputOptions: OutputOptions{
+			ExcludeTags: []string{"excluded"},
+		},
+	})
+	require.NoError(t, err)
 }

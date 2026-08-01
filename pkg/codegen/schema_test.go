@@ -3,7 +3,9 @@ package codegen
 import (
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestProperty_GoTypeDef(t *testing.T) {
@@ -453,4 +455,87 @@ func TestProperty_GoTypeDef_nullable(t *testing.T) {
 			assert.Equal(t, tt.want, p.GoTypeDef())
 		})
 	}
+}
+
+func TestProperty_ZeroValueIsNil(t *testing.T) {
+	newType := func(typ string) *openapi3.Types {
+		return &openapi3.Types{typ}
+	}
+
+	tests := []struct {
+		name        string
+		oapiSchema  *openapi3.Schema
+		goType      string
+		expectIsNil bool
+	}{
+		{
+			name:        "when an array, returns true",
+			oapiSchema:  &openapi3.Schema{Type: newType("array")},
+			expectIsNil: true,
+		},
+		{
+			name:        "when an object, returns false",
+			oapiSchema:  &openapi3.Schema{Type: newType("object")},
+			expectIsNil: false,
+		},
+		{
+			name:        "when an object rendered as a map, returns true",
+			oapiSchema:  &openapi3.Schema{Type: newType("object")},
+			goType:      "map[string]string",
+			expectIsNil: true,
+		},
+		{
+			name:        "when a string, returns false",
+			oapiSchema:  &openapi3.Schema{Type: newType("string")},
+			expectIsNil: false,
+		},
+		{
+			name:        "when an integer, returns false",
+			oapiSchema:  &openapi3.Schema{Type: newType("integer")},
+			expectIsNil: false,
+		},
+		{
+			name:        "when a number, returns false",
+			oapiSchema:  &openapi3.Schema{Type: newType("number")},
+			expectIsNil: false,
+		},
+		{
+			name:        "when OAPISchema is nil, returns false",
+			oapiSchema:  nil,
+			expectIsNil: false,
+		},
+		{
+			name:        "when OAPISchema is zero value, returns false",
+			oapiSchema:  &openapi3.Schema{},
+			expectIsNil: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			prop := Property{
+				Schema: Schema{
+					OAPISchema: tt.oapiSchema,
+					GoType:     tt.goType,
+				},
+			}
+			if tt.expectIsNil {
+				require.True(t, prop.ZeroValueIsNil())
+			} else {
+				require.False(t, prop.ZeroValueIsNil())
+			}
+		})
+	}
+}
+
+// A bare OpenAPI 3.1 `type: "null"` schema validates exactly the JSON
+// value null. Go has no such type, so it maps to `any`, with the optional
+// pointer skipped (nil is already `any`'s zero value). Issue #2430.
+func TestOapiSchemaToGoType_NullType(t *testing.T) {
+	schema := &openapi3.Schema{Type: &openapi3.Types{"null"}}
+	var out Schema
+	require.NoError(t, oapiSchemaToGoType(schema, []string{"Challenger"}, &out))
+	assert.Equal(t, "any", out.GoType)
+	assert.True(t, out.SkipOptionalPointer)
+	assert.True(t, out.DefineViaAlias)
 }

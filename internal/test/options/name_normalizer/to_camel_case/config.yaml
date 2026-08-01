@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: optionsnamenormalizertocamelcase
+output: name_normalizer.gen.go
+# name-normalizer: ToCamelCase — standard camelCase without initialism expansion;
+# same output as unset for this spec (Uuid, GetHttpPet, OneOf2things).
+# gorilla-server + client so the tests can assert the operation-derived names
+# on both ServerInterfaceWrapper and Client.
+# skip-prune: retain the Error schema which is not referenced from any path.
+generate:
+  gorilla-server: true
+  client: true
+  models: true
+output-options:
+  skip-prune: true
+  name-normalizer: ToCamelCase

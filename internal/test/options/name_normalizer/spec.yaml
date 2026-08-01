@@ -1,0 +1,88 @@
+# ==========================================================================
+# Category: options/name_normalizer  (shared spec for all five sub-packages)
+# Tests:    the name-normalizer output option (plus additional-initialisms).
+#
+# Folds in (provenance):
+#   - outputoptions/name-normalizer/unset
+#   - outputoptions/name-normalizer/to-camel-case
+#   - outputoptions/name-normalizer/to-camel-case-with-initialisms
+#   - outputoptions/name-normalizer/to-camel-case-with-additional-initialisms
+#   - outputoptions/name-normalizer/to-camel-case-with-digits
+#
+# All five sub-packages generate gorilla-server+client+models from THIS spec;
+# only the name-normalizer / additional-initialisms flags differ, so the casing
+# differences in generated type/field/operation names are purely a function of
+# the normalizer. They live in separate Go packages because each emits the same
+# client/server infrastructure (Client, ServerInterfaceWrapper, ...) which
+# would collide in one package.
+#
+# Name-sensitive inputs exercised by the tests:
+#   - operationId getHttpPet  → GetHttpPet vs GetHTTPPet (client + server)
+#   - Pet.uuid                → Uuid vs UUID
+#   - Pet.name                → Name vs NAME (via additional-initialisms)
+#   - schema OneOf2things     → OneOf2things vs OneOf2Things (digit boundary)
+# ==========================================================================
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Example code for the `name-normalizer` output option
+paths:
+  /api/pets/{petId}:
+    get:
+      summary: Get pet given identifier.
+      operationId: getHttpPet
+      parameters:
+      - name: petId
+        in: path
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: valid pet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+components:
+  schemas:
+    Pet:
+      type: object
+      required:
+        - uuid
+        - name
+      properties:
+        uuid:
+          type: string
+          description: The pet uuid.
+        name:
+          type: string
+          description: The name of the pet.
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+        message:
+          type: string
+          description: Error message
+    OneOf2things:
+      description: "Notice that the `things` is not capitalised"
+      oneOf:
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: string
+              format: uuid

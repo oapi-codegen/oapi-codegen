@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: extensionsstructtags
+output: struct_tags.gen.go
+# Union of the flags every folded case needs:
+#   - models: the base type-shape cases (x-extra-tags, x-omitempty, param-ref-sibling-omitempty)
+#   - client: param-ref-sibling-omitempty exercises NewListThingsRequest with x-omitempty:false
+#   - skip-prune: keep schemas not referenced by any path (x-extra-tags and x-omitempty have no paths)
+generate:
+  models: true
+  client: true
+output-options:
+  skip-prune: true

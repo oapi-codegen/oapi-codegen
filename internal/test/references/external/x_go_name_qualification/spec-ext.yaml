@@ -1,0 +1,19 @@
+# From issue-2422: external spec whose response model is renamed via x-go-name.
+openapi: "3.1.0"
+info:
+  version: "0.0.1"
+  title: ext
+paths: {}
+components:
+  responses:
+    # x-go-name renames the response model in *this* package to OutcomeResult.
+    # A base spec that references this response directly (not via a path item)
+    # must point its client wrapper at externalRef0.OutcomeResult, the imported
+    # model name -- not the raw component name "Outcome" (issue #2422).
+    Outcome:
+      x-go-name: OutcomeResult
+      description: the outcome
+      content:
+        application/json:
+          schema:
+            type: string

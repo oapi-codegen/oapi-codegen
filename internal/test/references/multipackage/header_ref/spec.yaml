@@ -1,0 +1,26 @@
+# From issue-2060: a response header referencing an external component header
+# whose schema is a $ref must qualify the schema type with the imported package.
+openapi: "3.0.4"
+info:
+  title: API
+  version: "0.0.1"
+paths:
+  /things/{id}:
+    get:
+      operationId: getThing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          headers:
+            ETag:
+              $ref: "./common/spec.yaml#/components/headers/ETag"
+          content:
+            application/json:
+              schema:
+                type: string

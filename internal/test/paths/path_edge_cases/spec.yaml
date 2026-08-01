@@ -1,0 +1,123 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Path parameter edge cases
+  description: |
+    Special cases in path handling: colons in paths, URL escaping of reserved
+    characters in path parameters, and operation-level parameter definitions
+    overriding path-level ones.
+paths:
+  # From issue-312: a colon in the path (not a parameter) must survive client
+  # URL construction, and reserved characters in path parameter values must be
+  # escaped by the client and unescaped by the server.
+  /pets:validate:
+    post:
+      summary: Validate pets
+      description: Validate pets
+      operationId: validatePets
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PetNames'
+      responses:
+        '200':
+          description: valid pets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /pets/{petId}:
+    get:
+      summary: Get pet given identifier.
+      operationId: getPet
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: valid pet
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pet'
+
+  # From issue-1180: the operation-level `param` definition (string) must take
+  # priority over the path-level definition (integer) — the definition closest
+  # to the operation wins.
+  /simplePrimitive/{param}:
+    parameters:
+      - name: param
+        in: path
+        required: true
+        style: simple
+        schema:
+          type: integer
+          format: int32
+    get:
+      operationId: getSimplePrimitive
+      parameters:
+        - name: param
+          in: path
+          required: true
+          style: simple
+          schema:
+            type: string
+            format: int32
+      responses:
+        '200':
+          $ref: "#/components/responses/SimpleResponse"
+
+components:
+  responses:
+    SimpleResponse:
+      description: A simple response object
+      content:
+        text/plain:
+          schema:
+            type: string
+  schemas:
+    Pet:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: The name of the pet.
+
+    PetNames:
+      type: object
+      required:
+        - names
+      properties:
+        names:
+          type: array
+          description: The names of the pets.
+          items:
+            type: string
+
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+          description: Error code
+        message:
+          type: string
+          description: Error message

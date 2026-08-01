@@ -1,0 +1,67 @@
+# ==========================================================================
+# Category: naming/identifiers
+# Tests:    Go identifier normalisation for names that are invalid as-is:
+#           operationIds starting with a digit, HTTP header names starting
+#           with a digit, and struct-field names starting with an underscore.
+#
+# Folds in (provenance):
+#   - issues/issue-head-digit-of-operation-id  (operationId prefix "N" for leading digit)
+#   - issues/issue-head-digit-of-httpheader    (header field prefix "N" for leading digit)
+#   - issues/issue1767                         (underscore field → UnderscoreId)
+# ==========================================================================
+openapi: "3.0.2"
+info:
+  title: naming/identifiers
+  version: "1.0.0"
+  description: |
+    Identifier normalisation: operationIds starting with a digit are prefixed
+    with "N" so they become valid Go identifiers; HTTP response-header names
+    starting with a digit (e.g. "000-foo") likewise become N000Foo; struct
+    field names starting with an underscore (e.g. "_id") become UnderscoreId.
+paths:
+  # issue-head-digit-of-operation-id: operationId "3GPPFoo" starts with a
+  # digit; codegen must prefix it with "N" to produce a valid Go identifier.
+  /3gpp/foo:
+    get:
+      operationId: 3GPPFoo
+      responses:
+        "200":
+          description: OK
+
+  # issue-head-digit-of-httpheader: response header "000-foo" starts with a
+  # digit; codegen must produce field N000Foo in the response-headers struct.
+  /foo:
+    get:
+      operationId: getFoo
+      responses:
+        "200":
+          $ref: "#/components/responses/200"
+
+components:
+  responses:
+    # issue-head-digit-of-httpheader: BOTH the digit-leading component/response name
+    # "200" and the digit-leading header field "000-foo" must be N-prefixed —
+    # producing N200Response / N200ResponseHeaders with an N000Foo field.
+    "200":
+      description: OK
+      headers:
+        "000-foo":
+          schema:
+            type: string
+
+  schemas:
+    # issue1767: a field name starting with underscore ("_id") must be
+    # converted to PascalCase as "UnderscoreId" in the generated struct.
+    Alarm:
+      description: |
+        Alarm Information
+      type: object
+      properties:
+        _id:
+          description: Identifier of the Alarm.
+          type: string
+          format: uuid
+        id:
+          description: Identifier of the Alarm.
+          type: string
+          format: uuid

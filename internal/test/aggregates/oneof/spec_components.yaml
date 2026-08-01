@@ -1,0 +1,222 @@
+# Comprehensive oneOf + anyOf cases folded from components/components.yaml.
+# The oneOf cluster (OneOfObject1-13 + OneOfVariant1-6/51) and AnyOfObject1 share
+# variants (AnyOfObject1 reuses OneOfVariant4/5), so they stay together in this leaf.
+openapi: "3.0.1"
+info:
+  version: "1.0.0"
+  title: aggregates/oneof (components fold)
+  description: |
+    Comprehensive oneOf marshaling, discriminator mapping (none/full/partial/snake_case/
+    implicit/fixed), arrays of oneOf, allOf-of-oneOf, oneOf-with-additionalProperties, and
+    a simple anyOf case.
+paths: {}
+components:
+  schemas:
+    OneOfObject1:
+      description: oneOf with references and no discriminator
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant1'
+        - $ref: '#/components/schemas/OneOfVariant2'
+        - $ref: '#/components/schemas/OneOfVariant3'
+    OneOfObject2:
+      description: oneOf with inline elements
+      oneOf:
+        - type: object
+          properties:
+            name:
+              type: string
+        - type: array
+          items:
+            type: number
+        - type: boolean
+    OneOfObject3:
+      description: inline OneOf
+      type: object
+      properties:
+        union:
+          oneOf:
+            - $ref: '#/components/schemas/OneOfVariant1'
+            - $ref: '#/components/schemas/OneOfVariant2'
+            - $ref: '#/components/schemas/OneOfVariant3'
+    OneOfObject4:
+      description: oneOf plus fixed type - custom marshaling/unmarshaling
+      type: object
+      properties:
+        fixedProperty:
+          type: string
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant1'
+        - $ref: '#/components/schemas/OneOfVariant2'
+        - $ref: '#/components/schemas/OneOfVariant3'
+    OneOfObject5:
+      description: oneOf with discriminator but no mapping
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant4'
+        - $ref: '#/components/schemas/OneOfVariant5'
+      discriminator:
+        propertyName: discriminator
+    OneOfObject6:
+      description: oneOf with discriminator and mapping
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant4'
+        - $ref: '#/components/schemas/OneOfVariant5'
+      discriminator:
+        propertyName: discriminator
+        mapping:
+          v4: '#/components/schemas/OneOfVariant4'
+          v5: '#/components/schemas/OneOfVariant5'
+    OneOfObject61:
+      description: oneOf with discriminator and partial mapping
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant4'
+        - $ref: '#/components/schemas/OneOfVariant5'
+      discriminator:
+        propertyName: discriminator
+        mapping:
+          v4: '#/components/schemas/OneOfVariant4'
+    OneOfObject62:
+      description: oneOf with snake_case discriminator and partial snake_case mapping
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant4'
+        - $ref: '#/components/schemas/one_of_variant51'
+      discriminator:
+        propertyName: discriminator
+        mapping:
+          variant_four: '#/components/schemas/OneOfVariant4'
+    OneOfObject7:
+      description: array of oneOf
+      type: array
+      items:
+        oneOf:
+          - $ref: '#/components/schemas/OneOfVariant1'
+          - $ref: '#/components/schemas/OneOfVariant2'
+    OneOfObject8:
+      description: oneOf with fixed properties
+      type: object
+      properties:
+        fixed:
+          type: string
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant1'
+        - $ref: '#/components/schemas/OneOfVariant2'
+    OneOfObject9:
+      description: oneOf with fixed discriminator
+      type: object
+      properties:
+        type:
+          type: string
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant1'
+        - $ref: '#/components/schemas/OneOfVariant6'
+      discriminator:
+        propertyName: type
+        mapping:
+          v1: '#/components/schemas/OneOfVariant1'
+          v6: '#/components/schemas/OneOfVariant6'
+      required:
+        - type
+    OneOfObject10:
+      description: fixed properties, variable required - will compile, but not much sense
+      type: object
+      properties:
+        one:
+          type: string
+        two:
+          type: integer
+        three:
+          type: boolean
+      oneOf:
+        - required:
+            - one
+        - required:
+            - two
+            - three
+    OneOfObject11:
+      description: additional properties of oneOf
+      type: object
+      additionalProperties:
+        oneOf:
+          - type: boolean
+          - type: number
+          - type: string
+    OneOfObject12:
+      description: allOf of oneOfs
+      allOf:
+        - oneOf:
+            - type: string
+            - type: number
+        - oneOf:
+            - $ref: '#/components/schemas/OneOfVariant3'
+            - $ref: '#/components/schemas/OneOfVariant4'
+    OneOfObject13:
+      description: oneOf with fixed discriminator and other fields allowed
+      type: object
+      properties:
+        type:
+          type: string
+      oneOf:
+        - $ref: '#/components/schemas/OneOfVariant1'
+        - $ref: '#/components/schemas/OneOfVariant6'
+      discriminator:
+        propertyName: type
+        mapping:
+          v1: '#/components/schemas/OneOfVariant1'
+          v6: '#/components/schemas/OneOfVariant6'
+      required:
+        - type
+      additionalProperties: true
+    AnyOfObject1:
+      description: simple anyOf case
+      anyOf:
+        - $ref: '#/components/schemas/OneOfVariant4'
+        - $ref: '#/components/schemas/OneOfVariant5'
+    OneOfVariant1:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+    OneOfVariant2:
+      type: array
+      items:
+        type: integer
+    OneOfVariant3:
+      type: boolean
+    OneOfVariant4:
+      type: object
+      properties:
+        discriminator:
+          type: string
+        name:
+          type: string
+      required:
+        - discriminator
+        - name
+    OneOfVariant5:
+      type: object
+      properties:
+        discriminator:
+          type: string
+        id:
+          type: integer
+      required:
+        - discriminator
+        - id
+    one_of_variant51:
+      type: object
+      properties:
+        discriminator:
+          type: string
+        id:
+          type: integer
+      required:
+        - discriminator
+        - id
+    OneOfVariant6:
+      type: object
+      properties:
+        values:
+          $ref: '#/components/schemas/OneOfVariant2'
+      required:
+        - values

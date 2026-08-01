@@ -1,0 +1,111 @@
+openapi: 3.1.0
+info:
+  title: shared-path-parameter-collision
+  version: "1.0"
+paths:
+  # Within-path, unique name: a path-item-level `anyOf` parameter shared by two
+  # methods. Its helper types are declared once for the path item (not once per
+  # method, which was the "Wid0 redeclared" bug), and since the name is unique
+  # across the spec it keeps its bare, undecorated form.
+  /widget/{wid}:
+    parameters:
+      - name: wid
+        in: path
+        required: true
+        schema:
+          anyOf:
+            - { type: string, format: uuid }
+            - { type: string }
+    get:
+      operationId: getWidget
+      responses: { '200': { description: ok } }
+    delete:
+      operationId: deleteWidget
+      responses: { '200': { description: ok } }
+
+  # Cross-path collision: two sibling single-method paths reuse the same `{id}`
+  # parameter. The bare names would collide across the two paths, so each path's
+  # parameter is prefixed with a short, stable hash of the path to disambiguate.
+  /gadget/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          anyOf:
+            - { type: string, format: uuid }
+            - { type: string }
+    delete:
+      operationId: deleteGadget
+      responses: { '200': { description: ok } }
+  /gadget/{id}/part:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          anyOf:
+            - { type: string, format: uuid }
+            - { type: string }
+    get:
+      operationId: getGadgetPart
+      responses: { '200': { description: ok } }
+
+  # No collision: a single-method path whose shared parameter hoists a name used
+  # nowhere else keeps its historical undecorated names (Ref0/Ref1), so existing
+  # generated code is unaffected.
+  /sprocket/{ref}:
+    parameters:
+      - name: ref
+        in: path
+        required: true
+        schema:
+          anyOf:
+            - { type: string, format: uuid }
+            - { type: string }
+    get:
+      operationId: getSprocket
+      responses: { '200': { description: ok } }
+
+  # Callback with a parameter shared across the callback path item's methods.
+  # Exercises the shared-parameter emit-once path in CallbackOperationDefinitions
+  # (cbid produces Cbid0/Cbid1 once, not once per callback method).
+  /subscribe:
+    post:
+      operationId: subscribe
+      responses: { '200': { description: ok } }
+      callbacks:
+        onData:
+          '{$request.body#/callbackUrl}':
+            parameters:
+              - name: cbid
+                in: query
+                schema:
+                  anyOf:
+                    - { type: string, format: uuid }
+                    - { type: string }
+            get:
+              operationId: onDataGet
+              responses: { '200': { description: ok } }
+            post:
+              operationId: onDataPost
+              responses: { '200': { description: ok } }
+
+# Webhook with a parameter shared across the webhook path item's methods.
+# Exercises the shared-parameter emit-once path in WebhookOperationDefinitions
+# (whid produces Whid0/Whid1 once, not once per webhook method).
+webhooks:
+  onEvent:
+    parameters:
+      - name: whid
+        in: query
+        schema:
+          anyOf:
+            - { type: string, format: uuid }
+            - { type: string }
+    get:
+      operationId: onEventGet
+      responses: { '200': { description: ok } }
+    post:
+      operationId: onEventPost
+      responses: { '200': { description: ok } }

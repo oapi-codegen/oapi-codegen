@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: optionsnamenormalizertocamelcasewithdigits
+output: name_normalizer.gen.go
+# name-normalizer: ToCamelCaseWithDigits — treats digit sequences as word
+# boundaries so OneOf2things → OneOf2Things, but does NOT expand initialisms
+# (uuid stays Uuid, getHttpPet → GetHttpPet).
+# gorilla-server + client so the tests can assert the operation-derived names
+# on both ServerInterfaceWrapper and Client.
+# skip-prune: retain the Error schema which is not referenced from any path.
+generate:
+  gorilla-server: true
+  client: true
+  models: true
+output-options:
+  skip-prune: true
+  name-normalizer: ToCamelCaseWithDigits

@@ -1,0 +1,14 @@
+package externaljsonref
+
+import (
+	"testing"
+
+	"github.com/stretchr/testify/require"
+)
+
+func TestOverlayApply(t *testing.T) {
+	spec, err := GetSpec()
+	require.NoError(t, err)
+
+	require.Equal(t, spec.Info.Extensions["x-overlay-applied"], "structured-overlay")
+}

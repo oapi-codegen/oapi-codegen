@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: optionstypealiases
+output: type_aliases.gen.go
+# disable-type-aliases-for-type: the flag under test — causes array schemas to be
+# emitted as concrete named types instead of type aliases, so methods may be defined
+# on them (exercised by the MustCompile() method in type_aliases_test.go).
+# skip-prune: keep schemas that no path references (spec has no paths).
+generate:
+  models: true
+output-options:
+  skip-prune: true
+  disable-type-aliases-for-type:
+    - array

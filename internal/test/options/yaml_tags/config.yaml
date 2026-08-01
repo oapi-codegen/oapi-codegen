@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: optionsyamltags
+output: yaml_tags.gen.go
+generate:
+  models: true
+output-options:
+  skip-prune: true
+  # yaml-tags: emit yaml:"..." struct tags on all generated types
+  yaml-tags: true

@@ -1,0 +1,7 @@
+# From issue-1825: spec in another package referenced from spec/spec.yaml.
+components:
+  schemas:
+    ObjectA:
+      properties:
+        name:
+          type: string

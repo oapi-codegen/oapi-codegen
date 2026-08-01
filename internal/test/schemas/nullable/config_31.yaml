@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+# openapi31_nullable/3_1: 3.1 type-array nullable idiom; output to subpackage spec31.
+# Separate triple because this spec uses OpenAPI 3.1 (type-array idiom) and the package name differs from spec30.
+package: spec31
+output: spec31/types.gen.go
+generate:
+  models: true
+output-options:
+  skip-prune: true

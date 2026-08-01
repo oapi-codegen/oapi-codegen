@@ -1,0 +1,18 @@
+openapi: "3.0.0"
+info: {title: t, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Thing:
+      type: object
+      properties:
+        child:
+          # An x-go-type sibling next to a $ref is honoured by codegen, so the
+          # ref node's own extensions must be validated even though the target
+          # (Child) is not traversed here.
+          $ref: '#/components/schemas/Child'
+          x-go-type: "int; var pwned = 1"
+    Child:
+      type: object
+      properties:
+        name: {type: string}

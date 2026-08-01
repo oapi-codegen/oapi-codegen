@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: optionscompatibility
+output: compatibility.gen.go
+# preserve-original-operation-id-casing-in-embedded-spec: verified by the test
+# embedded-spec: emits GetSpec() / GetSwagger() used by the test assertions
+generate:
+  embedded-spec: true
+output-options:
+  skip-prune: false
+compatibility:
+  preserve-original-operation-id-casing-in-embedded-spec: true

@@ -1,0 +1,21 @@
+openapi: "3.0.0"
+info: {title: t, version: "1.0.0"}
+paths:
+  /foo:
+    get:
+      operationId: getFoo
+      # The scope string here is copied verbatim into a generated []string, so a
+      # quote in it must be rejected.
+      security:
+        - petstore_auth: ['ev"il']
+      responses:
+        '200': {description: ok}
+components:
+  securitySchemes:
+    petstore_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://example.com/auth
+          scopes:
+            read: read access

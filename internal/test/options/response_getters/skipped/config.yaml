@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: optionsresponsegettersskipped
+output: response_getters.gen.go
+generate:
+  client: true
+  models: true
+output-options:
+  # outputoptions/response-body-getters/skipped: suppress GetBody()/typed getters.
+  skip-response-body-getters: true

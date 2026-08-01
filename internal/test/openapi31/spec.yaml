@@ -1,0 +1,158 @@
+# ==========================================================================
+# Category: openapi31
+# Tests:    OpenAPI 3.1 idiom DETECTION — the generator recognizing 3.1-style
+#           authoring patterns and lowering them to the right Go shapes.
+#
+# Folds in (provenance):
+#   - openapi31_content_keywords/  contentMediaType/contentEncoding -> File/[]byte
+#   - enum_via_oneof/              scalar + oneOf(title+const) -> typed enum
+#   - openapi31_polish/            const -> enum; examples -> doc comments
+#
+# All cases are models-only; skip-prune keeps these path-free component schemas.
+# ==========================================================================
+openapi: 3.1.0
+info:
+  title: openapi31 (3.1 idiom detection)
+  version: "1.0.0"
+  description: |
+    Verifies the generator detects OpenAPI 3.1-specific authoring idioms and
+    lowers each to the correct Go shape:
+      * contentMediaType / contentEncoding file-upload keywords
+        (https://learn.openapis.org/upgrading/v3.0-to-v3.1.html)
+      * the enum-via-oneOf idiom (scalar + oneOf branches with title+const)
+      * the smaller "polish" features: const -> typed enum, examples -> doc comments
+    Features that merely *exist* in both 3.0 and 3.1 (e.g. nullable) live in
+    their feature category with mixed-version specs, NOT here.
+paths: {}
+components:
+  schemas:
+    # ----------------------------------------------------------------------
+    # openapi31_content_keywords: contentMediaType / contentEncoding -> File / []byte
+    # ----------------------------------------------------------------------
+    # Mirrors the multipart-file-upload example from the 3.0->3.1 upgrade guide.
+    # `type: string, contentMediaType: ...` is the 3.1 spelling of 3.0's
+    # `type: string, format: binary`. Expected Go shape: openapi_types.File.
+    FileUploadFields:
+      type: object
+      required:
+        - orderId
+        - rawFile
+        - base64Field
+      properties:
+        orderId:
+          type: integer
+        rawFile:
+          type: string
+          contentMediaType: application/octet-stream
+          description: Raw binary file content.
+        imageFile:
+          type: string
+          contentMediaType: image/png
+          description: |
+            A non-octet-stream contentMediaType still routes to
+            openapi_types.File -- any contentMediaType signals
+            "this string is binary content of a specific type."
+        base64Field:
+          type: string
+          contentEncoding: base64
+          description: |
+            Base64-encoded binary as a JSON string. Mirrors the
+            3.0 `format: byte` idiom -- expected Go shape: `[]byte`.
+        base64UrlField:
+          type: string
+          contentEncoding: base64url
+          description: |
+            base64url is intentionally NOT mapped to []byte: Go's
+            encoding/json treats []byte as standard padded base64
+            (RFC4648 section 4), which would silently corrupt URL-safe
+            characters (`-`/`_`) on unmarshal and re-emit them as
+            standard base64 on marshal. Expected Go shape: `string`,
+            so the user retains the declared wire encoding and can
+            apply the appropriate codec.
+        bothKeywords:
+          type: string
+          contentEncoding: base64
+          contentMediaType: image/png
+          description: |
+            When both are set (base64-encoded binary of a specific
+            media type), the file mapping wins: openapi_types.File.
+            This matches the 3.0 behavior where `format: binary` would
+            dominate over any encoding hint.
+        explicitFormatWins:
+          type: string
+          format: date
+          contentMediaType: application/octet-stream
+          description: |
+            An explicit `format` always overrides the contentMediaType-
+            derived synthesis. Here `format: date` keeps its Go type
+            (openapi_types.Date) even though contentMediaType would
+            otherwise have routed to openapi_types.File.
+
+    # ----------------------------------------------------------------------
+    # enum_via_oneof: scalar schema + oneOf branches each with title+const
+    # ----------------------------------------------------------------------
+    # Integer enum -- each branch has title+const; Severity is emitted as
+    # `type Severity int` with constants HIGH, MEDIUM, LOW.
+    Severity:
+      description: How urgent a problem is.
+      type: integer
+      oneOf:
+        - title: HIGH
+          const: 2
+          description: An urgent problem
+        - title: MEDIUM
+          const: 1
+        - title: LOW
+          const: 0
+          description: Can wait forever
+
+    # String enum -- each branch has title+const; Color is emitted as
+    # `type Color string` with constants Red, Green, Blue.
+    Color:
+      type: string
+      oneOf:
+        - title: Red
+          const: r
+          description: Warm, high-energy
+        - title: Green
+          const: g
+        - title: Blue
+          const: b
+          description: Cool, calm
+
+    # Negative path -- one branch lacks `title`, so the enum-via-oneOf idiom must
+    # NOT match; MixedOneOf falls through to the standard union generator and is
+    # emitted as `type MixedOneOf = string` (a type alias, not a newtype).
+    MixedOneOf:
+      type: string
+      oneOf:
+        - title: Alpha
+          const: a
+        - const: b
+
+    # ----------------------------------------------------------------------
+    # openapi31_polish: examples -> doc comments; const -> typed enum
+    # ----------------------------------------------------------------------
+    # `examples` (plural array) on object properties must surface in the
+    # generated field's Go doc comment.
+    Pet:
+      type: object
+      required: [name, lives]
+      properties:
+        name:
+          type: string
+          description: The pet's name.
+          examples:
+            - "Whiskers"
+            - "Rex"
+        lives:
+          type: integer
+          examples:
+            - 9
+
+    # Top-level `const` schema -- with no `enum:` set, the codegen synthesizes a
+    # single-value enum from the const, so the schema becomes a typed alias plus
+    # a singleton constant.
+    Status:
+      type: string
+      const: active

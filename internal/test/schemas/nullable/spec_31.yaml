@@ -1,0 +1,128 @@
+openapi: "3.1.0"
+info:
+  title: Nullable test (OpenAPI 3.1)
+  version: "1.0.0"
+  description: |
+    Each nullable field uses the 3.1 type-array idiom
+    (type: ["X","null"]). The generated Go must match the 3.0 control
+    case so callers see no behavioral difference between spec versions.
+    Source: openapi31_nullable/3_1.
+paths: {}
+components:
+  schemas:
+    # openapi31_nullable/3_1: 3.1 type-array nullable idiom
+    Pet:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Required, non-nullable.
+        nickname:
+          type: ["string", "null"]
+          description: Optional, nullable scalar via 3.1 type-array idiom.
+        tags:
+          type: ["array", "null"]
+          items:
+            type: string
+          description: Optional, nullable array.
+        owner:
+          type: ["object", "null"]
+          properties:
+            id:
+              type: string
+          description: Optional, nullable inline object.
+        extras:
+          type: ["object", "null"]
+          description: |
+            Optional, nullable *unspecified* object (no `properties:`).
+            Regression for the gap where `Schema.Is(...)` strict
+            equality on a 3.1 type-array failed to recognize the
+            primary type as "object", routing the schema away from
+            the unspecified-object code path. Expected shape:
+            `*map[string]interface{}`.
+        metadata:
+          type: ["null", "object"]
+          description: |
+            Same as `extras` but with the type-array order reversed.
+            Both orderings must resolve identically; this guards
+            against any code path that inspects only the first
+            element of the type array.
+        nicknameAnyOf:
+          anyOf:
+            - type: string
+            - type: "null"
+          description: |
+            OpenAPI 3.1: a `{"type": "null"}` branch in `anyOf` is a
+            nullability marker, not a separate union variant. Should
+            generate the same shape as `type: ["string","null"]` (i.e.
+            `*string`). Regression for a previous crash with
+            "unhandled Schema type: &[null]".
+        nicknameOneOf:
+          oneOf:
+            - type: string
+            - type: "null"
+          description: Same as `nicknameAnyOf` but using `oneOf`.
+        favorite:
+          $ref: "#/components/schemas/DiscriminatedPet"
+          description: |
+            Nullable discriminated union (`oneOf: [Cat, Dog, null]` with a
+            discriminator). Before this branch's fix to the union-
+            completeness check, the null branch was skipped during
+            mapping construction but still counted toward the
+            expected-mapping count, so generation failed with
+            `discriminator: not all schemas were mapped`. The two real
+            branches must map and the null branch must be tolerated.
+    DiscriminatedPet:
+      oneOf:
+        - $ref: "#/components/schemas/Cat"
+        - $ref: "#/components/schemas/Dog"
+        - type: "null"
+      discriminator:
+        propertyName: kind
+    Cat:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+        meow:
+          type: boolean
+    Dog:
+      type: object
+      required:
+        - kind
+      properties:
+        kind:
+          type: string
+        bark:
+          type: boolean
+    # From issue-2430: bare 'null'-typed schemas map to Go 'any'; required null-typed properties must not be pointer-wrapped
+    # A property whose schema is the bare OpenAPI 3.1 null type: the only
+    # valid JSON value for `challenger` is null. Maps to `any` in Go.
+    ChallengeOpenJson:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+          format: uri
+        challenger:
+          type: "null"
+    # A required null-typed property: must not be wrapped in a pointer,
+    # since `any` already has nil as its zero value.
+    RequiredNull:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: "null"
+    # A named component that is itself the bare null type.
+    NullOnly:
+      type: "null"

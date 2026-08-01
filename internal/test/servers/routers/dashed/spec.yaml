@@ -1,0 +1,24 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Server-specific tests
+paths:
+  # The dashed path parameter name "addressing-identifier" is not a valid Go
+  # identifier. This exercises GitHub issue #2278: stdhttp's ServeMux requires
+  # wildcard names to be valid Go identifiers.
+  /resources/{addressing-identifier}:
+    get:
+      operationId: getResource
+      parameters:
+        - name: addressing-identifier
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            text/plain:
+              schema:
+                type: string

@@ -25,3 +25,18 @@ components:
           type: number
           # NOTE attempting a `x-go-type-name` here is a no-op, as we're not producing a _type_ only a _field_
           x-go-type-name: ThisWillNotBeUsed
+paths:
+  /example:
+    get:
+      operationId: exampleGet
+      responses:
+        '200':
+          description: "OK"
+          content:
+            'application/json':
+              schema:
+                type: object
+                x-go-type-name: ResponseRenamed
+                properties:
+                  name:
+                    type: string

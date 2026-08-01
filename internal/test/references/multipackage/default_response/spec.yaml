@@ -1,0 +1,22 @@
+# From issue-2113: a default response $ref to an external components/responses entry must qualify its schema type.
+openapi: "3.0.4"
+info:
+  title: API
+  version: "0.0.1"
+paths:
+  /things:
+    get:
+      operationId: listThings
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "400":
+          $ref: "./common/spec.yaml#/components/responses/StandardError"
+        default:
+          $ref: "./common/spec.yaml#/components/responses/StandardError"

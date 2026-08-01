@@ -1,0 +1,150 @@
+openapi: "3.0.1"
+info:
+  title: schemas/objects
+  version: "1.0.0"
+  description: |
+    Object schemas with additionalProperties, including additionalProperties:true
+    inside an array item's inline schema (exercising strict-server codegen).
+
+paths:
+  # issue #1277: additionalProperties:true inside an array item's inline schema;
+  # also exercises strict-server generation for such a response.
+  /test:
+    get:
+      operationId: test
+      responses:
+        "200":
+          description: desc
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    field1:
+                      type: string
+                    field2:
+                      type: string
+                  additionalProperties: true
+
+# additionalProperties + raw-JSON object cases folded from components/components.yaml.
+# SchemaObject also carries readOnly-required (-> pointer) and writeOnly props.
+components:
+  schemas:
+    SchemaObject:
+      properties:
+        role:
+          type: string
+        firstName:
+          type: string
+        readOnlyRequiredProp:
+          description: |
+            This property is required and readOnly, so the go model should have it as a pointer,
+            as it will not be included when it is sent from client to server.
+          type: string
+          readOnly: true
+        writeOnlyRequiredProp:
+          type: integer
+          writeOnly: true
+      required:
+        - role
+        - firstName
+        - readOnlyRequiredProp
+        - writeOnlyRequiredProp
+    SchemaObjectNullable:
+      properties:
+        role:
+          type: string
+        firstName:
+          type: string
+        readOnlyRequiredProp:
+          description: |
+            This property is required and readOnly, so the go model should have it as a pointer,
+            as it will not be included when it is sent from client to server.
+          type: string
+          readOnly: true
+        writeOnlyRequiredProp:
+          type: integer
+          writeOnly: true
+      required:
+        - role
+        - firstName
+        - readOnlyRequiredProp
+        - writeOnlyRequiredProp
+      nullable: true
+    AdditionalPropertiesObject1:
+      description: Has additional properties of type int
+      type: object
+      properties:
+        name:
+          type: string
+        id:
+          type: integer
+        optional:
+          type: string
+      required: [ name, id ]
+      additionalProperties:
+        type: integer
+    AdditionalPropertiesObject2:
+      description: Does not allow additional properties
+      type: object
+      properties:
+        name:
+          type: string
+        id:
+          type: integer
+      required: [ name, id ]
+      additionalProperties: false
+    AdditionalPropertiesObject3:
+      description: Allows any additional property
+      type: object
+      properties:
+        name:
+          type: string
+      required: [ name ]
+      additionalProperties: true
+    AdditionalPropertiesObject4:
+      description: Has anonymous field which has additional properties
+      type: object
+      properties:
+        name:
+          type: string
+        inner:
+          type: object
+          properties:
+            name:
+              type: string
+          required: [ name ]
+          additionalProperties: true
+      required: [ inner, name ]
+      additionalProperties: true
+    AdditionalPropertiesObject5:
+      description: Has additional properties with schema for dictionaries
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/SchemaObject'
+    AdditionalPropertiesObject6:
+      description: Array of object with additional properties
+      type: array
+      items:
+        type: object
+        additionalProperties:
+          $ref: '#/components/schemas/SchemaObject'
+    AdditionalPropertiesObject7:
+      description: Has additional properties with schema for dictionaries
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/SchemaObjectNullable'
+    ObjectWithJsonField:
+      type: object
+      properties:
+        name:
+          type: string
+        value1:
+          type: string
+          format: json
+        value2:
+          type: string
+          format: json
+      required: [ name, value1 ]

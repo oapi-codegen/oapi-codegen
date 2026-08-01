@@ -1,0 +1,57 @@
+# Callbacks have been part of the OpenAPI spec since 3.0, so this
+# fixture deliberately uses 3.0.3 to verify the codegen does NOT gate
+# callback emission on OpenAPI 3.1.
+openapi: 3.0.3
+info:
+  title: Callbacks test
+  version: 1.0.0
+paths:
+  /api/plant_tree:
+    post:
+      operationId: PlantTree
+      summary: Request a tree planting (async; result delivered via callback).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TreePlantingRequest'
+      responses:
+        '202':
+          description: Accepted
+      callbacks:
+        treePlanted:
+          '{$request.body#/callbackUrl}':
+            post:
+              operationId: TreePlanted
+              summary: Tree planting result notification.
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/TreePlantingResult'
+              responses:
+                '204':
+                  description: Acknowledged
+
+components:
+  schemas:
+    TreePlantingRequest:
+      type: object
+      required: [kind, callbackUrl]
+      properties:
+        kind:
+          type: string
+        callbackUrl:
+          type: string
+          format: uri
+
+    TreePlantingResult:
+      type: object
+      required: [id, success]
+      properties:
+        id:
+          type: string
+        success:
+          type: boolean

@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: parameterssharedcollision
+output: shared_collision.gen.go
+generate:
+  models: true
+  client: true

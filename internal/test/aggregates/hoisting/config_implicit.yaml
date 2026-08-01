@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: aggregateshoisting
+output: hoisting_implicit.gen.go
+# anonymous_inner_hoisting/implicit: hoisting of inline oneOf/anyOf schemas happens by
+# default (no extra flag required in 3.1 mode). client is omitted: the tests only exercise
+# model types, union accessors, and JSON round-trips; omitting client avoids
+# HttpRequestDoer/Client/RequestEditorFn redeclaration collisions with the explicit triple.
+generate:
+  models: true

@@ -2,9 +2,24 @@
 {{range .Bodies}}
 {{if .IsSupported -}}
 {{$contentType := .ContentType -}}
+{{$isJSON := .IsJSON -}}
 {{with .TypeDef $opid}}
 // {{.TypeName}} defines body for {{$opid}} for {{$contentType}} ContentType.
+{{- with .DeprecationComment}}
+//
+{{.}}
+{{- end}}
 type {{.TypeName}} {{if .IsAlias}}={{end}} {{.Schema.TypeDecl}}
+{{- if and $isJSON (not .IsAlias) .Schema.HasCustomMarshalJSONForRequestBody}}
+
+func (t {{.TypeName}}) MarshalJSON() ([]byte, error) {
+	return {{.Schema.TypeDecl}}(t).MarshalJSON()
+}
+
+func (t *{{.TypeName}}) UnmarshalJSON(b []byte) error {
+	return (*{{.Schema.TypeDecl}})(t).UnmarshalJSON(b)
+}
+{{- end}}
 {{end}}
 {{end}}
 {{end}}

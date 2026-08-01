@@ -1,0 +1,60 @@
+# ==========================================================================
+# Category: options/skip_prune (skip-prune triple)
+# Tests:    skip-prune:true — schemas not referenced by any path are preserved.
+#
+# Folds in (provenance):
+#   - issues/issue240  (Unreferenced schema preserved with skip-prune:true)
+# ==========================================================================
+openapi: "3.0.0"
+info:
+  title: options/skip_prune (skip-prune)
+  version: "1.0.0"
+  description: |
+    skip-prune:true behaviour: all schemas in components/schemas are emitted
+    regardless of whether they are referenced by a path. ClientTypeSkip is
+    referenced; UnreferencedSkip is not — with skip-prune enabled it MUST
+    appear in skip_prune.gen.go.
+paths:
+  /client-skip:
+    get:
+      # issue #240: GET returns ClientTypeSkip (a referenced schema); always emitted.
+      operationId: getClientSkip
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientTypeSkip"
+    put:
+      # issue #240: PUT returns an inline error body (400).
+      operationId: updateClientSkip
+      responses:
+        400:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                required:
+                  - code
+components:
+  schemas:
+    # issue #240: ClientTypeSkip is referenced by GET /client-skip; always emitted.
+    ClientTypeSkip:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    # issue #240: UnreferencedSkip is NOT referenced by any path operation.
+    # With skip-prune:true this schema IS preserved in the generated output.
+    UnreferencedSkip:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string

@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+# From issue-1887
+package: routeorder
+output: routeorder.gen.go
+generate:
+  fiber-server: true
+  models: true

@@ -1,0 +1,12 @@
+openapi: "3.0.0"
+info: {title: t, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Thing:
+      type: object
+      properties:
+        name:
+          type: string
+          x-oapi-codegen-extra-tags:
+            validate: 'ev`il'
