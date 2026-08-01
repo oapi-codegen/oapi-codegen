@@ -606,6 +606,25 @@ func TestGenPathString(t *testing.T) {
 			uri:  `/test/back\slash/{param}`,
 			want: `"/test/back\\slash/" + pathParam0`,
 		},
+		// A repeated parameter reuses the variable bound to its first occurrence,
+		// matching the deduplication SortParamsByPath applies.
+		{
+			uri:  "/orgs/{id}/mirror/{id}",
+			want: `"/orgs/" + pathParam0 + "/mirror/" + pathParam0`,
+		},
+		{
+			uri:  "/admin/realms/{realm}/clients/{client-uuid}/roles/{role-name}/composites/clients/{client-uuid}",
+			want: `"/admin/realms/" + pathParam0 + "/clients/" + pathParam1 + "/roles/" + pathParam2 + "/composites/clients/" + pathParam1`,
+		},
+		{
+			uri:  "/test/{param}/{other}/{param}/{other}",
+			want: `"/test/" + pathParam0 + "/" + pathParam1 + "/" + pathParam0 + "/" + pathParam1`,
+		},
+		// Prefixed and exploded forms refer to the same underlying parameter.
+		{
+			uri:  "/test/{param}/{.param}/{;param*}",
+			want: `"/test/" + pathParam0 + "/" + pathParam0 + "/" + pathParam0`,
+		},
 	}
 
 	for _, tst := range tests {

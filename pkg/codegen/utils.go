@@ -743,18 +743,32 @@ func OrderedParamsFromUri(uri string) []string {
 // which are significant in Go source, such as quotes, backslashes and percent signs,
 // survive into the generated code unchanged.
 func GenPathString(uri, paramVarName string) string {
-	matches := pathParamRE.FindAllStringIndex(uri, -1)
+	matches := pathParamRE.FindAllStringSubmatchIndex(uri, -1)
 	if len(matches) == 0 {
 		return strconv.Quote(uri)
 	}
 
+	// A path parameter may appear more than once in the same path. SortParamsByPath
+	// deduplicates them and preserves first-occurrence order, and the client template
+	// declares one variable per deduplicated parameter, so every repeat has to refer
+	// back to the variable assigned to its first occurrence.
+	varIndexByName := make(map[string]int, len(matches))
+
 	parts := make([]string, 0, 2*len(matches)+1)
 	pos := 0
-	for i, match := range matches {
+	for _, match := range matches {
 		if literal := uri[pos:match[0]]; literal != "" {
 			parts = append(parts, strconv.Quote(literal))
 		}
-		parts = append(parts, fmt.Sprintf("%s%d", paramVarName, i))
+
+		name := uri[match[2]:match[3]]
+		idx, seen := varIndexByName[name]
+		if !seen {
+			idx = len(varIndexByName)
+			varIndexByName[name] = idx
+		}
+
+		parts = append(parts, fmt.Sprintf("%s%d", paramVarName, idx))
 		pos = match[1]
 	}
 	if literal := uri[pos:]; literal != "" {
