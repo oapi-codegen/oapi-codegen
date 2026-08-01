@@ -706,12 +706,19 @@ func ValidateStdHTTPPath(path string) error {
 }
 
 // ValidateStdHTTPPaths validates every path in the document for ServeMux.
+// Paths whose operations have all been removed (e.g. by tag or operation-id
+// filtering) emit no routes, so they are skipped.
 func ValidateStdHTTPPaths(spec *openapi3.T) error {
 	if spec == nil || spec.Paths == nil {
 		return nil
 	}
 	var errs []error
-	for _, path := range SortedMapKeys(spec.Paths.Map()) {
+	pathMap := spec.Paths.Map()
+	for _, path := range SortedMapKeys(pathMap) {
+		pathItem := pathMap[path]
+		if pathItem == nil || len(pathItem.Operations()) == 0 {
+			continue
+		}
 		if err := ValidateStdHTTPPath(path); err != nil {
 			errs = append(errs, err)
 		}

@@ -896,3 +896,49 @@ paths:
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "mixes a path parameter")
 }
+
+func TestGenerateAllowsMixedServeMuxPathParamWhenFilteredOut(t *testing.T) {
+	spec := `openapi: 3.0.3
+info:
+  title: mixed path param filtered out
+  version: 1.0.0
+paths:
+  /resources/{resourceId}:apply:
+    post:
+      operationId: applyResource
+      tags: [excluded]
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Applied
+  /pets:
+    get:
+      operationId: listPets
+      responses:
+        "200":
+          description: OK
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	// Tag filtering removes the only operation on the mixed segment but leaves
+	// the path key in the spec; no route is emitted for it, so generation must
+	// succeed.
+	_, err = Generate(swagger, Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			StdHTTPServer: true,
+			Models:        true,
+		},
+		OutputOptions: OutputOptions{
+			ExcludeTags: []string{"excluded"},
+		},
+	})
+	require.NoError(t, err)
+}
