@@ -430,7 +430,7 @@ var TemplateFunctions = template.FuncMap{
 	"genParamArgs":               genParamArgs,
 	"genParamTypes":              genParamTypes,
 	"genParamNames":              genParamNames,
-	"getPathString":              GenPathString,
+	"genPathString":              GenPathString,
 	"swaggerUriToIrisUri":        SwaggerUriToIrisUri,
 	"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
 	"swaggerUriToFiberUri":       SwaggerUriToFiberUri,

@@ -220,7 +220,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
         return nil, err
     }
 
-    operationPath := {{getPathString .Path "pathParam"}}
+    operationPath := {{genPathString .Path "pathParam"}}
     if operationPath[0] == '/' {
         operationPath = "." + operationPath
     }
