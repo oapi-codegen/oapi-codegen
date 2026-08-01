@@ -1,0 +1,25 @@
+{{/*
+Shared ServerInterface skeleton for every server framework. The {{block}}
+defaults are the net/http-family shape (chi, gorilla, stdhttp); the other
+frameworks override the handler signature via their templates/<framework>/hooks.tmpl.
+See server-middleware.tmpl for a description of the layering.
+
+Hooks:
+  interface.handlerSignature - the per-operation method parameter list and
+                               return type (everything after the OperationId).
+                               Default is the net/http (w, r, ...) shape with no
+                               return value; echo/fiber add ` error`, gin/iris
+                               swap the receiver/context type.
+  interface.unimplemented    - optional Unimplemented stub type (chi only; empty
+                               by default).
+*/}}
+// ServerInterface represents all server handlers.
+type ServerInterface interface {
+{{range .}}{{if not .IsAlias}}{{.SummaryAsComment .OperationId }}
+// ({{.Method}} {{.Path}})
+{{with .DeprecationComment}}//
+{{.}}
+{{end}}{{.OperationId}}{{block "interface.handlerSignature" .}}(w http.ResponseWriter, r *http.Request{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}){{end}}
+{{end}}{{end}}
+}
+{{block "interface.unimplemented" .}}{{end}}

@@ -2,7 +2,9 @@ package serversstrict
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"mime"
 	"mime/multipart"
@@ -13,6 +15,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-chi/chi/v5"
+	fiberv3 "github.com/gofiber/fiber/v3"
+	fiberv3adaptor "github.com/gofiber/fiber/v3/middleware/adaptor"
 	"github.com/kataras/iris/v12"
 	"github.com/labstack/echo/v4"
 	echov5 "github.com/labstack/echo/v5"
@@ -22,6 +26,7 @@ import (
 	clientAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/client"
 	echoAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/echo"
 	echo5API "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/echo5"
+	fiberv3API "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/fiberv3"
 	ginAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/gin"
 	irisAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/iris"
 
@@ -68,6 +73,39 @@ func TestGinServer(t *testing.T) {
 	r := gin.New()
 	ginAPI.RegisterHandlers(r, strictHandler)
 	testImpl(t, r)
+}
+
+// Fiber v3 specializes the shared strict Fiber template through the hooks in
+// templates/fiber-v3/hooks.tmpl: bodies bind via ctx.Bind().Body rather than
+// v2's ctx.BodyParser, and the handler context is ctx.Context() rather than
+// ctx.UserContext(). Exercising the same suite as v2 keeps those overrides
+// honest.
+func TestFiberV3Server(t *testing.T) {
+	server := fiberv3API.StrictServer{}
+	strictHandler := fiberv3API.NewStrictHandler(server, nil)
+	app := fiberv3.New()
+	fiberv3API.RegisterHandlers(app, strictHandler)
+	testImpl(t, fiberv3adaptor.FiberApp(app))
+}
+
+type erroringFiberV3Server struct{ fiberv3API.StrictServer }
+
+func (erroringFiberV3Server) JSONExample(ctx context.Context, request fiberv3API.JSONExampleRequestObject) (fiberv3API.JSONExampleResponseObject, error) {
+	return nil, errors.New("handler failure")
+}
+
+// Errors returned by strict handlers must reach fiber's error chain untouched,
+// where the default handler reports them as 500 rather than being wrapped as a
+// 400. This mirrors TestFiberHandlerErrorIsServerError on the v2 side.
+func TestFiberV3HandlerErrorIsServerError(t *testing.T) {
+	strictHandler := fiberv3API.NewStrictHandler(erroringFiberV3Server{}, nil)
+	app := fiberv3.New()
+	fiberv3API.RegisterHandlers(app, strictHandler)
+
+	value := "123"
+	requestBody := clientAPI.Example{Value: &value}
+	rr := testutil.NewRequest().Post("/json").WithJsonBody(requestBody).GoWithHTTPHandler(t, fiberv3adaptor.FiberApp(app)).Recorder
+	assert.Equal(t, http.StatusInternalServerError, rr.Code)
 }
 
 func testImpl(t *testing.T, handler http.Handler) {

@@ -1,0 +1,69 @@
+{{/*
+Shared handler/registration skeleton for the net/http-family server frameworks
+(chi, gorilla, stdhttp). The {{block}} defaults are the stdhttp shape; chi and
+gorilla override the hooks via templates/<framework>/hooks.tmpl. See
+server-middleware.tmpl for a description of the layering.
+
+Hooks:
+  handler.serveMuxInterface - optional interface decl (stdhttp only; empty elsewhere)
+  handler.serverOptions     - name of the <Framework>ServerOptions struct type
+  handler.routerType        - Go type of the router/mux
+  handler.routerVar         - local variable / receiver name for the router
+  handler.newRouter         - expression constructing a default router
+  handler.register          - per-operation route registration statement
+*/}}
+// Handler creates http.Handler with routing matching OpenAPI spec.
+func Handler(si ServerInterface) http.Handler {
+  return HandlerWithOptions(si, {{block "handler.serverOptions" .}}StdHTTPServerOptions{{end}}{})
+}
+{{block "handler.serveMuxInterface" .}}
+// ServeMux is an abstraction of [http.ServeMux].
+type ServeMux interface {
+	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
+	http.Handler
+}
+{{end}}
+type {{template "handler.serverOptions" .}} struct {
+    BaseURL          string
+    BaseRouter       {{block "handler.routerType" .}}ServeMux{{end}}
+    Middlewares      []MiddlewareFunc
+    ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
+}
+
+// HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
+func HandlerFromMux(si ServerInterface, {{block "handler.routerVar" .}}m{{end}} {{template "handler.routerType" .}}) http.Handler {
+    return HandlerWithOptions(si, {{template "handler.serverOptions" .}} {
+        BaseRouter: {{template "handler.routerVar" .}},
+    })
+}
+
+func HandlerFromMuxWithBaseURL(si ServerInterface, {{template "handler.routerVar" .}} {{template "handler.routerType" .}}, baseURL string) http.Handler {
+    return HandlerWithOptions(si, {{template "handler.serverOptions" .}} {
+        BaseURL: baseURL,
+        BaseRouter: {{template "handler.routerVar" .}},
+    })
+}
+
+// HandlerWithOptions creates http.Handler with additional options
+func HandlerWithOptions(si ServerInterface, options {{template "handler.serverOptions" .}}) http.Handler {
+{{template "handler.routerVar" .}} := options.BaseRouter
+
+if {{template "handler.routerVar" .}} == nil {
+{{template "handler.routerVar" .}} = {{block "handler.newRouter" .}}http.NewServeMux(){{end}}
+}
+if options.ErrorHandlerFunc == nil {
+    options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+    }
+}
+{{if .}}
+wrapper := ServerInterfaceWrapper{
+Handler: si,
+HandlerMiddlewares: options.Middlewares,
+ErrorHandlerFunc: options.ErrorHandlerFunc,
+}
+{{end}}
+{{range .}}{{block "handler.register" .}}m.HandleFunc({{.Method | httpMethodConstant}}+" "+options.BaseURL+{{.Path | swaggerUriToStdHttpUri | toGoString}}, wrapper.{{.HandlerName}})
+{{end}}{{end}}
+return {{template "handler.routerVar" .}}
+}

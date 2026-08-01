@@ -74,54 +74,22 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 // The interface specification for the client above.
 type ClientInterface interface {
 {{range . -}}
-{{$hasParams := .RequiresParamObject -}}
-{{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
-{{$opidSuffix := ""}}
-{{$parent := . }}
-{{- if .HasBody -}}
-{{- $opidSuffix = "WithBody" -}}
-{{- end -}}
-{{$deprecationComment := .DeprecationComment -}}
-    {{ if .HasBody }}
-        {{ .GenerateFunctionComment $opid "WithBody" false }}
-    {{ else -}}
-        {{ .GenerateFunctionComment $opid "" false }}
-    {{ end -}}
-    {{with $deprecationComment}}//
-    {{.}}
-    {{end -}}{{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error)
-{{range .Bodies}}
-    {{if .IsSupportedByClient -}}
-    {{ .GenerateFunctionComment $opid $parent .Suffix false }}
-    {{with $deprecationComment}}//
-    {{.}}
-    {{end -}}{{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error)
-    {{end -}}
-{{end}}{{/* range .Bodies */}}
-{{end}}{{/* range . $opid := .OperationId */}}
+{{range .ClientMethodVariants}}
+    {{.InterfaceComment}}
+    {{$opid}}{{.Suffix}}(ctx context.Context{{.ArgsDecl}}, reqEditors... RequestEditorFn) (*http.Response, error)
+{{end -}}
+{{end -}}{{/* range . $opid := .OperationId */}}
 }
 
 
 {{/* Generate client methods */}}
 {{range . -}}
-{{$hasParams := .RequiresParamObject -}}
-{{$pathParams := .PathParams -}}
 {{$opid := .OperationId -}}
-{{$parent := . }}
-{{$opidSuffix := ""}}
-{{- if .HasBody -}}
-{{- $opidSuffix = "WithBody" -}}
-{{- end -}}
-
-{{ if .HasBody }}
-    {{ .GenerateFunctionComment $opid "WithBody" false }}
-{{ else }}
-    {{ .GenerateFunctionComment $opid "" false }}
-{{ end -}}
-{{with .DeprecationComment}}{{.}}
-{{end -}}func (c *{{ $clientTypeName }}) {{$opid}}{{if .HasBody}}WithBody{{end}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(c.Server{{genParamNames .PathParams}}{{if $hasParams}}, params{{end}}{{if .HasBody}}, contentType, body{{end}})
+{{range .ClientMethodVariants}}
+{{.MethodComment}}
+func (c *{{ $clientTypeName }}) {{$opid}}{{.Suffix}}(ctx context.Context{{.ArgsDecl}}, reqEditors... RequestEditorFn) (*http.Response, error) {
+    req, err := New{{$opid}}Request{{.Suffix}}(c.Server{{.CallArgs}})
     if err != nil {
         return nil, err
     }
@@ -131,25 +99,7 @@ type ClientInterface interface {
     }
     return c.Client.Do(req)
 }
-
-{{$deprecationComment := .DeprecationComment -}}
-{{range .Bodies}}
-{{if .IsSupportedByClient -}}
-{{ .GenerateFunctionComment $opid $parent .Suffix false }}
-{{with $deprecationComment}}{{.}}
-{{end -}}func (c *{{ $clientTypeName }}) {{$opid}}{{.Suffix}}(ctx context.Context{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := New{{$opid}}Request{{.Suffix}}(c.Server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, body)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
-}
-{{end -}}{{/* if .IsSupported */}}
-{{end}}{{/* range .Bodies */}}
+{{end -}}{{/* range .ClientMethodVariants */}}
 {{end}}
 
 {{/* Generate request builders */}}
@@ -158,6 +108,7 @@ type ClientInterface interface {
 {{$pathParams := .PathParams -}}
 {{$bodyRequired := .BodyRequired -}}
 {{$opid := .OperationId -}}
+{{$generic := .GenericClientVariant -}}
 
 {{range .Bodies}}
 {{if .IsSupportedByClient -}}
@@ -192,8 +143,8 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
 {{end -}}
 {{end}}
 
-// New{{$opid}}Request{{if .HasBody}}WithBody{{end}} constructs an http.Request for the {{$opid}} method{{if .HasBody}}, with any body, and a specified content type{{end}}
-func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}{{if .HasBody}}, contentType string, body io.Reader{{end}}) (*http.Request, error) {
+// New{{$opid}}Request{{$generic.Suffix}} constructs an http.Request for the {{$opid}} method{{if .HasBody}}, with any body, and a specified content type{{end}}
+func New{{$opid}}Request{{$generic.Suffix}}(server string{{$generic.ArgsDecl}}) (*http.Request, error) {
     var err error
 {{range $paramIdx, $param := .PathParams}}
     var pathParam{{$paramIdx}} string
@@ -275,33 +226,7 @@ func New{{$opid}}Request{{if .HasBody}}WithBody{{end}}(server string{{genParamAr
     }
 
     {{if .HasBody}}req.Header.Add("Content-Type", contentType){{end}}
-{{ if .HeaderParams }}
-    if params != nil {
-    {{range $paramIdx, $param := .HeaderParams}}
-        {{if .RequiresNilCheck}} if params.{{.GoName}} != nil { {{end}}
-        var headerParam{{$paramIdx}} string
-        {{if .IsPassThrough}}
-        headerParam{{$paramIdx}} = {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}}
-        {{end}}
-        {{if .IsJson}}
-        var headerParamBuf{{$paramIdx}} []byte
-        headerParamBuf{{$paramIdx}}, err = json.Marshal({{if .HasOptionalPointer}}*{{end}}params.{{.GoName}})
-        if err != nil {
-            return nil, err
-        }
-        headerParam{{$paramIdx}} = string(headerParamBuf{{$paramIdx}})
-        {{end}}
-        {{if .IsStyled}}
-        headerParam{{$paramIdx}}, err = runtime.StyleParamWithOptions("{{.Style}}", {{.Explode}}, "{{.ParamName}}", {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}}, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
-        if err != nil {
-            return nil, err
-        }
-        {{end}}
-        req.Header.Set("{{.ParamName}}", headerParam{{$paramIdx}})
-        {{if .RequiresNilCheck}}}{{end}}
-    {{end}}
-    }
-{{- end }}{{/* if .HeaderParams */}}
+{{template "client.headerParams" .}}
 
 {{ if .CookieParams }}
     if params != nil {

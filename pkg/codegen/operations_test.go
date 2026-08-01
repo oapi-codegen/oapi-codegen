@@ -16,7 +16,9 @@ package codegen
 import (
 	"go/format"
 	"net/http"
+	"strings"
 	"testing"
+	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
@@ -914,6 +916,113 @@ func TestGenerateFunctionComment_GofmtHeading(t *testing.T) {
 			require.NoError(t, err)
 			assert.NotContains(t, string(formatted), "// #",
 				"gofmt must not promote any description paragraph to a heading")
+		})
+	}
+}
+
+func TestNewInitiatorTemplateDataRejectsPathParams(t *testing.T) {
+	_, err := NewInitiatorTemplateData("Webhook", []OperationDefinition{
+		{
+			OperationId: "PetUpdated",
+			PathParams:  []ParameterDefinition{{ParamName: "petId"}},
+		},
+	})
+	require.ErrorContains(t, err, "path parameters")
+
+	data, err := NewInitiatorTemplateData("Callback", []OperationDefinition{
+		{OperationId: "PetUpdated"},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Callback", data.Prefix)
+	assert.Equal(t, "callback", data.PrefixLower)
+}
+
+// buildStrictTestTrees loads the real embedded templates and per-framework
+// clones the same way Generate() does, for exercising GenerateStrictServer.
+func buildStrictTestTrees(t *testing.T) (*template.Template, map[string]*template.Template) {
+	t.Helper()
+	funcs := make(template.FuncMap, len(TemplateFunctions)+1)
+	for k, v := range TemplateFunctions {
+		funcs[k] = v
+	}
+	// Generate() injects "opts" before loading templates; stub it here.
+	funcs["opts"] = func() Configuration { return Configuration{} }
+	base := template.New("codegen").Funcs(funcs)
+	require.NoError(t, LoadTemplates(templates, base))
+	clones, err := buildServerTemplates(templates, base)
+	require.NoError(t, err)
+	return base, clones
+}
+
+func TestGenerateStrictServerInterfaceDedup(t *testing.T) {
+	base, clones := buildStrictTestTrees(t)
+	ops := []OperationDefinition{{OperationId: "Ping"}}
+
+	// A single enabled server emits the interface exactly once.
+	out, err := GenerateStrictServer(base, clones, ops, Configuration{
+		Generate: GenerateOptions{ChiServer: true},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 1, strings.Count(out, "type StrictServerInterface interface"))
+
+	// Configuration.Validate() permits only one server type; the strict
+	// generator enforces the same invariant for direct API callers, since
+	// every interface template declares the same package-level type names.
+	for name, generate := range map[string]GenerateOptions{
+		"fiber v2+v3": {FiberServer: true, FiberV3Server: true},
+		"echo+fiber":  {EchoServer: true, FiberServer: true},
+		"chi+gin":     {ChiServer: true, GinServer: true},
+	} {
+		_, err = GenerateStrictServer(base, clones, ops, Configuration{Generate: generate})
+		require.ErrorContains(t, err, "only one server type", name)
+	}
+}
+
+func TestInitiatorPathParamsRejectedAtExtraction(t *testing.T) {
+	webhookSpec := `
+openapi: "3.1.0"
+info: {title: t, version: "1"}
+webhooks:
+  petUpdated:
+    post:
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200': {description: OK}
+paths: {}
+`
+	callbackSpec := `
+openapi: "3.0.0"
+info: {title: t, version: "1"}
+paths:
+  /subscribe:
+    post:
+      callbacks:
+        petUpdated:
+          '{$request.body#/callbackUrl}':
+            post:
+              parameters:
+                - name: petId
+                  in: path
+                  required: true
+                  schema: {type: string}
+              responses:
+                '200': {description: OK}
+      responses:
+        '200': {description: OK}
+`
+	for name, spec := range map[string]string{"webhook": webhookSpec, "callback": callbackSpec} {
+		t.Run(name, func(t *testing.T) {
+			swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+			require.NoError(t, err)
+			_, err = Generate(swagger, Configuration{
+				PackageName: "api",
+				Generate:    GenerateOptions{Models: true},
+			})
+			require.ErrorContains(t, err, `path parameter "petId"`)
 		})
 	}
 }

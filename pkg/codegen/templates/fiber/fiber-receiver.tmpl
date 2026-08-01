@@ -7,7 +7,7 @@ type {{.Prefix}}ReceiverInterface interface {
 {{range .Operations -}}
 {{.SummaryAsComment ""}}
 // Handle{{.OperationId}}{{$.Prefix}} handles the {{.Method}} {{$.PrefixLower}} for {{.SourceName}}.
-Handle{{.OperationId}}{{$.Prefix}}(c *fiber.Ctx{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
+Handle{{.OperationId}}{{$.Prefix}}(c {{$.CtxType}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error
 {{end}}
 }
 
@@ -20,7 +20,7 @@ Handle{{.OperationId}}{{$.Prefix}}(c *fiber.Ctx{{if .RequiresParamObject}}, para
 // error chain reports them as 400. Per-handler middleware is not
 // generated here; use fiber.App.Use() for engine-level middleware.
 func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface) fiber.Handler {
-    return func(c *fiber.Ctx) error {
+    return func(c {{$.CtxType}}) error {
 {{- if .RequiresParamObject}}
         var err error
         _ = err
@@ -70,7 +70,8 @@ func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface) fiber.Handle
                 return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for header {{.ParamName}}, 1 is required, but %d found", n))
             }
             {{if .IsPassThrough}}
-            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}valueList[0]
+            {{.GoName}} = valueList[0]
+            params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
             {{end}}
             {{if .IsJson}}
             err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})

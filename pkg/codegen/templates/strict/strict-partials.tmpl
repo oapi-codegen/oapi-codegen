@@ -1,0 +1,27 @@
+{{/*
+Shared partials for the strict-server response templates. This file contributes
+only {{define}} blocks to the base template tree; it emits nothing on its own.
+
+"strict.responseHeaders" renders the 3-way (nullable / optional / plain) response
+header-writing branch that every strict framework needs inside its Visit*Response
+methods. The only per-framework difference is the header setter expression, passed
+as .Setter (e.g. "w.Header().Set", "ctx.Response().Header.Set"); .Headers is the
+response's []HeaderDefinition. Build the argument with the dict helper:
+{{`{{template "strict.responseHeaders" (dict "Headers" $headers "Setter" "w.Header().Set")}}`}}
+*/}}
+{{define "strict.responseHeaders" -}}
+{{- $setter := .Setter -}}
+{{- range .Headers -}}
+{{if .IsNullable -}}
+if response.Headers.{{.GoName}}.IsSpecified() {
+    {{$setter}}("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}.MustGet()))
+}
+{{else if .IsOptional -}}
+if response.Headers.{{.GoName}} != nil {
+    {{$setter}}("{{.Name}}", fmt.Sprint(*response.Headers.{{.GoName}}))
+}
+{{else -}}
+{{$setter}}("{{.Name}}", fmt.Sprint(response.Headers.{{.GoName}}))
+{{end -}}
+{{end -}}
+{{end -}}

@@ -424,9 +424,29 @@ func httpMethodConstant(method string) string {
 	}
 }
 
+// dict builds a map[string]any from an even-length list of alternating
+// key/value arguments. It lets a template pass more than one named value to a
+// {{template}} invocation (text/template only accepts a single data argument),
+// e.g. {{template "partial" (dict "Headers" $headers "Setter" "w.Header().Set")}}.
+func dict(values ...any) (map[string]any, error) {
+	if len(values)%2 != 0 {
+		return nil, fmt.Errorf("dict requires an even number of arguments, got %d", len(values))
+	}
+	m := make(map[string]any, len(values)/2)
+	for i := 0; i < len(values); i += 2 {
+		key, ok := values[i].(string)
+		if !ok {
+			return nil, fmt.Errorf("dict keys must be strings, got %T", values[i])
+		}
+		m[key] = values[i+1]
+	}
+	return m, nil
+}
+
 // TemplateFunctions is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
+	"dict":                       dict,
 	"genParamArgs":               genParamArgs,
 	"genParamTypes":              genParamTypes,
 	"genParamNames":              genParamNames,

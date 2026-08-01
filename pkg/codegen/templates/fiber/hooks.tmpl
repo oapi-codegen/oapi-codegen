@@ -1,0 +1,15 @@
+{{/*
+fiber (v2) overrides for the shared server skeletons. This file is NOT loaded
+into the base template tree; it is parsed into a fiber-specific clone of the tree
+by buildServerTemplates in codegen.go, where these {{define}} blocks replace the
+skeletons' {{block}} defaults.
+
+The shared fiber wrapper (fiber/fiber-middleware.tmpl) carries the fiber v2
+context type (*fiber.Ctx) and accessor (Context) as its wrapper.ctxType /
+wrapper.ctxAccessor defaults, so v2 only needs the interface signature override
+here. The fiber v3 clone (templates/fiber-v3/hooks.tmpl) additionally overrides
+those two blocks.
+*/}}
+
+{{/* --- server-interface.tmpl --- */}}
+{{define "interface.handlerSignature"}}(c *fiber.Ctx{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error{{end}}
