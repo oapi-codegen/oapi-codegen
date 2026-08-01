@@ -737,30 +737,31 @@ func OrderedParamsFromUri(uri string) []string {
 	return result
 }
 
-// GenPathString constructs a string that embeds path-parameter variables into a URI template.
+// GenPathString constructs a Go expression that builds the given URI by concatenating
+// its literal segments with the path-parameter variables named <paramVarName>0 through
+// <paramVarName>N. Literal segments are quoted with strconv.Quote so that characters
+// which are significant in Go source, such as quotes, backslashes and percent signs,
+// survive into the generated code unchanged.
 func GenPathString(uri, paramVarName string) string {
-	tmpl := pathParamRE.ReplaceAllString(uri, "%s")
-
-	nParams := strings.Count(tmpl, "%s")
-	params := make([]any, nParams)
-
-	for i := range nParams {
-		params[i] = fmt.Sprintf(`" + %s%d + "`, paramVarName, i)
+	matches := pathParamRE.FindAllStringIndex(uri, -1)
+	if len(matches) == 0 {
+		return strconv.Quote(uri)
 	}
 
-	uri = fmt.Sprintf(tmpl, params...)
-
-	uri, found := strings.CutPrefix(uri, `" + `)
-	if !found {
-		uri = `"` + uri
+	parts := make([]string, 0, 2*len(matches)+1)
+	pos := 0
+	for i, match := range matches {
+		if literal := uri[pos:match[0]]; literal != "" {
+			parts = append(parts, strconv.Quote(literal))
+		}
+		parts = append(parts, fmt.Sprintf("%s%d", paramVarName, i))
+		pos = match[1]
+	}
+	if literal := uri[pos:]; literal != "" {
+		parts = append(parts, strconv.Quote(literal))
 	}
 
-	uri, found = strings.CutSuffix(uri, ` + "`)
-	if !found {
-		uri = uri + `"`
-	}
-
-	return uri
+	return strings.Join(parts, " + ")
 }
 
 // SortParamsByPath reorders the given parameter definitions to match those in the path URI.

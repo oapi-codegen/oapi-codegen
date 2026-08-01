@@ -579,6 +579,33 @@ func TestGenPathString(t *testing.T) {
 			uri:  "",
 			want: `""`,
 		},
+		// Percent signs are literal path characters, not format verbs.
+		{
+			uri:  "/test/%20/{param}",
+			want: `"/test/%20/" + pathParam0`,
+		},
+		{
+			uri:  "/test/100%/{param}",
+			want: `"/test/100%/" + pathParam0`,
+		},
+		{
+			uri:  "/test/%dpercent",
+			want: `"/test/%dpercent"`,
+		},
+		// A literal "%s" in the path must not be mistaken for a parameter.
+		{
+			uri:  "/test/literal%s/{param}",
+			want: `"/test/literal%s/" + pathParam0`,
+		},
+		// Characters that are significant in Go string literals must be escaped.
+		{
+			uri:  `/test/quo"te/{param}`,
+			want: `"/test/quo\"te/" + pathParam0`,
+		},
+		{
+			uri:  `/test/back\slash/{param}`,
+			want: `"/test/back\\slash/" + pathParam0`,
+		},
 	}
 
 	for _, tst := range tests {
