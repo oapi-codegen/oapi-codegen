@@ -267,7 +267,30 @@
         },
         "yaml-tags": {
           "type": "boolean",
-          "description": "Enable the generation of YAML tags for struct fields"
+          "description": "Enable the generation of YAML tags for struct fields. Superseded by `struct-tags`: when a `yaml` entry is present there, this flag has no effect."
+        },
+        "struct-tags": {
+          "type": "object",
+          "description": "Configure which struct tags are generated on struct fields and how their values are rendered. Entries are merged by name on top of the defaults (json, form), so a `json` entry replaces the default template while new names add tags. Tags render in alphabetical order.",
+          "properties": {
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "The struct tag name, e.g. `json`, `yaml`, `db`"
+                  },
+                  "template": {
+                    "type": "string",
+                    "description": "Go text/template producing the tag value. Available variables: `.FieldName`, `.IsOptional`, `.OmitEmpty`, `.OmitZero`, `.NeedsFormTag`. A template that renders to the empty string suppresses the tag on that field."
+                  }
+                },
+                "required": ["name", "template"]
+              }
+            }
+          }
         },
         "client-response-bytes-function": {
           "type": "boolean",

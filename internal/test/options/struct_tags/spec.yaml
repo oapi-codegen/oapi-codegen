@@ -1,0 +1,45 @@
+# ==========================================================================
+# Category: options/struct_tags
+# Tests:    struct-tags output option: user-configurable struct tag templates.
+#           - default json template kept when not overridden
+#           - user yaml entry supersedes the yaml-tags flag (no omitempty)
+#           - added tags (validate, db) rendered on every field
+#           - form tag still gated on form-style parameters (NeedsFormTag)
+# ==========================================================================
+openapi: "3.0.1"
+info:
+  title: options/struct_tags
+  version: "1.0.0"
+  description: |
+    Exercises the struct-tags output option, which makes struct tag
+    generation user-configurable via Go text/templates.
+paths:
+  /pets:
+    get:
+      operationId: listPets
+      parameters:
+        # form-style query parameter: field must carry a form tag
+        - name: limit
+          description: Query parameter
+          in: query
+          required: false
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: pets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Pet"
+components:
+  schemas:
+    Pet:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        tag:
+          type: string
