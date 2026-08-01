@@ -6,7 +6,6 @@ package paramclientgen
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -1134,7 +1133,7 @@ func NewGetLabelExplodePrimitiveRequest(server string, param int32) (*http.Reque
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/labelExplodePrimitive/%s", pathParam0)
+	operationPath := "/labelExplodePrimitive/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1236,7 +1235,7 @@ func NewGetLabelPrimitiveRequest(server string, param int32) (*http.Request, err
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/labelPrimitive/%s", pathParam0)
+	operationPath := "/labelPrimitive/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1338,7 +1337,7 @@ func NewGetMatrixExplodePrimitiveRequest(server string, id int32) (*http.Request
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/matrixExplodePrimitive/%s", pathParam0)
+	operationPath := "/matrixExplodePrimitive/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1440,7 +1439,7 @@ func NewGetMatrixPrimitiveRequest(server string, id int32) (*http.Request, error
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/matrixPrimitive/%s", pathParam0)
+	operationPath := "/matrixPrimitive/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1548,7 +1547,7 @@ func NewGetQueryDelimitedRequest(server string, params *GetQueryDelimitedParams)
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/queryDelimited")
+	operationPath := "/queryDelimited"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1837,7 +1836,7 @@ func NewGetSimpleExplodePrimitiveRequest(server string, param int32) (*http.Requ
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/simpleExplodePrimitive/%s", pathParam0)
+	operationPath := "/simpleExplodePrimitive/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1973,7 +1972,7 @@ func NewGetSimpleStringRequest(server string, param string) (*http.Request, erro
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/simpleString/%s", pathParam0)
+	operationPath := "/simpleString/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

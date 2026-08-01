@@ -173,7 +173,7 @@ func NewIssue209Request(server string, str StringInPath) (*http.Request, error) 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issues/209/$%s", pathParam0)
+	operationPath := "/issues/209/$" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -207,7 +207,7 @@ func NewIssue30Request(server string, pFallthrough string) (*http.Request, error
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issues/30/%s", pathParam0)
+	operationPath := "/issues/30/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -241,7 +241,7 @@ func NewIssue41Request(server string, n1param N5StartsWithNumber) (*http.Request
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issues/41/%s", pathParam0)
+	operationPath := "/issues/41/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

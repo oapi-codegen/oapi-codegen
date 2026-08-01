@@ -216,7 +216,7 @@ func NewXRequestWithBody(server string, contentType string, body io.Reader) (*ht
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/x")
+	operationPath := "/x"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

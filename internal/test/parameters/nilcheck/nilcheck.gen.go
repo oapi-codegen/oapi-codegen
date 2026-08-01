@@ -5,7 +5,6 @@ package parametersnilcheck
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -161,7 +160,7 @@ func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request,
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/cookie")
+	operationPath := "/cookie"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -205,7 +204,7 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/header")
+	operationPath := "/header"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -247,7 +246,7 @@ func NewGetQueryRequest(server string, params *GetQueryParams) (*http.Request, e
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/query")
+	operationPath := "/query"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

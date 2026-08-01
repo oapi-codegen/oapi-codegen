@@ -6,7 +6,6 @@ package responseheaders
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -124,7 +123,7 @@ func NewGetFooRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/foo")
+	operationPath := "/foo"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

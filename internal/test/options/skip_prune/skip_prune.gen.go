@@ -6,7 +6,6 @@ package optionsskipprune
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -139,7 +138,7 @@ func NewGetClientSkipRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/client-skip")
+	operationPath := "/client-skip"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -166,7 +165,7 @@ func NewUpdateClientSkipRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/client-skip")
+	operationPath := "/client-skip"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

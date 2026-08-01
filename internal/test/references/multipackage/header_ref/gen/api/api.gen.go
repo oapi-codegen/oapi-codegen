@@ -125,7 +125,7 @@ func NewGetThingRequest(server string, id string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/things/%s", pathParam0)
+	operationPath := "/things/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

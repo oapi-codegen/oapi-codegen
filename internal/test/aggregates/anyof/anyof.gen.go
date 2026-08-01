@@ -791,7 +791,7 @@ func NewGetInlinePetsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/inline/pets")
+	operationPath := "/inline/pets"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -818,7 +818,7 @@ func NewGetIssue1189TestRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issue1189/test")
+	operationPath := "/issue1189/test"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -845,7 +845,7 @@ func NewGetParamTestRequest(server string, params *GetParamTestParams) (*http.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/param/test")
+	operationPath := "/param/test"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -911,7 +911,7 @@ func NewGetRefPetsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/ref/pets")
+	operationPath := "/ref/pets"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

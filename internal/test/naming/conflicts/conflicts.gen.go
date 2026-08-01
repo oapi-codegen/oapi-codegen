@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -1155,7 +1154,7 @@ func NewListEntitiesRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/entities")
+	operationPath := "/entities"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1193,7 +1192,7 @@ func NewPostFooRequestWithBody(server string, params *PostFooParams, contentType
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/foo")
+	operationPath := "/foo"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1249,7 +1248,7 @@ func NewListItemsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/items")
+	operationPath := "/items"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1287,7 +1286,7 @@ func NewCreateItemRequestWithBody(server string, contentType string, body io.Rea
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/items")
+	operationPath := "/items"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1349,7 +1348,7 @@ func NewCreateOrderRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/orders")
+	operationPath := "/orders"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1378,7 +1377,7 @@ func NewGetOutcomeRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/outcome")
+	operationPath := "/outcome"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1416,7 +1415,7 @@ func NewPostOutcomeRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/outcome")
+	operationPath := "/outcome"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1456,7 +1455,7 @@ func NewSendPayloadRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/payload")
+	operationPath := "/payload"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1496,7 +1495,7 @@ func NewCreatePetRequestWithBody(server string, contentType string, body io.Read
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/pets")
+	operationPath := "/pets"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1536,7 +1535,7 @@ func NewQueryRequestWithBody(server string, contentType string, body io.Reader) 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/query")
+	operationPath := "/query"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1565,7 +1564,7 @@ func NewGetQuxRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/qux")
+	operationPath := "/qux"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1603,7 +1602,7 @@ func NewPostQuxRequestWithBody(server string, contentType string, body io.Reader
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/qux")
+	operationPath := "/qux"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1632,7 +1631,7 @@ func NewGetRenamedSchemaRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/renamed-schema")
+	operationPath := "/renamed-schema"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1670,7 +1669,7 @@ func NewPostRenamedSchemaRequestWithBody(server string, contentType string, body
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/renamed-schema")
+	operationPath := "/renamed-schema"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1739,7 +1738,7 @@ func NewPatchResourceRequestWithBody(server string, id string, contentType strin
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/resources/%s", pathParam0)
+	operationPath := "/resources/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1768,7 +1767,7 @@ func NewGetStatusRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/status")
+	operationPath := "/status"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1795,7 +1794,7 @@ func NewGetZapRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/zap")
+	operationPath := "/zap"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1833,7 +1832,7 @@ func NewPostZapRequestWithBody(server string, contentType string, body io.Reader
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/zap")
+	operationPath := "/zap"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

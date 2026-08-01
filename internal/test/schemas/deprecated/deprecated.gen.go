@@ -374,7 +374,7 @@ func NewPostClientsRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/clients")
+	operationPath := "/clients"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -403,7 +403,7 @@ func NewGetDeprecatedEndpointRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/deprecated_endpoint")
+	operationPath := "/deprecated_endpoint"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -441,7 +441,7 @@ func NewPostDeprecatedEndpointWithNonDeprecatedBodyRequestWithBody(server string
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/deprecated_endpoint_with_non_deprecated_body")
+	operationPath := "/deprecated_endpoint_with_non_deprecated_body"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -470,7 +470,7 @@ func NewGetDeprecatedFieldRequest(server string, params *GetDeprecatedFieldParam
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/deprecated_field")
+	operationPath := "/deprecated_field"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -543,7 +543,7 @@ func NewGetDeprecatedParamsOldIdRequest(server string, oldId string, params *Get
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/deprecated_params/%s", pathParam0)
+	operationPath := "/deprecated_params/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -613,7 +613,7 @@ func NewPostDeprecatedRequestBodyRequestWithBody(server string, contentType stri
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/deprecated_request_body")
+	operationPath := "/deprecated_request_body"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -642,7 +642,7 @@ func NewGetLegacyRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/legacy")
+	operationPath := "/legacy"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
