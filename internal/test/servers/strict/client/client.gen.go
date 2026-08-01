@@ -842,7 +842,7 @@ func NewJSONExampleRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/json")
+	operationPath := "/json"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -871,7 +871,7 @@ func NewMultipartExampleRequestWithBody(server string, contentType string, body 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/multipart")
+	operationPath := "/multipart"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -900,7 +900,7 @@ func NewMultipartRelatedExampleRequestWithBody(server string, contentType string
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/multipart-related")
+	operationPath := "/multipart-related"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -962,7 +962,7 @@ func NewMultipleRequestAndResponseTypesRequestWithBody(server string, contentTyp
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/multiple")
+	operationPath := "/multiple"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -991,7 +991,7 @@ func NewNoContentHeadersRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/no-content-headers")
+	operationPath := "/no-content-headers"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1029,7 +1029,7 @@ func NewRequiredJSONBodyRequestWithBody(server string, contentType string, body 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/required-json-body")
+	operationPath := "/required-json-body"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1069,7 +1069,7 @@ func NewRequiredTextBodyRequestWithBody(server string, contentType string, body 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/required-text-body")
+	operationPath := "/required-text-body"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1105,7 +1105,7 @@ func NewReservedGoKeywordParametersRequest(server string, pType string) (*http.R
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/reserved-go-keyword-parameters/%s", pathParam0)
+	operationPath := "/reserved-go-keyword-parameters/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1143,7 +1143,7 @@ func NewReusableResponsesRequestWithBody(server string, contentType string, body
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/reusable-responses")
+	operationPath := "/reusable-responses"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1190,7 +1190,7 @@ func NewSameNameParamAndBodyPropertyRequestWithBody(server string, name string, 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/same-name-param-and-body-property/%s", pathParam0)
+	operationPath := "/same-name-param-and-body-property/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1230,7 +1230,7 @@ func NewTextExampleRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/text")
+	operationPath := "/text"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1259,7 +1259,7 @@ func NewUnknownExampleRequestWithBody(server string, contentType string, body io
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/unknown")
+	operationPath := "/unknown"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1288,7 +1288,7 @@ func NewUnspecifiedContentTypeRequestWithBody(server string, contentType string,
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/unspecified-content-type")
+	operationPath := "/unspecified-content-type"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1328,7 +1328,7 @@ func NewURLEncodedExampleRequestWithBody(server string, contentType string, body
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/urlencoded")
+	operationPath := "/urlencoded"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1368,7 +1368,7 @@ func NewHeadersExampleRequestWithBody(server string, params *HeadersExampleParam
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/with-headers")
+	operationPath := "/with-headers"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1432,7 +1432,7 @@ func NewUnionExampleRequestWithBody(server string, contentType string, body io.R
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/with-union")
+	operationPath := "/with-union"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1833,9 +1833,17 @@ func (r MultipleRequestAndResponseTypesResponse) ContentType() string {
 	return ""
 }
 
+// NoContentHeadersResponse204Headers the declared response headers of an HTTP 204 response for NoContentHeaders
+type NoContentHeadersResponse204Headers struct {
+	NullableHeader *string
+	OptionalHeader *string
+}
+
 type NoContentHeadersResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	// Headers204 the parsed response headers for an HTTP 204 response
+	Headers204 *NoContentHeadersResponse204Headers
 }
 
 // GetBody returns the raw response body bytes
@@ -1976,11 +1984,19 @@ func (r ReservedGoKeywordParametersResponse) ContentType() string {
 	return ""
 }
 
+// ReusableResponsesResponse200Headers the declared response headers of an HTTP 200 response for ReusableResponses
+type ReusableResponsesResponse200Headers struct {
+	Header1 string
+	Header2 int
+}
+
 type ReusableResponsesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *Reusableresponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *ReusableResponsesResponse200Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -2194,11 +2210,21 @@ func (r URLEncodedExampleResponse) ContentType() string {
 	return ""
 }
 
+// HeadersExampleResponse200Headers the declared response headers of an HTTP 200 response for HeadersExample
+type HeadersExampleResponse200Headers struct {
+	Header1        string
+	Header2        int
+	NullableHeader *string
+	OptionalHeader *string
+}
+
 type HeadersExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *Example
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *HeadersExampleResponse200Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -2235,6 +2261,12 @@ func (r HeadersExampleResponse) ContentType() string {
 	return ""
 }
 
+// UnionExampleResponse200Headers the declared response headers of an HTTP 200 response for UnionExample
+type UnionExampleResponse200Headers struct {
+	Header1 string
+	Header2 int
+}
+
 type UnionExampleResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -2242,6 +2274,8 @@ type UnionExampleResponse struct {
 	ApplicationalternativeJSON200 *Example
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *UnionExample200JSONResponseBody
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *UnionExampleResponse200Headers
 }
 
 // GetApplicationalternativeJSON200 returns the response for an HTTP 200 `application/alternative+json` response
@@ -2743,6 +2777,26 @@ func ParseNoContentHeadersResponse(rsp *http.Response) (*NoContentHeadersRespons
 		HTTPResponse: rsp,
 	}
 
+	switch {
+	case rsp.StatusCode == 204:
+		var headers NoContentHeadersResponse204Headers
+		if values := rsp.Header.Values("nullable-header"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "nullable-header", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.NullableHeader = &value
+		}
+		if values := rsp.Header.Values("optional-header"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "optional-header", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.OptionalHeader = &value
+		}
+		response.Headers204 = &headers
+	}
+
 	return response, nil
 }
 
@@ -2831,6 +2885,26 @@ func ParseReusableResponsesResponse(rsp *http.Response) (*ReusableResponsesRespo
 	case rsp.StatusCode == 400:
 		break // No content-type
 
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers ReusableResponsesResponse200Headers
+		if values := rsp.Header.Values("header1"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "header1", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Header1 = value
+		}
+		if values := rsp.Header.Values("header2"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "header2", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Header2 = value
+		}
+		response.Headers200 = &headers
 	}
 
 	return response, nil
@@ -2952,6 +3026,40 @@ func ParseHeadersExampleResponse(rsp *http.Response) (*HeadersExampleResponse, e
 
 	}
 
+	switch {
+	case rsp.StatusCode == 200:
+		var headers HeadersExampleResponse200Headers
+		if values := rsp.Header.Values("header1"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "header1", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Header1 = value
+		}
+		if values := rsp.Header.Values("header2"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "header2", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Header2 = value
+		}
+		if values := rsp.Header.Values("nullable-header"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "nullable-header", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.NullableHeader = &value
+		}
+		if values := rsp.Header.Values("optional-header"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "optional-header", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.OptionalHeader = &value
+		}
+		response.Headers200 = &headers
+	}
+
 	return response, nil
 }
 
@@ -2986,6 +3094,26 @@ func ParseUnionExampleResponse(rsp *http.Response) (*UnionExampleResponse, error
 	case rsp.StatusCode == 400:
 		break // No content-type
 
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers UnionExampleResponse200Headers
+		if values := rsp.Header.Values("header1"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "header1", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Header1 = value
+		}
+		if values := rsp.Header.Values("header2"); len(values) > 0 {
+			var value int
+			if err := runtime.BindStyledParameterWithOptions("simple", "header2", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.Header2 = value
+		}
+		response.Headers200 = &headers
 	}
 
 	return response, nil

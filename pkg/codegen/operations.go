@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"cmp"
 	"fmt"
+	"hash/fnv"
 	"maps"
 	"slices"
 	"strconv"
@@ -36,6 +37,12 @@ type ParameterDefinition struct {
 	Required  bool   // Is this a required parameter?
 	Spec      *openapi3.Parameter
 	Schema    Schema
+
+	// Shared is true for a parameter declared at the path-item level, which
+	// is inherited by every method on the path. Its helper types are declared
+	// once for the path item rather than once per operation, so operation type
+	// collection skips them (issue #2090).
+	Shared bool
 }
 
 // TypeDef is here as an adapter after a large refactoring so that I don't
@@ -291,6 +298,253 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 	return outParams, nil
 }
 
+// paramNeedsHoisting reports whether a parameter's schema produces a named
+// helper type — an anyOf/oneOf union member, an inline object, etc. — as
+// opposed to a bare primitive. Only such parameters can cause the redeclaration
+// collision fixed for issue #2090, so only they participate in collision
+// detection. The check is exact: it describes the parameter and asks whether it
+// hoisted anything, rather than second-guessing which schema shapes hoist.
+func paramNeedsHoisting(paramRef *openapi3.ParameterRef) (bool, error) {
+	if paramRef == nil || paramRef.Value == nil {
+		return false, nil
+	}
+	described, err := DescribeParameters(openapi3.Parameters{paramRef}, nil)
+	if err != nil {
+		return false, err
+	}
+	for _, pd := range described {
+		if len(pd.Schema.AdditionalTypes) > 0 {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+// sharedParamScope is one path item whose path-item-level parameters are shared
+// by every method on it. hashKey is a string unique to the scope, hashed to
+// disambiguate colliding names; source is a human-readable identifier for the
+// scope used in generated doc comments.
+type sharedParamScope struct {
+	item    *openapi3.PathItem
+	hashKey string
+	source  string
+}
+
+// enumerateSharedParamScopes returns every path item in the spec that can
+// declare path-item-level (shared) parameters: regular paths, webhooks, and
+// callback path items. All three share the one global Go type namespace, so
+// they must be considered together when detecting and resolving collisions.
+func enumerateSharedParamScopes(swagger *openapi3.T) []sharedParamScope {
+	var scopes []sharedParamScope
+
+	if swagger.Paths != nil {
+		for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
+			item := swagger.Paths.Value(requestPath)
+			if item != nil {
+				scopes = append(scopes, sharedParamScope{item: item, hashKey: requestPath, source: requestPath})
+			}
+		}
+	}
+	for _, webhookName := range SortedMapKeys(swagger.Webhooks) {
+		if item := swagger.Webhooks[webhookName]; item != nil {
+			scopes = append(scopes, sharedParamScope{item: item, hashKey: "webhook:" + webhookName, source: "webhook " + webhookName})
+		}
+	}
+	if swagger.Paths != nil {
+		for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
+			pathItem := swagger.Paths.Value(requestPath)
+			if pathItem == nil {
+				continue
+			}
+			for _, parentMethod := range SortedMapKeys(pathItem.Operations()) {
+				parentOp := pathItem.Operations()[parentMethod]
+				for _, cbName := range SortedMapKeys(parentOp.Callbacks) {
+					cbRef := parentOp.Callbacks[cbName]
+					if cbRef == nil || cbRef.Value == nil {
+						continue
+					}
+					cb := cbRef.Value
+					cbKeys := append([]string(nil), cb.Keys()...)
+					slices.Sort(cbKeys)
+					for _, urlExpr := range cbKeys {
+						if item := cb.Value(urlExpr); item != nil {
+							scopes = append(scopes, sharedParamScope{
+								item:    item,
+								hashKey: "callback:" + requestPath + ":" + parentMethod + ":" + cbName + ":" + urlExpr,
+								source:  "callback " + cbName + " " + urlExpr,
+							})
+						}
+					}
+				}
+			}
+		}
+	}
+	return scopes
+}
+
+// resolveSharedParameters is the pre-pass for shared (path-item-level)
+// parameter naming (issue #2090). It describes each scope's shared parameters
+// once and returns them keyed by path item, ready for the operation loops to
+// attach.
+//
+// A shared parameter's helper types are declared once for its path item, so
+// two methods on the same path never collide. Names still collide *across*
+// path items, though — the same `{id}` reused by sibling paths is the common
+// case — so a helper-type name produced by more than one scope is disambiguated
+// by prefixing every colliding scope's parameters with a short, stable hash of
+// the scope (git-style: extended to the full hash only if two scopes' short
+// hashes clash). A parameter that doesn't collide keeps its historical
+// undecorated name, so existing generated code is unaffected.
+func resolveSharedParameters(swagger *openapi3.T) (map[*openapi3.PathItem][]ParameterDefinition, error) {
+	scopes := enumerateSharedParamScopes(swagger)
+
+	// Count, per shared-parameter name, how many scopes hoist a helper type
+	// under it. A name produced by two or more scopes collides.
+	nameCounts := map[string]int{}
+	for _, scope := range scopes {
+		if len(scope.item.Operations()) == 0 {
+			continue
+		}
+		for _, paramRef := range scope.item.Parameters {
+			hoists, err := paramNeedsHoisting(paramRef)
+			if err != nil {
+				return nil, err
+			}
+			if hoists {
+				nameCounts[paramRef.Value.Name]++
+			}
+		}
+	}
+	colliding := map[string]bool{}
+	for name, n := range nameCounts {
+		if n >= 2 {
+			colliding[name] = true
+		}
+	}
+
+	// Assign a disambiguating token to every scope that carries a colliding
+	// parameter. Tokens are hashes of the scope key; a short prefix is used
+	// unless two scopes' short prefixes clash, in which case both fall back to
+	// the full hash.
+	tokenScopeKeys := map[*openapi3.PathItem]string{}
+	var needToken []string
+	for _, scope := range scopes {
+		if len(scope.item.Operations()) == 0 {
+			continue
+		}
+		for _, paramRef := range scope.item.Parameters {
+			if paramRef.Value != nil && colliding[paramRef.Value.Name] {
+				tokenScopeKeys[scope.item] = scope.hashKey
+				needToken = append(needToken, scope.hashKey)
+				break
+			}
+		}
+	}
+	tokens := assignScopeTokens(needToken)
+
+	result := map[*openapi3.PathItem][]ParameterDefinition{}
+	for _, scope := range scopes {
+		if _, done := result[scope.item]; done {
+			continue
+		}
+		token := ""
+		if key, ok := tokenScopeKeys[scope.item]; ok {
+			token = tokens[key]
+		}
+		described, err := describeSharedParameters(scope.item.Parameters, scope.source, token, colliding)
+		if err != nil {
+			return nil, err
+		}
+		markShared(described)
+		result[scope.item] = described
+	}
+	return result, nil
+}
+
+// assignScopeTokens maps each scope key to a stable identifier token derived
+// from an FNV hash of the key. It uses a short prefix of the hash, extending
+// any keys whose short prefixes collide to the full hash (git-style). The
+// tokens are lowercase so they camel-case cleanly when threaded through type
+// naming (e.g. "a1b2c3d" becomes the "A1b2c3d" prefix of "A1b2c3dId0").
+func assignScopeTokens(keys []string) map[string]string {
+	const shortLen = 7
+	full := map[string]string{}
+	short := map[string]string{}
+	for _, key := range keys {
+		h := fnv.New64a()
+		_, _ = h.Write([]byte(key))
+		sum := fmt.Sprintf("h%x", h.Sum64())
+		full[key] = sum
+		short[key] = sum[:min(shortLen+1, len(sum))]
+	}
+	shortCounts := map[string]int{}
+	for _, key := range keys {
+		shortCounts[short[key]]++
+	}
+	tokens := map[string]string{}
+	for _, key := range keys {
+		if shortCounts[short[key]] > 1 {
+			tokens[key] = full[key]
+		} else {
+			tokens[key] = short[key]
+		}
+	}
+	return tokens
+}
+
+// describeSharedParameters describes a scope's shared parameters once. A
+// parameter whose name collides across scopes is prefixed with the scope's
+// disambiguating token so its helper types are uniquely named; a parameter
+// that does not collide keeps its historical undecorated name (issue #2090).
+// For the disambiguated types, a doc comment is set explaining the otherwise
+// opaque hash prefix and pointing back to the source path.
+func describeSharedParameters(params openapi3.Parameters, source, token string, colliding map[string]bool) ([]ParameterDefinition, error) {
+	out := make([]ParameterDefinition, 0, len(params))
+	for _, paramRef := range params {
+		collides := token != "" && paramRef.Value != nil && colliding[paramRef.Value.Name]
+		var path []string
+		if collides {
+			path = []string{token}
+		}
+		described, err := DescribeParameters(openapi3.Parameters{paramRef}, path)
+		if err != nil {
+			return nil, err
+		}
+		if collides {
+			for i := range described {
+				for j := range described[i].Schema.AdditionalTypes {
+					td := &described[i].Schema.AdditionalTypes[j]
+					td.Comment = fmt.Sprintf(
+						"// %s is a helper type for the shared %q parameter of %q, prefixed with a per-path hash to disambiguate it from the same-named parameter on another path.",
+						td.TypeName, paramRef.Value.Name, source)
+				}
+			}
+		}
+		out = append(out, described...)
+	}
+	return out, nil
+}
+
+// markShared flags every parameter as shared at the path-item level, so its
+// helper types are declared once for the path item rather than once per
+// operation (issue #2090).
+func markShared(params []ParameterDefinition) {
+	for i := range params {
+		params[i].Shared = true
+	}
+}
+
+// sharedParameterTypeDefs returns the helper TypeDefinitions produced by
+// path-item-level parameters. These are emitted once for the path item
+// (attributed to its first operation) instead of once per operation.
+func sharedParameterTypeDefs(sharedParams []ParameterDefinition) []TypeDefinition {
+	var typeDefs []TypeDefinition
+	for _, param := range sharedParams {
+		typeDefs = append(typeDefs, param.Schema.AdditionalTypes...)
+	}
+	return typeDefs
+}
+
 type SecurityDefinition struct {
 	ProviderName string
 	Scopes       []string
@@ -346,7 +600,13 @@ type OperationDefinition struct {
 	Summary             string                  // Summary string from Swagger, used to generate a comment
 	Method              string                  // GET, POST, DELETE, etc.
 	Path                string                  // The Swagger path for the operation, like /resource/{id}
-	Spec                *openapi3.Operation
+	// SpecOrder is the source line on which this operation's path is
+	// declared in the spec, used to register routes in the order the paths
+	// appear in the spec rather than sorted (issue #1887). Zero when the
+	// source location is unavailable (e.g. a programmatically-built spec),
+	// in which case route registration falls back to the default order.
+	SpecOrder int
+	Spec      *openapi3.Operation
 	IsAlias             bool   // True when this path is a $ref alias of another path item
 	AliasTarget         string // When IsAlias is true, this is the OperationId of the canonical operation (for route registration to reference the correct wrapper)
 	PathItemRef         string // The path item's $ref (if any); used to qualify externally-loaded schemas referenced from this operation's responses
@@ -1028,6 +1288,26 @@ func (h ResponseHeaderDefinition) IsNullable() bool {
 	return globalState.options.OutputOptions.NullableType && h.Nullable
 }
 
+// SchemaType returns the first OpenAPI type string for this header's schema
+// (e.g. "string", "integer"), or empty string if unavailable.
+func (h ResponseHeaderDefinition) SchemaType() string {
+	if h.Schema.OAPISchema != nil && h.Schema.OAPISchema.Type != nil {
+		if s := h.Schema.OAPISchema.Type.Slice(); len(s) > 0 {
+			return s[0]
+		}
+	}
+	return ""
+}
+
+// SchemaFormat returns the OpenAPI format string for this header's schema
+// (e.g. "date-time", "duration"), or empty string if unavailable.
+func (h ResponseHeaderDefinition) SchemaFormat() string {
+	if h.Schema.OAPISchema != nil {
+		return h.Schema.OAPISchema.Format
+	}
+	return ""
+}
+
 // FilterParameterDefinitionByType returns the subset of the specified parameters which are of the
 // specified type.
 func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []ParameterDefinition {
@@ -1041,6 +1321,26 @@ func FilterParameterDefinitionByType(params []ParameterDefinition, in string) []
 }
 
 // OperationDefinitions returns all operations for a swagger definition.
+// pathItemSourceLine returns the 1-based source line on which a path item's
+// key is declared, when the spec was loaded with origin tracking enabled
+// (see LoadSwagger). Returns 0 when the location is unavailable — e.g. a
+// spec built in memory or one whose loader did not record origins.
+func pathItemSourceLine(pathItem *openapi3.PathItem) int {
+	if pathItem == nil || pathItem.Origin == nil || pathItem.Origin.Key == nil {
+		return 0
+	}
+	// kin-openapi >= v0.143.0 calls attachOriginToResolved for $ref-resolved
+	// path items, giving them an Origin from the *external* file rather than
+	// the base spec. Those line numbers are meaningless for base-spec
+	// declaration order, so treat them as unavailable (return 0), which lets
+	// the stable SortedMapKeys alphabetical order take over — matching the
+	// pre-v0.143.0 behaviour.
+	if pathItem.Ref != "" && !strings.HasPrefix(pathItem.Ref, "#") {
+		return 0
+	}
+	return pathItem.Origin.Key.Line
+}
+
 func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	var operations []OperationDefinition
 
@@ -1062,15 +1362,25 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 	// when multiple paths $ref the same path item.
 	aliasCounters := map[string]int{}
 
+	// Resolve path-item-level (shared) parameters once for the whole spec, so
+	// their helper types are declared once per path item and colliding names
+	// across paths are disambiguated (issue #2090).
+	sharedParams, err := resolveSharedParameters(swagger)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
 		pathItem := swagger.Paths.Value(requestPath)
-		// These are parameters defined for all methods on a given path. They
-		// are shared by all methods.
-		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
-		if err != nil {
-			return nil, fmt.Errorf("error describing global parameters for %s: %s",
-				requestPath, err)
-		}
+		// Source line of this path's key, so route registration can follow
+		// spec declaration order (issue #1887). Zero when unavailable.
+		pathSpecOrder := pathItemSourceLine(pathItem)
+		// Parameters defined for all methods on this path, resolved by the
+		// pre-pass. Their helper types are emitted once for the path item (on
+		// its first operation) rather than once per operation (issue #2090).
+		globalParams := sharedParams[pathItem]
+		sharedParamTypeDefs := sharedParameterTypeDefs(globalParams)
+		sharedTypeDefsEmitted := false
 
 		// Each path can have a number of operations, POST, GET, OPTIONS, etc.
 		pathOps := pathItem.Operations()
@@ -1172,6 +1482,7 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 				Summary:         op.Summary,
 				Method:          opName,
 				Path:            requestPath,
+				SpecOrder:       pathSpecOrder,
 				Spec:            op,
 				Bodies:          bodyDefinitions,
 				Responses:       responseDefinitions,
@@ -1216,6 +1527,13 @@ func OperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, error) {
 			// Generate all the type definitions needed for this operation
 			opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
 
+			// Declare the shared (path-item-level) parameter helper types once,
+			// on the first operation of the path item (issue #2090).
+			if !sharedTypeDefsEmitted {
+				opDef.TypeDefinitions = append(opDef.TypeDefinitions, sharedParamTypeDefs...)
+				sharedTypeDefsEmitted = true
+			}
+
 			operations = append(operations, opDef)
 		}
 	}
@@ -1241,18 +1559,23 @@ func WebhookOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, er
 		return operations, nil
 	}
 
+	sharedParams, err := resolveSharedParameters(swagger)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, webhookName := range SortedMapKeys(swagger.Webhooks) {
 		pathItem := swagger.Webhooks[webhookName]
 		if pathItem == nil {
 			continue
 		}
 
-		// Path-item-level parameters apply to every method on the
-		// webhook (rare for webhooks, but honored defensively).
-		globalParams, err := DescribeParameters(pathItem.Parameters, nil)
-		if err != nil {
-			return nil, fmt.Errorf("error describing webhook %q parameters: %w", webhookName, err)
-		}
+		// Path-item-level parameters apply to every method on the webhook
+		// (rare for webhooks, but honored defensively). Their helper types are
+		// declared once for the path item (issue #2090).
+		globalParams := sharedParams[pathItem]
+		sharedParamTypeDefs := sharedParameterTypeDefs(globalParams)
+		sharedTypeDefsEmitted := false
 
 		pathOps := pathItem.Operations()
 		for _, opName := range SortedMapKeys(pathOps) {
@@ -1314,6 +1637,10 @@ func WebhookOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, er
 			}
 
 			opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
+			if !sharedTypeDefsEmitted {
+				opDef.TypeDefinitions = append(opDef.TypeDefinitions, sharedParamTypeDefs...)
+				sharedTypeDefsEmitted = true
+			}
 			operations = append(operations, opDef)
 		}
 	}
@@ -1353,6 +1680,11 @@ func CallbackOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, e
 		return operations, nil
 	}
 
+	sharedParams, err := resolveSharedParameters(swagger)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, requestPath := range SortedMapKeys(swagger.Paths.Map()) {
 		pathItem := swagger.Paths.Value(requestPath)
 		if pathItem == nil {
@@ -1383,10 +1715,12 @@ func CallbackOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, e
 					if cbPathItem == nil {
 						continue
 					}
-					globalParams, err := DescribeParameters(cbPathItem.Parameters, nil)
-					if err != nil {
-						return nil, fmt.Errorf("error describing callback %q parameters: %w", callbackName, err)
-					}
+					// Path-item-level parameters shared by every method on
+					// the callback path item; helper types declared once
+					// (issue #2090).
+					globalParams := sharedParams[cbPathItem]
+					sharedParamTypeDefs := sharedParameterTypeDefs(globalParams)
+					sharedTypeDefsEmitted := false
 
 					cbOps := cbPathItem.Operations()
 					for _, opName := range SortedMapKeys(cbOps) {
@@ -1445,6 +1779,10 @@ func CallbackOperationDefinitions(swagger *openapi3.T) ([]OperationDefinition, e
 						}
 
 						opDef.TypeDefinitions = append(opDef.TypeDefinitions, GenerateTypeDefsForOperation(opDef)...)
+						if !sharedTypeDefsEmitted {
+							opDef.TypeDefinitions = append(opDef.TypeDefinitions, sharedParamTypeDefs...)
+							sharedTypeDefsEmitted = true
+						}
 						operations = append(operations, opDef)
 					}
 				}
@@ -1681,6 +2019,20 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			if err != nil {
 				return nil, fmt.Errorf("error generating response header definition: %w", err)
 			}
+			// When the header component itself is an external `$ref` (it lives
+			// in another file) and its schema references a named type, that
+			// type is generated into the imported package, not this one. The
+			// schema `$ref` is written relative to the external file (e.g.
+			// "#/components/schemas/ETagSchema"), so GenerateGoSchema resolved
+			// it as a bare local name; qualify it with the header's external
+			// package so we emit "externalRef0.ETagSchema" instead of an
+			// undefined local "ETagSchema" (issue #2060). Guard on the schema
+			// being a reference so an external header with an inline primitive
+			// schema (e.g. `type: string`) is not turned into
+			// "externalRef0.string".
+			if header.Value.Schema != nil && header.Value.Schema.Ref != "" {
+				ensureExternalRefsInSchema(&contentSchema, header.Ref)
+			}
 			var nullable bool
 			if header.Value.Schema != nil {
 				nullable = schemaIsNullable(header.Value.Schema.Value)
@@ -1761,8 +2113,14 @@ func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 		typeDefs = append(typeDefs, GenerateParamsTypes(op)...)
 	}
 
-	// Now, go through all the additional types we need to declare.
+	// Now, go through all the additional types we need to declare. Skip
+	// parameters shared at the path-item level: their helper types are
+	// declared once for the path item (see sharedParameterTypeDefs), not once
+	// per operation, which would redeclare them (issue #2090).
 	for _, param := range op.AllParams() {
+		if param.Shared {
+			continue
+		}
 		typeDefs = append(typeDefs, param.Schema.AdditionalTypes...)
 	}
 
@@ -1852,58 +2210,174 @@ func GenerateTypesForOperations(t *template.Template, ops []OperationDefinition)
 	return buf.String(), nil
 }
 
+// sortOperationsBySpecOrder returns a copy of ops reordered to follow the
+// order paths are declared in the spec (by source line, OperationDefinition
+// .SpecOrder), with a stable fallback to the incoming order when source
+// locations are unavailable (e.g. an in-memory spec) or shared by several
+// operations (the methods of one path). This is used only for route
+// registration (issue #1887); the rest of the pipeline keeps the sorted
+// order so name-collision resolution and type emission are unaffected.
+func sortOperationsBySpecOrder(ops []OperationDefinition) []OperationDefinition {
+	out := make([]OperationDefinition, len(ops))
+	copy(out, ops)
+	slices.SortStableFunc(out, func(a, b OperationDefinition) int {
+		return a.SpecOrder - b.SpecOrder
+	})
+	return out
+}
+
+// sortOperationsLexicographically returns a copy of ops sorted by path then
+// method, reproducing the historical (pre-#1887) route-registration order in
+// which OperationDefinitions gathers paths. It is a stable no-op on an
+// already-gathered slice, but re-sorts explicitly so the ordering does not
+// depend on the caller's input.
+func sortOperationsLexicographically(ops []OperationDefinition) []OperationDefinition {
+	out := make([]OperationDefinition, len(ops))
+	copy(out, ops)
+	slices.SortStableFunc(out, func(a, b OperationDefinition) int {
+		if c := cmp.Compare(a.Path, b.Path); c != 0 {
+			return c
+		}
+		return cmp.Compare(a.Method, b.Method)
+	})
+	return out
+}
+
+// operationsInRegistrationOrder returns ops in the order route handlers should
+// be registered. By default this follows spec-declaration order (issue #1887);
+// when the sort-handler-registrations compatibility flag is set it restores the
+// historical lexicographic order.
+func operationsInRegistrationOrder(ops []OperationDefinition) []OperationDefinition {
+	if globalState.options.Compatibility.SortHandlerRegistrations {
+		return sortOperationsLexicographically(ops)
+	}
+	return sortOperationsBySpecOrder(ops)
+}
+
 // GenerateIrisServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateIrisServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"iris/iris-interface.tmpl", "iris/iris-middleware.tmpl", "iris/iris-handler.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"iris/iris-interface.tmpl", "iris/iris-middleware.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"iris/iris-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // GenerateChiServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateChiServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"chi/chi-interface.tmpl", "chi/chi-middleware.tmpl", "chi/chi-handler.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"chi/chi-interface.tmpl", "chi/chi-middleware.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"chi/chi-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // GenerateFiberServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateFiberServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"fiber/fiber-interface.tmpl", "fiber/fiber-middleware.tmpl", "fiber/fiber-handler.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber/fiber-interface.tmpl", "fiber/fiber-middleware.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber/fiber-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // GenerateFiberV3Server generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateFiberV3Server(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"fiber-v3/fiber-interface.tmpl", "fiber-v3/fiber-middleware.tmpl", "fiber-v3/fiber-handler.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber-v3/fiber-interface.tmpl", "fiber-v3/fiber-middleware.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"fiber-v3/fiber-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // GenerateEchoServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateEchoServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl", "echo/echo-register.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/echo-interface.tmpl", "echo/echo-wrappers.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/echo-register.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // GenerateEcho5Server generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateEcho5Server(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"echo/v5/echo-interface.tmpl", "echo/v5/echo-wrappers.tmpl", "echo/v5/echo-register.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/v5/echo-interface.tmpl", "echo/v5/echo-wrappers.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"echo/v5/echo-register.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // GenerateGinServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateGinServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl", "gin/gin-register.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"gin/gin-interface.tmpl", "gin/gin-wrappers.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"gin/gin-register.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // GenerateGorillaServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateGorillaServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"gorilla/gorilla-interface.tmpl", "gorilla/gorilla-middleware.tmpl", "gorilla/gorilla-register.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"gorilla/gorilla-interface.tmpl", "gorilla/gorilla-middleware.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"gorilla/gorilla-register.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 // GenerateStdHTTPServer generates all the go code for the ServerInterface as well as
 // all the wrapper functions around our handlers.
 func GenerateStdHTTPServer(t *template.Template, operations []OperationDefinition) (string, error) {
-	return GenerateTemplates([]string{"stdhttp/std-http-interface.tmpl", "stdhttp/std-http-middleware.tmpl", "stdhttp/std-http-handler.tmpl"}, t, operations)
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"stdhttp/std-http-interface.tmpl", "stdhttp/std-http-middleware.tmpl"}, t, operations); err != nil {
+		return "", err
+	}
+	// Route registration follows spec-declaration order (issue #1887).
+	if err := GenerateTemplatesIntoBuffer(&buf, []string{"stdhttp/std-http-handler.tmpl"}, t, operationsInRegistrationOrder(operations)); err != nil {
+		return "", err
+	}
+	return buf.String(), nil
 }
 
 func GenerateStrictServer(t *template.Template, operations []OperationDefinition, opts Configuration) (string, error) {
@@ -2046,23 +2520,30 @@ func GenerateIrisReceiver(t *template.Template, prefix string, ops []OperationDe
 	return GenerateTemplates([]string{"iris/iris-receiver.tmpl"}, t, NewReceiverTemplateData(prefix, ops))
 }
 
+// GenerateTemplatesIntoBuffer executes the named templates against ops and
+// writes the results to buf, separating consecutive templates with a newline.
+// Rendering into a caller-owned buffer lets a caller compose several passes —
+// e.g. feeding spec-ordered operations to the registration template while the
+// rest of a server uses the pipeline's default order (issue #1887).
+func GenerateTemplatesIntoBuffer(buf *bytes.Buffer, templates []string, t *template.Template, ops any) error {
+	for i, tmpl := range templates {
+		if i > 0 {
+			buf.WriteString("\n")
+		}
+		if err := t.ExecuteTemplate(buf, tmpl, ops); err != nil {
+			return fmt.Errorf("error generating %s: %s", tmpl, err)
+		}
+	}
+	return nil
+}
+
 // GenerateTemplates used to generate templates
 func GenerateTemplates(templates []string, t *template.Template, ops any) (string, error) {
-	var generatedTemplates []string
-	for _, tmpl := range templates {
-		var buf bytes.Buffer
-		w := bufio.NewWriter(&buf)
-
-		if err := t.ExecuteTemplate(w, tmpl, ops); err != nil {
-			return "", fmt.Errorf("error generating %s: %s", tmpl, err)
-		}
-		if err := w.Flush(); err != nil {
-			return "", fmt.Errorf("error flushing output buffer for %s: %s", tmpl, err)
-		}
-		generatedTemplates = append(generatedTemplates, buf.String())
+	var buf bytes.Buffer
+	if err := GenerateTemplatesIntoBuffer(&buf, templates, t, ops); err != nil {
+		return "", err
 	}
-
-	return strings.Join(generatedTemplates, "\n"), nil
+	return buf.String(), nil
 }
 
 // CombineOperationParameters combines the Parameters defined at a global level (Parameters defined for all methods on a given path) with the Parameters defined at a local level (Parameters defined for a specific path), preferring the locally defined parameter over the global one

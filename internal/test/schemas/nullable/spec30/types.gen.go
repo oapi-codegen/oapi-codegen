@@ -8,19 +8,19 @@ type Pet struct {
 	// Extras Optional, nullable *unspecified* object (no `properties:`).
 	// 3.0 control case for the 3.1 `type: ["object","null"]`
 	// equivalent; expected shape: `*map[string]interface{}`.
-	Extras *map[string]interface{} `json:"extras,omitempty"`
+	Extras *map[string]interface{} `json:"extras"`
 
 	// Name Required, non-nullable.
 	Name string `json:"name"`
 
 	// Nickname Optional, nullable scalar via 3.0 `nullable: true`.
-	Nickname *string `json:"nickname,omitempty"`
+	Nickname *string `json:"nickname"`
 
 	// Owner Optional, nullable inline object.
 	Owner *struct {
 		Id *string `json:"id,omitempty"`
-	} `json:"owner,omitempty"`
+	} `json:"owner"`
 
 	// Tags Optional, nullable array.
-	Tags *[]string `json:"tags,omitempty"`
+	Tags *[]string `json:"tags"`
 }

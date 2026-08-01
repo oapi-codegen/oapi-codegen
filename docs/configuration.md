@@ -10,7 +10,7 @@ This page is a structural overview. The authoritative, always-current reference 
 To get the IDE experience, add this line to the top of your configuration file:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.7.2/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
 package: api
 # ...
 ```
@@ -62,6 +62,7 @@ compatibility:
   disable-enum-value-conflict-resolution: false
   headers-implicitly-required: false
   enable-auth-scopes-on-context: false
+  sort-handler-registrations: false
 
 # Output modification options
 # See <a href="https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen#OutputOptions">OutputOptions</a>

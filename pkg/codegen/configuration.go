@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
+	"strings"
 )
 
 // defaultStreamingContentTypes are the regex patterns matched against
@@ -95,6 +96,16 @@ func (o Configuration) Validate() error {
 	if problems := o.OutputOptions.Validate(); problems != nil {
 		for k, v := range problems {
 			errs = append(errs, fmt.Errorf("`output-options` configuration for %v was incorrect: %v", k, v))
+		}
+	}
+
+	// import-mapping keys are the paths of $ref'd documents (a relative
+	// file path or URL). A JSON pointer key can never match anything —
+	// references within the same document always resolve to the package
+	// being generated — so it is a configuration mistake, not a mapping.
+	for _, specPath := range SortedMapKeys(o.ImportMapping) {
+		if strings.HasPrefix(specPath, "#") {
+			errs = append(errs, fmt.Errorf("`import-mapping` key %q is a JSON pointer, but keys must be the path or URL of a $ref'd document; references within the same document cannot be remapped to another package — see https://github.com/oapi-codegen/oapi-codegen/tree/main/examples/import-mapping", specPath))
 		}
 	}
 
@@ -358,7 +369,16 @@ type CompatibilityOptions struct {
 	// types (e.g. `bearerAuthContextKey`), the scope constants (e.g.
 	// `BearerAuthScopes`), and the per-operation calls that store the
 	// operation's scopes into the request context.
-	// This mechanism is deprecated and off by default: it flattens the
+	//
+	// A security scheme that is a $ref into a spec covered by import-mapping
+	// does not declare its own context key type; its scopes constant is an
+	// alias of the one in the mapped package, so `context.Value` lookups use
+	// the same key across the generated packages. This requires the mapped
+	// spec's config to also set this flag, so that the referenced constant
+	// exists. Please see
+	// https://github.com/oapi-codegen/oapi-codegen/issues/2383
+	//
+	// Deprecated: this mechanism is off by default because it flattens the
 	// OpenAPI `security` requirements into a per-scheme list of scopes, and
 	// cannot represent alternative schemes (OR), combined schemes (AND), or
 	// anonymous (`{}`) alternatives. Authentication and authorization should
@@ -366,6 +386,16 @@ type CompatibilityOptions struct {
 	// middleware, which evaluates the spec's security requirements directly.
 	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/1524
 	EnableAuthScopesOnContext bool `yaml:"enable-auth-scopes-on-context,omitempty"`
+
+	// SortHandlerRegistrations restores the historical behavior of registering
+	// generated route handlers in sorted (lexicographic, by path then method)
+	// order. By default handlers are registered in the order their paths are
+	// declared in the spec, so that on routers which match in registration
+	// order (e.g. Fiber, Gorilla/mux) overlapping paths can be disambiguated by
+	// ordering them in the spec. Set this to true to opt out and go back to the
+	// old sorted registration order.
+	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/1887
+	SortHandlerRegistrations bool `yaml:"sort-handler-registrations,omitempty"`
 }
 
 func (co CompatibilityOptions) Validate() map[string]string {

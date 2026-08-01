@@ -101,6 +101,9 @@ type ServerInterface interface {
 	// (GET /simplePrimitive/{param})
 	GetSimplePrimitive(w http.ResponseWriter, r *http.Request, param int32)
 
+	// (GET /simpleString/{param})
+	GetSimpleString(w http.ResponseWriter, r *http.Request, param string)
+
 	// (GET /startingWithNumber/{1param})
 	GetStartingWithNumber(w http.ResponseWriter, r *http.Request, n1param string)
 }
@@ -520,7 +523,7 @@ func (siw *ServerInterfaceWrapper) GetLabelExplodeArray(w http.ResponseWriter, r
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -546,7 +549,7 @@ func (siw *ServerInterfaceWrapper) GetLabelExplodeObject(w http.ResponseWriter, 
 	// ------------- Path parameter "param" -------------
 	var param Object
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -572,7 +575,7 @@ func (siw *ServerInterfaceWrapper) GetLabelExplodePrimitive(w http.ResponseWrite
 	// ------------- Path parameter "param" -------------
 	var param int32
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -598,7 +601,7 @@ func (siw *ServerInterfaceWrapper) GetLabelNoExplodeArray(w http.ResponseWriter,
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -624,7 +627,7 @@ func (siw *ServerInterfaceWrapper) GetLabelNoExplodeObject(w http.ResponseWriter
 	// ------------- Path parameter "param" -------------
 	var param Object
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -650,7 +653,7 @@ func (siw *ServerInterfaceWrapper) GetLabelPrimitive(w http.ResponseWriter, r *h
 	// ------------- Path parameter "param" -------------
 	var param int32
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -676,7 +679,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixExplodeArray(w http.ResponseWriter, 
 	// ------------- Path parameter "id" -------------
 	var id []int32
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -702,7 +705,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixExplodeObject(w http.ResponseWriter,
 	// ------------- Path parameter "id" -------------
 	var id Object
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -728,7 +731,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixExplodePrimitive(w http.ResponseWrit
 	// ------------- Path parameter "id" -------------
 	var id int32
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -754,7 +757,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixNoExplodeArray(w http.ResponseWriter
 	// ------------- Path parameter "id" -------------
 	var id []int32
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -780,7 +783,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixNoExplodeObject(w http.ResponseWrite
 	// ------------- Path parameter "id" -------------
 	var id Object
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -806,7 +809,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixPrimitive(w http.ResponseWriter, r *
 	// ------------- Path parameter "id" -------------
 	var id int32
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -1072,7 +1075,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleExplodeArray(w http.ResponseWriter, 
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -1098,7 +1101,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleExplodeObject(w http.ResponseWriter,
 	// ------------- Path parameter "param" -------------
 	var param Object
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -1124,7 +1127,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleExplodePrimitive(w http.ResponseWrit
 	// ------------- Path parameter "param" -------------
 	var param int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -1150,7 +1153,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleNoExplodeArray(w http.ResponseWriter
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -1176,7 +1179,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleNoExplodeObject(w http.ResponseWrite
 	// ------------- Path parameter "param" -------------
 	var param Object
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -1202,7 +1205,7 @@ func (siw *ServerInterfaceWrapper) GetSimplePrimitive(w http.ResponseWriter, r *
 	// ------------- Path parameter "param" -------------
 	var param int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -1210,6 +1213,32 @@ func (siw *ServerInterfaceWrapper) GetSimplePrimitive(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetSimplePrimitive(w, r, param)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSimpleString operation middleware
+func (siw *ServerInterfaceWrapper) GetSimpleString(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "param" -------------
+	var param string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSimpleString(w, r, param)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -1354,59 +1383,61 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	r.HandleFunc(options.BaseURL+"/simplePrimitive/{param}", wrapper.GetSimplePrimitive).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/simpleString/{param}", wrapper.GetSimpleString).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/simpleNoExplodeArray/{param}", wrapper.GetSimpleNoExplodeArray).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/simpleExplodeArray/{param}", wrapper.GetSimpleExplodeArray).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/simpleNoExplodeObject/{param}", wrapper.GetSimpleNoExplodeObject).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/simpleExplodeObject/{param}", wrapper.GetSimpleExplodeObject).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/labelNoExplodeArray/{param}", wrapper.GetLabelNoExplodeArray).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/labelExplodeArray/{param}", wrapper.GetLabelExplodeArray).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/labelNoExplodeObject/{param}", wrapper.GetLabelNoExplodeObject).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/labelExplodeObject/{param}", wrapper.GetLabelExplodeObject).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/matrixNoExplodeArray/{id}", wrapper.GetMatrixNoExplodeArray).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/matrixExplodeArray/{id}", wrapper.GetMatrixExplodeArray).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/matrixNoExplodeObject/{id}", wrapper.GetMatrixNoExplodeObject).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/matrixExplodeObject/{id}", wrapper.GetMatrixExplodeObject).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/simpleExplodePrimitive/{param}", wrapper.GetSimpleExplodePrimitive).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/labelPrimitive/{param}", wrapper.GetLabelPrimitive).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/labelExplodePrimitive/{param}", wrapper.GetLabelExplodePrimitive).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/matrixPrimitive/{id}", wrapper.GetMatrixPrimitive).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/matrixExplodePrimitive/{id}", wrapper.GetMatrixExplodePrimitive).Methods(http.MethodGet)
+
 	r.HandleFunc(options.BaseURL+"/contentObject/{param}", wrapper.GetContentObject).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/passThrough/{param}", wrapper.GetPassThrough).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/startingWithNumber/{1param}", wrapper.GetStartingWithNumber).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/queryForm", wrapper.GetQueryForm).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/queryDelimited", wrapper.GetQueryDelimited).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/queryDeepObject", wrapper.GetDeepObject).Methods(http.MethodGet)
+
+	r.HandleFunc(options.BaseURL+"/header", wrapper.GetHeader).Methods(http.MethodGet)
 
 	r.HandleFunc(options.BaseURL+"/cookie", wrapper.GetCookie).Methods(http.MethodGet)
 
 	r.HandleFunc(options.BaseURL+"/enums", wrapper.EnumParams).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/header", wrapper.GetHeader).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/labelExplodeArray/{param}", wrapper.GetLabelExplodeArray).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/labelExplodeObject/{param}", wrapper.GetLabelExplodeObject).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/labelExplodePrimitive/{param}", wrapper.GetLabelExplodePrimitive).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/labelNoExplodeArray/{param}", wrapper.GetLabelNoExplodeArray).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/labelNoExplodeObject/{param}", wrapper.GetLabelNoExplodeObject).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/labelPrimitive/{param}", wrapper.GetLabelPrimitive).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/matrixExplodeArray/{id}", wrapper.GetMatrixExplodeArray).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/matrixExplodeObject/{id}", wrapper.GetMatrixExplodeObject).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/matrixExplodePrimitive/{id}", wrapper.GetMatrixExplodePrimitive).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/matrixNoExplodeArray/{id}", wrapper.GetMatrixNoExplodeArray).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/matrixNoExplodeObject/{id}", wrapper.GetMatrixNoExplodeObject).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/matrixPrimitive/{id}", wrapper.GetMatrixPrimitive).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/passThrough/{param}", wrapper.GetPassThrough).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/queryDeepObject", wrapper.GetDeepObject).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/queryDelimited", wrapper.GetQueryDelimited).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/queryForm", wrapper.GetQueryForm).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/simpleExplodeArray/{param}", wrapper.GetSimpleExplodeArray).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/simpleExplodeObject/{param}", wrapper.GetSimpleExplodeObject).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/simpleExplodePrimitive/{param}", wrapper.GetSimpleExplodePrimitive).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/simpleNoExplodeArray/{param}", wrapper.GetSimpleNoExplodeArray).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/simpleNoExplodeObject/{param}", wrapper.GetSimpleNoExplodeObject).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/simplePrimitive/{param}", wrapper.GetSimplePrimitive).Methods(http.MethodGet)
-
-	r.HandleFunc(options.BaseURL+"/startingWithNumber/{1param}", wrapper.GetStartingWithNumber).Methods(http.MethodGet)
 
 	return r
 }
@@ -1436,8 +1467,9 @@ var swaggerSpec = []string{
 	"qqNVGAKw9t6P1ScNjeujNWO1TYqFEhaYxz7uZ8zFShEQthH3Z9WygzzBcABOmJs7rZ09i0cx1hVLwaCG",
 	"U4Bv6M0SdixcNj5chaaEdmyl/EJ50jnV2qhjlnt1k+3bhPHpUkPRwG6yherFQPXrKtucTX/HZ0UcI+A+",
 	"1a6LDzvbaa602yQ8WkCrY2zHab8wfOX+uwX2uDtSy8nAK9ITKpv5jqh6wOjRYFzVhr3dzrVJEU3GWuXL",
-	"ngG0vZ3e9dQMlc4a3W/Xq8aRr968nowj+3jfl6F3076enrn+39atmga+iQb2ZCwdIb4W1b1HmWX77hci",
-	"I3Mz7G2XPaioDZvwsL+c+LSvGNbfrxrcGx4jH0VSMt/zso9XJQg5V2fmBLM5Jmh3t/s3AAD//w==",
+	"ngG0vZ3e9dQMlc4a3W/Xq8aRr968nowj+3jfl6F3076enrn+39atmga+iQb2ZCwdIb4W1b1bma305tmf",
+	"g1X+RjIGAbXvVqdMN3vN+EJkZC7Cve2yR9a1YRP2NpYTNzcUw/pzXYN7w2Pko0hK5nte9q2uBCHnIQBL",
+	"MJtjgnZ3u38DAAD//w==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

@@ -16,6 +16,9 @@ func LoadSwagger(filePath string) (swagger *openapi3.T, err error) {
 
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
+	// Record each element's source location so route registration can be
+	// emitted in the order paths are declared in the spec (issue #1887).
+	loader.IncludeOrigin = true
 
 	u, err := url.Parse(filePath)
 	if err == nil && u.Scheme != "" && u.Host != "" {
@@ -92,6 +95,7 @@ func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (s
 
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
+	loader.IncludeOrigin = true
 
 	swagger, err = loader.LoadFromDataWithPath(b, &url.URL{
 		Path: filepath.ToSlash(filePath),

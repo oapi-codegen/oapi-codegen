@@ -374,7 +374,7 @@ func NewPostClientsRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/clients")
+	operationPath := "/clients"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -403,7 +403,7 @@ func NewGetDeprecatedEndpointRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/deprecated_endpoint")
+	operationPath := "/deprecated_endpoint"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -441,7 +441,7 @@ func NewPostDeprecatedEndpointWithNonDeprecatedBodyRequestWithBody(server string
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/deprecated_endpoint_with_non_deprecated_body")
+	operationPath := "/deprecated_endpoint_with_non_deprecated_body"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -470,7 +470,7 @@ func NewGetDeprecatedFieldRequest(server string, params *GetDeprecatedFieldParam
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/deprecated_field")
+	operationPath := "/deprecated_field"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -543,7 +543,7 @@ func NewGetDeprecatedParamsOldIdRequest(server string, oldId string, params *Get
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/deprecated_params/%s", pathParam0)
+	operationPath := "/deprecated_params/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -613,7 +613,7 @@ func NewPostDeprecatedRequestBodyRequestWithBody(server string, contentType stri
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/deprecated_request_body")
+	operationPath := "/deprecated_request_body"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -642,7 +642,7 @@ func NewGetLegacyRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/legacy")
+	operationPath := "/legacy"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -948,6 +948,12 @@ func (r GetDeprecatedFieldResponse) ContentType() string {
 	return ""
 }
 
+// GetDeprecatedParamsOldIdResponse200Headers the declared response headers of an HTTP 200 response for GetDeprecatedParamsOldId
+type GetDeprecatedParamsOldIdResponse200Headers struct {
+	// Deprecated: Use the Authorization header instead.
+	XOldToken *string
+}
+
 type GetDeprecatedParamsOldIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -955,6 +961,8 @@ type GetDeprecatedParamsOldIdResponse struct {
 	JSON200 *struct {
 		Result *string `json:"result,omitempty"`
 	}
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetDeprecatedParamsOldIdResponse200Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1034,11 +1042,20 @@ func (r PostDeprecatedRequestBodyResponse) ContentType() string {
 	return ""
 }
 
+// GetLegacyResponse200Headers the declared response headers of an HTTP 200 response for GetLegacy
+type GetLegacyResponse200Headers struct {
+	XCorrelationId *string
+	// Deprecated: Use X-Trace-Id instead.
+	XOldTrace *string
+}
+
 type GetLegacyResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *LegacyResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *GetLegacyResponse200Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -1325,6 +1342,19 @@ func ParseGetDeprecatedParamsOldIdResponse(rsp *http.Response) (*GetDeprecatedPa
 
 	}
 
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetDeprecatedParamsOldIdResponse200Headers
+		if values := rsp.Header.Values("X-Old-Token"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Old-Token", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XOldToken = &value
+		}
+		response.Headers200 = &headers
+	}
+
 	return response, nil
 }
 
@@ -1375,6 +1405,26 @@ func ParseGetLegacyResponse(rsp *http.Response) (*GetLegacyResponse, error) {
 		}
 		response.JSON200 = &dest
 
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers GetLegacyResponse200Headers
+		if values := rsp.Header.Values("X-Correlation-Id"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Correlation-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XCorrelationId = &value
+		}
+		if values := rsp.Header.Values("X-Old-Trace"); len(values) > 0 {
+			var value string
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Old-Trace", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XOldTrace = &value
+		}
+		response.Headers200 = &headers
 	}
 
 	return response, nil
@@ -1517,7 +1567,7 @@ func (siw *ServerInterfaceWrapper) GetDeprecatedParamsOldId(w http.ResponseWrite
 	// ------------- Path parameter "old_id" -------------
 	var oldId string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "old_id", r.PathValue("old_id"), &oldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "old_id", r.PathValue("old_id"), &oldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "old_id", Err: err})
 		return
@@ -1721,12 +1771,12 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/clients", wrapper.PostClients)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/deprecated_endpoint", wrapper.GetDeprecatedEndpoint)
-	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/deprecated_endpoint_with_non_deprecated_body", wrapper.PostDeprecatedEndpointWithNonDeprecatedBody)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/deprecated_field", wrapper.GetDeprecatedField)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/deprecated_params/{old_id}", wrapper.GetDeprecatedParamsOldId)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/deprecated_request_body", wrapper.PostDeprecatedRequestBody)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/clients", wrapper.PostClients)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/deprecated_endpoint_with_non_deprecated_body", wrapper.PostDeprecatedEndpointWithNonDeprecatedBody)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/legacy", wrapper.GetLegacy)
 
 	return m

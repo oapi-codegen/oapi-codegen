@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -80,7 +79,7 @@ type QueryResponse struct {
 // Qux defines model for Qux.
 type Qux = CustomQux
 
-// CustomQux defines model for .
+// CustomQux defines model for Qux.
 type CustomQux struct {
 	Label *string `json:"label,omitempty"`
 }
@@ -120,10 +119,10 @@ type N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON struct {
 	union json.RawMessage
 }
 
-// N200ResourcePatchApplicationJSONPatchPlusJSON1 defines model for .
+// N200ResourcePatchApplicationJSONPatchPlusJSON1 defines model for 200ResourcePatch.ApplicationJSONPatchPlusJSON.1.
 type N200ResourcePatchApplicationJSONPatchPlusJSON1 = []Resource
 
-// N200ResourcePatchApplicationJSONPatchPlusJSON2 defines model for .
+// N200ResourcePatchApplicationJSONPatchPlusJSON2 defines model for 200ResourcePatch.ApplicationJSONPatchPlusJSON.2.
 type N200ResourcePatchApplicationJSONPatchPlusJSON2 = string
 
 // N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON defines model for 200Resource_Patch.
@@ -131,10 +130,10 @@ type N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON struct {
 	union json.RawMessage
 }
 
-// N200ResourcePatchApplicationJSONPatchQueryPlusJSON1 defines model for .
+// N200ResourcePatchApplicationJSONPatchQueryPlusJSON1 defines model for 200ResourcePatch.ApplicationJSONPatchQueryPlusJSON.1.
 type N200ResourcePatchApplicationJSONPatchQueryPlusJSON1 = []Resource
 
-// N200ResourcePatchApplicationJSONPatchQueryPlusJSON2 defines model for .
+// N200ResourcePatchApplicationJSONPatchQueryPlusJSON2 defines model for 200ResourcePatch.ApplicationJSONPatchQueryPlusJSON.2.
 type N200ResourcePatchApplicationJSONPatchQueryPlusJSON2 = string
 
 // N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON defines model for 200Resource_Patch.
@@ -1155,7 +1154,7 @@ func NewListEntitiesRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/entities")
+	operationPath := "/entities"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1193,7 +1192,7 @@ func NewPostFooRequestWithBody(server string, params *PostFooParams, contentType
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/foo")
+	operationPath := "/foo"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1249,7 +1248,7 @@ func NewListItemsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/items")
+	operationPath := "/items"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1287,7 +1286,7 @@ func NewCreateItemRequestWithBody(server string, contentType string, body io.Rea
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/items")
+	operationPath := "/items"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1349,7 +1348,7 @@ func NewCreateOrderRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/orders")
+	operationPath := "/orders"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1378,7 +1377,7 @@ func NewGetOutcomeRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/outcome")
+	operationPath := "/outcome"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1416,7 +1415,7 @@ func NewPostOutcomeRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/outcome")
+	operationPath := "/outcome"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1456,7 +1455,7 @@ func NewSendPayloadRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/payload")
+	operationPath := "/payload"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1496,7 +1495,7 @@ func NewCreatePetRequestWithBody(server string, contentType string, body io.Read
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/pets")
+	operationPath := "/pets"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1536,7 +1535,7 @@ func NewQueryRequestWithBody(server string, contentType string, body io.Reader) 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/query")
+	operationPath := "/query"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1565,7 +1564,7 @@ func NewGetQuxRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/qux")
+	operationPath := "/qux"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1603,7 +1602,7 @@ func NewPostQuxRequestWithBody(server string, contentType string, body io.Reader
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/qux")
+	operationPath := "/qux"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1632,7 +1631,7 @@ func NewGetRenamedSchemaRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/renamed-schema")
+	operationPath := "/renamed-schema"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1670,7 +1669,7 @@ func NewPostRenamedSchemaRequestWithBody(server string, contentType string, body
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/renamed-schema")
+	operationPath := "/renamed-schema"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1739,7 +1738,7 @@ func NewPatchResourceRequestWithBody(server string, id string, contentType strin
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/resources/%s", pathParam0)
+	operationPath := "/resources/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1768,7 +1767,7 @@ func NewGetStatusRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/status")
+	operationPath := "/status"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1795,7 +1794,7 @@ func NewGetZapRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/zap")
+	operationPath := "/zap"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1833,7 +1832,7 @@ func NewPostZapRequestWithBody(server string, contentType string, body io.Reader
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/zap")
+	operationPath := "/zap"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2106,11 +2105,18 @@ func (r ListEntitiesResponse) ContentType() string {
 	return ""
 }
 
+// PostFooResponse200Headers the declared response headers of an HTTP 200 response for PostFoo
+type PostFooResponse200Headers struct {
+	XBar *bool
+}
+
 type PostFooResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
 	JSON200 *BarResponse
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *PostFooResponse200Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -3205,6 +3211,19 @@ func ParsePostFooResponse(rsp *http.Response) (*PostFooResponse, error) {
 		}
 		response.JSON200 = &dest
 
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers PostFooResponse200Headers
+		if values := rsp.Header.Values("X-Bar"); len(values) > 0 {
+			var value bool
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Bar", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "boolean", Format: ""}); err != nil {
+				return nil, err
+			}
+			headers.XBar = &value
+		}
+		response.Headers200 = &headers
 	}
 
 	return response, nil

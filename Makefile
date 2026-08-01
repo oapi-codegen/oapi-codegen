@@ -59,6 +59,6 @@ readme-toc-check: $(GOBIN)/mdtoc
 
 tidy-ci:
 	# for the root module, explicitly run the step, to prevent recursive calls
-	tidied -verbose
+	go mod tidy -diff
 	# then, for all child modules, use a module-managed `Makefile`
 	git ls-files '**/*go.mod' -z | xargs -0 -I{} bash -xc 'cd $$(dirname {}) && make tidy-ci'

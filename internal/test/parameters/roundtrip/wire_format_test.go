@@ -143,6 +143,11 @@ func (t *testServer) GetSimplePrimitive(ctx echo.Context, param int32) error {
 	return nil
 }
 
+// (GET /simpleString/{param})
+func (t *testServer) GetSimpleString(ctx echo.Context, param string) error {
+	return nil
+}
+
 // (GET /simpleExplodePrimitive/{param})
 func (t *testServer) GetSimpleExplodePrimitive(ctx echo.Context, param int32) error {
 	t.primitive = &param

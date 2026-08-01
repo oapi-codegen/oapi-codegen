@@ -27,7 +27,7 @@ type FilterPredicate struct {
 	union json.RawMessage
 }
 
-// FilterPredicate1 defines model for .
+// FilterPredicate1 defines model for FilterPredicate.1.
 type FilterPredicate1 = []FilterPredicate
 
 // FilterPredicateOp defines model for FilterPredicateOp.
@@ -36,7 +36,7 @@ type FilterPredicateOp struct {
 	None *FilterPredicateOp_None `json:"$none,omitempty"`
 }
 
-// FilterPredicateOpAny0 defines model for .
+// FilterPredicateOpAny0 defines model for FilterPredicateOp.Any.0.
 type FilterPredicateOpAny0 = []FilterPredicate
 
 // FilterPredicateOp_Any defines model for FilterPredicateOp.Any.
@@ -44,7 +44,7 @@ type FilterPredicateOp_Any struct {
 	union json.RawMessage
 }
 
-// FilterPredicateOpNone1 defines model for .
+// FilterPredicateOpNone1 defines model for FilterPredicateOp.None.1.
 type FilterPredicateOpNone1 = []FilterPredicate
 
 // FilterPredicateOp_None defines model for FilterPredicateOp.None.
@@ -62,10 +62,10 @@ type FilterRangeValue struct {
 	union json.RawMessage
 }
 
-// FilterRangeValue0 defines model for .
+// FilterRangeValue0 defines model for FilterRangeValue.0.
 type FilterRangeValue0 = float32
 
-// FilterRangeValue1 defines model for .
+// FilterRangeValue1 defines model for FilterRangeValue.1.
 type FilterRangeValue1 = string
 
 // FilterValue defines model for FilterValue.
@@ -73,13 +73,13 @@ type FilterValue struct {
 	union json.RawMessage
 }
 
-// FilterValue0 defines model for .
+// FilterValue0 defines model for FilterValue.0.
 type FilterValue0 = float32
 
-// FilterValue1 defines model for .
+// FilterValue1 defines model for FilterValue.1.
 type FilterValue1 = string
 
-// FilterValue2 defines model for .
+// FilterValue2 defines model for FilterValue.2.
 type FilterValue2 = bool
 
 // NonRecursiveObject defines model for NonRecursiveObject.

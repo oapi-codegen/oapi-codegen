@@ -3,6 +3,10 @@ package: packagea
 generate:
   models: true
   embedded-spec: true
+# issue-2383: emit the BearerAuth scopes context key so that packages
+# generated from specs $ref'ing this one can alias it.
+compatibility:
+  enable-auth-scopes-on-context: true
 output-options:
   skip-prune: true
 import-mapping:

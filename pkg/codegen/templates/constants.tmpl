@@ -1,7 +1,11 @@
-{{- if and (gt (len .SecuritySchemeProviderNames) 0) opts.Compatibility.EnableAuthScopesOnContext }}
+{{- if and (gt (len .SecuritySchemeProviders) 0) opts.Compatibility.EnableAuthScopesOnContext }}
 const (
-{{range $ProviderName := .SecuritySchemeProviderNames}}
-    {{- $ProviderName | sanitizeGoIdentity | ucFirst}}Scopes {{$ProviderName | schemaNameToTypeName | lcFirst}}ContextKey = "{{$ProviderName}}.Scopes"
+{{range $Provider := .SecuritySchemeProviders}}
+    {{- if $Provider.ImportedScopes}}
+    {{- $Provider.Name | sanitizeGoIdentity | ucFirst}}Scopes = {{$Provider.ImportedScopes}}
+    {{- else}}
+    {{- $Provider.Name | sanitizeGoIdentity | ucFirst}}Scopes {{$Provider.Name | schemaNameToTypeName | lcFirst}}ContextKey = "{{$Provider.Name}}.Scopes"
+    {{- end}}
 {{end}}
 )
 {{end}}

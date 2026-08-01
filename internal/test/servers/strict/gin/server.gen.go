@@ -185,7 +185,7 @@ func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(c *gin.Context) {
 	// ------------- Path parameter "type" -------------
 	var pType string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "type", c.Param("type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "type", c.Param("type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter type: %w", err), http.StatusBadRequest)
 		return
@@ -223,7 +223,7 @@ func (siw *ServerInterfaceWrapper) SameNameParamAndBodyProperty(c *gin.Context) 
 	// ------------- Path parameter "name" -------------
 	var name string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "name", c.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "name", c.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter name: %w", err), http.StatusBadRequest)
 		return
@@ -394,20 +394,20 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	}
 
 	router.POST(options.BaseURL+"/json", wrapper.JSONExample)
+	router.POST(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
 	router.POST(options.BaseURL+"/multipart", wrapper.MultipartExample)
 	router.POST(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample)
+	router.POST(options.BaseURL+"/text", wrapper.TextExample)
+	router.POST(options.BaseURL+"/unknown", wrapper.UnknownExample)
 	router.POST(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
+	router.POST(options.BaseURL+"/with-headers", wrapper.HeadersExample)
 	router.POST(options.BaseURL+"/no-content-headers", wrapper.NoContentHeaders)
+	router.POST(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
+	router.POST(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
 	router.POST(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody)
 	router.POST(options.BaseURL+"/required-text-body", wrapper.RequiredTextBody)
 	router.GET(options.BaseURL+"/reserved-go-keyword-parameters/:type", wrapper.ReservedGoKeywordParameters)
-	router.POST(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
 	router.POST(options.BaseURL+"/same-name-param-and-body-property/:name", wrapper.SameNameParamAndBodyProperty)
-	router.POST(options.BaseURL+"/text", wrapper.TextExample)
-	router.POST(options.BaseURL+"/unknown", wrapper.UnknownExample)
-	router.POST(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
-	router.POST(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
-	router.POST(options.BaseURL+"/with-headers", wrapper.HeadersExample)
 	router.POST(options.BaseURL+"/with-union", wrapper.UnionExample)
 }
 
@@ -613,7 +613,7 @@ func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequ
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 
@@ -704,7 +704,7 @@ func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(w 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 
@@ -739,7 +739,7 @@ func (response ReservedGoKeywordParameters200TextResponse) VisitReservedGoKeywor
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 
@@ -821,7 +821,7 @@ func (response TextExample200TextResponse) VisitTextExampleResponse(w http.Respo
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 

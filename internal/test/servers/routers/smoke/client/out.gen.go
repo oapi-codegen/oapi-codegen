@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -238,7 +237,7 @@ func NewGetGetMultibodyRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/get-multibody")
+	operationPath := "/get-multibody"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -265,7 +264,7 @@ func NewGetObjectRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/object")
+	operationPath := "/object"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -314,7 +313,7 @@ func NewPostPostMultibodyRequestWithBody(server string, contentType string, body
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/post-multibody")
+	operationPath := "/post-multibody"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -354,7 +353,7 @@ func NewPostPostObjectRequestWithBody(server string, contentType string, body io
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/post-object")
+	operationPath := "/post-object"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

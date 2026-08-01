@@ -228,13 +228,13 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	r.HandleFunc(options.BaseURL+"/get-multibody", wrapper.GetGetMultibody).Methods(http.MethodGet)
-
 	r.HandleFunc(options.BaseURL+"/object", wrapper.GetObject).Methods(http.MethodGet)
 
-	r.HandleFunc(options.BaseURL+"/post-multibody", wrapper.PostPostMultibody).Methods(http.MethodPost)
+	r.HandleFunc(options.BaseURL+"/get-multibody", wrapper.GetGetMultibody).Methods(http.MethodGet)
 
 	r.HandleFunc(options.BaseURL+"/post-object", wrapper.PostPostObject).Methods(http.MethodPost)
+
+	r.HandleFunc(options.BaseURL+"/post-multibody", wrapper.PostPostMultibody).Methods(http.MethodPost)
 
 	return r
 }

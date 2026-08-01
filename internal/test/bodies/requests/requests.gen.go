@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -170,7 +169,7 @@ func NewIssue9RequestWithBody(server string, params *Issue9Params, contentType s
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issues/9")
+	operationPath := "/issues/9"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

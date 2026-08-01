@@ -32,6 +32,7 @@ func (s *Server) GetMatrixNoExplodeArray(c *fiber.Ctx, id []int32) error        
 func (s *Server) GetMatrixNoExplodeObject(c *fiber.Ctx, id gen.Object) error                  { return c.JSON(id) }
 func (s *Server) GetMatrixPrimitive(c *fiber.Ctx, id int32) error                             { return c.JSON(id) }
 func (s *Server) GetPassThrough(c *fiber.Ctx, param string) error                             { return c.JSON(param) }
+func (s *Server) GetSimpleString(c *fiber.Ctx, param string) error                             { return c.JSON(param) }
 func (s *Server) GetDeepObject(c *fiber.Ctx, params gen.GetDeepObjectParams) error             { return c.JSON(params) }
 func (s *Server) GetQueryDelimited(c *fiber.Ctx, params gen.GetQueryDelimitedParams) error     { return c.JSON(params) }
 func (s *Server) GetQueryForm(c *fiber.Ctx, params gen.GetQueryFormParams) error               { return c.JSON(params) }

@@ -183,7 +183,7 @@ func (response GetPing200TextResponse) VisitGetPingResponse(w http.ResponseWrite
 	}
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response.Body))
+	_, err := w.Write([]byte(fmt.Sprint(response.Body)))
 	return err
 }
 

@@ -258,7 +258,11 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	// TODO: Check for collisions
 	maps.Copy(result.Extensions, s2.Extensions)
 
-	result.OneOf = append(s1.OneOf, s2.OneOf...)
+	// Capture top-level OneOf/AnyOf before overwriting s1/s2 with transitive
+	// AllOf merges. The merges may surface additional OneOf/AnyOf members from
+	// nested allOf members (issue #1905), so we accumulate from both sources.
+	oneOf := append(s1.OneOf, s2.OneOf...)
+	anyOf := append(s1.AnyOf, s2.AnyOf...)
 
 	// We are going to make AllOf transitive, so that merging an AllOf that
 	// contains AllOf's will result in a flat object.
@@ -269,6 +273,8 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 1")
 		}
+		oneOf = append(oneOf, merged.OneOf...)
+		anyOf = append(anyOf, merged.AnyOf...)
 		s1 = merged
 	}
 	if s2.AllOf != nil {
@@ -277,9 +283,13 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 2")
 		}
+		oneOf = append(oneOf, merged.OneOf...)
+		anyOf = append(anyOf, merged.AnyOf...)
 		s2 = merged
 	}
 
+	result.OneOf = oneOf
+	result.AnyOf = anyOf
 	result.AllOf = append(s1.AllOf, s2.AllOf...)
 
 	if s1.Type.Slice() != nil && s2.Type.Slice() != nil && !equalTypes(s1.Type, s2.Type) {
@@ -346,11 +356,24 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	// without needing to touch result.Nullable. The result.Nullable copy
 	// below is a no-op in 3.1 (s1.Nullable is always false there) but kept
 	// for 3.0 correctness, where Nullable is the only nullability carrier.
-	if schemaIsNullable(&s1) != schemaIsNullable(&s2) {
-		return openapi3.Schema{}, errors.New("merging two schemas with different Nullable")
-
+	//
+	// Nullability is UNIONed rather than required to match: if any member
+	// is nullable, the merged schema is nullable. This supports the common
+	// OpenAPI 3.0 idiom of decorating a $ref with nullability, which is only
+	// expressible through allOf because 3.0 forbids siblings next to $ref
+	// (issue #1898):
+	//
+	//   allOf:
+	//     - $ref: "#/components/schemas/user"
+	//     - nullable: true
+	//
+	// kin-openapi represents Nullable as a plain bool, so an unset value is
+	// indistinguishable from an explicit `nullable: false`; erroring on a
+	// mismatch made this widely-used idiom unusable. Union is also
+	// consistent with how Required is merged below.
+	if schemaIsNullable(&s1) || schemaIsNullable(&s2) {
+		result.Nullable = true
 	}
-	result.Nullable = s1.Nullable
 
 	if s1.ReadOnly != s2.ReadOnly {
 		return openapi3.Schema{}, errors.New("merging two schemas with different ReadOnly")

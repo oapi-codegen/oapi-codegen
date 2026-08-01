@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../../../../../../configuration-schema.json
+# From issue-1897 — iris (ctx.WriteString) backend coverage
+package: textnonstringiris
+output: iris.gen.go
+generate:
+  iris-server: true
+  strict-server: true
+  models: true
+output-options:
+  skip-prune: true

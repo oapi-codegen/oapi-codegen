@@ -104,10 +104,10 @@ func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, o
 		Handler: si,
 	}
 
-	router.Get(options.BaseURL+"/get-multibody", wrapper.GetGetMultibody)
 	router.Get(options.BaseURL+"/object", wrapper.GetObject)
-	router.Post(options.BaseURL+"/post-multibody", wrapper.PostPostMultibody)
+	router.Get(options.BaseURL+"/get-multibody", wrapper.GetGetMultibody)
 	router.Post(options.BaseURL+"/post-object", wrapper.PostPostObject)
+	router.Post(options.BaseURL+"/post-multibody", wrapper.PostPostMultibody)
 
 	router.Build()
 }
