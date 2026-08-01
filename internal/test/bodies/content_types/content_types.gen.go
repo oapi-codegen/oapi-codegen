@@ -610,7 +610,7 @@ func NewIssue1051Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issues/1051")
+	operationPath := "/issues/1051"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -637,7 +637,7 @@ func NewIssue127Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issues/127")
+	operationPath := "/issues/127"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -664,7 +664,7 @@ func NewCreateItemRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/items")
+	operationPath := "/items"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -702,7 +702,7 @@ func NewPostPetRequestWithBody(server string, contentType string, body io.Reader
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/pet")
+	operationPath := "/pet"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -742,7 +742,7 @@ func NewPostPet1234RequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/pet/1234")
+	operationPath := "/pet/1234"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -771,7 +771,7 @@ func NewGetV1TestRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/test")
+	operationPath := "/v1/test"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -831,7 +831,7 @@ func NewCreateWhateverRequestWithBody(server string, contentType string, body io
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/whatever")
+	operationPath := "/whatever"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

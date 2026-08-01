@@ -192,7 +192,7 @@ func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(w http.ResponseWr
 	// ------------- Path parameter "type" -------------
 	var pType string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "type", mux.Vars(r)["type"], &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "type", mux.Vars(r)["type"], &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "type", Err: err})
 		return
@@ -232,7 +232,7 @@ func (siw *ServerInterfaceWrapper) SameNameParamAndBodyProperty(w http.ResponseW
 	// ------------- Path parameter "name" -------------
 	var name string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "name", mux.Vars(r)["name"], &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "name", mux.Vars(r)["name"], &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
 		return
@@ -498,13 +498,25 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 
 	r.HandleFunc(options.BaseURL+"/json", wrapper.JSONExample).Methods(http.MethodPost)
 
+	r.HandleFunc(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample).Methods(http.MethodPost)
+
 	r.HandleFunc(options.BaseURL+"/multipart", wrapper.MultipartExample).Methods(http.MethodPost)
 
 	r.HandleFunc(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample).Methods(http.MethodPost)
 
+	r.HandleFunc(options.BaseURL+"/text", wrapper.TextExample).Methods(http.MethodPost)
+
+	r.HandleFunc(options.BaseURL+"/unknown", wrapper.UnknownExample).Methods(http.MethodPost)
+
 	r.HandleFunc(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes).Methods(http.MethodPost)
 
+	r.HandleFunc(options.BaseURL+"/with-headers", wrapper.HeadersExample).Methods(http.MethodPost)
+
 	r.HandleFunc(options.BaseURL+"/no-content-headers", wrapper.NoContentHeaders).Methods(http.MethodPost)
+
+	r.HandleFunc(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses).Methods(http.MethodPost)
+
+	r.HandleFunc(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType).Methods(http.MethodPost)
 
 	r.HandleFunc(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody).Methods(http.MethodPost)
 
@@ -512,19 +524,7 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 
 	r.HandleFunc(options.BaseURL+"/reserved-go-keyword-parameters/{type}", wrapper.ReservedGoKeywordParameters).Methods(http.MethodGet)
 
-	r.HandleFunc(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses).Methods(http.MethodPost)
-
 	r.HandleFunc(options.BaseURL+"/same-name-param-and-body-property/{name}", wrapper.SameNameParamAndBodyProperty).Methods(http.MethodPost)
-
-	r.HandleFunc(options.BaseURL+"/text", wrapper.TextExample).Methods(http.MethodPost)
-
-	r.HandleFunc(options.BaseURL+"/unknown", wrapper.UnknownExample).Methods(http.MethodPost)
-
-	r.HandleFunc(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType).Methods(http.MethodPost)
-
-	r.HandleFunc(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample).Methods(http.MethodPost)
-
-	r.HandleFunc(options.BaseURL+"/with-headers", wrapper.HeadersExample).Methods(http.MethodPost)
 
 	r.HandleFunc(options.BaseURL+"/with-union", wrapper.UnionExample).Methods(http.MethodPost)
 
@@ -733,7 +733,7 @@ func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequ
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 
@@ -824,7 +824,7 @@ func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(w 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 
@@ -859,7 +859,7 @@ func (response ReservedGoKeywordParameters200TextResponse) VisitReservedGoKeywor
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 
@@ -941,7 +941,7 @@ func (response TextExample200TextResponse) VisitTextExampleResponse(w http.Respo
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 

@@ -31,12 +31,12 @@ type OneOf2Things struct {
 	union json.RawMessage
 }
 
-// OneOf2Things0 defines model for .
+// OneOf2Things0 defines model for OneOf2Things.0.
 type OneOf2Things0 struct {
 	Id int `json:"id"`
 }
 
-// OneOf2Things1 defines model for .
+// OneOf2Things1 defines model for OneOf2Things.1.
 type OneOf2Things1 struct {
 	Id openapi_types.UUID `json:"id"`
 }
@@ -223,7 +223,7 @@ func NewGetHttpPetRequest(server string, petId string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/api/pets/%s", pathParam0)
+	operationPath := "/api/pets/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -398,7 +398,7 @@ func (siw *ServerInterfaceWrapper) GetHttpPet(w http.ResponseWriter, r *http.Req
 	// ------------- Path parameter "petId" -------------
 	var petId string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "petId", mux.Vars(r)["petId"], &petId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "petId", mux.Vars(r)["petId"], &petId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "petId", Err: err})
 		return

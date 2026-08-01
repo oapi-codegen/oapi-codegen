@@ -356,7 +356,7 @@ func NewListThingsRequest(server string, params *ListThingsParams) (*http.Reques
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/things")
+	operationPath := "/things"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -433,7 +433,7 @@ func NewCreateThingRequestWithBody(server string, contentType string, body io.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/things")
+	operationPath := "/things"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

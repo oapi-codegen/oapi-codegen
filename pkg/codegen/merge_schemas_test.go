@@ -66,3 +66,44 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		require.Error(t, err)
 	})
 }
+
+// TestMergeOpenapiSchemas_NullableUnion covers the OpenAPI 3.0 idiom of
+// decorating a $ref with `nullable: true` via allOf (issue #1898). Members
+// disagreeing on nullability must merge (union) rather than error.
+func TestMergeOpenapiSchemas_NullableUnion(t *testing.T) {
+	t.Run("nullable on s2 propagates to result", func(t *testing.T) {
+		s1 := openapi3.Schema{}
+		s2 := openapi3.Schema{Nullable: true}
+
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
+		require.NoError(t, err)
+		assert.True(t, result.Nullable)
+	})
+
+	t.Run("nullable on s1 propagates to result", func(t *testing.T) {
+		s1 := openapi3.Schema{Nullable: true}
+		s2 := openapi3.Schema{}
+
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
+		require.NoError(t, err)
+		assert.True(t, result.Nullable)
+	})
+
+	t.Run("both nullable stays nullable", func(t *testing.T) {
+		s1 := openapi3.Schema{Nullable: true}
+		s2 := openapi3.Schema{Nullable: true}
+
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
+		require.NoError(t, err)
+		assert.True(t, result.Nullable)
+	})
+
+	t.Run("neither nullable stays non-nullable", func(t *testing.T) {
+		s1 := openapi3.Schema{}
+		s2 := openapi3.Schema{}
+
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
+		require.NoError(t, err)
+		assert.False(t, result.Nullable)
+	})
+}

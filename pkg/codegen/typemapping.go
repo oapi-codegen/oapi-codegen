@@ -99,6 +99,7 @@ var DefaultTypeMapping = TypeMapping{
 			"email":     {Type: "openapi_types.Email"},
 			"date":      {Type: "openapi_types.Date"},
 			"date-time": {Type: "time.Time", Import: "time"},
+			"duration":  {Type: "openapi_types.Duration"},
 			"json":      {Type: "json.RawMessage", Import: "encoding/json"},
 			"uuid":      {Type: "openapi_types.UUID"},
 			"binary":    {Type: "openapi_types.File"},

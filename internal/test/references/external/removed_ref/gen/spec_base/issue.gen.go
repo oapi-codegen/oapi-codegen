@@ -199,10 +199,10 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/invalidExtRefTrouble", wrapper.PostInvalidExtRefTrouble)
+		r.Post(options.BaseURL+"/noTrouble", wrapper.PostNoTrouble)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/noTrouble", wrapper.PostNoTrouble)
+		r.Post(options.BaseURL+"/invalidExtRefTrouble", wrapper.PostInvalidExtRefTrouble)
 	})
 
 	return r

@@ -140,7 +140,7 @@ func (w *ServerInterfaceWrapper) ReservedGoKeywordParameters(ctx iris.Context) {
 	// ------------- Path parameter "type" -------------
 	var pType string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "type", ctx.Params().Get("type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "type", ctx.Params().Get("type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter type: %s", err)
@@ -167,7 +167,7 @@ func (w *ServerInterfaceWrapper) SameNameParamAndBodyProperty(ctx iris.Context) 
 	// ------------- Path parameter "name" -------------
 	var name string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Params().Get("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Params().Get("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter name: %s", err)
@@ -292,20 +292,20 @@ func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, o
 	}
 
 	router.Post(options.BaseURL+"/json", wrapper.JSONExample)
+	router.Post(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
 	router.Post(options.BaseURL+"/multipart", wrapper.MultipartExample)
 	router.Post(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample)
+	router.Post(options.BaseURL+"/text", wrapper.TextExample)
+	router.Post(options.BaseURL+"/unknown", wrapper.UnknownExample)
 	router.Post(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
+	router.Post(options.BaseURL+"/with-headers", wrapper.HeadersExample)
 	router.Post(options.BaseURL+"/no-content-headers", wrapper.NoContentHeaders)
+	router.Post(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
+	router.Post(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
 	router.Post(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody)
 	router.Post(options.BaseURL+"/required-text-body", wrapper.RequiredTextBody)
 	router.Get(options.BaseURL+"/reserved-go-keyword-parameters/:type", wrapper.ReservedGoKeywordParameters)
-	router.Post(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
 	router.Post(options.BaseURL+"/same-name-param-and-body-property/:name", wrapper.SameNameParamAndBodyProperty)
-	router.Post(options.BaseURL+"/text", wrapper.TextExample)
-	router.Post(options.BaseURL+"/unknown", wrapper.UnknownExample)
-	router.Post(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
-	router.Post(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
-	router.Post(options.BaseURL+"/with-headers", wrapper.HeadersExample)
 	router.Post(options.BaseURL+"/with-union", wrapper.UnionExample)
 
 	router.Build()
@@ -498,7 +498,7 @@ func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequ
 	ctx.ResponseWriter().Header().Set("Content-Type", "text/plain")
 	ctx.StatusCode(200)
 
-	_, err := ctx.WriteString(string(response))
+	_, err := ctx.WriteString(fmt.Sprint(response))
 	return err
 }
 
@@ -583,7 +583,7 @@ func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(ct
 	ctx.ResponseWriter().Header().Set("Content-Type", "text/plain")
 	ctx.StatusCode(200)
 
-	_, err := ctx.WriteString(string(response))
+	_, err := ctx.WriteString(fmt.Sprint(response))
 	return err
 }
 
@@ -617,7 +617,7 @@ func (response ReservedGoKeywordParameters200TextResponse) VisitReservedGoKeywor
 	ctx.ResponseWriter().Header().Set("Content-Type", "text/plain")
 	ctx.StatusCode(200)
 
-	_, err := ctx.WriteString(string(response))
+	_, err := ctx.WriteString(fmt.Sprint(response))
 	return err
 }
 
@@ -688,7 +688,7 @@ func (response TextExample200TextResponse) VisitTextExampleResponse(ctx iris.Con
 	ctx.ResponseWriter().Header().Set("Content-Type", "text/plain")
 	ctx.StatusCode(200)
 
-	_, err := ctx.WriteString(string(response))
+	_, err := ctx.WriteString(fmt.Sprint(response))
 	return err
 }
 

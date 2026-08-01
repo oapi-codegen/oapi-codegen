@@ -253,16 +253,16 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/get-multibody", wrapper.GetGetMultibody)
-	})
-	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/object", wrapper.GetObject)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/post-multibody", wrapper.PostPostMultibody)
+		r.Get(options.BaseURL+"/get-multibody", wrapper.GetGetMultibody)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/post-object", wrapper.PostPostObject)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/post-multibody", wrapper.PostPostMultibody)
 	})
 
 	return r

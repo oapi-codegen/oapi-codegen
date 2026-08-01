@@ -5,7 +5,6 @@ package sse
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -120,7 +119,7 @@ func NewGetStreamRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/")
+	operationPath := "/"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

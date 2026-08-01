@@ -104,7 +104,7 @@ type MyTestRequestNestedField struct {
 	Field2 string `json:"field2"`
 }
 
-// MyTestRequest defines model for .
+// MyTestRequest defines model for Test.
 type MyTestRequest struct {
 	// Field1 A array of enum values
 	Field1 *[]TestField1 `json:"field1,omitempty"`
@@ -306,7 +306,7 @@ func NewExampleGetRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/example")
+	operationPath := "/example"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -333,7 +333,7 @@ func NewExampleGet2Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/example2")
+	operationPath := "/example2"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -360,7 +360,7 @@ func NewGetRootRequest(server string, params *GetRootParams) (*http.Request, err
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/root")
+	operationPath := "/root"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -421,7 +421,7 @@ func NewTestRequestWithBody(server string, contentType string, body io.Reader) (
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/test")
+	operationPath := "/test"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -915,8 +915,8 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
 
 	router.GET(options.BaseURL+"/example", wrapper.ExampleGet, options.OperationMiddlewares["exampleGet"]...)
 	router.GET(options.BaseURL+"/example2", wrapper.ExampleGet2, options.OperationMiddlewares["exampleGet2"]...)
-	router.GET(options.BaseURL+"/root", wrapper.GetRoot, options.OperationMiddlewares["getRoot"]...)
 	router.GET(options.BaseURL+"/test", wrapper.Test, options.OperationMiddlewares["test"]...)
+	router.GET(options.BaseURL+"/root", wrapper.GetRoot, options.OperationMiddlewares["getRoot"]...)
 
 }
 

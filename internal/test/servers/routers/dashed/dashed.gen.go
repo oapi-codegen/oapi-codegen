@@ -37,7 +37,7 @@ func (siw *ServerInterfaceWrapper) GetResource(w http.ResponseWriter, r *http.Re
 	// ------------- Path parameter "addressing-identifier" -------------
 	var addressingIdentifier string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "addressing-identifier", r.PathValue("addressing_identifier"), &addressingIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "addressing-identifier", r.PathValue("addressing_identifier"), &addressingIdentifier, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "addressing-identifier", Err: err})
 		return

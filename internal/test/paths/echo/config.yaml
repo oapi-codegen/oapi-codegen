@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: colonpathsecho
+generate:
+  echo-server: true
+  models: true
+output: echo/colon.gen.go

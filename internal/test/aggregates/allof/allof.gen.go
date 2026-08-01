@@ -6,6 +6,8 @@ package aggregatesallof
 import (
 	"encoding/json"
 	"fmt"
+
+	"github.com/oapi-codegen/runtime"
 )
 
 // DefaultAdditional1 defines model for DefaultAdditional1.
@@ -145,6 +147,22 @@ type MergeWithoutWithout struct {
 	Field2 *string `json:"field2,omitempty"`
 	FieldA *int    `json:"fieldA,omitempty"`
 	FieldB *string `json:"fieldB,omitempty"`
+}
+
+// NestedOneOfInAllOf defines model for NestedOneOfInAllOf.
+type NestedOneOfInAllOf struct {
+	AFoo  *string `json:"a_foo,omitempty"`
+	union json.RawMessage
+}
+
+// NestedOneOfInAllOf0 defines model for NestedOneOfInAllOf.0.
+type NestedOneOfInAllOf0 struct {
+	AFooOneOf0 *string `json:"a_foo_one_of_0,omitempty"`
+}
+
+// NestedOneOfInAllOf1 defines model for NestedOneOfInAllOf.1.
+type NestedOneOfInAllOf1 struct {
+	AFooOneOf1 *string `json:"a_foo_one_of_1,omitempty"`
 }
 
 // PersonAllOfAdditional defines model for PersonAllOfAdditional.
@@ -1412,4 +1430,100 @@ func (a WithStringAdditional2) MarshalJSON() ([]byte, error) {
 		}
 	}
 	return json.Marshal(object)
+}
+
+// AsNestedOneOfInAllOf0 returns the union data inside the NestedOneOfInAllOf as a NestedOneOfInAllOf0
+func (t NestedOneOfInAllOf) AsNestedOneOfInAllOf0() (NestedOneOfInAllOf0, error) {
+	var body NestedOneOfInAllOf0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNestedOneOfInAllOf0 overwrites any union data inside the NestedOneOfInAllOf as the provided NestedOneOfInAllOf0
+func (t *NestedOneOfInAllOf) FromNestedOneOfInAllOf0(v NestedOneOfInAllOf0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNestedOneOfInAllOf0 performs a merge with any union data inside the NestedOneOfInAllOf, using the provided NestedOneOfInAllOf0
+func (t *NestedOneOfInAllOf) MergeNestedOneOfInAllOf0(v NestedOneOfInAllOf0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsNestedOneOfInAllOf1 returns the union data inside the NestedOneOfInAllOf as a NestedOneOfInAllOf1
+func (t NestedOneOfInAllOf) AsNestedOneOfInAllOf1() (NestedOneOfInAllOf1, error) {
+	var body NestedOneOfInAllOf1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNestedOneOfInAllOf1 overwrites any union data inside the NestedOneOfInAllOf as the provided NestedOneOfInAllOf1
+func (t *NestedOneOfInAllOf) FromNestedOneOfInAllOf1(v NestedOneOfInAllOf1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNestedOneOfInAllOf1 performs a merge with any union data inside the NestedOneOfInAllOf, using the provided NestedOneOfInAllOf1
+func (t *NestedOneOfInAllOf) MergeNestedOneOfInAllOf1(v NestedOneOfInAllOf1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t NestedOneOfInAllOf) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if t.AFoo != nil {
+		object["a_foo"], err = json.Marshal(t.AFoo)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'a_foo': %w", err)
+		}
+	}
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *NestedOneOfInAllOf) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["a_foo"]; found {
+		err = json.Unmarshal(raw, &t.AFoo)
+		if err != nil {
+			return fmt.Errorf("error reading 'a_foo': %w", err)
+		}
+	}
+
+	return err
 }

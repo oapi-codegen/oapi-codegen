@@ -1,0 +1,35 @@
+# ==========================================================================
+# Category: servers/routers/trailing_slash
+# Tests:    OpenAPI paths with trailing slashes register as exact-match
+#           ServeMux patterns ({$}-anchored) instead of subtree patterns.
+#
+# Folds in (provenance):
+#   - issues/issue-2065 (subtree pattern conflict panic at registration)
+# ==========================================================================
+openapi: "3.0.3"
+info:
+  title: servers/routers/trailing_slash
+  version: 1.0.0
+paths:
+  # This pair of paths is the issue-2065 repro: as ServeMux subtree
+  # patterns they overlap ambiguously ("/api/test/test3/test2/" matches
+  # both) and registration panics; as {$}-anchored exact patterns they
+  # coexist.
+  /api/test/{id}/test2/:
+    get:
+      operationId: test1
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ok
+  /api/test/test3/:
+    get:
+      operationId: test2
+      responses:
+        '200':
+          description: ok

@@ -32,6 +32,7 @@ func (s *Server) GetMatrixNoExplodeArray(ctx echo.Context, id []int32) error    
 func (s *Server) GetMatrixNoExplodeObject(ctx echo.Context, id gen.Object) error                { return ctx.JSON(http.StatusOK, id) }
 func (s *Server) GetMatrixPrimitive(ctx echo.Context, id int32) error                           { return ctx.JSON(http.StatusOK, id) }
 func (s *Server) GetPassThrough(ctx echo.Context, param string) error                           { return ctx.JSON(http.StatusOK, param) }
+func (s *Server) GetSimpleString(ctx echo.Context, param string) error                           { return ctx.JSON(http.StatusOK, param) }
 func (s *Server) GetDeepObject(ctx echo.Context, params gen.GetDeepObjectParams) error          { return ctx.JSON(http.StatusOK, params) }
 func (s *Server) GetQueryDelimited(ctx echo.Context, params gen.GetQueryDelimitedParams) error  { return ctx.JSON(http.StatusOK, params) }
 func (s *Server) GetQueryForm(ctx echo.Context, params gen.GetQueryFormParams) error            { return ctx.JSON(http.StatusOK, params) }

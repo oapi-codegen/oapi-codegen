@@ -100,6 +100,9 @@ type ServerInterface interface {
 	// (GET /simplePrimitive/{param})
 	GetSimplePrimitive(c *fiber.Ctx, param int32) error
 
+	// (GET /simpleString/{param})
+	GetSimpleString(c *fiber.Ctx, param string) error
+
 	// (GET /startingWithNumber/{1param})
 	GetStartingWithNumber(c *fiber.Ctx, n1param string) error
 }
@@ -1236,6 +1239,35 @@ func (siw *ServerInterfaceWrapper) GetSimplePrimitive(c *fiber.Ctx) error {
 	return handler(c)
 }
 
+// GetSimpleString operation middleware
+func (siw *ServerInterfaceWrapper) GetSimpleString(c *fiber.Ctx) error {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "param" -------------
+	var param string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "param", c.Params("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	if err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
+	}
+
+	handler := func(c *fiber.Ctx) error {
+		return siw.Handler.GetSimpleString(c, param)
+	}
+
+	for i := len(siw.HandlerMiddlewares) - 1; i >= 0; i-- {
+		m := siw.HandlerMiddlewares[i]
+		next := handler
+		handler = func(c *fiber.Ctx) error {
+			return m(c, next)
+		}
+	}
+
+	return handler(c)
+}
+
 // GetStartingWithNumber operation middleware
 func (siw *ServerInterfaceWrapper) GetStartingWithNumber(c *fiber.Ctx) error {
 
@@ -1288,59 +1320,61 @@ func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, option
 		router.Use(fiber.Handler(m))
 	}
 
+	router.Get(options.BaseURL+"/simplePrimitive/:param", wrapper.GetSimplePrimitive)
+
+	router.Get(options.BaseURL+"/simpleString/:param", wrapper.GetSimpleString)
+
+	router.Get(options.BaseURL+"/simpleNoExplodeArray/:param", wrapper.GetSimpleNoExplodeArray)
+
+	router.Get(options.BaseURL+"/simpleExplodeArray/:param", wrapper.GetSimpleExplodeArray)
+
+	router.Get(options.BaseURL+"/simpleNoExplodeObject/:param", wrapper.GetSimpleNoExplodeObject)
+
+	router.Get(options.BaseURL+"/simpleExplodeObject/:param", wrapper.GetSimpleExplodeObject)
+
+	router.Get(options.BaseURL+"/labelNoExplodeArray/:param", wrapper.GetLabelNoExplodeArray)
+
+	router.Get(options.BaseURL+"/labelExplodeArray/:param", wrapper.GetLabelExplodeArray)
+
+	router.Get(options.BaseURL+"/labelNoExplodeObject/:param", wrapper.GetLabelNoExplodeObject)
+
+	router.Get(options.BaseURL+"/labelExplodeObject/:param", wrapper.GetLabelExplodeObject)
+
+	router.Get(options.BaseURL+"/matrixNoExplodeArray/:id", wrapper.GetMatrixNoExplodeArray)
+
+	router.Get(options.BaseURL+"/matrixExplodeArray/:id", wrapper.GetMatrixExplodeArray)
+
+	router.Get(options.BaseURL+"/matrixNoExplodeObject/:id", wrapper.GetMatrixNoExplodeObject)
+
+	router.Get(options.BaseURL+"/matrixExplodeObject/:id", wrapper.GetMatrixExplodeObject)
+
+	router.Get(options.BaseURL+"/simpleExplodePrimitive/:param", wrapper.GetSimpleExplodePrimitive)
+
+	router.Get(options.BaseURL+"/labelPrimitive/:param", wrapper.GetLabelPrimitive)
+
+	router.Get(options.BaseURL+"/labelExplodePrimitive/:param", wrapper.GetLabelExplodePrimitive)
+
+	router.Get(options.BaseURL+"/matrixPrimitive/:id", wrapper.GetMatrixPrimitive)
+
+	router.Get(options.BaseURL+"/matrixExplodePrimitive/:id", wrapper.GetMatrixExplodePrimitive)
+
 	router.Get(options.BaseURL+"/contentObject/:param", wrapper.GetContentObject)
+
+	router.Get(options.BaseURL+"/passThrough/:param", wrapper.GetPassThrough)
+
+	router.Get(options.BaseURL+"/startingWithNumber/:1param", wrapper.GetStartingWithNumber)
+
+	router.Get(options.BaseURL+"/queryForm", wrapper.GetQueryForm)
+
+	router.Get(options.BaseURL+"/queryDelimited", wrapper.GetQueryDelimited)
+
+	router.Get(options.BaseURL+"/queryDeepObject", wrapper.GetDeepObject)
+
+	router.Get(options.BaseURL+"/header", wrapper.GetHeader)
 
 	router.Get(options.BaseURL+"/cookie", wrapper.GetCookie)
 
 	router.Get(options.BaseURL+"/enums", wrapper.EnumParams)
-
-	router.Get(options.BaseURL+"/header", wrapper.GetHeader)
-
-	router.Get(options.BaseURL+"/labelExplodeArray/:param", wrapper.GetLabelExplodeArray)
-
-	router.Get(options.BaseURL+"/labelExplodeObject/:param", wrapper.GetLabelExplodeObject)
-
-	router.Get(options.BaseURL+"/labelExplodePrimitive/:param", wrapper.GetLabelExplodePrimitive)
-
-	router.Get(options.BaseURL+"/labelNoExplodeArray/:param", wrapper.GetLabelNoExplodeArray)
-
-	router.Get(options.BaseURL+"/labelNoExplodeObject/:param", wrapper.GetLabelNoExplodeObject)
-
-	router.Get(options.BaseURL+"/labelPrimitive/:param", wrapper.GetLabelPrimitive)
-
-	router.Get(options.BaseURL+"/matrixExplodeArray/:id", wrapper.GetMatrixExplodeArray)
-
-	router.Get(options.BaseURL+"/matrixExplodeObject/:id", wrapper.GetMatrixExplodeObject)
-
-	router.Get(options.BaseURL+"/matrixExplodePrimitive/:id", wrapper.GetMatrixExplodePrimitive)
-
-	router.Get(options.BaseURL+"/matrixNoExplodeArray/:id", wrapper.GetMatrixNoExplodeArray)
-
-	router.Get(options.BaseURL+"/matrixNoExplodeObject/:id", wrapper.GetMatrixNoExplodeObject)
-
-	router.Get(options.BaseURL+"/matrixPrimitive/:id", wrapper.GetMatrixPrimitive)
-
-	router.Get(options.BaseURL+"/passThrough/:param", wrapper.GetPassThrough)
-
-	router.Get(options.BaseURL+"/queryDeepObject", wrapper.GetDeepObject)
-
-	router.Get(options.BaseURL+"/queryDelimited", wrapper.GetQueryDelimited)
-
-	router.Get(options.BaseURL+"/queryForm", wrapper.GetQueryForm)
-
-	router.Get(options.BaseURL+"/simpleExplodeArray/:param", wrapper.GetSimpleExplodeArray)
-
-	router.Get(options.BaseURL+"/simpleExplodeObject/:param", wrapper.GetSimpleExplodeObject)
-
-	router.Get(options.BaseURL+"/simpleExplodePrimitive/:param", wrapper.GetSimpleExplodePrimitive)
-
-	router.Get(options.BaseURL+"/simpleNoExplodeArray/:param", wrapper.GetSimpleNoExplodeArray)
-
-	router.Get(options.BaseURL+"/simpleNoExplodeObject/:param", wrapper.GetSimpleNoExplodeObject)
-
-	router.Get(options.BaseURL+"/simplePrimitive/:param", wrapper.GetSimplePrimitive)
-
-	router.Get(options.BaseURL+"/startingWithNumber/:1param", wrapper.GetStartingWithNumber)
 
 }
 
@@ -1369,8 +1403,9 @@ var swaggerSpec = []string{
 	"qqNVGAKw9t6P1ScNjeujNWO1TYqFEhaYxz7uZ8zFShEQthH3Z9WygzzBcABOmJs7rZ09i0cx1hVLwaCG",
 	"U4Bv6M0SdixcNj5chaaEdmyl/EJ50jnV2qhjlnt1k+3bhPHpUkPRwG6yherFQPXrKtucTX/HZ0UcI+A+",
 	"1a6LDzvbaa602yQ8WkCrY2zHab8wfOX+uwX2uDtSy8nAK9ITKpv5jqh6wOjRYFzVhr3dzrVJEU3GWuXL",
-	"ngG0vZ3e9dQMlc4a3W/Xq8aRr968nowj+3jfl6F3076enrn+39atmga+iQb2ZCwdIb4W1b1HmWX77hci",
-	"I3Mz7G2XPaioDZvwsL+c+LSvGNbfrxrcGx4jH0VSMt/zso9XJQg5V2fmBLM5Jmh3t/s3AAD//w==",
+	"ngG0vZ3e9dQMlc4a3W/Xq8aRr968nowj+3jfl6F3076enrn+39atmga+iQb2ZCwdIb4W1b1bma305tmf",
+	"g1X+RjIGAbXvVqdMN3vN+EJkZC7Cve2yR9a1YRP2NpYTNzcUw/pzXYN7w2Pko0hK5nte9q2uBCHnIQBL",
+	"MJtjgnZ3u38DAAD//w==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

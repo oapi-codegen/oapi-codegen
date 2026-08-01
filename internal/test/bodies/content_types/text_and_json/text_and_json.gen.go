@@ -119,7 +119,7 @@ func NewGetTestRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/test")
+	operationPath := "/v1/test"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -452,7 +452,7 @@ func (response GetTest401TextResponse) VisitGetTestResponse(w http.ResponseWrite
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(401)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 

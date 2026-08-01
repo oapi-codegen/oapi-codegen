@@ -276,7 +276,7 @@ func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(w http.ResponseWr
 	// ------------- Path parameter "type" -------------
 	var pType string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "type", chi.URLParam(r, "type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "type", chi.URLParam(r, "type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "type", Err: err})
 		return
@@ -316,7 +316,7 @@ func (siw *ServerInterfaceWrapper) SameNameParamAndBodyProperty(w http.ResponseW
 	// ------------- Path parameter "name" -------------
 	var name string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "name", chi.URLParam(r, "name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: r.URL.RawPath == ""})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
 		return
@@ -584,16 +584,34 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Post(options.BaseURL+"/json", wrapper.JSONExample)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/multipart", wrapper.MultipartExample)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/text", wrapper.TextExample)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/unknown", wrapper.UnknownExample)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes)
 	})
 	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/with-headers", wrapper.HeadersExample)
+	})
+	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/no-content-headers", wrapper.NoContentHeaders)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody)
@@ -605,25 +623,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 		r.Get(options.BaseURL+"/reserved-go-keyword-parameters/{type}", wrapper.ReservedGoKeywordParameters)
 	})
 	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses)
-	})
-	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/same-name-param-and-body-property/{name}", wrapper.SameNameParamAndBodyProperty)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/text", wrapper.TextExample)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/unknown", wrapper.UnknownExample)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample)
-	})
-	r.Group(func(r chi.Router) {
-		r.Post(options.BaseURL+"/with-headers", wrapper.HeadersExample)
 	})
 	r.Group(func(r chi.Router) {
 		r.Post(options.BaseURL+"/with-union", wrapper.UnionExample)
@@ -834,7 +834,7 @@ func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequ
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 
@@ -925,7 +925,7 @@ func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(w 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 
@@ -960,7 +960,7 @@ func (response ReservedGoKeywordParameters200TextResponse) VisitReservedGoKeywor
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 
@@ -1042,7 +1042,7 @@ func (response TextExample200TextResponse) VisitTextExampleResponse(w http.Respo
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 

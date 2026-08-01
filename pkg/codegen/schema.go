@@ -92,6 +92,14 @@ func (s Schema) HasCustomMarshalJSON() bool {
 	return len(s.OAPISchema.OneOf) > 0 || len(s.OAPISchema.AnyOf) > 0
 }
 
+// HasCustomMarshalJSONForRequestBody reports whether a named request body
+// wrapper needs to delegate JSON marshaling to its underlying union type.
+// Unlike strict response types, request body wrappers have no direct union
+// encoding path, so local inline unions need delegation as well.
+func (s Schema) HasCustomMarshalJSONForRequestBody() bool {
+	return len(s.UnionElements) > 0 || s.HasCustomMarshalJSON()
+}
+
 func (s Schema) TypeDecl() string {
 	if s.IsRef() {
 		return s.RefType
@@ -180,6 +188,13 @@ func (p Property) HasOptionalPointer() bool {
 	return !p.Required && !p.Schema.SkipOptionalPointer
 }
 
+// IsPointer reports whether the generated Go field for this property is
+// pointer-typed, i.e. GoTypeDef renders with a leading `*`. Templates use it
+// when assigning a value to the field requires taking an address first.
+func (p Property) IsPointer() bool {
+	return strings.HasPrefix(p.GoTypeDef(), "*")
+}
+
 // ZeroValueIsNil is a helper function to determine if the given Go type used
 // for this property has `nil` as its Go zero value. Slices (OpenAPI `array`)
 // and maps (OpenAPI `object` with only `additionalProperties`, rendered as
@@ -229,9 +244,28 @@ func (e *EnumDefinition) GetValues() map[string]string {
 	return newValues
 }
 
+// SecuritySchemeProvider describes one security scheme from
+// components/securitySchemes for which a scopes context-key constant is
+// generated.
+type SecuritySchemeProvider struct {
+	// Name is the sanitized scheme name; templates derive the constant name
+	// (<Name>Scopes), the context key type name and the key's string value
+	// from it.
+	Name string
+	// ImportedScopes, when non-empty, is the scopes constant declared by the
+	// package that import-mapping assigns this scheme's $ref to (e.g.
+	// "externalRef0.BearerAuthScopes", or unqualified for the current
+	// package). The local constant is declared as an alias of it, so the
+	// context key — which context.Value compares by type and value — is
+	// shared across the generated packages. Empty means the scheme is
+	// declared locally with its own context key type.
+	ImportedScopes string
+}
+
 type Constants struct {
-	// SecuritySchemeProviderNames holds all provider names for security schemes.
-	SecuritySchemeProviderNames []string
+	// SecuritySchemeProviders holds all security schemes for which scopes
+	// context-key constants are generated.
+	SecuritySchemeProviders []SecuritySchemeProvider
 	// EnumDefinitions holds type and value information for all enums
 	EnumDefinitions []EnumDefinition
 	// SkipEnumValidate suppresses generation of the `Valid()` method on
@@ -277,6 +311,13 @@ type TypeDefinition struct {
 	// DeprecationReason is the human-readable reason for deprecation, used
 	// when Deprecated is true. If empty, a generic message is emitted.
 	DeprecationReason string
+
+	// Comment, when set, is the full doc comment (including the leading "//")
+	// emitted above the type in the operation parameter template, replacing the
+	// default "<name> defines parameters for <op>." line. Used to explain
+	// non-obvious generated names, e.g. the per-path hash prefix on a shared
+	// parameter disambiguated across paths (issue #2090).
+	Comment string
 }
 
 // DeprecationComment returns a Go-style deprecation comment if the type is
@@ -349,6 +390,97 @@ func (d *Discriminator) PropertyName() string {
 	return SchemaNameToTypeName(d.Property)
 }
 
+// DiscriminatorStamp describes how the generated From*/Merge* union helpers
+// record the discriminator value for one union element.
+//
+// The value is always merged into the marshaled JSON via JSONPatch, so
+// Discriminator() and ValueByDiscriminator() — which read the union data —
+// see it immediately after From*/Merge*. Stamping at the JSON level stays
+// correct regardless of how the variant declares the property — pointer,
+// named enum type, renamed or absent field, or a type in an imported
+// package — none of which is knowable from the union's side (see issue
+// #2297). When the union struct itself declares the discriminator property,
+// the helpers additionally assign Value to that field: its JSON rendering
+// overwrites the union data in MarshalJSON, so the field is load-bearing.
+type DiscriminatorStamp struct {
+	// Value is the discriminator value mapped to this union element.
+	Value string
+	// Property is the union struct's own discriminator field, matched by
+	// JSON property name, when it declares one; nil when it doesn't.
+	Property *Property
+	// JSONPatch is the JSON object literal merged into the union data,
+	// e.g. {"code":"resource_exists"}. Safe to embed in a backtick string
+	// literal: spec validation rejects discriminator property names and
+	// mapping keys containing quotes, backticks or control characters.
+	JSONPatch string
+}
+
+// DiscriminatorStampFor resolves the discriminator stamp for the given union
+// element, or nil when nothing should be stamped: there is no discriminator,
+// the mapping doesn't cover every element, or several mapping values share
+// one element type, making the value ambiguous (the 1:1 gate keeps parity
+// with issue #2071).
+func (s Schema) DiscriminatorStampFor(element UnionElement) *DiscriminatorStamp {
+	d := s.Discriminator
+	if d == nil || len(d.Mapping) != len(s.UnionElements) {
+		return nil
+	}
+	stamp := DiscriminatorStamp{}
+	found := false
+	for _, value := range SortedMapKeys(d.Mapping) {
+		if d.Mapping[value] == element.String() {
+			stamp.Value = value
+			found = true
+		}
+	}
+	if !found {
+		return nil
+	}
+	stamp.JSONPatch = fmt.Sprintf(`{"%s":"%s"}`, d.Property, stamp.Value)
+	// Match by JSON property name: the discriminator is a JSON-level
+	// concept, and the Go field may be renamed via x-go-name.
+	for i := range s.Properties {
+		if s.Properties[i].JsonFieldName == d.Property {
+			stamp.Property = &s.Properties[i]
+		}
+	}
+	return &stamp
+}
+
+// DiscriminatorCase is one arm of a union's ValueByDiscriminator() switch: a
+// discriminator value and the As* helper it dispatches to.
+type DiscriminatorCase struct {
+	// Value is the discriminator value that selects this element, e.g. "GitDiffFile".
+	Value string
+	// Method is the union element method suffix, e.g. "ExternalRef0GitDiffFile",
+	// so the generated call is t.As<Method>().
+	Method string
+}
+
+// DiscriminatorCases returns the ValueByDiscriminator() switch arms for the
+// union, sorted by discriminator value for deterministic output. Each mapping
+// value is the Go type of a union element (generateUnion writes both from the
+// same elementSchema.GoType), so it resolves to that element's Method(). A
+// mapping value not found among the union elements is skipped: it has no As*
+// helper to dispatch to, so no case is emitted and it falls through to the
+// switch default.
+func (s Schema) DiscriminatorCases() []DiscriminatorCase {
+	if s.Discriminator == nil {
+		return nil
+	}
+	known := make(map[string]UnionElement, len(s.UnionElements))
+	for _, el := range s.UnionElements {
+		known[el.String()] = el
+	}
+	cases := make([]DiscriminatorCase, 0, len(s.Discriminator.Mapping))
+	for _, value := range SortedMapKeys(s.Discriminator.Mapping) {
+		if el, ok := known[s.Discriminator.Mapping[value]]; ok {
+			cases = append(cases, DiscriminatorCase{Value: value, Method: el.Method()})
+		}
+	}
+	return cases
+}
+
 // UnionElement describe union element, based on prefix externalRef\d+ and real ref name from external schema.
 type UnionElement string
 
@@ -385,8 +517,40 @@ func PropertiesEqual(a, b Property) bool {
 // using `type: [..., "null"]`) is documented as invalid input -- this
 // helper trusts its input to use the version-appropriate idiom.
 func schemaIsNullable(s *openapi3.Schema) bool {
+	return schemaIsNullableRec(s, nil)
+}
+
+// schemaIsNullableRec is schemaIsNullable's implementation, carrying a
+// `seen` set of already-visited schema values so that a cyclic allOf (a
+// $ref member resolving back to an ancestor — the same cycles
+// mergeOpenapiSchemas guards against) cannot cause unbounded recursion.
+// The set is allocated lazily: the common case (no allOf) never touches it.
+func schemaIsNullableRec(s *openapi3.Schema, seen map[*openapi3.Schema]bool) bool {
 	if s == nil {
 		return false
+	}
+	// A nullable member inside an allOf makes the whole schema nullable.
+	// In OpenAPI 3.0, allOf is the only place a sibling (`nullable: true`)
+	// may sit next to a $ref, so wrapping a $ref in allOf is the idiomatic
+	// way to decorate a referenced schema as nullable (issue #1898). This
+	// is where the flag lives — the outer schema's own Nullable is unset —
+	// so descend into the members. Descent is transitive to match the
+	// transitive allOf flattening in mergeOpenapiSchemas, and equally valid
+	// under 3.1's type-array idiom, hence checked before the version
+	// branch. mergeOpenapiSchemas unions nullability into the merged type;
+	// this surfaces it at the use site so the field is wrapped in a pointer
+	// / nullable.Nullable[T].
+	for _, member := range s.AllOf {
+		if member == nil || member.Value == nil || seen[member.Value] {
+			continue
+		}
+		if seen == nil {
+			seen = make(map[*openapi3.Schema]bool)
+		}
+		seen[member.Value] = true
+		if schemaIsNullableRec(member.Value, seen) {
+			return true
+		}
 	}
 	if globalState.is31 {
 		if s.Type != nil && s.Type.Includes("null") {
@@ -924,6 +1088,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 			newTypeDef := TypeDefinition{
 				TypeName: typeName,
+				JsonName: strings.Join(path, "."),
 				Schema:   outSchema,
 			}
 			outSchema = Schema{
@@ -1219,13 +1384,6 @@ type FieldDescriptor struct {
 	IsRef    bool   // Is this schema a reference to predefined object?
 }
 
-func stringOrEmpty(b bool, s string) string {
-	if b {
-		return s
-	}
-	return ""
-}
-
 // GenFieldsFromProperties produce corresponding field names with JSON annotations,
 // given a list of schema descriptors
 func GenFieldsFromProperties(props []Property) []string {
@@ -1270,7 +1428,18 @@ func GenFieldsFromProperties(props []Property) []string {
 		shouldOmitEmpty := (!p.Required || p.ReadOnly || p.WriteOnly) &&
 			(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
 
-		omitEmpty := shouldOmitEmpty
+		// Nullable fields don't get omitempty: `null` is a meaningful wire
+		// value distinct from key absence, and a nil pointer under omitempty
+		// could never produce it. Required+nullable fields must always
+		// serialize their key per JSON Schema `required` semantics. The
+		// nullable-type option is the exception — nullable.Nullable[T]
+		// distinguishes absent from null itself and relies on omitempty for
+		// the absent case. Issue #2503.
+		omitEmpty := !p.Nullable && shouldOmitEmpty
+
+		if p.Nullable && globalState.options.OutputOptions.NullableType {
+			omitEmpty = shouldOmitEmpty
+		}
 
 		omitZero := false
 
@@ -1292,18 +1461,13 @@ func GenFieldsFromProperties(props []Property) []string {
 			}
 		}
 
-		fieldTags := make(map[string]string)
-
-		fieldTags["json"] = p.JsonFieldName +
-			stringOrEmpty(omitEmpty, ",omitempty") +
-			stringOrEmpty(omitZero, ",omitzero")
-
-		if globalState.options.OutputOptions.EnableYamlTags {
-			fieldTags["yaml"] = p.JsonFieldName + stringOrEmpty(omitEmpty, ",omitempty")
-		}
-		if p.NeedsFormTag {
-			fieldTags["form"] = p.JsonFieldName + stringOrEmpty(omitEmpty, ",omitempty")
-		}
+		fieldTags := schemaFieldTagGenerator().generateTagsMap(StructTagInfo{
+			FieldName:    p.JsonFieldName,
+			IsOptional:   !p.Required,
+			OmitEmpty:    omitEmpty,
+			OmitZero:     omitZero,
+			NeedsFormTag: p.NeedsFormTag,
+		})
 
 		// Support x-go-json-ignore
 		if extension, ok := p.Extensions[extPropGoJsonIgnore]; ok {
@@ -1479,7 +1643,7 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 			if elementSchema.TypeDecl() == elementName {
 				elementSchema.GoType = elementName
 			} else {
-				td := TypeDefinition{Schema: elementSchema, TypeName: elementName}
+				td := TypeDefinition{Schema: elementSchema, TypeName: elementName, JsonName: strings.Join(elementPath, ".")}
 				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
 				elementSchema.GoType = td.TypeName
 			}

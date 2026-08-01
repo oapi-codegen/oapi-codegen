@@ -113,7 +113,7 @@ type Issue1189Test struct {
 	FieldC *Issue1189Test_FieldC `json:"fieldC,omitempty"`
 }
 
-// Issue1189TestFieldA0 defines model for .
+// Issue1189TestFieldA0 defines model for Issue1189Test.FieldA.0.
 type Issue1189TestFieldA0 = string
 
 // Issue1189TestFieldA1 defines model for Issue1189Test.FieldA.1.
@@ -127,7 +127,7 @@ type Issue1189Test_FieldA struct {
 // Issue1189TestFieldB defines model for Issue1189Test.FieldB.
 type Issue1189TestFieldB string
 
-// Issue1189TestFieldC0 defines model for .
+// Issue1189TestFieldC0 defines model for Issue1189Test.FieldC.0.
 type Issue1189TestFieldC0 = string
 
 // Issue1189TestFieldC1 defines model for Issue1189Test.FieldC.1.
@@ -143,13 +143,13 @@ type ParamAnyOf struct {
 	union json.RawMessage
 }
 
-// ParamAnyOf0 defines model for .
+// ParamAnyOf0 defines model for ParamAnyOf.0.
 type ParamAnyOf0 struct {
 	Item1 string `json:"item1"`
 	Item2 string `json:"item2"`
 }
 
-// ParamAnyOf1 defines model for .
+// ParamAnyOf1 defines model for ParamAnyOf.1.
 type ParamAnyOf1 struct {
 	Item2 *string `json:"item2,omitempty"`
 	Item3 *string `json:"item3,omitempty"`
@@ -160,10 +160,10 @@ type ParamOneOf struct {
 	union json.RawMessage
 }
 
-// ParamOneOf0 defines model for .
+// ParamOneOf0 defines model for ParamOneOf.0.
 type ParamOneOf0 = int
 
-// ParamOneOf1 defines model for .
+// ParamOneOf1 defines model for ParamOneOf.1.
 type ParamOneOf1 = string
 
 // RefCat This is a cat ($ref anyOf case)
@@ -791,7 +791,7 @@ func NewGetInlinePetsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/inline/pets")
+	operationPath := "/inline/pets"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -818,7 +818,7 @@ func NewGetIssue1189TestRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/issue1189/test")
+	operationPath := "/issue1189/test"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -845,7 +845,7 @@ func NewGetParamTestRequest(server string, params *GetParamTestParams) (*http.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/param/test")
+	operationPath := "/param/test"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -911,7 +911,7 @@ func NewGetRefPetsRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/ref/pets")
+	operationPath := "/ref/pets"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1444,8 +1444,8 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
 	}
 
 	router.GET(options.BaseURL+"/inline/pets", wrapper.GetInlinePets, options.OperationMiddlewares["getInlinePets"]...)
+	router.GET(options.BaseURL+"/ref/pets", wrapper.GetRefPets, options.OperationMiddlewares["getRefPets"]...)
 	router.GET(options.BaseURL+"/issue1189/test", wrapper.GetIssue1189Test, options.OperationMiddlewares["getIssue1189Test"]...)
 	router.GET(options.BaseURL+"/param/test", wrapper.GetParamTest, options.OperationMiddlewares["getParamTest"]...)
-	router.GET(options.BaseURL+"/ref/pets", wrapper.GetRefPets, options.OperationMiddlewares["getRefPets"]...)
 
 }

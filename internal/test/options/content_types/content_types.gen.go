@@ -179,7 +179,7 @@ func NewAddPetRequestWithBody(server string, contentType string, body io.Reader)
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/pets")
+	operationPath := "/pets"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -208,7 +208,7 @@ func NewUploadReportRequestWithBody(server string, contentType string, body io.R
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/report")
+	operationPath := "/report"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

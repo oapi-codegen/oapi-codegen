@@ -7,6 +7,24 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// issue #1905: a oneOf nested inside allOf-of-allOf must survive the merge.
+// The generated struct must have a union field, and the two variant types must exist.
+func TestIssue1905(t *testing.T) {
+	typ := reflect.TypeOf(NestedOneOfInAllOf{})
+
+	// The merged struct must carry the flat property from the outer allOf member.
+	_, hasAFoo := typ.FieldByName("AFoo")
+	assert.True(t, hasAFoo, "NestedOneOfInAllOf should have AFoo field")
+
+	// The union field signals that the oneOf was preserved.
+	_, hasUnion := typ.FieldByName("union")
+	assert.True(t, hasUnion, "NestedOneOfInAllOf should have a union field (oneOf was dropped)")
+
+	// The two oneOf variant types must be generated.
+	_ = NestedOneOfInAllOf0{}
+	_ = NestedOneOfInAllOf1{}
+}
+
 // issue #1219: test additionalProperties merge-precedence rules in allOf.
 // In oapi-codegen, an unspecified additionalProperties is treated as false
 // (unlike the OpenAPI specification default of true), so "default" and

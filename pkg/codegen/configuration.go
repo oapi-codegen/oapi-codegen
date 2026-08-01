@@ -100,6 +100,16 @@ func (o Configuration) Validate() error {
 		}
 	}
 
+	// import-mapping keys are the paths of $ref'd documents (a relative
+	// file path or URL). A JSON pointer key can never match anything —
+	// references within the same document always resolve to the package
+	// being generated — so it is a configuration mistake, not a mapping.
+	for _, specPath := range SortedMapKeys(o.ImportMapping) {
+		if strings.HasPrefix(specPath, "#") {
+			errs = append(errs, fmt.Errorf("`import-mapping` key %q is a JSON pointer, but keys must be the path or URL of a $ref'd document; references within the same document cannot be remapped to another package — see https://github.com/oapi-codegen/oapi-codegen/tree/main/examples/import-mapping", specPath))
+		}
+	}
+
 	err := errors.Join(errs...)
 	if err != nil {
 		return fmt.Errorf("failed to validate configuration: %w", err)
@@ -360,7 +370,16 @@ type CompatibilityOptions struct {
 	// types (e.g. `bearerAuthContextKey`), the scope constants (e.g.
 	// `BearerAuthScopes`), and the per-operation calls that store the
 	// operation's scopes into the request context.
-	// This mechanism is deprecated and off by default: it flattens the
+	//
+	// A security scheme that is a $ref into a spec covered by import-mapping
+	// does not declare its own context key type; its scopes constant is an
+	// alias of the one in the mapped package, so `context.Value` lookups use
+	// the same key across the generated packages. This requires the mapped
+	// spec's config to also set this flag, so that the referenced constant
+	// exists. Please see
+	// https://github.com/oapi-codegen/oapi-codegen/issues/2383
+	//
+	// Deprecated: this mechanism is off by default because it flattens the
 	// OpenAPI `security` requirements into a per-scheme list of scopes, and
 	// cannot represent alternative schemes (OR), combined schemes (AND), or
 	// anonymous (`{}`) alternatives. Authentication and authorization should
@@ -368,6 +387,16 @@ type CompatibilityOptions struct {
 	// middleware, which evaluates the spec's security requirements directly.
 	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/1524
 	EnableAuthScopesOnContext bool `yaml:"enable-auth-scopes-on-context,omitempty"`
+
+	// SortHandlerRegistrations restores the historical behavior of registering
+	// generated route handlers in sorted (lexicographic, by path then method)
+	// order. By default handlers are registered in the order their paths are
+	// declared in the spec, so that on routers which match in registration
+	// order (e.g. Fiber, Gorilla/mux) overlapping paths can be disambiguated by
+	// ordering them in the spec. Set this to true to opt out and go back to the
+	// old sorted registration order.
+	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/1887
+	SortHandlerRegistrations bool `yaml:"sort-handler-registrations,omitempty"`
 }
 
 func (co CompatibilityOptions) Validate() map[string]string {
@@ -435,8 +464,18 @@ type OutputOptions struct {
 	// Overlay defines configuration for the OpenAPI Overlay (https://github.com/OAI/Overlay-Specification) to manipulate the OpenAPI specification before generation. This allows modifying the specification without needing to apply changes directly to it, making it easier to keep it up-to-date.
 	Overlay OutputOptionsOverlay `yaml:"overlay"`
 
-	// EnableYamlTags adds YAML tags to generated structs, in addition to default JSON ones
+	// EnableYamlTags adds YAML tags to generated structs, in addition to default JSON ones.
+	// Superseded by StructTags: when a `yaml` entry is present in `struct-tags`, this flag
+	// has no effect.
 	EnableYamlTags bool `yaml:"yaml-tags,omitempty"`
+
+	// StructTags configures which struct tags are generated on struct fields and how their
+	// values are rendered. Each entry is a tag name plus a Go text/template evaluated
+	// against the field (see StructTagInfo for the available variables). Entries are
+	// merged by name on top of the defaults, so a `json` entry replaces the default json
+	// template while new names add tags. Tags render in alphabetical order; a template
+	// that renders to the empty string suppresses that tag on that field.
+	StructTags StructTagsConfig `yaml:"struct-tags,omitempty"`
 
 	// ClientResponseBytesFunction decides whether to enable the generation of a `Bytes()` method on response objects for `ClientWithResponses`
 	ClientResponseBytesFunction bool `yaml:"client-response-bytes-function,omitempty"`
@@ -549,6 +588,12 @@ func (oo OutputOptions) Validate() map[string]string {
 	if _, err := compileContentTypeNameTags(oo.ContentTypes); err != nil {
 		return map[string]string{
 			"content-types": err.Error(),
+		}
+	}
+
+	if _, err := newStructTagGenerator(defaultStructTagsConfig(oo.EnableYamlTags).Merge(oo.StructTags)); err != nil {
+		return map[string]string{
+			"struct-tags": err.Error(),
 		}
 	}
 

@@ -6,7 +6,6 @@ package paramclientgen
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -308,6 +307,9 @@ type ClientInterface interface {
 
 	// GetSimplePrimitive performs a GET /simplePrimitive/{param} (the `GetSimplePrimitive` operationId) request.
 	GetSimplePrimitive(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetSimpleString performs a GET /simpleString/{param} (the `GetSimpleString` operationId) request.
+	GetSimpleString(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetStartingWithNumber performs a GET /startingWithNumber/{1param} (the `GetStartingWithNumber` operationId) request.
 	GetStartingWithNumber(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -651,6 +653,19 @@ func (c *Client) GetSimplePrimitive(ctx context.Context, param int32, reqEditors
 	return c.Client.Do(req)
 }
 
+// GetSimpleString performs a GET /simpleString/{param} (the `GetSimpleString` operationId) request.
+func (c *Client) GetSimpleString(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSimpleStringRequest(c.Server, param)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // GetStartingWithNumber performs a GET /startingWithNumber/{1param} (the `GetStartingWithNumber` operationId) request.
 func (c *Client) GetStartingWithNumber(ctx context.Context, n1param string, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetStartingWithNumberRequest(c.Server, n1param)
@@ -682,7 +697,7 @@ func NewGetContentObjectRequest(server string, param ComplexObject) (*http.Reque
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/contentObject/%s", pathParam0)
+	operationPath := "/contentObject/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -709,7 +724,7 @@ func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request,
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/cookie")
+	operationPath := "/cookie"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -860,7 +875,7 @@ func NewEnumParamsRequest(server string, params *EnumParamsParams) (*http.Reques
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/enums")
+	operationPath := "/enums"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -914,7 +929,7 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/header")
+	operationPath := "/header"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1050,7 +1065,7 @@ func NewGetLabelExplodeArrayRequest(server string, param []int32) (*http.Request
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/labelExplodeArray/%s", pathParam0)
+	operationPath := "/labelExplodeArray/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1084,7 +1099,7 @@ func NewGetLabelExplodeObjectRequest(server string, param Object) (*http.Request
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/labelExplodeObject/%s", pathParam0)
+	operationPath := "/labelExplodeObject/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1118,7 +1133,7 @@ func NewGetLabelExplodePrimitiveRequest(server string, param int32) (*http.Reque
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/labelExplodePrimitive/%s", pathParam0)
+	operationPath := "/labelExplodePrimitive/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1152,7 +1167,7 @@ func NewGetLabelNoExplodeArrayRequest(server string, param []int32) (*http.Reque
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/labelNoExplodeArray/%s", pathParam0)
+	operationPath := "/labelNoExplodeArray/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1186,7 +1201,7 @@ func NewGetLabelNoExplodeObjectRequest(server string, param Object) (*http.Reque
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/labelNoExplodeObject/%s", pathParam0)
+	operationPath := "/labelNoExplodeObject/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1220,7 +1235,7 @@ func NewGetLabelPrimitiveRequest(server string, param int32) (*http.Request, err
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/labelPrimitive/%s", pathParam0)
+	operationPath := "/labelPrimitive/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1254,7 +1269,7 @@ func NewGetMatrixExplodeArrayRequest(server string, id []int32) (*http.Request, 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/matrixExplodeArray/%s", pathParam0)
+	operationPath := "/matrixExplodeArray/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1288,7 +1303,7 @@ func NewGetMatrixExplodeObjectRequest(server string, id Object) (*http.Request, 
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/matrixExplodeObject/%s", pathParam0)
+	operationPath := "/matrixExplodeObject/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1322,7 +1337,7 @@ func NewGetMatrixExplodePrimitiveRequest(server string, id int32) (*http.Request
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/matrixExplodePrimitive/%s", pathParam0)
+	operationPath := "/matrixExplodePrimitive/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1356,7 +1371,7 @@ func NewGetMatrixNoExplodeArrayRequest(server string, id []int32) (*http.Request
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/matrixNoExplodeArray/%s", pathParam0)
+	operationPath := "/matrixNoExplodeArray/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1390,7 +1405,7 @@ func NewGetMatrixNoExplodeObjectRequest(server string, id Object) (*http.Request
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/matrixNoExplodeObject/%s", pathParam0)
+	operationPath := "/matrixNoExplodeObject/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1424,7 +1439,7 @@ func NewGetMatrixPrimitiveRequest(server string, id int32) (*http.Request, error
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/matrixPrimitive/%s", pathParam0)
+	operationPath := "/matrixPrimitive/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1455,7 +1470,7 @@ func NewGetPassThroughRequest(server string, param string) (*http.Request, error
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/passThrough/%s", pathParam0)
+	operationPath := "/passThrough/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1482,7 +1497,7 @@ func NewGetDeepObjectRequest(server string, params *GetDeepObjectParams) (*http.
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/queryDeepObject")
+	operationPath := "/queryDeepObject"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1532,7 +1547,7 @@ func NewGetQueryDelimitedRequest(server string, params *GetQueryDelimitedParams)
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/queryDelimited")
+	operationPath := "/queryDelimited"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1598,7 +1613,7 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/queryForm")
+	operationPath := "/queryForm"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1753,7 +1768,7 @@ func NewGetSimpleExplodeArrayRequest(server string, param []int32) (*http.Reques
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/simpleExplodeArray/%s", pathParam0)
+	operationPath := "/simpleExplodeArray/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1787,7 +1802,7 @@ func NewGetSimpleExplodeObjectRequest(server string, param Object) (*http.Reques
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/simpleExplodeObject/%s", pathParam0)
+	operationPath := "/simpleExplodeObject/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1821,7 +1836,7 @@ func NewGetSimpleExplodePrimitiveRequest(server string, param int32) (*http.Requ
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/simpleExplodePrimitive/%s", pathParam0)
+	operationPath := "/simpleExplodePrimitive/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1855,7 +1870,7 @@ func NewGetSimpleNoExplodeArrayRequest(server string, param []int32) (*http.Requ
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/simpleNoExplodeArray/%s", pathParam0)
+	operationPath := "/simpleNoExplodeArray/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1889,7 +1904,7 @@ func NewGetSimpleNoExplodeObjectRequest(server string, param Object) (*http.Requ
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/simpleNoExplodeObject/%s", pathParam0)
+	operationPath := "/simpleNoExplodeObject/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1923,7 +1938,41 @@ func NewGetSimplePrimitiveRequest(server string, param int32) (*http.Request, er
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/simplePrimitive/%s", pathParam0)
+	operationPath := "/simplePrimitive/" + pathParam0
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetSimpleStringRequest constructs an http.Request for the GetSimpleString method
+func NewGetSimpleStringRequest(server string, param string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "param", param, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "string", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := "/simpleString/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1954,7 +2003,7 @@ func NewGetStartingWithNumberRequest(server string, n1param string) (*http.Reque
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/startingWithNumber/%s", pathParam0)
+	operationPath := "/startingWithNumber/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -2145,6 +2194,11 @@ type ClientWithResponsesInterface interface {
 	//
 	// Returns a wrapper object for the known response body format(s).
 	GetSimplePrimitiveWithResponse(ctx context.Context, param int32, reqEditors ...RequestEditorFn) (*GetSimplePrimitiveResponse, error)
+
+	// GetSimpleStringWithResponse performs a GET /simpleString/{param} (the `GetSimpleString` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	GetSimpleStringWithResponse(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*GetSimpleStringResponse, error)
 
 	// GetStartingWithNumberWithResponse performs a GET /startingWithNumber/{1param} (the `GetStartingWithNumber` operationId) request.
 	//
@@ -3036,6 +3090,40 @@ func (r GetSimplePrimitiveResponse) ContentType() string {
 	return ""
 }
 
+type GetSimpleStringResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes
+func (r GetSimpleStringResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetSimpleStringResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetSimpleStringResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetSimpleStringResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
 type GetStartingWithNumberResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -3354,6 +3442,17 @@ func (c *ClientWithResponses) GetSimplePrimitiveWithResponse(ctx context.Context
 		return nil, err
 	}
 	return ParseGetSimplePrimitiveResponse(rsp)
+}
+
+// GetSimpleStringWithResponse performs a GET /simpleString/{param} (the `GetSimpleString` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) GetSimpleStringWithResponse(ctx context.Context, param string, reqEditors ...RequestEditorFn) (*GetSimpleStringResponse, error) {
+	rsp, err := c.GetSimpleString(ctx, param, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSimpleStringResponse(rsp)
 }
 
 // GetStartingWithNumberWithResponse performs a GET /startingWithNumber/{1param} (the `GetStartingWithNumber` operationId) request.
@@ -3776,6 +3875,22 @@ func ParseGetSimplePrimitiveResponse(rsp *http.Response) (*GetSimplePrimitiveRes
 	}
 
 	response := &GetSimplePrimitiveResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
+// ParseGetSimpleStringResponse parses an HTTP response from a GetSimpleStringWithResponse call
+func ParseGetSimpleStringResponse(rsp *http.Response) (*GetSimpleStringResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetSimpleStringResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}

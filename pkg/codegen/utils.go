@@ -15,6 +15,7 @@ package codegen
 
 import (
 	"bytes"
+	"errors"
 	"cmp"
 	"fmt"
 	"go/token"
@@ -547,6 +548,23 @@ func SwaggerUriToIrisUri(uri string) string {
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
+// escapeLiteralPathColons escapes literal ':' characters in an OpenAPI path so
+// that routers which use ':' to introduce a path parameter (Echo, Gin, Fiber)
+// treat them as literals rather than parameter delimiters. Without this, a path
+// like "/pets:validate" registers a parameter named "validate", so multiple
+// such paths collide on the same prefix (issue #1726).
+//
+// The escaped form is a single backslash before the colon (`\:`). The register
+// templates render the result through toGoString (strconv.Quote), which turns
+// the backslash into `\\` in the emitted Go source, so the value the router
+// sees at runtime is exactly `\:` — the escape those routers understand.
+//
+// It must run before parameter substitution, which introduces its own ':'
+// delimiters that must stay unescaped.
+func escapeLiteralPathColons(uri string) string {
+	return strings.ReplaceAll(uri, ":", `\:`)
+}
+
 // SwaggerUriToEchoUri converts a OpenAPI style path URI with parameters to an
 // Echo compatible path URI. We need to replace all of OpenAPI parameters with
 // ":param". Valid input parameters are:
@@ -560,6 +578,7 @@ func SwaggerUriToIrisUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToEchoUri(uri string) string {
+	uri = escapeLiteralPathColons(uri)
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
@@ -576,6 +595,7 @@ func SwaggerUriToEchoUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToFiberUri(uri string) string {
+	uri = escapeLiteralPathColons(uri)
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
@@ -608,6 +628,7 @@ func SwaggerUriToChiUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToGinUri(uri string) string {
+	uri = escapeLiteralPathColons(uri)
 	return pathParamRE.ReplaceAllString(uri, ":$1")
 }
 
@@ -641,16 +662,68 @@ func SwaggerUriToGorillaUri(uri string) string {
 //	{?param}
 //	{?param*}
 func SwaggerUriToStdHttpUri(uri string) string {
-	// https://pkg.go.dev/net/http#hdr-Patterns-ServeMux
-	// The special wildcard {$} matches only the end of the URL. For example, the pattern "/{$}" matches only the path "/", whereas the pattern "/" matches every path.
-	if uri == "/" {
-		return "/{$}"
-	}
-
-	return pathParamRE.ReplaceAllStringFunc(uri, func(match string) string {
+	uri = pathParamRE.ReplaceAllStringFunc(uri, func(match string) string {
 		sub := pathParamRE.FindStringSubmatch(match)
 		return "{" + SanitizeGoIdentifier(sub[1]) + "}"
 	})
+
+	// https://pkg.go.dev/net/http#hdr-Patterns-ServeMux
+	// A ServeMux pattern ending in '/' matches the whole subtree below it,
+	// while an OpenAPI path ending in '/' means exactly that path. The
+	// special wildcard {$} anchors the pattern to the end of the URL:
+	// "/foo/{$}" matches only "/foo/", whereas "/foo/" matches every path
+	// under it. Anchoring also prevents registration panics when subtree
+	// patterns from independent spec paths overlap ambiguously (#2065).
+	// Appended after parameter sanitization so the '$' is not treated as a
+	// parameter name.
+	if strings.HasSuffix(uri, "/") {
+		uri += "{$}"
+	}
+
+	return uri
+}
+
+// ValidateStdHTTPPath reports whether an OpenAPI path can be registered with
+// net/http ServeMux. ServeMux wildcards must occupy an entire path segment, so
+// mixed segments such as "{resourceId}:apply" are rejected at codegen time
+// instead of panicking at server startup (see #2488).
+func ValidateStdHTTPPath(path string) error {
+	for _, seg := range strings.Split(path, "/") {
+		if seg == "" || seg == "{$}" {
+			continue
+		}
+		loc := pathParamRE.FindStringIndex(seg)
+		if loc == nil {
+			// pure literal segment
+			continue
+		}
+		// Wildcard must be the entire segment.
+		if loc[0] != 0 || loc[1] != len(seg) {
+			return fmt.Errorf("path %q: segment %q mixes a path parameter with literal text; net/http ServeMux requires wildcards to occupy an entire path segment (std-http-server)", path, seg)
+		}
+	}
+	return nil
+}
+
+// ValidateStdHTTPPaths validates every path in the document for ServeMux.
+// Paths whose operations have all been removed (e.g. by tag or operation-id
+// filtering) emit no routes, so they are skipped.
+func ValidateStdHTTPPaths(spec *openapi3.T) error {
+	if spec == nil || spec.Paths == nil {
+		return nil
+	}
+	var errs []error
+	pathMap := spec.Paths.Map()
+	for _, path := range SortedMapKeys(pathMap) {
+		pathItem := pathMap[path]
+		if pathItem == nil || len(pathItem.Operations()) == 0 {
+			continue
+		}
+		if err := ValidateStdHTTPPath(path); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
 }
 
 // OrderedParamsFromUri returns the argument names, in order, in a given URI string, so for
@@ -664,9 +737,45 @@ func OrderedParamsFromUri(uri string) []string {
 	return result
 }
 
-// ReplacePathParamsWithStr replaces path parameters of the form {param} with %s
-func ReplacePathParamsWithStr(uri string) string {
-	return pathParamRE.ReplaceAllString(uri, "%s")
+// GenPathString constructs a Go expression that builds the given URI by concatenating
+// its literal segments with the path-parameter variables named <paramVarName>0 through
+// <paramVarName>N. Literal segments are quoted with strconv.Quote so that characters
+// which are significant in Go source, such as quotes, backslashes and percent signs,
+// survive into the generated code unchanged.
+func GenPathString(uri, paramVarName string) string {
+	matches := pathParamRE.FindAllStringSubmatchIndex(uri, -1)
+	if len(matches) == 0 {
+		return strconv.Quote(uri)
+	}
+
+	// A path parameter may appear more than once in the same path. SortParamsByPath
+	// deduplicates them and preserves first-occurrence order, and the client template
+	// declares one variable per deduplicated parameter, so every repeat has to refer
+	// back to the variable assigned to its first occurrence.
+	varIndexByName := make(map[string]int, len(matches))
+
+	parts := make([]string, 0, 2*len(matches)+1)
+	pos := 0
+	for _, match := range matches {
+		if literal := uri[pos:match[0]]; literal != "" {
+			parts = append(parts, strconv.Quote(literal))
+		}
+
+		name := uri[match[2]:match[3]]
+		idx, seen := varIndexByName[name]
+		if !seen {
+			idx = len(varIndexByName)
+			varIndexByName[name] = idx
+		}
+
+		parts = append(parts, fmt.Sprintf("%s%d", paramVarName, idx))
+		pos = match[1]
+	}
+	if literal := uri[pos:]; literal != "" {
+		parts = append(parts, strconv.Quote(literal))
+	}
+
+	return strings.Join(parts, " + ")
 }
 
 // SortParamsByPath reorders the given parameter definitions to match those in the path URI.

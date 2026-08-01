@@ -150,7 +150,7 @@ func (w *ServerInterfaceWrapper) ReservedGoKeywordParameters(ctx echo.Context) e
 	// ------------- Path parameter "type" -------------
 	var pType string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "type", ctx.Param("type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "type", ctx.Param("type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: ctx.Request().URL.RawPath == ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter type: %s", err))
 	}
@@ -175,7 +175,7 @@ func (w *ServerInterfaceWrapper) SameNameParamAndBodyProperty(ctx echo.Context) 
 	// ------------- Path parameter "name" -------------
 	var name string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "name", ctx.Param("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: ctx.Request().URL.RawPath == ""})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter name: %s", err))
 	}
@@ -324,20 +324,20 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
 	}
 
 	router.POST(options.BaseURL+"/json", wrapper.JSONExample, options.OperationMiddlewares["JSONExample"]...)
+	router.POST(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample, options.OperationMiddlewares["URLEncodedExample"]...)
 	router.POST(options.BaseURL+"/multipart", wrapper.MultipartExample, options.OperationMiddlewares["MultipartExample"]...)
 	router.POST(options.BaseURL+"/multipart-related", wrapper.MultipartRelatedExample, options.OperationMiddlewares["MultipartRelatedExample"]...)
+	router.POST(options.BaseURL+"/text", wrapper.TextExample, options.OperationMiddlewares["TextExample"]...)
+	router.POST(options.BaseURL+"/unknown", wrapper.UnknownExample, options.OperationMiddlewares["UnknownExample"]...)
 	router.POST(options.BaseURL+"/multiple", wrapper.MultipleRequestAndResponseTypes, options.OperationMiddlewares["MultipleRequestAndResponseTypes"]...)
+	router.POST(options.BaseURL+"/with-headers", wrapper.HeadersExample, options.OperationMiddlewares["HeadersExample"]...)
 	router.POST(options.BaseURL+"/no-content-headers", wrapper.NoContentHeaders, options.OperationMiddlewares["NoContentHeaders"]...)
+	router.POST(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses, options.OperationMiddlewares["ReusableResponses"]...)
+	router.POST(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType, options.OperationMiddlewares["UnspecifiedContentType"]...)
 	router.POST(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody, options.OperationMiddlewares["RequiredJSONBody"]...)
 	router.POST(options.BaseURL+"/required-text-body", wrapper.RequiredTextBody, options.OperationMiddlewares["RequiredTextBody"]...)
 	router.GET(options.BaseURL+"/reserved-go-keyword-parameters/:type", wrapper.ReservedGoKeywordParameters, options.OperationMiddlewares["ReservedGoKeywordParameters"]...)
-	router.POST(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses, options.OperationMiddlewares["ReusableResponses"]...)
 	router.POST(options.BaseURL+"/same-name-param-and-body-property/:name", wrapper.SameNameParamAndBodyProperty, options.OperationMiddlewares["SameNameParamAndBodyProperty"]...)
-	router.POST(options.BaseURL+"/text", wrapper.TextExample, options.OperationMiddlewares["TextExample"]...)
-	router.POST(options.BaseURL+"/unknown", wrapper.UnknownExample, options.OperationMiddlewares["UnknownExample"]...)
-	router.POST(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType, options.OperationMiddlewares["UnspecifiedContentType"]...)
-	router.POST(options.BaseURL+"/urlencoded", wrapper.URLEncodedExample, options.OperationMiddlewares["URLEncodedExample"]...)
-	router.POST(options.BaseURL+"/with-headers", wrapper.HeadersExample, options.OperationMiddlewares["HeadersExample"]...)
 	router.POST(options.BaseURL+"/with-union", wrapper.UnionExample, options.OperationMiddlewares["UnionExample"]...)
 
 }
@@ -544,7 +544,7 @@ func (response MultipleRequestAndResponseTypes200TextResponse) VisitMultipleRequ
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 
@@ -635,7 +635,7 @@ func (response RequiredTextBody200TextResponse) VisitRequiredTextBodyResponse(w 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 
@@ -670,7 +670,7 @@ func (response ReservedGoKeywordParameters200TextResponse) VisitReservedGoKeywor
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 
@@ -752,7 +752,7 @@ func (response TextExample200TextResponse) VisitTextExampleResponse(w http.Respo
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(200)
 
-	_, err := w.Write([]byte(response))
+	_, err := w.Write([]byte(fmt.Sprint(response)))
 	return err
 }
 

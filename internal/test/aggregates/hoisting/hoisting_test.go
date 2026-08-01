@@ -162,6 +162,24 @@ func TestBodyRootOneOf_RoundTripCat(t *testing.T) {
 	require.Equal(t, cat, got)
 }
 
+func TestBodyRootOneOfRequestBody_RoundTripCat(t *testing.T) {
+	cat := ImplicitCat{Kind: Cat, Name: ptr("whiskers")}
+
+	var body PostBodyRootOneOfJSONBody
+	require.NoError(t, body.FromImplicitCat(cat))
+
+	requestBody := PostBodyRootOneOfJSONRequestBody(body)
+	b, err := json.Marshal(requestBody)
+	require.NoError(t, err)
+
+	var decoded PostBodyRootOneOfJSONRequestBody
+	require.NoError(t, json.Unmarshal(b, &decoded))
+
+	got, err := PostBodyRootOneOfJSONBody(decoded).AsImplicitCat()
+	require.NoError(t, err)
+	require.Equal(t, cat, got)
+}
+
 func TestBodyPropertyOneOf_RoundTripDog(t *testing.T) {
 	dog := ImplicitDog{Kind: Dog, Name: ptr("rex")}
 

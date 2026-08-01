@@ -251,7 +251,7 @@ func NewDeregisterWebhookRequest(server string, id openapi_types.UUID) (*http.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/api/webhook/%s", pathParam0)
+	operationPath := "/api/webhook/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -296,7 +296,7 @@ func NewRegisterWebhookRequestWithBody(server string, kind RegisterWebhookParams
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/api/webhook/%s", pathParam0)
+	operationPath := "/api/webhook/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -803,7 +803,7 @@ func (siw *ServerInterfaceWrapper) DeregisterWebhook(w http.ResponseWriter, r *h
 	// ------------- Path parameter "id" -------------
 	var id openapi_types.UUID
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid"})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -829,7 +829,7 @@ func (siw *ServerInterfaceWrapper) RegisterWebhook(w http.ResponseWriter, r *htt
 	// ------------- Path parameter "kind" -------------
 	var kind RegisterWebhookParamsKind
 
-	err = runtime.BindStyledParameterWithOptions("simple", "kind", r.PathValue("kind"), &kind, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "kind", r.PathValue("kind"), &kind, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
 		return
@@ -966,8 +966,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
-	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/webhook/{id}", wrapper.DeregisterWebhook)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api/webhook/{kind}", wrapper.RegisterWebhook)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api/webhook/{id}", wrapper.DeregisterWebhook)
 
 	return m
 }

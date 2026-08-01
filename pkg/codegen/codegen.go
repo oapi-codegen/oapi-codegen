@@ -30,7 +30,6 @@ import (
 	"regexp"
 	"runtime/debug"
 	"slices"
-	"sort"
 	"strings"
 	"text/template"
 	"time"
@@ -78,6 +77,15 @@ var globalState struct {
 	// mapping, resolving media types to user-configured short names for use
 	// in generated type names. Nil-safe: a nil matcher matches nothing.
 	contentTypeNameTags *contentTypeNameTags
+	// schemaFieldTagGenerator renders struct tags for schema property
+	// fields (defaults + output-options.struct-tags, including the legacy
+	// yaml-tags injection). Built in Generate; lazily built for direct
+	// callers via schemaFieldTagGenerator().
+	schemaFieldTagGenerator *structTagGenerator
+	// paramFieldTagGenerator renders struct tags for path parameter fields
+	// on strict RequestObject structs; identical to the schema generator
+	// except the legacy yaml-tags flag does not apply.
+	paramFieldTagGenerator *structTagGenerator
 }
 
 // goImport represents a go package to be imported in the generated code
@@ -170,6 +178,22 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		globalState.typeMapping = DefaultTypeMapping
 	}
 
+	// Build the struct tag generators eagerly so invalid user templates in
+	// output-options.struct-tags are reported as errors instead of being
+	// skipped. Assigning here also resets any state from a prior Generate.
+	schemaTagGen, err := newStructTagGenerator(
+		defaultStructTagsConfig(opts.OutputOptions.EnableYamlTags).Merge(opts.OutputOptions.StructTags))
+	if err != nil {
+		return "", fmt.Errorf("error in output-options.struct-tags: %w", err)
+	}
+	globalState.schemaFieldTagGenerator = schemaTagGen
+	paramTagGen, err := newStructTagGenerator(
+		defaultStructTagsConfig(false).Merge(opts.OutputOptions.StructTags))
+	if err != nil {
+		return "", fmt.Errorf("error in output-options.struct-tags: %w", err)
+	}
+	globalState.paramFieldTagGenerator = paramTagGen
+
 	filterOperationsByTag(spec, opts)
 	filterOperationsByOperationID(spec, opts)
 	if !opts.OutputOptions.SkipPrune {
@@ -182,6 +206,11 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	// values that will actually be emitted are considered.
 	if err := ValidateSpec(spec); err != nil {
 		return "", err
+	}
+	if opts.Generate.StdHTTPServer {
+		if err := ValidateStdHTTPPaths(spec); err != nil {
+			return "", err
+		}
 	}
 
 	// if we are provided an override for the response type suffix update it
@@ -329,7 +358,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 			return "", fmt.Errorf("error generating Go types for operations: %w", err)
 		}
 
-		constantDefinitions, err = GenerateConstants(t, allOps)
+		constantDefinitions, err = GenerateConstants(t, spec)
 		if err != nil {
 			return "", fmt.Errorf("error generating constants: %w", err)
 		}
@@ -1048,25 +1077,66 @@ func renderBoilerplate(t *template.Template, allEmitted []TypeDefinition) (enums
 }
 
 // GenerateConstants generates operation ids, context keys, paths, etc. to be exported as constants
-func GenerateConstants(t *template.Template, ops []OperationDefinition) (string, error) {
-	constants := Constants{
-		SecuritySchemeProviderNames: []string{},
-	}
+//
+// Scopes constants are derived from components/securitySchemes rather than
+// from the operations' security requirements (which are filtered to defined
+// schemes anyway), so that a spec holding shared definitions with no paths
+// still exports the constants other packages alias via import-mapping.
+func GenerateConstants(t *template.Template, swagger *openapi3.T) (string, error) {
+	var constants Constants
 
-	providerNameMap := map[string]struct{}{}
-	for _, op := range ops {
-		for _, def := range op.SecurityDefinitions {
-			providerName := SanitizeGoIdentity(def.ProviderName)
-			providerNameMap[providerName] = struct{}{}
+	if swagger.Components != nil {
+		for _, schemeName := range SortedSecuritySchemeKeys(swagger.Components.SecuritySchemes) {
+			provider := SecuritySchemeProvider{Name: SanitizeGoIdentity(schemeName)}
+			alias := importedSecuritySchemeScopes(swagger.Components.SecuritySchemes[schemeName].Ref)
+			if alias == securitySchemeScopesConstant(provider.Name) {
+				// The scheme $refs a spec that import-mapping assigns to the
+				// current package under the same name: the sibling config
+				// generating that spec into this package already declares
+				// the constant, so re-declaring it here would collide.
+				continue
+			}
+			provider.ImportedScopes = alias
+			constants.SecuritySchemeProviders = append(constants.SecuritySchemeProviders, provider)
 		}
 	}
 
-	providerNames := slices.Collect(maps.Keys(providerNameMap))
-	sort.Strings(providerNames)
-
-	constants.SecuritySchemeProviderNames = append(constants.SecuritySchemeProviderNames, providerNames...)
-
 	return GenerateTemplates([]string{"constants.tmpl"}, t, constants)
+}
+
+// securitySchemeScopesConstant returns the name of the generated scopes
+// context-key constant for a security scheme name. It must mirror the name
+// construction in constants.tmpl (`sanitizeGoIdentity | ucFirst` + "Scopes").
+func securitySchemeScopesConstant(schemeName string) string {
+	return UppercaseFirstCharacter(SanitizeGoIdentity(schemeName)) + "Scopes"
+}
+
+// importedSecuritySchemeScopes resolves a security scheme's $ref through
+// import-mapping to the scopes constant declared by the package generated
+// from the ref'd document. It returns "" when the scheme must be declared
+// locally: it is defined inline, the ref is internal, or the ref'd document
+// has no import-mapping entry (each package then keeps its own declaration,
+// matching the behavior from before typed context keys existed). For a
+// document mapped to the current package ("-") the returned constant is
+// unqualified — the sibling config generating that document declares it.
+func importedSecuritySchemeScopes(ref string) string {
+	if ref == "" || strings.HasPrefix(ref, "#") {
+		return ""
+	}
+	pathParts := strings.Split(ref, "#")
+	if len(pathParts) != 2 {
+		return ""
+	}
+	goPkg, ok := globalState.importMapping[pathParts[0]]
+	if !ok {
+		return ""
+	}
+	componentParts := strings.Split(pathParts[1], "/")
+	constName := securitySchemeScopesConstant(componentParts[len(componentParts)-1])
+	if goPkg.Path == importMappingCurrentPackage {
+		return constName
+	}
+	return fmt.Sprintf("%s.%s", goPkg.Name, constName)
 }
 
 // GenerateTypesForSchemas generates type definitions for any custom types defined in the
@@ -1284,6 +1354,13 @@ func GenerateTypesForSecuritySchemes(t *template.Template, schemes map[string]*o
 	var types []TypeDefinition
 
 	for _, schemeName := range SortedSecuritySchemeKeys(schemes) {
+		if importedSecuritySchemeScopes(schemes[schemeName].Ref) != "" {
+			// The scheme $refs a spec assigned to another package by
+			// import-mapping. That package declares the context key type;
+			// the scopes constant alias emitted by GenerateConstants
+			// carries it over, so no local type is declared.
+			continue
+		}
 		// Generate a type to be used as a key in context.WithValue
 		goTypeName := LowercaseFirstCharacter(SchemaNameToTypeName(schemeName)) + "ContextKey"
 		goType := Schema{

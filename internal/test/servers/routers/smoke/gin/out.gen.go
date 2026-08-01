@@ -138,10 +138,10 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 		ErrorHandler:       errorHandler,
 	}
 
-	router.GET(options.BaseURL+"/get-multibody", wrapper.GetGetMultibody)
 	router.GET(options.BaseURL+"/object", wrapper.GetObject)
-	router.POST(options.BaseURL+"/post-multibody", wrapper.PostPostMultibody)
+	router.GET(options.BaseURL+"/get-multibody", wrapper.GetGetMultibody)
 	router.POST(options.BaseURL+"/post-object", wrapper.PostPostObject)
+	router.POST(options.BaseURL+"/post-multibody", wrapper.PostPostMultibody)
 }
 
 type GetGetMultibodyRequestObject struct {

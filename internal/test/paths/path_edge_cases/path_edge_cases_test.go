@@ -1,4 +1,4 @@
-package parameterspathedgecases
+package pathedgecases
 
 import (
 	"context"

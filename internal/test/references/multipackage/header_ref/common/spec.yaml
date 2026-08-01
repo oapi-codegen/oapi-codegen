@@ -1,0 +1,17 @@
+# From issue-2060: common spec providing an externally referenced header whose
+# schema is a $ref to a named type in this same package.
+openapi: "3.0.4"
+info:
+  title: Common
+  version: "0.0.1"
+paths: {}
+components:
+  schemas:
+    ETagSchema:
+      type: string
+      description: RFC 7232 entity tag
+  headers:
+    ETag:
+      description: Entity tag header
+      schema:
+        $ref: "#/components/schemas/ETagSchema"
