@@ -185,6 +185,21 @@ Although we strive to retain backwards compatibility - as a project that's using
 
 In this case, we will expose a [compatibility option](https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen#CompatibilityOptions) to restore old behaviour.
 
+That all being said, we operate in a little bit of a grey area, since we are a code generator, we support template overrides, and
+our code can be imported. So this is how we will try to maintain compatibility:
+
+  - SemVer mostly applies to generated code. We strive to avoid breaking your code which depends on the generated code. We will
+    provide compatibility flags for major breaking changes.
+  - A breaking change could happen with either a compilation error (as something has changed in the generated code) or a behaviour change (we generate a slightly different implementation)
+  - However, if you're using generated code that is "off the beaten path", on a seldom encountered edge case, we'll sometimes decide to make a breaking change to avoid complicating usage or internals.
+  - [Our `pkg/` directory is importable](https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg). In retrospect, this was a mistake in our original design. Importing anything other than the `Generate` function and its related `Configuration` is considered unstable (and at this point, [hasn't (yet) been documented](https://github.com/oapi-codegen/oapi-codegen/issues/1487)). In the future, we will clean up our import surface.
+  - Template overrides are considered unstable, and you use them at your own risk. These are always drifting and so are their input contexts, so we can't guarantee much here.
+  - The command-line interface and/or the configuration file format are classed as stable
+
+Also note that - if a security vulnerability is found - we will opt for breaking all users if need be, if it is the most secure response.
+
+Unless explicitly called out above, your usage of `oapi-codegen` may be using unstable features, which may make it harder to upgrade over time.
+
 ## Features
 
 At a high level, `oapi-codegen` supports:
@@ -1293,9 +1308,11 @@ The default behaviour in `oapi-codegen` is to generate:
 
 ```go
 type S struct {
-	Field *string `json:"field,omitempty"`
+	Field *string `json:"field"`
 }
 ```
+
+Note that there is no `omitempty` here: since the field is nullable, a `nil` pointer marshals as an explicit `null`, and `omitempty` would make that `null` impossible to produce.
 
 However, you lose the ability to understand the three cases, as there's no way to distinguish two of the types from each other:
 

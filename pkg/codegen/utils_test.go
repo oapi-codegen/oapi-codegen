@@ -538,9 +538,122 @@ func TestSortParamsByPath(t *testing.T) {
 	})
 }
 
-func TestReplacePathParamsWithStr(t *testing.T) {
-	result := ReplacePathParamsWithStr("/path/{param1}/{.param2}/{;param3*}/foo")
-	assert.EqualValues(t, "/path/%s/%s/%s/foo", result)
+func TestGenPathString(t *testing.T) {
+	tests := []struct {
+		uri  string
+		want string
+	}{
+		{
+			uri:  "/test/{param1}/{.param2}/{;param3*}/foo",
+			want: `"/test/" + pathParam0 + "/" + pathParam1 + "/" + pathParam2 + "/foo"`,
+		},
+		{
+			uri:  "/test/{param}",
+			want: `"/test/" + pathParam0`,
+		},
+		{
+			uri:  "/test/{param}/test2/{param2}",
+			want: `"/test/" + pathParam0 + "/test2/" + pathParam1`,
+		},
+		{
+			uri:  "/test/test2",
+			want: `"/test/test2"`,
+		},
+		{
+			uri:  "test",
+			want: `"test"`,
+		},
+		{
+			uri:  "{param}/test",
+			want: `pathParam0 + "/test"`,
+		},
+		{
+			uri:  "/{param}/test/",
+			want: `"/" + pathParam0 + "/test/"`,
+		},
+		{
+			uri:  "/",
+			want: `"/"`,
+		},
+		{
+			uri:  "",
+			want: `""`,
+		},
+		// Percent signs are literal path characters, not format verbs.
+		{
+			uri:  "/test/%20/{param}",
+			want: `"/test/%20/" + pathParam0`,
+		},
+		{
+			uri:  "/test/100%/{param}",
+			want: `"/test/100%/" + pathParam0`,
+		},
+		{
+			uri:  "/test/%dpercent",
+			want: `"/test/%dpercent"`,
+		},
+		// A literal "%s" in the path must not be mistaken for a parameter.
+		{
+			uri:  "/test/literal%s/{param}",
+			want: `"/test/literal%s/" + pathParam0`,
+		},
+		// Characters that are significant in Go string literals must be escaped.
+		{
+			uri:  `/test/quo"te/{param}`,
+			want: `"/test/quo\"te/" + pathParam0`,
+		},
+		{
+			uri:  `/test/back\slash/{param}`,
+			want: `"/test/back\\slash/" + pathParam0`,
+		},
+		// A repeated parameter reuses the variable bound to its first occurrence,
+		// matching the deduplication SortParamsByPath applies.
+		{
+			uri:  "/orgs/{id}/mirror/{id}",
+			want: `"/orgs/" + pathParam0 + "/mirror/" + pathParam0`,
+		},
+		{
+			uri:  "/admin/realms/{realm}/clients/{client-uuid}/roles/{role-name}/composites/clients/{client-uuid}",
+			want: `"/admin/realms/" + pathParam0 + "/clients/" + pathParam1 + "/roles/" + pathParam2 + "/composites/clients/" + pathParam1`,
+		},
+		{
+			uri:  "/test/{param}/{other}/{param}/{other}",
+			want: `"/test/" + pathParam0 + "/" + pathParam1 + "/" + pathParam0 + "/" + pathParam1`,
+		},
+		// Prefixed and exploded forms refer to the same underlying parameter.
+		{
+			uri:  "/test/{param}/{.param}/{;param*}",
+			want: `"/test/" + pathParam0 + "/" + pathParam0 + "/" + pathParam0`,
+		},
+	}
+
+	for _, tst := range tests {
+		result := GenPathString(tst.uri, "pathParam")
+		assert.Equal(t, tst.want, result)
+	}
+}
+
+func Benchmark_concatPath1param(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	pathParam0 := "pathParam0"
+
+	for i := 0; i < b.N; i++ {
+		_ = "/test/" + pathParam0
+	}
+}
+
+func Benchmark_concatPath2param(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	pathParam0 := "pathParam0"
+	pathParam1 := "pathParam1"
+
+	for i := 0; i < b.N; i++ {
+		_ = "/test/" + pathParam0 + "/test2/" + pathParam1
+	}
 }
 
 func TestStringToGoStringValue(t *testing.T) {
@@ -836,4 +949,109 @@ func Test_replaceInitialism(t *testing.T) {
 			assert.Equalf(t, tt.want, replaceInitialism(tt.args.s), "replaceInitialism(%v)", tt.args.s)
 		})
 	}
+}
+
+
+func TestValidateStdHTTPPath(t *testing.T) {
+	tests := []struct {
+		path    string
+		wantErr bool
+	}{
+		{"/resources/{resourceId}", false},
+		{"/resources/{resourceId}/apply", false},
+		{"/resources/{resourceId}:apply", true},
+		{"/resources/prefix{resourceId}", true},
+		{"/resources/{resourceId}suffix", true},
+		{"/pets:validate", false}, // pure literal segment with colon is fine for ServeMux
+		{"/path/{arg1}/{arg2}/foo", false},
+	}
+	for _, tt := range tests {
+		err := ValidateStdHTTPPath(tt.path)
+		if tt.wantErr && err == nil {
+			t.Errorf("path %q: expected error", tt.path)
+		}
+		if !tt.wantErr && err != nil {
+			t.Errorf("path %q: unexpected error: %v", tt.path, err)
+		}
+	}
+}
+
+func TestGenerateRejectsMixedServeMuxPathParam(t *testing.T) {
+	spec := `openapi: 3.0.3
+info:
+  title: mixed path param
+  version: 1.0.0
+paths:
+  /resources/{resourceId}:apply:
+    post:
+      operationId: applyResource
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Applied
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	_, err = Generate(swagger, Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			StdHTTPServer: true,
+			Models:        true,
+		},
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "mixes a path parameter")
+}
+
+func TestGenerateAllowsMixedServeMuxPathParamWhenFilteredOut(t *testing.T) {
+	spec := `openapi: 3.0.3
+info:
+  title: mixed path param filtered out
+  version: 1.0.0
+paths:
+  /resources/{resourceId}:apply:
+    post:
+      operationId: applyResource
+      tags: [excluded]
+      parameters:
+        - name: resourceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Applied
+  /pets:
+    get:
+      operationId: listPets
+      responses:
+        "200":
+          description: OK
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	// Tag filtering removes the only operation on the mixed segment but leaves
+	// the path key in the spec; no route is emitted for it, so generation must
+	// succeed.
+	_, err = Generate(swagger, Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			StdHTTPServer: true,
+			Models:        true,
+		},
+		OutputOptions: OutputOptions{
+			ExcludeTags: []string{"excluded"},
+		},
+	})
+	require.NoError(t, err)
 }

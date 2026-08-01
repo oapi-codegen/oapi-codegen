@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: optionscontenttypes
+output: content_types.gen.go
+generate:
+  models: true
+  client: true
+  std-http-server: true
+  strict-server: true
+output-options:
+  skip-prune: true
+  # content-types: short names mapped to media-type regex patterns. V1 renames
+  # a vendored JSON type in generated identifiers; CSV opts an otherwise
+  # unsupported media type into model generation.
+  content-types:
+    V1: ['^application/vnd\.mycompany\.v1\+json$']
+    CSV: ['^text/csv$']

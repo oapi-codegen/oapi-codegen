@@ -133,6 +133,14 @@ type PostBodyPropertyOneOfJSONRequestBody PostBodyPropertyOneOfJSONBody
 // PostBodyRootOneOfJSONRequestBody defines body for PostBodyRootOneOf for application/json ContentType.
 type PostBodyRootOneOfJSONRequestBody PostBodyRootOneOfJSONBody
 
+func (t PostBodyRootOneOfJSONRequestBody) MarshalJSON() ([]byte, error) {
+	return PostBodyRootOneOfJSONBody(t).MarshalJSON()
+}
+
+func (t *PostBodyRootOneOfJSONRequestBody) UnmarshalJSON(b []byte) error {
+	return (*PostBodyRootOneOfJSONBody)(t).UnmarshalJSON(b)
+}
+
 // TriggerCallbackJSONRequestBody defines body for TriggerCallback for application/json ContentType.
 type TriggerCallbackJSONRequestBody TriggerCallbackJSONBody
 
@@ -142,11 +150,27 @@ type WebhookBodyPropertyOneOfJSONRequestBody WebhookBodyPropertyOneOfJSONBody
 // WebhookBodyRootOneOfJSONRequestBody defines body for WebhookBodyRootOneOf for application/json ContentType.
 type WebhookBodyRootOneOfJSONRequestBody WebhookBodyRootOneOfJSONBody
 
+func (t WebhookBodyRootOneOfJSONRequestBody) MarshalJSON() ([]byte, error) {
+	return WebhookBodyRootOneOfJSONBody(t).MarshalJSON()
+}
+
+func (t *WebhookBodyRootOneOfJSONRequestBody) UnmarshalJSON(b []byte) error {
+	return (*WebhookBodyRootOneOfJSONBody)(t).UnmarshalJSON(b)
+}
+
 // CallbackBodyPropertyOneOfJSONRequestBody defines body for CallbackBodyPropertyOneOf for application/json ContentType.
 type CallbackBodyPropertyOneOfJSONRequestBody CallbackBodyPropertyOneOfJSONBody
 
 // CallbackBodyRootOneOfJSONRequestBody defines body for CallbackBodyRootOneOf for application/json ContentType.
 type CallbackBodyRootOneOfJSONRequestBody CallbackBodyRootOneOfJSONBody
+
+func (t CallbackBodyRootOneOfJSONRequestBody) MarshalJSON() ([]byte, error) {
+	return CallbackBodyRootOneOfJSONBody(t).MarshalJSON()
+}
+
+func (t *CallbackBodyRootOneOfJSONRequestBody) UnmarshalJSON(b []byte) error {
+	return (*CallbackBodyRootOneOfJSONBody)(t).UnmarshalJSON(b)
+}
 
 // AsImplicitCat returns the union data inside the PostBodyPropertyOneOfJSONBody_Pet as a ImplicitCat
 func (t PostBodyPropertyOneOfJSONBody_Pet) AsImplicitCat() (ImplicitCat, error) {

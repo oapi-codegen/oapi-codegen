@@ -119,7 +119,7 @@ func NewGetTestRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/test")
+	operationPath := "/v1/test"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

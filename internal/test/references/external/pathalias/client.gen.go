@@ -6,7 +6,6 @@ package pathalias
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -137,7 +136,7 @@ func NewGetTestRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/test")
+	operationPath := "/test"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -164,7 +163,7 @@ func NewGetTestAlias0Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/test2")
+	operationPath := "/test2"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

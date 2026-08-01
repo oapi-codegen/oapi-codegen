@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -317,7 +316,7 @@ func NewPostBothRequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/with_both_bodies")
+	operationPath := "/with_both_bodies"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -346,7 +345,7 @@ func NewGetBothRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/with_both_responses")
+	operationPath := "/with_both_responses"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -384,7 +383,7 @@ func NewPostJsonRequestWithBody(server string, contentType string, body io.Reade
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/with_json_body")
+	operationPath := "/with_json_body"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -413,7 +412,7 @@ func NewGetJsonRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/with_json_response")
+	operationPath := "/with_json_response"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -440,7 +439,7 @@ func NewPostOtherRequestWithBody(server string, contentType string, body io.Read
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/with_other_body")
+	operationPath := "/with_other_body"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -469,7 +468,7 @@ func NewGetOtherRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/with_other_response")
+	operationPath := "/with_other_response"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -496,7 +495,7 @@ func NewGetJsonWithTrailingSlashRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/with_trailing_slash/")
+	operationPath := "/with_trailing_slash/"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -534,7 +533,7 @@ func NewPostVendorJsonRequestWithBody(server string, contentType string, body io
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/with_vendor_json")
+	operationPath := "/with_vendor_json"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

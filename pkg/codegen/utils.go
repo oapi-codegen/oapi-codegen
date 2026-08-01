@@ -15,6 +15,7 @@ package codegen
 
 import (
 	"bytes"
+	"errors"
 	"cmp"
 	"fmt"
 	"go/token"
@@ -682,6 +683,49 @@ func SwaggerUriToStdHttpUri(uri string) string {
 	return uri
 }
 
+// ValidateStdHTTPPath reports whether an OpenAPI path can be registered with
+// net/http ServeMux. ServeMux wildcards must occupy an entire path segment, so
+// mixed segments such as "{resourceId}:apply" are rejected at codegen time
+// instead of panicking at server startup (see #2488).
+func ValidateStdHTTPPath(path string) error {
+	for _, seg := range strings.Split(path, "/") {
+		if seg == "" || seg == "{$}" {
+			continue
+		}
+		loc := pathParamRE.FindStringIndex(seg)
+		if loc == nil {
+			// pure literal segment
+			continue
+		}
+		// Wildcard must be the entire segment.
+		if loc[0] != 0 || loc[1] != len(seg) {
+			return fmt.Errorf("path %q: segment %q mixes a path parameter with literal text; net/http ServeMux requires wildcards to occupy an entire path segment (std-http-server)", path, seg)
+		}
+	}
+	return nil
+}
+
+// ValidateStdHTTPPaths validates every path in the document for ServeMux.
+// Paths whose operations have all been removed (e.g. by tag or operation-id
+// filtering) emit no routes, so they are skipped.
+func ValidateStdHTTPPaths(spec *openapi3.T) error {
+	if spec == nil || spec.Paths == nil {
+		return nil
+	}
+	var errs []error
+	pathMap := spec.Paths.Map()
+	for _, path := range SortedMapKeys(pathMap) {
+		pathItem := pathMap[path]
+		if pathItem == nil || len(pathItem.Operations()) == 0 {
+			continue
+		}
+		if err := ValidateStdHTTPPath(path); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
+}
+
 // OrderedParamsFromUri returns the argument names, in order, in a given URI string, so for
 // /path/{param1}/{.param2*}/{?param3}, it would return param1, param2, param3
 func OrderedParamsFromUri(uri string) []string {
@@ -693,9 +737,45 @@ func OrderedParamsFromUri(uri string) []string {
 	return result
 }
 
-// ReplacePathParamsWithStr replaces path parameters of the form {param} with %s
-func ReplacePathParamsWithStr(uri string) string {
-	return pathParamRE.ReplaceAllString(uri, "%s")
+// GenPathString constructs a Go expression that builds the given URI by concatenating
+// its literal segments with the path-parameter variables named <paramVarName>0 through
+// <paramVarName>N. Literal segments are quoted with strconv.Quote so that characters
+// which are significant in Go source, such as quotes, backslashes and percent signs,
+// survive into the generated code unchanged.
+func GenPathString(uri, paramVarName string) string {
+	matches := pathParamRE.FindAllStringSubmatchIndex(uri, -1)
+	if len(matches) == 0 {
+		return strconv.Quote(uri)
+	}
+
+	// A path parameter may appear more than once in the same path. SortParamsByPath
+	// deduplicates them and preserves first-occurrence order, and the client template
+	// declares one variable per deduplicated parameter, so every repeat has to refer
+	// back to the variable assigned to its first occurrence.
+	varIndexByName := make(map[string]int, len(matches))
+
+	parts := make([]string, 0, 2*len(matches)+1)
+	pos := 0
+	for _, match := range matches {
+		if literal := uri[pos:match[0]]; literal != "" {
+			parts = append(parts, strconv.Quote(literal))
+		}
+
+		name := uri[match[2]:match[3]]
+		idx, seen := varIndexByName[name]
+		if !seen {
+			idx = len(varIndexByName)
+			varIndexByName[name] = idx
+		}
+
+		parts = append(parts, fmt.Sprintf("%s%d", paramVarName, idx))
+		pos = match[1]
+	}
+	if literal := uri[pos:]; literal != "" {
+		parts = append(parts, strconv.Quote(literal))
+	}
+
+	return strings.Join(parts, " + ")
 }
 
 // SortParamsByPath reorders the given parameter definitions to match those in the path URI.

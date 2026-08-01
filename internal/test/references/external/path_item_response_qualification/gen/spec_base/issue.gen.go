@@ -133,7 +133,7 @@ func NewGetV1OutcomeRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/outcome")
+	operationPath := "/v1/outcome"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -160,7 +160,7 @@ func NewGetV1VersionRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/version")
+	operationPath := "/v1/version"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
