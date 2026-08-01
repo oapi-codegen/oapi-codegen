@@ -5,7 +5,6 @@ package extensionsstructtags
 
 import (
 	"context"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -145,7 +144,7 @@ func NewListThingsRequest(server string, params *ListThingsParams) (*http.Reques
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/things")
+	operationPath := "/things"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

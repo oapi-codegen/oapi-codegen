@@ -207,7 +207,7 @@ func NewExamplePatchRequestWithBody(server string, contentType string, body io.R
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/example")
+	operationPath := "/example"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

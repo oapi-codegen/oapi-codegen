@@ -306,7 +306,7 @@ func NewExampleGetRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/example")
+	operationPath := "/example"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -333,7 +333,7 @@ func NewExampleGet2Request(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/example2")
+	operationPath := "/example2"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -360,7 +360,7 @@ func NewGetRootRequest(server string, params *GetRootParams) (*http.Request, err
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/root")
+	operationPath := "/root"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -421,7 +421,7 @@ func NewTestRequestWithBody(server string, contentType string, body io.Reader) (
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/test")
+	operationPath := "/test"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

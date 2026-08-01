@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"encoding/xml"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -165,7 +164,7 @@ func NewGetMixedRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/mixed")
+	operationPath := "/mixed"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -192,7 +191,7 @@ func NewGetThingRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/thing")
+	operationPath := "/thing"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -219,7 +218,7 @@ func NewGetXMLOnlyRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/xml-only")
+	operationPath := "/xml-only"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

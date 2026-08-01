@@ -245,7 +245,7 @@ func NewPlantTreeRequestWithBody(server string, contentType string, body io.Read
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/api/plant_tree")
+	operationPath := "/api/plant_tree"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

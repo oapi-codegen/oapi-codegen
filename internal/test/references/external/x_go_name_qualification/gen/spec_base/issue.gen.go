@@ -6,7 +6,6 @@ package spec_base
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -115,7 +114,7 @@ func NewGetOutcomeRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/outcome")
+	operationPath := "/outcome"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

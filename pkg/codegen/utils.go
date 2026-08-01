@@ -737,9 +737,45 @@ func OrderedParamsFromUri(uri string) []string {
 	return result
 }
 
-// ReplacePathParamsWithStr replaces path parameters of the form {param} with %s
-func ReplacePathParamsWithStr(uri string) string {
-	return pathParamRE.ReplaceAllString(uri, "%s")
+// GenPathString constructs a Go expression that builds the given URI by concatenating
+// its literal segments with the path-parameter variables named <paramVarName>0 through
+// <paramVarName>N. Literal segments are quoted with strconv.Quote so that characters
+// which are significant in Go source, such as quotes, backslashes and percent signs,
+// survive into the generated code unchanged.
+func GenPathString(uri, paramVarName string) string {
+	matches := pathParamRE.FindAllStringSubmatchIndex(uri, -1)
+	if len(matches) == 0 {
+		return strconv.Quote(uri)
+	}
+
+	// A path parameter may appear more than once in the same path. SortParamsByPath
+	// deduplicates them and preserves first-occurrence order, and the client template
+	// declares one variable per deduplicated parameter, so every repeat has to refer
+	// back to the variable assigned to its first occurrence.
+	varIndexByName := make(map[string]int, len(matches))
+
+	parts := make([]string, 0, 2*len(matches)+1)
+	pos := 0
+	for _, match := range matches {
+		if literal := uri[pos:match[0]]; literal != "" {
+			parts = append(parts, strconv.Quote(literal))
+		}
+
+		name := uri[match[2]:match[3]]
+		idx, seen := varIndexByName[name]
+		if !seen {
+			idx = len(varIndexByName)
+			varIndexByName[name] = idx
+		}
+
+		parts = append(parts, fmt.Sprintf("%s%d", paramVarName, idx))
+		pos = match[1]
+	}
+	if literal := uri[pos:]; literal != "" {
+		parts = append(parts, strconv.Quote(literal))
+	}
+
+	return strings.Join(parts, " + ")
 }
 
 // SortParamsByPath reorders the given parameter definitions to match those in the path URI.

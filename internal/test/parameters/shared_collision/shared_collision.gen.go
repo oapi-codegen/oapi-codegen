@@ -6,7 +6,6 @@ package parameterssharedcollision
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -289,7 +288,7 @@ func NewDeleteGadgetRequest(server string, id struct {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/gadget/%s", pathParam0)
+	operationPath := "/gadget/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -325,7 +324,7 @@ func NewGetGadgetPartRequest(server string, id struct {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/gadget/%s/part", pathParam0)
+	operationPath := "/gadget/" + pathParam0 + "/part"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -361,7 +360,7 @@ func NewGetSprocketRequest(server string, ref struct {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/sprocket/%s", pathParam0)
+	operationPath := "/sprocket/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -388,7 +387,7 @@ func NewSubscribeRequest(server string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/subscribe")
+	operationPath := "/subscribe"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -424,7 +423,7 @@ func NewDeleteWidgetRequest(server string, wid struct {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/widget/%s", pathParam0)
+	operationPath := "/widget/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -460,7 +459,7 @@ func NewGetWidgetRequest(server string, wid struct {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/widget/%s", pathParam0)
+	operationPath := "/widget/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

@@ -220,7 +220,7 @@ func NewGetPetRequest(server string, petId string) (*http.Request, error) {
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/pets/%s", pathParam0)
+	operationPath := "/pets/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -258,7 +258,7 @@ func NewValidatePetsRequestWithBody(server string, contentType string, body io.R
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/pets:validate")
+	operationPath := "/pets:validate"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -294,7 +294,7 @@ func NewGetSimplePrimitiveRequest(server string, param string) (*http.Request, e
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/simplePrimitive/%s", pathParam0)
+	operationPath := "/simplePrimitive/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}

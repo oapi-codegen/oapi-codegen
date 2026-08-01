@@ -251,7 +251,7 @@ func NewDeregisterWebhookRequest(server string, id openapi_types.UUID) (*http.Re
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/api/webhook/%s", pathParam0)
+	operationPath := "/api/webhook/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -296,7 +296,7 @@ func NewRegisterWebhookRequestWithBody(server string, kind RegisterWebhookParams
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/api/webhook/%s", pathParam0)
+	operationPath := "/api/webhook/" + pathParam0
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
