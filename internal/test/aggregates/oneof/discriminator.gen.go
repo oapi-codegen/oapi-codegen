@@ -184,7 +184,7 @@ func (t ConfigSaveReq) Discriminator() (string, error) {
 	return discriminator.Discriminator, err
 }
 
-func (t ConfigSaveReq) ValueByDiscriminator() (interface{}, error) {
+func (t ConfigSaveReq) ValueByDiscriminator() (any, error) {
 	discriminator, err := t.Discriminator()
 	if err != nil {
 		return nil, err
@@ -289,7 +289,7 @@ func (t ConflictError) Discriminator() (string, error) {
 	return discriminator.Discriminator, err
 }
 
-func (t ConflictError) ValueByDiscriminator() (interface{}, error) {
+func (t ConflictError) ValueByDiscriminator() (any, error) {
 	discriminator, err := t.Discriminator()
 	if err != nil {
 		return nil, err
@@ -398,7 +398,7 @@ func (t PetByKind) Discriminator() (string, error) {
 	return discriminator.Discriminator, err
 }
 
-func (t PetByKind) ValueByDiscriminator() (interface{}, error) {
+func (t PetByKind) ValueByDiscriminator() (any, error) {
 	discriminator, err := t.Discriminator()
 	if err != nil {
 		return nil, err
@@ -541,7 +541,7 @@ func (t RenamedPetByKind) Discriminator() (string, error) {
 	return discriminator.Discriminator, err
 }
 
-func (t RenamedPetByKind) ValueByDiscriminator() (interface{}, error) {
+func (t RenamedPetByKind) ValueByDiscriminator() (any, error) {
 	discriminator, err := t.Discriminator()
 	if err != nil {
 		return nil, err

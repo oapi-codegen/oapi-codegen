@@ -142,7 +142,7 @@ type strictHandler struct {
             {{if $multipleBodies}}}{{end}}
         {{end}}{{/* range .Bodies */}}
 
-        handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+        handler := func(ctx *gin.Context, request any) (any, error) {
             return sh.ssi.{{.OperationId}}(ctx, request.({{$opid | ucFirst}}RequestObject))
         }
         for _, middleware := range sh.middlewares {

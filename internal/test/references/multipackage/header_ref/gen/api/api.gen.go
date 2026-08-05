@@ -547,7 +547,7 @@ func (sh *strictHandler) GetThing(w http.ResponseWriter, r *http.Request, id str
 
 	request.Id = id
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.GetThing(ctx, request.(GetThingRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

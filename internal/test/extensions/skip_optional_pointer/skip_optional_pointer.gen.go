@@ -18,8 +18,8 @@ import (
 
 // ArrayContainer defines model for ArrayContainer.
 type ArrayContainer struct {
-	Values               []string               `json:"values,omitempty"`
-	AdditionalProperties map[string]interface{} `json:"-"`
+	Values               []string       `json:"values,omitempty"`
+	AdditionalProperties map[string]any `json:"-"`
 }
 
 // Default defines model for Default.
@@ -33,14 +33,14 @@ type Pong struct {
 
 // ResponseBody defines model for ResponseBody.
 type ResponseBody struct {
-	AMap                      map[string]Pong        `json:"a_map,omitempty"`
-	ASlice                    []Pong                 `json:"a_slice,omitempty"`
-	ASliceWithAdditionalProps []map[string]Pong      `json:"a_slice_with_additional_props,omitempty"`
-	AdditionalProps           map[string]Pong        `json:"additional_props,omitempty"`
-	Bytes                     []byte                 `json:"bytes,omitempty"`
-	BytesWithOverride         *[]byte                `json:"bytes_with_override,omitempty"`
-	RequiredSlice             []Pong                 `json:"required_slice"`
-	UnknownObject             map[string]interface{} `json:"unknown_object,omitempty"`
+	AMap                      map[string]Pong   `json:"a_map,omitempty"`
+	ASlice                    []Pong            `json:"a_slice,omitempty"`
+	ASliceWithAdditionalProps []map[string]Pong `json:"a_slice_with_additional_props,omitempty"`
+	AdditionalProps           map[string]Pong   `json:"additional_props,omitempty"`
+	Bytes                     []byte            `json:"bytes,omitempty"`
+	BytesWithOverride         *[]byte           `json:"bytes_with_override,omitempty"`
+	RequiredSlice             []Pong            `json:"required_slice"`
+	UnknownObject             map[string]any    `json:"unknown_object,omitempty"`
 }
 
 // SkipOptionalTrue defines model for SkipOptionalTrue.
@@ -71,7 +71,7 @@ type CreateThingJSONRequestBody = Thing
 
 // Getter for additional properties for ArrayContainer. Returns the specified
 // element and whether it was found
-func (a ArrayContainer) Get(fieldName string) (value interface{}, found bool) {
+func (a ArrayContainer) Get(fieldName string) (value any, found bool) {
 	if a.AdditionalProperties != nil {
 		value, found = a.AdditionalProperties[fieldName]
 	}
@@ -79,9 +79,9 @@ func (a ArrayContainer) Get(fieldName string) (value interface{}, found bool) {
 }
 
 // Setter for additional properties for ArrayContainer
-func (a *ArrayContainer) Set(fieldName string, value interface{}) {
+func (a *ArrayContainer) Set(fieldName string, value any) {
 	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 	}
 	a.AdditionalProperties[fieldName] = value
 }
@@ -103,9 +103,9 @@ func (a *ArrayContainer) UnmarshalJSON(b []byte) error {
 	}
 
 	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]interface{})
+		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
-			var fieldVal interface{}
+			var fieldVal any
 			err := json.Unmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)

@@ -723,7 +723,7 @@ func (sh *strictHandler) AddPet(w http.ResponseWriter, r *http.Request) {
 	}
 	request.Body = &body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.AddPet(ctx, request.(AddPetRequestObject))
 	}
 	for _, middleware := range sh.middlewares {
@@ -749,7 +749,7 @@ func (sh *strictHandler) UploadReport(w http.ResponseWriter, r *http.Request) {
 
 	request.Body = r.Body
 
-	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
 		return sh.ssi.UploadReport(ctx, request.(UploadReportRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

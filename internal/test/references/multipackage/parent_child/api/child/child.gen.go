@@ -168,7 +168,7 @@ type strictHandler struct {
 func (sh *strictHandler) GetPets(ctx *gin.Context) {
 	var request GetPetsRequestObject
 
-	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+	handler := func(ctx *gin.Context, request any) (any, error) {
 		return sh.ssi.GetPets(ctx, request.(GetPetsRequestObject))
 	}
 	for _, middleware := range sh.middlewares {

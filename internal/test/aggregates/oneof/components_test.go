@@ -260,7 +260,7 @@ func TestAnyOf(t *testing.T) {
 
 func TestOneOfWithAdditional(t *testing.T) {
 	x := OneOfObject13{
-		AdditionalProperties: map[string]interface{}{"x": "y"},
+		AdditionalProperties: map[string]any{"x": "y"},
 	}
 	err := x.MergeOneOfVariant1(OneOfVariant1{Name: "test-name"})
 	require.NoError(t, err)

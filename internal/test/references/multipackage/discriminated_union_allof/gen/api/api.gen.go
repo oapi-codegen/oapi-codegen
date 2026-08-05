@@ -99,7 +99,7 @@ func (t PRFile) Discriminator() (string, error) {
 	return discriminator.Discriminator, err
 }
 
-func (t PRFile) ValueByDiscriminator() (interface{}, error) {
+func (t PRFile) ValueByDiscriminator() (any, error) {
 	discriminator, err := t.Discriminator()
 	if err != nil {
 		return nil, err
