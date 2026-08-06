@@ -4,7 +4,7 @@ type {{names.ClientWithResponses}} struct {
 }
 
 // {{names.NewClientWithResponses}} creates a new {{names.ClientWithResponses}}, which wraps
-// {{names.ClientStem}} with return type handling
+// {{names.Client}} with return type handling
 func {{names.NewClientWithResponses}}(server string, opts ...{{names.ClientOption}}) (*{{names.ClientWithResponses}}, error) {
     client, err := {{names.NewClient}}(server, opts...)
     if err != nil {
