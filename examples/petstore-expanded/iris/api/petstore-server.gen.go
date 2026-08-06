@@ -160,7 +160,7 @@ func (w *ServerInterfaceWrapper) FindPetByID(ctx iris.Context) {
 	w.Handler.FindPetByID(ctx, id)
 }
 
-// IrisServerOption is the option for iris server
+// IrisServerOptions is the option for iris server
 type IrisServerOptions struct {
 	BaseURL     string
 	Middlewares []MiddlewareFunc

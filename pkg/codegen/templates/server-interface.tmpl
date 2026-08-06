@@ -10,11 +10,11 @@ Hooks:
                                Default is the net/http (w, r, ...) shape with no
                                return value; echo/fiber add ` error`, gin/iris
                                swap the receiver/context type.
-  interface.unimplemented    - optional Unimplemented stub type (chi only; empty
+  interface.unimplemented    - optional `Unimplemented` stub type (chi only; empty
                                by default).
 */}}
-// ServerInterface represents all server handlers.
-type ServerInterface interface {
+// {{names.ServerInterface}} represents all server handlers.
+type {{names.ServerInterface}} interface {
 {{range .}}{{if not .IsAlias}}{{.SummaryAsComment .OperationId }}
 // ({{.Method}} {{.Path}})
 {{with .DeprecationComment}}//
