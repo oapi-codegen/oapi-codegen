@@ -2397,7 +2397,10 @@ Two notes:
 
 If you override the built-in templates, nothing changes for you: your templates keep working untouched. To honour renames in your own templates, interpolate the same fields, e.g. `{{names.ServerInterface}}` (or `{{opts.OutputOptions.ComponentNames.ServerInterface}}`).
 
-One name is deliberately never renamed at its use site: the `PathToRawSpec` call that a generated package makes into a package it `$ref`s through [import mapping](#splitting-large-openapi-specs-across-multiple-packages-aka-import-mapping-or-external-references). That name belongs to the *referenced* package, whose configuration the referencing package cannot see, so the default is always used. Renaming or prefixing `PathToRawSpec` in a package that others `$ref` will break those callers.
+> [!IMPORTANT]
+> When one spec `$ref`s another through [import-mapping](#splitting-large-openapi-specs-across-multiple-packages-aka-import-mapping-or-external-references), all the specs involved **must be generated with the same `component-names` settings, `prefix` included**. The generated code calls across package boundaries by name -- `<package>.PathToRawSpec`, when resolving external references in the embedded spec -- and each configuration names those functions from its own settings. If the settings disagree, the referencing package will call a name the referenced package does not export, and the generated code will fail to compile with an "undefined" error.
+>
+> This is a requirement rather than a limitation. Import-mapping exists to split the generated boilerplate of what is conceptually one monolithic spec across several Go packages: the pieces are a single API, so they should be generated consistently, and `component-names` -- the prefix especially -- is part of that consistency. If you genuinely need individual names to diverge across the split, the per-schema [`x-go-name` and `x-go-type` extensions](#openapi-extensions) remain the escape hatch; identical settings everywhere is the supported and expected configuration.
 
 ### Collisions
 
