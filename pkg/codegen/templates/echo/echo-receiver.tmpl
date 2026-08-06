@@ -1,9 +1,9 @@
-// {{.Prefix}}ReceiverInterface represents handlers for receiving inbound
+// {{names.Prefix}}{{.Prefix}}ReceiverInterface represents handlers for receiving inbound
 // {{.PrefixLower}} requests. Each {{.PrefixLower}} becomes a Handle*{{.Prefix}}
 // method that the implementation fills in. The caller mounts the per-
 // {{.PrefixLower}} echo.HandlerFunc returned by {Op}{{.Prefix}}Handler at
 // whatever URL path they advertise to senders.
-type {{.Prefix}}ReceiverInterface interface {
+type {{names.Prefix}}{{.Prefix}}ReceiverInterface interface {
 {{range .Operations -}}
 {{.SummaryAsComment ""}}
 // Handle{{.OperationId}}{{$.Prefix}} handles the {{.Method}} {{$.PrefixLower}} for {{.SourceName}}.
@@ -19,7 +19,7 @@ Handle{{.OperationId}}{{$.Prefix}}(ctx {{$.CtxType}}{{if .RequiresParamObject}},
 // during parameter binding are returned via echo.NewHTTPError so echo's
 // error-handling chain reports them as 400. Middlewares are applied in
 // the order provided -- the last argument becomes the outermost wrapper.
-func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface, middlewares ...echo.MiddlewareFunc) echo.HandlerFunc {
+func {{$opid}}{{$.Prefix}}Handler(si {{names.Prefix}}{{$.Prefix}}ReceiverInterface, middlewares ...echo.MiddlewareFunc) echo.HandlerFunc {
     h := echo.HandlerFunc(func(ctx {{$.CtxType}}) error {
 {{- if .RequiresParamObject}}
         var err error

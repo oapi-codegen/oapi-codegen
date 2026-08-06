@@ -1,9 +1,9 @@
-// {{.Prefix}}ReceiverInterface represents handlers for receiving inbound
+// {{names.Prefix}}{{.Prefix}}ReceiverInterface represents handlers for receiving inbound
 // {{.PrefixLower}} requests. Each {{.PrefixLower}} becomes a Handle*{{.Prefix}}
 // method that the implementation fills in. The caller mounts the per-
 // {{.PrefixLower}} fiber.Handler returned by {Op}{{.Prefix}}Handler at
 // whatever URL path they advertise to senders.
-type {{.Prefix}}ReceiverInterface interface {
+type {{names.Prefix}}{{.Prefix}}ReceiverInterface interface {
 {{range .Operations -}}
 {{.SummaryAsComment ""}}
 // Handle{{.OperationId}}{{$.Prefix}} handles the {{.Method}} {{$.PrefixLower}} for {{.SourceName}}.
@@ -19,7 +19,7 @@ Handle{{.OperationId}}{{$.Prefix}}(c {{$.CtxType}}{{if .RequiresParamObject}}, p
 // during parameter binding are returned via fiber.NewError so fiber's
 // error chain reports them as 400. Per-handler middleware is not
 // generated here; use fiber.App.Use() for engine-level middleware.
-func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface) fiber.Handler {
+func {{$opid}}{{$.Prefix}}Handler(si {{names.Prefix}}{{$.Prefix}}ReceiverInterface) fiber.Handler {
     return func(c {{$.CtxType}}) error {
 {{- if .RequiresParamObject}}
         var err error

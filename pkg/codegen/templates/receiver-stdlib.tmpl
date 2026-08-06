@@ -1,9 +1,9 @@
-// {{.Prefix}}ReceiverInterface represents handlers for receiving inbound
+// {{names.Prefix}}{{.Prefix}}ReceiverInterface represents handlers for receiving inbound
 // {{.PrefixLower}} requests. Each {{.PrefixLower}} becomes a Handle*{{.Prefix}}
 // method that the implementation fills in. The caller mounts the per-
 // {{.PrefixLower}} http.Handler returned by {Op}{{.Prefix}}Handler at
 // whatever URL path they advertise to senders.
-type {{.Prefix}}ReceiverInterface interface {
+type {{names.Prefix}}{{.Prefix}}ReceiverInterface interface {
 {{range .Operations -}}
 {{.SummaryAsComment ""}}
 // Handle{{.OperationId}}{{$.Prefix}} handles the {{.Method}} {{$.PrefixLower}} for {{.SourceName}}.
@@ -11,9 +11,9 @@ Handle{{.OperationId}}{{$.Prefix}}(w http.ResponseWriter, r *http.Request{{if .R
 {{end}}
 }
 
-// {{.Prefix}}ReceiverMiddlewareFunc wraps an http.Handler with cross-
+// {{names.Prefix}}{{.Prefix}}ReceiverMiddlewareFunc wraps an http.Handler with cross-
 // cutting behavior (signature verification, logging, rate limiting, ...).
-type {{.Prefix}}ReceiverMiddlewareFunc func(http.Handler) http.Handler
+type {{names.Prefix}}{{.Prefix}}ReceiverMiddlewareFunc func(http.Handler) http.Handler
 
 {{range .Operations -}}
 {{$opid := .OperationId -}}
@@ -23,7 +23,7 @@ type {{.Prefix}}ReceiverMiddlewareFunc func(http.Handler) http.Handler
 // may be nil; if so, parameter-binding errors return 400 with the error
 // message. Middlewares are applied in the order provided -- the last
 // argument becomes the outermost wrapper.
-func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface, errHandler func(w http.ResponseWriter, r *http.Request, err error), middlewares ...{{$.Prefix}}ReceiverMiddlewareFunc) http.Handler {
+func {{$opid}}{{$.Prefix}}Handler(si {{names.Prefix}}{{$.Prefix}}ReceiverInterface, errHandler func(w http.ResponseWriter, r *http.Request, err error), middlewares ...{{names.Prefix}}{{$.Prefix}}ReceiverMiddlewareFunc) http.Handler {
     if errHandler == nil {
         errHandler = func(w http.ResponseWriter, r *http.Request, err error) {
             http.Error(w, err.Error(), http.StatusBadRequest)
@@ -47,13 +47,13 @@ func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface, errHandler f
             var value {{.TypeDef}}
             err = json.Unmarshal([]byte(paramValue), &value)
             if err != nil {
-                errHandler(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
+                errHandler(w, r, &{{names.Errors.UnmarshalingParamError}}{ParamName: "{{.ParamName}}", Err: err})
                 return
             }
             params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}value
             {{end}}
         }{{if .Required}} else {
-            errHandler(w, r, &RequiredParamError{ParamName: "{{.ParamName}}"})
+            errHandler(w, r, &{{names.Errors.RequiredParamError}}{ParamName: "{{.ParamName}}"})
             return
         }{{end}}
         {{end}}
@@ -62,9 +62,9 @@ func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface, errHandler f
         if err != nil {
             var requiredError *runtime.RequiredParameterError
             if errors.As(err, &requiredError) {
-                errHandler(w, r, &RequiredParamError{ParamName: "{{.ParamName}}"})
+                errHandler(w, r, &{{names.Errors.RequiredParamError}}{ParamName: "{{.ParamName}}"})
             } else {
-                errHandler(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
+                errHandler(w, r, &{{names.Errors.InvalidParamFormatError}}{ParamName: "{{.ParamName}}", Err: err})
             }
             return
         }
@@ -76,7 +76,7 @@ func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface, errHandler f
             var {{.GoName}} {{.TypeDef}}
             n := len(valueList)
             if n != 1 {
-                errHandler(w, r, &TooManyValuesForParamError{ParamName: "{{.ParamName}}", Count: n})
+                errHandler(w, r, &{{names.Errors.TooManyValuesForParamError}}{ParamName: "{{.ParamName}}", Count: n})
                 return
             }
             {{if .IsPassThrough}}
@@ -85,7 +85,7 @@ func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface, errHandler f
             {{if .IsJson}}
             err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
             if err != nil {
-                errHandler(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
+                errHandler(w, r, &{{names.Errors.UnmarshalingParamError}}{ParamName: "{{.ParamName}}", Err: err})
                 return
             }
             params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
@@ -93,14 +93,14 @@ func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface, errHandler f
             {{if .IsStyled}}
             err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"{{unionTypes .SchemaTypes}}})
             if err != nil {
-                errHandler(w, r, &InvalidParamFormatError{ParamName: "{{.ParamName}}", Err: err})
+                errHandler(w, r, &{{names.Errors.InvalidParamFormatError}}{ParamName: "{{.ParamName}}", Err: err})
                 return
             }
             params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
             {{end}}
         }{{if .Required}} else {
             err := fmt.Errorf("Header parameter {{.ParamName}} is required, but not found")
-            errHandler(w, r, &RequiredHeaderError{ParamName: "{{.ParamName}}", Err: err})
+            errHandler(w, r, &{{names.Errors.RequiredHeaderError}}{ParamName: "{{.ParamName}}", Err: err})
             return
         }{{end}}
 {{end}}
