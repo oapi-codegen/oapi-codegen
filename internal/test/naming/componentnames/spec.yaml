@@ -1,0 +1,98 @@
+# ==========================================================================
+# Category: naming/componentnames
+# Tests:    output-options.component-names -- renaming the fixed, generated
+#           package-level identifiers.
+#
+# The spec is deliberately unremarkable; what it must do is exercise every
+# code path that mentions a component name, so that a name the templates
+# still hardcode shows up as an undefined identifier at compile time. Hence:
+# a path parameter, a required query parameter, a JSON-content query
+# parameter, a required header and a JSON-content cookie (one per
+# parameter-binding error type), a request body, and a response schema.
+# ==========================================================================
+openapi: "3.0.0"
+
+info:
+  title: component-names
+  description: |
+    Two configurations generate into this one Go package, each with its own
+    `component-names.prefix`. That is only possible because the prefix
+    renames the unexported names (swaggerSpec, rawSpec, decodeSpec,
+    decodeSpecCached, strictHandler) as well as the exported ones.
+  version: 1.0.0
+
+paths:
+  /things:
+    post:
+      operationId: createThing
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Thing'
+      responses:
+        '201':
+          description: created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Thing'
+  /things/{thingId}:
+    get:
+      operationId: getThing
+      parameters:
+        - name: thingId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: kind
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: filter
+          in: query
+          required: false
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+        - name: X-Request-Id
+          in: header
+          required: true
+          schema:
+            type: string
+        - name: session
+          in: cookie
+          required: false
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Thing'
+
+components:
+  schemas:
+    Thing:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        name:
+          type: string
