@@ -26,12 +26,14 @@ import (
 // layers, in order:
 //
 //  1. Defaults: the names oapi-codegen has always emitted.
-//  2. Prefix: every name still at its default gets Prefix prepended. Exported
-//     names are prefixed verbatim (`PetStore` + `ServerInterface` ->
-//     `PetStoreServerInterface`); unexported names (`swaggerSpec`, `rawSpec`,
-//     `decodeSpec`, `decodeSpecCached`, `strictHandler`) lower the prefix's
-//     first letter so they stay unexported (`petStoreSwaggerSpec`).
-//  3. Explicit overrides: used verbatim, never prefixed.
+//  2. Explicit overrides replace the default for that component.
+//  3. Prefix is prepended to every resolved name, defaulted or overridden
+//     alike -- it affects everything or nothing, with no special-casing. So
+//     `prefix: PetStore` alone gives `PetStoreServerInterface`, and
+//     `prefix: PetStore` with `client: MyClient` gives `PetStoreMyClient`.
+//     Unexported names (`swaggerSpec`, `rawSpec`, `decodeSpec`,
+//     `decodeSpecCached`, `strictHandler`) lower the prefix's first letter so
+//     they stay unexported (`petStoreSwaggerSpec`).
 //
 // Fields carrying a YAML tag are user-configurable. Fields tagged `yaml:"-"`
 // are resolution slots only: they are either derived from a configurable root
@@ -50,6 +52,12 @@ type ComponentNames struct {
 	// all. Supersedes the older `client-type-name`, which renames only this
 	// type and leaves the rest of the family alone.
 	Client string `yaml:"client,omitempty"`
+	// ClientStem is the name the rest of the client family derives from. It
+	// equals Client, except when the legacy `client-type-name` is used: that
+	// knob renames only the client struct, leaving the family (and this stem)
+	// at the default. Templates use it in prose that refers to the family as
+	// a whole, so such prose stays consistent with the family's names.
+	ClientStem string `yaml:"-"`
 	// ClientInterface is derived: <Client>Interface.
 	ClientInterface string `yaml:"-"`
 	// ClientOption is derived: <Client>Option.
@@ -231,85 +239,101 @@ func prefixUnexported(prefix, name string) string {
 	return LowercaseFirstCharacter(prefix) + UppercaseFirstCharacter(name)
 }
 
-// resolve returns cn with every name filled in: defaults, then the prefix
-// applied to whatever is still at its default, then family derivation from the
-// resolved roots. Explicit overrides are never prefixed.
+// resolve returns cn with every name filled in: the user's override or the
+// historical default, then Prefix prepended to that, then family derivation
+// from the already-prefixed roots. Prefix applies uniformly -- an explicit
+// override is prefixed just like a default.
+//
+// resolve must be given the raw, user-supplied struct: it is not idempotent
+// (a second pass would prefix twice), and the `yaml:"-"` slots are outputs,
+// expected to be zero on input.
 func (cn ComponentNames) resolve() ComponentNames {
-	// exported prefixes an exported default name.
-	exp := func(name string) string { return cn.Prefix + name }
-	// unexp prefixes an unexported default name, preserving unexportedness.
-	unexp := func(name string) string { return prefixUnexported(cn.Prefix, name) }
+	// root fills an exported, user-configurable name: override or default,
+	// prefixed either way.
+	root := func(dst *string, def string) {
+		setDefault(dst, def)
+		*dst = cn.Prefix + *dst
+	}
+	// rootUnexported is root for a name that must stay unexported.
+	rootUnexported := func(dst *string, def string) {
+		setDefault(dst, def)
+		*dst = prefixUnexported(cn.Prefix, *dst)
+	}
+	// derived fills a name computed from an already-resolved (already
+	// prefixed) root, so it must not be prefixed again.
+	derived := setDefault
 
 	// --- client family ---
-	setDefault(&cn.Client, exp(defaultClientTypeName))
-	setDefault(&cn.ClientInterface, cn.Client+"Interface")
-	setDefault(&cn.ClientOption, cn.Client+"Option")
-	setDefault(&cn.NewClient, "New"+cn.Client)
-	setDefault(&cn.ClientWithResponses, cn.Client+"WithResponses")
-	setDefault(&cn.ClientWithResponsesInterface, cn.ClientWithResponses+"Interface")
-	setDefault(&cn.NewClientWithResponses, "New"+cn.ClientWithResponses)
-	setDefault(&cn.RequestEditorFn, exp("RequestEditorFn"))
-	setDefault(&cn.HTTPRequestDoer, exp("HttpRequestDoer"))
-	setDefault(&cn.WithHTTPClient, exp("WithHTTPClient"))
-	setDefault(&cn.WithRequestEditorFn, exp("WithRequestEditorFn"))
-	setDefault(&cn.WithBaseURL, exp("WithBaseURL"))
+	root(&cn.Client, defaultClientTypeName)
+	derived(&cn.ClientStem, cn.Client)
+	derived(&cn.ClientInterface, cn.ClientStem+"Interface")
+	derived(&cn.ClientOption, cn.ClientStem+"Option")
+	derived(&cn.NewClient, "New"+cn.ClientStem)
+	derived(&cn.ClientWithResponses, cn.ClientStem+"WithResponses")
+	derived(&cn.ClientWithResponsesInterface, cn.ClientWithResponses+"Interface")
+	derived(&cn.NewClientWithResponses, "New"+cn.ClientWithResponses)
+	root(&cn.RequestEditorFn, "RequestEditorFn")
+	root(&cn.HTTPRequestDoer, "HttpRequestDoer")
+	root(&cn.WithHTTPClient, "WithHTTPClient")
+	root(&cn.WithRequestEditorFn, "WithRequestEditorFn")
+	root(&cn.WithBaseURL, "WithBaseURL")
 
 	// --- shared server family ---
-	setDefault(&cn.ServerInterface, exp("ServerInterface"))
-	setDefault(&cn.ServerInterfaceWrapper, cn.ServerInterface+"Wrapper")
-	setDefault(&cn.MiddlewareFunc, exp("MiddlewareFunc"))
+	root(&cn.ServerInterface, "ServerInterface")
+	derived(&cn.ServerInterfaceWrapper, cn.ServerInterface+"Wrapper")
+	root(&cn.MiddlewareFunc, "MiddlewareFunc")
 
 	// --- net/http family ---
-	setDefault(&cn.Handler, exp("Handler"))
-	setDefault(&cn.HandlerFromMux, cn.Handler+"FromMux")
-	setDefault(&cn.HandlerFromMuxWithBaseURL, cn.Handler+"FromMuxWithBaseURL")
-	setDefault(&cn.HandlerWithOptions, cn.Handler+"WithOptions")
-	setDefault(&cn.Unimplemented, exp("Unimplemented"))
+	root(&cn.Handler, "Handler")
+	derived(&cn.HandlerFromMux, cn.Handler+"FromMux")
+	derived(&cn.HandlerFromMuxWithBaseURL, cn.Handler+"FromMuxWithBaseURL")
+	derived(&cn.HandlerWithOptions, cn.Handler+"WithOptions")
+	root(&cn.Unimplemented, "Unimplemented")
 
 	// --- register-handlers family ---
-	setDefault(&cn.RegisterHandlers, exp("RegisterHandlers"))
-	setDefault(&cn.RegisterHandlersWithBaseURL, cn.RegisterHandlers+"WithBaseURL")
-	setDefault(&cn.RegisterHandlersWithOptions, cn.RegisterHandlers+"WithOptions")
-	setDefault(&cn.RegisterHandlersOptions, cn.RegisterHandlers+"Options")
+	root(&cn.RegisterHandlers, "RegisterHandlers")
+	derived(&cn.RegisterHandlersWithBaseURL, cn.RegisterHandlers+"WithBaseURL")
+	derived(&cn.RegisterHandlersWithOptions, cn.RegisterHandlers+"WithOptions")
+	derived(&cn.RegisterHandlersOptions, cn.RegisterHandlers+"Options")
 
 	// --- strict server ---
-	setDefault(&cn.StrictServerInterface, exp("StrictServerInterface"))
-	setDefault(&cn.StrictHandlerFunc, exp("StrictHandlerFunc"))
-	setDefault(&cn.StrictMiddlewareFunc, exp("StrictMiddlewareFunc"))
-	setDefault(&cn.NewStrictHandler, exp("NewStrictHandler"))
-	setDefault(&cn.NewStrictHandlerWithOptions, exp("NewStrictHandlerWithOptions"))
-	setDefault(&cn.StrictHandler, unexp("strictHandler"))
-	setDefault(&cn.StrictHTTPServerOptions, exp("StrictHTTPServerOptions"))
-	setDefault(&cn.StrictGinServerOptions, exp("StrictGinServerOptions"))
+	root(&cn.StrictServerInterface, "StrictServerInterface")
+	root(&cn.StrictHandlerFunc, "StrictHandlerFunc")
+	root(&cn.StrictMiddlewareFunc, "StrictMiddlewareFunc")
+	root(&cn.NewStrictHandler, "NewStrictHandler")
+	root(&cn.NewStrictHandlerWithOptions, "NewStrictHandlerWithOptions")
+	rootUnexported(&cn.StrictHandler, "strictHandler")
+	root(&cn.StrictHTTPServerOptions, "StrictHTTPServerOptions")
+	root(&cn.StrictGinServerOptions, "StrictGinServerOptions")
 
 	// --- embedded spec ---
-	setDefault(&cn.GetSwagger, exp("GetSwagger"))
-	setDefault(&cn.GetSpec, exp("GetSpec"))
-	setDefault(&cn.GetSpecJSON, exp("GetSpecJSON"))
-	setDefault(&cn.PathToRawSpec, exp("PathToRawSpec"))
-	setDefault(&cn.SwaggerSpec, unexp("swaggerSpec"))
-	setDefault(&cn.RawSpec, unexp("rawSpec"))
-	setDefault(&cn.DecodeSpec, unexp("decodeSpec"))
-	setDefault(&cn.DecodeSpecCached, unexp("decodeSpecCached"))
+	root(&cn.GetSwagger, "GetSwagger")
+	root(&cn.GetSpec, "GetSpec")
+	root(&cn.GetSpecJSON, "GetSpecJSON")
+	root(&cn.PathToRawSpec, "PathToRawSpec")
+	rootUnexported(&cn.SwaggerSpec, "swaggerSpec")
+	rootUnexported(&cn.RawSpec, "rawSpec")
+	rootUnexported(&cn.DecodeSpec, "decodeSpec")
+	rootUnexported(&cn.DecodeSpecCached, "decodeSpecCached")
 
 	// --- per-framework option structs ---
-	setDefault(&cn.ChiServerOptions, exp("ChiServerOptions"))
-	setDefault(&cn.GorillaServerOptions, exp("GorillaServerOptions"))
-	setDefault(&cn.StdHTTPServerOptions, exp("StdHTTPServerOptions"))
-	setDefault(&cn.GinServerOptions, exp("GinServerOptions"))
-	setDefault(&cn.FiberServerOptions, exp("FiberServerOptions"))
-	setDefault(&cn.IrisServerOptions, exp("IrisServerOptions"))
+	root(&cn.ChiServerOptions, "ChiServerOptions")
+	root(&cn.GorillaServerOptions, "GorillaServerOptions")
+	root(&cn.StdHTTPServerOptions, "StdHTTPServerOptions")
+	root(&cn.GinServerOptions, "GinServerOptions")
+	root(&cn.FiberServerOptions, "FiberServerOptions")
+	root(&cn.IrisServerOptions, "IrisServerOptions")
 
 	// --- groups ---
-	setDefault(&cn.Errors.RequiredParamError, exp("RequiredParamError"))
-	setDefault(&cn.Errors.RequiredHeaderError, exp("RequiredHeaderError"))
-	setDefault(&cn.Errors.InvalidParamFormatError, exp("InvalidParamFormatError"))
-	setDefault(&cn.Errors.TooManyValuesForParamError, exp("TooManyValuesForParamError"))
-	setDefault(&cn.Errors.UnmarshalingParamError, exp("UnmarshalingParamError"))
-	setDefault(&cn.Errors.UnescapedCookieParamError, exp("UnescapedCookieParamError"))
-	setDefault(&cn.Echo.Router, exp("EchoRouter"))
-	setDefault(&cn.StdHTTP.ServeMux, exp("ServeMux"))
-	setDefault(&cn.Fiber.HandlerMiddlewareFunc, exp("HandlerMiddlewareFunc"))
+	root(&cn.Errors.RequiredParamError, "RequiredParamError")
+	root(&cn.Errors.RequiredHeaderError, "RequiredHeaderError")
+	root(&cn.Errors.InvalidParamFormatError, "InvalidParamFormatError")
+	root(&cn.Errors.TooManyValuesForParamError, "TooManyValuesForParamError")
+	root(&cn.Errors.UnmarshalingParamError, "UnmarshalingParamError")
+	root(&cn.Errors.UnescapedCookieParamError, "UnescapedCookieParamError")
+	root(&cn.Echo.Router, "EchoRouter")
+	root(&cn.StdHTTP.ServeMux, "ServeMux")
+	root(&cn.Fiber.HandlerMiddlewareFunc, "HandlerMiddlewareFunc")
 
 	return cn
 }
@@ -489,27 +513,20 @@ func resolveComponentNames(opts Configuration) (ComponentNames, error) {
 	if err := validateComponentNameIdentifiers(oo.ComponentNames); err != nil {
 		return ComponentNames{}, err
 	}
-	if oo.ClientTypeName != "" {
-		if !token.IsIdentifier(oo.ClientTypeName) {
-			return ComponentNames{}, fmt.Errorf("client-type-name: %q is not a valid Go identifier", oo.ClientTypeName)
-		}
-		if oo.ComponentNames.Client != "" && oo.ComponentNames.Client != oo.ClientTypeName {
-			return ComponentNames{}, fmt.Errorf(
-				"`client-type-name` (%q) and `component-names.client` (%q) are both set and disagree; "+
-					"drop `client-type-name`, which `component-names.client` supersedes",
-				oo.ClientTypeName, oo.ComponentNames.Client)
-		}
+	if oo.ClientTypeName != "" && !token.IsIdentifier(oo.ClientTypeName) {
+		return ComponentNames{}, fmt.Errorf("client-type-name: %q is not a valid Go identifier", oo.ClientTypeName)
 	}
 
 	resolved := oo.ComponentNames.resolve()
 
-	// The legacy `client-type-name` renames only the client struct, leaving
-	// ClientInterface, NewClient and the rest of the family at their defaults.
-	// Applying it after derivation preserves that behavior exactly;
-	// `component-names.client` (which is folded in before derivation) is the
-	// knob that renames the whole family.
+	// The deprecated `client-type-name` renames only the client struct,
+	// leaving ClientInterface, NewClient and the rest of the family at their
+	// defaults. Applying it after derivation preserves that behavior exactly;
+	// `component-names.client` (folded in before derivation) is the knob that
+	// renames the whole family, and silently wins when both are set --
+	// Configuration.Warnings reports the shadowing.
 	if oo.ClientTypeName != "" && oo.ComponentNames.Client == "" {
-		resolved.Client = oo.ClientTypeName
+		resolved.Client = oo.ComponentNames.Prefix + oo.ClientTypeName
 	}
 
 	if err := validateComponentNameUniqueness(resolved, opts.Generate); err != nil {
