@@ -139,10 +139,10 @@ type ComponentNames struct {
 	GetSpecJSON string `yaml:"get-spec-json,omitempty"`
 	// PathToRawSpec is prefix-only. NOTE that this name is also part of the
 	// cross-package protocol used by import-mapping: a generated package that
-	// $refs another calls `<pkg>.PathToRawSpec`, using the *default* name,
-	// because the referencing config cannot know the referenced config's
-	// component names. Renaming it in a package that others $ref will break
-	// those callers.
+	// $refs another calls `<pkg>.PathToRawSpec` using its own resolved name,
+	// which is why configs that reference each other must be generated with
+	// the same component-names settings (see the README). Mismatched settings
+	// fail to compile with an `undefined` error at that call site.
 	PathToRawSpec string `yaml:"-"`
 	// SwaggerSpec is prefix-only, and unexported (`swaggerSpec`).
 	SwaggerSpec string `yaml:"-"`
