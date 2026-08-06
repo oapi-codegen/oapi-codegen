@@ -58,6 +58,10 @@ With `oapi-codegen`, there are a few [Key Design Decisions](#key-design-decision
   - [<code>additionalProperties</code> with an object](#additionalproperties-with-an-object)
 - [Globally skipping the &quot;optional pointer&quot;](#globally-skipping-the-optional-pointer)
 - [Changing the names of generated types](#changing-the-names-of-generated-types)
+- [Changing the names of generated components](#changing-the-names-of-generated-components)
+  - [The prefix](#the-prefix)
+  - [Which names can be renamed](#which-names-can-be-renamed)
+  - [Collisions](#collisions)
 - [Examples](#examples)
   - [Blog posts](#blog-posts)
 - [Frequently Asked Questions (FAQs)](#frequently-asked-questions-faqs)
@@ -1119,6 +1123,9 @@ output-options:
 From here, `oapi-codegen` will generate multiple Go files, all within the same package, which can be used to break down your large OpenAPI specifications, and generate only the subsets of code needed for each part of the spec.
 
 Check out [the import-mapping/samepackage example](examples/import-mapping/samepackage) for the full code.
+
+> [!NOTE]
+> The self mapping shares a package between parts of *one* specification. If instead you want two unrelated specifications in one package, each needs its own set of generated component names, or `ServerInterface`, `Client`, `GetSwagger` and the rest will be declared twice. Give each generation run a distinct [`output-options.component-names.prefix`](#changing-the-names-of-generated-components).
 
 ### Using multiple packages, with one OpenAPI spec per package
 
@@ -2293,6 +2300,102 @@ type ClientInterface interface {
 
 
 For more details of what the resulting code looks like, check out [the test cases](internal/test/options/name_normalizer/).
+
+## Changing the names of generated components
+
+The section above is about names that come from your OpenAPI specification. This section is about the other kind: the fixed identifiers that `oapi-codegen` emits regardless of the spec -- `ServerInterface`, `Client`, `GetSwagger`, `RequiredParamError`, and around fifty others. The `output-options.component-names` configuration renames them.
+
+There are three reasons you might want to:
+
+1. **Your spec collides with one of them.** A `components/schemas/Client` and a generated client struct are both `Client`. Renaming the component is often easier than renaming the schema.
+2. **You want two specs in one Go package.** Every fixed name would be declared twice -- including the unexported ones (`swaggerSpec`, `rawSpec`, `decodeSpec`), which you cannot reach with `x-go-name`. Giving each generation run a `prefix` is a one-line fix.
+3. **House style**, or clearer godoc for a published SDK.
+
+```yaml
+output-options:
+  component-names:
+    prefix: PetStore
+    client: API
+    server-interface: Server
+    strict-server-interface: StrictServer
+    handler: Mux
+    register-handlers: MountRoutes
+    unimplemented: NotImplementedYet
+    get-swagger: LoadSwagger
+    get-spec: LoadSpec
+    get-spec-json: LoadSpecJSON
+    middleware-func: Middleware
+    errors:
+      required-param-error: MissingQueryParam
+      required-header-error: MissingHeader
+      invalid-param-format-error: BadParamFormat
+      too-many-values-for-param-error: RepeatedParam
+      unmarshaling-param-error: BadParamJSON
+      unescaped-cookie-param-error: BadCookieEncoding
+    echo:
+      router: Router
+    stdhttp:
+      serve-mux: Router
+    fiber:
+      handler-middleware-func: HandlerMiddleware
+```
+
+Every key is optional, and every name must be a valid Go identifier. Whether a name is exported is your choice -- `oapi-codegen` will not second-guess it.
+
+### The prefix
+
+`prefix` is prepended to every resolved name. It is independent of the individual overrides: it applies to a name you renamed just as it applies to one you left alone. So the configuration above generates `PetStoreAPI`, not `API`, and `PetStoreServerInterfaceWrapper` even though nothing renamed the wrapper.
+
+Unexported names -- `swaggerSpec`, `rawSpec`, `decodeSpec`, `decodeSpecCached`, `strictHandler` -- take the prefix with its first letter lowered, so they stay unexported: `petStoreSwaggerSpec`. This is what lets two generation runs share a Go package; see [`internal/test/naming/componentnames`](internal/test/naming/componentnames) for a worked example of exactly that.
+
+The prefix must start with a letter.
+
+### Which names can be renamed
+
+Renaming a **root** renames everything derived from it, so you rarely need to name each member of a family:
+
+| Root | Default | Names derived from it |
+|---|---|---|
+| `client` | `Client` | `ClientInterface`, `ClientOption`, `NewClient`, `ClientWithResponses`, `ClientWithResponsesInterface`, `NewClientWithResponses` |
+| `server-interface` | `ServerInterface` | `ServerInterfaceWrapper` |
+| `handler` | `Handler` | `HandlerFromMux`, `HandlerFromMuxWithBaseURL`, `HandlerWithOptions` |
+| `register-handlers` | `RegisterHandlers` | `RegisterHandlersWithBaseURL`, `RegisterHandlersWithOptions`, `RegisterHandlersOptions` |
+| `strict-server-interface` | `StrictServerInterface` | -- |
+| `middleware-func` | `MiddlewareFunc` | -- |
+| `unimplemented` | `Unimplemented` | -- |
+| `get-swagger` / `get-spec` / `get-spec-json` | `GetSwagger` / `GetSpec` / `GetSpecJSON` | -- |
+| `errors.*` | the six parameter-binding error types | -- |
+| `echo.router` | `EchoRouter` | -- |
+| `stdhttp.serve-mux` | `ServeMux` | -- |
+| `fiber.handler-middleware-func` | `HandlerMiddlewareFunc` | -- |
+
+The remaining fixed names have no key of their own and are renamed by `prefix` alone: `RequestEditorFn`, `HttpRequestDoer`, `WithHTTPClient`, `WithRequestEditorFn`, `WithBaseURL`, `StrictHandlerFunc`, `StrictMiddlewareFunc`, `NewStrictHandler`, `NewStrictHandlerWithOptions`, `strictHandler`, `StrictHTTPServerOptions`, `StrictGinServerOptions`, `PathToRawSpec`, `swaggerSpec`, `rawSpec`, `decodeSpec`, `decodeSpecCached`, and the per-framework `ChiServerOptions` / `GorillaServerOptions` / `StdHTTPServerOptions` / `GinServerOptions` / `FiberServerOptions` / `IrisServerOptions` structs. The webhook and callback initiator and receiver names (`WebhookInitiator`, `CallbackReceiverInterface`, ...) take the prefix in front of their existing `Webhook` / `Callback` prefix.
+
+Adding a key later is easy; removing one is not, so the set starts small. If you need one that isn't here, please open an issue.
+
+Two notes:
+
+- `output-options.client-type-name` is **deprecated** in favour of `component-names.client`. It still works, and still does exactly what it always did -- rename the client struct and nothing else, leaving `ClientInterface`, `NewClient` and the rest at their defaults. `component-names.client` renames the whole family. If you set both, `component-names.client` wins and `oapi-codegen` warns about the shadowed knob.
+- `output-options.response-type-suffix` is a different mechanism and is unaffected: it is a suffix applied to spec-derived response type names, not a component name.
+
+If you override the built-in templates, nothing changes for you: your templates keep working untouched. To honour renames in your own templates, interpolate the same fields, e.g. `{{names.ServerInterface}}` (or `{{opts.OutputOptions.ComponentNames.ServerInterface}}`).
+
+One name is deliberately never renamed at its use site: the `PathToRawSpec` call that a generated package makes into a package it `$ref`s through [import mapping](#splitting-large-openapi-specs-across-multiple-packages-aka-import-mapping-or-external-references). That name belongs to the *referenced* package, whose configuration the referencing package cannot see, so the default is always used. Renaming or prefixing `PathToRawSpec` in a package that others `$ref` will break those callers.
+
+### Collisions
+
+Two components resolving to the same identifier is a configuration error, reported before any code is generated.
+
+So is a schema resolving to the name of a component that the same configuration declares:
+
+```
+type name 'Client' collides with the generated client component, which is declared by this
+configuration. Either use x-go-name on the schema to rename the type, or use
+output-options.component-names (its `prefix` renames every component at once) to rename the
+component
+```
+
+Only the names a configuration actually emits take part: a schema called `Client` in a `models`-only configuration is fine, because that configuration declares no client.
 
 ## Examples
 
