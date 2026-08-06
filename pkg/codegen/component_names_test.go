@@ -41,6 +41,7 @@ func TestComponentNamesDefaults(t *testing.T) {
 	cn := resolveFor(t, OutputOptions{}, allGenerators)
 
 	assert.Equal(t, "Client", cn.Client)
+	assert.Equal(t, "Client", cn.ClientStem)
 	assert.Equal(t, "ClientInterface", cn.ClientInterface)
 	assert.Equal(t, "ClientOption", cn.ClientOption)
 	assert.Equal(t, "NewClient", cn.NewClient)
@@ -132,13 +133,11 @@ func TestComponentNamesPrefix(t *testing.T) {
 	assert.Equal(t, "petStoreStrictHandler", cn.StrictHandler)
 }
 
-// TestComponentNamesOverrideBeatsPrefix checks that explicit overrides are
-// used verbatim -- never double-prefixed -- while their siblings still take
-// the prefix.
-func TestComponentNamesOverrideBeatsPrefix(t *testing.T) {
+// TestComponentNamesOverridesWithoutPrefix checks that an explicit override
+// replaces the default, and that its family derives from it.
+func TestComponentNamesOverridesWithoutPrefix(t *testing.T) {
 	cn := resolveFor(t, OutputOptions{
 		ComponentNames: ComponentNames{
-			Prefix:          "PetStore",
 			ServerInterface: "MyServer",
 			GetSwagger:      "GetMySpec",
 			Errors:          ErrorComponentNames{RequiredParamError: "MissingParam"},
@@ -149,10 +148,38 @@ func TestComponentNamesOverrideBeatsPrefix(t *testing.T) {
 	assert.Equal(t, "MyServer", cn.ServerInterface)
 	assert.Equal(t, "MyServerWrapper", cn.ServerInterfaceWrapper) // derived from the override
 	assert.Equal(t, "GetMySpec", cn.GetSwagger)
-	assert.Equal(t, "PetStoreGetSpec", cn.GetSpec) // sibling still prefixed
+	assert.Equal(t, "GetSpec", cn.GetSpec) // sibling untouched
 	assert.Equal(t, "MissingParam", cn.Errors.RequiredParamError)
-	assert.Equal(t, "PetStoreRequiredHeaderError", cn.Errors.RequiredHeaderError)
+	assert.Equal(t, "RequiredHeaderError", cn.Errors.RequiredHeaderError)
 	assert.Equal(t, "MyEchoRouter", cn.Echo.Router)
+}
+
+// TestComponentNamesPrefixAppliesToOverrides pins the uniform-prefix rule:
+// the prefix is prepended to every resolved name, an explicit override
+// included. It is independent of the overrides -- it affects everything or
+// nothing.
+func TestComponentNamesPrefixAppliesToOverrides(t *testing.T) {
+	cn := resolveFor(t, OutputOptions{
+		ComponentNames: ComponentNames{
+			Prefix:          "PetStore",
+			Client:          "MyClient",
+			ServerInterface: "MyServer",
+			GetSwagger:      "GetMySpec",
+			Errors:          ErrorComponentNames{RequiredParamError: "MissingParam"},
+			Echo:            EchoComponentNames{Router: "MyEchoRouter"},
+		},
+	}, allGenerators)
+
+	assert.Equal(t, "PetStoreMyClient", cn.Client)
+	// ... and the family derives from the prefixed override, prefixed once.
+	assert.Equal(t, "PetStoreMyClientInterface", cn.ClientInterface)
+	assert.Equal(t, "NewPetStoreMyClient", cn.NewClient)
+	assert.Equal(t, "PetStoreMyServer", cn.ServerInterface)
+	assert.Equal(t, "PetStoreMyServerWrapper", cn.ServerInterfaceWrapper)
+	assert.Equal(t, "PetStoreGetMySpec", cn.GetSwagger)
+	assert.Equal(t, "PetStoreGetSpec", cn.GetSpec) // untouched sibling, prefixed too
+	assert.Equal(t, "PetStoreMissingParam", cn.Errors.RequiredParamError)
+	assert.Equal(t, "PetStoreMyEchoRouter", cn.Echo.Router)
 }
 
 // TestComponentNamesDerivation covers each derivation family: renaming a root
@@ -211,27 +238,42 @@ func TestComponentNamesLegacyClientTypeName(t *testing.T) {
 	assert.Equal(t, "APIClientInterface", cn.ClientInterface)
 	assert.Equal(t, "NewAPIClient", cn.NewClient)
 
-	// Setting both to the same value is allowed.
+	// The prefix applies to the legacy knob too.
 	cn = resolveFor(t, OutputOptions{
 		ClientTypeName: "APIClient",
-		ComponentNames: ComponentNames{Client: "APIClient"},
+		ComponentNames: ComponentNames{Prefix: "PetStore"},
 	}, allGenerators)
-	assert.Equal(t, "APIClient", cn.Client)
-	assert.Equal(t, "APIClientInterface", cn.ClientInterface)
+	assert.Equal(t, "PetStoreAPIClient", cn.Client)
+	assert.Equal(t, "PetStoreClientInterface", cn.ClientInterface)
 }
 
-func TestComponentNamesLegacyClientTypeNameConflict(t *testing.T) {
-	_, err := resolveComponentNames(Configuration{
+// TestComponentNamesLegacyClientTypeNameShadowed checks that setting both
+// knobs is not an error: component-names.client simply wins, and Warnings
+// reports the shadowing so the user notices.
+func TestComponentNamesLegacyClientTypeNameShadowed(t *testing.T) {
+	cfg := Configuration{
 		PackageName: "api",
 		Generate:    GenerateOptions{Client: true},
 		OutputOptions: OutputOptions{
 			ClientTypeName: "APIClient",
 			ComponentNames: ComponentNames{Client: "OtherClient"},
 		},
-	})
-	require.Error(t, err)
-	assert.Contains(t, err.Error(), "client-type-name")
-	assert.Contains(t, err.Error(), "component-names.client")
+	}
+	require.NoError(t, cfg.Validate())
+
+	cn, err := resolveComponentNames(cfg)
+	require.NoError(t, err)
+	assert.Equal(t, "OtherClient", cn.Client)
+	assert.Equal(t, "OtherClientInterface", cn.ClientInterface)
+
+	warnings := cfg.Warnings()
+	require.Contains(t, warnings, "client-type-name")
+	assert.Contains(t, warnings["client-type-name"], "deprecated")
+	assert.Contains(t, warnings["client-type-name"], "OtherClient")
+
+	// Set alone, it is not warned about -- it still works as it always has.
+	cfg.OutputOptions.ComponentNames.Client = ""
+	assert.NotContains(t, cfg.Warnings(), "client-type-name")
 }
 
 func TestComponentNamesIdentifierValidation(t *testing.T) {

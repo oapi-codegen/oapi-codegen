@@ -151,6 +151,14 @@ func (o Configuration) Warnings() map[string]string {
 		warnings["generate-types-for-anonymous-schemas"] = "the flag is set with `generate.models: false` and a client/server generator. The hoisted named types this config emits references to will not be declared by this config. If a sibling config emits `generate.models: true` into the same Go package with the same flag setting, you can ignore this warning. Otherwise, set `generate.models: true` in this config or remove the flag to fall back to anonymous structs."
 	}
 
+	// `client-type-name` predates `component-names` and renames only the
+	// client struct. It still works on its own, but `component-names.client`
+	// takes precedence when both are set, so a config carrying both would
+	// otherwise silently ignore one of them.
+	if o.OutputOptions.ClientTypeName != "" && o.OutputOptions.ComponentNames.Client != "" {
+		warnings["client-type-name"] = fmt.Sprintf("`client-type-name` is deprecated, and is shadowed here by `component-names.client`: %q wins over %q. Remove `client-type-name`.", o.OutputOptions.ComponentNames.Client, o.OutputOptions.ClientTypeName)
+	}
+
 	return warnings
 }
 
@@ -446,10 +454,10 @@ type OutputOptions struct {
 	ResponseTypeSuffix string `yaml:"response-type-suffix,omitempty"`
 	// Override the default generated client type with the value.
 	//
-	// Superseded by `component-names.client`, which additionally renames the
-	// rest of the client family (ClientInterface, NewClient, ...). This knob
-	// renames only the client struct itself and remains supported; setting
-	// both to different values is a configuration error.
+	// Deprecated: use `component-names.client`, which renames the whole client
+	// family (ClientInterface, NewClient, ClientWithResponses, ...) rather than
+	// just the client struct. This knob keeps working; when both are set,
+	// `component-names.client` wins and Warnings reports the shadowing.
 	ClientTypeName string `yaml:"client-type-name,omitempty"`
 	// ComponentNames customizes the fixed, spec-independent package-level
 	// identifiers oapi-codegen emits (ServerInterface, Client, GetSwagger,
