@@ -151,12 +151,13 @@ func (o Configuration) Warnings() map[string]string {
 		warnings["generate-types-for-anonymous-schemas"] = "the flag is set with `generate.models: false` and a client/server generator. The hoisted named types this config emits references to will not be declared by this config. If a sibling config emits `generate.models: true` into the same Go package with the same flag setting, you can ignore this warning. Otherwise, set `generate.models: true` in this config or remove the flag to fall back to anonymous structs."
 	}
 
-	// `client-type-name` predates `component-names` and renames only the
-	// client struct. It still works on its own, but `component-names.client`
-	// takes precedence when both are set, so a config carrying both would
-	// otherwise silently ignore one of them.
+	// `client-type-name` predates `component-names` and is orthogonal to it:
+	// it overrides the client struct's name, while `component-names.client`
+	// is the root the rest of the family derives from. Setting both is
+	// legitimate but leaves the struct named differently from its own
+	// family, which is almost never what someone means to ask for.
 	if o.OutputOptions.ClientTypeName != "" && o.OutputOptions.ComponentNames.Client != "" {
-		warnings["client-type-name"] = fmt.Sprintf("`client-type-name` is deprecated, and is shadowed here by `component-names.client`: %q wins over %q. Remove `client-type-name`.", o.OutputOptions.ComponentNames.Client, o.OutputOptions.ClientTypeName)
+		warnings["client-type-name"] = fmt.Sprintf("`client-type-name` (deprecated) and `component-names.client` are both set, which mixes the naming of the client family: the client struct is named after `client-type-name` (%q), while everything derived from it -- the New… constructors, the …Interface and …WithResponses types -- is named after `component-names.client` (%q). That is supported, but if you did not mean to keep the struct's old name, remove `client-type-name`.", o.OutputOptions.ClientTypeName, o.OutputOptions.ComponentNames.Client)
 	}
 
 	return warnings
@@ -456,8 +457,13 @@ type OutputOptions struct {
 	//
 	// Deprecated: use `component-names.client`, which renames the whole client
 	// family (ClientInterface, NewClient, ClientWithResponses, ...) rather than
-	// just the client struct. This knob keeps working; when both are set,
-	// `component-names.client` wins and Warnings reports the shadowing.
+	// just the client struct.
+	//
+	// The two are orthogonal, not competing: `component-names.client` is the
+	// family root, this is a struct-name override applied after derivation.
+	// Setting both is legitimate but produces mixed naming -- the struct takes
+	// this name while the family derives from the root -- which Warnings
+	// reports.
 	ClientTypeName string `yaml:"client-type-name,omitempty"`
 	// ComponentNames customizes the fixed, spec-independent package-level
 	// identifiers oapi-codegen emits (ServerInterface, Client, GetSwagger,

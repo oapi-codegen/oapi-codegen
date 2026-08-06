@@ -2375,7 +2375,24 @@ Adding a key later is easy; removing one is not, so the set starts small. If you
 
 Two notes:
 
-- `output-options.client-type-name` is **deprecated** in favour of `component-names.client`. It still works, and still does exactly what it always did -- rename the client struct and nothing else, leaving `ClientInterface`, `NewClient` and the rest at their defaults. `component-names.client` renames the whole family. If you set both, `component-names.client` wins and `oapi-codegen` warns about the shadowed knob.
+- `output-options.client-type-name` is **deprecated** in favour of `component-names.client`. It still works, and still does exactly what it always did: override the name of the client struct, leaving `ClientInterface`, `NewClient` and the rest of the family at their defaults.
+
+  The two are orthogonal rather than competing. `component-names.client` is the family *root* -- it is what the family derives from, and, absent the deprecated knob, the struct's name too. `client-type-name` is a struct-name *override*, applied after derivation. Setting both is therefore legitimate, though it produces mixed naming:
+
+  ```yaml
+  output-options:
+    client-type-name: George
+    component-names:
+      client: APIClient
+  ```
+
+  ```go
+  type George struct { ... }
+  func NewAPIClient(server string, opts ...APIClientOption) (*George, error)
+  type APIClientInterface interface { ... }
+  ```
+
+  which is useful while migrating -- your callers keep referring to the old struct name -- but rarely what you want to end up with, so `oapi-codegen` warns when both are set. A `client-type-name` that collides with a name derived from the root (`client-type-name: APIClientInterface` alongside `client: APIClient`) is a configuration error.
 - `output-options.response-type-suffix` is a different mechanism and is unaffected: it is a suffix applied to spec-derived response type names, not a component name.
 
 If you override the built-in templates, nothing changes for you: your templates keep working untouched. To honour renames in your own templates, interpolate the same fields, e.g. `{{names.ServerInterface}}` (or `{{opts.OutputOptions.ComponentNames.ServerInterface}}`).

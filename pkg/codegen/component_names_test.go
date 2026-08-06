@@ -219,19 +219,20 @@ func TestComponentNamesDerivation(t *testing.T) {
 }
 
 // TestComponentNamesLegacyClientTypeName pins the backwards-compatible
-// behavior of the older `client-type-name` knob: it renames the client struct
-// and nothing else, so existing generated code is unchanged.
+// behavior of the deprecated `client-type-name` knob: it overrides the client
+// struct's name and nothing else, so existing generated code is unchanged.
 func TestComponentNamesLegacyClientTypeName(t *testing.T) {
 	cn := resolveFor(t, OutputOptions{ClientTypeName: "APIClient"}, allGenerators)
 
 	assert.Equal(t, "APIClient", cn.Client)
+	assert.Equal(t, "Client", cn.ClientStem)
 	assert.Equal(t, "ClientInterface", cn.ClientInterface)
 	assert.Equal(t, "ClientOption", cn.ClientOption)
 	assert.Equal(t, "NewClient", cn.NewClient)
 	assert.Equal(t, "ClientWithResponses", cn.ClientWithResponses)
 	assert.Equal(t, "NewClientWithResponses", cn.NewClientWithResponses)
 
-	// component-names.client, by contrast, renames the whole family.
+	// component-names.client, by contrast, is the family root.
 	cn = resolveFor(t, OutputOptions{
 		ComponentNames: ComponentNames{Client: "APIClient"},
 	}, allGenerators)
@@ -248,33 +249,76 @@ func TestComponentNamesLegacyClientTypeName(t *testing.T) {
 	assert.Equal(t, "PetStoreClientInterface", cn.ClientInterface)
 }
 
-// TestComponentNamesLegacyClientTypeNameShadowed checks that setting both
-// knobs is not an error: component-names.client simply wins, and Warnings
-// reports the shadowing so the user notices.
-func TestComponentNamesLegacyClientTypeNameShadowed(t *testing.T) {
+// TestComponentNamesBothClientKnobs covers the two knobs together. They are
+// orthogonal, not competing: the struct takes the deprecated knob's name and
+// the family derives from the root, so the generated constructor is
+// New<root>() returning *<legacy name>. Ugly, but coherent and non-breaking
+// for anyone migrating.
+func TestComponentNamesBothClientKnobs(t *testing.T) {
 	cfg := Configuration{
 		PackageName: "api",
 		Generate:    GenerateOptions{Client: true},
 		OutputOptions: OutputOptions{
-			ClientTypeName: "APIClient",
-			ComponentNames: ComponentNames{Client: "OtherClient"},
+			ClientTypeName: "George",
+			ComponentNames: ComponentNames{Client: "APIClient"},
 		},
 	}
 	require.NoError(t, cfg.Validate())
 
 	cn, err := resolveComponentNames(cfg)
 	require.NoError(t, err)
-	assert.Equal(t, "OtherClient", cn.Client)
-	assert.Equal(t, "OtherClientInterface", cn.ClientInterface)
+	assert.Equal(t, "George", cn.Client)
+	assert.Equal(t, "APIClient", cn.ClientStem)
+	assert.Equal(t, "NewAPIClient", cn.NewClient)
+	assert.Equal(t, "APIClientInterface", cn.ClientInterface)
+	assert.Equal(t, "APIClientOption", cn.ClientOption)
+	assert.Equal(t, "APIClientWithResponses", cn.ClientWithResponses)
 
 	warnings := cfg.Warnings()
 	require.Contains(t, warnings, "client-type-name")
 	assert.Contains(t, warnings["client-type-name"], "deprecated")
-	assert.Contains(t, warnings["client-type-name"], "OtherClient")
+	assert.Contains(t, warnings["client-type-name"], "George")
+	assert.Contains(t, warnings["client-type-name"], "APIClient")
 
-	// Set alone, it is not warned about -- it still works as it always has.
+	// Set alone, the deprecated knob is not warned about -- it still works
+	// exactly as it always has.
 	cfg.OutputOptions.ComponentNames.Client = ""
 	assert.NotContains(t, cfg.Warnings(), "client-type-name")
+}
+
+// TestComponentNamesBothClientKnobsGenerated checks the same combination all
+// the way through to the emitted Go: New<root> must return a pointer to the
+// legacy struct name.
+func TestComponentNamesBothClientKnobsGenerated(t *testing.T) {
+	out, err := Generate(loadSpec(t, collisionSpec), Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{Client: true},
+		OutputOptions: OutputOptions{
+			ClientTypeName: "George",
+			ComponentNames: ComponentNames{Client: "APIClient"},
+		},
+	})
+	require.NoError(t, err)
+	assert.Contains(t, out, "type George struct")
+	assert.Contains(t, out, "func NewAPIClient(server string, opts ...APIClientOption) (*George, error)")
+	assert.Contains(t, out, "type APIClientInterface interface")
+}
+
+// TestComponentNamesLegacyClientTypeNameCollision checks that the legacy
+// override lands before the uniqueness check: colliding with a name derived
+// from the family root is a configuration error, not a compile error.
+func TestComponentNamesLegacyClientTypeNameCollision(t *testing.T) {
+	_, err := resolveComponentNames(Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{Client: true},
+		OutputOptions: OutputOptions{
+			ClientTypeName: "APIClientInterface",
+			ComponentNames: ComponentNames{Client: "APIClient"},
+		},
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "must be unique")
+	assert.Contains(t, err.Error(), `"APIClientInterface"`)
 }
 
 func TestComponentNamesIdentifierValidation(t *testing.T) {

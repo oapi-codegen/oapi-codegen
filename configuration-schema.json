@@ -211,7 +211,7 @@
         },
         "client-type-name": {
           "type": "string",
-          "description": "Deprecated: use `output-options.component-names.client`, which renames the whole client family instead of only the client struct. Override the default generated client type with the value"
+          "description": "Deprecated: use `output-options.component-names.client`, the family root, which renames the whole client family instead of only the client struct. Override the default generated client type with the value. The two are orthogonal: this is a struct-name override applied after derivation, so setting both names the struct after this key while the rest of the family derives from `component-names.client`"
         },
         "component-names": {
           "type": "object",

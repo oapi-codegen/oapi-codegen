@@ -52,11 +52,15 @@ type ComponentNames struct {
 	// all. Supersedes the older `client-type-name`, which renames only this
 	// type and leaves the rest of the family alone.
 	Client string `yaml:"client,omitempty"`
-	// ClientStem is the name the rest of the client family derives from. It
-	// equals Client, except when the legacy `client-type-name` is used: that
-	// knob renames only the client struct, leaving the family (and this stem)
-	// at the default. Templates use it in prose that refers to the family as
-	// a whole, so such prose stays consistent with the family's names.
+	// ClientStem is the client family root: the name every field below
+	// derives from. It equals Client except when the deprecated
+	// `client-type-name` overrides the struct name, which leaves the family
+	// (and this stem) alone.
+	//
+	// It exists only because no derived field renders the bare root -- they
+	// all carry a suffix or a `New` prefix -- and one doc comment
+	// (client-with-responses.tmpl) needs the root on its own to describe the
+	// family. Prefer a derived field wherever one fits.
 	ClientStem string `yaml:"-"`
 	// ClientInterface is derived: <Client>Interface.
 	ClientInterface string `yaml:"-"`
@@ -536,13 +540,22 @@ func resolveComponentNames(opts Configuration) (ComponentNames, error) {
 
 	resolved := oo.ComponentNames.resolve()
 
-	// The deprecated `client-type-name` renames only the client struct,
-	// leaving ClientInterface, NewClient and the rest of the family at their
-	// defaults. Applying it after derivation preserves that behavior exactly;
-	// `component-names.client` (folded in before derivation) is the knob that
-	// renames the whole family, and silently wins when both are set --
-	// Configuration.Warnings reports the shadowing.
-	if oo.ClientTypeName != "" && oo.ComponentNames.Client == "" {
+	// The two client knobs are orthogonal. `component-names.client` is the
+	// family root: it is folded in before derivation, so it renames
+	// ClientInterface, NewClient and the rest. The deprecated
+	// `client-type-name` is a struct-name override: applied here, after
+	// derivation, it renames the client struct and nothing else, which is
+	// exactly what it has always done.
+	//
+	// Setting both is legitimate, if ugly: the struct takes the legacy name
+	// and the family derives from the root, so `client-type-name: George`
+	// with `client: APIClient` yields `NewAPIClient() (*George, error)`.
+	// Configuration.Warnings describes the mixed naming.
+	//
+	// The override lands before the uniqueness check on purpose: a
+	// `client-type-name` that collides with a derived family name is still a
+	// configuration error.
+	if oo.ClientTypeName != "" {
 		resolved.Client = oo.ComponentNames.Prefix + oo.ClientTypeName
 	}
 
