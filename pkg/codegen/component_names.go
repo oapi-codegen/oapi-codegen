@@ -432,7 +432,9 @@ func EmittedComponentNames(cn ComponentNames, g GenerateOptions) map[string]stri
 
 	add(anyServer, "server-interface", cn.ServerInterface)
 	add(anyServer, "server-interface-wrapper (derived from `server-interface`)", cn.ServerInterfaceWrapper)
-	add(anyServer, "middleware-func", cn.MiddlewareFunc)
+	// echo is the exception: it uses echo.MiddlewareFunc and declares no
+	// middleware type of its own.
+	add(netHTTPFamily || g.GinServer || fiberFamily || g.IrisServer, "middleware-func", cn.MiddlewareFunc)
 
 	add(netHTTPFamily, "handler", cn.Handler)
 	add(netHTTPFamily, "handler-from-mux (derived from `handler`)", cn.HandlerFromMux)
