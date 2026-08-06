@@ -100,6 +100,14 @@ func (o Configuration) Validate() error {
 		}
 	}
 
+	// Component-name resolution needs both `output-options.component-names`
+	// and `generate` (only the names a config actually emits take part in the
+	// uniqueness check), so it lives here rather than in
+	// OutputOptions.Validate.
+	if _, err := resolveComponentNames(o); err != nil {
+		errs = append(errs, fmt.Errorf("`output-options` configuration for component-names was incorrect: %v", err))
+	}
+
 	// import-mapping keys are the paths of $ref'd documents (a relative
 	// file path or URL). A JSON pointer key can never match anything —
 	// references within the same document always resolve to the package
@@ -436,8 +444,17 @@ type OutputOptions struct {
 	ExcludeSchemas []string `yaml:"exclude-schemas,omitempty"`
 	// The suffix used for responses types
 	ResponseTypeSuffix string `yaml:"response-type-suffix,omitempty"`
-	// Override the default generated client type with the value
+	// Override the default generated client type with the value.
+	//
+	// Superseded by `component-names.client`, which additionally renames the
+	// rest of the client family (ClientInterface, NewClient, ...). This knob
+	// renames only the client struct itself and remains supported; setting
+	// both to different values is a configuration error.
 	ClientTypeName string `yaml:"client-type-name,omitempty"`
+	// ComponentNames customizes the fixed, spec-independent package-level
+	// identifiers oapi-codegen emits (ServerInterface, Client, GetSwagger,
+	// the parameter-binding error types, ...). See ComponentNames.
+	ComponentNames ComponentNames `yaml:"component-names,omitempty"`
 	// AdditionalInitialisms is a list of additional initialisms to use when generating names.
 	// NOTE that this has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`
 	AdditionalInitialisms []string `yaml:"additional-initialisms,omitempty"`

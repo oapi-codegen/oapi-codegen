@@ -218,9 +218,17 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		responseTypeSuffix = opts.OutputOptions.ResponseTypeSuffix
 	}
 
-	if globalState.options.OutputOptions.ClientTypeName == "" {
-		globalState.options.OutputOptions.ClientTypeName = defaultClientTypeName
+	// Resolve every fixed component name once (defaults, then prefix, then
+	// explicit overrides, then family derivation). Assigning -- not
+	// conditionally setting -- both fields also resets any state left by a
+	// prior Generate. ClientTypeName is kept in sync with the resolved client
+	// name so user templates reading it keep working.
+	componentNames, err := resolveComponentNames(opts)
+	if err != nil {
+		return "", fmt.Errorf("error in output-options.component-names: %w", err)
 	}
+	globalState.options.OutputOptions.ComponentNames = componentNames
+	globalState.options.OutputOptions.ClientTypeName = componentNames.Client
 
 	nameNormalizerFunction := NameNormalizerFunction(opts.OutputOptions.NameNormalizer)
 	nameNormalizer = NameNormalizers[nameNormalizerFunction]
@@ -275,6 +283,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
+	// `names` is sugar for opts.OutputOptions.ComponentNames: templates
+	// interpolate resolved component names as {{names.ServerInterface}}
+	// rather than spelling out the full path at every site.
+	TemplateFunctions["names"] = func() ComponentNames {
+		return globalState.options.OutputOptions.ComponentNames
+	}
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above
