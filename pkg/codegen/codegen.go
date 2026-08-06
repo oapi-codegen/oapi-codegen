@@ -1408,7 +1408,21 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 	m := map[string]TypeDefinition{}
 	var ts []TypeDefinition
 
+	// Component names are declared by the templates, not by any
+	// TypeDefinition, so the duplicate check below can never see them. Fold
+	// them in explicitly: a schema resolving to a generated component's name
+	// would otherwise produce two declarations of that identifier and fail at
+	// `go build` with no hint of where the second one came from.
+	reservedNames := reservedComponentNamesByName()
+
 	for _, typ := range types {
+		if label, found := reservedNames[typ.TypeName]; found {
+			return "", fmt.Errorf("type name '%s' collides with the generated %s component, "+
+				"which is declared by this configuration. Either use x-go-name on the schema "+
+				"to rename the type, or use output-options.component-names (its `prefix` renames "+
+				"every component at once) to rename the component", typ.TypeName, label)
+		}
+
 		if prevType, found := m[typ.TypeName]; found {
 			// If type names collide, we need to see if they refer to the same
 			// exact type definition, in which case, we can de-dupe. If they

@@ -3,6 +3,7 @@ package codegen
 import (
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -372,4 +373,78 @@ func values(m map[string]string) []string {
 		out = append(out, v)
 	}
 	return out
+}
+
+// collisionSpec declares a schema whose Go type name is `Client`, which is
+// also the name of the generated client struct.
+const collisionSpec = `
+openapi: 3.0.0
+info:
+  title: collision
+  version: 1.0.0
+paths:
+  /things:
+    get:
+      operationId: getThings
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+components:
+  schemas:
+    Client:
+      type: object
+      properties:
+        id:
+          type: string
+`
+
+func loadSpec(t *testing.T, spec string) *openapi3.T {
+	t.Helper()
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	require.NoError(t, err)
+	return swagger
+}
+
+// TestComponentNameSchemaCollision covers the reserved-name check: a schema
+// resolving to a generated component's name is reported at generation time
+// with both remedies, instead of emitting two declarations and failing at
+// `go build`.
+func TestComponentNameSchemaCollision(t *testing.T) {
+	cfg := Configuration{
+		PackageName: "collision",
+		Generate:    GenerateOptions{Models: true, Client: true},
+	}
+
+	_, err := Generate(loadSpec(t, collisionSpec), cfg)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "'Client' collides")
+	assert.Contains(t, err.Error(), "x-go-name")
+	assert.Contains(t, err.Error(), "component-names")
+
+	// Renaming the component resolves it, with no change to the schema.
+	renamed := cfg
+	renamed.OutputOptions.ComponentNames = ComponentNames{Client: "APIClient"}
+	out, err := Generate(loadSpec(t, collisionSpec), renamed)
+	require.NoError(t, err)
+	assert.Contains(t, out, "type Client struct")
+	assert.Contains(t, out, "type APIClient struct")
+
+	// So does a prefix, which renames every component at once.
+	prefixed := cfg
+	prefixed.OutputOptions.ComponentNames = ComponentNames{Prefix: "Things"}
+	out, err = Generate(loadSpec(t, collisionSpec), prefixed)
+	require.NoError(t, err)
+	assert.Contains(t, out, "type Client struct")
+	assert.Contains(t, out, "type ThingsClient struct")
+
+	// A component the configuration does not declare cannot collide: with
+	// only models generated, `Client` is not a reserved name.
+	modelsOnly := cfg
+	modelsOnly.Generate = GenerateOptions{Models: true}
+	_, err = Generate(loadSpec(t, collisionSpec), modelsOnly)
+	require.NoError(t, err)
 }

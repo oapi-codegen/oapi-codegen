@@ -483,6 +483,21 @@ func EmittedComponentNames(cn ComponentNames, g GenerateOptions) map[string]stri
 	return emitted
 }
 
+// reservedComponentNamesByName inverts the emitted-name map for the current
+// generation run: resolved identifier -> the label of the component that
+// declares it. Empty when Generate has not resolved the names (helpers
+// exercised directly in tests), so direct callers keep working unchecked.
+func reservedComponentNamesByName() map[string]string {
+	byName := map[string]string{}
+	emitted := EmittedComponentNames(globalState.options.OutputOptions.ComponentNames, globalState.options.Generate)
+	for _, label := range SortedMapKeys(emitted) {
+		if name := emitted[label]; name != "" {
+			byName[name] = label
+		}
+	}
+	return byName
+}
+
 // validateComponentNameUniqueness reports resolved names that two different
 // components share. Two components mapping to one identifier is a
 // configuration error, caught here rather than by the Go compiler.
