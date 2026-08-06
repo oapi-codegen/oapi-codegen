@@ -211,7 +211,122 @@
         },
         "client-type-name": {
           "type": "string",
-          "description": "Override the default generated client type with the value"
+          "description": "Deprecated: use `output-options.component-names.client`, the family root, which renames the whole client family instead of only the client struct. Override the default generated client type with the value. The two are orthogonal: this is a struct-name override applied after derivation, so setting both names the struct after this key while the rest of the family derives from `component-names.client`"
+        },
+        "component-names": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "ComponentNames customizes the fixed, spec-independent package-level identifiers that are generated (ServerInterface, Client, GetSwagger, the parameter-binding error types, ...). Resolution order is: default, then the explicit override below, then `prefix` prepended to the result. Renaming a root renames the names derived from it",
+          "properties": {
+            "prefix": {
+              "type": "string",
+              "description": "Prepended to every resolved component name, defaulted or overridden alike. Must be a valid Go identifier starting with a letter. Unexported names (swaggerSpec, rawSpec, decodeSpec, decodeSpecCached, strictHandler) take the prefix with its first letter lowered so they stay unexported. This is what allows two generation runs to share one Go package"
+            },
+            "client": {
+              "type": "string",
+              "description": "The generated HTTP client struct (default `Client`). Root of the client family: ClientInterface, ClientOption, NewClient, ClientWithResponses, ClientWithResponsesInterface and NewClientWithResponses derive from it"
+            },
+            "server-interface": {
+              "type": "string",
+              "description": "The generated server interface (default `ServerInterface`). `ServerInterfaceWrapper` derives from it"
+            },
+            "middleware-func": {
+              "type": "string",
+              "description": "The per-framework middleware type (default `MiddlewareFunc`). Not emitted by the echo generators, which use echo.MiddlewareFunc"
+            },
+            "handler": {
+              "type": "string",
+              "description": "Root of the net/http-family (chi, gorilla, std-http) handler constructors (default `Handler`). HandlerFromMux, HandlerFromMuxWithBaseURL and HandlerWithOptions derive from it"
+            },
+            "unimplemented": {
+              "type": "string",
+              "description": "The chi-only stub server implementation (default `Unimplemented`)"
+            },
+            "register-handlers": {
+              "type": "string",
+              "description": "Root of the route-registration family emitted by echo, gin, fiber and iris (default `RegisterHandlers`). RegisterHandlersWithBaseURL, RegisterHandlersWithOptions and RegisterHandlersOptions derive from it"
+            },
+            "strict-server-interface": {
+              "type": "string",
+              "description": "The strict-mode server interface (default `StrictServerInterface`)"
+            },
+            "get-swagger": {
+              "type": "string",
+              "description": "The deprecated embedded-spec accessor (default `GetSwagger`)"
+            },
+            "get-spec": {
+              "type": "string",
+              "description": "The embedded-spec accessor (default `GetSpec`)"
+            },
+            "get-spec-json": {
+              "type": "string",
+              "description": "The raw embedded-spec accessor (default `GetSpecJSON`)"
+            },
+            "errors": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "The parameter-binding error types handed to ErrorHandlerFunc by the net/http-family (chi, gorilla, std-http) server wrappers",
+              "properties": {
+                "required-param-error": {
+                  "type": "string",
+                  "description": "Default `RequiredParamError`"
+                },
+                "required-header-error": {
+                  "type": "string",
+                  "description": "Default `RequiredHeaderError`"
+                },
+                "invalid-param-format-error": {
+                  "type": "string",
+                  "description": "Default `InvalidParamFormatError`"
+                },
+                "too-many-values-for-param-error": {
+                  "type": "string",
+                  "description": "Default `TooManyValuesForParamError`"
+                },
+                "unmarshaling-param-error": {
+                  "type": "string",
+                  "description": "Default `UnmarshalingParamError`"
+                },
+                "unescaped-cookie-param-error": {
+                  "type": "string",
+                  "description": "Default `UnescapedCookieParamError`"
+                }
+              }
+            },
+            "echo": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "echo-specific generated types",
+              "properties": {
+                "router": {
+                  "type": "string",
+                  "description": "The router interface accepted by RegisterHandlers (default `EchoRouter`)"
+                }
+              }
+            },
+            "stdhttp": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "std-http-specific generated types",
+              "properties": {
+                "serve-mux": {
+                  "type": "string",
+                  "description": "The interface abstracting http.ServeMux (default `ServeMux`)"
+                }
+              }
+            },
+            "fiber": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "fiber-specific generated types",
+              "properties": {
+                "handler-middleware-func": {
+                  "type": "string",
+                  "description": "The per-handler middleware type supplied via FiberServerOptions.HandlerMiddlewares (default `HandlerMiddlewareFunc`)"
+                }
+              }
+            }
+          }
         },
         "additional-initialisms": {
           "type": "array",

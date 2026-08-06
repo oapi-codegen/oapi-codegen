@@ -5,47 +5,47 @@ gorilla override the hooks via templates/<framework>/hooks.tmpl. See
 server-middleware.tmpl for a description of the layering.
 
 Hooks:
-  handler.serveMuxInterface - optional interface decl (stdhttp only; empty elsewhere)
+  handler.serveMuxInterface - optional `ServeMux` interface decl (stdhttp only; empty elsewhere)
   handler.serverOptions     - name of the <Framework>ServerOptions struct type
   handler.routerType        - Go type of the router/mux
   handler.routerVar         - local variable / receiver name for the router
   handler.newRouter         - expression constructing a default router
   handler.register          - per-operation route registration statement
 */}}
-// Handler creates http.Handler with routing matching OpenAPI spec.
-func Handler(si ServerInterface) http.Handler {
-  return HandlerWithOptions(si, {{block "handler.serverOptions" .}}StdHTTPServerOptions{{end}}{})
+// {{names.Handler}} creates http.Handler with routing matching OpenAPI spec.
+func {{names.Handler}}(si {{names.ServerInterface}}) http.Handler {
+  return {{names.HandlerWithOptions}}(si, {{block "handler.serverOptions" .}}{{names.StdHTTPServerOptions}}{{end}}{})
 }
 {{block "handler.serveMuxInterface" .}}
-// ServeMux is an abstraction of [http.ServeMux].
-type ServeMux interface {
+// {{names.StdHTTP.ServeMux}} is an abstraction of [http.ServeMux].
+type {{names.StdHTTP.ServeMux}} interface {
 	HandleFunc(pattern string, handler func(http.ResponseWriter, *http.Request))
 	http.Handler
 }
 {{end}}
 type {{template "handler.serverOptions" .}} struct {
     BaseURL          string
-    BaseRouter       {{block "handler.routerType" .}}ServeMux{{end}}
-    Middlewares      []MiddlewareFunc
+    BaseRouter       {{block "handler.routerType" .}}{{names.StdHTTP.ServeMux}}{{end}}
+    Middlewares      []{{names.MiddlewareFunc}}
     ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
-// HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, {{block "handler.routerVar" .}}m{{end}} {{template "handler.routerType" .}}) http.Handler {
-    return HandlerWithOptions(si, {{template "handler.serverOptions" .}} {
+// {{names.HandlerFromMux}} creates http.Handler with routing matching OpenAPI spec based on the provided mux.
+func {{names.HandlerFromMux}}(si {{names.ServerInterface}}, {{block "handler.routerVar" .}}m{{end}} {{template "handler.routerType" .}}) http.Handler {
+    return {{names.HandlerWithOptions}}(si, {{template "handler.serverOptions" .}} {
         BaseRouter: {{template "handler.routerVar" .}},
     })
 }
 
-func HandlerFromMuxWithBaseURL(si ServerInterface, {{template "handler.routerVar" .}} {{template "handler.routerType" .}}, baseURL string) http.Handler {
-    return HandlerWithOptions(si, {{template "handler.serverOptions" .}} {
+func {{names.HandlerFromMuxWithBaseURL}}(si {{names.ServerInterface}}, {{template "handler.routerVar" .}} {{template "handler.routerType" .}}, baseURL string) http.Handler {
+    return {{names.HandlerWithOptions}}(si, {{template "handler.serverOptions" .}} {
         BaseURL: baseURL,
         BaseRouter: {{template "handler.routerVar" .}},
     })
 }
 
-// HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options {{template "handler.serverOptions" .}}) http.Handler {
+// {{names.HandlerWithOptions}} creates http.Handler with additional options
+func {{names.HandlerWithOptions}}(si {{names.ServerInterface}}, options {{template "handler.serverOptions" .}}) http.Handler {
 {{template "handler.routerVar" .}} := options.BaseRouter
 
 if {{template "handler.routerVar" .}} == nil {
@@ -57,7 +57,7 @@ if options.ErrorHandlerFunc == nil {
     }
 }
 {{if .}}
-wrapper := ServerInterfaceWrapper{
+wrapper := {{names.ServerInterfaceWrapper}}{
 Handler: si,
 HandlerMiddlewares: options.Middlewares,
 ErrorHandlerFunc: options.ErrorHandlerFunc,

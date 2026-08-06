@@ -1,17 +1,17 @@
-// GinServerOptions provides options for the Gin server.
-type GinServerOptions struct {
+// {{names.GinServerOptions}} provides options for the Gin server.
+type {{names.GinServerOptions}} struct {
     BaseURL string
-    Middlewares []MiddlewareFunc
+    Middlewares []{{names.MiddlewareFunc}}
     ErrorHandler func(*gin.Context, error, int)
 }
 
-// RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
-func RegisterHandlers(router gin.IRouter, si ServerInterface) {
-  RegisterHandlersWithOptions(router, si, GinServerOptions{})
+// {{names.RegisterHandlers}} creates http.Handler with routing matching OpenAPI spec.
+func {{names.RegisterHandlers}}(router gin.IRouter, si {{names.ServerInterface}}) {
+  {{names.RegisterHandlersWithOptions}}(router, si, {{names.GinServerOptions}}{})
 }
 
-// RegisterHandlersWithOptions creates http.Handler with additional options
-func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options GinServerOptions) {
+// {{names.RegisterHandlersWithOptions}} creates http.Handler with additional options
+func {{names.RegisterHandlersWithOptions}}(router gin.IRouter, si {{names.ServerInterface}}, options {{names.GinServerOptions}}) {
     {{- if . -}}
     errorHandler := options.ErrorHandler
     if errorHandler == nil {
@@ -20,7 +20,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
         }
     }
 
-    wrapper := ServerInterfaceWrapper{
+    wrapper := {{names.ServerInterfaceWrapper}}{
         Handler: si,
         HandlerMiddlewares: options.Middlewares,
         ErrorHandler: errorHandler,
