@@ -42,7 +42,6 @@ func TestComponentNamesDefaults(t *testing.T) {
 	cn := resolveFor(t, OutputOptions{}, allGenerators)
 
 	assert.Equal(t, "Client", cn.Client)
-	assert.Equal(t, "Client", cn.ClientStem)
 	assert.Equal(t, "ClientInterface", cn.ClientInterface)
 	assert.Equal(t, "ClientOption", cn.ClientOption)
 	assert.Equal(t, "NewClient", cn.NewClient)
@@ -225,7 +224,6 @@ func TestComponentNamesLegacyClientTypeName(t *testing.T) {
 	cn := resolveFor(t, OutputOptions{ClientTypeName: "APIClient"}, allGenerators)
 
 	assert.Equal(t, "APIClient", cn.Client)
-	assert.Equal(t, "Client", cn.ClientStem)
 	assert.Equal(t, "ClientInterface", cn.ClientInterface)
 	assert.Equal(t, "ClientOption", cn.ClientOption)
 	assert.Equal(t, "NewClient", cn.NewClient)
@@ -268,7 +266,6 @@ func TestComponentNamesBothClientKnobs(t *testing.T) {
 	cn, err := resolveComponentNames(cfg)
 	require.NoError(t, err)
 	assert.Equal(t, "George", cn.Client)
-	assert.Equal(t, "APIClient", cn.ClientStem)
 	assert.Equal(t, "NewAPIClient", cn.NewClient)
 	assert.Equal(t, "APIClientInterface", cn.ClientInterface)
 	assert.Equal(t, "APIClientOption", cn.ClientOption)

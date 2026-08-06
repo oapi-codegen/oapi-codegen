@@ -47,21 +47,11 @@ type ComponentNames struct {
 
 	// ---- client (generate.client) ----
 
-	// Client is the generated HTTP client struct. Root of the client family:
-	// the derived names below default from it, so renaming it renames them
-	// all. Supersedes the older `client-type-name`, which renames only this
-	// type and leaves the rest of the family alone.
+	// Client is the generated HTTP client struct, and the root of the client
+	// family: the derived names below default from it, so renaming it
+	// renames them all. Supersedes the deprecated `client-type-name`, which
+	// overrides this field after derivation and so renames the struct alone.
 	Client string `yaml:"client,omitempty"`
-	// ClientStem is the client family root: the name every field below
-	// derives from. It equals Client except when the deprecated
-	// `client-type-name` overrides the struct name, which leaves the family
-	// (and this stem) alone.
-	//
-	// It exists only because no derived field renders the bare root -- they
-	// all carry a suffix or a `New` prefix -- and one doc comment
-	// (client-with-responses.tmpl) needs the root on its own to describe the
-	// family. Prefer a derived field wherever one fits.
-	ClientStem string `yaml:"-"`
 	// ClientInterface is derived: <Client>Interface.
 	ClientInterface string `yaml:"-"`
 	// ClientOption is derived: <Client>Option.
@@ -268,12 +258,14 @@ func (cn ComponentNames) resolve() ComponentNames {
 	derived := setDefault
 
 	// --- client family ---
+	// The family derives from cn.Client here, before resolveComponentNames
+	// applies the deprecated `client-type-name` on top: that knob overrides
+	// the struct's name only, and must not reach the derivation.
 	root(&cn.Client, defaultClientTypeName)
-	derived(&cn.ClientStem, cn.Client)
-	derived(&cn.ClientInterface, cn.ClientStem+"Interface")
-	derived(&cn.ClientOption, cn.ClientStem+"Option")
-	derived(&cn.NewClient, "New"+cn.ClientStem)
-	derived(&cn.ClientWithResponses, cn.ClientStem+"WithResponses")
+	derived(&cn.ClientInterface, cn.Client+"Interface")
+	derived(&cn.ClientOption, cn.Client+"Option")
+	derived(&cn.NewClient, "New"+cn.Client)
+	derived(&cn.ClientWithResponses, cn.Client+"WithResponses")
 	derived(&cn.ClientWithResponsesInterface, cn.ClientWithResponses+"Interface")
 	derived(&cn.NewClientWithResponses, "New"+cn.ClientWithResponses)
 	root(&cn.RequestEditorFn, "RequestEditorFn")
