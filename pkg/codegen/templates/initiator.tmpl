@@ -1,31 +1,31 @@
 {{if eq .Prefix "Webhook" -}}
-// WebhookInitiator sends OpenAPI 3.1 webhook requests to target URLs.
-// Modeled on the generated Client, but with no stored Server -- the full
+// {{names.Prefix}}WebhookInitiator sends OpenAPI 3.1 webhook requests to target URLs.
+// Modeled on the generated {{names.Client}}, but with no stored Server -- the full
 // target URL is provided per-call by the caller (typically discovered
 // from a subscription registration).
 {{- else -}}
-// CallbackInitiator sends OpenAPI callback requests to target URLs.
-// Modeled on the generated Client, but with no stored Server -- the full
+// {{names.Prefix}}CallbackInitiator sends OpenAPI callback requests to target URLs.
+// Modeled on the generated {{names.Client}}, but with no stored Server -- the full
 // target URL is provided per-call by the caller (typically discovered
 // from a callback expression on the parent operation's request body,
 // e.g. `{$request.body#/callbackUrl}`).
 {{- end}}
-type {{.Prefix}}Initiator struct {
+type {{names.Prefix}}{{.Prefix}}Initiator struct {
 	// Doer for performing requests, typically a *http.Client with any
 	// customized settings, such as certificate chains.
-	Client HttpRequestDoer
+	Client {{names.HTTPRequestDoer}}
 
 	// A list of callbacks for modifying requests which are generated before sending over
 	// the network.
-	RequestEditors []RequestEditorFn
+	RequestEditors []{{names.RequestEditorFn}}
 }
 
-// {{.Prefix}}InitiatorOption allows setting custom parameters during construction.
-type {{.Prefix}}InitiatorOption func(*{{.Prefix}}Initiator) error
+// {{names.Prefix}}{{.Prefix}}InitiatorOption allows setting custom parameters during construction.
+type {{names.Prefix}}{{.Prefix}}InitiatorOption func(*{{names.Prefix}}{{.Prefix}}Initiator) error
 
-// New{{.Prefix}}Initiator creates a new {{.Prefix}}Initiator with reasonable defaults.
-func New{{.Prefix}}Initiator(opts ...{{.Prefix}}InitiatorOption) (*{{.Prefix}}Initiator, error) {
-	initiator := {{.Prefix}}Initiator{}
+// New{{names.Prefix}}{{.Prefix}}Initiator creates a new {{names.Prefix}}{{.Prefix}}Initiator with reasonable defaults.
+func New{{names.Prefix}}{{.Prefix}}Initiator(opts ...{{names.Prefix}}{{.Prefix}}InitiatorOption) (*{{names.Prefix}}{{.Prefix}}Initiator, error) {
+	initiator := {{names.Prefix}}{{.Prefix}}Initiator{}
 	for _, o := range opts {
 		if err := o(&initiator); err != nil {
 			return nil, err
@@ -37,26 +37,26 @@ func New{{.Prefix}}Initiator(opts ...{{.Prefix}}InitiatorOption) (*{{.Prefix}}In
 	return &initiator, nil
 }
 
-// With{{.Prefix}}HTTPClient allows overriding the default Doer, which is
+// With{{names.Prefix}}{{.Prefix}}HTTPClient allows overriding the default Doer, which is
 // automatically created using http.Client. This is useful for tests.
-func With{{.Prefix}}HTTPClient(doer HttpRequestDoer) {{.Prefix}}InitiatorOption {
-	return func(p *{{.Prefix}}Initiator) error {
+func With{{names.Prefix}}{{.Prefix}}HTTPClient(doer {{names.HTTPRequestDoer}}) {{names.Prefix}}{{.Prefix}}InitiatorOption {
+	return func(p *{{names.Prefix}}{{.Prefix}}Initiator) error {
 		p.Client = doer
 		return nil
 	}
 }
 
-// With{{.Prefix}}RequestEditorFn allows setting up a callback function, which
+// With{{names.Prefix}}{{.Prefix}}RequestEditorFn allows setting up a callback function, which
 // will be called right before sending the {{.PrefixLower}} request. This can be
 // used to mutate the request, e.g. to add signature headers.
-func With{{.Prefix}}RequestEditorFn(fn RequestEditorFn) {{.Prefix}}InitiatorOption {
-	return func(p *{{.Prefix}}Initiator) error {
+func With{{names.Prefix}}{{.Prefix}}RequestEditorFn(fn {{names.RequestEditorFn}}) {{names.Prefix}}{{.Prefix}}InitiatorOption {
+	return func(p *{{names.Prefix}}{{.Prefix}}Initiator) error {
 		p.RequestEditors = append(p.RequestEditors, fn)
 		return nil
 	}
 }
 
-func (p *{{.Prefix}}Initiator) apply{{.Prefix}}Editors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
+func (p *{{names.Prefix}}{{.Prefix}}Initiator) apply{{.Prefix}}Editors(ctx context.Context, req *http.Request, additionalEditors []{{names.RequestEditorFn}}) error {
 	for _, r := range p.RequestEditors {
 		if err := r(ctx, req); err != nil {
 			return err
@@ -70,8 +70,8 @@ func (p *{{.Prefix}}Initiator) apply{{.Prefix}}Editors(ctx context.Context, req 
 	return nil
 }
 
-// {{.Prefix}}InitiatorInterface is the interface specification for the {{.PrefixLower}} initiator.
-type {{.Prefix}}InitiatorInterface interface {
+// {{names.Prefix}}{{.Prefix}}InitiatorInterface is the interface specification for the {{.PrefixLower}} initiator.
+type {{names.Prefix}}{{.Prefix}}InitiatorInterface interface {
 {{range .Operations -}}
 {{$op := . -}}
 {{$opid := .OperationId -}}
@@ -80,7 +80,7 @@ type {{.Prefix}}InitiatorInterface interface {
     // {{$opid}}{{$v.Suffix}} fires the {{$op.SourceName}} {{$.PrefixLower}}{{if $op.HasBody}} with any body{{end}}
 {{else}}
 {{end -}}
-    {{$opid}}{{$v.Suffix}}(ctx context.Context, targetURL string{{$v.ArgsDecl}}, reqEditors... RequestEditorFn) (*http.Response, error)
+    {{$opid}}{{$v.Suffix}}(ctx context.Context, targetURL string{{$v.ArgsDecl}}, reqEditors... {{names.RequestEditorFn}}) (*http.Response, error)
 {{end -}}{{/* range .ClientMethodVariants */}}
 {{end}}{{/* range .Operations */}}
 }
@@ -90,7 +90,7 @@ type {{.Prefix}}InitiatorInterface interface {
 {{range .Operations -}}
 {{$opid := .OperationId -}}
 {{range .ClientMethodVariants}}
-func (p *{{$.Prefix}}Initiator) {{$opid}}{{.Suffix}}(ctx context.Context, targetURL string{{.ArgsDecl}}, reqEditors... RequestEditorFn) (*http.Response, error) {
+func (p *{{names.Prefix}}{{$.Prefix}}Initiator) {{$opid}}{{.Suffix}}(ctx context.Context, targetURL string{{.ArgsDecl}}, reqEditors... {{names.RequestEditorFn}}) (*http.Response, error) {
     req, err := New{{$opid}}{{$.Prefix}}Request{{.Suffix}}(targetURL{{.CallArgs}})
     if err != nil {
         return nil, err
