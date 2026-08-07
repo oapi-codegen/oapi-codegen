@@ -1,0 +1,12 @@
+components:
+  schemas:
+    Id:
+      $ref: '../id/spec.yaml#/components/schemas/Id'
+  parameters:
+    IdParam:
+      name: id
+      in: path
+      description: The name of the blobstore to read
+      required: true
+      schema:
+        $ref: '#/components/schemas/Id'
