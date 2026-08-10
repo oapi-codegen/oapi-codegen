@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	"github.com/oapi-codegen/runtime"
 )
 
 // ServerInterface represents all server handlers.
@@ -180,7 +181,13 @@ func (response GetPing200TextResponse) VisitGetPingResponse(w http.ResponseWrite
 
 	w.Header().Set("Content-Type", "text/plain")
 	if response.Headers.MyHeader != nil {
-		w.Header().Set("MyHeader", fmt.Sprint(*response.Headers.MyHeader))
+		{
+			v, err := runtime.StyleParamWithOptions("simple", false, "MyHeader", *response.Headers.MyHeader, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return fmt.Errorf("error styling response header MyHeader: %w", err)
+			}
+			w.Header().Set("MyHeader", v)
+		}
 	}
 	w.WriteHeader(200)
 

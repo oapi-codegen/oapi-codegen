@@ -527,10 +527,22 @@ type NoContentHeaders204Response struct {
 
 func (response NoContentHeaders204Response) VisitNoContentHeadersResponse(ctx iris.Context) error {
 	if response.Headers.NullableHeader != nil {
-		ctx.ResponseWriter().Header().Set("nullable-header", fmt.Sprint(*response.Headers.NullableHeader))
+		{
+			v, err := runtime.StyleParamWithOptions("simple", false, "nullable-header", *response.Headers.NullableHeader, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return fmt.Errorf("error styling response header nullable-header: %w", err)
+			}
+			ctx.ResponseWriter().Header().Set("nullable-header", v)
+		}
 	}
 	if response.Headers.OptionalHeader != nil {
-		ctx.ResponseWriter().Header().Set("optional-header", fmt.Sprint(*response.Headers.OptionalHeader))
+		{
+			v, err := runtime.StyleParamWithOptions("simple", false, "optional-header", *response.Headers.OptionalHeader, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return fmt.Errorf("error styling response header optional-header: %w", err)
+			}
+			ctx.ResponseWriter().Header().Set("optional-header", v)
+		}
 	}
 	ctx.StatusCode(204)
 	return nil
@@ -632,8 +644,20 @@ type ReusableResponsesResponseObject interface {
 type ReusableResponses200JSONResponse struct{ ReusableresponseJSONResponse }
 
 func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(ctx iris.Context) error {
-	ctx.ResponseWriter().Header().Set("header1", fmt.Sprint(response.Headers.Header1))
-	ctx.ResponseWriter().Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "header1", response.Headers.Header1, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header header1: %w", err)
+		}
+		ctx.ResponseWriter().Header().Set("header1", v)
+	}
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "header2", response.Headers.Header2, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "integer", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header header2: %w", err)
+		}
+		ctx.ResponseWriter().Header().Set("header2", v)
+	}
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
 	ctx.StatusCode(200)
 
@@ -872,13 +896,37 @@ type HeadersExample200JSONResponse struct {
 }
 
 func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(ctx iris.Context) error {
-	ctx.ResponseWriter().Header().Set("header1", fmt.Sprint(response.Headers.Header1))
-	ctx.ResponseWriter().Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "header1", response.Headers.Header1, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header header1: %w", err)
+		}
+		ctx.ResponseWriter().Header().Set("header1", v)
+	}
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "header2", response.Headers.Header2, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "integer", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header header2: %w", err)
+		}
+		ctx.ResponseWriter().Header().Set("header2", v)
+	}
 	if response.Headers.NullableHeader != nil {
-		ctx.ResponseWriter().Header().Set("nullable-header", fmt.Sprint(*response.Headers.NullableHeader))
+		{
+			v, err := runtime.StyleParamWithOptions("simple", false, "nullable-header", *response.Headers.NullableHeader, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return fmt.Errorf("error styling response header nullable-header: %w", err)
+			}
+			ctx.ResponseWriter().Header().Set("nullable-header", v)
+		}
 	}
 	if response.Headers.OptionalHeader != nil {
-		ctx.ResponseWriter().Header().Set("optional-header", fmt.Sprint(*response.Headers.OptionalHeader))
+		{
+			v, err := runtime.StyleParamWithOptions("simple", false, "optional-header", *response.Headers.OptionalHeader, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return fmt.Errorf("error styling response header optional-header: %w", err)
+			}
+			ctx.ResponseWriter().Header().Set("optional-header", v)
+		}
 	}
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
 	ctx.StatusCode(200)
@@ -921,8 +969,20 @@ type UnionExample200ApplicationAlternativePlusJSONResponse struct {
 }
 
 func (response UnionExample200ApplicationAlternativePlusJSONResponse) VisitUnionExampleResponse(ctx iris.Context) error {
-	ctx.ResponseWriter().Header().Set("header1", fmt.Sprint(response.Headers.Header1))
-	ctx.ResponseWriter().Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "header1", response.Headers.Header1, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header header1: %w", err)
+		}
+		ctx.ResponseWriter().Header().Set("header1", v)
+	}
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "header2", response.Headers.Header2, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "integer", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header header2: %w", err)
+		}
+		ctx.ResponseWriter().Header().Set("header2", v)
+	}
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/alternative+json")
 	ctx.StatusCode(200)
 
@@ -935,8 +995,20 @@ type UnionExample200JSONResponse struct {
 }
 
 func (response UnionExample200JSONResponse) VisitUnionExampleResponse(ctx iris.Context) error {
-	ctx.ResponseWriter().Header().Set("header1", fmt.Sprint(response.Headers.Header1))
-	ctx.ResponseWriter().Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "header1", response.Headers.Header1, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header header1: %w", err)
+		}
+		ctx.ResponseWriter().Header().Set("header1", v)
+	}
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "header2", response.Headers.Header2, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "integer", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header header2: %w", err)
+		}
+		ctx.ResponseWriter().Header().Set("header2", v)
+	}
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
 	ctx.StatusCode(200)
 

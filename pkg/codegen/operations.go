@@ -1347,9 +1347,14 @@ func (r ResponseContentDefinition) IsStreamingContentType() bool {
 }
 
 type ResponseHeaderDefinition struct {
-	Name              string
-	GoName            string
-	Schema            Schema
+	Name   string
+	GoName string
+	Schema Schema
+	// Style and Explode mirror the serialization controls on the OpenAPI header
+	// object. A response header is always serialized as if it were `in: header`,
+	// so these default to "simple" / false when the spec omits them.
+	Style             string
+	Explode           bool
 	Required          bool
 	Nullable          bool
 	Deprecated        bool
@@ -2171,10 +2176,23 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			if header.Value.Schema != nil {
 				nullable = schemaIsNullable(header.Value.Schema.Value)
 			}
+			// A header object carries the same style/explode controls as a
+			// parameter, but has no `in` field: it is implicitly `in: header`,
+			// which defaults to "simple" and explode=false.
+			style := header.Value.Style
+			if style == "" {
+				style = "simple"
+			}
+			var explode bool
+			if header.Value.Explode != nil {
+				explode = *header.Value.Explode
+			}
 			headerDefinition := ResponseHeaderDefinition{
 				Name:     headerName,
 				GoName:   SchemaNameToTypeName(headerName),
 				Schema:   contentSchema,
+				Style:    style,
+				Explode:  explode,
 				Required: header.Value.Required || globalState.options.Compatibility.HeadersImplicitlyRequired,
 				Nullable: nullable,
 			}
