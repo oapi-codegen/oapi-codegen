@@ -1,0 +1,39 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Issue 2512
+paths:
+  /thing:
+    get:
+      operationId: getThing
+      responses:
+        '200':
+          description: ok
+          headers:
+            X-Expires-At:
+              required: true
+              style: simple
+              explode: false
+              schema:
+                type: string
+                format: date-time
+            X-Trace-Id:
+              required: true
+              schema:
+                type: string
+                format: uuid
+            X-Optional-Expires-At:
+              schema:
+                type: string
+                format: date-time
+            X-Plain:
+              required: true
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean

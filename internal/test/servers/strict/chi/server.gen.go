@@ -864,10 +864,22 @@ type NoContentHeaders204Response struct {
 
 func (response NoContentHeaders204Response) VisitNoContentHeadersResponse(w http.ResponseWriter) error {
 	if response.Headers.NullableHeader != nil {
-		w.Header().Set("nullable-header", fmt.Sprint(*response.Headers.NullableHeader))
+		{
+			v, err := runtime.StyleParamWithOptions("simple", false, "nullable-header", *response.Headers.NullableHeader, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return fmt.Errorf("error styling response header nullable-header: %w", err)
+			}
+			w.Header().Set("nullable-header", v)
+		}
 	}
 	if response.Headers.OptionalHeader != nil {
-		w.Header().Set("optional-header", fmt.Sprint(*response.Headers.OptionalHeader))
+		{
+			v, err := runtime.StyleParamWithOptions("simple", false, "optional-header", *response.Headers.OptionalHeader, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return fmt.Errorf("error styling response header optional-header: %w", err)
+			}
+			w.Header().Set("optional-header", v)
+		}
 	}
 	w.WriteHeader(204)
 	return nil
@@ -982,8 +994,20 @@ func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
-	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "header1", response.Headers.Header1, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header header1: %w", err)
+		}
+		w.Header().Set("header1", v)
+	}
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "header2", response.Headers.Header2, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "integer", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header header2: %w", err)
+		}
+		w.Header().Set("header2", v)
+	}
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
@@ -1235,13 +1259,37 @@ func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(w http
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
-	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "header1", response.Headers.Header1, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header header1: %w", err)
+		}
+		w.Header().Set("header1", v)
+	}
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "header2", response.Headers.Header2, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "integer", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header header2: %w", err)
+		}
+		w.Header().Set("header2", v)
+	}
 	if response.Headers.NullableHeader != nil {
-		w.Header().Set("nullable-header", fmt.Sprint(*response.Headers.NullableHeader))
+		{
+			v, err := runtime.StyleParamWithOptions("simple", false, "nullable-header", *response.Headers.NullableHeader, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return fmt.Errorf("error styling response header nullable-header: %w", err)
+			}
+			w.Header().Set("nullable-header", v)
+		}
 	}
 	if response.Headers.OptionalHeader != nil {
-		w.Header().Set("optional-header", fmt.Sprint(*response.Headers.OptionalHeader))
+		{
+			v, err := runtime.StyleParamWithOptions("simple", false, "optional-header", *response.Headers.OptionalHeader, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return fmt.Errorf("error styling response header optional-header: %w", err)
+			}
+			w.Header().Set("optional-header", v)
+		}
 	}
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
@@ -1289,8 +1337,20 @@ func (response UnionExample200ApplicationAlternativePlusJSONResponse) VisitUnion
 		return err
 	}
 	w.Header().Set("Content-Type", "application/alternative+json")
-	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
-	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "header1", response.Headers.Header1, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header header1: %w", err)
+		}
+		w.Header().Set("header1", v)
+	}
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "header2", response.Headers.Header2, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "integer", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header header2: %w", err)
+		}
+		w.Header().Set("header2", v)
+	}
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
@@ -1308,8 +1368,20 @@ func (response UnionExample200JSONResponse) VisitUnionExampleResponse(w http.Res
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("header1", fmt.Sprint(response.Headers.Header1))
-	w.Header().Set("header2", fmt.Sprint(response.Headers.Header2))
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "header1", response.Headers.Header1, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header header1: %w", err)
+		}
+		w.Header().Set("header1", v)
+	}
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "header2", response.Headers.Header2, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "integer", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header header2: %w", err)
+		}
+		w.Header().Set("header2", v)
+	}
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err

@@ -1918,7 +1918,13 @@ func (response GetDeprecatedParamsOldId200JSONResponse) VisitGetDeprecatedParams
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if response.Headers.XOldToken != nil {
-		w.Header().Set("X-Old-Token", fmt.Sprint(*response.Headers.XOldToken))
+		{
+			v, err := runtime.StyleParamWithOptions("simple", false, "X-Old-Token", *response.Headers.XOldToken, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return fmt.Errorf("error styling response header X-Old-Token: %w", err)
+			}
+			w.Header().Set("X-Old-Token", v)
+		}
 	}
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
@@ -1964,10 +1970,22 @@ func (response GetLegacy200JSONResponse) VisitGetLegacyResponse(w http.ResponseW
 	}
 	w.Header().Set("Content-Type", "application/json")
 	if response.Headers.XCorrelationId != nil {
-		w.Header().Set("X-Correlation-Id", fmt.Sprint(*response.Headers.XCorrelationId))
+		{
+			v, err := runtime.StyleParamWithOptions("simple", false, "X-Correlation-Id", *response.Headers.XCorrelationId, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return fmt.Errorf("error styling response header X-Correlation-Id: %w", err)
+			}
+			w.Header().Set("X-Correlation-Id", v)
+		}
 	}
 	if response.Headers.XOldTrace != nil {
-		w.Header().Set("X-Old-Trace", fmt.Sprint(*response.Headers.XOldTrace))
+		{
+			v, err := runtime.StyleParamWithOptions("simple", false, "X-Old-Trace", *response.Headers.XOldTrace, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+			if err != nil {
+				return fmt.Errorf("error styling response header X-Old-Trace: %w", err)
+			}
+			w.Header().Set("X-Old-Trace", v)
+		}
 	}
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
