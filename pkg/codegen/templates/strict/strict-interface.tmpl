@@ -26,10 +26,11 @@
         {{$fixedStatusCode := .HasFixedStatusCode -}}
         {{$isRef := .IsRef -}}
         {{$isExternalRef := .IsExternalRef -}}
+        {{$useLocalHeaders := .NeedsLocalResponseHeaders -}}
         {{$ref := .Ref  | ucFirstWithPkgName -}}
         {{$headers := .Headers -}}
 
-        {{if (and $hasHeaders (not $isRef)) -}}
+        {{if (and $hasHeaders $useLocalHeaders) -}}
             type {{$opid}}{{$statusCode}}ResponseHeaders struct {
                 {{range .Headers -}}
                     {{with .DeprecationComment}}{{.}}
@@ -46,7 +47,7 @@
                 {{else -}}
                 type {{$receiverTypeName}} struct{ {{$ref}}{{.NameTagOrContentType}}Response }
                 {{end}}
-            {{else if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
+            {{else if and (not $hasHeaders) ($fixedStatusCode) (.CanUseDirectResponseType) -}}
                 type {{$receiverTypeName}} {{if .IsMultipart}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if and .Schema.IsRef (not .Schema.IsExternalRef)}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
                 {{- if and .IsJSON .Schema.HasCustomMarshalJSON}}
 
@@ -62,7 +63,7 @@
                 type {{$receiverTypeName}} struct {
                     Body {{if .IsMultipart}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
                     {{if $hasHeaders -}}
-                        Headers {{if $isRef}}{{$ref}}{{else}}{{$opid}}{{$statusCode}}{{end}}ResponseHeaders
+                        Headers {{if $useLocalHeaders}}{{$opid}}{{$statusCode}}{{else}}{{$ref}}{{end}}ResponseHeaders
                     {{end -}}
 
                     {{if not $fixedStatusCode -}}
@@ -83,7 +84,7 @@
                 {{if .IsMultipart -}}
                     writer := multipart.NewWriter(w)
                 {{end -}}
-                {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
+                {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .CanUseDirectResponseType)}}
                 {{if .IsJSON -}}
                     {{$hasUnionElements := ne 0 (len .Schema.UnionElements) -}}
                     var buf bytes.Buffer

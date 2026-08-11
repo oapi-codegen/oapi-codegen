@@ -18,6 +18,8 @@ import (
 	"bytes"
 	"cmp"
 	"fmt"
+	"go/ast"
+	"go/parser"
 	"hash/fnv"
 	"maps"
 	"slices"
@@ -1270,6 +1272,12 @@ func (r ResponseDefinition) IsExternalRef() bool {
 	return strings.Contains(r.Ref, ".")
 }
 
+// NeedsLocalResponseHeaders reports whether the response must declare its own
+// header type. Response references reuse the type declared with the response.
+func (r ResponseDefinition) NeedsLocalResponseHeaders() bool {
+	return !r.IsRef()
+}
+
 type ResponseContentDefinition struct {
 	// This is the schema describing this content
 	Schema Schema
@@ -1280,6 +1288,81 @@ type ResponseContentDefinition struct {
 	// When we generate type names, we need a Tag for it, such as JSON, in
 	// which case we will produce "Response200JSONContent".
 	NameTag string
+
+	// NeedsBodyWrapper is true when a schema-backed strict response cannot use
+	// its generated Go type as a method receiver.
+	NeedsBodyWrapper bool
+}
+
+func responseSchemaNeedsBodyWrapper(sref *openapi3.SchemaRef, schema Schema, path []string) (bool, error) {
+	return responseSchemaNeedsBodyWrapperSeen(sref, schema, path, map[string]struct{}{})
+}
+
+func responseSchemaNeedsBodyWrapperSeen(sref *openapi3.SchemaRef, schema Schema, path []string, seenRefs map[string]struct{}) (bool, error) {
+	if goTypeNeedsBodyWrapper(schema.TypeDecl()) {
+		return true, nil
+	}
+	if sref == nil || sref.Value == nil {
+		return false, nil
+	}
+
+	if IsGoTypeReference(sref.Ref) {
+		if _, seen := seenRefs[sref.Ref]; seen {
+			return false, nil
+		}
+		seenRefs[sref.Ref] = struct{}{}
+
+		resolved := *sref.Value
+		resolved.Extensions = combinedSchemaExtensions(sref)
+		resolvedRef := openapi3.NewSchemaRef("", &resolved)
+		resolvedSchema, err := GenerateGoSchema(resolvedRef, path)
+		if err != nil {
+			return false, fmt.Errorf("generating referenced response schema: %w", err)
+		}
+		return responseSchemaNeedsBodyWrapperSeen(resolvedRef, resolvedSchema, path, seenRefs)
+	}
+
+	// An explicit named x-go-type may be declared by user code in the current
+	// package or an imported package. Its underlying type is unavailable here,
+	// so preserve the existing direct response API.
+	if _, ok := combinedSchemaExtensions(sref)[extPropGoType]; ok {
+		return false, nil
+	}
+
+	// A single-element allOf preserves the referenced type identity.
+	if len(sref.Value.AllOf) == 1 {
+		innerRef := sref.Value.AllOf[0]
+		innerSchema, err := GenerateGoSchema(innerRef, path)
+		if err != nil {
+			return false, fmt.Errorf("generating allOf response schema: %w", err)
+		}
+		return responseSchemaNeedsBodyWrapperSeen(innerRef, innerSchema, path, seenRefs)
+	}
+
+	return false, nil
+}
+
+func goTypeNeedsBodyWrapper(typeDecl string) bool {
+	expr, err := parser.ParseExpr(typeDecl)
+	if err != nil {
+		return false
+	}
+	for {
+		paren, ok := expr.(*ast.ParenExpr)
+		if !ok {
+			break
+		}
+		expr = paren.X
+	}
+
+	switch expr := expr.(type) {
+	case *ast.InterfaceType, *ast.StarExpr:
+		return true
+	case *ast.Ident:
+		return expr.Name == "any" || expr.Name == "error"
+	default:
+		return false
+	}
 }
 
 // TypeDef returns the Go type definition for a request body
@@ -1296,6 +1379,18 @@ func (r ResponseContentDefinition) TypeDef(opID string, statusCode int) *TypeDef
 // (output-options.content-types) don't change how a response is written.
 func (r ResponseContentDefinition) IsSupported() bool {
 	return r.IsJSON() || r.IsFormdata() || r.IsMultipart() || r.IsText()
+}
+
+// usesSchemaReceiver reports whether a strict response derives its receiver
+// from the response schema rather than a fixed callback or reader type.
+func (r ResponseContentDefinition) usesSchemaReceiver() bool {
+	return r.IsJSON()
+}
+
+// CanUseDirectResponseType reports whether the strict response can use its
+// wire type directly instead of exposing a Body field.
+func (r ResponseContentDefinition) CanUseDirectResponseType() bool {
+	return r.IsSupported() && !r.NeedsBodyWrapper
 }
 
 // HasFixedContentType returns true if content type has fixed content type, i.e. contains no "*" symbol
@@ -2146,6 +2241,12 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 				ContentType: contentType,
 				NameTag:     tag,
 				Schema:      contentSchema,
+			}
+			if rcd.usesSchemaReceiver() {
+				rcd.NeedsBodyWrapper, err = responseSchemaNeedsBodyWrapper(content.Schema, contentSchema, []string{responseBodyTypeName})
+				if err != nil {
+					return nil, fmt.Errorf("determining response body representation: %w", err)
+				}
 			}
 
 			responseContentDefinitions = append(responseContentDefinitions, rcd)
