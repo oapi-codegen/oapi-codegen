@@ -134,7 +134,9 @@ components:
     # openapi31_polish: examples -> doc comments; const -> typed enum
     # ----------------------------------------------------------------------
     # `examples` (plural array) on object properties must surface in the
-    # generated field's Go doc comment.
+    # generated field's Go doc comment. 3.1 keeps the singular `example`
+    # keyword as a valid annotation, and specs written against 3.1 use it
+    # heavily, so `nickname` locks in that it renders too.
     Pet:
       type: object
       required: [name, lives]
@@ -145,6 +147,10 @@ components:
           examples:
             - "Whiskers"
             - "Rex"
+        nickname:
+          type: string
+          description: The pet's nickname.
+          example: "Whisk"
         lives:
           type: integer
           examples:

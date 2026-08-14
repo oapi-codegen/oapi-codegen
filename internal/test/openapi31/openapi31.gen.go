@@ -116,6 +116,11 @@ type Pet struct {
 	//
 	// Examples: Whiskers, Rex
 	Name string `json:"name"`
+
+	// Nickname The pet's nickname.
+	//
+	// Example: Whisk
+	Nickname *string `json:"nickname,omitempty"`
 }
 
 // Severity How urgent a problem is.

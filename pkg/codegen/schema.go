@@ -665,13 +665,19 @@ func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, bool) {
 
 // describeWithExamples folds a schema's example data into its
 // description string for use in generated Go doc comments. Version-aware:
-// in 3.0 it reads schema.Example (singular); in 3.1 it reads
-// schema.Examples (plural array). Cross-version misuse is documented as
-// invalid input -- this helper does not look at the off-version field.
+// in 3.0 it reads schema.Example (singular); in 3.1 it prefers
+// schema.Examples (the JSON Schema plural array) and falls back to
+// schema.Example.
 //
-// The output appends `Examples: <v1>, <v2>, ...` (or `Example: <v>` in
-// 3.0) on a new paragraph after any existing description text. Non-
-// string values are JSON-encoded so structured examples render
+// The fallback matters because 3.1 keeps the singular `example` keyword
+// as a valid annotation, and specs written against 3.1 use it heavily.
+// kin-openapi parses it into schema.Example regardless of document
+// version, so without the fallback every such example is silently
+// dropped from the generated comments.
+//
+// The output appends `Examples: <v1>, <v2>, ...` (or `Example: <v>` for
+// a single value) on a new paragraph after any existing description
+// text. Non-string values are JSON-encoded so structured examples render
 // readably.
 //
 // Precondition: globalState.is31 must be set (see schemaIsNullable
@@ -682,10 +688,7 @@ func describeWithExamples(description string, schema *openapi3.Schema) string {
 	}
 	var values []any
 	label := "Example"
-	if globalState.is31 {
-		if len(schema.Examples) == 0 {
-			return description
-		}
+	if globalState.is31 && len(schema.Examples) > 0 {
 		values = schema.Examples
 		label = "Examples"
 	} else {
