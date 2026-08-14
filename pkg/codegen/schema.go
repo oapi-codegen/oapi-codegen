@@ -688,22 +688,66 @@ func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, *openapi3
 // "integer") of a oneOf branch's `const` value, and whether that value is a
 // supported scalar. It mirrors how kin-openapi parses 3.1 `const` values:
 // strings stay strings, while numbers (including whole-number integers)
-// arrive as float64. Booleans, objects, arrays, and fractional numbers are
-// not supported -- callers should fall through to the union generator.
+// arrive as float64. Booleans, objects, arrays, fractional numbers, and
+// whole numbers outside the int64 range are not supported -- callers should
+// fall through to the union generator.
+//
+// The int64 bound matters: the generated Go enum is a typed constant whose
+// value is emitted verbatim; a const that does not fit the target integer
+// type would fail while formatting the generated source (.e.g a float
+// literal assigned to an int type).
 func enumViaOneOfConstType(v any) (string, bool) {
 	switch c := v.(type) {
 	case string:
 		return "string", true
 	case float64:
-		if c == math.Trunc(c) {
+		// The bound is strict on the top end: math.MaxInt64 (2^63-1) rounds
+		// up to 2^63 when widened to float64, so a whole value equal to or
+		// above 2^63 is not representable within int64. Reject it rather
+		// than emit an overflowing typed constant.
+		if c == math.Trunc(c) && c >= math.MinInt64 && c < (1<<63) {
 			return "integer", true
 		}
 	case float32, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 		// Defensive: kin-openapi yields float64 for numbers, but other
-		// loaders/constructors may keep integral Go types as-is.
-		return "integer", true
+		// loaders/constructors may keep integral Go types as-is. The uint64
+		// case can still exceed the int64 range, so it is guarded too.
+		if toInt64(c) {
+			return "integer", true
+		}
 	}
 	return "", false
+}
+
+// toInt64 reports whether the given integral/uint value fits within the
+// int64 range, and is safe to emit as a Go integer constant.
+func toInt64(v any) bool {
+	switch c := v.(type) {
+	case int:
+		return true
+	case int8:
+		return true
+	case int16:
+		return true
+	case int32:
+		return true
+	case int64:
+		return true
+	case uint:
+		return uint64(c) <= math.MaxInt64
+	case uint8:
+		return true
+	case uint16:
+		return true
+	case uint32:
+		return true
+	case uint64:
+		return c <= math.MaxInt64
+	case float32:
+		f := float64(c)
+		return f == math.Trunc(f) && f >= math.MinInt64 && f < (1<<63)
+	}
+	return false
 }
 
 // describeWithExamples folds a schema's example data into its

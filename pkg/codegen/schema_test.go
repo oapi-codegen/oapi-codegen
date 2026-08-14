@@ -562,6 +562,11 @@ func TestEnumViaOneOfConstType(t *testing.T) {
 		{name: "nil", in: nil, want: "", ok: false},
 		{name: "map (an object)", in: map[string]any{"a": 1}, want: "", ok: false},
 		{name: "slice (an array)", in: []any{1, 2}, want: "", ok: false},
+		{name: "float64 overflow int64 max", in: float64(9223372036854775808), want: "", ok: false},
+		{name: "float64 overflow int64 negative", in: -9.3e18, want: "", ok: false},
+		{name: "uint64 overflow int64 max", in: uint64(18446744073709551615), want: "", ok: false},
+		{name: "uint64 within int64", in: uint64(9223372036854775807), want: "integer", ok: true},
+		{name: "int64 min boundary", in: int64(-9223372036854775808), want: "integer", ok: true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -570,4 +575,26 @@ func TestEnumViaOneOfConstType(t *testing.T) {
 			assert.Equal(t, tc.want, fam, "family mismatch")
 		})
 	}
+}
+
+// An integer enum-via-oneOf whose const exceeds the Go int64 range must not
+// be emitted as a typed enum: the verbatim value would not fit the target
+// integer type and the generated source would fail to format. Instead
+// detectEnumViaOneOf must fall through (ok=false) so the union path is used.
+// Issue: overflowing constants were treated as valid integers.
+func TestEnumViaOneOfOverflowFallsThrough(t *testing.T) {
+	globalState.is31 = true
+	globalState.options.OutputOptions.SkipEnumViaOneOf = false
+
+	schema := &openapi3.Schema{
+		Type: nil, // no outer type -> family inferred from const values
+		OneOf: openapi3.SchemaRefs{
+			{Value: &openapi3.Schema{Title: "Enormous", Const: float64(9223372036854775808)}}, // 2^63, overflows int64
+		},
+	}
+
+	items, enumType, ok := detectEnumViaOneOf(schema)
+	assert.False(t, ok, "overflowing const must fall through, not form an enum")
+	assert.Nil(t, items)
+	assert.Nil(t, enumType)
 }
