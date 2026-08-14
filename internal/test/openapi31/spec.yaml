@@ -156,3 +156,50 @@ components:
     Status:
       type: string
       const: active
+
+    # ----------------------------------------------------------------------
+    # multi-type unions: `type: [T1, T2, ...]` -> any
+    # ----------------------------------------------------------------------
+    # 3.1 lets `type` hold a list, so a value may be any one of several types.
+    # Go has no type expressing that constraint, so each of these lowers to
+    # `any`, the same permissive mapping a typeless schema gets.
+    #
+    # A free-form map whose values are genuinely polymorphic scalars. This is
+    # the shape that appears in published 3.1 specs (e.g. an event payload
+    # whose fields may be strings, numbers or booleans). Expected Go shape:
+    # map[string]any.
+    Event:
+      type: object
+      additionalProperties:
+        type: [string, number, boolean]
+
+    # Unions in property position. `value` is required and `optionalValue` is
+    # not, but neither is pointer-wrapped: nil is already `any`'s zero value.
+    # `nullableValue` adds "null" to the list, which is stripped as the
+    # nullability marker before the union check, leaving a two-type union.
+    Measurement:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: [string, number]
+        optionalValue:
+          type: [string, number]
+        nullableValue:
+          type: [string, number, "null"]
+
+    # A named component that is itself a union. Emitted as a type alias
+    # (`type UnionValue = any`) rather than a newtype.
+    UnionValue:
+      type: [string, number, boolean]
+
+    # A union carrying an `enum` does not become a Go typed constant:
+    # `const X any = ...` is not a valid Go constant. The enum is dropped and
+    # the schema generates as the plain `any` the union maps to, the same way
+    # `type: array` with an `enum` falls through to plain array handling.
+    UnionEnum:
+      type: [string, integer]
+      enum:
+        - 1
+        - two

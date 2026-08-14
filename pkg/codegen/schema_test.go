@@ -539,3 +539,78 @@ func TestOapiSchemaToGoType_NullType(t *testing.T) {
 	assert.True(t, out.SkipOptionalPointer)
 	assert.True(t, out.DefineViaAlias)
 }
+
+// An OpenAPI 3.1 `type` list holding more than one type after "null" is
+// stripped is a multi-type union. Go has no type accepting exactly those
+// types, so the union maps to `any`.
+func TestOapiSchemaToGoType_MultiTypeUnion(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		types    openapi3.Types
+		wantErr  bool
+		wantType string
+		wantSkip bool
+	}{
+		{
+			name:     "three scalar types",
+			types:    openapi3.Types{"string", "number", "boolean"},
+			wantType: "any",
+			wantSkip: true,
+		},
+		{
+			name:     "array in a union does not take the array branch",
+			types:    openapi3.Types{"array", "string"},
+			wantType: "any",
+			wantSkip: true,
+		},
+		{
+			name:     "union alongside null",
+			types:    openapi3.Types{"string", "number", "null"},
+			wantType: "any",
+			wantSkip: true,
+		},
+		{
+			name:     "single type alongside null is not a union",
+			types:    openapi3.Types{"string", "null"},
+			wantType: "string",
+			wantSkip: false,
+		},
+		{
+			name:    "misspelled type name is still an error",
+			types:   openapi3.Types{"strng", "number"},
+			wantErr: true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			prev := globalState
+			t.Cleanup(func() { globalState = prev })
+			globalState.is31 = true
+			globalState.typeMapping = DefaultTypeMapping
+
+			var out Schema
+			err := oapiSchemaToGoType(&openapi3.Schema{Type: &tc.types}, []string{"Value"}, &out)
+			if tc.wantErr {
+				assert.ErrorContains(t, err, "unhandled Schema type")
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantType, out.GoType)
+			assert.Equal(t, tc.wantSkip, out.SkipOptionalPointer)
+			assert.True(t, out.DefineViaAlias)
+		})
+	}
+}
+
+// A list-valued `type` is only legal syntax in OpenAPI 3.1. A 3.0 document
+// carrying one is malformed, so it keeps failing generation instead of
+// picking up the 3.1 union mapping.
+func TestOapiSchemaToGoType_MultiTypeUnionRequires31(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.is31 = false
+	globalState.typeMapping = DefaultTypeMapping
+
+	var out Schema
+	err := oapiSchemaToGoType(&openapi3.Schema{Type: &openapi3.Types{"string", "number"}}, []string{"Value"}, &out)
+	assert.ErrorContains(t, err, "unhandled Schema type")
+}

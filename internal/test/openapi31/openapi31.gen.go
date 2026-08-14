@@ -67,6 +67,9 @@ func (e Status) Valid() bool {
 // Color defines model for Color.
 type Color string
 
+// Event defines model for Event.
+type Event map[string]any
+
 // FileUploadFields defines model for FileUploadFields.
 type FileUploadFields struct {
 	// Base64Field Base64-encoded binary as a JSON string. Mirrors the
@@ -104,6 +107,13 @@ type FileUploadFields struct {
 	RawFile openapi_types.File `json:"rawFile"`
 }
 
+// Measurement defines model for Measurement.
+type Measurement struct {
+	NullableValue any `json:"nullableValue"`
+	OptionalValue any `json:"optionalValue,omitempty"`
+	Value         any `json:"value"`
+}
+
 // MixedOneOf defines model for MixedOneOf.
 type MixedOneOf = string
 
@@ -123,3 +133,9 @@ type Severity int
 
 // Status defines model for Status.
 type Status string
+
+// UnionEnum defines model for UnionEnum.
+type UnionEnum = any
+
+// UnionValue defines model for UnionValue.
+type UnionValue = any
