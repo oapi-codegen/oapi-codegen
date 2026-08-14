@@ -163,6 +163,43 @@ func TestMixedOneOfFallsThrough(t *testing.T) {
 	assert.Equal(t, "anything", string(m))
 }
 
+// A no-outer-type enum-via-oneOf (consts imply the string family) must emit a
+// typed `PetStatus string` enum with named constants, not a raw union.
+func TestPetStatusConstants(t *testing.T) {
+	assert.Equal(t, "available", string(Available))
+	assert.Equal(t, "pending", string(Pending))
+	assert.Equal(t, "sold", string(Sold))
+}
+
+// PetStatus marshals as its string value (a typed enum, not a wrapped union).
+func TestPetStatusJSONRoundTrip(t *testing.T) {
+	data, err := json.Marshal(Available)
+	require.NoError(t, err)
+	assert.JSONEq(t, `"available"`, string(data))
+
+	var got PetStatus
+	require.NoError(t, json.Unmarshal([]byte(`"sold"`), &got))
+	assert.Equal(t, Sold, got)
+}
+
+// A no-outer-type integer enum-via-oneOf deduces `Port int` from whole-number
+// const values.
+func TestPortConstants(t *testing.T) {
+	assert.Equal(t, 8080, int(Http))
+	assert.Equal(t, 9090, int(Https))
+}
+
+// Port marshals as its integer value.
+func TestPortJSONRoundTrip(t *testing.T) {
+	data, err := json.Marshal(Http)
+	require.NoError(t, err)
+	assert.JSONEq(t, `8080`, string(data))
+
+	var got Port
+	require.NoError(t, json.Unmarshal([]byte(`9090`), &got))
+	assert.Equal(t, Https, got)
+}
+
 // ----------------------------------------------------------------------------
 // 3.1 polish: const -> enum, examples -> doc comments (from openapi31_polish)
 // ----------------------------------------------------------------------------

@@ -156,3 +156,31 @@ components:
     Status:
       type: string
       const: active
+
+    # ----------------------------------------------------------------------
+    # enum-via-oneOf WITHOUT an outer scalar `type`: the type is inferred
+    # from the per-branch `const` values (string family; must agree).
+    # ----------------------------------------------------------------------
+    # PetStatus asserts the whole reason this idiom is used in the wild: the
+    # outer schema omits `type` and lets the consts imply it. It must be a
+    # typed enum `PetStatus string` with constants, not a raw union.
+    PetStatus:
+      oneOf:
+        - const: available
+          title: Available
+          description: Pet is available for adoption
+        - const: pending
+          title: Pending
+          description: Pet is pending adoption
+        - const: sold
+          title: Sold
+          description: Pet has been sold
+
+    # Integer no-type variant -- consts are whole numbers, so Port becomes a
+    # typed `Port int` with integer constants.
+    Port:
+      oneOf:
+        - const: 8080
+          title: Http
+        - const: 9090
+          title: Https

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"math"
 	"slices"
 	"strings"
 
@@ -623,44 +624,86 @@ type enumViaOneOfValue struct {
 //
 // Precondition: globalState (both is31 and options) must be initialized
 // (see schemaIsNullable for context).
-func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, bool) {
+func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, *openapi3.Types, bool) {
 	if !globalState.is31 {
-		return nil, false
+		return nil, nil, false
 	}
 	if globalState.options.OutputOptions.SkipEnumViaOneOf {
-		return nil, false
+		return nil, nil, false
 	}
 	if schema == nil || len(schema.OneOf) == 0 {
-		return nil, false
+		return nil, nil, false
 	}
 	primary := schemaPrimaryType(schema.Type)
-	if primary == nil {
-		return nil, false
-	}
-	if !primary.Is("string") && !primary.Is("integer") {
-		return nil, false
+	if primary != nil {
+		if !primary.Is("string") && !primary.Is("integer") {
+			return nil, nil, false
+		}
 	}
 	items := make([]enumViaOneOfValue, 0, len(schema.OneOf))
+	// When the outer schema has no `type`, the scalar family is inferred
+	// from the per-branch `const` values. This blocks the enum from being
+	// emitted unless every branch agrees on a supported scalar family.
+	var inferred string
 	for _, ref := range schema.OneOf {
 		if ref == nil || ref.Value == nil {
-			return nil, false
+			return nil, nil, false
 		}
 		m := ref.Value
 		if m.Title == "" || m.Const == nil {
-			return nil, false
+			return nil, nil, false
 		}
 		if len(m.OneOf) > 0 || len(m.AllOf) > 0 || len(m.AnyOf) > 0 {
-			return nil, false
+			return nil, nil, false
 		}
 		if len(m.Properties) > 0 {
-			return nil, false
+			return nil, nil, false
+		}
+		if primary == nil {
+			fam, ok := enumViaOneOfConstType(m.Const)
+			if !ok {
+				// A non-scalar or non-whole value means we cannot infer a
+				// typed Go enum; fall through to the union generator.
+				return nil, nil, false
+			}
+			if inferred == "" {
+				inferred = fam
+			} else if inferred != fam {
+				// Branches disagree (string vs integer); not an enum.
+				return nil, nil, false
+			}
 		}
 		items = append(items, enumViaOneOfValue{
 			Title: m.Title,
 			Value: fmt.Sprintf("%v", m.Const),
 		})
 	}
-	return items, true
+	if primary == nil {
+		primary = &openapi3.Types{inferred}
+	}
+	return items, primary, true
+}
+
+// enumViaOneOfConstType reports the scalar family (either "string" or
+// "integer") of a oneOf branch's `const` value, and whether that value is a
+// supported scalar. It mirrors how kin-openapi parses 3.1 `const` values:
+// strings stay strings, while numbers (including whole-number integers)
+// arrive as float64. Booleans, objects, arrays, and fractional numbers are
+// not supported -- callers should fall through to the union generator.
+func enumViaOneOfConstType(v any) (string, bool) {
+	switch c := v.(type) {
+	case string:
+		return "string", true
+	case float64:
+		if c == math.Trunc(c) {
+			return "integer", true
+		}
+	case float32, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+		// Defensive: kin-openapi yields float64 for numbers, but other
+		// loaders/constructors may keep integral Go types as-is.
+		return "integer", true
+	}
+	return "", false
 }
 
 // describeWithExamples folds a schema's example data into its
@@ -887,8 +930,22 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// a union. Detection is gated by version + the SkipEnumViaOneOf flag;
 	// when the idiom does not match, fall through to standard handling
 	// (which routes oneOf into generateUnion further below).
-	if items, ok := detectEnumViaOneOf(schema); ok {
-		if err := oapiSchemaToGoType(schema, path, &outSchema); err != nil {
+	if items, enumType, ok := detectEnumViaOneOf(schema); ok {
+		// detectEnumViaOneOf returns the effective scalar type that must
+		// drive the Go base-type mapping. When the outer schema declares
+		// `type` it is used as-is; when `type` is omitted the type was
+		// inferred from the per-branch `const` values, so oapiSchemaToGoType
+		// -- which reads schema.Type -- would otherwise fall into the
+		// generic branch and yield `interface{}`. Feed it the inferred type
+		// via a shallow copy of the schema rather than mutating the
+		// caller's schema as a side effect.
+		typeSource := schema
+		if schema.Type == nil {
+			cp := *schema
+			cp.Type = enumType
+			typeSource = &cp
+		}
+		if err := oapiSchemaToGoType(typeSource, path, &outSchema); err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type for enum-via-oneOf: %w", err)
 		}
 		// Force a typed declaration -- enums must not be aliased.

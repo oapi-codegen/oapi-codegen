@@ -539,3 +539,35 @@ func TestOapiSchemaToGoType_NullType(t *testing.T) {
 	assert.True(t, out.SkipOptionalPointer)
 	assert.True(t, out.DefineViaAlias)
 }
+
+// enumViaOneOfConstType is the type-inference core behind a no-outer-type
+// enum-via-oneOf. It maps a branch's `const` value to a scalar family and
+// rejects anything that cannot form a typed Go enum.
+func TestEnumViaOneOfConstType(t *testing.T) {
+	tests := []struct {
+		name string
+		in   any
+		want string // expected family on success, "" = must not match
+		ok   bool
+	}{
+		{name: "string", in: "available", want: "string", ok: true},
+		{name: "empty string", in: "", want: "string", ok: true},
+		{name: "whole float64 (kin-openapi yaml number)", in: float64(8080), want: "integer", ok: true},
+		{name: "zero float64", in: float64(0), want: "integer", ok: true},
+		{name: "float64 int64", in: float64(2), want: "integer", ok: true},
+		{name: "int", in: 42, want: "integer", ok: true},
+		{name: "int64", in: int64(7), want: "integer", ok: true},
+		{name: "fractional float", in: 1.5, want: "", ok: false},
+		{name: "bool", in: true, want: "", ok: false},
+		{name: "nil", in: nil, want: "", ok: false},
+		{name: "map (an object)", in: map[string]any{"a": 1}, want: "", ok: false},
+		{name: "slice (an array)", in: []any{1, 2}, want: "", ok: false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			fam, ok := enumViaOneOfConstType(tc.in)
+			assert.Equal(t, tc.ok, ok, "enumViaOneOfConstType(%v) ok mismatch", tc.in)
+			assert.Equal(t, tc.want, fam, "family mismatch")
+		})
+	}
+}
