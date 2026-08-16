@@ -38,7 +38,7 @@ func (siw *ServerInterfaceWrapper) PrivateTemplateGet(c *fiber.Ctx) error {
 	// ------------- Path parameter "id" -------------
 	var id string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", Types: []string{}})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
@@ -67,7 +67,7 @@ func (siw *ServerInterfaceWrapper) TemplateShortcutGetAll(c *fiber.Ctx) error {
 	// ------------- Path parameter "template_visibility" -------------
 	var templateVisibility string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "template_visibility", c.Params("template_visibility"), &templateVisibility, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "template_visibility", c.Params("template_visibility"), &templateVisibility, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", Types: []string{}})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter template_visibility: %w", err).Error())
 	}

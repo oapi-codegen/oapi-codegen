@@ -156,7 +156,7 @@ func Parse{{genResponseTypeName $opid | ucFirst}}(rsp *http.Response) (*{{genRes
         {{- range .Headers}}
         if values := rsp.Header.Values({{.Name | toGoString}}); len(values) > 0 {
             var value {{.Schema.TypeDecl}}
-            if err := runtime.BindStyledParameterWithOptions("simple", {{.Name | toGoString}}, values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"}); err != nil {
+            if err := runtime.BindStyledParameterWithOptions("simple", {{.Name | toGoString}}, values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}", Types: {{toStringArray .SchemaTypes}}}); err != nil {
                 return nil, err
             }
             {{- if .IsNullable}}

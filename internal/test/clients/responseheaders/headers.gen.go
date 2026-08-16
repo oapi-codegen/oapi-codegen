@@ -308,21 +308,21 @@ func ParseGetFooResponse(rsp *http.Response) (*GetFooResponse, error) {
 		var headers GetFooResponse200Headers
 		if values := rsp.Header.Values("bar"); len(values) > 0 {
 			var value string
-			if err := runtime.BindStyledParameterWithOptions("simple", "bar", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "bar", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "", Types: []string{}}); err != nil {
 				return nil, err
 			}
 			headers.Bar = &value
 		}
 		if values := rsp.Header.Values("x-next-cursor"); len(values) > 0 {
 			var value string
-			if err := runtime.BindStyledParameterWithOptions("simple", "x-next-cursor", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "x-next-cursor", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "", Types: []string{}}); err != nil {
 				return nil, err
 			}
 			headers.XNextCursor.Set(value)
 		}
 		if values := rsp.Header.Values("x-request-id"); len(values) > 0 {
 			var value int
-			if err := runtime.BindStyledParameterWithOptions("simple", "x-request-id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "integer", Format: ""}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "x-request-id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "integer", Format: "", Types: []string{}}); err != nil {
 				return nil, err
 			}
 			headers.XRequestId = value
@@ -332,7 +332,7 @@ func ParseGetFooResponse(rsp *http.Response) (*GetFooResponse, error) {
 		var headers GetFooResponse404Headers
 		if values := rsp.Header.Values("trace-id"); len(values) > 0 {
 			var value string
-			if err := runtime.BindStyledParameterWithOptions("simple", "trace-id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "trace-id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: "", Types: []string{}}); err != nil {
 				return nil, err
 			}
 			headers.TraceId = value
@@ -342,7 +342,7 @@ func ParseGetFooResponse(rsp *http.Response) (*GetFooResponse, error) {
 		var headers GetFooResponseDefaultHeaders
 		if values := rsp.Header.Values("retry-after"); len(values) > 0 {
 			var value int
-			if err := runtime.BindStyledParameterWithOptions("simple", "retry-after", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "retry-after", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: "", Types: []string{}}); err != nil {
 				return nil, err
 			}
 			headers.RetryAfter = &value

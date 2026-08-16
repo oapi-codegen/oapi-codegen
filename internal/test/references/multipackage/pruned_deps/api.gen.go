@@ -371,14 +371,14 @@ func ParseGetThingsResponse(rsp *http.Response) (*GetThingsResponse, error) {
 		var headers GetThingsResponse304Headers
 		if values := rsp.Header.Values("Cache-Control"); len(values) > 0 {
 			var value string
-			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "Cache-Control", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "", Types: []string{}}); err != nil {
 				return nil, err
 			}
 			headers.CacheControl = &value
 		}
 		if values := rsp.Header.Values("ETag"); len(values) > 0 {
 			var value string
-			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "ETag", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "", Types: []string{}}); err != nil {
 				return nil, err
 			}
 			headers.ETag = &value

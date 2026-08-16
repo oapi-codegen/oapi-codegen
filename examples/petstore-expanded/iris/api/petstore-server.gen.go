@@ -93,7 +93,7 @@ func (w *ServerInterfaceWrapper) FindPets(ctx iris.Context) {
 	var params FindPetsParams
 	// ------------- Optional query parameter "tags" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "tags", ctx.Request().URL.Query(), &params.Tags, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "tags", ctx.Request().URL.Query(), &params.Tags, runtime.BindQueryParameterOptions{Type: "array", Format: "", Types: []string{}})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter tags: %s", err)
@@ -102,7 +102,7 @@ func (w *ServerInterfaceWrapper) FindPets(ctx iris.Context) {
 
 	// ------------- Optional query parameter "limit" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", ctx.Request().URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", ctx.Request().URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32", Types: []string{}})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter limit: %s", err)
@@ -129,7 +129,7 @@ func (w *ServerInterfaceWrapper) DeletePet(ctx iris.Context) {
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", Types: []string{}, ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter id: %s", err)
@@ -149,7 +149,7 @@ func (w *ServerInterfaceWrapper) FindPetByID(ctx iris.Context) {
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", Types: []string{}, ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter id: %s", err)

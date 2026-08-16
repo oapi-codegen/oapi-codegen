@@ -3218,7 +3218,7 @@ func ParsePostFooResponse(rsp *http.Response) (*PostFooResponse, error) {
 		var headers PostFooResponse200Headers
 		if values := rsp.Header.Values("X-Bar"); len(values) > 0 {
 			var value bool
-			if err := runtime.BindStyledParameterWithOptions("simple", "X-Bar", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "boolean", Format: ""}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Bar", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "boolean", Format: "", Types: []string{}}); err != nil {
 				return nil, err
 			}
 			headers.XBar = &value

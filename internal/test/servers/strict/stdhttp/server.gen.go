@@ -193,7 +193,7 @@ func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(w http.ResponseWr
 	// ------------- Path parameter "type" -------------
 	var pType string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "type", r.PathValue("type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "type", r.PathValue("type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", Types: []string{}, ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "type", Err: err})
 		return
@@ -233,7 +233,7 @@ func (siw *ServerInterfaceWrapper) SameNameParamAndBodyProperty(w http.ResponseW
 	// ------------- Path parameter "name" -------------
 	var name string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "name", r.PathValue("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "name", r.PathValue("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", Types: []string{}, ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "name", Err: err})
 		return
@@ -326,7 +326,7 @@ func (siw *ServerInterfaceWrapper) HeadersExample(w http.ResponseWriter, r *http
 			return
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "header1", valueList[0], &Header1, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		err = runtime.BindStyledParameterWithOptions("simple", "header1", valueList[0], &Header1, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: "", Types: []string{}})
 		if err != nil {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "header1", Err: err})
 			return
@@ -349,7 +349,7 @@ func (siw *ServerInterfaceWrapper) HeadersExample(w http.ResponseWriter, r *http
 			return
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "header2", valueList[0], &Header2, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""})
+		err = runtime.BindStyledParameterWithOptions("simple", "header2", valueList[0], &Header2, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: "", Types: []string{}})
 		if err != nil {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "header2", Err: err})
 			return

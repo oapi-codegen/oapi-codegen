@@ -779,6 +779,26 @@ func isMultiTypeUnion(t *openapi3.Types) bool {
 	return true
 }
 
+// schemaUnionTypes returns t's member types as a string slice when t is an
+// OpenAPI 3.1 multi-type union after the "null" nullability marker is
+// stripped, or nil otherwise. Generated code passes the list to the
+// runtime's union-aware parameter binding (the Types option added in
+// runtime v1.7.0); it is nil for single-type schemas, which keep binding
+// through their concrete Go type.
+//
+// Precondition: globalState.is31 must be set (see schemaIsNullable for
+// context).
+func schemaUnionTypes(t *openapi3.Types) []string {
+	if t == nil {
+		return nil
+	}
+	primary := schemaPrimaryType(t)
+	if !isMultiTypeUnion(primary) {
+		return nil
+	}
+	return primary.Slice()
+}
+
 func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// Add a fallback value in case the sref is nil.
 	// i.e. the parent schema defines a type:array, but the array has

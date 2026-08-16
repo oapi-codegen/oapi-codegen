@@ -31,7 +31,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
   }
   {{end}}
   {{if .IsStyled}}
-  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", c.Param("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}", ValueIsUnescaped: true})
+  err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", c.Param("{{.ParamName}}"), &{{$varName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}", Types: {{toStringArray .SchemaTypes}}, ValueIsUnescaped: true})
   if err != nil {
     siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
     return
@@ -78,7 +78,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
       {{end}}
 
       {{if .IsStyled}}
-      err = runtime.BindQueryParameterWithOptions("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", c.Request.URL.Query(), &params.{{.GoName}}, runtime.BindQueryParameterOptions{Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+      err = runtime.BindQueryParameterWithOptions("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", c.Request.URL.Query(), &params.{{.GoName}}, runtime.BindQueryParameterOptions{Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}", Types: {{toStringArray .SchemaTypes}}})
       if err != nil {
         siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
         return
@@ -111,7 +111,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
         {{end}}
 
         {{if .IsStyled}}
-          err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+          err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}", Types: {{toStringArray .SchemaTypes}}})
           if err != nil {
             siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
             return
@@ -158,7 +158,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
 
       {{- if .IsStyled}}
         var value {{.TypeDef}}
-        err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"})
+        err = runtime.BindStyledParameterWithOptions("simple", "{{.ParamName}}", cookie, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}", Types: {{toStringArray .SchemaTypes}}})
         if err != nil {
             siw.ErrorHandler(c, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err), http.StatusBadRequest)
             return
