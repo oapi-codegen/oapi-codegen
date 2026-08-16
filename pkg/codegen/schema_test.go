@@ -539,3 +539,162 @@ func TestOapiSchemaToGoType_NullType(t *testing.T) {
 	assert.True(t, out.SkipOptionalPointer)
 	assert.True(t, out.DefineViaAlias)
 }
+
+// An OpenAPI 3.1 `type` list holding more than one type after "null" is
+// stripped is a multi-type union. Go has no type accepting exactly those
+// types, so the union maps to `any`.
+func TestOapiSchemaToGoType_MultiTypeUnion(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		types    openapi3.Types
+		wantErr  bool
+		wantType string
+		wantSkip bool
+	}{
+		{
+			name:     "three scalar types",
+			types:    openapi3.Types{"string", "number", "boolean"},
+			wantType: "any",
+			wantSkip: true,
+		},
+		{
+			name:     "array in a union does not take the array branch",
+			types:    openapi3.Types{"array", "string"},
+			wantType: "any",
+			wantSkip: true,
+		},
+		{
+			name:     "union alongside null",
+			types:    openapi3.Types{"string", "number", "null"},
+			wantType: "any",
+			wantSkip: true,
+		},
+		{
+			name:     "single type alongside null is not a union",
+			types:    openapi3.Types{"string", "null"},
+			wantType: "string",
+			wantSkip: false,
+		},
+		{
+			name:    "misspelled type name is still an error",
+			types:   openapi3.Types{"strng", "number"},
+			wantErr: true,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			prev := globalState
+			t.Cleanup(func() { globalState = prev })
+			globalState.is31 = true
+			globalState.typeMapping = DefaultTypeMapping
+
+			var out Schema
+			err := oapiSchemaToGoType(&openapi3.Schema{Type: &tc.types}, []string{"Value"}, &out)
+			if tc.wantErr {
+				assert.ErrorContains(t, err, "unhandled Schema type")
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantType, out.GoType)
+			assert.Equal(t, tc.wantSkip, out.SkipOptionalPointer)
+			assert.True(t, out.DefineViaAlias)
+		})
+	}
+}
+
+// A list-valued `type` is only legal syntax in OpenAPI 3.1. A 3.0 document
+// carrying one is malformed, so it keeps failing generation instead of
+// picking up the 3.1 union mapping.
+func TestOapiSchemaToGoType_MultiTypeUnionRequires31(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.is31 = false
+	globalState.typeMapping = DefaultTypeMapping
+
+	var out Schema
+	err := oapiSchemaToGoType(&openapi3.Schema{Type: &openapi3.Types{"string", "number"}}, []string{"Value"}, &out)
+	assert.ErrorContains(t, err, "unhandled Schema type")
+}
+
+// schemaUnionTypes feeds the Types bind option emitted for union
+// parameters: the member list with "null" stripped for genuine 3.1
+// multi-type unions, nil for everything else (single types bind through
+// their concrete Go type, and a list is not legal syntax in 3.0).
+func TestSchemaUnionTypes(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		is31 bool
+		in   *openapi3.Types
+		want []string
+	}{
+		{
+			name: "union",
+			is31: true,
+			in:   &openapi3.Types{"string", "integer"},
+			want: []string{"string", "integer"},
+		},
+		{
+			name: "nullable union strips the null marker",
+			is31: true,
+			in:   &openapi3.Types{"integer", "string", "null"},
+			want: []string{"integer", "string"},
+		},
+		{
+			name: "nullable single type is not a union",
+			is31: true,
+			in:   &openapi3.Types{"string", "null"},
+			want: nil,
+		},
+		{
+			name: "single type is not a union",
+			is31: true,
+			in:   &openapi3.Types{"string"},
+			want: nil,
+		},
+		{
+			name: "nil types",
+			is31: true,
+			in:   nil,
+			want: nil,
+		},
+		{
+			name: "3.0 documents never produce a union",
+			is31: false,
+			in:   &openapi3.Types{"string", "integer"},
+			want: nil,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			prev := globalState
+			t.Cleanup(func() { globalState = prev })
+			globalState.is31 = tc.is31
+
+			assert.Equal(t, tc.want, schemaUnionTypes(tc.in))
+		})
+	}
+}
+
+// SchemaType feeds the Type bind option: the single declared type with the
+// 3.1 "null" marker stripped, or "" for unions (carried by SchemaTypes) and
+// typeless schemas. The previous first-entry behavior emitted "null" for
+// ["null", "string"] and a lone member for unions.
+func TestParameterDefinitionSchemaType(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.is31 = true
+
+	paramWithTypes := func(types *openapi3.Types) *ParameterDefinition {
+		return &ParameterDefinition{
+			Spec: &openapi3.Parameter{
+				Schema: &openapi3.SchemaRef{Value: &openapi3.Schema{Type: types}},
+			},
+		}
+	}
+
+	assert.Equal(t, "string", paramWithTypes(&openapi3.Types{"string"}).SchemaType())
+	assert.Equal(t, "string", paramWithTypes(&openapi3.Types{"null", "string"}).SchemaType(),
+		"null is the nullability marker, not the parameter's type")
+	assert.Equal(t, "", paramWithTypes(&openapi3.Types{"string", "integer"}).SchemaType(),
+		"unions carry no single Type; SchemaTypes has the members")
+	assert.Equal(t, []string{"string", "integer"}, paramWithTypes(&openapi3.Types{"string", "integer", "null"}).SchemaTypes())
+	assert.Nil(t, paramWithTypes(&openapi3.Types{"string"}).SchemaTypes())
+}
