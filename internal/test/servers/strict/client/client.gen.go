@@ -2782,14 +2782,14 @@ func ParseNoContentHeadersResponse(rsp *http.Response) (*NoContentHeadersRespons
 		var headers NoContentHeadersResponse204Headers
 		if values := rsp.Header.Values("nullable-header"); len(values) > 0 {
 			var value string
-			if err := runtime.BindStyledParameterWithOptions("simple", "nullable-header", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "nullable-header", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			}
 			headers.NullableHeader = &value
 		}
 		if values := rsp.Header.Values("optional-header"); len(values) > 0 {
 			var value string
-			if err := runtime.BindStyledParameterWithOptions("simple", "optional-header", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "optional-header", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			}
 			headers.OptionalHeader = &value
@@ -2892,14 +2892,14 @@ func ParseReusableResponsesResponse(rsp *http.Response) (*ReusableResponsesRespo
 		var headers ReusableResponsesResponse200Headers
 		if values := rsp.Header.Values("header1"); len(values) > 0 {
 			var value string
-			if err := runtime.BindStyledParameterWithOptions("simple", "header1", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: "", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "header1", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			}
 			headers.Header1 = value
 		}
 		if values := rsp.Header.Values("header2"); len(values) > 0 {
 			var value int
-			if err := runtime.BindStyledParameterWithOptions("simple", "header2", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "integer", Format: "", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "header2", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "integer", Format: ""}); err != nil {
 				return nil, err
 			}
 			headers.Header2 = value
@@ -3031,28 +3031,28 @@ func ParseHeadersExampleResponse(rsp *http.Response) (*HeadersExampleResponse, e
 		var headers HeadersExampleResponse200Headers
 		if values := rsp.Header.Values("header1"); len(values) > 0 {
 			var value string
-			if err := runtime.BindStyledParameterWithOptions("simple", "header1", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: "", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "header1", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			}
 			headers.Header1 = value
 		}
 		if values := rsp.Header.Values("header2"); len(values) > 0 {
 			var value int
-			if err := runtime.BindStyledParameterWithOptions("simple", "header2", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "integer", Format: "", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "header2", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "integer", Format: ""}); err != nil {
 				return nil, err
 			}
 			headers.Header2 = value
 		}
 		if values := rsp.Header.Values("nullable-header"); len(values) > 0 {
 			var value string
-			if err := runtime.BindStyledParameterWithOptions("simple", "nullable-header", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "nullable-header", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			}
 			headers.NullableHeader = &value
 		}
 		if values := rsp.Header.Values("optional-header"); len(values) > 0 {
 			var value string
-			if err := runtime.BindStyledParameterWithOptions("simple", "optional-header", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "optional-header", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			}
 			headers.OptionalHeader = &value
@@ -3101,14 +3101,14 @@ func ParseUnionExampleResponse(rsp *http.Response) (*UnionExampleResponse, error
 		var headers UnionExampleResponse200Headers
 		if values := rsp.Header.Values("header1"); len(values) > 0 {
 			var value string
-			if err := runtime.BindStyledParameterWithOptions("simple", "header1", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: "", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "header1", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			}
 			headers.Header1 = value
 		}
 		if values := rsp.Header.Values("header2"); len(values) > 0 {
 			var value int
-			if err := runtime.BindStyledParameterWithOptions("simple", "header2", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "integer", Format: "", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "header2", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "integer", Format: ""}); err != nil {
 				return nil, err
 			}
 			headers.Header2 = value

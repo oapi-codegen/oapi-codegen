@@ -284,28 +284,28 @@ func ParseGetThingResponse(rsp *http.Response) (*GetThingResponse, error) {
 		var headers GetThingResponse200Headers
 		if values := rsp.Header.Values("X-Expires-At"); len(values) > 0 {
 			var value time.Time
-			if err := runtime.BindStyledParameterWithOptions("simple", "X-Expires-At", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: "date-time", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Expires-At", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: "date-time"}); err != nil {
 				return nil, err
 			}
 			headers.XExpiresAt = value
 		}
 		if values := rsp.Header.Values("X-Optional-Expires-At"); len(values) > 0 {
 			var value time.Time
-			if err := runtime.BindStyledParameterWithOptions("simple", "X-Optional-Expires-At", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "date-time", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Optional-Expires-At", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "date-time"}); err != nil {
 				return nil, err
 			}
 			headers.XOptionalExpiresAt = &value
 		}
 		if values := rsp.Header.Values("X-Plain"); len(values) > 0 {
 			var value string
-			if err := runtime.BindStyledParameterWithOptions("simple", "X-Plain", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: "", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Plain", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			}
 			headers.XPlain = value
 		}
 		if values := rsp.Header.Values("X-Trace-Id"); len(values) > 0 {
 			var value openapi_types.UUID
-			if err := runtime.BindStyledParameterWithOptions("simple", "X-Trace-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: "uuid", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Trace-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: "uuid"}); err != nil {
 				return nil, err
 			}
 			headers.XTraceId = value

@@ -157,7 +157,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(w http.ResponseWriter, r *http.Requ
 
 		if cookie, err = r.Cookie("p"); err == nil {
 			var value int32
-			err = runtime.BindStyledParameterWithOptions("simple", "p", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: false, Required: false, Type: "integer", Format: "int32", Types: []string{}})
+			err = runtime.BindStyledParameterWithOptions("simple", "p", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: false, Required: false, Type: "integer", Format: "int32"})
 			if err != nil {
 				siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "p", Err: err})
 				return
@@ -172,7 +172,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(w http.ResponseWriter, r *http.Requ
 
 		if cookie, err = r.Cookie("ep"); err == nil {
 			var value int32
-			err = runtime.BindStyledParameterWithOptions("simple", "ep", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false, Type: "integer", Format: "int32", Types: []string{}})
+			err = runtime.BindStyledParameterWithOptions("simple", "ep", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false, Type: "integer", Format: "int32"})
 			if err != nil {
 				siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ep", Err: err})
 				return
@@ -187,7 +187,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(w http.ResponseWriter, r *http.Requ
 
 		if cookie, err = r.Cookie("ea"); err == nil {
 			var value []int32
-			err = runtime.BindStyledParameterWithOptions("simple", "ea", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false, Type: "array", Format: "", Types: []string{}})
+			err = runtime.BindStyledParameterWithOptions("simple", "ea", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false, Type: "array", Format: ""})
 			if err != nil {
 				siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ea", Err: err})
 				return
@@ -202,7 +202,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(w http.ResponseWriter, r *http.Requ
 
 		if cookie, err = r.Cookie("a"); err == nil {
 			var value []int32
-			err = runtime.BindStyledParameterWithOptions("simple", "a", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: false, Required: false, Type: "array", Format: "", Types: []string{}})
+			err = runtime.BindStyledParameterWithOptions("simple", "a", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: false, Required: false, Type: "array", Format: ""})
 			if err != nil {
 				siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "a", Err: err})
 				return
@@ -217,7 +217,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(w http.ResponseWriter, r *http.Requ
 
 		if cookie, err = r.Cookie("eo"); err == nil {
 			var value Object
-			err = runtime.BindStyledParameterWithOptions("simple", "eo", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false, Type: "", Format: "", Types: []string{}})
+			err = runtime.BindStyledParameterWithOptions("simple", "eo", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false, Type: "", Format: ""})
 			if err != nil {
 				siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "eo", Err: err})
 				return
@@ -232,7 +232,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(w http.ResponseWriter, r *http.Requ
 
 		if cookie, err = r.Cookie("o"); err == nil {
 			var value Object
-			err = runtime.BindStyledParameterWithOptions("simple", "o", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: false, Required: false, Type: "", Format: "", Types: []string{}})
+			err = runtime.BindStyledParameterWithOptions("simple", "o", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: false, Required: false, Type: "", Format: ""})
 			if err != nil {
 				siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "o", Err: err})
 				return
@@ -271,7 +271,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(w http.ResponseWriter, r *http.Requ
 
 		if cookie, err = r.Cookie("1s"); err == nil {
 			var value string
-			err = runtime.BindStyledParameterWithOptions("simple", "1s", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false, Type: "string", Format: "", Types: []string{}})
+			err = runtime.BindStyledParameterWithOptions("simple", "1s", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false, Type: "string", Format: ""})
 			if err != nil {
 				siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "1s", Err: err})
 				return
@@ -303,7 +303,7 @@ func (siw *ServerInterfaceWrapper) EnumParams(w http.ResponseWriter, r *http.Req
 
 	// ------------- Optional query parameter "enumPathParam" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "enumPathParam", r.URL.Query(), &params.EnumPathParam, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32", Types: []string{}})
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "enumPathParam", r.URL.Query(), &params.EnumPathParam, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
@@ -345,7 +345,7 @@ func (siw *ServerInterfaceWrapper) GetHeader(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Primitive", valueList[0], &XPrimitive, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: "int32", Types: []string{}})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Primitive", valueList[0], &XPrimitive, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: "int32"})
 		if err != nil {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Primitive", Err: err})
 			return
@@ -364,7 +364,7 @@ func (siw *ServerInterfaceWrapper) GetHeader(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Primitive-Exploded", valueList[0], &XPrimitiveExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "integer", Format: "int32", Types: []string{}})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Primitive-Exploded", valueList[0], &XPrimitiveExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "integer", Format: "int32"})
 		if err != nil {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Primitive-Exploded", Err: err})
 			return
@@ -383,7 +383,7 @@ func (siw *ServerInterfaceWrapper) GetHeader(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Array-Exploded", valueList[0], &XArrayExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "array", Format: "", Types: []string{}})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Array-Exploded", valueList[0], &XArrayExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "array", Format: ""})
 		if err != nil {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Array-Exploded", Err: err})
 			return
@@ -402,7 +402,7 @@ func (siw *ServerInterfaceWrapper) GetHeader(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Array", valueList[0], &XArray, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "array", Format: "", Types: []string{}})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Array", valueList[0], &XArray, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "array", Format: ""})
 		if err != nil {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Array", Err: err})
 			return
@@ -421,7 +421,7 @@ func (siw *ServerInterfaceWrapper) GetHeader(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Object-Exploded", valueList[0], &XObjectExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "", Format: "", Types: []string{}})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Object-Exploded", valueList[0], &XObjectExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "", Format: ""})
 		if err != nil {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Object-Exploded", Err: err})
 			return
@@ -440,7 +440,7 @@ func (siw *ServerInterfaceWrapper) GetHeader(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Object", valueList[0], &XObject, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "", Format: "", Types: []string{}})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Object", valueList[0], &XObject, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "", Format: ""})
 		if err != nil {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "X-Object", Err: err})
 			return
@@ -493,7 +493,7 @@ func (siw *ServerInterfaceWrapper) GetHeader(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "1-Starting-With-Number", valueList[0], &N1StartingWithNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "", Types: []string{}})
+		err = runtime.BindStyledParameterWithOptions("simple", "1-Starting-With-Number", valueList[0], &N1StartingWithNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
 		if err != nil {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "1-Starting-With-Number", Err: err})
 			return
@@ -523,7 +523,7 @@ func (siw *ServerInterfaceWrapper) GetLabelExplodeArray(w http.ResponseWriter, r
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: "", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -549,7 +549,7 @@ func (siw *ServerInterfaceWrapper) GetLabelExplodeObject(w http.ResponseWriter, 
 	// ------------- Path parameter "param" -------------
 	var param Object
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: "", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -575,7 +575,7 @@ func (siw *ServerInterfaceWrapper) GetLabelExplodePrimitive(w http.ResponseWrite
 	// ------------- Path parameter "param" -------------
 	var param int32
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -601,7 +601,7 @@ func (siw *ServerInterfaceWrapper) GetLabelNoExplodeArray(w http.ResponseWriter,
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: "", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -627,7 +627,7 @@ func (siw *ServerInterfaceWrapper) GetLabelNoExplodeObject(w http.ResponseWriter
 	// ------------- Path parameter "param" -------------
 	var param Object
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: "", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -653,7 +653,7 @@ func (siw *ServerInterfaceWrapper) GetLabelPrimitive(w http.ResponseWriter, r *h
 	// ------------- Path parameter "param" -------------
 	var param int32
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("label", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -679,7 +679,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixExplodeArray(w http.ResponseWriter, 
 	// ------------- Path parameter "id" -------------
 	var id []int32
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: "", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -705,7 +705,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixExplodeObject(w http.ResponseWriter,
 	// ------------- Path parameter "id" -------------
 	var id Object
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: "", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -731,7 +731,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixExplodePrimitive(w http.ResponseWrit
 	// ------------- Path parameter "id" -------------
 	var id int32
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -757,7 +757,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixNoExplodeArray(w http.ResponseWriter
 	// ------------- Path parameter "id" -------------
 	var id []int32
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: "", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -783,7 +783,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixNoExplodeObject(w http.ResponseWrite
 	// ------------- Path parameter "id" -------------
 	var id Object
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: "", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -809,7 +809,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixPrimitive(w http.ResponseWriter, r *
 	// ------------- Path parameter "id" -------------
 	var id int32
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", mux.Vars(r)["id"], &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
 		return
@@ -859,7 +859,7 @@ func (siw *ServerInterfaceWrapper) GetDeepObject(w http.ResponseWriter, r *http.
 
 	// ------------- Required query parameter "deepObj" -------------
 
-	err = runtime.BindQueryParameterWithOptions("deepObject", true, true, "deepObj", r.URL.Query(), &params.DeepObj, runtime.BindQueryParameterOptions{Type: "", Format: "", Types: []string{}})
+	err = runtime.BindQueryParameterWithOptions("deepObject", true, true, "deepObj", r.URL.Query(), &params.DeepObj, runtime.BindQueryParameterOptions{Type: "", Format: ""})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
@@ -892,7 +892,7 @@ func (siw *ServerInterfaceWrapper) GetQueryDelimited(w http.ResponseWriter, r *h
 
 	// ------------- Optional query parameter "sa" -------------
 
-	err = runtime.BindQueryParameterWithOptions("spaceDelimited", false, false, "sa", r.URL.Query(), &params.Sa, runtime.BindQueryParameterOptions{Type: "array", Format: "", Types: []string{}})
+	err = runtime.BindQueryParameterWithOptions("spaceDelimited", false, false, "sa", r.URL.Query(), &params.Sa, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
@@ -905,7 +905,7 @@ func (siw *ServerInterfaceWrapper) GetQueryDelimited(w http.ResponseWriter, r *h
 
 	// ------------- Optional query parameter "pa" -------------
 
-	err = runtime.BindQueryParameterWithOptions("pipeDelimited", false, false, "pa", r.URL.Query(), &params.Pa, runtime.BindQueryParameterOptions{Type: "array", Format: "", Types: []string{}})
+	err = runtime.BindQueryParameterWithOptions("pipeDelimited", false, false, "pa", r.URL.Query(), &params.Pa, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
@@ -938,7 +938,7 @@ func (siw *ServerInterfaceWrapper) GetQueryForm(w http.ResponseWriter, r *http.R
 
 	// ------------- Optional query parameter "ea" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "ea", r.URL.Query(), &params.Ea, runtime.BindQueryParameterOptions{Type: "array", Format: "", Types: []string{}})
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "ea", r.URL.Query(), &params.Ea, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
@@ -951,7 +951,7 @@ func (siw *ServerInterfaceWrapper) GetQueryForm(w http.ResponseWriter, r *http.R
 
 	// ------------- Optional query parameter "a" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", false, false, "a", r.URL.Query(), &params.A, runtime.BindQueryParameterOptions{Type: "array", Format: "", Types: []string{}})
+	err = runtime.BindQueryParameterWithOptions("form", false, false, "a", r.URL.Query(), &params.A, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
@@ -964,7 +964,7 @@ func (siw *ServerInterfaceWrapper) GetQueryForm(w http.ResponseWriter, r *http.R
 
 	// ------------- Optional query parameter "eo" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "eo", r.URL.Query(), &params.Eo, runtime.BindQueryParameterOptions{Type: "", Format: "", Types: []string{}})
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "eo", r.URL.Query(), &params.Eo, runtime.BindQueryParameterOptions{Type: "", Format: ""})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
@@ -977,7 +977,7 @@ func (siw *ServerInterfaceWrapper) GetQueryForm(w http.ResponseWriter, r *http.R
 
 	// ------------- Optional query parameter "o" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", false, false, "o", r.URL.Query(), &params.O, runtime.BindQueryParameterOptions{Type: "", Format: "", Types: []string{}})
+	err = runtime.BindQueryParameterWithOptions("form", false, false, "o", r.URL.Query(), &params.O, runtime.BindQueryParameterOptions{Type: "", Format: ""})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
@@ -990,7 +990,7 @@ func (siw *ServerInterfaceWrapper) GetQueryForm(w http.ResponseWriter, r *http.R
 
 	// ------------- Optional query parameter "ep" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "ep", r.URL.Query(), &params.Ep, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32", Types: []string{}})
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "ep", r.URL.Query(), &params.Ep, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
@@ -1003,7 +1003,7 @@ func (siw *ServerInterfaceWrapper) GetQueryForm(w http.ResponseWriter, r *http.R
 
 	// ------------- Optional query parameter "p" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", false, false, "p", r.URL.Query(), &params.P, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32", Types: []string{}})
+	err = runtime.BindQueryParameterWithOptions("form", false, false, "p", r.URL.Query(), &params.P, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
@@ -1016,7 +1016,7 @@ func (siw *ServerInterfaceWrapper) GetQueryForm(w http.ResponseWriter, r *http.R
 
 	// ------------- Optional query parameter "ps" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "ps", r.URL.Query(), &params.Ps, runtime.BindQueryParameterOptions{Type: "string", Format: "", Types: []string{}})
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "ps", r.URL.Query(), &params.Ps, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
@@ -1044,7 +1044,7 @@ func (siw *ServerInterfaceWrapper) GetQueryForm(w http.ResponseWriter, r *http.R
 
 	// ------------- Optional query parameter "1s" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "1s", r.URL.Query(), &params.N1s, runtime.BindQueryParameterOptions{Type: "string", Format: "", Types: []string{}})
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "1s", r.URL.Query(), &params.N1s, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
@@ -1075,7 +1075,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleExplodeArray(w http.ResponseWriter, 
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: "", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -1101,7 +1101,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleExplodeObject(w http.ResponseWriter,
 	// ------------- Path parameter "param" -------------
 	var param Object
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: "", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -1127,7 +1127,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleExplodePrimitive(w http.ResponseWrit
 	// ------------- Path parameter "param" -------------
 	var param int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -1153,7 +1153,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleNoExplodeArray(w http.ResponseWriter
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: "", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -1179,7 +1179,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleNoExplodeObject(w http.ResponseWrite
 	// ------------- Path parameter "param" -------------
 	var param Object
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: "", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -1205,7 +1205,7 @@ func (siw *ServerInterfaceWrapper) GetSimplePrimitive(w http.ResponseWriter, r *
 	// ------------- Path parameter "param" -------------
 	var param int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return
@@ -1231,7 +1231,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleString(w http.ResponseWriter, r *htt
 	// ------------- Path parameter "param" -------------
 	var param string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", mux.Vars(r)["param"], &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "param", Err: err})
 		return

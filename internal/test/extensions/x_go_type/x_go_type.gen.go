@@ -847,7 +847,7 @@ func (w *ServerInterfaceWrapper) GetRoot(ctx echo.Context) error {
 	var params GetRootParams
 	// ------------- Optional query parameter "at" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "at", ctx.QueryParams(), &params.At, runtime.BindQueryParameterOptions{Type: "string", Format: "date-time", Types: []string{}})
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "at", ctx.QueryParams(), &params.At, runtime.BindQueryParameterOptions{Type: "string", Format: "date-time"})
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter at: %s", err))
 	}

@@ -1347,7 +1347,7 @@ func ParseGetDeprecatedParamsOldIdResponse(rsp *http.Response) (*GetDeprecatedPa
 		var headers GetDeprecatedParamsOldIdResponse200Headers
 		if values := rsp.Header.Values("X-Old-Token"); len(values) > 0 {
 			var value string
-			if err := runtime.BindStyledParameterWithOptions("simple", "X-Old-Token", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Old-Token", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			}
 			headers.XOldToken = &value
@@ -1412,14 +1412,14 @@ func ParseGetLegacyResponse(rsp *http.Response) (*GetLegacyResponse, error) {
 		var headers GetLegacyResponse200Headers
 		if values := rsp.Header.Values("X-Correlation-Id"); len(values) > 0 {
 			var value string
-			if err := runtime.BindStyledParameterWithOptions("simple", "X-Correlation-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Correlation-Id", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			}
 			headers.XCorrelationId = &value
 		}
 		if values := rsp.Header.Values("X-Old-Trace"); len(values) > 0 {
 			var value string
-			if err := runtime.BindStyledParameterWithOptions("simple", "X-Old-Trace", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "", Types: []string{}}); err != nil {
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Old-Trace", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			}
 			headers.XOldTrace = &value
@@ -1523,7 +1523,7 @@ func (siw *ServerInterfaceWrapper) GetDeprecatedField(w http.ResponseWriter, r *
 
 	// ------------- Optional query parameter "old_filter" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "old_filter", r.URL.Query(), &params.OldFilter, runtime.BindQueryParameterOptions{Type: "string", Format: "", Types: []string{}})
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "old_filter", r.URL.Query(), &params.OldFilter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
@@ -1536,7 +1536,7 @@ func (siw *ServerInterfaceWrapper) GetDeprecatedField(w http.ResponseWriter, r *
 
 	// ------------- Optional query parameter "new_filter" -------------
 
-	err = runtime.BindQueryParameterWithOptions("form", true, false, "new_filter", r.URL.Query(), &params.NewFilter, runtime.BindQueryParameterOptions{Type: "string", Format: "", Types: []string{}})
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "new_filter", r.URL.Query(), &params.NewFilter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
 	if err != nil {
 		var requiredError *runtime.RequiredParameterError
 		if errors.As(err, &requiredError) {
@@ -1567,7 +1567,7 @@ func (siw *ServerInterfaceWrapper) GetDeprecatedParamsOldId(w http.ResponseWrite
 	// ------------- Path parameter "old_id" -------------
 	var oldId string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "old_id", r.PathValue("old_id"), &oldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", Types: []string{}, ValueIsUnescaped: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "old_id", r.PathValue("old_id"), &oldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "old_id", Err: err})
 		return
@@ -1587,7 +1587,7 @@ func (siw *ServerInterfaceWrapper) GetDeprecatedParamsOldId(w http.ResponseWrite
 			return
 		}
 
-		err = runtime.BindStyledParameterWithOptions("simple", "old_header", valueList[0], &OldHeader, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: "", Types: []string{}})
+		err = runtime.BindStyledParameterWithOptions("simple", "old_header", valueList[0], &OldHeader, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
 		if err != nil {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "old_header", Err: err})
 			return
@@ -1602,7 +1602,7 @@ func (siw *ServerInterfaceWrapper) GetDeprecatedParamsOldId(w http.ResponseWrite
 
 		if cookie, err = r.Cookie("old_cookie"); err == nil {
 			var value string
-			err = runtime.BindStyledParameterWithOptions("simple", "old_cookie", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false, Type: "string", Format: "", Types: []string{}})
+			err = runtime.BindStyledParameterWithOptions("simple", "old_cookie", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false, Type: "string", Format: ""})
 			if err != nil {
 				siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "old_cookie", Err: err})
 				return
