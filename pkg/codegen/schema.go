@@ -618,13 +618,25 @@ type enumViaOneOfValue struct {
 // be a composition (oneOf/allOf/anyOf) or declare properties. The outer
 // schema's primary type must be a scalar (string or integer).
 //
+// The outer `type` may also be omitted, which is the more common spelling
+// of the idiom in the wild -- the consts already imply the family, so
+// repeating it is redundant. The family is then read back off those consts
+// (see inferEnumViaOneOfType).
+//
+// The second return is the schema that drives the Go base-type mapping:
+// the input as-is when it declares its own `type`, or a shallow copy
+// carrying the inferred type when it does not. oapiSchemaToGoType reads
+// Type and Format, so without the splice a typeless schema would land on
+// the generic `any` branch. The copy keeps the inference from leaking back
+// into the caller's schema as a side effect.
+//
 // Gated on globalState.is31 (the keyword `const` lands in OpenAPI 3.1)
 // AND !SkipEnumViaOneOf so users can fall through to the standard union
 // generator on demand.
 //
 // Precondition: globalState (both is31 and options) must be initialized
 // (see schemaIsNullable for context).
-func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, *openapi3.Types, bool) {
+func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, *openapi3.Schema, bool) {
 	if !globalState.is31 {
 		return nil, nil, false
 	}
@@ -634,17 +646,21 @@ func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, *openapi3
 	if schema == nil || len(schema.OneOf) == 0 {
 		return nil, nil, false
 	}
+	typeSource := schema
 	primary := schemaPrimaryType(schema.Type)
-	if primary != nil {
-		if !primary.Is("string") && !primary.Is("integer") {
+	if primary == nil {
+		inferred, format, ok := inferEnumViaOneOfType(schema.OneOf)
+		if !ok {
 			return nil, nil, false
 		}
+		cp := *schema
+		cp.Type, cp.Format = inferred, format
+		primary, typeSource = inferred, &cp
+	}
+	if !primary.Is("string") && !primary.Is("integer") {
+		return nil, nil, false
 	}
 	items := make([]enumViaOneOfValue, 0, len(schema.OneOf))
-	// When the outer schema has no `type`, the scalar family is inferred
-	// from the per-branch `const` values. This blocks the enum from being
-	// emitted unless every branch agrees on a supported scalar family.
-	var inferred string
 	for _, ref := range schema.OneOf {
 		if ref == nil || ref.Value == nil {
 			return nil, nil, false
@@ -659,96 +675,106 @@ func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, *openapi3
 		if len(m.Properties) > 0 {
 			return nil, nil, false
 		}
-		if primary == nil {
-			fam, ok := enumViaOneOfConstType(m.Const)
-			if !ok {
-				// A non-scalar or non-whole value means we cannot infer a
-				// typed Go enum; fall through to the union generator.
-				return nil, nil, false
-			}
-			if inferred == "" {
-				inferred = fam
-			} else if inferred != fam {
-				// Branches disagree (string vs integer); not an enum.
-				return nil, nil, false
-			}
-		}
 		items = append(items, enumViaOneOfValue{
 			Title: m.Title,
 			Value: fmt.Sprintf("%v", m.Const),
 		})
 	}
-	if primary == nil {
-		primary = &openapi3.Types{inferred}
-	}
-	return items, primary, true
+	return items, typeSource, true
 }
 
-// enumViaOneOfConstType reports the scalar family (either "string" or
-// "integer") of a oneOf branch's `const` value, and whether that value is a
-// supported scalar. It mirrors how kin-openapi parses 3.1 `const` values:
-// strings stay strings, while numbers (including whole-number integers)
-// arrive as float64. Booleans, objects, arrays, fractional numbers, and
-// whole numbers outside the int64 range are not supported -- callers should
-// fall through to the union generator.
+// inferEnumViaOneOfType reads the outer scalar type of an enum-via-oneOf
+// schema back off its branch `const` values, for the common spelling of the
+// idiom that leaves `type` off the outer schema. It returns the inferred
+// type and, for integers, the `format` that selects a Go type wide enough
+// to hold every value seen.
 //
-// The int64 bound matters: the generated Go enum is a typed constant whose
-// value is emitted verbatim; a const that does not fit the target integer
-// type would fail while formatting the generated source (.e.g a float
-// literal assigned to an int type).
-func enumViaOneOfConstType(v any) (string, bool) {
-	switch c := v.(type) {
-	case string:
-		return "string", true
-	case float64:
-		// The bound is strict on the top end: math.MaxInt64 (2^63-1) rounds
-		// up to 2^63 when widened to float64, so a whole value equal to or
-		// above 2^63 is not representable within int64. Reject it rather
-		// than emit an overflowing typed constant.
-		if c == math.Trunc(c) && c >= math.MinInt64 && c < (1<<63) {
-			return "integer", true
+// Every branch must land in the same family: a string next to a number has
+// no single Go type, so it is left to the union generator. The family is
+// reported honestly rather than filtered here -- a boolean or fractional
+// const yields "boolean"/"number", which the caller's existing scalar gate
+// then rejects.
+func inferEnumViaOneOfType(refs openapi3.SchemaRefs) (*openapi3.Types, string, bool) {
+	var family, format string
+	for _, ref := range refs {
+		if ref == nil || ref.Value == nil {
+			return nil, "", false
 		}
-	case float32, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
-		// Defensive: kin-openapi yields float64 for numbers, but other
-		// loaders/constructors may keep integral Go types as-is. The uint64
-		// case can still exceed the int64 range, so it is guarded too.
-		if toInt64(c) {
-			return "integer", true
+		fam, wide, ok := constScalarFamily(ref.Value.Const)
+		if !ok {
+			return nil, "", false
+		}
+		switch {
+		case family == "":
+			family = fam
+		case family != fam:
+			return nil, "", false
+		}
+		// Any one value needing the wider integer type widens the whole enum.
+		if wide != "" {
+			format = wide
 		}
 	}
-	return "", false
+	if family == "" {
+		return nil, "", false
+	}
+	return &openapi3.Types{family}, format, true
 }
 
-// toInt64 reports whether the given integral/uint value fits within the
-// int64 range, and is safe to emit as a Go integer constant.
-func toInt64(v any) bool {
+// constScalarFamily classifies one `const` value into the OpenAPI scalar
+// family it belongs to, plus the integer `format` needed to hold it ("" when
+// the default Go int is wide enough). It reports false for values that are
+// not scalars at all -- objects, arrays, JSON null -- and for integers too
+// large to survive the trip through the parser (see below).
+//
+// The cases run narrowest-first, the way the JSON value kinds nest: boolean
+// admits exactly two values, a number splits into integer or number
+// depending on whether it is whole, and string comes last because it is the
+// family that can spell anything.
+//
+// Widths are chosen against the values, not the spec: plain `int` is the
+// natural Go enum type and covers anything inside the int32 range, which is
+// also the range that stays correct on a 32-bit build; past that the enum
+// widens to `int64`.
+//
+// There is no rung above int64. kin-openapi decodes every JSON number into
+// a float64, so an integer above 2^53 has already been rounded to a nearby
+// representable value before we ever see it -- the digits the spec wrote are
+// simply gone, and emitting them as a constant would bake in a wrong number.
+// Such a const is rejected so the schema falls through to the union
+// generator. (A spec that genuinely needs the full 64-bit range should carry
+// the value as a JSON string, which the OpenAPI format registry blesses for
+// int64/uint64 for exactly this reason; that arrives here as the string
+// family and works already.)
+func constScalarFamily(v any) (family string, format string, ok bool) {
 	switch c := v.(type) {
-	case int:
-		return true
-	case int8:
-		return true
-	case int16:
-		return true
-	case int32:
-		return true
-	case int64:
-		return true
-	case uint:
-		return uint64(c) <= math.MaxInt64
-	case uint8:
-		return true
-	case uint16:
-		return true
-	case uint32:
-		return true
-	case uint64:
-		return c <= math.MaxInt64
-	case float32:
-		f := float64(c)
-		return f == math.Trunc(f) && f >= math.MinInt64 && f < (1<<63)
+	case bool:
+		return "boolean", "", true
+	case float64:
+		if c != math.Trunc(c) {
+			return "number", "", true
+		}
+		if c < minExactFloat64Int || c > maxExactFloat64Int {
+			return "", "", false
+		}
+		if c < math.MinInt32 || c > math.MaxInt32 {
+			return "integer", "int64", true
+		}
+		return "integer", "", true
+	case string:
+		return "string", "", true
 	}
-	return false
+	return "", "", false
 }
+
+// maxExactFloat64Int is 2^53, the largest magnitude below which every
+// integer still has its own float64 representation. Above it consecutive
+// integers start to share one, so a parsed value can no longer be trusted to
+// be the value the document wrote.
+const (
+	maxExactFloat64Int = 1 << 53
+	minExactFloat64Int = -maxExactFloat64Int
+)
 
 // describeWithExamples folds a schema's example data into its
 // description string for use in generated Go doc comments. Version-aware:
@@ -1025,21 +1051,9 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// a union. Detection is gated by version + the SkipEnumViaOneOf flag;
 	// when the idiom does not match, fall through to standard handling
 	// (which routes oneOf into generateUnion further below).
-	if items, enumType, ok := detectEnumViaOneOf(schema); ok {
-		// detectEnumViaOneOf returns the effective scalar type that must
-		// drive the Go base-type mapping. When the outer schema declares
-		// `type` it is used as-is; when `type` is omitted the type was
-		// inferred from the per-branch `const` values, so oapiSchemaToGoType
-		// -- which reads schema.Type -- would otherwise fall into the
-		// generic branch and yield `interface{}`. Feed it the inferred type
-		// via a shallow copy of the schema rather than mutating the
-		// caller's schema as a side effect.
-		typeSource := schema
-		if schema.Type == nil {
-			cp := *schema
-			cp.Type = enumType
-			typeSource = &cp
-		}
+	// The outer `type` may be absent, in which case typeSource carries the
+	// scalar type inferred from the branch consts; see detectEnumViaOneOf.
+	if items, typeSource, ok := detectEnumViaOneOf(schema); ok {
 		if err := oapiSchemaToGoType(typeSource, path, &outSchema); err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type for enum-via-oneOf: %w", err)
 		}

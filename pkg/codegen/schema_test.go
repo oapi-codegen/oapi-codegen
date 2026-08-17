@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"math"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -540,39 +541,131 @@ func TestOapiSchemaToGoType_NullType(t *testing.T) {
 	assert.True(t, out.DefineViaAlias)
 }
 
-// enumViaOneOfConstType is the type-inference core behind a no-outer-type
-// enum-via-oneOf. It maps a branch's `const` value to a scalar family and
-// rejects anything that cannot form a typed Go enum.
-func TestEnumViaOneOfConstType(t *testing.T) {
+// constScalarFamily is the type-inference core behind a no-outer-type
+// enum-via-oneOf: it maps a branch's `const` to the OpenAPI scalar family it
+// belongs to, and to the integer format wide enough to hold it. kin-openapi
+// decodes every JSON number into a float64, so the numeric cases all arrive
+// in that shape.
+func TestConstScalarFamily(t *testing.T) {
 	tests := []struct {
-		name string
-		in   any
-		want string // expected family on success, "" = must not match
-		ok   bool
+		name       string
+		in         any
+		wantFamily string // "" = must not match
+		wantFormat string
+		ok         bool
 	}{
-		{name: "string", in: "available", want: "string", ok: true},
-		{name: "empty string", in: "", want: "string", ok: true},
-		{name: "whole float64 (kin-openapi yaml number)", in: float64(8080), want: "integer", ok: true},
-		{name: "zero float64", in: float64(0), want: "integer", ok: true},
-		{name: "float64 int64", in: float64(2), want: "integer", ok: true},
-		{name: "int", in: 42, want: "integer", ok: true},
-		{name: "int64", in: int64(7), want: "integer", ok: true},
-		{name: "fractional float", in: 1.5, want: "", ok: false},
-		{name: "bool", in: true, want: "", ok: false},
-		{name: "nil", in: nil, want: "", ok: false},
-		{name: "map (an object)", in: map[string]any{"a": 1}, want: "", ok: false},
-		{name: "slice (an array)", in: []any{1, 2}, want: "", ok: false},
-		{name: "float64 overflow int64 max", in: float64(9223372036854775808), want: "", ok: false},
-		{name: "float64 overflow int64 negative", in: -9.3e18, want: "", ok: false},
-		{name: "uint64 overflow int64 max", in: uint64(18446744073709551615), want: "", ok: false},
-		{name: "uint64 within int64", in: uint64(9223372036854775807), want: "integer", ok: true},
-		{name: "int64 min boundary", in: int64(-9223372036854775808), want: "integer", ok: true},
+		{name: "string", in: "available", wantFamily: "string", ok: true},
+		{name: "empty string", in: "", wantFamily: "string", ok: true},
+		{name: "bool is its own family", in: true, wantFamily: "boolean", ok: true},
+		{name: "fractional is a number, not an integer", in: 1.5, wantFamily: "number", ok: true},
+		{name: "whole float64 (kin-openapi yaml number)", in: float64(8080), wantFamily: "integer", ok: true},
+		{name: "zero", in: float64(0), wantFamily: "integer", ok: true},
+		{name: "negative", in: float64(-7), wantFamily: "integer", ok: true},
+
+		// int holds anything inside the int32 range on every build; past it
+		// the enum widens to int64 so a 32-bit build stays correct.
+		{name: "int32 max still fits plain int", in: float64(math.MaxInt32), wantFamily: "integer", ok: true},
+		{name: "int32 min still fits plain int", in: float64(math.MinInt32), wantFamily: "integer", ok: true},
+		{name: "past int32 widens to int64", in: float64(math.MaxInt32) + 1, wantFamily: "integer", wantFormat: "int64", ok: true},
+		{name: "below int32 widens to int64", in: float64(math.MinInt32) - 1, wantFamily: "integer", wantFormat: "int64", ok: true},
+
+		// Above 2^53 the float64 the parser handed us is no longer the value
+		// the document wrote, so there is nothing safe to emit.
+		{name: "2^53 is the last exact integer", in: float64(1 << 53), wantFamily: "integer", wantFormat: "int64", ok: true},
+		{name: "past 2^53 is no longer exact", in: float64(1<<53) + 2, ok: false},
+		{name: "below -2^53 is no longer exact", in: -float64(1<<53) - 2, ok: false},
+		{name: "uint64 max as parsed by kin-openapi", in: float64(18446744073709551615), ok: false},
+
+		// Not scalars at all.
+		{name: "nil", in: nil, ok: false},
+		{name: "map (an object)", in: map[string]any{"a": 1}, ok: false},
+		{name: "slice (an array)", in: []any{1, 2}, ok: false},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			fam, ok := enumViaOneOfConstType(tc.in)
-			assert.Equal(t, tc.ok, ok, "enumViaOneOfConstType(%v) ok mismatch", tc.in)
-			assert.Equal(t, tc.want, fam, "family mismatch")
+			fam, format, ok := constScalarFamily(tc.in)
+			assert.Equal(t, tc.ok, ok, "constScalarFamily(%v) ok mismatch", tc.in)
+			assert.Equal(t, tc.wantFamily, fam, "family mismatch")
+			assert.Equal(t, tc.wantFormat, format, "format mismatch")
+		})
+	}
+}
+
+// inferEnumViaOneOfType folds the per-branch families into the one type the
+// whole enum takes, and widens the integer format to fit the largest value.
+func TestInferEnumViaOneOfType(t *testing.T) {
+	refs := func(consts ...any) openapi3.SchemaRefs {
+		out := make(openapi3.SchemaRefs, 0, len(consts))
+		for _, c := range consts {
+			out = append(out, &openapi3.SchemaRef{Value: &openapi3.Schema{Const: c}})
+		}
+		return out
+	}
+
+	for _, tc := range []struct {
+		name       string
+		in         openapi3.SchemaRefs
+		wantType   *openapi3.Types
+		wantFormat string
+		ok         bool
+	}{
+		{
+			name:     "all strings",
+			in:       refs("available", "pending", "sold"),
+			wantType: &openapi3.Types{"string"},
+			ok:       true,
+		},
+		{
+			name:     "small integers keep the natural int",
+			in:       refs(float64(8080), float64(9090)),
+			wantType: &openapi3.Types{"integer"},
+			ok:       true,
+		},
+		{
+			name:       "one large value widens the whole enum",
+			in:         refs(float64(1), float64(5_000_000_000)),
+			wantType:   &openapi3.Types{"integer"},
+			wantFormat: "int64",
+			ok:         true,
+		},
+		{
+			name: "a string beside a number has no single Go type",
+			in:   refs("available", float64(1)),
+			ok:   false,
+		},
+		{
+			name: "an integer beside a fractional number disagrees too",
+			in:   refs(float64(1), 1.5),
+			ok:   false,
+		},
+		{
+			// Reported honestly; the caller's scalar gate is what rejects it.
+			name:     "all booleans",
+			in:       refs(true, false),
+			wantType: &openapi3.Types{"boolean"},
+			ok:       true,
+		},
+		{
+			name: "a non-scalar const stops inference",
+			in:   refs("available", []any{1, 2}),
+			ok:   false,
+		},
+		{
+			name: "a missing const stops inference",
+			in:   refs("available", nil),
+			ok:   false,
+		},
+		{
+			name: "no branches",
+			in:   nil,
+			ok:   false,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			gotType, gotFormat, ok := inferEnumViaOneOfType(tc.in)
+			assert.Equal(t, tc.ok, ok)
+			assert.Equal(t, tc.wantType, gotType)
+			assert.Equal(t, tc.wantFormat, gotFormat)
 		})
 	}
 }
@@ -638,12 +731,41 @@ func TestOapiSchemaToGoType_MultiTypeUnion(t *testing.T) {
 	}
 }
 
-// An integer enum-via-oneOf whose const exceeds the Go int64 range must not
-// be emitted as a typed enum: the verbatim value would not fit the target
-// integer type and the generated source would fail to format. Instead
-// detectEnumViaOneOf must fall through (ok=false) so the union path is used.
-// Issue: overflowing constants were treated as valid integers.
-func TestEnumViaOneOfOverflowFallsThrough(t *testing.T) {
+// detectEnumViaOneOf splices the inferred type into a shallow copy, so the
+// caller's schema keeps whatever it declared (here: nothing) and the copy is
+// what carries the type and format on to oapiSchemaToGoType.
+func TestDetectEnumViaOneOfInfersTypeWithoutMutating(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.is31 = true
+	globalState.options.OutputOptions.SkipEnumViaOneOf = false
+
+	schema := &openapi3.Schema{
+		OneOf: openapi3.SchemaRefs{
+			{Value: &openapi3.Schema{Title: "Http", Const: float64(8080)}},
+			{Value: &openapi3.Schema{Title: "Ephemeral", Const: float64(5_000_000_000)}},
+		},
+	}
+
+	items, typeSource, ok := detectEnumViaOneOf(schema)
+	require.True(t, ok)
+	assert.Equal(t, []enumViaOneOfValue{
+		{Title: "Http", Value: "8080"},
+		{Title: "Ephemeral", Value: "5e+09"},
+	}, items)
+
+	assert.NotSame(t, schema, typeSource, "the inferred type belongs on a copy")
+	assert.Equal(t, &openapi3.Types{"integer"}, typeSource.Type)
+	assert.Equal(t, "int64", typeSource.Format, "5e9 does not fit a 32-bit int")
+	assert.Nil(t, schema.Type, "the caller's schema must be left alone")
+	assert.Empty(t, schema.Format)
+}
+
+// An integer enum-via-oneOf whose const has already lost precision in the
+// parser must not be emitted as a typed enum: the value we would write into
+// the constant is not the value the document declared. detectEnumViaOneOf
+// falls through (ok=false) so the union path is used instead.
+func TestEnumViaOneOfInexactIntegerFallsThrough(t *testing.T) {
 	prev := globalState
 	t.Cleanup(func() { globalState = prev })
 	globalState.is31 = true
@@ -652,14 +774,36 @@ func TestEnumViaOneOfOverflowFallsThrough(t *testing.T) {
 	schema := &openapi3.Schema{
 		Type: nil, // no outer type -> family inferred from const values
 		OneOf: openapi3.SchemaRefs{
-			{Value: &openapi3.Schema{Title: "Enormous", Const: float64(9223372036854775808)}}, // 2^63, overflows int64
+			// Past 2^53 a float64 can no longer hold every integer, and this
+			// is the shape kin-openapi hands us for any JSON number.
+			{Value: &openapi3.Schema{Title: "Enormous", Const: float64(1<<53) + 2}},
 		},
 	}
 
-	items, enumType, ok := detectEnumViaOneOf(schema)
-	assert.False(t, ok, "overflowing const must fall through, not form an enum")
+	items, typeSource, ok := detectEnumViaOneOf(schema)
+	assert.False(t, ok, "an inexact const must fall through, not form an enum")
 	assert.Nil(t, items)
-	assert.Nil(t, enumType)
+	assert.Nil(t, typeSource)
+}
+
+// A oneOf whose branches carry non-enumerable consts (booleans here) infers
+// its family honestly and is then turned away by the scalar gate, landing in
+// the union generator like any other non-enum oneOf.
+func TestEnumViaOneOfNonScalarFamilyFallsThrough(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.is31 = true
+	globalState.options.OutputOptions.SkipEnumViaOneOf = false
+
+	schema := &openapi3.Schema{
+		OneOf: openapi3.SchemaRefs{
+			{Value: &openapi3.Schema{Title: "Yes", Const: true}},
+			{Value: &openapi3.Schema{Title: "No", Const: false}},
+		},
+	}
+
+	_, _, ok := detectEnumViaOneOf(schema)
+	assert.False(t, ok, "boolean is not an enumerable scalar family")
 }
 
 // A list-valued `type` is only legal syntax in OpenAPI 3.1. A 3.0 document
