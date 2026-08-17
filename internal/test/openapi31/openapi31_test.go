@@ -10,6 +10,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -190,12 +191,22 @@ func TestPortConstants(t *testing.T) {
 }
 
 // One const past the 32-bit range widens the whole enum from int to int64,
-// so the value survives on a 32-bit build too. The assignment below is what
-// proves it: SizeHuge would not fit an int32.
+// so the value survives on a 32-bit build too.
+//
+// The underlying kind is the assertion, not the values: `int64(SizeHuge)`
+// compares equal on any 64-bit build whether the enum widened or not, so a
+// value check would keep passing if the widening were dropped. Only a 32-bit
+// build catches that, and nothing in `make test` runs one.
 func TestFileSizeWidensToInt64(t *testing.T) {
-	huge := int64(SizeHuge)
-	assert.Equal(t, int64(5000000000), huge)
+	assert.Equal(t, reflect.Int64, reflect.TypeOf(FileSize(0)).Kind())
+	assert.Equal(t, int64(5000000000), int64(SizeHuge))
 	assert.Equal(t, int64(1024), int64(SizeSmall))
+}
+
+// Conversely, an enum whose consts all sit inside the 32-bit range keeps the
+// natural `int` rather than widening every integer enum to int64.
+func TestPortStaysInt(t *testing.T) {
+	assert.Equal(t, reflect.Int, reflect.TypeOf(Port(0)).Kind())
 }
 
 // Port marshals as its integer value.

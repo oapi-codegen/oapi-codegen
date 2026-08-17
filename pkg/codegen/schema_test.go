@@ -569,11 +569,16 @@ func TestConstScalarFamily(t *testing.T) {
 		{name: "past int32 widens to int64", in: float64(math.MaxInt32) + 1, wantFamily: "integer", wantFormat: "int64", ok: true},
 		{name: "below int32 widens to int64", in: float64(math.MinInt32) - 1, wantFamily: "integer", wantFormat: "int64", ok: true},
 
-		// Above 2^53 the float64 the parser handed us is no longer the value
-		// the document wrote, so there is nothing safe to emit.
-		{name: "2^53 is the last exact integer", in: float64(1 << 53), wantFamily: "integer", wantFormat: "int64", ok: true},
-		{name: "past 2^53 is no longer exact", in: float64(1<<53) + 2, ok: false},
-		{name: "below -2^53 is no longer exact", in: -float64(1<<53) - 2, ok: false},
+		// From 2^53 up, the float64 the parser handed us no longer identifies
+		// a single integer, so there is nothing safe to emit. The boundary
+		// itself must be rejected: a spec writing 2^53+1 arrives as exactly
+		// 2^53, so accepting 2^53 would emit the wrong number for it.
+		{name: "largest still-unambiguous integer", in: float64(1<<53) - 1, wantFamily: "integer", wantFormat: "int64", ok: true},
+		{name: "smallest still-unambiguous integer", in: -float64(1<<53) + 1, wantFamily: "integer", wantFormat: "int64", ok: true},
+		{name: "2^53 is ambiguous with 2^53+1", in: float64(1 << 53), ok: false},
+		{name: "2^53+1 arrives already rounded", in: float64(9007199254740993), ok: false},
+		{name: "-2^53 is ambiguous too", in: -float64(1 << 53), ok: false},
+		{name: "-(2^53+1) arrives already rounded", in: -float64(9007199254740993), ok: false},
 		{name: "uint64 max as parsed by kin-openapi", in: float64(18446744073709551615), ok: false},
 
 		// Not scalars at all.
@@ -774,9 +779,10 @@ func TestEnumViaOneOfInexactIntegerFallsThrough(t *testing.T) {
 	schema := &openapi3.Schema{
 		Type: nil, // no outer type -> family inferred from const values
 		OneOf: openapi3.SchemaRefs{
-			// Past 2^53 a float64 can no longer hold every integer, and this
-			// is the shape kin-openapi hands us for any JSON number.
-			{Value: &openapi3.Schema{Title: "Enormous", Const: float64(1<<53) + 2}},
+			// 2^53+1 is the case that matters: it is not representable, so
+			// the parser already rounded it down to 2^53 before we saw it.
+			// Emitting it would write a number the document never used.
+			{Value: &openapi3.Schema{Title: "Enormous", Const: float64(9007199254740993)}},
 		},
 	}
 

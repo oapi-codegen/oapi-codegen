@@ -739,14 +739,20 @@ func inferEnumViaOneOfType(refs openapi3.SchemaRefs) (*openapi3.Types, string, b
 // widens to `int64`.
 //
 // There is no rung above int64. kin-openapi decodes every JSON number into
-// a float64, so an integer above 2^53 has already been rounded to a nearby
-// representable value before we ever see it -- the digits the spec wrote are
-// simply gone, and emitting them as a constant would bake in a wrong number.
-// Such a const is rejected so the schema falls through to the union
-// generator. (A spec that genuinely needs the full 64-bit range should carry
-// the value as a JSON string, which the OpenAPI format registry blesses for
-// int64/uint64 for exactly this reason; that arrives here as the string
+// a float64, so an integer at 2^53 or beyond has already been rounded to a
+// nearby representable value before we ever see it -- the digits the spec
+// wrote are simply gone, and emitting them as a constant would bake in a
+// wrong number. Such a const is rejected so the schema falls through to the
+// union generator. (A spec that genuinely needs the full 64-bit range should
+// carry the value as a JSON string, which the OpenAPI format registry blesses
+// for int64/uint64 for exactly this reason; that arrives here as the string
 // family and works already.)
+//
+// The bound has to exclude 2^53 itself, not just everything past it. 2^53 is
+// exactly representable, but so is nothing between it and 2^53+2: the spec
+// writing 9007199254740993 also arrives as 9007199254740992. A value sitting
+// on the boundary is therefore ambiguous about which integer it came from,
+// which is the same reason the larger ones are rejected.
 func constScalarFamily(v any) (family string, format string, ok bool) {
 	switch c := v.(type) {
 	case bool:
@@ -755,7 +761,7 @@ func constScalarFamily(v any) (family string, format string, ok bool) {
 		if c != math.Trunc(c) {
 			return "number", "", true
 		}
-		if c < minExactFloat64Int || c > maxExactFloat64Int {
+		if c <= minExactFloat64Int || c >= maxExactFloat64Int {
 			return "", "", false
 		}
 		if c < math.MinInt32 || c > math.MaxInt32 {
@@ -777,7 +783,7 @@ func constScalarFamily(v any) (family string, format string, ok bool) {
 // a port number or a byte count that way.
 func enumConstLiteral(v any) string {
 	if f, ok := v.(float64); ok && f == math.Trunc(f) &&
-		f >= minExactFloat64Int && f <= maxExactFloat64Int {
+		f > minExactFloat64Int && f < maxExactFloat64Int {
 		return strconv.FormatInt(int64(f), 10)
 	}
 	return fmt.Sprintf("%v", v)
