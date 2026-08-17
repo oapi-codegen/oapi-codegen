@@ -292,15 +292,31 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	result.AnyOf = anyOf
 	result.AllOf = append(s1.AllOf, s2.AllOf...)
 
+	// Type conflicts are an error only when both members declare a type.
+	// When exactly one declares one, it propagates: a typeless member
+	// contributes its other constraints (properties, required, ...) without
+	// erasing the sibling's type. Taking s1.Type unconditionally here used
+	// to silently drop s2's type, making the generated shape depend on
+	// allOf member order (issue #2524).
 	if s1.Type.Slice() != nil && s2.Type.Slice() != nil && !equalTypes(s1.Type, s2.Type) {
 		return openapi3.Schema{}, fmt.Errorf("can not merge incompatible types: %v, %v", s1.Type.Slice(), s2.Type.Slice())
 	}
 	result.Type = s1.Type
+	if result.Type.Slice() == nil {
+		result.Type = s2.Type
+	}
 
-	if s1.Format != s2.Format {
+	// Format follows the same rule: error only when both members declare
+	// a format and they differ. Erroring on the set-vs-unset case made the
+	// allOf decorator idiom (e.g. $ref + nullable, issue #1898) fail for
+	// refs to format-carrying scalars.
+	if s1.Format != "" && s2.Format != "" && s1.Format != s2.Format {
 		return openapi3.Schema{}, errors.New("can not merge incompatible formats")
 	}
 	result.Format = s1.Format
+	if result.Format == "" {
+		result.Format = s2.Format
+	}
 
 	// For Enums, do we union, or intersect? This is a bit vague. I choose
 	// to be more permissive and union.
@@ -351,9 +367,10 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	//                                                    -> error from
 	//                                                       equalTypes
 	//
-	// Because result.Type was already assigned (line 232) and carries any
-	// "null" entry forward, the merged result is correctly nullable in 3.1
-	// without needing to touch result.Nullable. The result.Nullable copy
+	// Because result.Type was already assigned above and carries any
+	// "null" entry forward — from whichever member declared a type — the
+	// merged result is correctly nullable in 3.1 without needing to touch
+	// result.Nullable. The result.Nullable copy
 	// below is a no-op in 3.1 (s1.Nullable is always false there) but kept
 	// for 3.0 correctness, where Nullable is the only nullability carrier.
 	//

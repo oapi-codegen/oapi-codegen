@@ -9,6 +9,9 @@
 //     (one branch missing `title`) falls through to a plain union type alias.
 //   - the smaller 3.1 polish features: `const` on a scalar -> typed alias +
 //     singleton constant; plural `examples` -> Go doc comments.
+//   - multi-type unions (`type: [string, number, boolean]`) -> `any`, since Go
+//     has no type expressing "one of these". A "null" entry is the nullability
+//     marker and is stripped before the union check.
 //
 // Features that merely exist in both 3.0 and 3.1 (e.g. nullable) are NOT here --
 // they live in their feature category with mixed-version specs.

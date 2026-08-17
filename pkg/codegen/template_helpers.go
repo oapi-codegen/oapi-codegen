@@ -424,6 +424,21 @@ func httpMethodConstant(method string) string {
 	}
 }
 
+// unionTypesFragment renders the Types field of a runtime bind-options
+// literal for an OpenAPI 3.1 multi-type union parameter, e.g.
+// `, Types: []string{"string", "integer"}`. It returns "" for the empty
+// list, so single-type parameters emit no Types field at all: code
+// generated from specs without union parameters stays byte-identical to
+// previous releases and keeps compiling against runtime versions before
+// v1.7.0. Only specs that actually use union parameters pick up the new
+// runtime requirement.
+func unionTypesFragment(types []string) string {
+	if len(types) == 0 {
+		return ""
+	}
+	return ", Types: " + toStringArray(types)
+}
+
 // dict builds a map[string]any from an even-length list of alternating
 // key/value arguments. It lets a template pass more than one named value to a
 // {{template}} invocation (text/template only accepts a single data argument),
@@ -476,6 +491,7 @@ var TemplateFunctions = template.FuncMap{
 	"schemaNameToTypeName":       SchemaNameToTypeName,
 	"toGoString":                 StringToGoString,
 	"toGoComment":                StringWithTypeNameToGoComment,
+	"unionTypes":                 unionTypesFragment,
 
 	"genServerURLWithVariablesFunctionParams": genServerURLWithVariablesFunctionParams,
 	"httpMethodConstant":                      httpMethodConstant,

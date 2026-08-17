@@ -10,6 +10,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -163,6 +164,62 @@ func TestMixedOneOfFallsThrough(t *testing.T) {
 	assert.Equal(t, "anything", string(m))
 }
 
+// A no-outer-type enum-via-oneOf (consts imply the string family) must emit a
+// typed `PetStatus string` enum with named constants, not a raw union.
+func TestPetStatusConstants(t *testing.T) {
+	assert.Equal(t, "available", string(Available))
+	assert.Equal(t, "pending", string(Pending))
+	assert.Equal(t, "sold", string(Sold))
+}
+
+// PetStatus marshals as its string value (a typed enum, not a wrapped union).
+func TestPetStatusJSONRoundTrip(t *testing.T) {
+	data, err := json.Marshal(Available)
+	require.NoError(t, err)
+	assert.JSONEq(t, `"available"`, string(data))
+
+	var got PetStatus
+	require.NoError(t, json.Unmarshal([]byte(`"sold"`), &got))
+	assert.Equal(t, Sold, got)
+}
+
+// A no-outer-type integer enum-via-oneOf deduces `Port int` from whole-number
+// const values.
+func TestPortConstants(t *testing.T) {
+	assert.Equal(t, 8080, int(Http))
+	assert.Equal(t, 9090, int(Https))
+}
+
+// One const past the 32-bit range widens the whole enum from int to int64,
+// so the value survives on a 32-bit build too.
+//
+// The underlying kind is the assertion, not the values: `int64(SizeHuge)`
+// compares equal on any 64-bit build whether the enum widened or not, so a
+// value check would keep passing if the widening were dropped. Only a 32-bit
+// build catches that, and nothing in `make test` runs one.
+func TestFileSizeWidensToInt64(t *testing.T) {
+	assert.Equal(t, reflect.Int64, reflect.TypeOf(FileSize(0)).Kind())
+	assert.Equal(t, int64(5000000000), int64(SizeHuge))
+	assert.Equal(t, int64(1024), int64(SizeSmall))
+}
+
+// Conversely, an enum whose consts all sit inside the 32-bit range keeps the
+// natural `int` rather than widening every integer enum to int64.
+func TestPortStaysInt(t *testing.T) {
+	assert.Equal(t, reflect.Int, reflect.TypeOf(Port(0)).Kind())
+}
+
+// Port marshals as its integer value.
+func TestPortJSONRoundTrip(t *testing.T) {
+	data, err := json.Marshal(Http)
+	require.NoError(t, err)
+	assert.JSONEq(t, `8080`, string(data))
+
+	var got Port
+	require.NoError(t, json.Unmarshal([]byte(`9090`), &got))
+	assert.Equal(t, Https, got)
+}
+
 // ----------------------------------------------------------------------------
 // 3.1 polish: const -> enum, examples -> doc comments (from openapi31_polish)
 // ----------------------------------------------------------------------------
@@ -207,6 +264,54 @@ func TestPetExampleComments(t *testing.T) {
 		"Nickname field should preserve the original description")
 	assert.Contains(t, fields["Nickname"], "Example: Whisk",
 		"Nickname field should fall back to the singular example under 3.1")
+}
+
+// ----------------------------------------------------------------------------
+// multi-type unions: `type: [T1, T2, ...]` -> any
+// ----------------------------------------------------------------------------
+
+// A free-form map whose values are a multi-type union becomes
+// map[string]any, so any of the declared JSON types round-trips.
+func TestEventUnionValuedMap(t *testing.T) {
+	var e Event
+	require.NoError(t, json.Unmarshal([]byte(`{"name":"deploy","duration":1.5,"ok":true}`), &e))
+	assert.Equal(t, "deploy", e["name"])
+	assert.Equal(t, 1.5, e["duration"])
+	assert.Equal(t, true, e["ok"])
+}
+
+// Union-typed properties are plain `any` fields. Neither the required nor
+// the optional one is pointer-wrapped, since nil is already `any`'s zero
+// value. Compile-time check: each field takes a bare value.
+func TestMeasurementUnionProperties(t *testing.T) {
+	m := Measurement{
+		Value:         "high",
+		OptionalValue: 42,
+		NullableValue: nil,
+	}
+	data, err := json.Marshal(m)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"value":"high","optionalValue":42,"nullableValue":null}`, string(data))
+}
+
+// A named component that is itself a union is emitted as an alias
+// (`type UnionValue = any`) rather than a newtype, so a value of any of the
+// declared types is directly assignable. If the union were emitted as a
+// newtype, the assignments below would fail to compile.
+func TestUnionValueIsAlias(t *testing.T) {
+	var v UnionValue = "anything"
+	assert.Equal(t, "anything", v)
+
+	v = 3
+	assert.Equal(t, 3, v)
+}
+
+// A union carrying an `enum` must not generate typed constants: `const X any
+// = ...` does not compile. The enum is dropped and the schema stays the plain
+// `any` alias, so this file building at all is the assertion.
+func TestUnionEnumDropsConstants(t *testing.T) {
+	var v UnionEnum = "two"
+	assert.Equal(t, "two", v)
 }
 
 // petFieldComments extracts the doc comment text for each field of the Pet
