@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -81,4 +82,29 @@ func TestIssue1219(t *testing.T) {
 	// the merged schema has no AdditionalProperties field.
 	_, exist = reflect.TypeOf(MergeWithoutWithout{}).FieldByName("AdditionalProperties")
 	assert.False(t, exist)
+}
+
+// issue #2524: a type or format declared by only one allOf member must
+// propagate to the merged schema instead of being silently dropped (type) or
+// erroring (format), and member order must not change the generated shape.
+// The checks are compile-time: each pair of order-reversed schemas must lower
+// to the same alias.
+func TestIssue2524(t *testing.T) {
+	// A typeless properties-only member alongside `type: string` generates a
+	// string (properties don't constrain non-object instances), not a struct.
+	// The conversions fail to compile if either shape regresses to a struct.
+	assert.IsType(t, "", NewMergeTypeFromSecondMember("s"))
+	assert.IsType(t, "", NewMergeTypeFromFirstMember("s"))
+
+	// A 3.1 multi-type union member lowers to `any` in both orders.
+	var union1 NewMergeUnionTypeFromSecondMember = "either a string"
+	var union2 NewMergeUnionTypeFromFirstMember = 1.5
+	assert.NotNil(t, union1)
+	assert.NotNil(t, union2)
+
+	// The decorator idiom over a format-carrying scalar propagates the format
+	// (previously a hard "can not merge incompatible formats" error). The
+	// composite literals fail to compile if the aliases regress to string.
+	assert.IsType(t, openapi_types.UUID{}, NewMergeFormatFromRef{})
+	assert.IsType(t, openapi_types.UUID{}, NewMergeFormatFromRefReversed{})
 }

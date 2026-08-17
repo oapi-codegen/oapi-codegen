@@ -2321,6 +2321,8 @@ Got one to add? Please raise a PR!
 
 Yes. Initial OpenAPI 3.1 support landed with [#2336](https://github.com/oapi-codegen/oapi-codegen/pull/2336), including [webhooks](https://spec.openapis.org/oas/v3.1.0#oasWebhooks) and version-aware handling of 3.1 idioms such as `type: [T, "null"]` nullability and enums declared via `oneOf` + `const`.
 
+A 3.1 schema may also declare a multi-type union, such as `type: [string, number, boolean]`. Go has no type expressing that constraint, so these generate `any`.
+
 If you're on an older release that predates this, you can [use OpenAPI Overlay](#modifying-the-input-openapi-specification-with-openapi-overlay) to "downgrade" an OpenAPI 3.1 spec to OpenAPI 3.0, following [steps from this blog post](https://www.jvt.me/posts/2025/05/04/oapi-codegen-trick-openapi-3-1/).
 
 ### How does `oapi-codegen` handle `anyOf`, `allOf` and `oneOf`?

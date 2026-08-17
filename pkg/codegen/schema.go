@@ -835,6 +835,57 @@ func schemaPrimaryType(t *openapi3.Types) *openapi3.Types {
 	return &stripped
 }
 
+// isMultiTypeUnion reports whether t is an OpenAPI 3.1 multi-type union: a
+// `type` list naming more than one type, such as `type: [string, number]`.
+// A list is only legal `type` syntax in 3.1, so a 3.0 document carrying one
+// is malformed and keeps failing generation.
+//
+// Every entry must name a JSON Schema type, so a misspelled one
+// (`type: [strng, number]`) is not a union and still reaches the "unhandled
+// Schema type" error rather than being quietly widened to `any`. "null" is
+// excluded because it is the nullability marker rather than a member of the
+// union, so a list containing it is not a union on its account alone.
+//
+// Precondition: globalState.is31 must be set (see schemaIsNullable for
+// context).
+func isMultiTypeUnion(t *openapi3.Types) bool {
+	if !globalState.is31 {
+		return false
+	}
+	s := t.Slice()
+	if len(s) < 2 {
+		return false
+	}
+	for _, name := range s {
+		switch name {
+		case "array", "boolean", "integer", "number", "object", "string":
+		default:
+			return false
+		}
+	}
+	return true
+}
+
+// schemaUnionTypes returns t's member types as a string slice when t is an
+// OpenAPI 3.1 multi-type union after the "null" nullability marker is
+// stripped, or nil otherwise. Generated code passes the list to the
+// runtime's union-aware parameter binding (the Types option added in
+// runtime v1.7.0); it is nil for single-type schemas, which keep binding
+// through their concrete Go type.
+//
+// Precondition: globalState.is31 must be set (see schemaIsNullable for
+// context).
+func schemaUnionTypes(t *openapi3.Types) []string {
+	if t == nil {
+		return nil
+	}
+	primary := schemaPrimaryType(t)
+	if !isMultiTypeUnion(primary) {
+		return nil
+	}
+	return primary.Slice()
+}
+
 func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// Add a fallback value in case the sref is nil.
 	// i.e. the parent schema defines a type:array, but the array has
@@ -1236,7 +1287,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 
 		return outSchema, nil
-	} else if (len(schema.Enum) > 0 || (globalState.is31 && schema.Const != nil)) && !t.Is("array") {
+	} else if (len(schema.Enum) > 0 || (globalState.is31 && schema.Const != nil)) && !t.Is("array") && !isMultiTypeUnion(t) {
 		// An `enum` (or 3.1 `const`) is only meaningful on a scalar schema:
 		// it constrains a single value, which we render as a typed constant.
 		// A schema that combines `type: array` with an `enum` is malformed --
@@ -1246,6 +1297,10 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		// `const X SliceType = ...`, which is not a valid Go constant type.
 		// Fall through to normal array handling so the schema generates as a
 		// plain `[]ItemType`; the item schema carries the real enum.
+		//
+		// A multi-type union is excluded for the same reason: it lowers to
+		// `any`, and `const X any = ...` is not a valid Go constant either.
+		// Falling through generates the plain `any` the union maps to.
 		err := oapiSchemaToGoType(schema, path, &outSchema)
 		// Enums need to be typed, so that the values aren't interchangeable,
 		// so no matter what schema conversion thinks, we need to define a
@@ -1461,6 +1516,16 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		// zero value is already nil, so skip it — mirroring the
 		// typeless-schema handling in GenerateGoSchema.
 		// See https://github.com/oapi-codegen/oapi-codegen/issues/2430
+		outSchema.GoType = "any"
+		outSchema.SkipOptionalPointer = true
+		outSchema.DefineViaAlias = true
+	} else if isMultiTypeUnion(t) {
+		// OpenAPI 3.1 allows `type` to be a list, so a value may be any one
+		// of several types (`type: [string, number, boolean]`). Go has no
+		// type matching that constraint. Map it to `any`, the same permissive
+		// mapping used for typeless schemas, rather than rejecting an
+		// otherwise valid spec. An optional pointer makes no sense for `any`,
+		// whose zero value is already nil, so skip it.
 		outSchema.GoType = "any"
 		outSchema.SkipOptionalPointer = true
 		outSchema.DefineViaAlias = true

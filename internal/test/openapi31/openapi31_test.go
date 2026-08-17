@@ -237,6 +237,54 @@ func TestPetExampleComments(t *testing.T) {
 		"Lives field should surface the integer example as a doc fragment")
 }
 
+// ----------------------------------------------------------------------------
+// multi-type unions: `type: [T1, T2, ...]` -> any
+// ----------------------------------------------------------------------------
+
+// A free-form map whose values are a multi-type union becomes
+// map[string]any, so any of the declared JSON types round-trips.
+func TestEventUnionValuedMap(t *testing.T) {
+	var e Event
+	require.NoError(t, json.Unmarshal([]byte(`{"name":"deploy","duration":1.5,"ok":true}`), &e))
+	assert.Equal(t, "deploy", e["name"])
+	assert.Equal(t, 1.5, e["duration"])
+	assert.Equal(t, true, e["ok"])
+}
+
+// Union-typed properties are plain `any` fields. Neither the required nor
+// the optional one is pointer-wrapped, since nil is already `any`'s zero
+// value. Compile-time check: each field takes a bare value.
+func TestMeasurementUnionProperties(t *testing.T) {
+	m := Measurement{
+		Value:         "high",
+		OptionalValue: 42,
+		NullableValue: nil,
+	}
+	data, err := json.Marshal(m)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"value":"high","optionalValue":42,"nullableValue":null}`, string(data))
+}
+
+// A named component that is itself a union is emitted as an alias
+// (`type UnionValue = any`) rather than a newtype, so a value of any of the
+// declared types is directly assignable. If the union were emitted as a
+// newtype, the assignments below would fail to compile.
+func TestUnionValueIsAlias(t *testing.T) {
+	var v UnionValue = "anything"
+	assert.Equal(t, "anything", v)
+
+	v = 3
+	assert.Equal(t, 3, v)
+}
+
+// A union carrying an `enum` must not generate typed constants: `const X any
+// = ...` does not compile. The enum is dropped and the schema stays the plain
+// `any` alias, so this file building at all is the assertion.
+func TestUnionEnumDropsConstants(t *testing.T) {
+	var v UnionEnum = "two"
+	assert.Equal(t, "two", v)
+}
+
 // petFieldComments extracts the doc comment text for each field of the Pet
 // struct from a parsed AST. Returns map[fieldName]commentText.
 func petFieldComments(t *testing.T, f *ast.File) map[string]string {
