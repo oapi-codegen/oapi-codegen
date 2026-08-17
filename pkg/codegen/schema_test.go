@@ -569,17 +569,12 @@ func TestConstScalarFamily(t *testing.T) {
 		{name: "past int32 widens to int64", in: float64(math.MaxInt32) + 1, wantFamily: "integer", wantFormat: "int64", ok: true},
 		{name: "below int32 widens to int64", in: float64(math.MinInt32) - 1, wantFamily: "integer", wantFormat: "int64", ok: true},
 
-		// From 2^53 up, the float64 the parser handed us no longer identifies
-		// a single integer, so there is nothing safe to emit. The boundary
-		// itself must be rejected: a spec writing 2^53+1 arrives as exactly
-		// 2^53, so accepting 2^53 would emit the wrong number for it.
-		{name: "largest still-unambiguous integer", in: float64(1<<53) - 1, wantFamily: "integer", wantFormat: "int64", ok: true},
-		{name: "smallest still-unambiguous integer", in: -float64(1<<53) + 1, wantFamily: "integer", wantFormat: "int64", ok: true},
-		{name: "2^53 is ambiguous with 2^53+1", in: float64(1 << 53), ok: false},
-		{name: "2^53+1 arrives already rounded", in: float64(9007199254740993), ok: false},
-		{name: "-2^53 is ambiguous too", in: -float64(1 << 53), ok: false},
-		{name: "-(2^53+1) arrives already rounded", in: -float64(9007199254740993), ok: false},
-		{name: "uint64 max as parsed by kin-openapi", in: float64(18446744073709551615), ok: false},
+		// Classification answers "what family", which stays true however big
+		// the number is. Whether the value survived parsing is a separate
+		// question, asked later by checkIntegerConstsExact.
+		{name: "largest unambiguous integer is still just an integer", in: float64(1<<53) - 1, wantFamily: "integer", wantFormat: "int64", ok: true},
+		{name: "2^53 classifies, exactness is not asked here", in: float64(1 << 53), wantFamily: "integer", wantFormat: "int64", ok: true},
+		{name: "uint64 max classifies too", in: float64(18446744073709551615), wantFamily: "integer", wantFormat: "int64", ok: true},
 
 		// Not scalars at all.
 		{name: "nil", in: nil, ok: false},
@@ -592,6 +587,49 @@ func TestConstScalarFamily(t *testing.T) {
 			assert.Equal(t, tc.ok, ok, "constScalarFamily(%v) ok mismatch", tc.in)
 			assert.Equal(t, tc.wantFamily, fam, "family mismatch")
 			assert.Equal(t, tc.wantFormat, format, "format mismatch")
+		})
+	}
+}
+
+// checkIntegerConstsExact is the guard that turns a value the parser mangled
+// into an error. The bound excludes 2^53 itself: 2^53+1 arrives as exactly
+// 2^53, so a value sitting on the boundary cannot be traced back to one
+// integer.
+func TestCheckIntegerConstsExact(t *testing.T) {
+	refs := func(consts ...any) openapi3.SchemaRefs {
+		out := make(openapi3.SchemaRefs, 0, len(consts))
+		for _, c := range consts {
+			out = append(out, &openapi3.SchemaRef{Value: &openapi3.Schema{Title: "T", Const: c}})
+		}
+		return out
+	}
+
+	for _, tc := range []struct {
+		name    string
+		in      openapi3.SchemaRefs
+		wantErr bool
+	}{
+		{name: "small values", in: refs(float64(0), float64(-1), float64(8080))},
+		{name: "largest unambiguous", in: refs(float64(1<<53) - 1)},
+		{name: "smallest unambiguous", in: refs(-float64(1<<53) + 1)},
+		{name: "past int32 but exact", in: refs(float64(5_000_000_000))},
+		{name: "strings are not this check's business", in: refs("available", "sold")},
+		{name: "a nil branch is someone else's problem", in: openapi3.SchemaRefs{nil}},
+
+		{name: "2^53 is ambiguous with 2^53+1", in: refs(float64(1 << 53)), wantErr: true},
+		{name: "2^53+1 arrives already rounded", in: refs(float64(9007199254740993)), wantErr: true},
+		{name: "-2^53 is ambiguous too", in: refs(-float64(1 << 53)), wantErr: true},
+		{name: "-(2^53+1) arrives already rounded", in: refs(-float64(9007199254740993)), wantErr: true},
+		{name: "uint64 max", in: refs(float64(18446744073709551615)), wantErr: true},
+		{name: "one bad value among good ones", in: refs(float64(1), float64(2), float64(1<<60)), wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := checkIntegerConstsExact(tc.in)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
 		})
 	}
 }
@@ -752,8 +790,8 @@ func TestDetectEnumViaOneOfInfersTypeWithoutMutating(t *testing.T) {
 		},
 	}
 
-	items, typeSource, ok := detectEnumViaOneOf(schema)
-	require.True(t, ok)
+	items, typeSource, err := detectEnumViaOneOf(schema)
+	require.NoError(t, err)
 	assert.Equal(t, []enumViaOneOfValue{
 		{Title: "Http", Value: "8080"},
 		{Title: "Ephemeral", Value: "5000000000"},
@@ -766,50 +804,114 @@ func TestDetectEnumViaOneOfInfersTypeWithoutMutating(t *testing.T) {
 	assert.Empty(t, schema.Format)
 }
 
-// An integer enum-via-oneOf whose const has already lost precision in the
-// parser must not be emitted as a typed enum: the value we would write into
-// the constant is not the value the document declared. detectEnumViaOneOf
-// falls through (ok=false) so the union path is used instead.
-func TestEnumViaOneOfInexactIntegerFallsThrough(t *testing.T) {
+// A const that lost precision in the parser is an error, not a fall-through.
+// The branches say plainly that an enum was meant, so quietly substituting a
+// union would hide the fact that the value cannot be generated faithfully.
+// Both spellings must report it: the inferred one, and the declared one that
+// never consults the consts on its way to a Go type.
+func TestEnumViaOneOfInexactIntegerErrors(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		types *openapi3.Types
+	}{
+		{name: "type inferred from consts", types: nil},
+		{name: "type declared by the schema", types: &openapi3.Types{"integer"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			prev := globalState
+			t.Cleanup(func() { globalState = prev })
+			globalState.is31 = true
+			globalState.options.OutputOptions.SkipEnumViaOneOf = false
+
+			schema := &openapi3.Schema{
+				Type: tc.types,
+				OneOf: openapi3.SchemaRefs{
+					{Value: &openapi3.Schema{Title: "Fine", Const: float64(1)}},
+					// 2^53+1 is the case that matters: it is not representable,
+					// so the parser rounded it to 2^53 before we saw it.
+					{Value: &openapi3.Schema{Title: "Enormous", Const: float64(9007199254740993)}},
+				},
+			}
+
+			items, typeSource, err := detectEnumViaOneOf(schema)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "Enormous", "the message should name the offending branch")
+			assert.Contains(t, err.Error(), "9007199254740992", "and the value as it actually arrived")
+			assert.Nil(t, items)
+			assert.Nil(t, typeSource)
+		})
+	}
+}
+
+// skip-enum-via-oneof turns the whole path off before the exactness check runs,
+// so opting out of the idiom also opts out of failing over it.
+func TestEnumViaOneOfInexactIntegerSkipped(t *testing.T) {
 	prev := globalState
 	t.Cleanup(func() { globalState = prev })
 	globalState.is31 = true
-	globalState.options.OutputOptions.SkipEnumViaOneOf = false
+	globalState.options.OutputOptions.SkipEnumViaOneOf = true
 
 	schema := &openapi3.Schema{
-		Type: nil, // no outer type -> family inferred from const values
 		OneOf: openapi3.SchemaRefs{
-			// 2^53+1 is the case that matters: it is not representable, so
-			// the parser already rounded it down to 2^53 before we saw it.
-			// Emitting it would write a number the document never used.
 			{Value: &openapi3.Schema{Title: "Enormous", Const: float64(9007199254740993)}},
 		},
 	}
 
-	items, typeSource, ok := detectEnumViaOneOf(schema)
-	assert.False(t, ok, "an inexact const must fall through, not form an enum")
+	items, _, err := detectEnumViaOneOf(schema)
+	require.NoError(t, err, "the escape hatch must cover the error too")
 	assert.Nil(t, items)
-	assert.Nil(t, typeSource)
 }
 
-// A oneOf whose branches carry non-enumerable consts (booleans here) infers
-// its family honestly and is then turned away by the scalar gate, landing in
-// the union generator like any other non-enum oneOf.
-func TestEnumViaOneOfNonScalarFamilyFallsThrough(t *testing.T) {
-	prev := globalState
-	t.Cleanup(func() { globalState = prev })
-	globalState.is31 = true
-	globalState.options.OutputOptions.SkipEnumViaOneOf = false
-
-	schema := &openapi3.Schema{
-		OneOf: openapi3.SchemaRefs{
-			{Value: &openapi3.Schema{Title: "Yes", Const: true}},
-			{Value: &openapi3.Schema{Title: "No", Const: false}},
+// A oneOf that is not an enum at all still falls through silently -- the error
+// is reserved for schemas that are unmistakably enums we cannot generate.
+func TestEnumViaOneOfNonEnumsStillFallThrough(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		refs openapi3.SchemaRefs
+	}{
+		{
+			// Boolean is a scalar family, but not an enumerable one.
+			name: "boolean consts",
+			refs: openapi3.SchemaRefs{
+				{Value: &openapi3.Schema{Title: "Yes", Const: true}},
+				{Value: &openapi3.Schema{Title: "No", Const: false}},
+			},
 		},
-	}
+		{
+			name: "families disagree",
+			refs: openapi3.SchemaRefs{
+				{Value: &openapi3.Schema{Title: "Word", Const: "one"}},
+				{Value: &openapi3.Schema{Title: "Number", Const: float64(1)}},
+			},
+		},
+		{
+			// Even alongside an unrepresentable number: the shape is not an
+			// enum, so there is nothing to fail about.
+			name: "non-scalar const beside a huge one",
+			refs: openapi3.SchemaRefs{
+				{Value: &openapi3.Schema{Title: "Obj", Const: map[string]any{"a": 1}}},
+				{Value: &openapi3.Schema{Title: "Enormous", Const: float64(9007199254740993)}},
+			},
+		},
+		{
+			name: "a branch without a title",
+			refs: openapi3.SchemaRefs{
+				{Value: &openapi3.Schema{Title: "Fine", Const: float64(1)}},
+				{Value: &openapi3.Schema{Const: float64(9007199254740993)}},
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			prev := globalState
+			t.Cleanup(func() { globalState = prev })
+			globalState.is31 = true
+			globalState.options.OutputOptions.SkipEnumViaOneOf = false
 
-	_, _, ok := detectEnumViaOneOf(schema)
-	assert.False(t, ok, "boolean is not an enumerable scalar family")
+			items, _, err := detectEnumViaOneOf(&openapi3.Schema{OneOf: tc.refs})
+			require.NoError(t, err, "a non-enum oneOf belongs to the union generator")
+			assert.Nil(t, items)
+		})
+	}
 }
 
 // A list-valued `type` is only legal syntax in OpenAPI 3.1. A 3.0 document
