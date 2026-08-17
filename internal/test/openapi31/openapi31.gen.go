@@ -28,6 +28,63 @@ func (e Color) Valid() bool {
 	}
 }
 
+// Defines values for FileSize.
+const (
+	SizeHuge  FileSize = 5000000000
+	SizeSmall FileSize = 1024
+)
+
+// Valid indicates whether the value is a known member of the FileSize enum.
+func (e FileSize) Valid() bool {
+	switch e {
+	case SizeHuge:
+		return true
+	case SizeSmall:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PetStatus.
+const (
+	Available PetStatus = "available"
+	Pending   PetStatus = "pending"
+	Sold      PetStatus = "sold"
+)
+
+// Valid indicates whether the value is a known member of the PetStatus enum.
+func (e PetStatus) Valid() bool {
+	switch e {
+	case Available:
+		return true
+	case Pending:
+		return true
+	case Sold:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for Port.
+const (
+	Http  Port = 8080
+	Https Port = 9090
+)
+
+// Valid indicates whether the value is a known member of the Port enum.
+func (e Port) Valid() bool {
+	switch e {
+	case Http:
+		return true
+	case Https:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Severity.
 const (
 	HIGH   Severity = 2
@@ -69,6 +126,9 @@ type Color string
 
 // Event defines model for Event.
 type Event map[string]any
+
+// FileSize defines model for FileSize.
+type FileSize int64
 
 // FileUploadFields defines model for FileUploadFields.
 type FileUploadFields struct {
@@ -127,6 +187,12 @@ type Pet struct {
 	// Examples: Whiskers, Rex
 	Name string `json:"name"`
 }
+
+// PetStatus defines model for PetStatus.
+type PetStatus string
+
+// Port defines model for Port.
+type Port int
 
 // Severity How urgent a problem is.
 type Severity int

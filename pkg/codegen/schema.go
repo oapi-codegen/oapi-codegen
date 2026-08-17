@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"math"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -617,51 +619,232 @@ type enumViaOneOfValue struct {
 // be a composition (oneOf/allOf/anyOf) or declare properties. The outer
 // schema's primary type must be a scalar (string or integer).
 //
+// The outer `type` may also be omitted, which is the more common spelling
+// of the idiom in the wild -- the consts already imply the family, so
+// repeating it is redundant. The family is then read back off those consts
+// (see inferEnumViaOneOfType).
+//
+// The second return is the schema that drives the Go base-type mapping:
+// the input as-is when it declares its own `type`, or a shallow copy
+// carrying the inferred type when it does not. oapiSchemaToGoType reads
+// Type and Format, so without the splice a typeless schema would land on
+// the generic `any` branch. The copy keeps the inference from leaking back
+// into the caller's schema as a side effect.
+//
 // Gated on globalState.is31 (the keyword `const` lands in OpenAPI 3.1)
 // AND !SkipEnumViaOneOf so users can fall through to the standard union
-// generator on demand.
+// generator on demand. Because both gates sit at the top, the error below
+// is unreachable once skip-enum-via-oneof is set -- the escape hatch covers
+// it without needing to know about it.
+//
+// A nil error with nil items means the schema simply is not this idiom, and
+// the caller should carry on to its standard handling. A non-nil error means
+// the schema *is* the idiom but cannot be generated faithfully; that is worth
+// failing over rather than papering back over with a union.
 //
 // Precondition: globalState (both is31 and options) must be initialized
 // (see schemaIsNullable for context).
-func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, bool) {
+func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, *openapi3.Schema, error) {
 	if !globalState.is31 {
-		return nil, false
+		return nil, nil, nil
 	}
 	if globalState.options.OutputOptions.SkipEnumViaOneOf {
-		return nil, false
+		return nil, nil, nil
 	}
 	if schema == nil || len(schema.OneOf) == 0 {
-		return nil, false
+		return nil, nil, nil
 	}
+	typeSource := schema
 	primary := schemaPrimaryType(schema.Type)
 	if primary == nil {
-		return nil, false
+		inferred, format, ok := inferEnumViaOneOfType(schema.OneOf)
+		if !ok {
+			return nil, nil, nil
+		}
+		cp := *schema
+		cp.Type, cp.Format = inferred, format
+		primary, typeSource = inferred, &cp
 	}
 	if !primary.Is("string") && !primary.Is("integer") {
-		return nil, false
+		return nil, nil, nil
 	}
 	items := make([]enumViaOneOfValue, 0, len(schema.OneOf))
 	for _, ref := range schema.OneOf {
 		if ref == nil || ref.Value == nil {
-			return nil, false
+			return nil, nil, nil
 		}
 		m := ref.Value
 		if m.Title == "" || m.Const == nil {
-			return nil, false
+			return nil, nil, nil
 		}
 		if len(m.OneOf) > 0 || len(m.AllOf) > 0 || len(m.AnyOf) > 0 {
-			return nil, false
+			return nil, nil, nil
 		}
 		if len(m.Properties) > 0 {
-			return nil, false
+			return nil, nil, nil
 		}
 		items = append(items, enumViaOneOfValue{
 			Title: m.Title,
-			Value: fmt.Sprintf("%v", m.Const),
+			Value: enumConstLiteral(m.Const),
 		})
 	}
-	return items, true
+	// Only now, with the schema confirmed to be an enum, is an unrepresentable
+	// value an error rather than a reason to look elsewhere. This covers the
+	// declared spelling as well as the inferred one: `type: integer` reaches
+	// here without ever consulting the consts.
+	if primary.Is("integer") {
+		if err := checkIntegerConstsExact(schema.OneOf); err != nil {
+			return nil, nil, err
+		}
+	}
+	return items, typeSource, nil
 }
+
+// inferEnumViaOneOfType reads the outer scalar type of an enum-via-oneOf
+// schema back off its branch `const` values, for the common spelling of the
+// idiom that leaves `type` off the outer schema. It returns the inferred
+// type and, for integers, the `format` that selects a Go type wide enough
+// to hold every value seen.
+//
+// Every branch must land in the same family: a string next to a number has
+// no single Go type, so it is left to the union generator. The family is
+// reported honestly rather than filtered here -- a boolean or fractional
+// const yields "boolean"/"number", which the caller's existing scalar gate
+// then rejects.
+func inferEnumViaOneOfType(refs openapi3.SchemaRefs) (*openapi3.Types, string, bool) {
+	var family, format string
+	for _, ref := range refs {
+		if ref == nil || ref.Value == nil {
+			return nil, "", false
+		}
+		fam, wide, ok := constScalarFamily(ref.Value.Const)
+		if !ok {
+			return nil, "", false
+		}
+		switch {
+		case family == "":
+			family = fam
+		case family != fam:
+			return nil, "", false
+		}
+		// Any one value needing the wider integer type widens the whole enum.
+		if wide != "" {
+			format = wide
+		}
+	}
+	if family == "" {
+		return nil, "", false
+	}
+	return &openapi3.Types{family}, format, true
+}
+
+// constScalarFamily classifies one `const` value into the OpenAPI scalar
+// family it belongs to, plus the integer `format` needed to hold it ("" when
+// the default Go int is wide enough). It reports false for values that are
+// not scalars at all -- objects, arrays, JSON null -- and for integers too
+// large to survive the trip through the parser (see below).
+//
+// The cases run narrowest-first, the way the JSON value kinds nest: boolean
+// admits exactly two values, a number splits into integer or number
+// depending on whether it is whole, and string comes last because it is the
+// family that can spell anything.
+//
+// Widths are chosen against the values, not the spec: plain `int` is the
+// natural Go enum type and covers anything inside the int32 range, which is
+// also the range that stays correct on a 32-bit build; past that the enum
+// widens to `int64`.
+//
+// Integers the parser could not carry faithfully are classified here like any
+// other, and rejected later by checkIntegerConstsExact. Classification answers
+// "what family is this", which stays a question about shape; whether a value
+// survived parsing is a separate question with a separate answer (an error,
+// not a fall-through), and keeping them apart is what lets the caller tell a
+// schema that is not an enum from an enum it cannot generate.
+func constScalarFamily(v any) (family string, format string, ok bool) {
+	switch c := v.(type) {
+	case bool:
+		return "boolean", "", true
+	case float64:
+		if c != math.Trunc(c) {
+			return "number", "", true
+		}
+		if c < math.MinInt32 || c > math.MaxInt32 {
+			return "integer", "int64", true
+		}
+		return "integer", "", true
+	case string:
+		return "string", "", true
+	}
+	return "", "", false
+}
+
+// checkIntegerConstsExact verifies that every branch of an integer
+// enum-via-oneOf still carries the number its document declared.
+//
+// kin-openapi decodes every JSON number into a float64, so an integer at 2^53
+// or beyond arrives already rounded to a nearby representable value -- the
+// digits the spec wrote are gone before codegen runs. Generating the constant
+// anyway would bake in a number the document never used, silently and without
+// a compile error to catch it, so this is an error rather than a fall-through
+// to the union generator: every branch carrying `title` + `const` says plainly
+// that an enum was intended, and quietly handing back a shapeless union does
+// not serve that. Users who want the union can say so with
+// output-options.skip-enum-via-oneof, which turns this whole path off before
+// the check is ever reached.
+//
+// The bound excludes 2^53 itself, not just everything past it. 2^53 is exactly
+// representable, but nothing between it and 2^53+2 is: a document writing
+// 9007199254740993 also arrives as 9007199254740992. A value sitting on the
+// boundary is therefore ambiguous about which integer it came from, which is
+// the same reason the larger ones are refused.
+func checkIntegerConstsExact(refs openapi3.SchemaRefs) error {
+	for _, ref := range refs {
+		if ref == nil || ref.Value == nil {
+			continue
+		}
+		f, isFloat := ref.Value.Const.(float64)
+		if !isFloat || constIsExactInteger(f) {
+			continue
+		}
+		return fmt.Errorf(
+			"enum-via-oneOf branch %q has a const that did not survive parsing: it reached the generator as %s, "+
+				"because JSON numbers are decoded as float64 and integers at 2^53 or beyond no longer identify a "+
+				"single value. Generating this enum would emit a constant the document never declared. Carry the "+
+				"value as a JSON string instead (the OpenAPI format registry allows this for int64 and uint64), or "+
+				"set output-options.skip-enum-via-oneof to generate a union",
+			ref.Value.Title, strconv.FormatFloat(f, 'f', -1, 64))
+	}
+	return nil
+}
+
+// constIsExactInteger reports whether a whole float64 still identifies the one
+// integer the document wrote. See checkIntegerConstsExact for the bound.
+func constIsExactInteger(f float64) bool {
+	return f == math.Trunc(f) && f > minExactFloat64Int && f < maxExactFloat64Int
+}
+
+// enumConstLiteral renders a `const` value as the Go literal that goes into
+// the generated constant.
+//
+// Whole numbers are spelled out in full. They reach us as float64, and the
+// default formatting writes a round value in exponent form -- 5000000000
+// becomes "5e+09". Go accepts that as an integer constant, but nobody writes
+// a port number or a byte count that way.
+func enumConstLiteral(v any) string {
+	if f, ok := v.(float64); ok && constIsExactInteger(f) {
+		return strconv.FormatInt(int64(f), 10)
+	}
+	return fmt.Sprintf("%v", v)
+}
+
+// maxExactFloat64Int is 2^53, the largest magnitude below which every
+// integer still has its own float64 representation. Above it consecutive
+// integers start to share one, so a parsed value can no longer be trusted to
+// be the value the document wrote.
+const (
+	maxExactFloat64Int = 1 << 53
+	minExactFloat64Int = -maxExactFloat64Int
+)
 
 // describeWithExamples folds a schema's example data into its
 // description string for use in generated Go doc comments. Version-aware:
@@ -938,8 +1121,15 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// a union. Detection is gated by version + the SkipEnumViaOneOf flag;
 	// when the idiom does not match, fall through to standard handling
 	// (which routes oneOf into generateUnion further below).
-	if items, ok := detectEnumViaOneOf(schema); ok {
-		if err := oapiSchemaToGoType(schema, path, &outSchema); err != nil {
+	// The outer `type` may be absent, in which case typeSource carries the
+	// scalar type inferred from the branch consts; see detectEnumViaOneOf.
+	// A nil error with nil items just means this is not the idiom.
+	items, typeSource, err := detectEnumViaOneOf(schema)
+	if err != nil {
+		return Schema{}, err
+	}
+	if items != nil {
+		if err := oapiSchemaToGoType(typeSource, path, &outSchema); err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type for enum-via-oneOf: %w", err)
 		}
 		// Force a typed declaration -- enums must not be aliased.

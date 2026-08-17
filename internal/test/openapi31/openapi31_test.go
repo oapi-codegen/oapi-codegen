@@ -10,6 +10,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -161,6 +162,62 @@ func TestMixedOneOfFallsThrough(t *testing.T) {
 	var s = "anything"
 	var m MixedOneOf = s //nolint:staticcheck // ST1023: explicit type is the compile-time alias check
 	assert.Equal(t, "anything", string(m))
+}
+
+// A no-outer-type enum-via-oneOf (consts imply the string family) must emit a
+// typed `PetStatus string` enum with named constants, not a raw union.
+func TestPetStatusConstants(t *testing.T) {
+	assert.Equal(t, "available", string(Available))
+	assert.Equal(t, "pending", string(Pending))
+	assert.Equal(t, "sold", string(Sold))
+}
+
+// PetStatus marshals as its string value (a typed enum, not a wrapped union).
+func TestPetStatusJSONRoundTrip(t *testing.T) {
+	data, err := json.Marshal(Available)
+	require.NoError(t, err)
+	assert.JSONEq(t, `"available"`, string(data))
+
+	var got PetStatus
+	require.NoError(t, json.Unmarshal([]byte(`"sold"`), &got))
+	assert.Equal(t, Sold, got)
+}
+
+// A no-outer-type integer enum-via-oneOf deduces `Port int` from whole-number
+// const values.
+func TestPortConstants(t *testing.T) {
+	assert.Equal(t, 8080, int(Http))
+	assert.Equal(t, 9090, int(Https))
+}
+
+// One const past the 32-bit range widens the whole enum from int to int64,
+// so the value survives on a 32-bit build too.
+//
+// The underlying kind is the assertion, not the values: `int64(SizeHuge)`
+// compares equal on any 64-bit build whether the enum widened or not, so a
+// value check would keep passing if the widening were dropped. Only a 32-bit
+// build catches that, and nothing in `make test` runs one.
+func TestFileSizeWidensToInt64(t *testing.T) {
+	assert.Equal(t, reflect.Int64, reflect.TypeOf(FileSize(0)).Kind())
+	assert.Equal(t, int64(5000000000), int64(SizeHuge))
+	assert.Equal(t, int64(1024), int64(SizeSmall))
+}
+
+// Conversely, an enum whose consts all sit inside the 32-bit range keeps the
+// natural `int` rather than widening every integer enum to int64.
+func TestPortStaysInt(t *testing.T) {
+	assert.Equal(t, reflect.Int, reflect.TypeOf(Port(0)).Kind())
+}
+
+// Port marshals as its integer value.
+func TestPortJSONRoundTrip(t *testing.T) {
+	data, err := json.Marshal(Http)
+	require.NoError(t, err)
+	assert.JSONEq(t, `8080`, string(data))
+
+	var got Port
+	require.NoError(t, json.Unmarshal([]byte(`9090`), &got))
+	assert.Equal(t, Https, got)
 }
 
 // ----------------------------------------------------------------------------
