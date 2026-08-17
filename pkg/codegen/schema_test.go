@@ -751,7 +751,7 @@ func TestDetectEnumViaOneOfInfersTypeWithoutMutating(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, []enumViaOneOfValue{
 		{Title: "Http", Value: "8080"},
-		{Title: "Ephemeral", Value: "5e+09"},
+		{Title: "Ephemeral", Value: "5000000000"},
 	}, items)
 
 	assert.NotSame(t, schema, typeSource, "the inferred type belongs on a copy")

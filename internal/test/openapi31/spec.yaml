@@ -185,6 +185,16 @@ components:
         - const: 9090
           title: Https
 
+    # `int` is the natural Go enum type, but it is only 32 bits wide on a
+    # 32-bit build. One const past that range widens the whole enum to int64,
+    # so the generated code stays correct everywhere.
+    FileSize:
+      oneOf:
+        - const: 1024
+          title: SizeSmall
+        - const: 5000000000
+          title: SizeHuge
+
     # ----------------------------------------------------------------------
     # multi-type unions: `type: [T1, T2, ...]` -> any
     # ----------------------------------------------------------------------

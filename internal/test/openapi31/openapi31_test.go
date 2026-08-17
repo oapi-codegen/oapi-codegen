@@ -189,6 +189,15 @@ func TestPortConstants(t *testing.T) {
 	assert.Equal(t, 9090, int(Https))
 }
 
+// One const past the 32-bit range widens the whole enum from int to int64,
+// so the value survives on a 32-bit build too. The assignment below is what
+// proves it: SizeHuge would not fit an int32.
+func TestFileSizeWidensToInt64(t *testing.T) {
+	huge := int64(SizeHuge)
+	assert.Equal(t, int64(5000000000), huge)
+	assert.Equal(t, int64(1024), int64(SizeSmall))
+}
+
 // Port marshals as its integer value.
 func TestPortJSONRoundTrip(t *testing.T) {
 	data, err := json.Marshal(Http)

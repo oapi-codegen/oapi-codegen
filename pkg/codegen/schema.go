@@ -7,6 +7,7 @@ import (
 	"maps"
 	"math"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -677,7 +678,7 @@ func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, *openapi3
 		}
 		items = append(items, enumViaOneOfValue{
 			Title: m.Title,
-			Value: fmt.Sprintf("%v", m.Const),
+			Value: enumConstLiteral(m.Const),
 		})
 	}
 	return items, typeSource, true
@@ -765,6 +766,21 @@ func constScalarFamily(v any) (family string, format string, ok bool) {
 		return "string", "", true
 	}
 	return "", "", false
+}
+
+// enumConstLiteral renders a `const` value as the Go literal that goes into
+// the generated constant.
+//
+// Whole numbers are spelled out in full. They reach us as float64, and the
+// default formatting writes a round value in exponent form -- 5000000000
+// becomes "5e+09". Go accepts that as an integer constant, but nobody writes
+// a port number or a byte count that way.
+func enumConstLiteral(v any) string {
+	if f, ok := v.(float64); ok && f == math.Trunc(f) &&
+		f >= minExactFloat64Int && f <= maxExactFloat64Int {
+		return strconv.FormatInt(int64(f), 10)
+	}
+	return fmt.Sprintf("%v", v)
 }
 
 // maxExactFloat64Int is 2^53, the largest magnitude below which every
