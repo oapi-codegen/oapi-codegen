@@ -255,6 +255,15 @@ func TestPetExampleComments(t *testing.T) {
 	require.Contains(t, fields, "Lives")
 	assert.Contains(t, fields["Lives"], "Examples: 9",
 		"Lives field should surface the integer example as a doc fragment")
+
+	// `nickname` used the singular `example` keyword, which stays valid in
+	// 3.1 and is what most 3.1 specs write. Reading only the plural array
+	// dropped every such example from the generated comments.
+	require.Contains(t, fields, "Nickname")
+	assert.Contains(t, fields["Nickname"], "The pet's nickname.",
+		"Nickname field should preserve the original description")
+	assert.Contains(t, fields["Nickname"], "Example: Whisk",
+		"Nickname field should fall back to the singular example under 3.1")
 }
 
 // ----------------------------------------------------------------------------

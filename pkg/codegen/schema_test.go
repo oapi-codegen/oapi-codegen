@@ -541,6 +541,78 @@ func TestOapiSchemaToGoType_NullType(t *testing.T) {
 	assert.True(t, out.DefineViaAlias)
 }
 
+func TestDescribeWithExamples(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		is31        bool
+		description string
+		schema      *openapi3.Schema
+		want        string
+	}{
+		{
+			name: "nil schema keeps description",
+			want: "",
+		},
+		{
+			name:        "3.0 singular example",
+			description: "The widget name.",
+			schema:      &openapi3.Schema{Example: "hammer"},
+			want:        "The widget name.\n\nExample: hammer",
+		},
+		{
+			name:   "3.0 singular example with no description",
+			schema: &openapi3.Schema{Example: "hammer"},
+			want:   "Example: hammer",
+		},
+		{
+			name:        "3.0 ignores plural examples",
+			description: "The widget name.",
+			schema:      &openapi3.Schema{Examples: []any{"hammer"}},
+			want:        "The widget name.",
+		},
+		{
+			name:        "3.1 plural examples",
+			is31:        true,
+			description: "The widget name.",
+			schema:      &openapi3.Schema{Examples: []any{"hammer", "wrench"}},
+			want:        "The widget name.\n\nExamples: hammer, wrench",
+		},
+		{
+			name:        "3.1 falls back to singular example",
+			is31:        true,
+			description: "The widget name.",
+			schema:      &openapi3.Schema{Example: "hammer"},
+			want:        "The widget name.\n\nExample: hammer",
+		},
+		{
+			name:   "3.1 prefers plural examples over singular",
+			is31:   true,
+			schema: &openapi3.Schema{Example: "ignored", Examples: []any{"hammer"}},
+			want:   "Examples: hammer",
+		},
+		{
+			name:        "3.1 with neither keeps description",
+			is31:        true,
+			description: "The widget name.",
+			schema:      &openapi3.Schema{},
+			want:        "The widget name.",
+		},
+		{
+			name:   "structured example is JSON encoded",
+			schema: &openapi3.Schema{Example: map[string]any{"k": "v"}},
+			want:   `Example: {"k":"v"}`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			old := globalState.is31
+			defer func() { globalState.is31 = old }()
+			globalState.is31 = tc.is31
+
+			assert.Equal(t, tc.want, describeWithExamples(tc.description, tc.schema))
+		})
+	}
+}
+
 // constScalarFamily is the type-inference core behind a no-outer-type
 // enum-via-oneOf: it maps a branch's `const` to the OpenAPI scalar family it
 // belongs to, and to the integer format wide enough to hold it. kin-openapi
