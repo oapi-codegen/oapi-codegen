@@ -644,6 +644,8 @@ func TestOapiSchemaToGoType_MultiTypeUnion(t *testing.T) {
 // detectEnumViaOneOf must fall through (ok=false) so the union path is used.
 // Issue: overflowing constants were treated as valid integers.
 func TestEnumViaOneOfOverflowFallsThrough(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
 	globalState.is31 = true
 	globalState.options.OutputOptions.SkipEnumViaOneOf = false
 
