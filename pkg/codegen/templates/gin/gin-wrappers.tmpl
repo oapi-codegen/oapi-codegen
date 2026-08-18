@@ -1,16 +1,16 @@
-// ServerInterfaceWrapper converts contexts to parameters.
-type ServerInterfaceWrapper struct {
-    Handler ServerInterface
-    HandlerMiddlewares []MiddlewareFunc
+// {{names.ServerInterfaceWrapper}} converts contexts to parameters.
+type {{names.ServerInterfaceWrapper}} struct {
+    Handler {{names.ServerInterface}}
+    HandlerMiddlewares []{{names.MiddlewareFunc}}
     ErrorHandler func(*gin.Context, error, int)
 }
 
-type MiddlewareFunc func(c *gin.Context)
+type {{names.MiddlewareFunc}} func(c *gin.Context)
 
 {{range .}}{{$opid := .OperationId}}
 {{if not .IsAlias}}
 // {{$opid}} operation middleware
-func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
+func (siw *{{names.ServerInterfaceWrapper}}) {{$opid}}(c *gin.Context) {
 
   {{if or .RequiresParamObject (gt (len .PathParams) 0) }}
   var err error

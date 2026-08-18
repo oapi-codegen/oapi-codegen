@@ -1,12 +1,12 @@
-// ServerInterfaceWrapper converts echo contexts to parameters.
-type ServerInterfaceWrapper struct {
-    Handler ServerInterface
+// {{names.ServerInterfaceWrapper}} converts echo contexts to parameters.
+type {{names.ServerInterfaceWrapper}} struct {
+    Handler {{names.ServerInterface}}
 }
 
-type MiddlewareFunc iris.Handler
+type {{names.MiddlewareFunc}} iris.Handler
 
 {{range .}}{{$opid := .OperationId}}{{if not .IsAlias}}// {{$opid}} converts iris context to params.
-func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
+func (w *{{names.ServerInterfaceWrapper}}) {{.OperationId}} (ctx iris.Context) {
 {{if or .RequiresParamObject (gt (len .PathParams) 0) }}
     var err error
     _ = err

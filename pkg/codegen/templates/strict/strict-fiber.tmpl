@@ -1,20 +1,20 @@
-type StrictHandlerFunc func(ctx {{template "fiber.ctxType" .}}, args any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+type {{names.StrictHandlerFunc}} func(ctx {{template "fiber.ctxType" .}}, args any) (any, error)
+type {{names.StrictMiddlewareFunc}} func(f {{names.StrictHandlerFunc}}, operationID string) {{names.StrictHandlerFunc}}
 
-func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
-    return &strictHandler{ssi: ssi, middlewares: middlewares}
+func {{names.NewStrictHandler}}(ssi {{names.StrictServerInterface}}, middlewares []{{names.StrictMiddlewareFunc}}) {{names.ServerInterface}} {
+    return &{{names.StrictHandler}}{ssi: ssi, middlewares: middlewares}
 }
 
-type strictHandler struct {
-    ssi StrictServerInterface
-    middlewares []StrictMiddlewareFunc
+type {{names.StrictHandler}} struct {
+    ssi {{names.StrictServerInterface}}
+    middlewares []{{names.StrictMiddlewareFunc}}
 }
 
 {{range .}}
     {{$opid := .OperationId}}
     {{if not .IsAlias}}
     // {{$opid}} operation middleware
-    func (sh *strictHandler) {{.OperationId}}(ctx {{template "fiber.ctxType" .}}{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error {
+    func (sh *{{names.StrictHandler}}) {{.OperationId}}(ctx {{template "fiber.ctxType" .}}{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) error {
         var request {{$opid | ucFirst}}RequestObject
 
         {{range .PathParams -}}

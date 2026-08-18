@@ -13,7 +13,7 @@ the skeletons' {{block}} defaults.
 {{/* The {{""}} action makes this override non-empty: text/template ignores a
      define whose body is only whitespace/comments and would keep the default. */}}
 {{define "handler.serveMuxInterface"}}{{- "" -}}{{end}}
-{{define "handler.serverOptions"}}ChiServerOptions{{end}}
+{{define "handler.serverOptions"}}{{names.ChiServerOptions}}{{end}}
 {{define "handler.routerType"}}chi.Router{{end}}
 {{define "handler.routerVar"}}r{{end}}
 {{define "handler.newRouter"}}chi.NewRouter(){{end}}
@@ -24,14 +24,14 @@ r.{{.Method | lower | title }}(options.BaseURL+{{.Path | swaggerUriToChiUri | to
 
 {{/* --- server-interface.tmpl --- */}}
 {{define "interface.unimplemented"}}
-// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
+// {{names.Unimplemented}} server implementation that returns http.StatusNotImplemented for each endpoint.
 
-type Unimplemented struct {}
+type {{names.Unimplemented}} struct {}
  {{range .}}{{if not .IsAlias}}{{.SummaryAsComment .OperationId }}
  // ({{.Method}} {{.Path}})
 {{with .DeprecationComment}}//
 {{.}}
-{{end}} func (_ Unimplemented) {{.OperationId}}(w http.ResponseWriter, r *http.Request{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) {
+{{end}} func (_ {{names.Unimplemented}}) {{.OperationId}}(w http.ResponseWriter, r *http.Request{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) {
 	w.WriteHeader(http.StatusNotImplemented)
  }
  {{end}}{{end}}{{end}}

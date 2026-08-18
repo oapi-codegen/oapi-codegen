@@ -25,7 +25,7 @@ default uses ApplyChiMiddlewareFirstToLast. Only the flag name differs.
 {{/* The {{""}} action makes this override non-empty: text/template ignores a
      define whose body is only whitespace/comments and would keep the default. */}}
 {{define "handler.serveMuxInterface"}}{{- "" -}}{{end}}
-{{define "handler.serverOptions"}}GorillaServerOptions{{end}}
+{{define "handler.serverOptions"}}{{names.GorillaServerOptions}}{{end}}
 {{define "handler.routerType"}}*mux.Router{{end}}
 {{define "handler.routerVar"}}r{{end}}
 {{define "handler.newRouter"}}mux.NewRouter(){{end}}

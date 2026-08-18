@@ -155,7 +155,7 @@ type ClientWithResponses struct {
 }
 
 // NewClientWithResponses creates a new ClientWithResponses, which wraps
-// Client with return type handling
+// CustomClientType with return type handling
 func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
 	client, err := NewClient(server, opts...)
 	if err != nil {
