@@ -12,13 +12,13 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
+	"github.com/wayleadr/oapi-codegen/v2/pkg/util"
 )
 
 const (
 	remoteRefFile = `https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/master/examples/petstore-expanded` +
 		`/petstore-expanded.yaml`
-	remoteRefImport = `github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded`
+	remoteRefImport = `github.com/wayleadr/oapi-codegen/v2/examples/petstore-expanded`
 )
 
 func TestExampleOpenAPICodeGeneration(t *testing.T) {
@@ -248,7 +248,7 @@ func TestRemoteExternalReference(t *testing.T) {
 	assert.Contains(t, code, "package api")
 
 	// Check import
-	assert.Contains(t, code, `externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded"`)
+	assert.Contains(t, code, `externalRef0 "github.com/wayleadr/oapi-codegen/v2/examples/petstore-expanded"`)
 
 	// Check generated oneOf structure:
 	assert.Contains(t, code, `
@@ -579,6 +579,115 @@ paths:
 	require.NoError(t, err)
 	assert.Contains(t, code, `BearerAuthScopes bearerAuthContextKey = "bearerAuth.Scopes"`)
 	assert.Contains(t, code, `ctx = context.WithValue(ctx, BearerAuthScopes, []string{"read"})`)
+}
+
+// TestAuthScopesForUndeclaredSecurityScheme verifies that a `security` block
+// naming a scheme the spec never declares under components/securitySchemes
+// still produces a usable scopes constant, its context key type, and the
+// context value in the generated middleware. Emitting the constant without the
+// type declaration would not compile, so the two must be generated together.
+func TestAuthScopesForUndeclaredSecurityScheme(t *testing.T) {
+	const spec = `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Undeclared security scheme
+security:
+  - undeclaredAuth: ["read"]
+paths:
+  /secured:
+    get:
+      operationId: secured
+      responses:
+        '200':
+          description: ok
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	opts := Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			StdHTTPServer: true,
+			Models:        true,
+		},
+	}
+	opts.Compatibility.EnableAuthScopesOnContext = true
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+	assert.Contains(t, code, "type undeclaredAuthContextKey string")
+	assert.Contains(t, code, `UndeclaredAuthScopes undeclaredAuthContextKey = "undeclaredAuth.Scopes"`)
+	assert.Contains(t, code, `ctx = context.WithValue(ctx, UndeclaredAuthScopes, []string{"read"})`)
+}
+
+// TestFiberVersionedHandlerRegistration verifies that the fiber v2 generator
+// emits the header-versioning registration helpers (which build a map keyed by
+// version-prefixed path for fibermid.MountVersionedRoutes to dispatch against)
+// and that fiber v3 does not: pkg/fibermid is fiber v2 only, and the fibermid
+// import is only added for fiber-server, so emitting them for v3 would
+// reference an unimported package.
+func TestFiberVersionedHandlerRegistration(t *testing.T) {
+	const spec = `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Fiber versioning
+paths:
+  /events:
+    get:
+      operationId: listEvents
+      responses:
+        '200':
+          description: ok
+    post:
+      operationId: createEvent
+      responses:
+        '201':
+          description: ok
+  /events/{id}:
+    get:
+      operationId: getEvent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ok
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	code, err := Generate(swagger, Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{FiberServer: true, Models: true},
+	})
+	require.NoError(t, err)
+
+	assert.Contains(t, code, "func RegisterHandlerVersions(")
+	assert.Contains(t, code, "func RegisterHandlerVersionsWithOptions(")
+	// Both methods on the same path share one map entry, and every route is
+	// mirrored under the "latest" alias.
+	assert.Contains(t, code, `versionedPath = "/" + version + "/events"`)
+	assert.Contains(t, code, `latestPath = "/" + fibermid.LatestVersion + "/events"`)
+	assert.Contains(t, code, `apiHandlers[versionedPath]["GET"] = wrapper.ListEvents`)
+	assert.Contains(t, code, `apiHandlers[versionedPath]["POST"] = wrapper.CreateEvent`)
+	assert.Contains(t, code, `apiHandlers[latestPath]["GET"] = wrapper.GetEvent`)
+	// Path params keep the fiber ":id" form so the bare-path route can match.
+	assert.Contains(t, code, `"/events/:id"`)
+
+	v3Code, err := Generate(swagger, Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{FiberV3Server: true, Models: true},
+	})
+	require.NoError(t, err)
+	assert.NotContains(t, v3Code, "RegisterHandlerVersions")
+	assert.NotContains(t, v3Code, "fibermid")
 }
 
 // TestEnumValueEscaping verifies that a string enum value containing a

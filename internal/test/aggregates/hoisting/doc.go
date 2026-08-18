@@ -11,6 +11,6 @@
 //     are hoisted and receive As<Branch>()/From<Branch>()/Merge<Branch>() accessors.
 package aggregateshoisting
 
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config_explicit.yaml spec_explicit.yaml
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config_implicit.yaml spec_implicit.yaml
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config_schemas.yaml spec_schemas.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen --config=config_explicit.yaml spec_explicit.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen --config=config_implicit.yaml spec_implicit.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen --config=config_schemas.yaml spec_schemas.yaml

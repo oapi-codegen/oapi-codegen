@@ -4,7 +4,7 @@
 // single path parameter. See issue #1726.
 package paths
 
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=echo/config.yaml spec.yaml
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=gin/config.yaml spec.yaml
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=fiber/config.yaml spec.yaml
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=fiberv3/config.yaml spec.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen --config=echo/config.yaml spec.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen --config=gin/config.yaml spec.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen --config=fiber/config.yaml spec.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen --config=fiberv3/config.yaml spec.yaml

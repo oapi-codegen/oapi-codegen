@@ -10,4 +10,4 @@
 //     tested via in-memory codegen.Generate call, so no separate gen triple needed)
 package namingconflicts
 
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml spec.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml spec.yaml

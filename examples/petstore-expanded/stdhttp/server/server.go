@@ -5,7 +5,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/stdhttp/api"
+	"github.com/wayleadr/oapi-codegen/v2/examples/petstore-expanded/stdhttp/api"
 )
 
 type PetStore struct {

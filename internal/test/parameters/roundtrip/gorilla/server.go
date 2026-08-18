@@ -1,5 +1,5 @@
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=server.cfg.yaml ../parameters.yaml
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=types.cfg.yaml ../parameters.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen --config=server.cfg.yaml ../parameters.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen --config=types.cfg.yaml ../parameters.yaml
 
 package gorillaparams
 
@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"net/http"
 
-	gen "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/roundtrip/gorilla/gen"
+	gen "github.com/wayleadr/oapi-codegen/v2/internal/test/parameters/roundtrip/gorilla/gen"
 )
 
 type Server struct{}

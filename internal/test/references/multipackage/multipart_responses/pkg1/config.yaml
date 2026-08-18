@@ -8,4 +8,4 @@ generate:
   strict-server: true
 output: pkg1.gen.go
 import-mapping:
-  pkg2.yaml: github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/multipart_responses/pkg2
+  pkg2.yaml: github.com/wayleadr/oapi-codegen/v2/internal/test/references/multipackage/multipart_responses/pkg2

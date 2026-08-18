@@ -3,8 +3,8 @@ package defaultresponse
 import (
 	"testing"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/default_response/gen/api"
-	"github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/default_response/gen/common"
+	"github.com/wayleadr/oapi-codegen/v2/internal/test/references/multipackage/default_response/gen/api"
+	"github.com/wayleadr/oapi-codegen/v2/internal/test/references/multipackage/default_response/gen/common"
 )
 
 // TestExternalRefInResponse verifies that a $ref to an external

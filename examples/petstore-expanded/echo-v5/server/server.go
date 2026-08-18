@@ -8,7 +8,7 @@ import (
 
 	"github.com/labstack/echo/v5"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/echo-v5/api"
+	"github.com/wayleadr/oapi-codegen/v2/examples/petstore-expanded/echo-v5/api"
 )
 
 type PetStore struct {

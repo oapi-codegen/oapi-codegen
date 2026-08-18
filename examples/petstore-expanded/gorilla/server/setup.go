@@ -6,7 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/gorilla/api"
+	"github.com/wayleadr/oapi-codegen/v2/examples/petstore-expanded/gorilla/api"
 )
 
 // NewServer creates a fully configured *http.Server with the petstore handler

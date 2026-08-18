@@ -6,7 +6,7 @@ import (
 
 	"github.com/kataras/iris/v12"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/iris/api"
+	"github.com/wayleadr/oapi-codegen/v2/examples/petstore-expanded/iris/api"
 )
 
 type PetStore struct {

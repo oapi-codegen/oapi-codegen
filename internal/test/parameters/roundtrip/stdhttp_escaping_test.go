@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"testing"
 
-	stdhttpparams "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/roundtrip/stdhttp"
-	stdhttpgen "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/roundtrip/stdhttp/gen"
+	stdhttpparams "github.com/wayleadr/oapi-codegen/v2/internal/test/parameters/roundtrip/stdhttp"
+	stdhttpgen "github.com/wayleadr/oapi-codegen/v2/internal/test/parameters/roundtrip/stdhttp/gen"
 )
 
 // TestStdHttpStringEscaping registers only the /simpleString route directly,

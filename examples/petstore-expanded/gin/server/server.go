@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/gin/api"
+	"github.com/wayleadr/oapi-codegen/v2/examples/petstore-expanded/gin/api"
 )
 
 type PetStore struct {

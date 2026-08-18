@@ -12,7 +12,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/echo-v5/server"
+	"github.com/wayleadr/oapi-codegen/v2/examples/petstore-expanded/echo-v5/server"
 )
 
 func main() {

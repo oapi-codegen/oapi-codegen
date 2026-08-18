@@ -1,0 +1,72 @@
+{{/*
+Header-based API version routing for fiber v2.
+
+Emits RegisterHandlerVersions/RegisterHandlerVersionsWithOptions alongside the
+plain RegisterHandlers pair from fiber-handler.tmpl. Instead of binding routes
+on the router directly, these build a map keyed by version-prefixed path:
+
+    "/v1/events/:id" -> { "GET": wrapper.GetEvent }
+    "/latest/events/:id" -> { "GET": wrapper.GetEvent }
+
+fibermid.MountVersionedRoutes then binds the bare paths and dispatches on the
+API-Version request header. Each generated package registers into the same
+shared map, so several spec versions can coexist behind one set of URLs.
+
+This is fiber v2 only: fiber-handler.tmpl is shared with fiber v3, but the
+fibermid import is only added for fiber-server, so the versioned helpers live
+here rather than in the shared template.
+*/}}
+
+// RegisterHandlerVersions registers the routes into apiHandlers under the given
+// version, for dispatch by fibermid.MountVersionedRoutes.
+func RegisterHandlerVersions(
+	router fiber.Router,
+	si ServerInterface,
+	version string,
+	apiHandlers map[string]map[string]fiber.Handler,
+) map[string]map[string]fiber.Handler {
+	return RegisterHandlerVersionsWithOptions(router, si, version, apiHandlers, FiberServerOptions{})
+}
+
+// RegisterHandlerVersionsWithOptions registers the routes into apiHandlers under
+// the given version, with additional options.
+func RegisterHandlerVersionsWithOptions(
+	router fiber.Router,
+	si ServerInterface,
+	version string,
+	apiHandlers map[string]map[string]fiber.Handler,
+	options FiberServerOptions,
+) map[string]map[string]fiber.Handler {
+{{if .}}wrapper := ServerInterfaceWrapper{
+Handler: si,
+HandlerMiddlewares: options.HandlerMiddlewares,
+}
+
+for _, m := range options.Middlewares {
+    router.Use(fiber.Handler(m))
+}
+{{end}}
+if apiHandlers == nil {
+    apiHandlers = make(map[string]map[string]fiber.Handler)
+}
+{{if .}}var versionedPath, latestPath string
+{{end}}{{$lastPath := ""}}{{range .}}
+{{- $currentPath := .Path | swaggerUriToFiberUri}}
+{{- if ne $lastPath $currentPath}}
+// {{.Path}}
+versionedPath = "/" + version + {{$currentPath | toGoString}}
+if apiHandlers[versionedPath] == nil {
+    apiHandlers[versionedPath] = make(map[string]fiber.Handler)
+}
+
+latestPath = "/" + fibermid.LatestVersion + {{$currentPath | toGoString}}
+if apiHandlers[latestPath] == nil {
+    apiHandlers[latestPath] = make(map[string]fiber.Handler)
+}
+{{$lastPath = $currentPath}}
+{{- end}}
+apiHandlers[versionedPath][{{.Method | toGoString}}] = wrapper.{{.HandlerName}}
+apiHandlers[latestPath][{{.Method | toGoString}}] = wrapper.{{.HandlerName}}
+{{end}}
+return apiHandlers
+}

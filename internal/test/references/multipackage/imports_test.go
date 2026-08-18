@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	packageA "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/packageA"
-	packageB "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/packageB"
-	petstore "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/petstore"
+	packageA "github.com/wayleadr/oapi-codegen/v2/internal/test/references/multipackage/packageA"
+	packageB "github.com/wayleadr/oapi-codegen/v2/internal/test/references/multipackage/packageB"
+	petstore "github.com/wayleadr/oapi-codegen/v2/internal/test/references/multipackage/petstore"
 	"github.com/stretchr/testify/require"
 )
 

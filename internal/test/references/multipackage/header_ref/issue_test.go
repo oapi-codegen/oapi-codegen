@@ -5,8 +5,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/header_ref/gen/api"
-	"github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/header_ref/gen/common"
+	"github.com/wayleadr/oapi-codegen/v2/internal/test/references/multipackage/header_ref/gen/api"
+	"github.com/wayleadr/oapi-codegen/v2/internal/test/references/multipackage/header_ref/gen/common"
 )
 
 // TestExternalHeaderSchemaIsQualified asserts that a response header whose

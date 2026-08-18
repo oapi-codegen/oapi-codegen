@@ -9,6 +9,6 @@
 //   - components/components.yaml (oneOf+anyOf)      -> config_components.yaml / spec_components.yaml
 package aggregatesoneof
 
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config_discriminator.yaml spec_discriminator.yaml
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config_union.yaml spec_union.yaml
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config_components.yaml spec_components.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen --config=config_discriminator.yaml spec_discriminator.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen --config=config_union.yaml spec_union.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen --config=config_components.yaml spec_components.yaml

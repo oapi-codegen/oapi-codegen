@@ -3,7 +3,7 @@ package aggregatesanyof_test
 import (
 	"testing"
 
-	aggregatesanyof "github.com/oapi-codegen/oapi-codegen/v2/internal/test/aggregates/anyof"
+	aggregatesanyof "github.com/wayleadr/oapi-codegen/v2/internal/test/aggregates/anyof"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

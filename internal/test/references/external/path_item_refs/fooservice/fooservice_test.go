@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	bionicle "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/external/path_item_refs/bionicle"
+	bionicle "github.com/wayleadr/oapi-codegen/v2/internal/test/references/external/path_item_refs/bionicle"
 )
 
 // TestExternalRefUnionResponseSerialization locks in the fix for the

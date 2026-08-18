@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/kataras/iris/v12"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/minimal-server/iris/api"
+	"github.com/wayleadr/oapi-codegen/v2/examples/minimal-server/iris/api"
 )
 
 func main() {

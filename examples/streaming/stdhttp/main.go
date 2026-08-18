@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"flag"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/streaming/stdhttp/sse"
+	"github.com/wayleadr/oapi-codegen/v2/examples/streaming/stdhttp/sse"
 	"log/slog"
 	"os"
 	"os/signal"

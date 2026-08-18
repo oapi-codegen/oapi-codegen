@@ -3,8 +3,8 @@ package pathitemresponsequalification
 import (
 	"testing"
 
-	spec_base "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/external/path_item_response_qualification/gen/spec_base"
-	spec_ext "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/external/path_item_response_qualification/gen/spec_ext"
+	spec_base "github.com/wayleadr/oapi-codegen/v2/internal/test/references/external/path_item_response_qualification/gen/spec_base"
+	spec_ext "github.com/wayleadr/oapi-codegen/v2/internal/test/references/external/path_item_response_qualification/gen/spec_ext"
 )
 
 // Regression test for https://github.com/oapi-codegen/oapi-codegen/issues/2308.

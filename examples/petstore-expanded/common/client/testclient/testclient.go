@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/common/client/openapi"
+	"github.com/wayleadr/oapi-codegen/v2/examples/petstore-expanded/common/client/openapi"
 )
 
 // Run executes the full petstore test sequence against serverURL.

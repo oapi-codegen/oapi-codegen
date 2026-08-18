@@ -7,7 +7,7 @@ import (
 
 	"github.com/labstack/echo/v5"
 	mw "github.com/oapi-codegen/echo-v5-middleware"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/echo-v5/api"
+	"github.com/wayleadr/oapi-codegen/v2/examples/petstore-expanded/echo-v5/api"
 )
 
 // NewEchoServer creates a fully configured *echo.Echo (v5) with the petstore

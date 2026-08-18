@@ -6,8 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/discriminated_union_allof/gen/api"
-	"github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/discriminated_union_allof/gen/common"
+	"github.com/wayleadr/oapi-codegen/v2/internal/test/references/multipackage/discriminated_union_allof/gen/api"
+	"github.com/wayleadr/oapi-codegen/v2/internal/test/references/multipackage/discriminated_union_allof/gen/common"
 )
 
 // TestValueByDiscriminatorExternalRef verifies that PRFile.ValueByDiscriminator()

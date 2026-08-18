@@ -6,7 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	middleware "github.com/oapi-codegen/gin-middleware"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/gin/api"
+	"github.com/wayleadr/oapi-codegen/v2/examples/petstore-expanded/gin/api"
 )
 
 // NewServer creates a fully configured *http.Server with the petstore handler

@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	middleware "github.com/oapi-codegen/nethttp-middleware"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/strict/api"
+	"github.com/wayleadr/oapi-codegen/v2/examples/petstore-expanded/strict/api"
 )
 
 // NewServer creates a fully configured *http.Server with the strict petstore

@@ -13,10 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	colonecho "github.com/oapi-codegen/oapi-codegen/v2/internal/test/paths/echo"
-	colonfiber "github.com/oapi-codegen/oapi-codegen/v2/internal/test/paths/fiber"
-	colonfiberv3 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/paths/fiberv3"
-	colongin "github.com/oapi-codegen/oapi-codegen/v2/internal/test/paths/gin"
+	colonecho "github.com/wayleadr/oapi-codegen/v2/internal/test/paths/echo"
+	colonfiber "github.com/wayleadr/oapi-codegen/v2/internal/test/paths/fiber"
+	colonfiberv3 "github.com/wayleadr/oapi-codegen/v2/internal/test/paths/fiberv3"
+	colongin "github.com/wayleadr/oapi-codegen/v2/internal/test/paths/gin"
 )
 
 // Each handler writes its own operation name so the test can prove that

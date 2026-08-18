@@ -1,8 +1,8 @@
-module github.com/oapi-codegen/oapi-codegen/v2/examples
+module github.com/wayleadr/oapi-codegen/v2/examples
 
 go 1.25.0
 
-replace github.com/oapi-codegen/oapi-codegen/v2 => ../
+replace github.com/wayleadr/oapi-codegen/v2 => ../
 
 require (
 	github.com/getkin/kin-openapi v0.146.0
@@ -23,10 +23,10 @@ require (
 	github.com/oapi-codegen/gin-middleware v1.0.2
 	github.com/oapi-codegen/iris-middleware v1.0.5
 	github.com/oapi-codegen/nethttp-middleware v1.1.2
-	github.com/oapi-codegen/oapi-codegen/v2 v2.0.0-00010101000000-000000000000
 	github.com/oapi-codegen/runtime v1.7.0
 	github.com/oapi-codegen/testutil v1.1.0
 	github.com/stretchr/testify v1.11.1
+	github.com/wayleadr/oapi-codegen/v2 v2.0.0-00010101000000-000000000000
 )
 
 require (
@@ -94,6 +94,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.59.0 // indirect
+	github.com/rs/zerolog v1.35.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 // indirect
 	github.com/schollz/closestmatch v2.1.0+incompatible // indirect
@@ -131,4 +132,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-tool github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen
+tool github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen

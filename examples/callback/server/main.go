@@ -12,7 +12,7 @@ import (
 
 	"github.com/google/uuid"
 
-	treefarm "github.com/oapi-codegen/oapi-codegen/v2/examples/callback"
+	treefarm "github.com/wayleadr/oapi-codegen/v2/examples/callback"
 )
 
 // TreeFarm implements treefarm.ServerInterface.

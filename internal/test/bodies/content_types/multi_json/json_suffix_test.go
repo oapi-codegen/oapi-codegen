@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	multijson "github.com/oapi-codegen/oapi-codegen/v2/internal/test/bodies/content_types/multi_json"
+	multijson "github.com/wayleadr/oapi-codegen/v2/internal/test/bodies/content_types/multi_json"
 	"github.com/stretchr/testify/assert"
 )
 

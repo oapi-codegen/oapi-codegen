@@ -8,7 +8,7 @@ import (
 	"github.com/lestrrat-go/jwx/v3/jwk"
 	"github.com/lestrrat-go/jwx/v3/jws"
 	"github.com/lestrrat-go/jwx/v3/jwt"
-	"github.com/oapi-codegen/oapi-codegen/v2/pkg/ecdsafile"
+	"github.com/wayleadr/oapi-codegen/v2/pkg/ecdsafile"
 )
 
 // PrivateKey is an ECDSA private key which was generated with the following

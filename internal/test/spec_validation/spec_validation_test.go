@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
-	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
+	"github.com/wayleadr/oapi-codegen/v2/pkg/codegen"
+	"github.com/wayleadr/oapi-codegen/v2/pkg/util"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

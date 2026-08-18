@@ -37,7 +37,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"golang.org/x/tools/imports"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
+	"github.com/wayleadr/oapi-codegen/v2/pkg/util"
 )
 
 // Embed the templates directory
@@ -352,6 +352,13 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error collecting component types: %w", err)
 		}
+		if opts.Compatibility.EnableAuthScopesOnContext {
+			// A `security` block may name a scheme the spec never declares
+			// under components/securitySchemes — or declare no components at
+			// all — and the constants and middleware generated for it still
+			// need its context key type to exist.
+			componentTypes = append(componentTypes, GenerateContextKeyTypesForUndeclaredSecuritySchemes(spec, allOps)...)
+		}
 		componentDecls, err := GenerateTypes(t, componentTypes)
 		if err != nil {
 			return "", fmt.Errorf("error generating code for type definitions: %w", err)
@@ -368,7 +375,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 			return "", fmt.Errorf("error generating Go types for operations: %w", err)
 		}
 
-		constantDefinitions, err = GenerateConstants(t, spec)
+		constantDefinitions, err = GenerateConstants(t, spec, allOps)
 		if err != nil {
 			return "", fmt.Errorf("error generating constants: %w", err)
 		}
@@ -1088,16 +1095,21 @@ func renderBoilerplate(t *template.Template, allEmitted []TypeDefinition) (enums
 
 // GenerateConstants generates operation ids, context keys, paths, etc. to be exported as constants
 //
-// Scopes constants are derived from components/securitySchemes rather than
-// from the operations' security requirements (which are filtered to defined
-// schemes anyway), so that a spec holding shared definitions with no paths
-// still exports the constants other packages alias via import-mapping.
-func GenerateConstants(t *template.Template, swagger *openapi3.T) (string, error) {
+// Scopes constants are derived from components/securitySchemes, so that a spec
+// holding shared definitions with no paths still exports the constants other
+// packages alias via import-mapping. Schemes that operations reference through
+// a `security` block without ever declaring under components are appended
+// afterwards, so their scopes constants exist too; see
+// GenerateContextKeyTypesForUndeclaredSecuritySchemes for the matching context
+// key types.
+func GenerateConstants(t *template.Template, swagger *openapi3.T, ops []OperationDefinition) (string, error) {
 	var constants Constants
 
+	declared := map[string]struct{}{}
 	if swagger.Components != nil {
 		for _, schemeName := range SortedSecuritySchemeKeys(swagger.Components.SecuritySchemes) {
 			provider := SecuritySchemeProvider{Name: SanitizeGoIdentity(schemeName)}
+			declared[provider.Name] = struct{}{}
 			alias := importedSecuritySchemeScopes(swagger.Components.SecuritySchemes[schemeName].Ref)
 			if alias == securitySchemeScopesConstant(provider.Name) {
 				// The scheme $refs a spec that import-mapping assigns to the
@@ -1111,7 +1123,82 @@ func GenerateConstants(t *template.Template, swagger *openapi3.T) (string, error
 		}
 	}
 
+	for _, providerName := range securitySchemeProviderNames(ops) {
+		if _, found := declared[providerName]; found {
+			continue
+		}
+		declared[providerName] = struct{}{}
+		constants.SecuritySchemeProviders = append(constants.SecuritySchemeProviders, SecuritySchemeProvider{Name: providerName})
+	}
+
 	return GenerateTemplates([]string{"constants.tmpl"}, t, constants)
+}
+
+// securitySchemeProviderNames returns the sanitized, sorted set of security
+// scheme provider names referenced by the given operations.
+func securitySchemeProviderNames(ops []OperationDefinition) []string {
+	providerNameMap := map[string]struct{}{}
+	for _, op := range ops {
+		for _, def := range op.SecurityDefinitions {
+			providerNameMap[SanitizeGoIdentity(def.ProviderName)] = struct{}{}
+		}
+	}
+
+	providerNames := slices.Sorted(maps.Keys(providerNameMap))
+
+	return providerNames
+}
+
+// securitySchemeContextKeyTypeName returns the name of the Go type used as the
+// context key for a security scheme. It mirrors the type expression that
+// constants.tmpl uses for each generated <Name>Scopes constant, so the two must
+// be changed together.
+func securitySchemeContextKeyTypeName(schemeName string) string {
+	return LowercaseFirstCharacter(SchemaNameToTypeName(schemeName)) + "ContextKey"
+}
+
+// GenerateContextKeyTypesForUndeclaredSecuritySchemes generates the context key
+// types for security schemes that operations reference through a `security`
+// block but that the spec never declares under components/securitySchemes.
+//
+// GenerateConstants emits a <Name>Scopes constant for every provider name an
+// operation references, and the server middleware templates reference that
+// constant in turn. Both are typed with the scheme's context key type, so
+// without this the generated package refers to a type that was never declared
+// and fails to compile.
+//
+// A scheme listed under components/securitySchemes is skipped, whether or not
+// it produced a local type: GenerateTypesForSecuritySchemes deliberately emits
+// no context key type for a scheme that $refs a spec owned by another package,
+// because the scopes constant aliases that package's constant and carries its
+// key type over. Keying off the spec rather than the emitted types keeps this
+// from re-declaring an unused local type for those.
+func GenerateContextKeyTypesForUndeclaredSecuritySchemes(swagger *openapi3.T, ops []OperationDefinition) []TypeDefinition {
+	declaredNames := map[string]struct{}{}
+	if swagger.Components != nil {
+		for schemeName := range swagger.Components.SecuritySchemes {
+			declaredNames[SanitizeGoIdentity(schemeName)] = struct{}{}
+		}
+	}
+
+	var types []TypeDefinition
+	for _, providerName := range securitySchemeProviderNames(ops) {
+		if _, found := declaredNames[providerName]; found {
+			continue
+		}
+		declaredNames[providerName] = struct{}{}
+
+		types = append(types, TypeDefinition{
+			JsonName: providerName,
+			TypeName: securitySchemeContextKeyTypeName(providerName),
+			Schema: Schema{
+				GoType:      "string",
+				Description: fmt.Sprintf("is the context key for %s security scheme", providerName),
+			},
+		})
+	}
+
+	return types
 }
 
 // securitySchemeScopesConstant returns the name of the generated scopes

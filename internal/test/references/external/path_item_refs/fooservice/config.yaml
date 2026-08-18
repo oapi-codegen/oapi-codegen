@@ -6,6 +6,6 @@ generate:
   strict-server: true
   models: true
 import-mapping:
-  common.yaml: github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/external/path_item_refs/common
-  bionicle.yaml: github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/external/path_item_refs/bionicle
+  common.yaml: github.com/wayleadr/oapi-codegen/v2/internal/test/references/external/path_item_refs/common
+  bionicle.yaml: github.com/wayleadr/oapi-codegen/v2/internal/test/references/external/path_item_refs/bionicle
 output: fooservice.gen.go

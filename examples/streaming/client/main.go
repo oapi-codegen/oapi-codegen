@@ -11,7 +11,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/streaming/client/sse"
+	"github.com/wayleadr/oapi-codegen/v2/examples/streaming/client/sse"
 )
 
 func main() {

@@ -7,5 +7,5 @@
 // generated JSON tag).
 package extensionsstructtags
 
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml spec.yaml
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config_extra_tags_params.yaml spec_extra_tags_params.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml spec.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen --config=config_extra_tags_params.yaml spec_extra_tags_params.yaml

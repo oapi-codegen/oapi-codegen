@@ -11,7 +11,7 @@ import (
 	"net"
 	"os"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/strict/server"
+	"github.com/wayleadr/oapi-codegen/v2/examples/petstore-expanded/strict/server"
 )
 
 func main() {

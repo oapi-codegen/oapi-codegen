@@ -7,7 +7,7 @@ generate:
   client: true
   models: true
 import-mapping:
-  spec-ext.yaml: "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/external/path_item_response_qualification/gen/spec_ext"
+  spec-ext.yaml: "github.com/wayleadr/oapi-codegen/v2/internal/test/references/external/path_item_response_qualification/gen/spec_ext"
 output: gen/spec_base/issue.gen.go
 output-options:
   skip-prune: true

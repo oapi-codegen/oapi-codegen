@@ -17,7 +17,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/adaptor"
 	"github.com/stretchr/testify/assert"
 
-	clientAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/client"
+	clientAPI "github.com/wayleadr/oapi-codegen/v2/internal/test/servers/strict/client"
 	"github.com/oapi-codegen/runtime"
 	"github.com/oapi-codegen/testutil"
 )

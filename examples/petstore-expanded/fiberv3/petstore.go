@@ -14,7 +14,7 @@ import (
 	"github.com/gofiber/fiber/v3"
 
 	middleware "github.com/oapi-codegen/fiber-v3-middleware"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/fiberv3/api"
+	"github.com/wayleadr/oapi-codegen/v2/examples/petstore-expanded/fiberv3/api"
 )
 
 func main() {

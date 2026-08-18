@@ -6,7 +6,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/fiber/api"
+	"github.com/wayleadr/oapi-codegen/v2/examples/petstore-expanded/fiber/api"
 )
 
 type PetStore struct {

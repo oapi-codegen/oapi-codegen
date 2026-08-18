@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/gofiber/fiber/v3"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/minimal-server/fiberv3/api"
+	"github.com/wayleadr/oapi-codegen/v2/examples/minimal-server/fiberv3/api"
 )
 
 func main() {

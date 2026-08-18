@@ -6,4 +6,4 @@
 // issue #1529 (strict-iris): client + models + embedded-spec + iris-server + strict-server.
 package serversstrictmulticontentiris
 
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml spec.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml spec.yaml

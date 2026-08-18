@@ -78,7 +78,7 @@ With `oapi-codegen`, there are a few [Key Design Decisions](#key-design-decision
 As announced in [May 2024](https://github.com/oapi-codegen/oapi-codegen/discussions/1605),
 we have moved the project from the Deepmap organization to our own organization, and you will need to update your
 import paths to pull updates past this point. You need to do a recursive search/replace from
-`github.com/deepmap/oapi-codegen/v2` to `github.com/oapi-codegen/oapi-codegen/v2`.
+`github.com/deepmap/oapi-codegen/v2` to `github.com/wayleadr/oapi-codegen/v2`.
 
 > [!IMPORTANT]
 > `oapi-codegen` moved to its new home with the version tag `v2.3.0`.
@@ -94,7 +94,7 @@ If you are using `v2.3.0` or above, please install like so, using the new module
 
 ```sh
 # for the binary install
-go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+go install github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen@latest
 ```
 
 ### Installing
@@ -106,7 +106,7 @@ It is recommended to use [`go tool` support](https://www.jvt.me/posts/2025/01/27
 To do this, you run `go get -tool`:
 
 ```sh
-$ go get -tool github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+$ go get -tool github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen@latest
 # this will then modify your `go.mod`
 ```
 
@@ -119,7 +119,7 @@ From there, each invocation of `oapi-codegen` would be used like so:
 Alternatively, you can install it as a binary with:
 
 ```sh
-$ go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
+$ go install github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen@latest
 $ oapi-codegen -version
 ```
 
@@ -143,9 +143,9 @@ To do so, you can run:
 
 ```sh
 # pin to the latest version on the default branch
-$ go get github.com/oapi-codegen/oapi-codegen/v2@main
+$ go get github.com/wayleadr/oapi-codegen/v2@main
 # alternatively, to a commit hash i.e. https://github.com/oapi-codegen/oapi-codegen/commit/71e916c59688a6379b5774dfe5904ec222b9a537
-$ go get github.com/oapi-codegen/oapi-codegen/v2@71e916c59688a6379b5774dfe5904ec222b9a537
+$ go get github.com/wayleadr/oapi-codegen/v2@71e916c59688a6379b5774dfe5904ec222b9a537
 ```
 
 This will then make a change such as:
@@ -156,8 +156,8 @@ index 44f29a4..436a780 100644
 --- go.mod
 +++ go.mod
 @@ -2,21 +2,20 @@
--require github.com/oapi-codegen/oapi-codegen/v2 v2.1.0
-+require github.com/oapi-codegen/oapi-codegen/v2 v2.1.1-0.20240331212514-80f0b978ef16
+-require github.com/wayleadr/oapi-codegen/v2 v2.1.0
++require github.com/wayleadr/oapi-codegen/v2 v2.1.1-0.20240331212514-80f0b978ef16
 ```
 
 ## Usage
@@ -183,7 +183,7 @@ Note that it's recommended to pin to a specific version of the configuration sch
 
 Although we strive to retain backwards compatibility - as a project that's using a stable API per SemVer - there are sometimes opportunities we must take to fix a bug that could cause a breaking change for [people relying upon the behaviour](https://xkcd.com/1172/).
 
-In this case, we will expose a [compatibility option](https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen#CompatibilityOptions) to restore old behaviour.
+In this case, we will expose a [compatibility option](https://pkg.go.dev/github.com/wayleadr/oapi-codegen/v2/pkg/codegen#CompatibilityOptions) to restore old behaviour.
 
 That all being said, we operate in a little bit of a grey area, since we are a code generator, we support template overrides, and
 our code can be imported. So this is how we will try to maintain compatibility:
@@ -192,7 +192,7 @@ our code can be imported. So this is how we will try to maintain compatibility:
     provide compatibility flags for major breaking changes.
   - A breaking change could happen with either a compilation error (as something has changed in the generated code) or a behaviour change (we generate a slightly different implementation)
   - However, if you're using generated code that is "off the beaten path", on a seldom encountered edge case, we'll sometimes decide to make a breaking change to avoid complicating usage or internals.
-  - [Our `pkg/` directory is importable](https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg). In retrospect, this was a mistake in our original design. Importing anything other than the `Generate` function and its related `Configuration` is considered unstable (and at this point, [hasn't (yet) been documented](https://github.com/oapi-codegen/oapi-codegen/issues/1487)). In the future, we will clean up our import surface.
+  - [Our `pkg/` directory is importable](https://pkg.go.dev/github.com/wayleadr/oapi-codegen/v2/pkg). In retrospect, this was a mistake in our original design. Importing anything other than the `Generate` function and its related `Configuration` is considered unstable (and at this point, [hasn't (yet) been documented](https://github.com/oapi-codegen/oapi-codegen/issues/1487)). In the future, we will clean up our import surface.
   - Template overrides are considered unstable, and you use them at your own risk. These are always drifting and so are their input contexts, so we can't guarantee much here.
   - The command-line interface and/or the configuration file format are classed as stable
 
@@ -597,7 +597,7 @@ And a `generate.go`:
 ```go
 package client
 
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg.yaml api.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen -config cfg.yaml api.yaml
 ```
 
 This would then generate:
@@ -673,7 +673,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/client"
+	"github.com/wayleadr/oapi-codegen/v2/examples/client"
 )
 
 func TestClient_canCall() {
@@ -841,7 +841,7 @@ generate:
 This would then result in `go build` failures:
 
 ```
-# github.com/oapi-codegen/oapi-codegen/v2/examples/clienttypenameclash
+# github.com/wayleadr/oapi-codegen/v2/examples/clienttypenameclash
 ./client.gen.go:184:6: UpdateClientResponse redeclared in this block
         ./client.gen.go:17:6: other declaration of UpdateClientResponse
 ./client.gen.go:192:7: r.HTTPResponse undefined (type UpdateClientResponse has no field or method HTTPResponse)
@@ -958,7 +958,7 @@ And a `generate.go`:
 ```go
 package onlymodels
 
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg.yaml api.yaml
+//go:generate go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen -config cfg.yaml api.yaml
 ```
 
 This would then generate:
@@ -1082,8 +1082,8 @@ So how do we get `oapi-codegen` to generate our code?
 To get `oapi-codegen`'s single-package support working, we need multiple calls to `oapi-codegen`, one call per OpenAPI spec file:
 
 ```sh
-$ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg-api.yaml ../admin/api.yaml
-$ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg-user.yaml ../common/api.yaml
+$ go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen -config cfg-api.yaml ../admin/api.yaml
+$ go run github.com/wayleadr/oapi-codegen/v2/cmd/oapi-codegen -config cfg-user.yaml ../common/api.yaml
 ```
 
 This therefore means that we need multiple configuration files, such as `cfg-api.yaml`:
@@ -1169,7 +1169,7 @@ output-options:
   skip-prune: true
 import-mapping:
   # for a given file/URL that is $ref'd, point `oapi-codegen` to the Go package that this spec is generated into, to perform Go package imports
-  ../common/api.yaml: github.com/oapi-codegen/oapi-codegen/v2/examples/import-mapping/common
+  ../common/api.yaml: github.com/wayleadr/oapi-codegen/v2/examples/import-mapping/common
 ```
 
 This will then generate the following code:
@@ -1179,7 +1179,7 @@ package admin
 
 import (
 	// ...
-	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/examples/import-mapping/common"
+	externalRef0 "github.com/wayleadr/oapi-codegen/v2/examples/import-mapping/common"
 )
 
 // User defines model for User.
@@ -1537,7 +1537,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/pkg/securityprovider"
+	"github.com/wayleadr/oapi-codegen/v2/pkg/securityprovider"
 )
 
 func main() {
@@ -1559,7 +1559,7 @@ func main() {
 }
 ```
 
-Notice that we're using a pre-built provider from the [`pkg/securityprovider` package](https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg/securityprovider), which has some inbuilt support for other types of authentication, too.
+Notice that we're using a pre-built provider from the [`pkg/securityprovider` package](https://pkg.go.dev/github.com/wayleadr/oapi-codegen/v2/pkg/securityprovider), which has some inbuilt support for other types of authentication, too.
 
 ## Custom code generation
 
@@ -2610,7 +2610,7 @@ output-options:
   exclude-schemas: []
 ```
 
-Check [the docs](https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen#OutputOptions) for more details of usage.
+Check [the docs](https://pkg.go.dev/github.com/wayleadr/oapi-codegen/v2/pkg/codegen#OutputOptions) for more details of usage.
 
 ### Should I commit the generated code?
 

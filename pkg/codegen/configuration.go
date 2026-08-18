@@ -208,6 +208,7 @@ func (g GenerateOptions) RouterImports() []AdditionalImport {
 		imports = append(imports, AdditionalImport{Package: "github.com/gorilla/mux"})
 	case g.FiberServer:
 		imports = append(imports, AdditionalImport{Package: "github.com/gofiber/fiber/v2"})
+		imports = append(imports, AdditionalImport{Alias: "fibermid", Package: "github.com/wayleadr/oapi-codegen/v2/pkg/fibermid"})
 	case g.FiberV3Server:
 		imports = append(imports, AdditionalImport{Package: "github.com/gofiber/fiber/v3"})
 	case g.IrisServer:

@@ -26,8 +26,8 @@ import (
 
 	"go.yaml.in/yaml/v3"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
-	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
+	"github.com/wayleadr/oapi-codegen/v2/pkg/codegen"
+	"github.com/wayleadr/oapi-codegen/v2/pkg/util"
 )
 
 func errExit(format string, args ...any) {

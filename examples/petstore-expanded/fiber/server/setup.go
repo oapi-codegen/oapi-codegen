@@ -5,7 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	middleware "github.com/oapi-codegen/fiber-middleware"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/fiber/api"
+	"github.com/wayleadr/oapi-codegen/v2/examples/petstore-expanded/fiber/api"
 )
 
 // NewFiberApp creates a fully configured *fiber.App with the petstore handler

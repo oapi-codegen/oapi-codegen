@@ -6,8 +6,8 @@ import (
 	"net"
 
 	"github.com/labstack/echo/v4"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/authenticated-api/echo/api"
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/authenticated-api/echo/server"
+	"github.com/wayleadr/oapi-codegen/v2/examples/authenticated-api/echo/api"
+	"github.com/wayleadr/oapi-codegen/v2/examples/authenticated-api/echo/server"
 )
 
 func main() {

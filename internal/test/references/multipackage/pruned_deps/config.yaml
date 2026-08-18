@@ -8,4 +8,4 @@ generate:
   embedded-spec: false
   client: true
 import-mapping:
-  ./deps/my-deps.json: github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/pruned_deps/deps
+  ./deps/my-deps.json: github.com/wayleadr/oapi-codegen/v2/internal/test/references/multipackage/pruned_deps/deps

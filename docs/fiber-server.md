@@ -107,7 +107,7 @@ Now we've got our implementation, we can then write the following code to wire i
 import (
 	"log"
 
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/minimal-server/fiber/api"
+	"github.com/wayleadr/oapi-codegen/v2/examples/minimal-server/fiber/api"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -126,3 +126,56 @@ func main() {
 
 > [!NOTE]
 > This doesn't include [validation of incoming requests](../README.md#requestresponse-validation-middleware).
+
+## Header-based API versioning
+
+Alongside `RegisterHandlers`, the Fiber generator emits a `RegisterHandlerVersions`
+pair that registers the operations into a shared map keyed by version-prefixed
+path instead of binding them on the router directly:
+
+```go
+// RegisterHandlerVersions registers the routes into apiHandlers under the given
+// version, for dispatch by fibermid.MountVersionedRoutes.
+func RegisterHandlerVersions(
+	router fiber.Router,
+	si ServerInterface,
+	version string,
+	apiHandlers map[string]map[string]fiber.Handler,
+) map[string]map[string]fiber.Handler
+```
+
+Each generated package registers into the same map, so several versions of a
+spec can coexist. `fibermid.MountVersionedRoutes` then binds the **bare** paths
+and dispatches on the `API-Version` (or `X-API-Version`) request header,
+falling back to the supplied default version:
+
+```go
+import (
+	"github.com/gofiber/fiber/v2"
+
+	v1 "example.com/service/api/v1"
+	v2 "example.com/service/api/v2"
+	"github.com/wayleadr/oapi-codegen/v2/pkg/fibermid"
+)
+
+app := fiber.New()
+
+apiHandlers := make(map[string]map[string]fiber.Handler)
+v1.RegisterHandlerVersions(app, v1Server, "v1", apiHandlers)
+v2.RegisterHandlerVersions(app, v2Server, "v2", apiHandlers)
+
+fibermid.MountVersionedRoutes(app, apiHandlers, "v1")
+```
+
+This binds `/events`, `/events/:id` and friends as the only externally visible
+URLs — `/v1/...` and `/v2/...` are never registered as routes. Because the
+bare-path route does the matching, path parameters resolve normally: the
+dispatcher forwards the same `*fiber.Ctx` to the per-version wrapper, so
+`c.Params("id")` reads the value the bare-path route extracted.
+
+Each version prefix is also registered under `fibermid.LatestVersion`
+(`"latest"`), which is what an unknown or unmatched version falls back to.
+
+> [!NOTE]
+> `pkg/fibermid` targets Fiber v2 only. Fiber v3 passes `fiber.Ctx` by value, so
+> `fiber-v3-server` does not generate the versioned registration helpers.

@@ -3,8 +3,8 @@ package responsecast_test
 import (
 	"testing"
 
-	base "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/response_cast/gen/spec_base"
-	other "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/response_cast/gen/spec_other"
+	base "github.com/wayleadr/oapi-codegen/v2/internal/test/references/multipackage/response_cast/gen/spec_base"
+	other "github.com/wayleadr/oapi-codegen/v2/internal/test/references/multipackage/response_cast/gen/spec_other"
 )
 
 // Cross-package cast that broke in 2.1.0+ when both specs generate
