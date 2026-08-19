@@ -956,13 +956,90 @@ func isMultiTypeUnion(t *openapi3.Types) bool {
 		return false
 	}
 	for _, name := range s {
-		switch name {
-		case "array", "boolean", "integer", "number", "object", "string":
-		default:
+		if name == "null" || !isJSONSchemaType(name) {
 			return false
 		}
 	}
 	return true
+}
+
+// jsonSchemaTypes are the values a schema's `type` may name, per JSON Schema
+// (and so per OpenAPI). The primitive-type dispatch handles every one of
+// them, which is what lets unhandledSchemaTypeError treat an unrecognized
+// name as a misspelling rather than an unimplemented feature.
+var jsonSchemaTypes = []string{"array", "boolean", "integer", "null", "number", "object", "string"}
+
+func isJSONSchemaType(name string) bool {
+	return slices.Contains(jsonSchemaTypes, name)
+}
+
+// quoteTypeNames renders a `type` value the way the spec author wrote it: a
+// bare quoted name for a single type, a bracketed list for the 3.1 list form.
+func quoteTypeNames(names []string) string {
+	quoted := make([]string, len(names))
+	for i, name := range names {
+		quoted[i] = strconv.Quote(name)
+	}
+	if len(names) == 1 {
+		return quoted[0]
+	}
+	return "[" + strings.Join(quoted, ", ") + "]"
+}
+
+// unhandledSchemaTypeError explains why a schema's `type` fell off the end of
+// the primitive-type dispatch. The dispatch covers every JSON Schema type, so
+// reaching it means the `type` is not one this document may carry: a name
+// that is not a JSON Schema type at all, or the 3.1-only list form in an
+// earlier document. The message names the declared value verbatim and the
+// reason, so a typo is visible at a glance -- see
+// https://github.com/oapi-codegen/oapi-codegen/issues/1977.
+//
+// declared is the schema's `type` as written, not the "null"-stripped value
+// the dispatch runs on, so the reader sees what is in their spec.
+func unhandledSchemaTypeError(declared *openapi3.Types) error {
+	names := declared.Slice()
+	expected := fmt.Sprintf("expected one of %s", strings.Join(jsonSchemaTypes, ", "))
+
+	var unknown []string
+	for _, name := range names {
+		if !isJSONSchemaType(name) {
+			unknown = append(unknown, strconv.Quote(name))
+		}
+	}
+
+	switch {
+	case len(unknown) == 1 && len(names) == 1:
+		// The whole `type` is the offending name, so naming it twice reads
+		// as a stutter.
+		return fmt.Errorf("unhandled Schema type %s: not a valid JSON Schema type (%s)",
+			quoteTypeNames(names), expected)
+	case len(unknown) == 1:
+		return fmt.Errorf("unhandled Schema type %s: %s is not a valid JSON Schema type (%s)",
+			quoteTypeNames(names), unknown[0], expected)
+	case len(unknown) > 1:
+		return fmt.Errorf("unhandled Schema type %s: %s are not valid JSON Schema types (%s)",
+			quoteTypeNames(names), strings.Join(unknown, ", "), expected)
+	case len(names) > 1 && !globalState.is31:
+		// Every entry names a real type, so the list form itself is what is
+		// unusable here: a 3.1 document would have mapped it to `any`.
+		return fmt.Errorf("unhandled Schema type %s: a list of types is OpenAPI 3.1 syntax, but %s",
+			quoteTypeNames(names), declaredOpenAPIVersion())
+	default:
+		// An empty `type`, or a 3.1 list naming nothing but the "null"
+		// nullability marker, which leaves no type to map.
+		return fmt.Errorf("unhandled Schema type %s: type must name a JSON Schema type (%s)",
+			quoteTypeNames(names), expected)
+	}
+}
+
+// declaredOpenAPIVersion phrases what the document declares, for errors about
+// version-gated syntax. globalState.spec is unset when codegen internals are
+// exercised directly, so fall back to naming the requirement instead.
+func declaredOpenAPIVersion() string {
+	if globalState.spec == nil || globalState.spec.OpenAPI == "" {
+		return "this document is not OpenAPI 3.1 or later"
+	}
+	return fmt.Sprintf("this document declares OpenAPI %s", globalState.spec.OpenAPI)
 }
 
 // schemaUnionTypes returns t's member types as a string slice when t is an
@@ -1622,7 +1699,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		outSchema.SkipOptionalPointer = true
 		outSchema.DefineViaAlias = true
 	} else {
-		return fmt.Errorf("unhandled Schema type: %v", t)
+		return unhandledSchemaTypeError(schema.Type)
 	}
 	return nil
 }
