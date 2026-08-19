@@ -956,13 +956,103 @@ func isMultiTypeUnion(t *openapi3.Types) bool {
 		return false
 	}
 	for _, name := range s {
-		switch name {
-		case "array", "boolean", "integer", "number", "object", "string":
-		default:
+		if name == "null" || !isJSONSchemaType(name) {
 			return false
 		}
 	}
 	return true
+}
+
+// jsonSchemaTypes are the values a schema's `type` may name, per JSON Schema
+// (and so per OpenAPI). The primitive-type dispatch handles every one of
+// them, which is what lets unhandledSchemaTypeError treat an unrecognized
+// name as a misspelling.
+var jsonSchemaTypes = []string{"array", "boolean", "integer", "null", "number", "object", "string"}
+
+func isJSONSchemaType(name string) bool {
+	return slices.Contains(jsonSchemaTypes, name)
+}
+
+// quoteTypeNames renders a `type` value the way the spec author wrote it: a
+// bare quoted name for a single type, a bracketed list for the 3.1 list form.
+func quoteTypeNames(names []string) string {
+	quoted := make([]string, len(names))
+	for i, name := range names {
+		quoted[i] = strconv.Quote(name)
+	}
+	if len(names) == 1 {
+		return quoted[0]
+	}
+	return "[" + strings.Join(quoted, ", ") + "]"
+}
+
+// unhandledSchemaTypeError explains why a schema's `type` fell off the end of
+// the primitive-type dispatch. The dispatch covers every JSON Schema type, so
+// reaching it means the `type` is not one this document may carry: a name
+// that is not a JSON Schema type at all, or the 3.1-only list form in an
+// earlier document. The message names the declared value verbatim and the
+// reason, so a typo is visible at a glance.
+// See https://github.com/oapi-codegen/oapi-codegen/issues/1977.
+//
+// declared is the schema's `type` as written, not the "null"-stripped value
+// the dispatch runs on, so the reader sees what is in their spec.
+//
+// Precondition: globalState.is31 must be set (see schemaIsNullable for
+// context). An unset is31 reads a 3.1 document as an earlier one and picks
+// the version branch below.
+func unhandledSchemaTypeError(declared *openapi3.Types) error {
+	names := declared.Slice()
+
+	var unknown []string
+	for _, name := range names {
+		if !isJSONSchemaType(name) {
+			unknown = append(unknown, strconv.Quote(name))
+		}
+	}
+
+	expected := fmt.Sprintf("expected one of %s", strings.Join(jsonSchemaTypes, ", "))
+
+	switch {
+	case len(unknown) > 0:
+		return fmt.Errorf("unhandled Schema type %s: %s (%s)",
+			quoteTypeNames(names), invalidTypeNamesPhrase(names, unknown), expected)
+	case len(names) > 1 && !globalState.is31:
+		// Every entry names a real type, so the list form itself is what is
+		// unusable here: a 3.1 document would have mapped it to `any`.
+		return fmt.Errorf("unhandled Schema type %s: a list of types requires OpenAPI 3.1 or later%s",
+			quoteTypeNames(names), declaredVersionSuffix())
+	default:
+		// An empty `type`, or a 3.1 list naming nothing but the "null"
+		// nullability marker, which leaves no type to map.
+		return fmt.Errorf("unhandled Schema type %s: type must name a JSON Schema type (%s)",
+			quoteTypeNames(names), expected)
+	}
+}
+
+// invalidTypeNamesPhrase names the entries that are not JSON Schema types.
+// A single-entry `type` is its own offender, so the phrase does not repeat
+// the name the message already printed.
+func invalidTypeNamesPhrase(names, unknown []string) string {
+	switch {
+	case len(names) == 1:
+		return "not a valid JSON Schema type"
+	case len(unknown) == 1:
+		return unknown[0] + " is not a valid JSON Schema type"
+	default:
+		return strings.Join(unknown, ", ") + " are not valid JSON Schema types"
+	}
+}
+
+// declaredVersionSuffix names the document's version when that explains the
+// failure, and says nothing when it would not. globalState.spec is unset
+// when codegen internals are exercised directly, and SetGlobalStateSpec sets
+// the spec without is31, so a spec already declaring 3.1 would contradict a
+// message about needing 3.1. Silence beats a self-contradicting hint.
+func declaredVersionSuffix() string {
+	if globalState.spec == nil || globalState.spec.OpenAPI == "" || globalState.spec.IsOpenAPI31OrLater() {
+		return ""
+	}
+	return fmt.Sprintf(", but this document declares OpenAPI %s", globalState.spec.OpenAPI)
 }
 
 // schemaUnionTypes returns t's member types as a string slice when t is an
@@ -1622,7 +1712,7 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 		outSchema.SkipOptionalPointer = true
 		outSchema.DefineViaAlias = true
 	} else {
-		return fmt.Errorf("unhandled Schema type: %v", t)
+		return unhandledSchemaTypeError(schema.Type)
 	}
 	return nil
 }
@@ -1893,7 +1983,10 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 		elementPath := append(path, fmt.Sprint(i))
 		elementSchema, err := GenerateGoSchema(element, elementPath)
 		if err != nil {
-			return err
+			// The caller names the keyword (anyOf/oneOf); the index is the
+			// only thing that says which inline branch failed, and it is
+			// otherwise discarded with elementPath.
+			return fmt.Errorf("branch %d: %w", i, err)
 		}
 
 		if element.Ref == "" {
