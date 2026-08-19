@@ -998,7 +998,7 @@ func TestOapiSchemaToGoType_MultiTypeUnionRequires31(t *testing.T) {
 	var out Schema
 	err := oapiSchemaToGoType(&openapi3.Schema{Type: &openapi3.Types{"string", "number"}}, []string{"Value"}, &out)
 	assert.ErrorContains(t, err,
-		`unhandled Schema type ["string", "number"]: a list of types is OpenAPI 3.1 syntax`)
+		`unhandled Schema type ["string", "number"]: a list of types requires OpenAPI 3.1 or later`)
 }
 
 // The dispatch handles every JSON Schema type, so falling off the end of it
@@ -1047,7 +1047,7 @@ func TestOapiSchemaToGoType_UnhandledTypeError(t *testing.T) {
 			types: openapi3.Types{"string", "number"},
 			want: []string{
 				`unhandled Schema type ["string", "number"]`,
-				"a list of types is OpenAPI 3.1 syntax, but this document declares OpenAPI 3.0.3",
+				"a list of types requires OpenAPI 3.1 or later, but this document declares OpenAPI 3.0.3",
 			},
 		},
 		{
@@ -1087,16 +1087,77 @@ func TestOapiSchemaToGoType_UnhandledTypeError(t *testing.T) {
 	}
 }
 
-// The version hint has to survive a nil spec: codegen internals are exercised
-// directly by tests and by callers that never ran Generate().
-func TestUnhandledSchemaTypeErrorWithoutSpec(t *testing.T) {
+// The version hint is a suffix, not the message: a caller that never ran
+// Generate() has no spec to read, and SetGlobalStateSpec sets the spec
+// without is31, so a 3.1 spec would otherwise be told it needs 3.1. Both
+// drop the suffix and keep the requirement.
+func TestUnhandledSchemaTypeErrorVersionSuffix(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		spec *openapi3.T
+	}{
+		{name: "no spec at all", spec: nil},
+		{name: "spec with no declared version", spec: &openapi3.T{}},
+		{
+			// SetGlobalStateSpec sets the spec without is31, so the two can
+			// disagree. Citing 3.1 here would contradict the requirement.
+			name: "spec already declares 3.1",
+			spec: &openapi3.T{OpenAPI: "3.1.0"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			prev := globalState
+			t.Cleanup(func() { globalState = prev })
+			globalState.is31 = false
+			globalState.spec = tc.spec
+
+			err := unhandledSchemaTypeError(&openapi3.Types{"string", "number"})
+			assert.ErrorContains(t, err, "a list of types requires OpenAPI 3.1 or later")
+			assert.NotContains(t, err.Error(), "but this document declares",
+				"an unusable or contradictory version must not be cited")
+		})
+	}
+}
+
+// components.responses generate with no operation, so the response label is
+// the component name alone rather than an empty operation and a stray dot.
+func TestGenerateResponseDefinitionsNamesComponentResponses(t *testing.T) {
 	prev := globalState
 	t.Cleanup(func() { globalState = prev })
-	globalState.is31 = false
-	globalState.spec = nil
+	globalState.typeMapping = DefaultTypeMapping
 
-	err := unhandledSchemaTypeError(&openapi3.Types{"string", "number"})
-	assert.ErrorContains(t, err, "this document is not OpenAPI 3.1 or later")
+	responses := map[string]*openapi3.ResponseRef{
+		"NotFound": {Value: &openapi3.Response{
+			Content: openapi3.Content{
+				"application/json": &openapi3.MediaType{
+					Schema: &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"int"}}},
+				},
+			},
+		}},
+	}
+
+	_, err := GenerateResponseDefinitions("", responses, "")
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "for NotFound (application/json)")
+	assert.NotContains(t, err.Error(), "for .NotFound", "no empty operation prefix")
+}
+
+// An inline oneOf/anyOf branch is only identifiable by its index, which
+// generateUnion computes for naming and used to discard on the error path.
+func TestGenerateUnionNamesFailingBranch(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.typeMapping = DefaultTypeMapping
+
+	_, err := GenerateGoSchema(&openapi3.SchemaRef{Value: &openapi3.Schema{
+		OneOf: openapi3.SchemaRefs{
+			{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
+			{Value: &openapi3.Schema{Type: &openapi3.Types{"int"}}},
+		},
+	}}, []string{"Choice"})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "branch 1")
+	assert.ErrorContains(t, err, `unhandled Schema type "int"`)
 }
 
 // schemaUnionTypes feeds the Types bind option emitted for union
