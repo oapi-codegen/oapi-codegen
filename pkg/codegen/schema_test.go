@@ -1016,7 +1016,6 @@ func TestOapiSchemaToGoType_UnhandledTypeError(t *testing.T) {
 		want  []string
 	}{
 		{
-			// The #1976 reproduction, verbatim.
 			name:  "unknown single type name",
 			types: openapi3.Types{"int"},
 			want:  []string{`unhandled Schema type "int": not a valid JSON Schema type`, expected},
@@ -1041,8 +1040,8 @@ func TestOapiSchemaToGoType_UnhandledTypeError(t *testing.T) {
 			},
 		},
 		{
-			// The list form itself is what is unusable here, so the hint
-			// names the version rather than the entries, which are fine.
+			// The list form itself is what is unusable here: the entries are valid
+			// types, so the hint names the version.
 			name:  "list of valid types under a 3.0 document",
 			spec:  &openapi3.T{OpenAPI: "3.0.3"},
 			types: openapi3.Types{"string", "number"},

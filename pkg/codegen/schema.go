@@ -966,7 +966,7 @@ func isMultiTypeUnion(t *openapi3.Types) bool {
 // jsonSchemaTypes are the values a schema's `type` may name, per JSON Schema
 // (and so per OpenAPI). The primitive-type dispatch handles every one of
 // them, which is what lets unhandledSchemaTypeError treat an unrecognized
-// name as a misspelling rather than an unimplemented feature.
+// name as a misspelling.
 var jsonSchemaTypes = []string{"array", "boolean", "integer", "null", "number", "object", "string"}
 
 func isJSONSchemaType(name string) bool {
