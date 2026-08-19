@@ -14,10 +14,10 @@ info:
   version: "1.0.0"
   description: |
     Exercises multi-type unions in every parameter position the runtime
-    binds: path, query, and header, plus a union request/response body.
-    Each union parameter lowers to `any`, and the generated bind calls
-    carry Types so runtime >= v1.7.0 picks the first member that parses
-    (boolean, integer, number, string).
+    binds: path, query, header, and response header, plus a union
+    request/response body. Each union parameter lowers to `any`, and the
+    generated bind calls carry Types so runtime >= v1.7.0 picks the first
+    member that parses (boolean, integer, number, string).
 paths:
   /things/{id}:
     post:
@@ -54,6 +54,13 @@ paths:
       responses:
         "200":
           description: echo of what was bound
+          headers:
+            # Response-header position: the generated ClientWithResponses
+            # binds declared headers through the same styled binder, so a
+            # union-typed header needs its Types list too.
+            X-Echo:
+              schema:
+                type: [integer, string]
           content:
             application/json:
               schema:

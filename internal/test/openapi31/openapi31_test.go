@@ -314,6 +314,35 @@ func TestUnionEnumDropsConstants(t *testing.T) {
 	assert.Equal(t, "two", v)
 }
 
+// Union in array-items position: the element carries the permissive mapping,
+// so the component is an `[]any` alias and mixed member values round-trip.
+func TestReadingListUnionItems(t *testing.T) {
+	var r ReadingList
+	require.NoError(t, json.Unmarshal([]byte(`["low",97.5]`), &r))
+	assert.Equal(t, ReadingList{"low", 97.5}, r)
+}
+
+// A union as a oneOf branch keeps the outer schema's standard union
+// machinery, with that branch's accessor typed `any`. Because `any` accepts
+// every JSON value, As... on the union branch can never fail, so
+// discriminating between branches falls to the caller.
+func TestFlexibleIdUnionBranch(t *testing.T) {
+	var f FlexibleId
+	require.NoError(t, json.Unmarshal([]byte(`"user-7"`), &f))
+	v, err := f.AsFlexibleId1()
+	require.NoError(t, err)
+	assert.Equal(t, "user-7", v)
+
+	require.NoError(t, f.FromFlexibleId0(FlexibleId0{Id: "abc"}))
+	obj, err := f.AsFlexibleId0()
+	require.NoError(t, err)
+	assert.Equal(t, "abc", obj.Id)
+
+	v, err = f.AsFlexibleId1()
+	require.NoError(t, err, "the any-typed accessor succeeds even on the object branch's data")
+	assert.Equal(t, map[string]any{"id": "abc"}, v)
+}
+
 // petFieldComments extracts the doc comment text for each field of the Pet
 // struct from a parsed AST. Returns map[fieldName]commentText.
 func petFieldComments(t *testing.T, f *ast.File) map[string]string {
