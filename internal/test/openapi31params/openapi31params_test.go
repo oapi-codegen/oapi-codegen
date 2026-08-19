@@ -105,9 +105,9 @@ func TestUnionParamClientRoundTrip(t *testing.T) {
 	assert.Equal(t, float64(42), echoed["id"], "response body is plain JSON, so the id comes back as a JSON number")
 }
 
-// A union-typed response header is parsed by the generated ClientWithResponses
-// through the same Types-carrying styled binder, so the header value comes
-// back as the first member that parses.
+// The generated ClientWithResponses binds declared response headers through
+// the styled binder with Types, so a union-typed header comes back as the
+// first member that parses.
 func TestUnionResponseHeaderClientBinding(t *testing.T) {
 	capture := &captureServer{}
 	srv := httptest.NewServer(Handler(capture))

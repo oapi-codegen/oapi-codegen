@@ -255,11 +255,9 @@ components:
       items:
         type: [string, number]
 
-    # A union as a oneOf BRANCH. The outer schema still gets the standard
-    # oneOf union machinery (union field, As.../From... accessors); the union
-    # branch's accessor is typed `any`, so its As... conversion can never
-    # fail and discrimination falls to the caller, the same as a typeless
-    # branch.
+    # A union as a oneOf branch. The outer schema keeps the standard oneOf
+    # union machinery. The union branch's accessor is typed `any`, so its
+    # As... conversion never fails, the same as a typeless branch.
     FlexibleId:
       oneOf:
         - type: object

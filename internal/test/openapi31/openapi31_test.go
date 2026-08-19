@@ -323,9 +323,8 @@ func TestReadingListUnionItems(t *testing.T) {
 }
 
 // A union as a oneOf branch keeps the outer schema's standard union
-// machinery, with that branch's accessor typed `any`. Because `any` accepts
-// every JSON value, As... on the union branch can never fail, so
-// discriminating between branches falls to the caller.
+// machinery, with the branch accessor typed `any`. As... to `any` never
+// fails, so branch discrimination falls to the caller.
 func TestFlexibleIdUnionBranch(t *testing.T) {
 	var f FlexibleId
 	require.NoError(t, json.Unmarshal([]byte(`"user-7"`), &f))
