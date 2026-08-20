@@ -5,7 +5,7 @@ package serversstrictmulticontentfiber
 
 import (
 	"bytes"
-	"compress/flate"
+	"compress/lzw"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -436,32 +436,33 @@ func (sh *strictHandler) Test(ctx *fiber.Ctx) error {
 	return nil
 }
 
-// Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
+// Base64 encoded, compressed with lzw, json marshaled OpenAPI spec.
 // Stored as a slice of fixed-width chunks rather than one concatenated
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"rM8xSwQxEAXgvyJPy3BZtYvYWAj2ltfEOOvlyM0MyVjIsv9dEhcWLMVp3jTvY2ZBkosKE1tDWNDSiS5x",
-	"rK/UrKd9KSFA3s6UDOu6OmSeBYE/S3EQJY6aEXB/mA63cNBopyF424gPGiFKNVoWfnlH+PEdKjUVbjQa",
-	"d9PUIwkb8ehE1ZLTaPlzE96P7NtNpRkB137/wm8v+OH3a38TD1daZc6FHo94ivWIfzafRf5gbvMdAAD/",
-	"/w==",
+	"APeIGPOmDZw3bsq4oTNHhA6Bc8agKdMmTMOHIqiUmUPHoUA6eeCUcSjijRg1ZcZ07MOShYg0bsy8ceim",
+	"Dhs2Lt+IdBMGThqSM1zAcBFDhEs4YeiguSjwBZ2NHTGeKRNVoM4ycpKmQZiEDEmNHI2KkLPxoJs5Gz2K",
+	"kAEDhlqCCxVWFdETDps0Y7QifKFmDkK1ESdWVEuCrBmSI14QNIhQ7pwXgSlafAF2ZR+Xde/mpbPVDV+/",
+	"bnaAgCPnjZk0bMr04CJCSBg5rAFLlEzYMGLFBc06hjy74uPKIlrShWMXr17PfRGKJm0atWrWRt68iY0x",
+	"8mCMhcsc1iEi8WLdCx9bnwycpfnzAQE=",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
-// after base64-decoding and flate-decompressing the embedded blob.
+// after base64-decoding and lzw-decompressing the embedded blob.
 func decodeSpec() ([]byte, error) {
 	encoded := strings.Join(swaggerSpec, "")
 	compressed, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr := flate.NewReader(bytes.NewReader(compressed))
+	zr := lzw.NewReader(bytes.NewReader(compressed), lzw.LSB, 8)
 	var buf bytes.Buffer
 	if _, err := buf.ReadFrom(zr); err != nil {
-		return nil, fmt.Errorf("read flate: %w", err)
+		return nil, fmt.Errorf("read lzw: %w", err)
 	}
 	if err := zr.Close(); err != nil {
-		return nil, fmt.Errorf("close flate reader: %w", err)
+		return nil, fmt.Errorf("close lzw reader: %w", err)
 	}
 
 	return buf.Bytes(), nil

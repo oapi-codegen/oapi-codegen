@@ -5,7 +5,7 @@ package externaljsonref
 
 import (
 	"bytes"
-	"compress/flate"
+	"compress/lzw"
 	"encoding/base64"
 	"fmt"
 	"net/url"
@@ -22,32 +22,33 @@ type Container struct {
 	ObjectB *map[string]any       `json:"object_b,omitempty"`
 }
 
-// Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
+// Base64 encoded, compressed with lzw, json marshaled OpenAPI spec.
 // Stored as a slice of fixed-width chunks rather than one concatenated
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"hI/RTsMwDEX/xfDYrZN469vEB8AfVF7qbYbWsRJ3Ypry78hZBwiQ9pRY1/fc6wuEOGkUEsvQXSCHI01Y",
-	"v89RDFko+aApKiVjqlLcvVGwHv3/mGgPHTy036B2obSK4R0PtO2zUuhfqmsLpbkBdvcAX3ul/HLhMLBx",
-	"FBxff1SzNFMDdlaCbln3uP97/DlLcCJ/F3+2xHLwaA9n2ccqso2uQgMnSpmjXIePVTxRGvG8QtWRabgS",
-	"5mBzouEm1uOVBJWhg6f1Zr0B72dHb1DKZwAAAP//",
+	"APeIGPOmDZw3bsq4oTNHhA6Bc8agKdMmTMOHIoYgpBMmTUI5DgXCkfMGThk5dNKUuSjwjRg1ZcbQ+RIm",
+	"pAgScsqYcShixAuCBhEqZPgi4sSKc17ACTNmTZgzZYJ8mWNyzJcnL2PSCSKiDwsRLmHK/CLGJk6dPH0C",
+	"PZhwYVKjFC2+CKuVbNc+XsFmHVsWYxgyZNKkRBiGDRSSJlGqvEhHTp0yX+nkMcmTrsyuX5c2fRp1atWr",
+	"e7faHFnyZMqVNt2EaVPGpmTKOkTMaezxzF28eT2aeeNaMJvWsUV8tXNyThqEPIWLwNPiDXE5bMLkaREG",
+	"Dhw2KsnwnO1YZp2cZJo/j54HM1iTquGk4TnDBQz3ypfSQcMSb0A=",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
-// after base64-decoding and flate-decompressing the embedded blob.
+// after base64-decoding and lzw-decompressing the embedded blob.
 func decodeSpec() ([]byte, error) {
 	encoded := strings.Join(swaggerSpec, "")
 	compressed, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr := flate.NewReader(bytes.NewReader(compressed))
+	zr := lzw.NewReader(bytes.NewReader(compressed), lzw.LSB, 8)
 	var buf bytes.Buffer
 	if _, err := buf.ReadFrom(zr); err != nil {
-		return nil, fmt.Errorf("read flate: %w", err)
+		return nil, fmt.Errorf("read lzw: %w", err)
 	}
 	if err := zr.Close(); err != nil {
-		return nil, fmt.Errorf("close flate reader: %w", err)
+		return nil, fmt.Errorf("close lzw reader: %w", err)
 	}
 
 	return buf.Bytes(), nil

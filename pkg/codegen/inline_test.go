@@ -15,7 +15,7 @@ package codegen
 
 import (
 	"bytes"
-	"compress/flate"
+	"compress/lzw"
 	"encoding/base64"
 	"io"
 	"testing"
@@ -27,17 +27,18 @@ import (
 // rawSpecFixture and compressedSpecFixture are a known-good pair: rawSpecFixture
 // compressed with compressSpec must always produce exactly compressedSpecFixture.
 //
-// compress/flate makes no promise that its compressed output is byte-stable
-// across Go versions - only that the format remains valid and round-trips
-// correctly. If a future Go release changes that output, this test - not a
-// `go generate` diff in some unrelated repo - is what should catch it.
+// compress/lzw (like compress/flate before it) makes no promise that its
+// compressed output is byte-stable across Go versions - only that the format
+// remains valid and round-trips correctly. If a future Go release changes
+// that output, this test - not a `go generate` diff in some unrelated repo -
+// is what should catch it.
 const rawSpecFixture = `{"openapi":"3.0.3","info":{"title":"Test API","version":"1.0.0"},"paths":{"/ping":{"get":{"operationId":"getPing","responses":{"200":{"description":"pong","content":{"application/json":{"schema":{"type":"object","properties":{"message":{"type":"string"}}}}}}}}}}}`
 
-const compressedSpecFixture = "TI6xbgMxDEN/peBsXNxm89YxW4b+gOuoFwWJJVhCgeKQfy/kG1ovNKQnkhtEqVdlFByXvByRwP1LUDY4+51Q8EHmL+/nExK+aRhLR8HrkpeMZ4JWv1rgB+W+xmclDxGlUZ2lny4oMTzHPmGQqXSjefSWc8iFrA1W371VJtikO/XpVVXv3Kbb4WYBbbB2pUedRX80esrnjZojQUdkO+8RDzKrK/0DzUdUef693wAAAP//"
+const compressedSpecFixture = "APeIeAOnjJswcNKI0CFihgsYLmaIYCEijRszbxYKpJOGDpsyC0VQKTOHDoggUJJMFGGnjJw5ad64CRnj4UMRfSjCCUMHzRyNIl4kdHMG6JkydIASdMkzppskZEIepQPFYlGKckjCkTmHJFAZMGAAJUNyjJw0cDjKDLmV6MoxMukYTKpDIEI4bNKMaSrzhZo5a+uKmDMGTZk2YYDSyVMw5BsxasqMSapTzlI5HL0KbkNyTpijihmDZFjyrNs+qFOr7hMQ"
 
 // TestCompressSpec_KnownGood pins compressSpec's output for a fixed input.
 // If this test starts failing after a Go toolchain upgrade, that confirms
-// compress/flate's output has changed underneath us, and any regenerated
+// compress/lzw's output has changed underneath us, and any regenerated
 // *.gen.go embedding a spec will show a spurious diff.
 func TestCompressSpec_KnownGood(t *testing.T) {
 	got, err := compressSpec([]byte(rawSpecFixture))
@@ -46,15 +47,16 @@ func TestCompressSpec_KnownGood(t *testing.T) {
 }
 
 // TestCompressSpec_RoundTrip confirms the known-good compressed fixture
-// decodes back to the known-good raw fixture, using the same flate.Reader
-// settings as the decodeSpec function generated into *.gen.go by
-// inline.tmpl. If these settings ever drift apart, decoding a real embedded
-// spec at runtime would fail, and this is where that would first show up.
+// decodes back to the known-good raw fixture, using the same lzw.Reader
+// settings (order, litWidth) as the decodeSpec function generated into
+// *.gen.go by inline.tmpl. If these settings ever drift apart, decoding a
+// real embedded spec at runtime would panic/error, and this is where that
+// would first show up.
 func TestCompressSpec_RoundTrip(t *testing.T) {
 	compressed, err := base64.StdEncoding.DecodeString(compressedSpecFixture)
 	require.NoError(t, err)
 
-	zr := flate.NewReader(bytes.NewReader(compressed))
+	zr := lzw.NewReader(bytes.NewReader(compressed), lzw.LSB, 8)
 	defer func() {
 		require.NoError(t, zr.Close())
 	}()
