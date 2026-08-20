@@ -15,7 +15,7 @@ package codegen
 
 import (
 	"bytes"
-	"compress/flate"
+	"compress/lzw"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -24,7 +24,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// GenerateInlinedSpec generates a gzipped, base64 encoded JSON representation of the
+// GenerateInlinedSpec generates an LZW-compressed, base64 encoded JSON representation of the
 // swagger definition, which we embed inside the generated code.
 func GenerateInlinedSpec(t *template.Template, importMapping importMap, swagger *openapi3.T) (string, error) {
 	// ensure that any external file references are embedded into the embedded spec
@@ -35,22 +35,10 @@ func GenerateInlinedSpec(t *template.Template, importMapping importMap, swagger 
 		return "", fmt.Errorf("error marshaling swagger: %w", err)
 	}
 
-	// flate
-	var buf bytes.Buffer
-	zw, err := flate.NewWriter(&buf, flate.BestCompression)
+	str, err := compressSpec(encoded)
 	if err != nil {
-		return "", fmt.Errorf("new flate writer: %w", err)
+		return "", err
 	}
-
-	if _, err := zw.Write(encoded); err != nil {
-		return "", fmt.Errorf("write flate: %w", err)
-	}
-
-	if err := zw.Close(); err != nil {
-		return "", fmt.Errorf("close flate writer: %w", err)
-	}
-
-	str := base64.StdEncoding.EncodeToString(buf.Bytes())
 
 	var parts []string
 	const width = 80
@@ -75,4 +63,23 @@ func GenerateInlinedSpec(t *template.Template, importMapping importMap, swagger 
 			SpecParts:     parts,
 			ImportMapping: importMapping,
 		})
+}
+
+// compressSpec LZW-compresses data and base64-encodes the result. The order
+// and litWidth here must match the lzw.NewReader call in inline.tmpl's
+// decodeSpec, otherwise generated code will fail to decompress its own
+// embedded spec.
+func compressSpec(data []byte) (string, error) {
+	var buf bytes.Buffer
+	zw := lzw.NewWriter(&buf, lzw.LSB, 8)
+
+	if _, err := zw.Write(data); err != nil {
+		return "", fmt.Errorf("write lzw: %w", err)
+	}
+
+	if err := zw.Close(); err != nil {
+		return "", fmt.Errorf("close lzw writer: %w", err)
+	}
+
+	return base64.StdEncoding.EncodeToString(buf.Bytes()), nil
 }

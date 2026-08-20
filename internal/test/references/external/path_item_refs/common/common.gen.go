@@ -5,7 +5,7 @@ package common
 
 import (
 	"bytes"
-	"compress/flate"
+	"compress/lzw"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -190,31 +190,32 @@ type strictHandler struct {
 	options     StrictHTTPServerOptions
 }
 
-// Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
+// Base64 encoded, compressed with lzw, json marshaled OpenAPI spec.
 // Stored as a slice of fixed-width chunks rather than one concatenated
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"RMw/TwMxDAXw7/Lm6HQVW3YGFha6IYaQmNboahvHRUJVvjtKT4jJf95P74aqF1MhiY58Q69nupT7+uh+",
-	"9FJZTk/tWeOFJObbXI08mO6oaqM548cIGT2c5YQxEpy+ruzUkF939Zb+lL5/Ug2MyVg+dBY06tXZglWQ",
-	"caQeSAiOjf7Pb/K+54dlXVaMBDWSYoyMh2VdDkiwEueOLNdtG78BAAD//w==",
+	"APeIGPOmDZw3bsq4oTNHhA6Bc8agKdMmTMOHIorIkUNFTpgxadycSULGyRs6UxTScSgQjpw3cMrIoZOm",
+	"zEWBBMmUYSmCTp6YDkXMoSMn5BkRffqwECGnTJw6aZqScbhl4BudIros9QlUh4g3YtSUGbMyqVIRIc28",
+	"4akzYlE4NBEGpWJz5dY0dNjs9Ep3qIildmTOSSPXawwXMBAjXQpTYRg4aYLOQOwixl8RcMLQQXPRTR02",
+	"bPoEBA==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
-// after base64-decoding and flate-decompressing the embedded blob.
+// after base64-decoding and lzw-decompressing the embedded blob.
 func decodeSpec() ([]byte, error) {
 	encoded := strings.Join(swaggerSpec, "")
 	compressed, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr := flate.NewReader(bytes.NewReader(compressed))
+	zr := lzw.NewReader(bytes.NewReader(compressed), lzw.LSB, 8)
 	var buf bytes.Buffer
 	if _, err := buf.ReadFrom(zr); err != nil {
-		return nil, fmt.Errorf("read flate: %w", err)
+		return nil, fmt.Errorf("read lzw: %w", err)
 	}
 	if err := zr.Close(); err != nil {
-		return nil, fmt.Errorf("close flate reader: %w", err)
+		return nil, fmt.Errorf("close lzw reader: %w", err)
 	}
 
 	return buf.Bytes(), nil

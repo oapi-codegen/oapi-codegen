@@ -5,7 +5,7 @@ package referencesmultipackage
 
 import (
 	"bytes"
-	"compress/flate"
+	"compress/lzw"
 	"encoding/base64"
 	"fmt"
 	"net/url"
@@ -30,38 +30,47 @@ type Container struct {
 	Pet     *externalRef1.Pet     `json:"pet,omitempty"`
 }
 
-// Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
+// Base64 encoded, compressed with lzw, json marshaled OpenAPI spec.
 // Stored as a slice of fixed-width chunks rather than one concatenated
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
+	"APeIGPOmDZw3bsq4oTNHhA6Bc8agKdMmTMOHIoYgpBMmTUI5DgXCkfMGThk5dNKUuSjwjRg1ZcbQ+RIm",
+	"pAgScsqYcShixAuCBhEqZPgi4sSKc17ACTNmTZgzZYJ8mWNyzJcnL2PSCSKiDwsRLmHK/CLGJk6dPH0C",
+	"PZhwYVKjFC0qZeoUqpCpVa9mlSmk69ewWr+MMZtzp46ePwuyHfpWYtykgMcO9irCJB3CaA+rVSzUbVHH",
+	"SIveeQpVToswcNJMHX2mdAvLc+i8yfml8JwvE8OQuY2UzsmpcqxW9Fh75Zs6wVd+KakQtWooZS73mf53",
+	"78zBGHWTSZMSYRg2UEiaRKnyIh05dcp8pZPHJM/I0r8ubfo0Kt6YesVutTmSOfmVNrkRRhtl2MSee4fF",
+	"JodHZ/gFlnVkYWYYYmt1RhRcoc1XVxl3UYUfVvr1NR1lGtbXYV4gatUXRv2NlxKAGAlIoIHtFZjgeQx2",
+	"RZ0Ic7DmmnOrkXbSa9HFNlsZxZlxW267fdHbb3ME52RHbhQ3x3HJ3cacgKl9MUQYvp0xWx78iXfSiyyJ",
+	"kAYZNpWBx4BwsGFjDF+ZMVtFlx3mER020CDCejXytGcZpTkoo40CuQmnnDwR8cYZDQGKII84utHgjgfa",
+	"+KB+f4qARws9CmkaSXX4Zlobb5BRBhuCvuFCqK2d5AJssuXkAqqqsuHCl2GO2SkebbAa44CajgEmob7u",
+	"COuPXS47JK1HJrlkGbrxZpGpwAlHpZVYjqHclkBCl6dIZv6XprG9ykEmRmdNuFlQbV0ImlzOmgZkvUQy",
+	"VCuStuFGbZNPypHtlMTldCVy3mppEpeq8Yqsug6u2eabBjGqQwww1HknmIIu1GenmXYc5kmGEjvxopqS",
+	"8egZKoEc6I0LWuogHGi8IVsVcrCRJncUpRkyzDl+BaywAh3KE802v4Ezq5i+LEIYcsgRBplCB2vTHVLD",
+	"YRKbOpyXnrIc0VFHmqpGtCAc3blxdHQgxAbm2CB4BAIdE7W9b6cK1dGGQ1s8bUdHbIQhBqPyKbSdzF9d",
+	"yQabXUiqqYI5UsYRpDbx3Eaa7aaVGLyMfXYUvT4OeW/opkFLW79MWhsblFIOV6XB3X67MJBUPOXgz09H",
+	"PfWvVmOENWpbO+R1GSN+lVMcdaSRE9d9Gy1fzTfn3FDjIuAO36+gkt4Cqaa2gOuqrb5K+qxF7ntrqqu6",
+	"IC7vRItg9GGW6Zi49qOLmq+Rp+s0bbVTri5wlNoqmHEQJrvmdKl2DWJRudBUOa4JxE5ywJPIPuY4kRGK",
+	"ZJR5n0BwBzmZNW1S1xNa9uzHvSF9T1hqclW9yKevI50vVy5AIPsCZLLDTE5HlJlDTJDDnTxMATQwEogQ",
+	"qJUTOQShVGiQkOYqFK+37HBB7PnhUVYyF/pARSoessoQoXaSI9JtZnSpDxbzssUiejGJGMGQpsRARJJV",
+	"8DBooAMd4IDDr3jETgbijsVE0Ck7nGQOaUAITxwErtTwZAYugEEiO7UUurFkOgEB",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
-// after base64-decoding and flate-decompressing the embedded blob.
+// after base64-decoding and lzw-decompressing the embedded blob.
 func decodeSpec() ([]byte, error) {
 	encoded := strings.Join(swaggerSpec, "")
 	compressed, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr := flate.NewReader(bytes.NewReader(compressed))
+	zr := lzw.NewReader(bytes.NewReader(compressed), lzw.LSB, 8)
 	var buf bytes.Buffer
 	if _, err := buf.ReadFrom(zr); err != nil {
-		return nil, fmt.Errorf("read flate: %w", err)
+		return nil, fmt.Errorf("read lzw: %w", err)
 	}
 	if err := zr.Close(); err != nil {
-		return nil, fmt.Errorf("close flate reader: %w", err)
+		return nil, fmt.Errorf("close lzw reader: %w", err)
 	}
 
 	return buf.Bytes(), nil

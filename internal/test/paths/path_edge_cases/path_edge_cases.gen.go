@@ -5,7 +5,7 @@ package pathedgecases
 
 import (
 	"bytes"
-	"compress/flate"
+	"compress/lzw"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -743,40 +743,47 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
 
 }
 
-// Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
+// Base64 encoded, compressed with lzw, json marshaled OpenAPI spec.
 // Stored as a slice of fixed-width chunks rather than one concatenated
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"tFXLbhs7DP0VgfcuVY+b7GbXAkURoCiMpO0myUKV6DGDGUmVaCOGMf9eUOP3IynQdDdDUjyHjyOtwIYu",
-	"Bo+eM9QrSJhj8BnLzx11scXbtUksNnhGz/LJ+MxVbA15+ct2hp0p9mVEqCFzIt9A3/caHGabKDIFDzV8",
-	"ULnkVRssFX4+oWWQ0CFPQf+UUkjyEVOImJgGUja4QuUwaQlWxadhGlJnGGogz9dXoDecyDM2mKDX0GHO",
-	"prmYaOPWJ+VoSPhrTgkd1PewBtyEP/YaJsinpL3pzmB9m6ESjwpTxTNUEXn0KmRJ9biN2vSuAH813YB3",
-	"ip4vw+c9/CwEiLHLZ2a5BTUpmeVZZvkMNYkjPw2nDO4iWjKtsiZjVuRVNDxTM+NdS76plQ1t8FtH1ur7",
-	"7ReF2ZpIvhHWCTOmBboHb2cmGcuYdnmiSaZDMWllvFPSEiPI71pcYLvzK4dT8iSu/ODDAlMiJwiSZh0c",
-	"PObRg5fxELdS3uQAQ6FrcCgENCww5aHE96PxaCytCxG9iQQ1XBeThlKTNKWSxleriHzjejE0ww5tCd84",
-	"qOEzsuyWnNvUBfX9CkSAJRfo9Z5ByQT70+E0R/2CSh/1ofSvxuMjvZsYW7KFTvWUw5Hq/084hRr+q3bX",
-	"SbXWciWsz9wDC9OSk50bhD/vOpOWQ51iVQ0t0Cty6JmmhGlU4kqv6nLWcNFUDJlPV+vHOqIsNeijXm68",
-	"k8EpfcLMH4NbvmXVgxz7Q53IJPq/7PZWoK+2/USyl8eQofimZt7ym3VhuMTPwM49Pke0jE7hOmZ/CQ7H",
-	"VwY/vBqTRB0xLbBaFR28qJe7wyN/ph2JeFE7l56X3TWZeVmuiIEyXFLXucZt46qj17f08F/S33sdT/j3",
-	"ff87AAD//w==",
+	"APeIGPOmDZw3bsq4oTNHhA6BcsrMOehmjkSHAqekMcimjBSJFC1iHIiQjkI6I03iofMCDpswadyMnDMG",
+	"TZk2YVLmgVPGoYg5dOTEPCOij1EWIshIHCMUDp00CH0GATFno8syICJORGgRxBsxasqMQXn0Z82bYRo+",
+	"FFFEjpw3ckbCectTztOLawkqHamUZtOnUXWwdQsXhN6eSM3AxYlScEw6M2SIQEpnZ0/HC8ucKRO3D9I2",
+	"EueE2cx36V+oMgW3fSsHBOg5oklTtuwTqFA3RMtGjFMnTUQyDreQ3Ps59OieXTyLgFKmscC5b+reVSvQ",
+	"TRjQpf2mcYraJxWbIKyD9moGBB3wPOm4mCyiMs/aQYcWVb679+/gIsQjn/1e8NewYxWFFHN0OHEdXs/R",
+	"xdl0I+lHXVKmbQdYaiJ8h5WD5JmHXnNzrIdUGia18aB7l/0UH24CtkebYGG4FUYe8yFVn29lAKeDcA6K",
+	"0AV/Jf4nFlllxaRYdkxJ2J1gU/A0RhphsGFYWhKBEBMIcIRxHghohOEGGWwMpYNhb7DBlZRuUGklGnOw",
+	"AEIVUjABwlJhwDFUhlpxZkeNXLhRU4thjMXZHGSaeWWVchxokhxpgqAlGV7VZSVqLXR0p5OEGsoZCEqZ",
+	"EROIqM2R5xt3upUGGXNWeV6kZUzqVUId5sneU3R05BMUZ5pZKGiHvknGZk9a1BBSoVYVmAgxuACDsSlG",
+	"p1Ccafg0g7HIImUqmiO1xOELe6SXBBl9jLSZcyIoW+iE2/p0RHMEslcprn8GJ1BMPk3Lnn7xNleujGXw",
+	"RqONQdVRBlI02YSTTv2ZeFtufewoglYhISiCDDDAMBJBmS00UpwupTHGowi9oMYcgQkUMFojkRCRGT6N",
+	"8AJBBiF00hwvjIwTzOkapVxfRXI3rB1NjkplczH+VEcbOMkBo2Dn0vGz0mekcWeZo56UhqacrVeWtQzp",
+	"wHOXZFh52XNvAEXkacNa0XPXJi39a7iOkmujCGZz7TWBa9cnER1CvEHG0QJRbJLFa2Hc5cYTegxyaiKf",
+	"NfBaJpeBsmAqs0zRyzErntYLBBr42nz05WtfjQ71W0bnW1XkMMQS51XSSRfDkTHhqBkeslkC57QWiDc9",
+	"2PjjIkRe0OQLwSzz5TXz6FOLhcJoM1I4k03h1j6n19DNjodRBxvg+s164K4PzrEbsiNOO8mMn5zyyr+7",
+	"HHzltcO8GlycMx+hzhTWkRAeSprEKGesBT3H0EU7GtzO5jW1BS1mVukIFITSBk7dCVvr6tZavjUScX2v",
+	"XEhrjkY4UoYFbsSBiBHBuprTrhu9i0LyQgq9BLMu9szoPjoQHcAsNxLFyIExPnlMZF61IoPJRzlAyYOs",
+	"BFMVDhZFYQzjyukiVjLzQQ59LUvI+pJoOpht8CofKZ1IlidCPrELUe4SAbxYeKZ5HSheXnSh5/YVOjn4",
+	"a4a1q+FirJTDhezQeJgxyWY6A7DKDPEnCexJwmwWEA==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
-// after base64-decoding and flate-decompressing the embedded blob.
+// after base64-decoding and lzw-decompressing the embedded blob.
 func decodeSpec() ([]byte, error) {
 	encoded := strings.Join(swaggerSpec, "")
 	compressed, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr := flate.NewReader(bytes.NewReader(compressed))
+	zr := lzw.NewReader(bytes.NewReader(compressed), lzw.LSB, 8)
 	var buf bytes.Buffer
 	if _, err := buf.ReadFrom(zr); err != nil {
-		return nil, fmt.Errorf("read flate: %w", err)
+		return nil, fmt.Errorf("read lzw: %w", err)
 	}
 	if err := zr.Close(); err != nil {
-		return nil, fmt.Errorf("close flate reader: %w", err)
+		return nil, fmt.Errorf("close lzw reader: %w", err)
 	}
 
 	return buf.Bytes(), nil

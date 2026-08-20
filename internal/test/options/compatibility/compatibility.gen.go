@@ -5,7 +5,7 @@ package optionscompatibility
 
 import (
 	"bytes"
-	"compress/flate"
+	"compress/lzw"
 	"encoding/base64"
 	"fmt"
 	"net/url"
@@ -15,34 +15,36 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-// Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
+// Base64 encoded, compressed with lzw, json marshaled OpenAPI spec.
 // Stored as a slice of fixed-width chunks rather than one concatenated
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"vJFPixsxDMW/itF1x0na3ua2lB7K0j/QHgNFY2snajyysdTdDWG+e7GHLmk/QE8W4vn5956vwPKYYbxC",
-	"JA2Vi3EWGOE7qamzE5orlZTqE/lceWbB5HOhik3oOfqAyjJ7Fk/LRDFS9FoouDNRaQ50lIrP7vXOx+jU",
-	"KsvsHmtemsB1PUuf/5hsyynlaec+8Qv1h+goKNGdacLpLuBC6U4Fz3Trrm75peYmegWPjl4wWLo4VPdc",
-	"2YxkdxQYwNgSwQi5x9Z9yEtB44kT2wUGeKKqWx9vdofdAdYBciHBwjDCu74aoKCdtDW4L2Rbk4mM2nSD",
-	"BSPYidWzevQ9wL3E9y3Cj2+f7x8+wACVtGRR6mZvD4d2hCxG0m2xlMSh2+1/aqO6goYTLdgmu5SWZKsW",
-	"1nUd/vnRLw/bdt4g/0abyb6S/SeGdV1/BwAA//8=",
+	"APeISOPGzBsROgSSKTNnjJw0cOikeeMGoQgqDOnMAUEHTRg6IODIYVhGjp0yLd48PEMwDJuUcEp+nOim",
+	"RRoyLcaEmUPwjM2aZdqIKUNmIc45MceAWFOmDJyNHctwcSMnzB0Qb2JWlUgxCRkQc+g8dHMGhBk5b9pw",
+	"RFMGbFIQBNe2DTq0KFG3ZZSKYfNGjAsQTdLgIZpzp1Q3Ydx8ZSomjJgVOtuUYbNiDmKmWLXO7EpmY5s6",
+	"YUEMDTlyTsmTX8vgCTOGDps8IHaCuPOQDp0yblxMFcFChETXZSxm5epmzosxaeHMFJOGTRo6eXiLOCmH",
+	"J0WLMVzA0C6iT++suMPASWNxhnbuvZV3nINQ4IuYdNqLWMimzG354LfS9GqxY5o5NgEYRguMORaEYkOE",
+	"IRkbX0zhRBBLFCFdaXBQZBp7CYkgAwwwyIecG7eBKJ94cDinE3EvqDHHdRk2xFYbYcgHXUwWhTXWGd31",
+	"4d18DDkEEXEWPbFEjjueYR9+mhHHnw4iGEkHFEf2RqGFDMm3YYcZfhhifBmSaOJmbqS4YkUtjvFijBnO",
+	"GByTNvZEZG8LNfRQRDQFOaSOePYREA==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
-// after base64-decoding and flate-decompressing the embedded blob.
+// after base64-decoding and lzw-decompressing the embedded blob.
 func decodeSpec() ([]byte, error) {
 	encoded := strings.Join(swaggerSpec, "")
 	compressed, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr := flate.NewReader(bytes.NewReader(compressed))
+	zr := lzw.NewReader(bytes.NewReader(compressed), lzw.LSB, 8)
 	var buf bytes.Buffer
 	if _, err := buf.ReadFrom(zr); err != nil {
-		return nil, fmt.Errorf("read flate: %w", err)
+		return nil, fmt.Errorf("read lzw: %w", err)
 	}
 	if err := zr.Close(); err != nil {
-		return nil, fmt.Errorf("close flate reader: %w", err)
+		return nil, fmt.Errorf("close lzw reader: %w", err)
 	}
 
 	return buf.Bytes(), nil

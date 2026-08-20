@@ -5,7 +5,7 @@ package api
 
 import (
 	"bytes"
-	"compress/flate"
+	"compress/lzw"
 	"encoding/base64"
 	"fmt"
 	"net/http"
@@ -172,35 +172,37 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 	return r
 }
 
-// Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
+// Base64 encoded, compressed with lzw, json marshaled OpenAPI spec.
 // Stored as a slice of fixed-width chunks rather than one concatenated
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"XFLBbtQwEP0Va+AAUna97YqLbxVCaMVhV4Jb1YPrTGKXxGPsSWlV+d/ROLsUepp48uz33sx7AUdzooiR",
-	"C5gXKM7jbNvnieIoNWVKmDlg66awdvHJzmlCMJAE1wE/JzkVzoKotYOMv5aQsQdzu167+4ui+wd0DB08",
-	"bUbaRDtL8/iIOYe+x9ioq7wR4kBCx4Eb2ZeVVjGpEPvgLKPy9FvOS0HFHtUxYbw5HZQ8N9lnVRK6MAg0",
-	"UFQfPHMqRusxsF/ut45mfbw56DN68/1f9Efo4BFzCRTBwNV2t901zXQG25SmIAbF9uJ4ydhffkLtgBJG",
-	"mwIY2J/vJsu+zVHbfg5R24WpODutU60d6MuAR2QpPRaXQ+JVwmeP7qdib7lZFZuhqLzEGOKojt+gceYm",
-	"/iC6viKfQttPxpIolnWL17udFEeRMTaeZmV1rR+KkF3CIF/vMw5g4J1+TYs+R0W/Lut/rSfMA+VZWSWW",
-	"lKQBC7dkFMwyVjC3bw3+8Kh6HOwysVpRW+hgyRMYkM0ZrSdydvJU2Ow/XV3vod7VWuufAAAA//8=",
+	"APeIGPOmDZw3bsq4oTNHhA6Bc8agKdMmTMOHIqAgPONQIBw5b+CUkUMnTZmLHtO44YixDJ4wBtmUcSji",
+	"4EoRLETQySOS5hw6clRy7NMnp5wyceqkOUrG4ZaaQkV0ybmzpw4Rb8SoKTOGDk4ReFqcedPCDcyZV5/Y",
+	"GRmUDBmFGm8SLSpCpZk3HXWmoSOTZpGXMcuAoPMGhEoyacaEoSMYzZs7gwvXmSOYzkQQT0S6CQIlCea1",
+	"ctiEyQNijsgxacwkXpwGIQgUaOjQgTNHx4sXZ/aiqSPGBcE2L54ESRIctOg8LaacTr26JMIUX0HPae2G",
+	"ZgwXMLB/DfvG+OgWYeDAYWOy6dWfcup0rcO0RfeRx0XQDakwfBqaM7BrzwlnMRqUIrwQBhltqCRgHYRF",
+	"FAZ5Nz1E1wtwRIXRGWV4hdFbEQUFh3PVXTXERGOsMRgai40oGGeepTEHCOm54YZQmC3xFX1ysIZQEuaJ",
+	"cESFUERl1Ek2UQagDDDAkBdBCylkoUDhjdccdS+oMQdCeUU0UUV5kXCUGTSN8MJvNik5xwtWUmTRC3EN",
+	"RVROGI6hIYc0QTHSXXK0AUIYIES4EotI1XGSV2uKQJkc0jklUJtvUkcTFZe9ZUYYdbBBR2kjgebCV+yx",
+	"QVNss9n2AhtvKMaGYz/pMEMNMcgwg3xdzNVHQA==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
-// after base64-decoding and flate-decompressing the embedded blob.
+// after base64-decoding and lzw-decompressing the embedded blob.
 func decodeSpec() ([]byte, error) {
 	encoded := strings.Join(swaggerSpec, "")
 	compressed, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr := flate.NewReader(bytes.NewReader(compressed))
+	zr := lzw.NewReader(bytes.NewReader(compressed), lzw.LSB, 8)
 	var buf bytes.Buffer
 	if _, err := buf.ReadFrom(zr); err != nil {
-		return nil, fmt.Errorf("read flate: %w", err)
+		return nil, fmt.Errorf("read lzw: %w", err)
 	}
 	if err := zr.Close(); err != nil {
-		return nil, fmt.Errorf("close flate reader: %w", err)
+		return nil, fmt.Errorf("close lzw reader: %w", err)
 	}
 
 	return buf.Bytes(), nil

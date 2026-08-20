@@ -5,7 +5,7 @@ package pkg2
 
 import (
 	"bytes"
-	"compress/flate"
+	"compress/lzw"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -242,31 +242,32 @@ type strictHandler struct {
 	options     StrictGinServerOptions
 }
 
-// Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
+// Base64 encoded, compressed with lzw, json marshaled OpenAPI spec.
 // Stored as a slice of fixed-width chunks rather than one concatenated
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"hI/BTgQhDIbfpXoki6s3jh58D3a2uBimbdruwUzm3Q1gYkwmWS78wP/loxssvAoTkhukDRRNmAzHwdG8",
-	"7wuTI4243ptXyepRsWXHa7+05YZr7kmUBdXr5L+M6T1rj8+KBRI8xT9dnJjFS1bYw2h/MD9qF2bY5wq/",
-	"5iG7TNH/H5SK7fo6ZvkWhATmWukTBlym7IA4HxKdqVQYEt1bC8CClKVCgrfTy+kMAST7zebz/hMAAP//",
+	"APeIGPOmDZw3bsq4oTNHhA6BcsrMOehmjkSHAulIpINxIEKNCzu2qcOGTho4YeTQeRGRTRiNZDrOGYOm",
+	"TJswHeHIeQOnjMo0Fx+KUDMHoZCUHUlENONQxIgXBA0iVMjwxcyaN+e8EIO0D4uhRd0YefMm6dKmT6NS",
+	"pKr1qs0wWs2QFdGnrl2vItxm7chVTs6dPX8GFWgGKBsyMjrSydOz6Rw6ctK4OUO37le5ZYXq5OnT5GAR",
+	"hcscjqGYcRnHkCVTvotXslyHbkiy+crZTRg4aZrOcAHDBemvKOmgaagjNhs2fQIC",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
-// after base64-decoding and flate-decompressing the embedded blob.
+// after base64-decoding and lzw-decompressing the embedded blob.
 func decodeSpec() ([]byte, error) {
 	encoded := strings.Join(swaggerSpec, "")
 	compressed, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr := flate.NewReader(bytes.NewReader(compressed))
+	zr := lzw.NewReader(bytes.NewReader(compressed), lzw.LSB, 8)
 	var buf bytes.Buffer
 	if _, err := buf.ReadFrom(zr); err != nil {
-		return nil, fmt.Errorf("read flate: %w", err)
+		return nil, fmt.Errorf("read lzw: %w", err)
 	}
 	if err := zr.Close(); err != nil {
-		return nil, fmt.Errorf("close flate reader: %w", err)
+		return nil, fmt.Errorf("close lzw reader: %w", err)
 	}
 
 	return buf.Bytes(), nil

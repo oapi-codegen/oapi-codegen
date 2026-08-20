@@ -5,7 +5,7 @@ package pkg2
 
 import (
 	"bytes"
-	"compress/flate"
+	"compress/lzw"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -211,32 +211,32 @@ type strictHandler struct {
 	middlewares []StrictMiddlewareFunc
 }
 
-// Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
+// Base64 encoded, compressed with lzw, json marshaled OpenAPI spec.
 // Stored as a slice of fixed-width chunks rather than one concatenated
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"NI4xT8MwFIT/inVz5LZi88bIwFIqMSAG41ywIbEtv9cyRP7vKKGMn9777m5FKEstmVkFbkWj1JKFO5zv",
-	"8Jo0njmxMQduh5ESWqqaSobDo/m3TPn4YlDzE1OIJolpm9U4Gi1mamUxPheNbKb68O0/id77gJSnssXO",
-	"KTDL3pD9Qjg8P13QB2jSecMLRc0L240NA25s8rfgZI/2uD2WyuxrgsODPdoTBlSvUeDydZ4HyK4K3NuK",
-	"a5vhEFWrOxzunlLUjmRdfLU+ob/33wAAAP//",
+	"APeIGPOmDZw3bsq4oTNHhA6BcsrMOehmjkSHAqVIpGjxSho6aDSaKRPRzZgyGEWQkThGTho4dNIgdCgi",
+	"CIiIExFaBPFGjJoyY+iAuIMmzRg0INLMuVlmpJyIZEDQeQPCjJyCIMK4eQOSJAg4YcasCXMGZZ+zLESk",
+	"cWPmTUo2RhVaTOkmTBuUOkQ0SUJFRJ+0MemwwSuCikShU0jaISki7WI5c2S6oRnDBQzLftO+gaMwDJw0",
+	"NGdYdhGjsQiwIBvqcFOHDZu0FuU8Vr1FYB05bGiioUMHjo4XLzZ3/kznsIuVZeC08ewiDOg+XfoEBA==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
-// after base64-decoding and flate-decompressing the embedded blob.
+// after base64-decoding and lzw-decompressing the embedded blob.
 func decodeSpec() ([]byte, error) {
 	encoded := strings.Join(swaggerSpec, "")
 	compressed, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr := flate.NewReader(bytes.NewReader(compressed))
+	zr := lzw.NewReader(bytes.NewReader(compressed), lzw.LSB, 8)
 	var buf bytes.Buffer
 	if _, err := buf.ReadFrom(zr); err != nil {
-		return nil, fmt.Errorf("read flate: %w", err)
+		return nil, fmt.Errorf("read lzw: %w", err)
 	}
 	if err := zr.Close(); err != nil {
-		return nil, fmt.Errorf("close flate reader: %w", err)
+		return nil, fmt.Errorf("close lzw reader: %w", err)
 	}
 
 	return buf.Bytes(), nil
