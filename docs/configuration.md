@@ -145,6 +145,7 @@ output-options:
       #   template: '{{.FieldName}}'
   client-response-bytes-function: false
   skip-client-response-content-type: false
+  client-response-error-on-unexpected-response: false
   skip-response-body-getters: false
   streaming-content-types: []
   # Short names for media types, used in generated type names. Keys are the

@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: optionsunexpectedresponseenabled
+output: unexpected_response.gen.go
+generate:
+  client: true
+  models: true
+output-options:
+  # outputoptions/unexpected-response/enabled: error on responses the spec does not declare.
+  client-response-error-on-unexpected-response: true

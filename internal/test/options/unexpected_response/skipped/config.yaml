@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: optionsunexpectedresponseskipped
+output: unexpected_response.gen.go
+# client-response-error-on-unexpected-response is left UNSET — no default case is generated.
+generate:
+  client: true
+  models: true
