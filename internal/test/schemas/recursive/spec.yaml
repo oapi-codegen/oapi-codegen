@@ -28,18 +28,18 @@ components:
         fields:
           type: object
           additionalProperties:
-            $ref: '#/components/schemas/Value'
+            $ref: "#/components/schemas/Value"
     Value:
       type: object
       properties:
         stringValue:
           type: string
         arrayValue:
-          $ref: '#/components/schemas/ArrayValue'
+          $ref: "#/components/schemas/ArrayValue"
     ArrayValue:
       type: array
       items:
-        $ref: '#/components/schemas/Value'
+        $ref: "#/components/schemas/Value"
 
     # --- issue #936: cyclic oneOf (deep recursive oneOf that requires circular-reference-limit) ---
     # Via https://github.com/getkin/kin-openapi/blob/b31a4bb2dcd523b1477da8854f0f75859cd314b3/openapi3/testdata/recursiveRef/issue615.yml
@@ -47,19 +47,19 @@ components:
       type: object
       properties:
         $includes:
-          $ref: '#/components/schemas/FilterPredicate'
+          $ref: "#/components/schemas/FilterPredicate"
       additionalProperties: false
       maxProperties: 1
       minProperties: 1
     FilterPredicate:
       oneOf:
-        - $ref: '#/components/schemas/FilterValue'
+        - $ref: "#/components/schemas/FilterValue"
         - type: array
           items:
-            $ref: '#/components/schemas/FilterPredicate'
+            $ref: "#/components/schemas/FilterPredicate"
           minLength: 1
-        - $ref: '#/components/schemas/FilterPredicateOp'
-        - $ref: '#/components/schemas/FilterPredicateRangeOp'
+        - $ref: "#/components/schemas/FilterPredicateOp"
+        - $ref: "#/components/schemas/FilterPredicateRangeOp"
     FilterPredicateOp:
       type: object
       properties:
@@ -67,13 +67,13 @@ components:
           oneOf:
             - type: array
               items:
-                $ref: '#/components/schemas/FilterPredicate'
+                $ref: "#/components/schemas/FilterPredicate"
         $none:
           oneOf:
-            - $ref: '#/components/schemas/FilterPredicate'
+            - $ref: "#/components/schemas/FilterPredicate"
             - type: array
               items:
-                $ref: '#/components/schemas/FilterPredicate'
+                $ref: "#/components/schemas/FilterPredicate"
       additionalProperties: false
       maxProperties: 1
       minProperties: 1
@@ -81,7 +81,7 @@ components:
       type: object
       properties:
         $lt:
-          $ref: '#/components/schemas/FilterRangeValue'
+          $ref: "#/components/schemas/FilterRangeValue"
       additionalProperties: false
       maxProperties: 2
       minProperties: 2
@@ -108,3 +108,26 @@ components:
       properties:
         FieldInNonRecursive:
           type: string
+
+    # --- issue #2542: recursive anyOf wrapping self-$ref in allOf ---
+    # Node is a union; one branch has a children array whose items are
+    # allOf: [$ref: Node, {extra}]. Merging that allOf used to
+    # re-propagate Node's anyOf and overflow the stack; it must
+    # terminate instead.
+    Node:
+      anyOf:
+        - type: object
+          properties:
+            leaf:
+              type: string
+        - type: object
+          properties:
+            children:
+              type: array
+              items:
+                allOf:
+                  - $ref: "#/components/schemas/Node"
+                  - type: object
+                    properties:
+                      extra:
+                        type: string

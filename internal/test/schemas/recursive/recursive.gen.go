@@ -82,6 +82,23 @@ type FilterValue1 = string
 // FilterValue2 defines model for FilterValue.2.
 type FilterValue2 = bool
 
+// Node defines model for Node.
+type Node struct {
+	union json.RawMessage
+}
+
+// Node0 defines model for Node.0.
+type Node0 struct {
+	Leaf *string `json:"leaf,omitempty"`
+}
+
+// Node1 defines model for Node.1.
+type Node1 struct {
+	Children *[]struct {
+		Extra *string `json:"extra,omitempty"`
+	} `json:"children,omitempty"`
+}
+
 // NonRecursiveObject defines model for NonRecursiveObject.
 type NonRecursiveObject struct {
 	FieldInNonRecursive *string `json:"FieldInNonRecursive,omitempty"`
@@ -457,6 +474,68 @@ func (t FilterValue) MarshalJSON() ([]byte, error) {
 }
 
 func (t *FilterValue) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsNode0 returns the union data inside the Node as a Node0
+func (t Node) AsNode0() (Node0, error) {
+	var body Node0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNode0 overwrites any union data inside the Node as the provided Node0
+func (t *Node) FromNode0(v Node0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNode0 performs a merge with any union data inside the Node, using the provided Node0
+func (t *Node) MergeNode0(v Node0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsNode1 returns the union data inside the Node as a Node1
+func (t Node) AsNode1() (Node1, error) {
+	var body Node1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNode1 overwrites any union data inside the Node as the provided Node1
+func (t *Node) FromNode1(v Node1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNode1 performs a merge with any union data inside the Node, using the provided Node1
+func (t *Node) MergeNode1(v Node1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Node) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Node) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }

@@ -20,3 +20,10 @@ var _ FilterValue
 // The original test verified generation succeeds; compilation confirms it.
 var _ RecursiveObject
 var _ NonRecursiveObject
+
+// issue #2542: recursive anyOf whose branch wraps the self-$ref in allOf.
+// The original crash was a stack overflow; compilation of the generated
+// types confirms generation now terminates without dropping the extra field.
+var _ Node
+var _ Node0
+var _ Node1
