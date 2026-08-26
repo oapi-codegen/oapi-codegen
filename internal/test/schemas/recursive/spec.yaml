@@ -131,3 +131,44 @@ components:
                     properties:
                       extra:
                         type: string
+
+    # --- issue #2542 (object variant): plain recursive object + allOf ---
+    # The same crash shape without a union: children items are
+    # allOf: [$ref: NodeObject, {extra}], which also overflowed the
+    # stack and now terminates with a reference back to NodeObject.
+    NodeObject:
+      type: object
+      properties:
+        children:
+          type: array
+          items:
+            allOf:
+              - $ref: "#/components/schemas/NodeObject"
+              - type: object
+                properties:
+                  extra:
+                    type: string
+
+    # --- issue #2542 (transitive variant): self-$ref behind nested allOf ---
+    # The recursive $ref sits inside an allOf nested inside another
+    # allOf member. This escaped the cycle guard (PR #2543 review) and
+    # hung generation indefinitely; it must terminate with the
+    # reference preserved.
+    NodeNestedAllOf:
+      anyOf:
+        - type: object
+          properties:
+            leaf:
+              type: string
+        - type: object
+          properties:
+            children:
+              type: array
+              items:
+                allOf:
+                  - allOf:
+                      - $ref: "#/components/schemas/NodeNestedAllOf"
+                  - type: object
+                    properties:
+                      extra:
+                        type: string

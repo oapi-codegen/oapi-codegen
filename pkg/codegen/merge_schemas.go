@@ -57,15 +57,22 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 		}
 	}
 
-	schema, err := valueWithPropagatedRef(allOf[0])
-	if err != nil {
-		return Schema{}, err
+	// A member that is a $ref back into the schema currently being generated
+	// (a nested self-reference) must not be inlined: merging its body re-enters
+	// generation of the same schema and overflows the stack (issue #2542).
+	// Substitute a ref-only schema so the merged result keeps the reference —
+	// it becomes a single union branch that GenerateGoSchema resolves to the
+	// named Go type, the same way a bare $ref terminates recursion.
+	var schema openapi3.Schema
+	var err error
+	if isSelfRef(allOf[0].Ref, path) {
+		schema = backRefSchema(allOf[0])
+	} else {
+		schema, err = valueWithPropagatedRef(allOf[0])
+		if err != nil {
+			return Schema{}, err
+		}
 	}
-
-	// Determine whether allOf[0] is a self-reference to the top-level schema
-	// currently being generated. Propagating a self-referential member's
-	// oneOf/anyOf would re-enter the merge and overflow the stack (issue #2542).
-	s1SelfRef := isSelfRef(allOf[0].Ref, path)
 
 	// Seed allOf[0]'s ref so that if s1's own AllOf contains a back-reference
 	// to itself, the cycle is detected during recursive merging.
@@ -75,10 +82,14 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	}
 
 	for i := 1; i < n; i++ {
-		var err error
-		oneOfSchema, err := valueWithPropagatedRef(allOf[i])
-		if err != nil {
-			return Schema{}, err
+		var oneOfSchema openapi3.Schema
+		if isSelfRef(allOf[i].Ref, path) {
+			oneOfSchema = backRefSchema(allOf[i])
+		} else {
+			oneOfSchema, err = valueWithPropagatedRef(allOf[i])
+			if err != nil {
+				return Schema{}, err
+			}
 		}
 
 		seenSchemaRef := make(map[string]bool)
@@ -89,13 +100,10 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 			seenSchemaRef[allOf[i].Ref] = true
 			seenTopLevel[allOf[i].Ref] = true
 		}
-		schema, err = mergeOpenapiSchemas(schema, oneOfSchema, true, seenSchemaRef, s1SelfRef, isSelfRef(allOf[i].Ref, path))
+		schema, err = mergeOpenapiSchemas(schema, oneOfSchema, true, seenSchemaRef, path)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
-		// After the first merge, schema is the inline accumulated result and no
-		// longer the de-referenced value of allOf[0].
-		s1SelfRef = false
 	}
 
 	if !decoratorIdiom {
@@ -120,15 +128,32 @@ func mergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	return GenerateGoSchema(openapi3.NewSchemaRef("", &schema), path)
 }
 
-// isSelfRef reports whether ref points back to the top-level schema
-// currently being generated (path[0]). Only a local component-schema ref can
-// self-reference; such a ref re-enters the type currently being generated, so
-// its oneOf/anyOf must not be inlined (issue #2542).
+// isSelfRef reports whether ref is a local component-schema reference back
+// to the schema currently being generated (path[0]) from a nested position
+// (len(path) > 1). At the top level (len(path) == 1) a self-referential allOf
+// member is a fixed-point composition already handled by the seenSchemaRef
+// cycle detection in mergeAllOf, so it is not substituted.
 func isSelfRef(ref string, path []string) bool {
-	if len(path) == 0 || !strings.HasPrefix(ref, "#/components/schemas/") {
+	if len(path) < 2 || !strings.HasPrefix(ref, "#/components/schemas/") {
 		return false
 	}
 	return RefPathToObjName(ref) == path[0]
+}
+
+// backRefSchema builds the substitute for a self-referential allOf member
+// (see mergeSchemas). The result carries the $ref as its only content — a
+// single anyOf branch — so the merged schema references the named Go type
+// instead of inlining the referenced schema's body. A discriminator, if the
+// referenced schema declares one, is carried over so union codegen keeps
+// mapping it.
+func backRefSchema(ref *openapi3.SchemaRef) openapi3.Schema {
+	s := openapi3.Schema{
+		AnyOf: []*openapi3.SchemaRef{{Ref: ref.Ref, Value: ref.Value}},
+	}
+	if ref.Value != nil {
+		s.Discriminator = ref.Value.Discriminator
+	}
+	return s
 }
 
 // isExtensionOnlySchema reports whether a schema carries only extensions,
@@ -242,10 +267,9 @@ func propagateRemoteRefs(remoteComponent string, schema *openapi3.Schema) {
 	}
 }
 
-func mergeAllOf(allOf []*openapi3.SchemaRef, seenSchemaRef map[string]bool) (openapi3.Schema, error) {
+func mergeAllOf(allOf []*openapi3.SchemaRef, seenSchemaRef map[string]bool, path []string) (openapi3.Schema, error) {
 	var schema openapi3.Schema
 	for _, schemaRef := range allOf {
-		var err error
 		if schemaRef.Ref != "" && seenSchemaRef[schemaRef.Ref] {
 			continue
 		}
@@ -254,12 +278,20 @@ func mergeAllOf(allOf []*openapi3.SchemaRef, seenSchemaRef map[string]bool) (ope
 		}
 		// Use valueWithPropagatedRef so sibling extensions on a $ref
 		// member of a transitively-flattened allOf reach the merged
-		// schema, matching mergeSchemas' top-level handling.
-		member, err := valueWithPropagatedRef(schemaRef)
-		if err != nil {
-			return openapi3.Schema{}, err
+		// schema, matching mergeSchemas' top-level handling — except for
+		// nested self-references, which are substituted to keep the named
+		// type reference (issue #2542).
+		var member openapi3.Schema
+		var err error
+		if isSelfRef(schemaRef.Ref, path) {
+			member = backRefSchema(schemaRef)
+		} else {
+			member, err = valueWithPropagatedRef(schemaRef)
+			if err != nil {
+				return openapi3.Schema{}, err
+			}
 		}
-		schema, err = mergeOpenapiSchemas(schema, member, true, seenSchemaRef, false, false)
+		schema, err = mergeOpenapiSchemas(schema, member, true, seenSchemaRef, path)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
@@ -269,7 +301,7 @@ func mergeAllOf(allOf []*openapi3.SchemaRef, seenSchemaRef map[string]bool) (ope
 
 // mergeOpenapiSchemas merges two openAPI schemas and returns the schema
 // all of whose fields are composed.
-func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[string]bool, s1SelfRef, s2SelfRef bool) (openapi3.Schema, error) {
+func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[string]bool, path []string) (openapi3.Schema, error) {
 	var result openapi3.Schema
 
 	result.Extensions = make(map[string]any, len(s1.Extensions)+len(s2.Extensions))
@@ -281,25 +313,18 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	// AllOf merges. The merges may surface additional OneOf/AnyOf members from
 	// nested allOf members (issue #1905), so we accumulate from both sources.
 	//
-	// A self-referential member ($ref back to the schema currently being
-	// generated) must not have its oneOf/anyOf propagated: doing so re-enters
-	// the merge and overflows the stack (issue #2542).
-	var oneOf, anyOf openapi3.SchemaRefs
-	if !s1SelfRef {
-		oneOf = append(oneOf, s1.OneOf...)
-		anyOf = append(anyOf, s1.AnyOf...)
-	}
-	if !s2SelfRef {
-		oneOf = append(oneOf, s2.OneOf...)
-		anyOf = append(anyOf, s2.AnyOf...)
-	}
+	// Self-referential members never reach here inlined — mergeSchemas and
+	// mergeAllOf substitute a ref-only schema for them upstream — so their
+	// oneOf/anyOf cannot re-enter the merge (issue #2542).
+	oneOf := append(s1.OneOf, s2.OneOf...)
+	anyOf := append(s1.AnyOf, s2.AnyOf...)
 
 	// We are going to make AllOf transitive, so that merging an AllOf that
 	// contains AllOf's will result in a flat object.
 	var err error
 	if s1.AllOf != nil {
 		var merged openapi3.Schema
-		merged, err = mergeAllOf(s1.AllOf, seenSchemaRef)
+		merged, err = mergeAllOf(s1.AllOf, seenSchemaRef, path)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 1")
 		}
@@ -309,7 +334,7 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	}
 	if s2.AllOf != nil {
 		var merged openapi3.Schema
-		merged, err = mergeAllOf(s2.AllOf, seenSchemaRef)
+		merged, err = mergeAllOf(s2.AllOf, seenSchemaRef, path)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 2")
 		}
