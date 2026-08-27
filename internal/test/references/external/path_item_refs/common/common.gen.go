@@ -197,7 +197,7 @@ type strictHandler struct {
 var swaggerSpec = []string{
 	"RMw/TwMxDAXw7/Lm6HQVW3YGFha6IYaQmNboahvHRUJVvjtKT4jJf95P74aqF1MhiY58Q69nupT7+uh+",
 	"9FJZTk/tWeOFJObbXI08mO6oaqM548cIGT2c5YQxEpy+ruzUkF939Zb+lL5/Ug2MyVg+dBY06tXZglWQ",
-	"caQeSAiOjf7Pb/K+54dlXVaMBDWSYoyMh2VdDkiwEueOLNdtG78BAAD//w==",
+	"caQeSAiOjf7Pb/K+54dlXVaMBDWSYoyMh2VdDkiwEueOLNdtG78DAA==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
