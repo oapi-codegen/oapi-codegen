@@ -467,8 +467,7 @@ func (sh *strictHandler) Test(ctx echo.Context) error {
 var swaggerSpec = []string{
 	"rM8xSwQxEAXgvyJPy3BZtYvYWAj2ltfEOOvlyM0MyVjIsv9dEhcWLMVp3jTvY2ZBkosKE1tDWNDSiS5x",
 	"rK/UrKd9KSFA3s6UDOu6OmSeBYE/S3EQJY6aEXB/mA63cNBopyF424gPGiFKNVoWfnlH+PEdKjUVbjQa",
-	"d9PUIwkb8ehE1ZLTaPlzE96P7NtNpRkB137/wm8v+OH3a38TD1daZc6FHo94ivWIfzafRf5gbvMdAAD/",
-	"/w==",
+	"d9PUIwkb8ehE1ZLTaPlzE96P7NtNpRkB137/wm8v+OH3a38TD1daZc6FHo94ivWIfzafRf5gbvM9AA==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

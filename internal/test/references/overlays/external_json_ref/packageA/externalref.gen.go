@@ -26,7 +26,7 @@ type ObjectA struct {
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
 	"JMnBDQIxDETRXuacCnKjAmoI0cAabWwrNge02t5RlrnMl96BbsNNqRmoB6JvHO3K++PNnreVPs05U3iB",
-	"tsH1+XWiInKKvnCuFYg+DVU/+15gTm0uqECBt9ziL+cvAAD//w==",
+	"tsH1+XWiInKKvnCuFYg+DVU/+15gTm0uqECBt9ziL+dvAA==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

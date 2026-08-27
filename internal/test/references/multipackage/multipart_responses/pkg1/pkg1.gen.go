@@ -422,10 +422,10 @@ func (sh *strictHandler) Test(ctx *gin.Context) {
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"jJExT8MwEIX/y4MxqkPYPDIgsbMjN7mkBufOsq8DqvrfkW1oVKlIzZI72997p3cnjLJGYWLNsCckylE4",
-	"U23i1zJ8KGUtzSisxLVcj0F9dElNouCUpnKYxwOtrmJJIiX1TeQzC7+4VMrHRDMsHszmaRqWTfXau4Rz",
-	"V5FXkbuQWQTn9nW/M2yz75vv9UCzpzANpdLvSLDImjwvqAoXzdvY002sgJ5ngeVjCB0kErvoYfG863c9",
-	"OkSnh6pi/uJcqP6Kg1Mv/DbB4r1cdtdLGPr+vyAu78y2qRbFTwAAAP//",
+	"jJFBT8MwDIX/i+EYLaXccuSAxJ07ylq3C6S25XgHNO2/o6SwCjGk9VI7yff89HyCgRdhQrIC4QSKRZgK",
+	"tkY+5v7NsFhtBiZDauVyzJYkqnnFHA3HeliGAy6xYcqCamkVeS9MT1Frea84QYA7v830K1Z8m7WPCmfX",
+	"kGfmm5CJGc7r5749bN73Uf8amhLmsa+VfQpCgGKaaIamcNG8jj1cxSqYaGIIdMzZAQtSlAQBHnfdrgMH",
+	"Eu3QVPxPnDO2X50QLTG9jBDgtV6630vou+6/IC7v/LapNYqvAQA=",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
