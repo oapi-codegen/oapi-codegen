@@ -278,6 +278,9 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 
 		fmt.Fprintf(buffer, "%s\n", unhandledCaseClauses[caseClauseKey])
 	}
+	if globalState.options.OutputOptions.ClientResponseErrorOnUnexpectedResponse {
+		fmt.Fprintf(buffer, "default:\nreturn nil, ErrUnexpectedResponse\n")
+	}
 	fmt.Fprintf(buffer, "}\n")
 
 	return buffer.String()

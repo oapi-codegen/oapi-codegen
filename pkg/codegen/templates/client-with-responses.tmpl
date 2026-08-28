@@ -15,6 +15,13 @@ func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithRes
 
 {{$clientTypeName := opts.OutputOptions.ClientTypeName -}}
 
+{{if opts.OutputOptions.ClientResponseErrorOnUnexpectedResponse}}
+// ErrUnexpectedResponse is returned by the Parse<Operation>Response functions
+// when the server responds with a status code and content-type that match none
+// of the responses declared in the OpenAPI specification.
+var ErrUnexpectedResponse = errors.New("unexpected response")
+{{end}}
+
 // WithBaseURL overrides the baseURL.
 func WithBaseURL(baseURL string) ClientOption {
 	return func(c *{{ $clientTypeName }}) error {
