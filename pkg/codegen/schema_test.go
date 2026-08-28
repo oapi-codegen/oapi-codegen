@@ -792,7 +792,7 @@ func TestOapiSchemaToGoType_MultiTypeUnion(t *testing.T) {
 	for _, tc := range []struct {
 		name     string
 		types    openapi3.Types
-		wantErr  bool
+		wantErr  string
 		wantType string
 		wantSkip bool
 	}{
@@ -823,7 +823,7 @@ func TestOapiSchemaToGoType_MultiTypeUnion(t *testing.T) {
 		{
 			name:    "misspelled type name is still an error",
 			types:   openapi3.Types{"strng", "number"},
-			wantErr: true,
+			wantErr: `unhandled Schema type ["strng", "number"]: "strng" is not a valid JSON Schema type`,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -834,8 +834,8 @@ func TestOapiSchemaToGoType_MultiTypeUnion(t *testing.T) {
 
 			var out Schema
 			err := oapiSchemaToGoType(&openapi3.Schema{Type: &tc.types}, []string{"Value"}, &out)
-			if tc.wantErr {
-				assert.ErrorContains(t, err, "unhandled Schema type")
+			if tc.wantErr != "" {
+				assert.ErrorContains(t, err, tc.wantErr)
 				return
 			}
 			require.NoError(t, err)
@@ -997,7 +997,167 @@ func TestOapiSchemaToGoType_MultiTypeUnionRequires31(t *testing.T) {
 
 	var out Schema
 	err := oapiSchemaToGoType(&openapi3.Schema{Type: &openapi3.Types{"string", "number"}}, []string{"Value"}, &out)
-	assert.ErrorContains(t, err, "unhandled Schema type")
+	assert.ErrorContains(t, err,
+		`unhandled Schema type ["string", "number"]: a list of types requires OpenAPI 3.1 or later`)
+}
+
+// The dispatch handles every JSON Schema type, so falling off the end of it
+// means the `type` is not one the document may carry. The error has to say
+// which value that was and why, or the user is left with #1976's
+// "unhandled Schema type: &[int]" and nothing to act on.
+func TestOapiSchemaToGoType_UnhandledTypeError(t *testing.T) {
+	const expected = "expected one of array, boolean, integer, null, number, object, string"
+
+	for _, tc := range []struct {
+		name  string
+		is31  bool
+		spec  *openapi3.T
+		types openapi3.Types
+		want  []string
+	}{
+		{
+			name:  "unknown single type name",
+			types: openapi3.Types{"int"},
+			want:  []string{`unhandled Schema type "int": not a valid JSON Schema type`, expected},
+		},
+		{
+			name:  "unknown type name in a 3.1 list",
+			is31:  true,
+			types: openapi3.Types{"strng", "number"},
+			want: []string{
+				`unhandled Schema type ["strng", "number"]`,
+				`"strng" is not a valid JSON Schema type`,
+				expected,
+			},
+		},
+		{
+			name:  "several unknown type names in a 3.1 list",
+			is31:  true,
+			types: openapi3.Types{"strng", "numbr"},
+			want: []string{
+				`unhandled Schema type ["strng", "numbr"]`,
+				`"strng", "numbr" are not valid JSON Schema types`,
+			},
+		},
+		{
+			// The list form itself is what is unusable here: the entries are valid
+			// types, so the hint names the version.
+			name:  "list of valid types under a 3.0 document",
+			spec:  &openapi3.T{OpenAPI: "3.0.3"},
+			types: openapi3.Types{"string", "number"},
+			want: []string{
+				`unhandled Schema type ["string", "number"]`,
+				"a list of types requires OpenAPI 3.1 or later, but this document declares OpenAPI 3.0.3",
+			},
+		},
+		{
+			// The declared `type` is reported verbatim, "null" marker and
+			// all, so it matches what the reader has in front of them.
+			name:  "unknown type name alongside the null marker",
+			is31:  true,
+			types: openapi3.Types{"strng", "null"},
+			want:  []string{`unhandled Schema type ["strng", "null"]`, `"strng" is not a valid JSON Schema type`},
+		},
+		{
+			name:  "a type list naming nothing but null",
+			is31:  true,
+			types: openapi3.Types{"null", "null"},
+			want:  []string{`unhandled Schema type ["null", "null"]`, "type must name a JSON Schema type"},
+		},
+		{
+			name:  "an empty type list",
+			types: openapi3.Types{},
+			want:  []string{"unhandled Schema type []", "type must name a JSON Schema type"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			prev := globalState
+			t.Cleanup(func() { globalState = prev })
+			globalState.is31 = tc.is31
+			globalState.spec = tc.spec
+			globalState.typeMapping = DefaultTypeMapping
+
+			var out Schema
+			err := oapiSchemaToGoType(&openapi3.Schema{Type: &tc.types}, []string{"Value"}, &out)
+			require.Error(t, err)
+			for _, want := range tc.want {
+				assert.ErrorContains(t, err, want)
+			}
+		})
+	}
+}
+
+// The version hint is a suffix, not the message: a caller that never ran
+// Generate() has no spec to read, and SetGlobalStateSpec sets the spec
+// without is31, so a 3.1 spec would otherwise be told it needs 3.1. Both
+// drop the suffix and keep the requirement.
+func TestUnhandledSchemaTypeErrorVersionSuffix(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		spec *openapi3.T
+	}{
+		{name: "no spec at all", spec: nil},
+		{name: "spec with no declared version", spec: &openapi3.T{}},
+		{
+			// SetGlobalStateSpec sets the spec without is31, so the two can
+			// disagree. Citing 3.1 here would contradict the requirement.
+			name: "spec already declares 3.1",
+			spec: &openapi3.T{OpenAPI: "3.1.0"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			prev := globalState
+			t.Cleanup(func() { globalState = prev })
+			globalState.is31 = false
+			globalState.spec = tc.spec
+
+			err := unhandledSchemaTypeError(&openapi3.Types{"string", "number"})
+			assert.ErrorContains(t, err, "a list of types requires OpenAPI 3.1 or later")
+			assert.NotContains(t, err.Error(), "but this document declares",
+				"an unusable or contradictory version must not be cited")
+		})
+	}
+}
+
+// components.responses generate with no operation, so the response label is
+// the component name alone rather than an empty operation and a stray dot.
+func TestGenerateResponseDefinitionsNamesComponentResponses(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.typeMapping = DefaultTypeMapping
+
+	responses := map[string]*openapi3.ResponseRef{
+		"NotFound": {Value: &openapi3.Response{
+			Content: openapi3.Content{
+				"application/json": &openapi3.MediaType{
+					Schema: &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"int"}}},
+				},
+			},
+		}},
+	}
+
+	_, err := GenerateResponseDefinitions("", responses, "")
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "for NotFound (application/json)")
+	assert.NotContains(t, err.Error(), "for .NotFound", "no empty operation prefix")
+}
+
+// An inline oneOf/anyOf branch is only identifiable by its index, which
+// generateUnion computes for naming and used to discard on the error path.
+func TestGenerateUnionNamesFailingBranch(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.typeMapping = DefaultTypeMapping
+
+	_, err := GenerateGoSchema(&openapi3.SchemaRef{Value: &openapi3.Schema{
+		OneOf: openapi3.SchemaRefs{
+			{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
+			{Value: &openapi3.Schema{Type: &openapi3.Types{"int"}}},
+		},
+	}}, []string{"Choice"})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "branch 1")
+	assert.ErrorContains(t, err, `unhandled Schema type "int"`)
 }
 
 // schemaUnionTypes feeds the Types bind option emitted for union

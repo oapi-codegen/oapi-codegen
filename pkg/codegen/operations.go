@@ -2031,7 +2031,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		bodyTypeName := operationID + tag + "Body"
 		bodySchema, err := GenerateGoSchema(content.Schema, []string{bodyTypeName})
 		if err != nil {
-			return nil, nil, fmt.Errorf("error generating request body definition: %w", err)
+			return nil, nil, fmt.Errorf("error generating request body definition for %s (%s): %w", operationID, contentType, err)
 		}
 
 		// If the body is a pre-defined type
@@ -2113,6 +2113,16 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 		}
 		response := responseOrRef.Value
 
+		// Reusable components.responses are generated with no operation
+		// (see the GenerateResponseDefinitions("", ...) call in Generate),
+		// and the map key is then a response component name rather than a
+		// status code. Name it alone instead of qualifying it with an empty
+		// operation, which would read as a leading ".".
+		responseLabel := statusCode
+		if operationID != "" {
+			responseLabel = operationID + "." + statusCode
+		}
+
 		var responseContentDefinitions []ResponseContentDefinition
 
 		for _, contentType := range SortedMapKeys(response.Content) {
@@ -2149,7 +2159,7 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			responseBodyTypeName := responseTypeName + "Body"
 			contentSchema, err := GenerateGoSchema(content.Schema, []string{responseBodyTypeName})
 			if err != nil {
-				return nil, fmt.Errorf("error generating request body definition: %w", err)
+				return nil, fmt.Errorf("error generating response body definition for %s (%s): %w", responseLabel, contentType, err)
 			}
 
 			// Hoist inline response-root schemas that need method-emitting
@@ -2193,7 +2203,7 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			header := response.Headers[headerName]
 			contentSchema, err := GenerateGoSchema(header.Value.Schema, []string{})
 			if err != nil {
-				return nil, fmt.Errorf("error generating response header definition: %w", err)
+				return nil, fmt.Errorf("error generating response header definition for %s header %q: %w", responseLabel, headerName, err)
 			}
 			// When the header component itself is an external `$ref` (it lives
 			// in another file) and its schema references a named type, that
