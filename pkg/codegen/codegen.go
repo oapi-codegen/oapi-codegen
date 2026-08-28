@@ -218,9 +218,17 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		responseTypeSuffix = opts.OutputOptions.ResponseTypeSuffix
 	}
 
-	if globalState.options.OutputOptions.ClientTypeName == "" {
-		globalState.options.OutputOptions.ClientTypeName = defaultClientTypeName
+	// Resolve every fixed component name once (defaults, then prefix, then
+	// explicit overrides, then family derivation). Assigning -- not
+	// conditionally setting -- both fields also resets any state left by a
+	// prior Generate. ClientTypeName is kept in sync with the resolved client
+	// name so user templates reading it keep working.
+	componentNames, err := resolveComponentNames(opts)
+	if err != nil {
+		return "", fmt.Errorf("error in output-options.component-names: %w", err)
 	}
+	globalState.options.OutputOptions.ComponentNames = componentNames
+	globalState.options.OutputOptions.ClientTypeName = componentNames.Client
 
 	nameNormalizerFunction := NameNormalizerFunction(opts.OutputOptions.NameNormalizer)
 	nameNormalizer = NameNormalizers[nameNormalizerFunction]
@@ -275,6 +283,12 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 
 	// This creates the golang templates text package
 	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
+	// `names` is sugar for opts.OutputOptions.ComponentNames: templates
+	// interpolate resolved component names as {{names.ServerInterface}}
+	// rather than spelling out the full path at every site.
+	TemplateFunctions["names"] = func() ComponentNames {
+		return globalState.options.OutputOptions.ComponentNames
+	}
 	t := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	// This parses all of our own template files into the template object
 	// above
@@ -1394,7 +1408,21 @@ func GenerateTypes(t *template.Template, types []TypeDefinition) (string, error)
 	m := map[string]TypeDefinition{}
 	var ts []TypeDefinition
 
+	// Component names are declared by the templates, not by any
+	// TypeDefinition, so the duplicate check below can never see them. Fold
+	// them in explicitly: a schema resolving to a generated component's name
+	// would otherwise produce two declarations of that identifier and fail at
+	// `go build` with no hint of where the second one came from.
+	reservedNames := reservedComponentNamesByName()
+
 	for _, typ := range types {
+		if label, found := reservedNames[typ.TypeName]; found {
+			return "", fmt.Errorf("type name '%s' collides with the generated %s component, "+
+				"which is declared by this configuration. Either use x-go-name on the schema "+
+				"to rename the type, or use output-options.component-names (its `prefix` renames "+
+				"every component at once) to rename the component", typ.TypeName, label)
+		}
+
 		if prevType, found := m[typ.TypeName]; found {
 			// If type names collide, we need to see if they refer to the same
 			// exact type definition, in which case, we can de-dupe. If they

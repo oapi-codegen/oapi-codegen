@@ -1,7 +1,7 @@
-type StrictHandlerFunc func(ctx *gin.Context, request any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+type {{names.StrictHandlerFunc}} func(ctx *gin.Context, request any) (any, error)
+type {{names.StrictMiddlewareFunc}} func(f {{names.StrictHandlerFunc}}, operationID string) {{names.StrictHandlerFunc}}
 
-type StrictGinServerOptions struct {
+type {{names.StrictGinServerOptions}} struct {
     // RequestErrorHandlerFunc is called when a request cannot be parsed or
     // decoded. It is invoked for JSON bind failures, form parse/bind errors,
     // multipart reader errors, media type parse errors, missing multipart
@@ -16,8 +16,8 @@ type StrictGinServerOptions struct {
     ResponseErrorHandlerFunc func(ctx *gin.Context, err error)
 }
 
-func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
-    return &strictHandler{ssi: ssi, middlewares: middlewares, options: StrictGinServerOptions {
+func {{names.NewStrictHandler}}(ssi {{names.StrictServerInterface}}, middlewares []{{names.StrictMiddlewareFunc}}) {{names.ServerInterface}} {
+    return &{{names.StrictHandler}}{ssi: ssi, middlewares: middlewares, options: {{names.StrictGinServerOptions}} {
         RequestErrorHandlerFunc: func(ctx *gin.Context, err error) {
             ctx.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
         },
@@ -30,7 +30,7 @@ func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareF
     }}
 }
 
-func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc, options StrictGinServerOptions) ServerInterface {
+func {{names.NewStrictHandlerWithOptions}}(ssi {{names.StrictServerInterface}}, middlewares []{{names.StrictMiddlewareFunc}}, options {{names.StrictGinServerOptions}}) {{names.ServerInterface}} {
     if options.RequestErrorHandlerFunc == nil {
         options.RequestErrorHandlerFunc = func(ctx *gin.Context, err error) {
             ctx.JSON(http.StatusBadRequest, gin.H{"msg": err.Error()})
@@ -46,20 +46,20 @@ func NewStrictHandlerWithOptions(ssi StrictServerInterface, middlewares []Strict
             ctx.JSON(http.StatusInternalServerError, gin.H{"msg": err.Error()})
         }
     }
-    return &strictHandler{ssi: ssi, middlewares: middlewares, options: options}
+    return &{{names.StrictHandler}}{ssi: ssi, middlewares: middlewares, options: options}
 }
 
-type strictHandler struct {
-    ssi StrictServerInterface
-    middlewares []StrictMiddlewareFunc
-    options StrictGinServerOptions
+type {{names.StrictHandler}} struct {
+    ssi {{names.StrictServerInterface}}
+    middlewares []{{names.StrictMiddlewareFunc}}
+    options {{names.StrictGinServerOptions}}
 }
 
 {{range .}}
     {{$opid := .OperationId}}
     {{if not .IsAlias}}
     // {{$opid}} operation middleware
-    func (sh *strictHandler) {{.OperationId}}(ctx *gin.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) {
+    func (sh *{{names.StrictHandler}}) {{.OperationId}}(ctx *gin.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}) {
         var request {{$opid | ucFirst}}RequestObject
 
         {{range .PathParams -}}

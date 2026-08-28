@@ -1,23 +1,21 @@
-// ClientWithResponses builds on ClientInterface to offer response payloads
-type ClientWithResponses struct {
-    ClientInterface
+// {{names.ClientWithResponses}} builds on {{names.ClientInterface}} to offer response payloads
+type {{names.ClientWithResponses}} struct {
+    {{names.ClientInterface}}
 }
 
-// NewClientWithResponses creates a new ClientWithResponses, which wraps
-// Client with return type handling
-func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
-    client, err := NewClient(server, opts...)
+// {{names.NewClientWithResponses}} creates a new {{names.ClientWithResponses}}, which wraps
+// {{names.Client}} with return type handling
+func {{names.NewClientWithResponses}}(server string, opts ...{{names.ClientOption}}) (*{{names.ClientWithResponses}}, error) {
+    client, err := {{names.NewClient}}(server, opts...)
     if err != nil {
         return nil, err
     }
-    return &ClientWithResponses{client}, nil
+    return &{{names.ClientWithResponses}}{client}, nil
 }
 
-{{$clientTypeName := opts.OutputOptions.ClientTypeName -}}
-
-// WithBaseURL overrides the baseURL.
-func WithBaseURL(baseURL string) ClientOption {
-	return func(c *{{ $clientTypeName }}) error {
+// {{names.WithBaseURL}} overrides the baseURL.
+func {{names.WithBaseURL}}(baseURL string) {{names.ClientOption}} {
+	return func(c *{{names.Client}}) error {
 		newBaseURL, err := url.Parse(baseURL)
 		if err != nil {
 			return err
@@ -27,13 +25,13 @@ func WithBaseURL(baseURL string) ClientOption {
 	}
 }
 
-// ClientWithResponsesInterface is the interface specification for the client with responses above.
-type ClientWithResponsesInterface interface {
+// {{names.ClientWithResponsesInterface}} is the interface specification for the client with responses above.
+type {{names.ClientWithResponsesInterface}} interface {
 {{range . -}}
 {{$opid := .OperationId -}}
 {{range .ClientMethodVariants}}
     {{.WithResponseInterfaceComment}}
-    {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{.ArgsDecl}}, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error)
+    {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{.ArgsDecl}}, reqEditors... {{names.RequestEditorFn}}) (*{{genResponseTypeName $opid}}, error)
 {{end -}}
 {{end -}}{{/* range . $opid := .OperationId */}}
 }
@@ -118,7 +116,7 @@ func (r {{genResponseTypeName $opid | ucFirst}}) ContentType() string {
 {{/* Generate client methods (with responses)*/}}
 {{range .ClientMethodVariants}}
 {{.WithResponseMethodComment}}
-func (c *ClientWithResponses) {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{.ArgsDecl}}, reqEditors... RequestEditorFn) (*{{genResponseTypeName $opid}}, error) {
+func (c *{{names.ClientWithResponses}}) {{$opid}}{{.Suffix}}WithResponse(ctx context.Context{{.ArgsDecl}}, reqEditors... {{names.RequestEditorFn}}) (*{{genResponseTypeName $opid}}, error) {
     rsp, err := c.{{$opid}}{{.Suffix}}(ctx{{.CallArgs}}, reqEditors...)
     if err != nil {
         return nil, err

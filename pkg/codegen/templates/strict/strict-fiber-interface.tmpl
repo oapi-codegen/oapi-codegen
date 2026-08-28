@@ -167,8 +167,8 @@
     {{end}}
 {{end}}{{end}}
 
-// StrictServerInterface represents all server handlers.
-type StrictServerInterface interface {
+// {{names.StrictServerInterface}} represents all server handlers.
+type {{names.StrictServerInterface}} interface {
 {{range .}}{{if not .IsAlias}}{{.SummaryAsComment .OperationId }}
 // ({{.Method}} {{.Path}})
 {{with .DeprecationComment}}//

@@ -100,6 +100,14 @@ func (o Configuration) Validate() error {
 		}
 	}
 
+	// Component-name resolution needs both `output-options.component-names`
+	// and `generate` (only the names a config actually emits take part in the
+	// uniqueness check), so it lives here rather than in
+	// OutputOptions.Validate.
+	if _, err := resolveComponentNames(o); err != nil {
+		errs = append(errs, fmt.Errorf("`output-options` configuration for component-names was incorrect: %v", err))
+	}
+
 	// import-mapping keys are the paths of $ref'd documents (a relative
 	// file path or URL). A JSON pointer key can never match anything —
 	// references within the same document always resolve to the package
@@ -141,6 +149,15 @@ func (o Configuration) Warnings() map[string]string {
 	// users get a heads-up before `go build` fails.
 	if o.OutputOptions.GenerateTypesForAnonymousSchemas && !o.Generate.Models && o.Generate.AnyOperationGenerator() {
 		warnings["generate-types-for-anonymous-schemas"] = "the flag is set with `generate.models: false` and a client/server generator. The hoisted named types this config emits references to will not be declared by this config. If a sibling config emits `generate.models: true` into the same Go package with the same flag setting, you can ignore this warning. Otherwise, set `generate.models: true` in this config or remove the flag to fall back to anonymous structs."
+	}
+
+	// `client-type-name` predates `component-names` and is orthogonal to it:
+	// it overrides the client struct's name, while `component-names.client`
+	// is the root the rest of the family derives from. Setting both is
+	// legitimate but leaves the struct named differently from its own
+	// family, which is almost never what someone means to ask for.
+	if o.OutputOptions.ClientTypeName != "" && o.OutputOptions.ComponentNames.Client != "" {
+		warnings["client-type-name"] = fmt.Sprintf("`client-type-name` (deprecated) and `component-names.client` are both set, which mixes the naming of the client family: the client struct is named after `client-type-name` (%q), while everything derived from it -- the New… constructors, the …Interface and …WithResponses types -- is named after `component-names.client` (%q). That is supported, but if you did not mean to keep the struct's old name, remove `client-type-name`.", o.OutputOptions.ClientTypeName, o.OutputOptions.ComponentNames.Client)
 	}
 
 	return warnings
@@ -436,8 +453,22 @@ type OutputOptions struct {
 	ExcludeSchemas []string `yaml:"exclude-schemas,omitempty"`
 	// The suffix used for responses types
 	ResponseTypeSuffix string `yaml:"response-type-suffix,omitempty"`
-	// Override the default generated client type with the value
+	// Override the default generated client type with the value.
+	//
+	// Deprecated: use `component-names.client`, which renames the whole client
+	// family (ClientInterface, NewClient, ClientWithResponses, ...) rather than
+	// just the client struct.
+	//
+	// The two are orthogonal, not competing: `component-names.client` is the
+	// family root, this is a struct-name override applied after derivation.
+	// Setting both is legitimate but produces mixed naming -- the struct takes
+	// this name while the family derives from the root -- which Warnings
+	// reports.
 	ClientTypeName string `yaml:"client-type-name,omitempty"`
+	// ComponentNames customizes the fixed, spec-independent package-level
+	// identifiers oapi-codegen emits (ServerInterface, Client, GetSwagger,
+	// the parameter-binding error types, ...). See ComponentNames.
+	ComponentNames ComponentNames `yaml:"component-names,omitempty"`
 	// AdditionalInitialisms is a list of additional initialisms to use when generating names.
 	// NOTE that this has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`
 	AdditionalInitialisms []string `yaml:"additional-initialisms,omitempty"`
