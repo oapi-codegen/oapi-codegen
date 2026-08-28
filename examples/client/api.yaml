@@ -44,4 +44,4 @@ components:
         - id
       properties:
         id:
-          type: int
+          type: integer
