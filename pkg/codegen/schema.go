@@ -140,9 +140,19 @@ type Property struct {
 	NeedsFormTag  bool
 	Extensions    map[string]any
 	Deprecated    bool
+
+	// resolvedGoFieldName, when non-empty, overrides the computed Go field
+	// name. It is set by ResolvePropertyGoFieldNameCollisions so that when two
+	// properties would normalize to the same Go identifier, both the struct
+	// declaration and the generated marshalling boilerplate agree on the same
+	// (disambiguated) name. See issue #2495.
+	resolvedGoFieldName string
 }
 
 func (p Property) GoFieldName() string {
+	if p.resolvedGoFieldName != "" {
+		return p.resolvedGoFieldName
+	}
 	goFieldName := p.JsonFieldName
 	if extension, ok := p.Extensions[extGoName]; ok {
 		if extGoFieldName, err := extParseGoFieldName(extension); err == nil {
@@ -1317,6 +1327,10 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			// primitive's Go type and clears the struct-shaped fields;
 			// rebuilding `struct {}` here would clobber that.
 			if len(outSchema.Properties) > 0 || outSchema.HasAdditionalProperties || len(outSchema.UnionElements) > 0 {
+				// Disambiguate any Go field-name collisions before rendering, so
+				// the struct declaration and the generated marshalling
+				// boilerplate agree on the same names. See issue #2495.
+				ResolvePropertyGoFieldNameCollisions(&outSchema)
 				outSchema.GoType = GenStructFromSchema(outSchema)
 			}
 		}
@@ -1753,6 +1767,45 @@ func GenFieldsFromProperties(props []Property) []string {
 		fields = append(fields, field)
 	}
 	return fields
+}
+
+// ResolvePropertyGoFieldNameCollisions disambiguates the Go field names of a
+// schema's properties in place. Distinct JSON property names can normalize to
+// the same Go identifier (e.g. "host-fqdn" and "host_fqdn" both become
+// "HostFqdn"), which would emit two identically named struct fields and fail to
+// compile with "redeclared in this block".
+//
+// The first property to claim a name keeps it; each later property that would
+// collide gets an incrementing numeric suffix ("HostFqdn2", "HostFqdn3", ...),
+// re-checked so a suffixed name cannot itself collide. The resolved name is
+// stored on the Property (via resolvedGoFieldName) so that both the struct
+// declaration and the generated marshal/unmarshal boilerplate — which all read
+// GoFieldName() — stay consistent. Only the Go identifier changes; the JSON tag
+// still uses the original JsonFieldName, so the wire format is unchanged.
+//
+// When the schema also renders a synthetic "AdditionalProperties" field, that
+// name is reserved first so a real property named "additionalProperties" (or
+// one using x-go-name: AdditionalProperties) is suffixed instead of colliding
+// with it. See issue #2495.
+func ResolvePropertyGoFieldNameCollisions(schema *Schema) {
+	seen := make(map[string]struct{}, len(schema.Properties)+1)
+	if schema.HasAdditionalProperties {
+		seen["AdditionalProperties"] = struct{}{}
+	}
+	for i := range schema.Properties {
+		name := schema.Properties[i].GoFieldName()
+		if _, exists := seen[name]; exists {
+			for n := 2; ; n++ {
+				candidate := fmt.Sprintf("%s%d", name, n)
+				if _, taken := seen[candidate]; !taken {
+					name = candidate
+					break
+				}
+			}
+			schema.Properties[i].resolvedGoFieldName = name
+		}
+		seen[name] = struct{}{}
+	}
 }
 
 func additionalPropertiesType(schema Schema) string {

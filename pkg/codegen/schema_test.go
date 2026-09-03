@@ -1083,3 +1083,54 @@ func TestParameterDefinitionSchemaType(t *testing.T) {
 	assert.Equal(t, []string{"string", "integer"}, paramWithTypes(&openapi3.Types{"string", "integer", "null"}).SchemaTypes())
 	assert.Nil(t, paramWithTypes(&openapi3.Types{"string"}).SchemaTypes())
 }
+
+// TestResolvePropertyGoFieldNameCollisions covers issue #2495:
+// two JSON properties that differ only by separator ("host-fqdn" vs
+// "host_fqdn") both normalize to the Go field name "HostFqdn", which previously
+// emitted two identically named fields and failed to compile with "redeclared
+// in this block". The first keeps the name; the second is suffixed. JSON tags
+// keep the original property names. Resolution happens on the schema so struct
+// and marshalling boilerplate share the same names.
+func TestResolvePropertyGoFieldNameCollisions(t *testing.T) {
+	schema := Schema{
+		Properties: []Property{
+			{JsonFieldName: "host-fqdn", Schema: Schema{GoType: "string"}, Required: true},
+			{JsonFieldName: "host_fqdn", Schema: Schema{GoType: "string"}, Required: true},
+		},
+	}
+
+	ResolvePropertyGoFieldNameCollisions(&schema)
+
+	// distinct, stable Go identifiers via GoFieldName (used by both the struct
+	// and the templates)
+	assert.Equal(t, "HostFqdn", schema.Properties[0].GoFieldName())
+	assert.Equal(t, "HostFqdn2", schema.Properties[1].GoFieldName())
+
+	// the rendered fields carry the disambiguated names and original JSON tags
+	fields := GenFieldsFromProperties(schema.Properties)
+	require.Len(t, fields, 2)
+	assert.Contains(t, fields[0], "HostFqdn ")
+	assert.Contains(t, fields[0], `json:"host-fqdn"`)
+	assert.Contains(t, fields[1], "HostFqdn2 ")
+	assert.Contains(t, fields[1], `json:"host_fqdn"`)
+}
+
+// TestResolvePropertyGoFieldNameCollisions_ReservesAdditionalProperties ensures
+// a real property that normalizes to "AdditionalProperties" does not collide
+// with the synthetic AdditionalProperties field generated for objects that
+// allow additional properties.
+func TestResolvePropertyGoFieldNameCollisions_ReservesAdditionalProperties(t *testing.T) {
+	schema := Schema{
+		HasAdditionalProperties: true,
+		Properties: []Property{
+			{JsonFieldName: "additionalProperties", Schema: Schema{GoType: "string"}, Required: true},
+		},
+	}
+
+	ResolvePropertyGoFieldNameCollisions(&schema)
+
+	// the synthetic field owns "AdditionalProperties"; the real property is
+	// suffixed so the generated struct has no duplicate declaration.
+	assert.Equal(t, "AdditionalProperties2", schema.Properties[0].GoFieldName())
+	assert.Contains(t, GenFieldsFromProperties(schema.Properties)[0], `json:"additionalProperties"`)
+}
