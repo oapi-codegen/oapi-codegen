@@ -13,6 +13,28 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Event'
+  # From issue-2549: allOf member containing a oneOf union.
+  /thing:
+    get:
+      operationId: getThing
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Thing'
+  # From issue-2549: fixed properties alongside additionalProperties.
+  /bag:
+    get:
+      operationId: getBag
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bag'
 components:
   schemas:
     Event:
@@ -31,3 +53,28 @@ components:
       properties:
         kind: { type: string, enum: [repeatable] }
         interval: { type: string }
+    Base:
+      type: object
+      required: [id]
+      properties:
+        id: { type: string }
+    Thing:
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - oneOf:
+            - $ref: '#/components/schemas/Cat'
+            - $ref: '#/components/schemas/Dog'
+    Cat:
+      type: object
+      properties:
+        meow: { type: string }
+    Dog:
+      type: object
+      properties:
+        woof: { type: string }
+    Bag:
+      type: object
+      required: [kind]
+      properties:
+        kind: { type: string }
+      additionalProperties: true

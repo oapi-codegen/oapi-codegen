@@ -84,6 +84,13 @@ func (s Schema) IsExternalRef() bool {
 // defined type — `type X externalRef0.Y` — and methods on Y don't transfer.
 // The .union shortcut also can't reach across packages. So we still need the
 // MarshalJSON delegator here, even though UnionElements is non-empty.
+//
+// A $ref only carries the referenced OpenAPI schema, not the Go schema that
+// was generated for it, so shapes whose custom marshalling isn't visible at
+// the top level (an allOf containing a oneOf/anyOf, or properties alongside
+// additionalProperties) are detected by generating the referenced schema.
+// Inline schemas already carry their own generated flags, and are hoisted
+// into named types when they need custom marshalling.
 func (s Schema) HasCustomMarshalJSON() bool {
 	if s.OAPISchema == nil {
 		return false
@@ -91,7 +98,17 @@ func (s Schema) HasCustomMarshalJSON() bool {
 	if len(s.UnionElements) > 0 {
 		return s.IsExternalRef()
 	}
-	return len(s.OAPISchema.OneOf) > 0 || len(s.OAPISchema.AnyOf) > 0
+	if len(s.OAPISchema.OneOf) > 0 || len(s.OAPISchema.AnyOf) > 0 {
+		return true
+	}
+	if s.HasAdditionalProperties || !s.DefineViaAlias {
+		return false
+	}
+	target, err := GenerateGoSchema(&openapi3.SchemaRef{Value: s.OAPISchema}, []string{s.TypeDecl()})
+	if err != nil {
+		return false
+	}
+	return len(target.UnionElements) > 0 || target.HasAdditionalProperties
 }
 
 // HasCustomMarshalJSONForRequestBody reports whether a named request body
