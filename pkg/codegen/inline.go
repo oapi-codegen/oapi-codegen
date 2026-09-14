@@ -106,7 +106,8 @@ func inlineSchemaRefSiblings(swagger *openapi3.T) {
 
 		// Do not follow resolved references: their definitions are visited through
 		// components, and following them here can recurse forever for cyclic schemas.
-		if schemaRef.Value == nil || !hasSchemaRefKeywordSibling(schemaRef) {
+		siblingFields := schemaRefKeywordSiblingFields(schemaRef)
+		if schemaRef.Value == nil || len(siblingFields) == 0 {
 			return false, nil
 		}
 
@@ -114,6 +115,7 @@ func inlineSchemaRefSiblings(swagger *openapi3.T) {
 		// the reference as a serialization boundary if the same SchemaRef is
 		// reachable from its resolved value.
 		if schemaRefValueIsCyclic(schemaRef) {
+			preserveSchemaRefKeywordSiblings(schemaRef, siblingFields)
 			return false, nil
 		}
 
@@ -130,7 +132,7 @@ func inlineSchemaRefSiblings(swagger *openapi3.T) {
 	})
 }
 
-func hasSchemaRefKeywordSibling(ref *openapi3.SchemaRef) bool {
+func schemaRefKeywordSiblingFields(ref *openapi3.SchemaRef) []string {
 	// SchemaRef keeps the original sibling field names internally and exposes
 	// them through ExtraSiblingFieldsError. Clear Value on a shallow copy so
 	// validation only inspects this reference and cannot report an error from
@@ -138,7 +140,29 @@ func hasSchemaRefKeywordSibling(ref *openapi3.SchemaRef) bool {
 	probe := *ref
 	probe.Value = nil
 	var siblingErr *openapi3.ExtraSiblingFieldsError
-	return errors.As(probe.Validate(context.Background()), &siblingErr)
+	if !errors.As(probe.Validate(context.Background()), &siblingErr) {
+		return nil
+	}
+	return siblingErr.Fields
+}
+
+func preserveSchemaRefKeywordSiblings(ref *openapi3.SchemaRef, fields []string) {
+	// SchemaRef.MarshalJSON emits Ref and Extensions only. Put just the original
+	// sibling fields into a cloned extension map so the reference can remain a
+	// serialization boundary without losing its OpenAPI 3.1 sibling keywords.
+	marshaled, _ := ref.Value.MarshalYAML()
+	valueFields := marshaled.(map[string]any)
+
+	extensions := maps.Clone(ref.Extensions)
+	if extensions == nil {
+		extensions = make(map[string]any, len(fields))
+	}
+	for _, field := range fields {
+		if value, ok := valueFields[field]; ok {
+			extensions[field] = value
+		}
+	}
+	ref.Extensions = extensions
 }
 
 func schemaRefValueIsCyclic(root *openapi3.SchemaRef) bool {

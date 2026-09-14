@@ -179,6 +179,13 @@ components:
           $ref: '#/components/schemas/Node'
           minProperties: 1
 `)
+	parentRef := spec.Components.Schemas["Node"].Value.Properties["parent"]
+	// kin-openapi does not apply sibling fields while resolving a self-reference,
+	// so model the shallow-copy shape which reaches this function when the
+	// sibling has been applied to a cyclic resolved value.
+	resolved := *parentRef.Value
+	resolved.MinProps = 1
+	parentRef.Value = &resolved
 
 	raw, err := marshalInlinedSpec(spec)
 	require.NoError(t, err)
@@ -186,6 +193,7 @@ components:
 	node := embeddedSchema(t, raw, "Node")
 	parent := node["properties"].(map[string]any)["parent"].(map[string]any)
 	require.Contains(t, parent, "$ref")
+	require.Equal(t, float64(1), parent["minProperties"])
 }
 
 func TestMarshalInlinedSpecDoesNotMutateReferencedSchemaExtensions(t *testing.T) {
