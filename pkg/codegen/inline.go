@@ -18,9 +18,9 @@ import (
 	"compress/flate"
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"maps"
-	"strings"
 	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -110,11 +110,20 @@ func inlineSchemaRefSiblings(swagger *openapi3.T) {
 			return false, nil
 		}
 
+		// Clearing this reference would make encoding/json follow Value. Keep
+		// the reference as a serialization boundary if the same SchemaRef is
+		// reachable from its resolved value.
+		if schemaRefValueIsCyclic(schemaRef) {
+			return false, nil
+		}
+
 		if len(schemaRef.Extensions) != 0 {
-			if schemaRef.Value.Extensions == nil {
-				schemaRef.Value.Extensions = make(map[string]any, len(schemaRef.Extensions))
+			extensions := maps.Clone(schemaRef.Value.Extensions)
+			if extensions == nil {
+				extensions = make(map[string]any, len(schemaRef.Extensions))
 			}
-			maps.Copy(schemaRef.Value.Extensions, schemaRef.Extensions)
+			maps.Copy(extensions, schemaRef.Extensions)
+			schemaRef.Value.Extensions = extensions
 		}
 		schemaRef.Ref = ""
 		return false, nil
@@ -122,13 +131,50 @@ func inlineSchemaRefSiblings(swagger *openapi3.T) {
 }
 
 func hasSchemaRefKeywordSibling(ref *openapi3.SchemaRef) bool {
-	if ref.Origin == nil {
-		return false
-	}
-	for _, field := range ref.Origin.Fields {
-		if field.Name != "$ref" && !strings.HasPrefix(field.Name, "x-") {
+	// SchemaRef keeps the original sibling field names internally and exposes
+	// them through ExtraSiblingFieldsError. Clear Value on a shallow copy so
+	// validation only inspects this reference and cannot report an error from
+	// the resolved schema graph.
+	probe := *ref
+	probe.Value = nil
+	var siblingErr *openapi3.ExtraSiblingFieldsError
+	return errors.As(probe.Validate(context.Background()), &siblingErr)
+}
+
+func schemaRefValueIsCyclic(root *openapi3.SchemaRef) bool {
+	visiting := make(map[*openapi3.Schema]bool)
+	visited := make(map[*openapi3.Schema]bool)
+
+	var visit func(*openapi3.Schema) bool
+	visit = func(schema *openapi3.Schema) bool {
+		if schema == nil {
+			return false
+		}
+		if visiting[schema] {
 			return true
 		}
+		if visited[schema] {
+			return false
+		}
+
+		visiting[schema] = true
+		for _, child := range schemaChildRefs(schema) {
+			if child == nil || child.Value == nil {
+				continue
+			}
+			// A non-empty ref is normally a serialization boundary. The root is
+			// the exception because the caller is considering clearing its Ref.
+			if child.Ref != "" && child != root {
+				continue
+			}
+			if visit(child.Value) {
+				return true
+			}
+		}
+		visiting[schema] = false
+		visited[schema] = true
+		return false
 	}
-	return false
+
+	return root != nil && visit(root.Value)
 }

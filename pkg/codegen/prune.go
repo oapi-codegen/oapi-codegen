@@ -14,21 +14,34 @@ type RefWrapper struct {
 }
 
 func walkSwagger(swagger *openapi3.T, doFn func(RefWrapper) (bool, error)) error {
-	if swagger == nil || swagger.Paths == nil {
+	if swagger == nil {
 		return nil
 	}
 
-	for _, p := range swagger.Paths.Map() {
-		for _, param := range p.Parameters {
-			_ = walkParameterRef(param, doFn)
+	if swagger.Paths != nil {
+		for _, p := range swagger.Paths.Map() {
+			_ = walkPathItem(p, doFn)
 		}
-		for _, op := range p.Operations() {
-			_ = walkOperation(op, doFn)
-		}
+	}
+	for _, webhook := range swagger.Webhooks {
+		_ = walkPathItem(webhook, doFn)
 	}
 
 	_ = walkComponents(swagger.Components, doFn)
 
+	return nil
+}
+
+func walkPathItem(pathItem *openapi3.PathItem, doFn func(RefWrapper) (bool, error)) error {
+	if pathItem == nil {
+		return nil
+	}
+	for _, param := range pathItem.Parameters {
+		_ = walkParameterRef(param, doFn)
+	}
+	for _, op := range pathItem.Operations() {
+		_ = walkOperation(op, doFn)
+	}
 	return nil
 }
 
@@ -119,28 +132,53 @@ func walkSchemaRef(ref *openapi3.SchemaRef, doFn func(RefWrapper) (bool, error))
 		return nil
 	}
 
-	for _, ref := range ref.Value.OneOf {
-		_ = walkSchemaRef(ref, doFn)
+	for _, child := range schemaChildRefs(ref.Value) {
+		_ = walkSchemaRef(child, doFn)
 	}
-
-	for _, ref := range ref.Value.AnyOf {
-		_ = walkSchemaRef(ref, doFn)
-	}
-
-	for _, ref := range ref.Value.AllOf {
-		_ = walkSchemaRef(ref, doFn)
-	}
-
-	_ = walkSchemaRef(ref.Value.Not, doFn)
-	_ = walkSchemaRef(ref.Value.Items, doFn)
-
-	for _, ref := range ref.Value.Properties {
-		_ = walkSchemaRef(ref, doFn)
-	}
-
-	_ = walkSchemaRef(ref.Value.AdditionalProperties.Schema, doFn)
 
 	return nil
+}
+
+// schemaChildRefs returns every SchemaRef-bearing keyword supported by the
+// current kin-openapi Schema type. Keep this list in sync when that type grows.
+func schemaChildRefs(schema *openapi3.Schema) []*openapi3.SchemaRef {
+	if schema == nil {
+		return nil
+	}
+
+	refs := make([]*openapi3.SchemaRef, 0,
+		len(schema.OneOf)+len(schema.AnyOf)+len(schema.AllOf)+
+			len(schema.Properties)+len(schema.PrefixItems)+
+			len(schema.PatternProperties)+len(schema.DependentSchemas)+len(schema.Defs)+12)
+	refs = append(refs, schema.OneOf...)
+	refs = append(refs, schema.AnyOf...)
+	refs = append(refs, schema.AllOf...)
+	refs = append(refs, schema.Not, schema.Items)
+	for _, ref := range schema.Properties {
+		refs = append(refs, ref)
+	}
+	refs = append(refs, schema.AdditionalProperties.Schema)
+	refs = append(refs, schema.PrefixItems...)
+	refs = append(refs, schema.Contains)
+	for _, ref := range schema.PatternProperties {
+		refs = append(refs, ref)
+	}
+	for _, ref := range schema.DependentSchemas {
+		refs = append(refs, ref)
+	}
+	refs = append(refs,
+		schema.PropertyNames,
+		schema.UnevaluatedItems.Schema,
+		schema.UnevaluatedProperties.Schema,
+		schema.If,
+		schema.Then,
+		schema.Else,
+	)
+	for _, ref := range schema.Defs {
+		refs = append(refs, ref)
+	}
+	refs = append(refs, schema.ContentSchema)
+	return refs
 }
 
 func walkParameterRef(ref *openapi3.ParameterRef, doFn func(RefWrapper) (bool, error)) error {
@@ -171,6 +209,7 @@ func walkParameterRef(ref *openapi3.ParameterRef, doFn func(RefWrapper) (bool, e
 			continue
 		}
 		_ = walkSchemaRef(mediaType.Schema, doFn)
+		_ = walkSchemaRef(mediaType.ItemSchema, doFn)
 
 		for _, example := range mediaType.Examples {
 			_ = walkExampleRef(example, doFn)
@@ -202,6 +241,7 @@ func walkRequestBodyRef(ref *openapi3.RequestBodyRef, doFn func(RefWrapper) (boo
 			continue
 		}
 		_ = walkSchemaRef(mediaType.Schema, doFn)
+		_ = walkSchemaRef(mediaType.ItemSchema, doFn)
 
 		for _, example := range mediaType.Examples {
 			_ = walkExampleRef(example, doFn)
@@ -237,6 +277,7 @@ func walkResponseRef(ref *openapi3.ResponseRef, doFn func(RefWrapper) (bool, err
 			continue
 		}
 		_ = walkSchemaRef(mediaType.Schema, doFn)
+		_ = walkSchemaRef(mediaType.ItemSchema, doFn)
 
 		for _, example := range mediaType.Examples {
 			_ = walkExampleRef(example, doFn)
