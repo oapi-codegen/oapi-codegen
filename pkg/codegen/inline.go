@@ -128,7 +128,7 @@ func inlineSchemaRefSiblings(swagger *openapi3.T) {
 			schemaRef.Value.Extensions = extensions
 		}
 		schemaRef.Ref = ""
-		return false, nil
+		return true, nil
 	})
 }
 

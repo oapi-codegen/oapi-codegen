@@ -81,6 +81,46 @@ components:
 	require.Equal(t, float64(50), property["minLength"])
 }
 
+func TestMarshalInlinedSpecPreservesNestedSchemaRefSiblings(t *testing.T) {
+	spec := loadSchemaFromData(t, `openapi: 3.1.0
+info:
+  title: API
+  version: "1.0"
+paths: {}
+components:
+  schemas:
+    Container:
+      type: object
+    Text:
+      type: string
+      maxLength: 100
+    Request:
+      type: object
+      properties:
+        value:
+          $ref: '#/components/schemas/Container'
+          properties:
+            inner:
+              $ref: '#/components/schemas/Text'
+              minLength: 5
+`)
+
+	raw, err := marshalInlinedSpec(spec)
+	require.NoError(t, err)
+
+	value := embeddedValueProperty(t, raw)
+	require.NotContains(t, value, "$ref")
+	inner := value["properties"].(map[string]any)["inner"].(map[string]any)
+	require.NotContains(t, inner, "$ref")
+	require.Equal(t, float64(5), inner["minLength"])
+
+	embedded, err := openapi3.NewLoader().LoadFromData(raw)
+	require.NoError(t, err)
+	innerSchema := embedded.Components.Schemas["Request"].Value.Properties["value"].Value.Properties["inner"].Value
+	require.Equal(t, uint64(5), innerSchema.MinLength)
+	require.Error(t, innerSchema.VisitJSON("four"))
+}
+
 func TestMarshalInlinedSpecVisitsOpenAPI31SchemaRefFields(t *testing.T) {
 	spec := loadSchemaFromData(t, `openapi: 3.1.0
 info:
