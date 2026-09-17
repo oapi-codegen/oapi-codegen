@@ -985,7 +985,17 @@ func schemaUnionTypes(t *openapi3.Types) []string {
 	return primary.Slice()
 }
 
+// GenerateGoSchema converts an OpenAPI schema into a Go type definition.
+//
+// It starts a fresh generation context, so a call made from outside the
+// package behaves exactly as it always has. Within the package, prefer
+// generateGoSchema so that the recursion state described by genContext
+// survives the descent.
 func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
+	return generateGoSchema(newGenContext(path), sref, path)
+}
+
+func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// Add a fallback value in case the sref is nil.
 	// i.e. the parent schema defines a type:array, but the array has
 	// no items defined. Therefore, we have at least valid Go-Code.
@@ -1065,8 +1075,25 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// so that in a RESTful paradigm, the Create operation can return
 	// (object, id), so that other operations can refer to (id)
 	if schema.AllOf != nil {
-		var mergedSchema Schema
+		// An enclosing frame is already generating this composition. Refer to
+		// the type it is building instead of inlining the body a second time,
+		// which is what used to recurse until the stack ran out (issue #2542).
+		if frame, ok := ctx.inProgress[schema]; ok {
+			frame.consulted = true
+			return Schema{
+				GoType:              frame.typeName,
+				RefType:             frame.typeName,
+				DefineViaAlias:      true,
+				SkipOptionalPointer: skipOptionalPointer,
+				OAPISchema:          schema,
+			}, nil
+		}
 		var err error
+		frame := &mergeFrame{typeName: ctx.typeName(path)}
+		ctx.inProgress[schema] = frame
+		defer delete(ctx.inProgress, schema)
+
+		var mergedSchema Schema
 		// Behavior is gated on Compatibility.OldAllOfSiblingMerging:
 		// when set, the parent's structural siblings and Description are
 		// silently discarded (the historical behavior). When unset
@@ -1088,13 +1115,13 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			allOfRefs := make([]*openapi3.SchemaRef, 0, len(schema.AllOf)+1)
 			allOfRefs = append(allOfRefs, schema.AllOf...)
 			allOfRefs = append(allOfRefs, &openapi3.SchemaRef{Value: &s})
-			mergedSchema, err = MergeSchemas(allOfRefs, path)
+			mergedSchema, err = mergeSchemasCtx(ctx, allOfRefs, path)
 		} else {
 			// Either the user opted into legacy behavior, or the parent is
 			// a pure wrapper with no structural siblings. In the wrapper
 			// case, MergeSchemas' single-element fast path returns the
 			// referenced type unchanged, preserving named-type identity.
-			mergedSchema, err = MergeSchemas(schema.AllOf, path)
+			mergedSchema, err = mergeSchemasCtx(ctx, schema.AllOf, path)
 		}
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas: %w", err)
@@ -1116,6 +1143,41 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		if _, ok := extensions[extPropGoTypeSkipOptionalPointer]; ok {
 			mergedSchema.SkipOptionalPointer = skipOptionalPointer
 		}
+		// Something underneath referred back to this composition, so it has
+		// to resolve to a named type. When nothing did — the overwhelmingly
+		// common case — fall through with the anonymous struct this has
+		// always produced, byte for byte.
+		if frame.consulted {
+			switch {
+			case mergedSchema.RefType == frame.typeName:
+				// Already defined under the promised name: generating the
+				// merged body hoisted it (generate-types-for-anonymous-schemas).
+			case mergedSchema.RefType != "":
+				// The name handed to the recursive members is not the one the
+				// type ended up with, so those references would dangle. Fail
+				// loudly rather than emit code that does not compile.
+				return Schema{}, fmt.Errorf(
+					"recursive allOf composition at %s was generated as %q but its self-references were resolved to %q",
+					strings.Join(ctx.nameHint, "."), mergedSchema.RefType, frame.typeName)
+			case ctx.rootPosition:
+				// GenerateTypesForSchemas names this one, from renameSchema
+				// rather than from the path, so the name handed to the
+				// members above is not the one it will be defined under.
+				// Believed unreachable (see genContext.rootPosition); say so
+				// rather than emit code that will not compile.
+				return Schema{}, fmt.Errorf(
+					"recursive allOf composition at the root of %s is not supported: give the composition its own schema",
+					strings.Join(ctx.nameHint, "."))
+			default:
+				typeDef := TypeDefinition{
+					TypeName: frame.typeName,
+					JsonName: strings.Join(ctx.nameHint, "."),
+					Schema:   mergedSchema,
+				}
+				mergedSchema.AdditionalTypes = append(mergedSchema.AdditionalTypes, typeDef)
+				mergedSchema.RefType = frame.typeName
+			}
+		}
 		return mergedSchema, nil
 	}
 
@@ -1132,7 +1194,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		return Schema{}, err
 	}
 	if items != nil {
-		if err := oapiSchemaToGoType(typeSource, path, &outSchema); err != nil {
+		if err := oapiSchemaToGoType(ctx, typeSource, path, &outSchema); err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type for enum-via-oneOf: %w", err)
 		}
 		// Force a typed declaration -- enums must not be aliased.
@@ -1211,7 +1273,8 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			// If additional properties are defined, we will override the default
 			// above with the specific definition.
 			if schema.AdditionalProperties.Schema != nil {
-				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties.Schema, path)
+				apHint := append(slices.Clone(path), "AdditionalProperties")
+				additionalSchema, err := generateGoSchema(ctx.at(apHint), schema.AdditionalProperties.Schema, path)
 				if err != nil {
 					return Schema{}, fmt.Errorf("error generating type for additional properties: %w", err)
 				}
@@ -1253,8 +1316,8 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			// We've got an object with some properties.
 			for _, pName := range SortedSchemaKeys(schema.Properties) {
 				p := schema.Properties[pName]
-				propertyPath := append(path, pName)
-				pSchema, err := GenerateGoSchema(p, propertyPath)
+				propertyPath := append(slices.Clone(path), pName)
+				pSchema, err := generateGoSchema(ctx.at(propertyPath), p, propertyPath)
 				if err != nil {
 					return Schema{}, fmt.Errorf("error generating Go schema for property '%s': %w", pName, err)
 				}
@@ -1300,12 +1363,12 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			}
 
 			if schema.AnyOf != nil {
-				if err := generateUnion(&outSchema, schema.AnyOf, schema.Discriminator, path); err != nil {
+				if err := generateUnion(ctx, &outSchema, schema.AnyOf, schema.Discriminator, path); err != nil {
 					return Schema{}, fmt.Errorf("error generating type for anyOf: %w", err)
 				}
 			}
 			if schema.OneOf != nil {
-				if err := generateUnion(&outSchema, schema.OneOf, schema.Discriminator, path); err != nil {
+				if err := generateUnion(ctx, &outSchema, schema.OneOf, schema.Discriminator, path); err != nil {
 					return Schema{}, fmt.Errorf("error generating type for oneOf: %w", err)
 				}
 			}
@@ -1393,7 +1456,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		// A multi-type union is excluded for the same reason: it lowers to
 		// `any`, and `const X any = ...` is not a valid Go constant either.
 		// Falling through generates the plain `any` the union maps to.
-		err := oapiSchemaToGoType(schema, path, &outSchema)
+		err := oapiSchemaToGoType(ctx, schema, path, &outSchema)
 		// Enums need to be typed, so that the values aren't interchangeable,
 		// so no matter what schema conversion thinks, we need to define a
 		// new type.
@@ -1463,7 +1526,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			outSchema.RefType = typeName
 		}
 	} else {
-		err := oapiSchemaToGoType(schema, path, &outSchema)
+		err := oapiSchemaToGoType(ctx, schema, path, &outSchema)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
@@ -1473,7 +1536,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 // oapiSchemaToGoType converts an OpenApi schema into a Go type definition for
 // all non-object types.
-func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schema) error {
+func oapiSchemaToGoType(ctx genContext, schema *openapi3.Schema, path []string, outSchema *Schema) error {
 	f := schema.Format
 	// In OpenAPI 3.1, `type` may be a multi-element array including "null"
 	// to express nullability. The dispatch below uses `*Types.Is("...")`,
@@ -1486,7 +1549,8 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 	if t.Is("array") {
 		// For arrays, we'll get the type of the Items and throw a
 		// [] in front of it.
-		arrayType, err := GenerateGoSchema(schema.Items, path)
+		itemHint := append(slices.Clone(path), "Item")
+		arrayType, err := generateGoSchema(ctx.at(itemHint), schema.Items, path)
 		if err != nil {
 			return fmt.Errorf("error generating type for array: %w", err)
 		}
@@ -1820,7 +1884,7 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	return GenerateGoSchema(mt.Schema, path)
 }
 
-func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string) error {
+func generateUnion(ctx genContext, outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string) error {
 	if discriminator != nil {
 		outSchema.Discriminator = &Discriminator{
 			Property: discriminator.PropertyName,
@@ -1864,7 +1928,7 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 	// union specs that may rely on the wrapper shape. The narrow
 	// condition keeps this change scoped to the bug fix.
 	if effectiveCount == 1 && hadNullBranch && discriminator == nil {
-		elementSchema, err := GenerateGoSchema(soleEffective, path)
+		elementSchema, err := generateGoSchema(ctx.at(path), soleEffective, path)
 		if err != nil {
 			return err
 		}
@@ -1891,7 +1955,7 @@ func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminato
 			continue
 		}
 		elementPath := append(path, fmt.Sprint(i))
-		elementSchema, err := GenerateGoSchema(element, elementPath)
+		elementSchema, err := generateGoSchema(ctx.at(elementPath), element, elementPath)
 		if err != nil {
 			return err
 		}

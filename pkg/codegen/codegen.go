@@ -1164,7 +1164,7 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 		}
 		schemaRef := schemas[schemaName]
 
-		goSchema, err := GenerateGoSchema(schemaRef, []string{schemaName})
+		goSchema, err := generateGoSchema(newRootGenContext([]string{schemaName}), schemaRef, []string{schemaName})
 		if err != nil {
 			return nil, fmt.Errorf("error converting Schema %s to Go type: %w", schemaName, err)
 		}

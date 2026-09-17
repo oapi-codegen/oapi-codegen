@@ -535,7 +535,7 @@ func TestProperty_ZeroValueIsNil(t *testing.T) {
 func TestOapiSchemaToGoType_NullType(t *testing.T) {
 	schema := &openapi3.Schema{Type: &openapi3.Types{"null"}}
 	var out Schema
-	require.NoError(t, oapiSchemaToGoType(schema, []string{"Challenger"}, &out))
+	require.NoError(t, oapiSchemaToGoType(newGenContext(nil), schema, []string{"Challenger"}, &out))
 	assert.Equal(t, "any", out.GoType)
 	assert.True(t, out.SkipOptionalPointer)
 	assert.True(t, out.DefineViaAlias)
@@ -833,7 +833,7 @@ func TestOapiSchemaToGoType_MultiTypeUnion(t *testing.T) {
 			globalState.typeMapping = DefaultTypeMapping
 
 			var out Schema
-			err := oapiSchemaToGoType(&openapi3.Schema{Type: &tc.types}, []string{"Value"}, &out)
+			err := oapiSchemaToGoType(newGenContext(nil), &openapi3.Schema{Type: &tc.types}, []string{"Value"}, &out)
 			if tc.wantErr {
 				assert.ErrorContains(t, err, "unhandled Schema type")
 				return
@@ -996,7 +996,7 @@ func TestOapiSchemaToGoType_MultiTypeUnionRequires31(t *testing.T) {
 	globalState.typeMapping = DefaultTypeMapping
 
 	var out Schema
-	err := oapiSchemaToGoType(&openapi3.Schema{Type: &openapi3.Types{"string", "number"}}, []string{"Value"}, &out)
+	err := oapiSchemaToGoType(newGenContext(nil), &openapi3.Schema{Type: &openapi3.Types{"string", "number"}}, []string{"Value"}, &out)
 	assert.ErrorContains(t, err, "unhandled Schema type")
 }
 
