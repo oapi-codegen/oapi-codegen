@@ -1,6 +1,8 @@
 package codegen
 
 import (
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -17,7 +19,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Discriminator: disc}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, disc, result.Discriminator)
 	})
@@ -26,7 +28,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Discriminator: disc}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, disc, result.Discriminator)
 	})
@@ -36,7 +38,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Discriminator: disc}
 		s2 := openapi3.Schema{Discriminator: disc2}
 
-		_, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		_, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "discriminators")
 	})
@@ -45,7 +47,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Nil(t, result.Discriminator)
 	})
@@ -54,7 +56,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Discriminator: disc}
 		s2 := openapi3.Schema{}
 
-		_, err := mergeOpenapiSchemas(s1, s2, false, make(map[string]bool), nil)
+		_, err := mergeOpenapiSchemas(s1, s2, false, make(map[string]bool))
 		require.Error(t, err)
 	})
 
@@ -62,7 +64,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Discriminator: disc}
 
-		_, err := mergeOpenapiSchemas(s1, s2, false, make(map[string]bool), nil)
+		_, err := mergeOpenapiSchemas(s1, s2, false, make(map[string]bool))
 		require.Error(t, err)
 	})
 }
@@ -80,7 +82,7 @@ func TestMergeOpenapiSchemas_TypePropagation(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Type: stringType}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, stringType, result.Type)
 	})
@@ -89,7 +91,7 @@ func TestMergeOpenapiSchemas_TypePropagation(t *testing.T) {
 		s1 := openapi3.Schema{Type: stringType}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, stringType, result.Type)
 	})
@@ -102,7 +104,7 @@ func TestMergeOpenapiSchemas_TypePropagation(t *testing.T) {
 		}
 		s2 := openapi3.Schema{Type: unionType}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, unionType, result.Type)
 	})
@@ -111,7 +113,7 @@ func TestMergeOpenapiSchemas_TypePropagation(t *testing.T) {
 		s1 := openapi3.Schema{Type: stringType}
 		s2 := openapi3.Schema{Type: stringType}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, stringType, result.Type)
 	})
@@ -120,7 +122,7 @@ func TestMergeOpenapiSchemas_TypePropagation(t *testing.T) {
 		s1 := openapi3.Schema{Type: stringType}
 		s2 := openapi3.Schema{Type: numberType}
 
-		_, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		_, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "incompatible types")
 	})
@@ -129,7 +131,7 @@ func TestMergeOpenapiSchemas_TypePropagation(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Nil(t, result.Type.Slice())
 	})
@@ -144,7 +146,7 @@ func TestMergeOpenapiSchemas_FormatPropagation(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Format: "uuid"}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, "uuid", result.Format)
 	})
@@ -153,7 +155,7 @@ func TestMergeOpenapiSchemas_FormatPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Format: "uuid"}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, "uuid", result.Format)
 	})
@@ -162,7 +164,7 @@ func TestMergeOpenapiSchemas_FormatPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Format: "uuid"}
 		s2 := openapi3.Schema{Format: "uuid"}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, "uuid", result.Format)
 	})
@@ -171,7 +173,7 @@ func TestMergeOpenapiSchemas_FormatPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Format: "uuid"}
 		s2 := openapi3.Schema{Format: "date-time"}
 
-		_, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		_, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "incompatible formats")
 	})
@@ -180,7 +182,7 @@ func TestMergeOpenapiSchemas_FormatPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Type: &openapi3.Types{"string"}, Format: "uuid"}
 		s2 := openapi3.Schema{Nullable: true}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, "uuid", result.Format)
 		assert.True(t, result.Nullable)
@@ -195,7 +197,7 @@ func TestMergeOpenapiSchemas_NullableUnion(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Nullable: true}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.True(t, result.Nullable)
 	})
@@ -204,7 +206,7 @@ func TestMergeOpenapiSchemas_NullableUnion(t *testing.T) {
 		s1 := openapi3.Schema{Nullable: true}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.True(t, result.Nullable)
 	})
@@ -213,7 +215,7 @@ func TestMergeOpenapiSchemas_NullableUnion(t *testing.T) {
 		s1 := openapi3.Schema{Nullable: true}
 		s2 := openapi3.Schema{Nullable: true}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.True(t, result.Nullable)
 	})
@@ -222,89 +224,28 @@ func TestMergeOpenapiSchemas_NullableUnion(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool), nil)
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.False(t, result.Nullable)
 	})
 }
 
-// TestIsSelfRef covers the back-reference detection that guards recursive
-// allOf merging (issue #2542). Only a local component-schema ref whose target
-// is the top-level schema currently being generated (path[0]), referenced
-// from a nested position, counts as a self-reference.
-func TestIsSelfRef(t *testing.T) {
-	ref := "#/components/schemas/Node"
-
-	t.Run("nested reference back to the schema being generated", func(t *testing.T) {
-		assert.True(t, isSelfRef(ref, []string{"Node", "1", "children", "items"}))
-	})
-
-	t.Run("top-level fixed-point composition is not a nested self-reference", func(t *testing.T) {
-		// RecursiveObject-style allOf: [$ref: A, $ref: A, {...}] at the top
-		// level is handled by the seenSchemaRef cycle detection instead.
-		assert.False(t, isSelfRef(ref, []string{"Node"}))
-	})
-
-	t.Run("reference to a different schema", func(t *testing.T) {
-		assert.False(t, isSelfRef(ref, []string{"PRFile"}))
-	})
-
-	t.Run("external reference", func(t *testing.T) {
-		assert.False(t, isSelfRef("./common/spec.yaml#/components/schemas/Node", []string{"Node", "items"}))
-	})
-
-	t.Run("inline member", func(t *testing.T) {
-		assert.False(t, isSelfRef("", []string{"Node", "items"}))
-	})
-}
-
-// TestBackRefSchema covers the substitute schema built for a
-// self-referential allOf member: its only content is the $ref as a single
-// anyOf branch, so the merged result references the named Go type instead of
-// inlining the recursive schema's body (issue #2542).
-func TestBackRefSchema(t *testing.T) {
-	ref := &openapi3.SchemaRef{
-		Ref: "#/components/schemas/Node",
-		Value: &openapi3.Schema{
-			Type: &openapi3.Types{"object"},
-			Properties: openapi3.Schemas{
-				"leaf": openapi3.NewSchemaRef("", openapi3.NewStringSchema()),
-			},
-		},
-	}
-
-	s := backRefSchema(ref)
-	require.Len(t, s.AnyOf, 1)
-	assert.Equal(t, "#/components/schemas/Node", s.AnyOf[0].Ref)
-	assert.Same(t, ref.Value, s.AnyOf[0].Value, "Value must be carried so GenerateGoSchema can dereference it safely")
-	assert.Empty(t, s.Properties, "the recursive schema's body must not be inlined")
-	assert.Nil(t, s.Type.Slice(), "the recursive schema's type must not be inlined")
-	assert.Nil(t, s.Discriminator)
-}
-
-// TestBackRefSchema_Discriminator verifies that a discriminator declared by
-// the self-referenced schema is carried onto the substitute so union codegen
-// keeps mapping it.
-func TestBackRefSchema_Discriminator(t *testing.T) {
-	disc := &openapi3.Discriminator{PropertyName: "diff_type"}
-	ref := &openapi3.SchemaRef{
-		Ref:   "#/components/schemas/Node",
-		Value: &openapi3.Schema{Discriminator: disc},
-	}
-
-	s := backRefSchema(ref)
-	require.Len(t, s.AnyOf, 1)
-	assert.Equal(t, "#/components/schemas/Node", s.AnyOf[0].Ref)
-	assert.Equal(t, disc, s.Discriminator)
-}
-
 // generateSpec loads an inline OpenAPI spec and generates models from it.
-func generateSpec(t *testing.T, spec string) string {
+func generateSpec(t *testing.T, spec string, opts ...func(*Configuration)) string {
 	t.Helper()
+	code, err := generateSpecErr(spec, opts...)
+	require.NoError(t, err)
+	return code
+}
+
+// generateSpecErr is generateSpec for the cases that are meant to fail.
+func generateSpecErr(spec string, opts ...func(*Configuration)) (string, error) {
 	loader := openapi3.NewLoader()
 	swagger, err := loader.LoadFromData([]byte(spec))
-	require.NoError(t, err)
-	code, err := Generate(swagger, Configuration{
+	if err != nil {
+		return "", err
+	}
+	cfg := Configuration{
 		PackageName: "repro",
 		Generate: GenerateOptions{
 			Models: true,
@@ -312,21 +253,69 @@ func generateSpec(t *testing.T, spec string) string {
 		OutputOptions: OutputOptions{
 			SkipPrune: true,
 		},
-	})
-	require.NoError(t, err)
-	return code
+	}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+	return Generate(swagger, cfg)
 }
 
-// TestMergeSchemasRecursiveAnyOfAllOf reproduces the self-referential
-// anyOf+allOf schema from issue #2542 end-to-end. Generation must terminate,
-// and — unlike v2.7.2, which silently dropped the recursive member — the
-// item type must keep a reference back to Node as a union branch, so the
-// recursive payload can still be represented, marshaled, and unmarshaled.
+// assertField asserts that code declares a struct field of the given name and
+// Go type, ignoring the column alignment gofmt applies.
+func assertField(t *testing.T, code, name, goType string) {
+	t.Helper()
+	assert.Regexp(t, `\n\t`+regexp.QuoteMeta(name)+`\s+`+regexp.QuoteMeta(goType)+`\s`, code,
+		"expected a field %s %s", name, goType)
+}
+
+// specRecursiveObject is the plain-object shape of issue #2542: a tree whose
+// array items compose the tree type itself with an extra field.
+const specRecursiveObject = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Node:
+      type: object
+      properties:
+        children:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Node'
+              - type: object
+                properties:
+                  extra:
+                    type: string
+`
+
+// TestMergeSchemasRecursiveObjectAllOf covers the object-recursion variant of
+// issue #2542. Generation used to overflow the stack; the composition now
+// becomes a named Go type that refers back to itself through the slice, which
+// is how the generator represents every other allOf composition — flattened,
+// concrete, no json.RawMessage in sight.
+func TestMergeSchemasRecursiveObjectAllOf(t *testing.T) {
+	code := generateSpec(t, specRecursiveObject)
+
+	assert.Contains(t, code, "type Node_Children_Item struct {")
+	// Node ∧ {extra}: the referenced schema's own fields are merged in, and
+	// the recursion closes on the composed type, not on Node — grandchildren
+	// carry `extra` too, which is what the spec says.
+	assertField(t, code, "Children", "*[]Node_Children_Item")
+	assertField(t, code, "Extra", "*string")
+	assert.NotContains(t, code, "union json.RawMessage",
+		"an allOf composition must not be represented as a union")
+	assert.NotContains(t, code, "AsNode(")
+}
+
+// TestMergeSchemasRecursiveAnyOfAllOf reproduces the exact schema from issue
+// #2542. Node is genuinely an anyOf, so the composed type is still a union —
+// but over Node's own branches, regenerated, exactly as a non-recursive
+// allOf over a union already generates. The recursion closes on the composed
+// item type.
 func TestMergeSchemasRecursiveAnyOfAllOf(t *testing.T) {
 	const spec = `openapi: 3.0.0
-info:
-  title: repro
-  version: "1.0.0"
+info: {title: repro, version: "1.0.0"}
 paths: {}
 components:
   schemas:
@@ -350,24 +339,130 @@ components:
 `
 
 	code := generateSpec(t, spec)
-	assert.Contains(t, code, "type Node struct {")
-	assert.Contains(t, code, "Extra *string")
-	// The recursive reference must be preserved: the merged item type carries
-	// the self-$ref as a union branch referencing the named Node type.
+
 	assert.Contains(t, code, "type Node_1_Children_Item struct {")
-	assert.Contains(t, code, "func (t Node_1_Children_Item) AsNode() (Node, error)")
-	assert.Contains(t, code, "func (t *Node_1_Children_Item) FromNode(v Node) error")
+	assertField(t, code, "Extra", "*string")
+	// The branches of the composed union are Node's branches regenerated at
+	// this position, and the recursive one points back at the composed type.
+	assert.Contains(t, code, "type Node1Children1 struct {")
+	assertField(t, code, "Children", "*[]Node_1_Children_Item")
+	assert.Contains(t, code, "func (t Node_1_Children_Item) AsNode1Children1() (Node1Children1, error)")
 }
 
-// TestMergeSchemasRecursiveObjectAllOf reproduces the object-recursion
-// variant of issue #2542: a plain object whose array items are
-// allOf: [$ref: self, {extra}]. This shape also overflowed the stack, and the
-// generated item must likewise keep the reference back to the parent type.
-func TestMergeSchemasRecursiveObjectAllOf(t *testing.T) {
+// TestMergeSchemasNestedAllOfSelfRef covers the self-$ref hiding behind a
+// nested allOf member, which escapes a guard that only inspects the members
+// of the allOf it was handed.
+func TestMergeSchemasNestedAllOfSelfRef(t *testing.T) {
 	const spec = `openapi: 3.0.0
-info:
-  title: repro
-  version: "1.0.0"
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Node:
+      type: object
+      properties:
+        children:
+          type: array
+          items:
+            allOf:
+              - allOf:
+                  - $ref: '#/components/schemas/Node'
+              - type: object
+                properties:
+                  extra:
+                    type: string
+`
+
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "type Node_Children_Item struct {")
+	assertField(t, code, "Children", "*[]Node_Children_Item")
+	assertField(t, code, "Extra", "*string")
+}
+
+// TestMergeSchemasRecursionThroughAdditionalProperties covers a cycle that
+// closes through additionalProperties. items and additionalProperties reuse
+// their parent's path, so a guard keyed on path depth misses this one even
+// though it sits at the component root.
+func TestMergeSchemasRecursionThroughAdditionalProperties(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Node:
+      type: object
+      additionalProperties:
+        allOf:
+          - $ref: '#/components/schemas/Node'
+          - type: object
+            properties:
+              extra:
+                type: string
+`
+
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "Node_AdditionalProperties")
+	assert.Contains(t, code, "map[string]Node_AdditionalProperties")
+}
+
+// TestMergeSchemasMutualRecursion covers a cycle that never passes through
+// the component being generated: generating A walks into B and C, which
+// compose each other. A guard keyed on "refers to the schema at path[0]"
+// never fires here.
+func TestMergeSchemasMutualRecursion(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    A:
+      type: object
+      properties:
+        b:
+          allOf:
+            - $ref: '#/components/schemas/B'
+            - type: object
+              properties:
+                tag:
+                  type: string
+    B:
+      type: object
+      properties:
+        c:
+          allOf:
+            - $ref: '#/components/schemas/C'
+            - type: object
+              properties:
+                x:
+                  type: string
+    C:
+      type: object
+      properties:
+        back:
+          allOf:
+            - $ref: '#/components/schemas/B'
+            - type: object
+              properties:
+                y:
+                  type: string
+`
+
+	code := generateSpec(t, spec)
+	for _, want := range []string{"type A struct {", "type B struct {", "type C struct {"} {
+		assert.Contains(t, code, want)
+	}
+	// The cycle has to close on a named type rather than unrolling: the type
+	// generated for B.c contains a field whose type is itself.
+	assert.Regexp(t, `type B_C struct \{(.|\n)*\*B_C`, code)
+	assert.NotContains(t, code, "union json.RawMessage")
+}
+
+// TestMergeSchemasRecursionViaOtherComponent covers a cycle reached from a
+// component that is not part of it: Wrapper inlines Node's body, and it is
+// that inlined body that re-enters itself.
+func TestMergeSchemasRecursionViaOtherComponent(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
 paths: {}
 components:
   schemas:
@@ -383,51 +478,177 @@ components:
                 properties:
                   extra:
                     type: string
+    Wrapper:
+      type: object
+      properties:
+        n:
+          allOf:
+            - $ref: '#/components/schemas/Node'
+            - type: object
+              properties:
+                extra:
+                  type: string
 `
 
 	code := generateSpec(t, spec)
-	assert.Contains(t, code, "type Node struct {")
+	assert.Contains(t, code, "type Wrapper struct {")
 	assert.Contains(t, code, "type Node_Children_Item struct {")
-	assert.Contains(t, code, "Extra *string")
-	assert.Contains(t, code, "func (t Node_Children_Item) AsNode() (Node, error)")
-	assert.Contains(t, code, "func (t *Node_Children_Item) FromNode(v Node) error")
 }
 
-// TestMergeSchemasNestedAllOfSelfRef reproduces the transitive variant of
-// issue #2542 (review issue 2 on PR #2543): the self-$ref hides behind a
-// nested allOf member, which previously escaped the cycle guard and hung
-// generation indefinitely.
-func TestMergeSchemasNestedAllOfSelfRef(t *testing.T) {
+// TestMergeSchemasValueRecursionGeneratesUncompilableGo pins a deliberate
+// choice. A composition that refers to itself with no pointer, slice or map
+// in between describes a Go value that contains itself. The generator emits
+// what the spec declares and leaves the objection to the compiler, which says
+// `invalid recursive type: T_Child refers to itself` and points at the line.
+// Detecting it here would mean predicting, before generating the body, what
+// the field rendering will do with it — which cannot be done for a
+// SkipOptionalPointer that the merge itself produces (the #1957 decorator
+// idiom). If this test starts failing, that trade-off is being revisited.
+func TestMergeSchemasValueRecursionGeneratesUncompilableGo(t *testing.T) {
 	const spec = `openapi: 3.0.0
-info:
-  title: repro
-  version: "1.0.0"
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    T:
+      type: object
+      required: [child]
+      properties:
+        child:
+          allOf:
+            - $ref: '#/components/schemas/T'
+            - type: object
+              properties:
+                w:
+                  type: integer
+`
+
+	code := generateSpec(t, spec)
+	// Generation terminates rather than overflowing the stack (issue #2542).
+	assertField(t, code, "Child", "T_Child")
+	assert.Contains(t, code, "type T_Child struct {")
+}
+
+// TestMergeSchemasValueRecursionOptionalIsFine is the same shape with the
+// property left optional, which renders as a pointer and so terminates.
+func TestMergeSchemasValueRecursionOptionalIsFine(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    T:
+      type: object
+      properties:
+        child:
+          allOf:
+            - $ref: '#/components/schemas/T'
+            - type: object
+              properties:
+                w:
+                  type: integer
+`
+
+	code := generateSpec(t, spec)
+	assertField(t, code, "Child", "*T_Child")
+	assertField(t, code, "W", "*int")
+}
+
+// TestMergeSchemasNonRecursiveAllOfUnaffected pins the property this change
+// depends on for backwards compatibility: a composition nothing refers back
+// to is still emitted as the inline anonymous struct it always was, with no
+// named type invented for it.
+func TestMergeSchemasNonRecursiveAllOfUnaffected(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Base:
+      type: object
+      properties:
+        name:
+          type: string
+    Holder:
+      type: object
+      properties:
+        list:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/Base'
+              - type: object
+                properties:
+                  weight:
+                    type: integer
+`
+
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "List *[]struct {")
+	assert.NotContains(t, code, "Holder_List_Item",
+		"a non-recursive composition must not gain a named type")
+	assert.Equal(t, 1, strings.Count(code, "type Holder struct {"))
+}
+
+// TestMergeSchemasRecursiveWithAnonymousSchemaTypes covers the interaction
+// with generate-types-for-anonymous-schemas, which hoists the merged body
+// under its own path. The name a recursive member was handed has to be the
+// one that ends up defined, or the generated code refers to a type that does
+// not exist.
+func TestMergeSchemasRecursiveWithAnonymousSchemaTypes(t *testing.T) {
+	anon := func(c *Configuration) { c.OutputOptions.GenerateTypesForAnonymousSchemas = true }
+
+	t.Run("array items", func(t *testing.T) {
+		code := generateSpec(t, specRecursiveObject, anon)
+		assertDefinesWhatItReferences(t, code)
+	})
+
+	t.Run("additionalProperties", func(t *testing.T) {
+		const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
 paths: {}
 components:
   schemas:
     Node:
-      anyOf:
-        - type: object
-          properties:
-            leaf:
-              type: string
-        - type: object
-          properties:
-            children:
-              type: array
-              items:
-                allOf:
-                  - allOf:
-                      - $ref: '#/components/schemas/Node'
-                  - type: object
-                    properties:
-                      extra:
-                        type: string
+      type: object
+      properties:
+        kids:
+          type: object
+          additionalProperties:
+            allOf:
+              - $ref: '#/components/schemas/Node'
+              - type: object
+                properties:
+                  extra:
+                    type: string
 `
+		code := generateSpec(t, spec, anon)
+		assertDefinesWhatItReferences(t, code)
+	})
+}
 
-	code := generateSpec(t, spec)
-	assert.Contains(t, code, "type Node_1_Children_Item struct {")
-	assert.Contains(t, code, "Extra *string")
-	assert.Contains(t, code, "func (t Node_1_Children_Item) AsNode() (Node, error)")
-	assert.Contains(t, code, "func (t *Node_1_Children_Item) FromNode(v Node) error")
+// assertDefinesWhatItReferences checks that every generated type referenced
+// from a struct field is also declared, which is the cheapest stand-in for
+// "the output compiles".
+func assertDefinesWhatItReferences(t *testing.T, code string) {
+	t.Helper()
+	declared := map[string]bool{}
+	for _, m := range regexp.MustCompile(`(?m)^type (\w+) `).FindAllStringSubmatch(code, -1) {
+		declared[m[1]] = true
+	}
+	referenced := regexp.MustCompile(`\*?\[?\]?\*?(Node\w*)\s+`+"`json:").FindAllStringSubmatch(code, -1)
+	require.NotEmpty(t, referenced, "expected the output to reference a generated type")
+	for _, m := range referenced {
+		assert.True(t, declared[m[1]], "field refers to %s, which is never declared:\n%s", m[1], code)
+	}
+}
+
+// TestMergeSchemasRecursionUnderOldMergeSchemas pins that the legacy merge
+// path is unaffected. It embeds $ref members instead of inlining them, so it
+// never recursed, and it bypasses the state this fix threads.
+func TestMergeSchemasRecursionUnderOldMergeSchemas(t *testing.T) {
+	code := generateSpec(t, specRecursiveObject, func(c *Configuration) {
+		c.Compatibility.OldMergeSchemas = true
+	})
+	assert.Contains(t, code, "type Node struct {")
 }

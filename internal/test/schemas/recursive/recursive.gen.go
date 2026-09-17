@@ -83,6 +83,51 @@ type FilterValue1 = string
 // FilterValue2 defines model for FilterValue.2.
 type FilterValue2 = bool
 
+// MutualA defines model for MutualA.
+type MutualA struct {
+	B *struct {
+		C   *MutualA_B_C `json:"c,omitempty"`
+		Tag *string      `json:"tag,omitempty"`
+	} `json:"b,omitempty"`
+}
+
+// MutualA_B_C defines model for MutualA.b.c.
+type MutualA_B_C struct {
+	Back *struct {
+		C *MutualA_B_C `json:"c,omitempty"`
+		Y *string      `json:"y,omitempty"`
+	} `json:"back,omitempty"`
+	X *string `json:"x,omitempty"`
+}
+
+// MutualB defines model for MutualB.
+type MutualB struct {
+	C *MutualB_C `json:"c,omitempty"`
+}
+
+// MutualB_C defines model for MutualB.c.
+type MutualB_C struct {
+	Back *struct {
+		C *MutualB_C `json:"c,omitempty"`
+		Y *string    `json:"y,omitempty"`
+	} `json:"back,omitempty"`
+	X *string `json:"x,omitempty"`
+}
+
+// MutualC defines model for MutualC.
+type MutualC struct {
+	Back *MutualC_Back `json:"back,omitempty"`
+}
+
+// MutualC_Back defines model for MutualC.back.
+type MutualC_Back struct {
+	C *struct {
+		Back *MutualC_Back `json:"back,omitempty"`
+		X    *string       `json:"x,omitempty"`
+	} `json:"c,omitempty"`
+	Y *string `json:"y,omitempty"`
+}
+
 // Node defines model for Node.
 type Node struct {
 	union json.RawMessage
@@ -98,10 +143,29 @@ type Node1 struct {
 	Children *[]Node_1_Children_Item `json:"children,omitempty"`
 }
 
-// Node_1_Children_Item defines model for Node.1.Children.Item.
+// Node1Children0 defines model for Node.1.Children.0.
+type Node1Children0 struct {
+	Leaf *string `json:"leaf,omitempty"`
+}
+
+// Node1Children1 defines model for Node.1.Children.1.
+type Node1Children1 struct {
+	Children *[]Node_1_Children_Item `json:"children,omitempty"`
+}
+
+// Node_1_Children_Item defines model for Node.1.children.Item.
 type Node_1_Children_Item struct {
 	Extra *string `json:"extra,omitempty"`
 	union json.RawMessage
+}
+
+// NodeMap defines model for NodeMap.
+type NodeMap map[string]NodeMap_AdditionalProperties
+
+// NodeMap_AdditionalProperties defines model for NodeMap.AdditionalProperties.
+type NodeMap_AdditionalProperties struct {
+	Extra                *string                                 `json:"extra,omitempty"`
+	AdditionalProperties map[string]NodeMap_AdditionalProperties `json:"-"`
 }
 
 // NodeNestedAllOf defines model for NodeNestedAllOf.
@@ -119,7 +183,17 @@ type NodeNestedAllOf1 struct {
 	Children *[]NodeNestedAllOf_1_Children_Item `json:"children,omitempty"`
 }
 
-// NodeNestedAllOf_1_Children_Item defines model for NodeNestedAllOf.1.Children.Item.
+// NodeNestedAllOf1Children0 defines model for NodeNestedAllOf.1.Children.0.
+type NodeNestedAllOf1Children0 struct {
+	Leaf *string `json:"leaf,omitempty"`
+}
+
+// NodeNestedAllOf1Children1 defines model for NodeNestedAllOf.1.Children.1.
+type NodeNestedAllOf1Children1 struct {
+	Children *[]NodeNestedAllOf_1_Children_Item `json:"children,omitempty"`
+}
+
+// NodeNestedAllOf_1_Children_Item defines model for NodeNestedAllOf.1.children.Item.
 type NodeNestedAllOf_1_Children_Item struct {
 	Extra *string `json:"extra,omitempty"`
 	union json.RawMessage
@@ -132,8 +206,8 @@ type NodeObject struct {
 
 // NodeObject_Children_Item defines model for NodeObject.children.Item.
 type NodeObject_Children_Item struct {
-	Extra *string `json:"extra,omitempty"`
-	union json.RawMessage
+	Children *[]NodeObject_Children_Item `json:"children,omitempty"`
+	Extra    *string                     `json:"extra,omitempty"`
 }
 
 // NonRecursiveObject defines model for NonRecursiveObject.
@@ -151,6 +225,88 @@ type RecursiveObject struct {
 type Value struct {
 	ArrayValue  *ArrayValue `json:"arrayValue,omitempty"`
 	StringValue *string     `json:"stringValue,omitempty"`
+}
+
+// Wrapper defines model for Wrapper.
+type Wrapper struct {
+	N *struct {
+		Children *[]Wrapper_N_Children_Item `json:"children,omitempty"`
+		Extra    *string                    `json:"extra,omitempty"`
+	} `json:"n,omitempty"`
+}
+
+// Wrapper_N_Children_Item defines model for Wrapper.n.children.Item.
+type Wrapper_N_Children_Item struct {
+	Children *[]Wrapper_N_Children_Item `json:"children,omitempty"`
+	Extra    *string                    `json:"extra,omitempty"`
+}
+
+// Getter for additional properties for NodeMap_AdditionalProperties. Returns the specified
+// element and whether it was found
+func (a NodeMap_AdditionalProperties) Get(fieldName string) (value NodeMap_AdditionalProperties, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for NodeMap_AdditionalProperties
+func (a *NodeMap_AdditionalProperties) Set(fieldName string, value NodeMap_AdditionalProperties) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]NodeMap_AdditionalProperties)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for NodeMap_AdditionalProperties to handle AdditionalProperties
+func (a *NodeMap_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["extra"]; found {
+		err = json.Unmarshal(raw, &a.Extra)
+		if err != nil {
+			return fmt.Errorf("error reading 'extra': %w", err)
+		}
+		delete(object, "extra")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]NodeMap_AdditionalProperties)
+		for fieldName, fieldBuf := range object {
+			var fieldVal NodeMap_AdditionalProperties
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for NodeMap_AdditionalProperties to handle AdditionalProperties
+func (a NodeMap_AdditionalProperties) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.Extra != nil {
+		object["extra"], err = json.Marshal(a.Extra)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'extra': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
 }
 
 // AsFilterValue returns the union data inside the FilterPredicate as a FilterValue
@@ -577,22 +733,48 @@ func (t *Node) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// AsNode returns the union data inside the Node_1_Children_Item as a Node
-func (t Node_1_Children_Item) AsNode() (Node, error) {
-	var body Node
+// AsNode1Children0 returns the union data inside the Node_1_Children_Item as a Node1Children0
+func (t Node_1_Children_Item) AsNode1Children0() (Node1Children0, error) {
+	var body Node1Children0
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromNode overwrites any union data inside the Node_1_Children_Item as the provided Node
-func (t *Node_1_Children_Item) FromNode(v Node) error {
+// FromNode1Children0 overwrites any union data inside the Node_1_Children_Item as the provided Node1Children0
+func (t *Node_1_Children_Item) FromNode1Children0(v Node1Children0) error {
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
 }
 
-// MergeNode performs a merge with any union data inside the Node_1_Children_Item, using the provided Node
-func (t *Node_1_Children_Item) MergeNode(v Node) error {
+// MergeNode1Children0 performs a merge with any union data inside the Node_1_Children_Item, using the provided Node1Children0
+func (t *Node_1_Children_Item) MergeNode1Children0(v Node1Children0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsNode1Children1 returns the union data inside the Node_1_Children_Item as a Node1Children1
+func (t Node_1_Children_Item) AsNode1Children1() (Node1Children1, error) {
+	var body Node1Children1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNode1Children1 overwrites any union data inside the Node_1_Children_Item as the provided Node1Children1
+func (t *Node_1_Children_Item) FromNode1Children1(v Node1Children1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNode1Children1 performs a merge with any union data inside the Node_1_Children_Item, using the provided Node1Children1
+func (t *Node_1_Children_Item) MergeNode1Children1(v Node1Children1) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -709,22 +891,48 @@ func (t *NodeNestedAllOf) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// AsNodeNestedAllOf returns the union data inside the NodeNestedAllOf_1_Children_Item as a NodeNestedAllOf
-func (t NodeNestedAllOf_1_Children_Item) AsNodeNestedAllOf() (NodeNestedAllOf, error) {
-	var body NodeNestedAllOf
+// AsNodeNestedAllOf1Children0 returns the union data inside the NodeNestedAllOf_1_Children_Item as a NodeNestedAllOf1Children0
+func (t NodeNestedAllOf_1_Children_Item) AsNodeNestedAllOf1Children0() (NodeNestedAllOf1Children0, error) {
+	var body NodeNestedAllOf1Children0
 	err := json.Unmarshal(t.union, &body)
 	return body, err
 }
 
-// FromNodeNestedAllOf overwrites any union data inside the NodeNestedAllOf_1_Children_Item as the provided NodeNestedAllOf
-func (t *NodeNestedAllOf_1_Children_Item) FromNodeNestedAllOf(v NodeNestedAllOf) error {
+// FromNodeNestedAllOf1Children0 overwrites any union data inside the NodeNestedAllOf_1_Children_Item as the provided NodeNestedAllOf1Children0
+func (t *NodeNestedAllOf_1_Children_Item) FromNodeNestedAllOf1Children0(v NodeNestedAllOf1Children0) error {
 	b, err := json.Marshal(v)
 	t.union = b
 	return err
 }
 
-// MergeNodeNestedAllOf performs a merge with any union data inside the NodeNestedAllOf_1_Children_Item, using the provided NodeNestedAllOf
-func (t *NodeNestedAllOf_1_Children_Item) MergeNodeNestedAllOf(v NodeNestedAllOf) error {
+// MergeNodeNestedAllOf1Children0 performs a merge with any union data inside the NodeNestedAllOf_1_Children_Item, using the provided NodeNestedAllOf1Children0
+func (t *NodeNestedAllOf_1_Children_Item) MergeNodeNestedAllOf1Children0(v NodeNestedAllOf1Children0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsNodeNestedAllOf1Children1 returns the union data inside the NodeNestedAllOf_1_Children_Item as a NodeNestedAllOf1Children1
+func (t NodeNestedAllOf_1_Children_Item) AsNodeNestedAllOf1Children1() (NodeNestedAllOf1Children1, error) {
+	var body NodeNestedAllOf1Children1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromNodeNestedAllOf1Children1 overwrites any union data inside the NodeNestedAllOf_1_Children_Item as the provided NodeNestedAllOf1Children1
+func (t *NodeNestedAllOf_1_Children_Item) FromNodeNestedAllOf1Children1(v NodeNestedAllOf1Children1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeNodeNestedAllOf1Children1 performs a merge with any union data inside the NodeNestedAllOf_1_Children_Item, using the provided NodeNestedAllOf1Children1
+func (t *NodeNestedAllOf_1_Children_Item) MergeNodeNestedAllOf1Children1(v NodeNestedAllOf1Children1) error {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return err
@@ -759,76 +967,6 @@ func (t NodeNestedAllOf_1_Children_Item) MarshalJSON() ([]byte, error) {
 }
 
 func (t *NodeNestedAllOf_1_Children_Item) UnmarshalJSON(b []byte) error {
-	err := t.union.UnmarshalJSON(b)
-	if err != nil {
-		return err
-	}
-	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["extra"]; found {
-		err = json.Unmarshal(raw, &t.Extra)
-		if err != nil {
-			return fmt.Errorf("error reading 'extra': %w", err)
-		}
-	}
-
-	return err
-}
-
-// AsNodeObject returns the union data inside the NodeObject_Children_Item as a NodeObject
-func (t NodeObject_Children_Item) AsNodeObject() (NodeObject, error) {
-	var body NodeObject
-	err := json.Unmarshal(t.union, &body)
-	return body, err
-}
-
-// FromNodeObject overwrites any union data inside the NodeObject_Children_Item as the provided NodeObject
-func (t *NodeObject_Children_Item) FromNodeObject(v NodeObject) error {
-	b, err := json.Marshal(v)
-	t.union = b
-	return err
-}
-
-// MergeNodeObject performs a merge with any union data inside the NodeObject_Children_Item, using the provided NodeObject
-func (t *NodeObject_Children_Item) MergeNodeObject(v NodeObject) error {
-	b, err := json.Marshal(v)
-	if err != nil {
-		return err
-	}
-
-	merged, err := runtime.JSONMerge(t.union, b)
-	t.union = merged
-	return err
-}
-
-func (t NodeObject_Children_Item) MarshalJSON() ([]byte, error) {
-	b, err := t.union.MarshalJSON()
-	if err != nil {
-		return nil, err
-	}
-	object := make(map[string]json.RawMessage)
-	if t.union != nil {
-		err = json.Unmarshal(b, &object)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if t.Extra != nil {
-		object["extra"], err = json.Marshal(t.Extra)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'extra': %w", err)
-		}
-	}
-	b, err = json.Marshal(object)
-	return b, err
-}
-
-func (t *NodeObject_Children_Item) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	if err != nil {
 		return err
