@@ -1,6 +1,8 @@
 package codegen
 
 import (
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"testing"
@@ -651,4 +653,120 @@ func TestMergeSchemasRecursionUnderOldMergeSchemas(t *testing.T) {
 		c.Compatibility.OldMergeSchemas = true
 	})
 	assert.Contains(t, code, "type Node struct {")
+}
+
+// TestPropagateRemoteRefsIsIdempotent covers issue #2557. Flattening a remote
+// schema rewrites its local refs in place, in the shared document, so the
+// same schema can be walked again by a later flatten. The second walk must
+// leave the already-qualified refs alone — and must terminate, which before
+// the fix it did not: the first pass removed the "#" prefix that stopped the
+// walk at a self-reference, so the second followed it around the cycle until
+// the stack overflowed.
+func TestPropagateRemoteRefsIsIdempotent(t *testing.T) {
+	// Tree { kids: [$ref '#/components/schemas/Tree'] } — self-recursive,
+	// with nothing pointing outside its own document.
+	tree := &openapi3.Schema{Type: &openapi3.Types{"object"}}
+	selfRef := &openapi3.SchemaRef{Ref: "#/components/schemas/Tree", Value: tree}
+	tree.Properties = openapi3.Schemas{
+		"kids": {Value: &openapi3.Schema{Type: &openapi3.Types{"array"}, Items: selfRef}},
+	}
+
+	const qualified = "./common.yaml#/components/schemas/Tree"
+
+	propagateRemoteRefs("./common.yaml", tree)
+	assert.Equal(t, qualified, selfRef.Ref, "a local ref must be qualified with the remote document")
+
+	propagateRemoteRefs("./common.yaml", tree)
+	assert.Equal(t, qualified, selfRef.Ref, "an already-qualified ref must be left alone")
+}
+
+// TestPropagateRemoteRefsLeavesForeignRefsAlone checks the other half of the
+// same rule: a ref that already points at some other document is not ours to
+// re-qualify, and its body belongs to that document rather than to the one
+// being flattened.
+func TestPropagateRemoteRefsLeavesForeignRefsAlone(t *testing.T) {
+	foreignBody := &openapi3.Schema{
+		Type: &openapi3.Types{"object"},
+		Properties: openapi3.Schemas{
+			"inner": {Ref: "#/components/schemas/Inner", Value: &openapi3.Schema{}},
+		},
+	}
+	foreign := &openapi3.SchemaRef{Ref: "./other.yaml#/components/schemas/Foreign", Value: foreignBody}
+	schema := &openapi3.Schema{
+		Type:       &openapi3.Types{"object"},
+		Properties: openapi3.Schemas{"f": foreign},
+	}
+
+	propagateRemoteRefs("./common.yaml", schema)
+
+	assert.Equal(t, "./other.yaml#/components/schemas/Foreign", foreign.Ref)
+	assert.Equal(t, "#/components/schemas/Inner", foreignBody.Properties["inner"].Ref,
+		"a foreign schema's body must not be re-qualified for the document being flattened")
+}
+
+const remoteRecursiveCommonSpec = `openapi: 3.0.3
+info: {title: common, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Tree:
+      type: object
+      properties:
+        name:
+          type: string
+        kids:
+          type: array
+          items:
+            $ref: '#/components/schemas/Tree'
+`
+
+const remoteRecursiveUserSpec = `openapi: 3.0.3
+info: {title: user, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    A:
+      allOf:
+        - $ref: './common.yml#/components/schemas/Tree'
+        - type: object
+          properties:
+            extra:
+              type: string
+    B:
+      allOf:
+        - $ref: './common.yml#/components/schemas/Tree'
+        - type: object
+          properties:
+            other:
+              type: string
+`
+
+// TestMergeSchemasRemoteRecursiveSchemaFlattenedTwice is issue #2557 through
+// the path users hit it on: a self-recursive schema in another document,
+// composed via allOf from two components. Flattening it once always worked;
+// the second flatten overflowed the stack.
+func TestMergeSchemasRemoteRecursiveSchemaFlattenedTwice(t *testing.T) {
+	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "common.yml"), []byte(remoteRecursiveCommonSpec), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "user.yml"), []byte(remoteRecursiveUserSpec), 0o600))
+
+	loader := openapi3.NewLoader()
+	loader.IsExternalRefsAllowed = true
+	swagger, err := loader.LoadFromFile(filepath.Join(dir, "user.yml"))
+	require.NoError(t, err)
+
+	code, err := Generate(swagger, Configuration{
+		PackageName:   "user",
+		Generate:      GenerateOptions{Models: true},
+		OutputOptions: OutputOptions{SkipPrune: true},
+		ImportMapping: map[string]string{"./common.yml": "example.com/common"},
+	})
+	require.NoError(t, err)
+
+	// Both composed types keep the recursive member pointing at the named
+	// type in the document it came from, rather than inlining it.
+	assert.Equal(t, 2, strings.Count(code, "*[]externalRef0.Tree"),
+		"both A and B should reference the external Tree:\n%s", code)
+	assert.Contains(t, code, "type A struct {")
+	assert.Contains(t, code, "type B struct {")
 }
