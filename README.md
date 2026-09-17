@@ -2670,4 +2670,14 @@ We are also generously sponsored by the following folks, each of whom provide sp
 	</a>
 </p>
 
+<p align="center">
+	<a href="https://elastic.co?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+		<picture>
+		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/elastic-light.svg">
+		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/elastic-dark.svg">
+		  <img alt="Elastic logo" src=".github/sponsors/elastic-dark.svg" height="100px">
+		</picture>
+	</a>
+</p>
+
 (Note that the order of appearance the order in which sponsorship was received)

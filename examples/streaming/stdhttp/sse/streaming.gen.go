@@ -300,12 +300,12 @@ func (sh *strictHandler) GetStream(w http.ResponseWriter, r *http.Request) {
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"ZJJBb9swDIX/CsHTBjipnNz0B4YNxTbAPe2m2kzCwqI0iQlWFP7vA+UtXbKLZVB473t80BuyHBL6N1TW",
-	"mdDjwDHPBF+Gb18fYdBCIbIcYaBy4ZGwwwuVyknQY791W4dLhymThMzocd9GHeagp2q2D/Y5ktoxUR0L",
-	"Z13V30u68EQVAtSGgXRoWJjSeI4kWuFDEoJMBWYW6iDkPPMYzODhpSaZP8KYRAOLRQygHKlqiBmCTFDp",
-	"55lkJJBzfKayxRa0NPnnCT1+Il0XxA4L1ZykUgu9c84O8yZp0f8j25B+BevKfv+y0PcdWgz0uHO7/abv",
-	"Nzv31Du/d965H9ZWHU8Ug6lysUDKK/Xd476q4XYTK0pPBHQhUVtLX7MBWZSOVIyxRrj3ebr2c+9wSCUG",
-	"RY9TUNo09dW2amE54rJcJ+n5hUbFxUa3hH+fTVPUc4yhvP65gkcWqu/3y/I7AAD//w==",
+	"ZFLNbtswDH4VgqcNcFI5uekFhg3FNsA97abaTMLCojSJMVYUfveB6pIt2cU0PuL74Qe9IcshoX9DZZ0J",
+	"PQ4c80zwZfj29REGLRQiyxEGKguPhB0uVConQY/91m0drh2mTBIyo8d9gzrMQU/VZB/scyS1MVEdC2d9",
+	"Z38vaeGJKgSozQbSodnClMZzJNEKH5IQZCows1AHIeeZx2ACDy81yfwRxiQaWCxiAOVIVUPMEGSCSj/P",
+	"JCOBnOMzlS22oKXRP0/o8RPp+4HYYaGak1RqoXfO2TBtkhb9P2cD6Vewruz34oW+79BioMed2+03fb/Z",
+	"uafe+b3zzv2wtup4ohiMlYsFUqZ6q3Ff1XB7iRWlJwJaSNTO0tdshixKRyq4XiLc6zxd+7lXOKQSg6LH",
+	"KShtGvsqW7WwHHFdr0h6fqFRcTXo1uHfZ9MY9RxjKK9/VvDIQvXvfl1/DwA=",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
