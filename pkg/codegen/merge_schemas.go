@@ -186,46 +186,43 @@ func valueWithPropagatedRef(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
 // qualification. See https://github.com/oapi-codegen/oapi-codegen/issues/2288
 func propagateRemoteRefs(remoteComponent string, schema *openapi3.Schema) {
 	for _, value := range schema.Properties {
-		if len(value.Ref) > 0 && value.Ref[0] == '#' {
-			value.Ref = remoteComponent + value.Ref
-		} else if value.Value != nil {
-			propagateRemoteRefs(remoteComponent, value.Value)
-		}
+		qualifyRemoteRef(remoteComponent, value)
 	}
-
-	if schema.Items != nil {
-		if len(schema.Items.Ref) > 0 && schema.Items.Ref[0] == '#' {
-			schema.Items.Ref = remoteComponent + schema.Items.Ref
-		} else if schema.Items.Value != nil {
-			propagateRemoteRefs(remoteComponent, schema.Items.Value)
-		}
-	}
-
-	if schema.AdditionalProperties.Schema != nil {
-		ap := schema.AdditionalProperties.Schema
-		if len(ap.Ref) > 0 && ap.Ref[0] == '#' {
-			ap.Ref = remoteComponent + ap.Ref
-		} else if ap.Value != nil {
-			propagateRemoteRefs(remoteComponent, ap.Value)
-		}
-	}
-
+	qualifyRemoteRef(remoteComponent, schema.Items)
+	qualifyRemoteRef(remoteComponent, schema.AdditionalProperties.Schema)
 	for _, list := range [][]*openapi3.SchemaRef{schema.AllOf, schema.AnyOf, schema.OneOf} {
 		for _, ref := range list {
-			if len(ref.Ref) > 0 && ref.Ref[0] == '#' {
-				ref.Ref = remoteComponent + ref.Ref
-			} else if ref.Value != nil {
-				propagateRemoteRefs(remoteComponent, ref.Value)
-			}
+			qualifyRemoteRef(remoteComponent, ref)
 		}
 	}
+	qualifyRemoteRef(remoteComponent, schema.Not)
+}
 
-	if schema.Not != nil {
-		if len(schema.Not.Ref) > 0 && schema.Not.Ref[0] == '#' {
-			schema.Not.Ref = remoteComponent + schema.Not.Ref
-		} else if schema.Not.Value != nil {
-			propagateRemoteRefs(remoteComponent, schema.Not.Value)
+// qualifyRemoteRef qualifies one position inside a schema being flattened out
+// of a remote document: a local "#/..." ref is rewritten to point at that
+// document, and an inline schema is walked for positions of its own.
+//
+// A $ref is never followed. The schema it names becomes a Go type generated
+// from the document it lives in, so its body is not ours to rewrite — and a
+// ref already qualified for some document must not be re-qualified for this
+// one. Not following refs is also what makes this terminate: a schema can
+// only refer back to itself through a $ref, so walking inline schemas alone
+// cannot cycle. Following them recursed forever the second time a
+// self-recursive remote schema was flattened, because the first pass had
+// rewritten the very refs whose "#" prefix stopped the walk
+// (https://github.com/oapi-codegen/oapi-codegen/issues/2557).
+func qualifyRemoteRef(remoteComponent string, ref *openapi3.SchemaRef) {
+	if ref == nil {
+		return
+	}
+	if len(ref.Ref) > 0 {
+		if ref.Ref[0] == '#' {
+			ref.Ref = remoteComponent + ref.Ref
 		}
+		return
+	}
+	if ref.Value != nil {
+		propagateRemoteRefs(remoteComponent, ref.Value)
 	}
 }
 
