@@ -146,6 +146,11 @@ output-options:
   client-response-bytes-function: false
   skip-client-response-content-type: false
   skip-response-body-getters: false
+  # When true, the generated response parsing function adds a `default:` case
+  # that returns an error for a response whose status code and content type are
+  # not matched by any declared case. Off by default, which preserves the
+  # existing behaviour of returning such a response with no error.
+  default-response-error: false
   streaming-content-types: []
   # Short names for media types, used in generated type names. Keys are the
   # tag spliced into type names (e.g. the JSON in FindPetsJSONRequestBody),
