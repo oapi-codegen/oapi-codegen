@@ -1083,3 +1083,167 @@ func TestParameterDefinitionSchemaType(t *testing.T) {
 	assert.Equal(t, []string{"string", "integer"}, paramWithTypes(&openapi3.Types{"string", "integer", "null"}).SchemaTypes())
 	assert.Nil(t, paramWithTypes(&openapi3.Types{"string"}).SchemaTypes())
 }
+
+// TestStrictResponseDelegatesCustomMarshalJSON pins which strict-server
+// response envelopes get a delegating MarshalJSON/UnmarshalJSON pair.
+// See https://github.com/oapi-codegen/oapi-codegen/issues/2549.
+func TestStrictResponseDelegatesCustomMarshalJSON(t *testing.T) {
+	spec := `
+openapi: "3.1.0"
+info: {title: t, version: "1"}
+paths:
+  /thing:
+    get:
+      operationId: getThing
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Thing'}
+  /bag:
+    get:
+      operationId: getBag
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Bag'}
+  /event:
+    get:
+      operationId: getEvent
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Event'}
+  /maybe:
+    get:
+      operationId: getMaybe
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MaybeName'}
+  /renamed:
+    get:
+      operationId: getRenamed
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RenamedEvent'}
+  /plain:
+    get:
+      operationId: getPlain
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Base'}
+  /inline-thing:
+    get:
+      operationId: getInlineThing
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Base'
+                  - oneOf:
+                      - $ref: '#/components/schemas/Cat'
+                      - $ref: '#/components/schemas/Dog'
+  /inline-event:
+    get:
+      operationId: getInlineEvent
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Cat'
+                  - $ref: '#/components/schemas/Dog'
+components:
+  schemas:
+    Base:
+      type: object
+      required: [id]
+      properties:
+        id: {type: string}
+    Cat:
+      type: object
+      properties:
+        meow: {type: string}
+    Dog:
+      type: object
+      properties:
+        woof: {type: string}
+    # allOf-composed union: UnionElements come from the merge, not from a
+    # top-level oneOf.
+    Thing:
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - oneOf:
+            - $ref: '#/components/schemas/Cat'
+            - $ref: '#/components/schemas/Dog'
+    # fixed properties plus additionalProperties
+    Bag:
+      type: object
+      required: [kind]
+      properties:
+        kind: {type: string}
+      additionalProperties: true
+    # plain top-level oneOf (issue #970)
+    Event:
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    # x-go-type-name wraps the union in a renamed type and aliases it; the
+    # envelope is a defined type over the alias, so it still needs a delegator
+    RenamedEvent:
+      x-go-type-name: EventImpl
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    # looks like a union, but collapses to a plain string alias, so there is
+    # no MarshalJSON to delegate to
+    MaybeName:
+      anyOf:
+        - type: string
+        - type: "null"
+`
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	require.NoError(t, err)
+	out, err := Generate(swagger, Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{Models: true, StdHTTPServer: true, Strict: true},
+	})
+	require.NoError(t, err)
+
+	delegator := func(name string) string {
+		return "func (t " + name + "200JSONResponse) MarshalJSON() ([]byte, error) {\n\treturn "
+	}
+	for _, name := range []string{"GetThing", "GetBag", "GetEvent", "GetRenamed"} {
+		assert.Contains(t, out, delegator(name), "%s must delegate to the model's MarshalJSON", name)
+	}
+	for _, name := range []string{"GetMaybe", "GetPlain", "GetInlineThing", "GetInlineEvent"} {
+		assert.NotContains(t, out, delegator(name), "%s must not get a delegator", name)
+	}
+
+	// Hoisted inline bodies are aliased, so they inherit the methods and the
+	// visitor encodes the response value itself — never the raw union field,
+	// which would drop the properties merged in by an allOf.
+	assert.NotContains(t, out, ".union)", "visitors must not encode the raw union field")
+	for _, name := range []string{"GetInlineThing", "GetInlineEvent"} {
+		assert.Contains(t, out, "type "+name+"200JSONResponse = "+name+"200JSONResponseBody")
+	}
+}

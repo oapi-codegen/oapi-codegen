@@ -35,8 +35,55 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Bag'
+  # Control for #2549: top-level oneOf plus additionalProperties was already
+  # delegated by the #970 fix.
+  /both:
+    get:
+      operationId: getBoth
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Both'
+  # Issue #2549 (inline variant): allOf+oneOf at the response root is hoisted
+  # to a named body type and the envelope aliases it, so MarshalJSON is
+  # inherited; the visitor must not bypass it by encoding `.union` directly.
+  /inline-thing:
+    get:
+      operationId: getInlineThing
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Base'
+                  - oneOf:
+                      - $ref: '#/components/schemas/Cat'
+                      - $ref: '#/components/schemas/Dog'
+  # Issue #2549 (x-go-type-name variant): the union model is moved to a renamed
+  # type and this position becomes an alias to it, so the response envelope is
+  # a defined type over the renamed model and still needs a delegator.
+  /renamed:
+    get:
+      operationId: getRenamed
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenamedEvent'
 components:
   schemas:
+    RenamedEvent:
+      x-go-type-name: EventImpl
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
     Event:
       oneOf:
         - $ref: '#/components/schemas/OnetimeEvent'
@@ -53,6 +100,7 @@ components:
       properties:
         kind: { type: string, enum: [repeatable] }
         interval: { type: string }
+    # Issue #2549 schemas.
     Base:
       type: object
       required: [id]
@@ -78,3 +126,12 @@ components:
       properties:
         kind: { type: string }
       additionalProperties: true
+    Both:
+      type: object
+      required: [kind]
+      properties:
+        kind: { type: string }
+      additionalProperties: true
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'

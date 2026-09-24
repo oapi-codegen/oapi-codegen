@@ -107,6 +107,56 @@ func TestAdditionalPropertiesResponseVisitWritesBody(t *testing.T) {
 	assert.Equal(t, bag, Bag(decoded))
 }
 
+// TestUnionAndAdditionalPropertiesResponseVisitWritesBody is a control for
+// https://github.com/oapi-codegen/oapi-codegen/issues/2549: a top-level oneOf
+// alongside additionalProperties was already delegated by the #970 fix, and
+// must stay that way.
+func TestUnionAndAdditionalPropertiesResponseVisitWritesBody(t *testing.T) {
+	both := Both{Kind: "demo", AdditionalProperties: map[string]any{"extra": float64(1)}}
+	require.NoError(t, both.FromCat(Cat{Meow: ptr("purr")}))
+
+	resp := GetBoth200JSONResponse(both)
+	w := httptest.NewRecorder()
+
+	require.NoError(t, resp.VisitGetBothResponse(w))
+	assert.JSONEq(t, `{"kind":"demo","extra":1,"meow":"purr"}`, w.Body.String())
+}
+
+// TestInlineAllOfUnionResponseVisitWritesBody is a regression test for
+// https://github.com/oapi-codegen/oapi-codegen/issues/2549.
+//
+// An inline allOf+oneOf at the response root is hoisted to a named body type,
+// and the envelope is an alias of it, so MarshalJSON is inherited. The visitor
+// must not bypass it by encoding the raw union field, which would drop the
+// fixed properties merged in from the allOf.
+func TestInlineAllOfUnionResponseVisitWritesBody(t *testing.T) {
+	body := GetInlineThing200JSONResponseBody{Id: "abc"}
+	require.NoError(t, body.FromCat(Cat{Meow: ptr("purr")}))
+
+	resp := GetInlineThing200JSONResponse(body)
+	w := httptest.NewRecorder()
+
+	require.NoError(t, resp.VisitGetInlineThingResponse(w))
+	assert.JSONEq(t, `{"id":"abc","meow":"purr"}`, w.Body.String())
+}
+
+// TestRenamedUnionResponseVisitWritesBody is a regression test for
+// https://github.com/oapi-codegen/oapi-codegen/issues/2549.
+//
+// x-go-type-name moves the union model to a renamed type and leaves an alias
+// behind, so the response envelope is a defined type over the renamed model
+// and still needs a delegator.
+func TestRenamedUnionResponseVisitWritesBody(t *testing.T) {
+	var ev RenamedEvent
+	require.NoError(t, ev.FromCat(Cat{Meow: ptr("purr")}))
+
+	resp := GetRenamed200JSONResponse(ev)
+	w := httptest.NewRecorder()
+
+	require.NoError(t, resp.VisitGetRenamedResponse(w))
+	assert.JSONEq(t, `{"meow":"purr"}`, w.Body.String())
+}
+
 func ptr[T any](v T) *T {
 	return &v
 }

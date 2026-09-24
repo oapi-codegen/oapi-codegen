@@ -1196,7 +1196,7 @@ func (response UnionExample200JSONResponse) VisitUnionExampleResponse(ctx fiber.
 	ctx.Response().Header.Set("Content-Type", "application/json")
 	ctx.Status(200)
 
-	return ctx.JSON(&response.Body.union)
+	return ctx.JSON(&response.Body)
 }
 
 type UnionExample400Response = BadrequestResponse
