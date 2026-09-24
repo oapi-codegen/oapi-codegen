@@ -6,6 +6,7 @@ package codegen
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/json"
 	"fmt"
 	"maps"
@@ -73,6 +74,7 @@ func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 			seen[member.Ref] = true
 			seenTopLevel[member.Ref] = true
 		}
+		merged.member = member
 		if err := merged.add(value, allOfMemberLabel(ctx, member, i), seen); err != nil {
 			return Schema{}, err
 		}
@@ -94,6 +96,9 @@ func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 		schema.Extensions = ext
 	}
 
+	if components := merged.components; len(components) > 1 {
+		ctx.unionComponents[&schema] = components
+	}
 	return generateGoSchema(ctx, openapi3.NewSchemaRef("", &schema), path)
 }
 
@@ -710,6 +715,130 @@ type allOfMerge struct {
 	// flattening holds the members' schemas the merge has reached, directly
 	// or in a nested allOf (see listsFlattened).
 	flattening map[*openapi3.Schema]bool
+	// components are the oneOfs and anyOfs the members bring, each a union of
+	// its own.
+	components []unionComponent
+	// member is the member whose schema add is about to merge.
+	member *openapi3.SchemaRef
+}
+
+// unionComponent is a oneOf or anyOf that an allOf's merge collects from one
+// of its members. An allOf of several is a value that is one of each union's
+// variants at once: `allOf: [$ref Payment, $ref Delivery]` is a card or a
+// transfer, and a courier or a pickup. The generated type keeps one JSON
+// value; each variant of each union parses it on demand, and setting a
+// variant replaces only the keys its own union owns (see
+// Schema.UnionOwnedKeys).
+type unionComponent struct {
+	branches      openapi3.SchemaRefs
+	anyOf         bool
+	discriminator *openapi3.Discriminator
+	// ref is the member when it is a $ref to a schema that is only this
+	// union, which then gets As* and From* of its own.
+	ref *openapi3.SchemaRef
+	// label names the member the union comes from, for errors.
+	label string
+}
+
+// addComponent adds a union to the merge, unless one with the same branches
+// is already there. Then the two are one union: a oneOf if either is, with
+// the $ref and the discriminator either has.
+func (m *allOfMerge) addComponent(c unionComponent) {
+	for i, existing := range m.components {
+		if sameBranches(existing.branches, c.branches) {
+			if existing.anyOf && !c.anyOf {
+				existing.anyOf, existing.label = false, c.label
+			}
+			existing.ref = cmp.Or(existing.ref, c.ref)
+			existing.discriminator = cmp.Or(existing.discriminator, c.discriminator)
+			m.components[i] = existing
+			return
+		}
+	}
+	m.components = append(m.components, c)
+}
+
+// placeDiscriminator decides which of several unions the composition's
+// discriminator d tells apart: the one that declares it, or else, for one
+// declared elsewhere (next to the allOf, or in a member of its own), the one
+// whose variants its mapping names or, without a mapping, the one whose
+// variants all have the property. A value has one discriminator, so it is an
+// error for it to fit several unions, or none.
+func (m *allOfMerge) placeDiscriminator(d *openapi3.Discriminator) error {
+	var carriers, labels []string
+	var candidates []int
+	for i, c := range m.components {
+		labels = append(labels, displayLabel(c.label))
+		if c.discriminator != nil {
+			carriers = append(carriers, displayLabel(c.label))
+		}
+		if unionFits(c.branches, d) {
+			candidates = append(candidates, i)
+		}
+	}
+	switch {
+	case len(carriers) == 1:
+		return nil
+	case len(carriers) > 1:
+		return fmt.Errorf("allOf can't use the discriminator %s for both %s and %s: a value has one discriminator",
+			d.PropertyName, carriers[0], carriers[1])
+	case len(candidates) != 1:
+		return fmt.Errorf("allOf can't tell which of its unions (%s) the discriminator %s is for; declare it next to that union's oneOf or anyOf",
+			strings.Join(labels, ", "), d.PropertyName)
+	}
+	m.components[candidates[0]].discriminator = d
+	return nil
+}
+
+// unionFits reports whether the discriminator d can tell the union's branches
+// apart: its mapping names one of them, or, without a mapping, every branch
+// but a null one declares its property.
+func unionFits(branches openapi3.SchemaRefs, d *openapi3.Discriminator) bool {
+	if len(d.Mapping) > 0 {
+		for _, b := range branches {
+			for _, target := range d.Mapping {
+				if b != nil && b.Ref != "" && b.Ref == target.Ref {
+					return true
+				}
+			}
+		}
+		return false
+	}
+	declared := false
+	for _, b := range branches {
+		if b == nil || b.Value == nil || isNullTypeSchema(b.Value) {
+			continue
+		}
+		if findProperty(b.Value, d.PropertyName, 0) == nil {
+			return false
+		}
+		declared = true
+	}
+	return declared
+}
+
+// sameBranches reports whether two lists of union branches are the same.
+func sameBranches(a, b openapi3.SchemaRefs) bool {
+	return slices.EqualFunc(a, b, func(x, y *openapi3.SchemaRef) bool {
+		return x == y || (x != nil && y != nil && sameSchemaV3(x, y))
+	})
+}
+
+// isUnionOnly reports whether a schema is only a oneOf or anyOf: a union type
+// with nothing else that shapes a Go type but its discriminator and a
+// restated `type: object`.
+func isUnionOnly(v openapi3.Schema) bool {
+	if (len(v.OneOf) == 0) == (len(v.AnyOf) == 0) {
+		return false
+	}
+	own := v
+	own.OneOf, own.AnyOf, own.Discriminator, own.Required = nil, nil, nil, nil
+	for _, keyword := range shallowTypeKeywords(own) {
+		if keyword != "type" || !sameTypes(nonNullTypes(own.Type), []string{openapi3.TypeObject}) {
+			return false
+		}
+	}
+	return true
 }
 
 // markFlattening records member, and the members of its allOf, all the way
@@ -766,6 +895,8 @@ func newAllOfMerge(ctx genContext) *allOfMerge {
 // an allOf itself contributes its members, then its own keywords. seen holds
 // the $refs being flattened, so that a cycle back into one is skipped.
 func (m *allOfMerge) add(v openapi3.Schema, label string, seen map[string]bool) error {
+	member := m.member
+	m.member = nil
 	// A member that is an allOf is merged its own way first when that differs
 	// from this composition's, so it has the values it has on its own:
 	// decorating a composition that adds values to an enum doesn't take them
@@ -783,6 +914,7 @@ func (m *allOfMerge) add(v openapi3.Schema, label string, seen map[string]bool) 
 			own.unionEnums = union
 			own.composition = m.composition
 			own.flattening = m.flattening
+			own.member = member
 			if err := own.add(v, label, seen); err != nil {
 				return err
 			}
@@ -790,6 +922,10 @@ func (m *allOfMerge) add(v openapi3.Schema, label string, seen map[string]bool) 
 			if err != nil {
 				return err
 			}
+			for _, c := range own.components {
+				m.addComponent(c)
+			}
+			merged.OneOf, merged.AnyOf = nil, nil
 			return m.add(merged, label, seen)
 		}
 	}
@@ -812,6 +948,7 @@ func (m *allOfMerge) add(v openapi3.Schema, label string, seen map[string]bool) 
 		default:
 			innerLabel = childLabel(label, fmt.Sprintf("allOf/%d", j))
 		}
+		m.member = inner
 		if err := m.add(iv, innerLabel, seen); err != nil {
 			return err
 		}
@@ -822,27 +959,35 @@ func (m *allOfMerge) add(v openapi3.Schema, label string, seen map[string]bool) 
 			m.schema.Extensions[k] = ext
 		}
 	}
-	// A oneOf or anyOf that only adds constraints makes no union, and nor does
-	// one that lists a schema this merge is part of (see listsFlattened). A
-	// list constrains the member, or, when the member declares no type, the
-	// composition, whose other members may declare the type its branches
-	// restate. A discriminator goes with the list it tells apart, the oneOf
-	// when there are both: a parent's discriminator says which child a value
-	// is, not which branch of a union the child has of its own.
+	// Each oneOf and anyOf is a union of its own (see unionComponent). One that
+	// only adds constraints makes no union, and nor does one that lists a
+	// schema this merge is part of (see listsFlattened). A list constrains the
+	// member, or, when the member declares no type, the composition, whose
+	// other members may declare the type its branches restate. A discriminator
+	// goes with the list it tells apart, the oneOf when there are both: a
+	// parent's discriminator says which child a value is, not which branch of
+	// a union the child has of its own.
+	if member == nil || member.Ref == "" || !isUnionOnly(v) {
+		member = nil
+	}
 	owner := &v
 	if len(declaredTypes(owner)) == 0 && m.composition != nil {
 		owner = m.composition
 	}
-	oneOf := !isConstraintOnlyUnionV3(v.OneOf, owner) && !m.listsFlattened(v.OneOf)
-	anyOf := !isConstraintOnlyUnionV3(v.AnyOf, owner) && !m.listsFlattened(v.AnyOf)
-	if oneOf {
-		m.schema.OneOf = append(m.schema.OneOf, v.OneOf...)
-	}
-	if anyOf {
-		m.schema.AnyOf = append(m.schema.AnyOf, v.AnyOf...)
-	}
+	oneOf := len(v.OneOf) > 0 && !isConstraintOnlyUnionV3(v.OneOf, owner) && !m.listsFlattened(v.OneOf)
+	anyOf := len(v.AnyOf) > 0 && !isConstraintOnlyUnionV3(v.AnyOf, owner) && !m.listsFlattened(v.AnyOf)
 	if (len(v.OneOf) > 0 && !oneOf) || (len(v.OneOf) == 0 && len(v.AnyOf) > 0 && !anyOf) {
 		v.Discriminator = nil
+	}
+	anyOfDiscriminator := v.Discriminator
+	if len(v.OneOf) > 0 {
+		anyOfDiscriminator = nil
+	}
+	if anyOf {
+		m.addComponent(unionComponent{branches: v.AnyOf, anyOf: true, discriminator: anyOfDiscriminator, ref: member, label: label})
+	}
+	if oneOf {
+		m.addComponent(unionComponent{branches: v.OneOf, discriminator: v.Discriminator, ref: member, label: label})
 	}
 
 	if err := m.addType(v, label); err != nil {
@@ -1169,6 +1314,29 @@ func (m *allOfMerge) result() (openapi3.Schema, error) {
 	if m.nullInType {
 		types := append(slices.Clone(s.Type.Slice()), openapi3.TypeNull)
 		s.Type = (*openapi3.Types)(&types)
+	}
+	// A oneOf or anyOf whose branches restate a type another member declares
+	// only adds constraints too, which only the whole composition shows. One
+	// of only 3.1 null branches says nullable, which is read where the schema
+	// is used.
+	m.components = slices.DeleteFunc(m.components, func(c unionComponent) bool {
+		return isConstraintOnlyUnionV3(c.branches, &s) || !slices.ContainsFunc(c.branches, func(b *openapi3.SchemaRef) bool {
+			return b == nil || b.Value == nil || !isNullTypeSchema(b.Value)
+		})
+	})
+	if len(m.components) > 1 && s.Discriminator != nil {
+		if err := m.placeDiscriminator(s.Discriminator); err != nil {
+			return openapi3.Schema{}, err
+		}
+	}
+	// A single union is generated as it always was. Several are one union
+	// for the generator, whose variants unionComponents groups again.
+	for _, c := range m.components {
+		if c.anyOf && len(m.components) == 1 {
+			s.AnyOf = c.branches
+		} else {
+			s.OneOf = append(slices.Clone(s.OneOf), c.branches...)
+		}
 	}
 	if s.Const != nil && s.Enum != nil {
 		i := slices.IndexFunc(s.Enum, func(value any) bool { return reflect.DeepEqual(value, s.Const) })

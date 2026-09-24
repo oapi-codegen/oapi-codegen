@@ -45,6 +45,17 @@ type Schema struct {
 	// union's additionalProperties, where UnmarshalJSON also puts them.
 	UnionVariantProperties []string
 
+	// UnionOwnedKeys is set for a union that combines several oneOfs or
+	// anyOfs, such as an allOf of unions (schema-merging-behavior v3). It
+	// maps each variant to the JSON keys only the variants of its own union
+	// declare: From* replaces those and keeps the other unions' data, where
+	// for a single union it replaces all of it.
+	UnionOwnedKeys map[UnionElement][]string
+
+	// UnionRefComponents lists, for such a union, the unions that are a $ref
+	// to a union type, which get As* and From* of their own.
+	UnionRefComponents []UnionRefComponent
+
 	Discriminator *Discriminator // Describes which value is stored in a union
 
 	// If this is set, the schema will declare a type via alias, eg,
@@ -518,6 +529,11 @@ type Discriminator struct {
 	// "boolean", "integer" or "number" when the schemas declare one, and ""
 	// for the usual string discriminator.
 	ValueType string
+
+	// variants are the union members the discriminator tells apart, when
+	// they are only some of the union's: a union that combines several
+	// (see Schema.UnionOwnedKeys) has the discriminator of one of them.
+	variants []UnionElement
 }
 
 // IsString reports whether the discriminator's values are JSON strings.
@@ -590,7 +606,14 @@ type DiscriminatorStamp struct {
 // with issue #2071).
 func (s Schema) DiscriminatorStampFor(element UnionElement) *DiscriminatorStamp {
 	d := s.Discriminator
-	if d == nil || len(d.Mapping) != len(s.UnionElements) {
+	if d == nil {
+		return nil
+	}
+	variants := len(s.UnionElements)
+	if d.variants != nil {
+		variants = len(d.variants)
+	}
+	if len(d.Mapping) != variants {
 		return nil
 	}
 	stamp := DiscriminatorStamp{}
@@ -652,6 +675,31 @@ func (s Schema) DiscriminatorCases() []DiscriminatorCase {
 
 // UnionElement describe union element, based on prefix externalRef\d+ and real ref name from external schema.
 type UnionElement string
+
+// UnionRefComponent is a union type that a union combining several includes
+// through a $ref (see Schema.UnionRefComponents).
+type UnionRefComponent struct {
+	// Type is the union's Go type.
+	Type UnionElement
+	// OwnedKeys are the JSON keys only this union's variants declare.
+	OwnedKeys []string
+	// OtherKeys are the JSON keys only the other unions' variants declare,
+	// which As* leaves out of this union.
+	OtherKeys []string
+}
+
+// InUnionComponent reports whether a variant belongs to one of several unions
+// the schema combines (see UnionOwnedKeys).
+func (s Schema) InUnionComponent(e UnionElement) bool {
+	_, ok := s.UnionOwnedKeys[e]
+	return ok
+}
+
+// UnionOwnedKeysFor returns the JSON keys a variant's own union owns (see
+// UnionOwnedKeys).
+func (s Schema) UnionOwnedKeysFor(e UnionElement) []string {
+	return s.UnionOwnedKeys[e]
+}
 
 // String returns externalRef\d+ and real ref name from external schema, like externalRef0.SomeType.
 func (u UnionElement) String() string {

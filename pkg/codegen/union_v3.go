@@ -15,31 +15,140 @@ import (
 
 // generateUnionsV3 generates the anyOf and oneOf of an object schema into
 // outSchema's union members.
+//
+// A schema that combines several unions, an anyOf and a oneOf or an allOf's
+// merge of several, is a value that is one of each union's variants at once
+// (see unionComponent), and generates as generateUnionComponentsV3 describes.
 func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema, path []string) error {
-	// Inline union members are named <path><index>. A schema with both
-	// anyOf and oneOf would name both lists' members the same way and
-	// fail with a duplicate type name (issue #839), so each list gets
-	// its own path segment then. A schema with only one keeps its
-	// names.
-	anyOfPath, oneOfPath := path, path
-	if schema.AnyOf != nil && schema.OneOf != nil {
-		anyOfPath = append(slices.Clone(path), "AnyOf")
-		oneOfPath = append(slices.Clone(path), "OneOf")
-	}
-	if schema.AnyOf != nil {
-		if err := generateUnionV3(ctx, outSchema, schema.AnyOf, schema.Discriminator, anyOfPath); err != nil {
-			return fmt.Errorf("error generating type for anyOf: %w", err)
+	components := ctx.unionComponents[schema]
+	if components == nil && schema.AnyOf != nil && schema.OneOf != nil {
+		components = []unionComponent{
+			{branches: schema.AnyOf, anyOf: true},
+			{branches: schema.OneOf, discriminator: schema.Discriminator},
+		}
+		if sameBranches(schema.AnyOf, schema.OneOf) {
+			components = components[1:]
 		}
 	}
-	if schema.OneOf != nil {
-		if err := generateUnionV3(ctx, outSchema, schema.OneOf, schema.Discriminator, oneOfPath); err != nil {
+	switch {
+	case len(components) > 1:
+		return generateUnionComponentsV3(ctx, outSchema, components, path)
+	case len(components) == 1:
+		if err := generateUnionV3(ctx, outSchema, components[0].branches, components[0].discriminator, path, true); err != nil {
+			return fmt.Errorf("error generating type for oneOf: %w", err)
+		}
+	case schema.AnyOf != nil:
+		if err := generateUnionV3(ctx, outSchema, schema.AnyOf, schema.Discriminator, path, true); err != nil {
+			return fmt.Errorf("error generating type for anyOf: %w", err)
+		}
+	case schema.OneOf != nil:
+		if err := generateUnionV3(ctx, outSchema, schema.OneOf, schema.Discriminator, path, true); err != nil {
 			return fmt.Errorf("error generating type for oneOf: %w", err)
 		}
 	}
 	return nil
 }
 
-func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string) error {
+// generateUnionComponentsV3 generates a union that combines several (see
+// unionComponent): the variants of each, and for each variant the JSON keys
+// its own union owns, those only its union's variants declare, which From*
+// replaces while keeping the other unions' data (see
+// Schema.UnionOwnedKeys). A key several unions declare, such as a shared id,
+// belongs to all of them and is never removed. A union that is a $ref to a
+// union type also gets As* and From* for that type.
+//
+// Inline variants are named <path><union><index>, where <union> is OneOf or
+// AnyOf, numbered when there are several of a kind.
+func generateUnionComponentsV3(ctx genContext, outSchema *Schema, components []unionComponent, path []string) error {
+	// An opaque variant, from another document or an x-go-type, declares no
+	// keys: its fields aren't ours to read (see isOpaqueSchema).
+	// The discriminator's property is its union's too, even when the variants
+	// leave it to the stamp.
+	declared := make([][]string, len(components))
+	for k, c := range components {
+		for _, b := range c.branches {
+			if b != nil && b.Value != nil && !isOpaqueSchema(b) {
+				declared[k] = append(declared[k], propertyNames(b.Value, 0)...)
+			}
+		}
+		if c.discriminator != nil {
+			declared[k] = append(declared[k], c.discriminator.PropertyName)
+		}
+	}
+	owned := make([][]string, len(components))
+	for k := range components {
+		owned[k] = []string{}
+		for _, key := range declared[k] {
+			shared := false
+			for j := range components {
+				shared = shared || (j != k && slices.Contains(declared[j], key))
+			}
+			if !shared && !slices.Contains(owned[k], key) {
+				owned[k] = append(owned[k], key)
+			}
+		}
+		slices.Sort(owned[k])
+	}
+
+	outSchema.UnionOwnedKeys = make(map[UnionElement][]string)
+	for k, c := range components {
+		kind, count, index := "OneOf", 0, 0
+		if c.anyOf {
+			kind = "AnyOf"
+		}
+		for j, other := range components {
+			if other.anyOf == c.anyOf {
+				count++
+				if j < k {
+					index++
+				}
+			}
+		}
+		if count > 1 {
+			kind += fmt.Sprint(index)
+		}
+		// The union has one discriminator, which the merge gives to one of
+		// the unions (see allOfMerge.placeDiscriminator).
+		discriminator := c.discriminator
+		if outSchema.Discriminator != nil {
+			discriminator = nil
+		}
+		before := len(outSchema.UnionElements)
+		if err := generateUnionV3(ctx, outSchema, c.branches, discriminator, append(slices.Clone(path), kind), false); err != nil {
+			return fmt.Errorf("error generating type for %s: %w", strings.ToLower(kind[:1])+kind[1:], err)
+		}
+		for _, e := range outSchema.UnionElements[before:] {
+			outSchema.UnionOwnedKeys[e] = owned[k]
+		}
+		if c.ref != nil {
+			union, err := generateGoSchema(ctx.at(path), c.ref, path)
+			if err != nil {
+				return err
+			}
+			var others []string
+			for j := range components {
+				if j != k {
+					others = append(others, owned[j]...)
+				}
+			}
+			slices.Sort(others)
+			outSchema.UnionRefComponents = append(outSchema.UnionRefComponents,
+				UnionRefComponent{Type: UnionElement(union.GoType), OwnedKeys: owned[k], OtherKeys: slices.Compact(others)})
+		}
+	}
+	// A union type that is also a variant of another union has that
+	// variant's As* and From* already.
+	outSchema.UnionRefComponents = slices.DeleteFunc(outSchema.UnionRefComponents, func(c UnionRefComponent) bool {
+		return slices.Contains(outSchema.UnionElements, c.Type)
+	})
+	return nil
+}
+
+// generateUnionV3 generates one oneOf or anyOf into outSchema's union members.
+// alone is false when the union is one of several (see
+// generateUnionComponentsV3), which then isn't collapsed into its only
+// non-null branch.
+func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string, alone bool) error {
 	if discriminator != nil {
 		outSchema.Discriminator = &Discriminator{
 			Property:  discriminator.PropertyName,
@@ -83,7 +192,7 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 	// X}]` alone) to avoid changing behavior for existing single-branch
 	// union specs that may rely on the wrapper shape. The narrow
 	// condition keeps this change scoped to the bug fix.
-	if effectiveCount == 1 && hadNullBranch && discriminator == nil {
+	if alone && effectiveCount == 1 && hadNullBranch && discriminator == nil {
 		elementSchema, err := generateGoSchema(ctx.at(path), soleEffective, path)
 		if err != nil {
 			return err
@@ -153,6 +262,9 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 		if !slices.Contains(outSchema.UnionElements, UnionElement(elementSchema.GoType)) {
 			outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
 		}
+		if discriminator != nil && !alone && !slices.Contains(outSchema.Discriminator.variants, UnionElement(elementSchema.GoType)) {
+			outSchema.Discriminator.variants = append(outSchema.Discriminator.variants, UnionElement(elementSchema.GoType))
+		}
 		for _, name := range propertyNames(element.Value, 0) {
 			if !slices.Contains(outSchema.UnionVariantProperties, name) {
 				outSchema.UnionVariantProperties = append(outSchema.UnionVariantProperties, name)
@@ -168,7 +280,7 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 	// mapping than the raw element count, and we must not flag that as
 	// incomplete -- the null branch is a nullability marker, not a real
 	// variant that needs a mapping.
-	if (outSchema.Discriminator != nil) && len(outSchema.Discriminator.Mapping) < effectiveCount {
+	if discriminator != nil && len(outSchema.Discriminator.Mapping) < effectiveCount {
 		return errors.New("discriminator: not all schemas were mapped")
 	}
 
