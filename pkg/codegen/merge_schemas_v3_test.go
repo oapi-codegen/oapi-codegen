@@ -1056,6 +1056,196 @@ func TestConstraintOnlyUnionRestatedTypeV3(t *testing.T) {
 	assert.Contains(t, code, "type Beside = Contact")
 }
 
+// TestParentListsChildrenV3: a member whose oneOf or anyOf lists the
+// composition being merged, or a schema the merge flattens into it, adds no
+// union: a child that is an allOf of its parent is one of the parent's
+// branches, not a union of all of them.
+func TestParentListsChildrenV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+`
+    Pet:
+      type: object
+      required: [petType]
+      properties:
+        petType: {type: string}
+      discriminator:
+        propertyName: petType
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    Cat:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+        - properties:
+            meow: {type: string}
+    Dog:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+        - properties:
+            bark: {type: string}
+    Kitten:
+      allOf:
+        - $ref: '#/components/schemas/Cat'
+        - properties:
+            age: {type: integer}
+    Shape:
+      anyOf:
+        - $ref: '#/components/schemas/Square'
+    Square:
+      allOf:
+        - $ref: '#/components/schemas/Shape'
+        - properties:
+            side: {type: number}
+    Unlisted:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+        - properties:
+            purr: {type: string}
+`, withV3)
+	for _, child := range []string{"Cat", "Dog", "Kitten", "Square"} {
+		start := strings.Index(code, "type "+child+" struct {")
+		require.GreaterOrEqual(t, start, 0, child)
+		body := code[start : start+strings.Index(code[start:], "\n}")]
+		assert.NotContains(t, body, "union json.RawMessage", child)
+	}
+	assert.Contains(t, code, "func (t Pet) AsCat() (Cat, error)", "the parent is still the union")
+	assert.Contains(t, code, "func (t Unlisted) AsCat() (Cat, error)",
+		"a schema the parent doesn't list is still one of its branches")
+}
+
+// TestParentListsChildOnlyV3: a child that is only an allOf of the parent
+// that lists it, alone or with members that only annotate, is a struct of the
+// parent's fields, not an alias of the parent's union. Only the composition
+// being merged counts as listed: a property inside a child is still the
+// parent's union.
+func TestParentListsChildOnlyV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+`
+    Pet:
+      type: object
+      required: [petType]
+      properties:
+        petType: {type: string}
+      discriminator:
+        propertyName: petType
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+        - $ref: '#/components/schemas/Bird'
+    Cat:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+    Dog:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+        - description: A dog.
+    Bird:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+        - type: object
+          properties:
+            best:
+              allOf:
+                - $ref: '#/components/schemas/Pet'
+                - properties:
+                    since: {type: string}
+`, withV3)
+	assert.Contains(t, code, "type Cat struct {\n\tPetType string")
+	assert.Contains(t, code, "type Dog struct {\n\tPetType string")
+	assert.NotContains(t, code, "type Cat = Pet")
+	assert.NotContains(t, code, "type Dog = Pet")
+	assert.Contains(t, code, "func (t Bird_Best) AsCat() (Cat, error)", "best is a Pet, one of its branches")
+}
+
+// TestParentListsMemberV3: a union that lists another member of the same
+// allOf, or a schema inside one, is left out whatever the members' order, and
+// its discriminator goes with it.
+func TestParentListsMemberV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+`
+    Pet:
+      type: object
+      required: [petType]
+      properties:
+        petType: {type: string}
+      discriminator:
+        propertyName: petType
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    Cat:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+        - properties:
+            meow: {type: string}
+    Dog:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+        - oneOf:
+            - $ref: '#/components/schemas/Indoor'
+            - $ref: '#/components/schemas/Outdoor'
+    Indoor:
+      type: object
+      properties:
+        room: {type: string}
+    Outdoor:
+      type: object
+      properties:
+        yard: {type: string}
+    KittenA:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+        - $ref: '#/components/schemas/Cat'
+        - properties:
+            age: {type: integer}
+    KittenB:
+      allOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Pet'
+        - properties:
+            age: {type: integer}
+    Nested:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+        - allOf:
+            - $ref: '#/components/schemas/Cat'
+    Card:
+      type: object
+      properties:
+        card: {type: string}
+    Cash:
+      type: object
+      properties:
+        amount: {type: number}
+    Payment:
+      oneOf:
+        - $ref: '#/components/schemas/Card'
+        - $ref: '#/components/schemas/Cash'
+    Wallet:
+      oneOf:
+        - $ref: '#/components/schemas/Payment'
+        - $ref: '#/components/schemas/Cash'
+    BothA:
+      allOf:
+        - $ref: '#/components/schemas/Wallet'
+        - $ref: '#/components/schemas/Payment'
+    BothB:
+      allOf:
+        - $ref: '#/components/schemas/Payment'
+        - $ref: '#/components/schemas/Wallet'
+`, withV3)
+	for _, name := range []string{"KittenA", "KittenB", "Nested"} {
+		assert.NotContains(t, code, "func (t "+name+") AsDog()", name)
+	}
+	for _, name := range []string{"BothA", "BothB"} {
+		assert.Contains(t, code, "func (t "+name+") AsCard() (Card, error)", name)
+		assert.NotContains(t, code, "func (t "+name+") AsPayment()", name)
+	}
+	assert.Contains(t, code, "func (t Dog) AsIndoor() (Indoor, error)")
+	assert.NotContains(t, code, "func (t Dog) ValueByDiscriminator(", "petType tells Pet's children apart, not Dog's own union")
+	start := strings.Index(code, "func (t *Dog) FromIndoor(")
+	require.GreaterOrEqual(t, start, 0)
+	fromIndoor := code[start : start+strings.Index(code[start:], "\n}\n")]
+	assert.NotContains(t, fromIndoor, `"Indoor"`, "nothing stamps petType")
+}
+
 // TestConstraintOnlyUnionMemberV3: a member's list whose branches restate the
 // type another member declares only adds constraints, also when another
 // member brings a real union; and a branch that names its Go type is a type.

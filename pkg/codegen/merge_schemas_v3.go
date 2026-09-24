@@ -19,7 +19,10 @@ import (
 func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	n := len(allOf)
 
-	if n == 1 {
+	// A child that is only an allOf of the parent that lists it is not the
+	// parent's union: it is merged, which leaves the list out (see
+	// listsFlattened).
+	if n == 1 && !listsComposition(ctx, refSchemaFor(allOf[0])) {
 		return generateGoSchema(ctx, allOf[0], path)
 	}
 
@@ -57,6 +60,9 @@ func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 	// The $refs of the members merged so far, so that a nested allOf that
 	// refers back to one is not flattened into itself.
 	seenTopLevel := make(map[string]bool)
+	for _, member := range allOf {
+		merged.markFlattening(member)
+	}
 	for i, member := range allOf {
 		value, err := memberValue(member)
 		if err != nil {
@@ -241,12 +247,27 @@ func annotatedRefMember(ctx genContext, allOf []*openapi3.SchemaRef) *openapi3.S
 				return nil
 			}
 		}
-		if ctx.rootPosition && aliasesBack(ctx, target) {
+		if (ctx.rootPosition && aliasesBack(ctx, target)) || listsComposition(ctx, target) {
 			return nil
 		}
 		return m
 	}
 	return nil
+}
+
+// listsComposition reports whether target's oneOf or anyOf lists the
+// composition being merged: target is the parent of a child that is an allOf
+// of it (see listsFlattened), so the child isn't target's type.
+func listsComposition(ctx genContext, target *openapi3.SchemaRef) bool {
+	if target == nil || target.Value == nil || ctx.composing == nil {
+		return false
+	}
+	for _, b := range slices.Concat(target.Value.OneOf, target.Value.AnyOf) {
+		if b != nil && b.Value == ctx.composing {
+			return true
+		}
+	}
+	return false
 }
 
 // annotates reports whether an allOf member only annotates target, the member
@@ -686,6 +707,41 @@ type allOfMerge struct {
 	// composition is the allOf being merged. A member's oneOf or anyOf may
 	// restate the type another member declares (see isConstraintOnlyUnionV3).
 	composition *openapi3.Schema
+	// flattening holds the members' schemas the merge has reached, directly
+	// or in a nested allOf (see listsFlattened).
+	flattening map[*openapi3.Schema]bool
+}
+
+// markFlattening records member, and the members of its allOf, all the way
+// down, as schemas the merge flattens (see listsFlattened), before any is
+// merged, so which unions are left out doesn't depend on the members' order.
+func (m *allOfMerge) markFlattening(member *openapi3.SchemaRef) {
+	if member == nil || member.Value == nil || m.flattening[member.Value] {
+		return
+	}
+	m.flattening[member.Value] = true
+	for _, inner := range member.Value.AllOf {
+		m.markFlattening(inner)
+	}
+}
+
+// listsFlattened reports whether a oneOf or anyOf lists the composition being
+// merged, or a schema the merge is flattening into it. That's the inheritance
+// style some generators write, where a parent lists its children and each
+// child is an allOf of the parent: `Pet: {oneOf: [Cat, Dog]}` and
+// `Cat: {allOf: [$ref Pet, {...}]}`. Merging Pet into Cat would make every
+// child a union of all of them, with Cat.AsDog(); but a Cat already is the Cat
+// branch, so the list says nothing more about it and is left out.
+func (m *allOfMerge) listsFlattened(branches openapi3.SchemaRefs) bool {
+	for _, b := range branches {
+		if b == nil || b.Value == nil {
+			continue
+		}
+		if b.Value == m.ctx.composing || m.flattening[b.Value] {
+			return true
+		}
+	}
+	return false
 }
 
 // labeledSchema is a member's schema for a position, with its label.
@@ -702,6 +758,7 @@ func newAllOfMerge(ctx genContext) *allOfMerge {
 		schema:     openapi3.Schema{Extensions: map[string]any{}},
 		from:       map[string]string{},
 		properties: map[string][]labeledSchema{},
+		flattening: map[*openapi3.Schema]bool{},
 	}
 }
 
@@ -725,6 +782,7 @@ func (m *allOfMerge) add(v openapi3.Schema, label string, seen map[string]bool) 
 			own := newAllOfMerge(m.ctx)
 			own.unionEnums = union
 			own.composition = m.composition
+			own.flattening = m.flattening
 			if err := own.add(v, label, seen); err != nil {
 				return err
 			}
@@ -764,19 +822,27 @@ func (m *allOfMerge) add(v openapi3.Schema, label string, seen map[string]bool) 
 			m.schema.Extensions[k] = ext
 		}
 	}
-	// A oneOf or anyOf that only adds constraints makes no union. It
-	// constrains the member, or, when the member declares no type, the
+	// A oneOf or anyOf that only adds constraints makes no union, and nor does
+	// one that lists a schema this merge is part of (see listsFlattened). A
+	// list constrains the member, or, when the member declares no type, the
 	// composition, whose other members may declare the type its branches
-	// restate.
+	// restate. A discriminator goes with the list it tells apart, the oneOf
+	// when there are both: a parent's discriminator says which child a value
+	// is, not which branch of a union the child has of its own.
 	owner := &v
 	if len(declaredTypes(owner)) == 0 && m.composition != nil {
 		owner = m.composition
 	}
-	if !isConstraintOnlyUnionV3(v.OneOf, owner) {
+	oneOf := !isConstraintOnlyUnionV3(v.OneOf, owner) && !m.listsFlattened(v.OneOf)
+	anyOf := !isConstraintOnlyUnionV3(v.AnyOf, owner) && !m.listsFlattened(v.AnyOf)
+	if oneOf {
 		m.schema.OneOf = append(m.schema.OneOf, v.OneOf...)
 	}
-	if !isConstraintOnlyUnionV3(v.AnyOf, owner) {
+	if anyOf {
 		m.schema.AnyOf = append(m.schema.AnyOf, v.AnyOf...)
+	}
+	if (len(v.OneOf) > 0 && !oneOf) || (len(v.OneOf) == 0 && len(v.AnyOf) > 0 && !anyOf) {
+		v.Discriminator = nil
 	}
 
 	if err := m.addType(v, label); err != nil {
@@ -1293,6 +1359,7 @@ func generateAllOfV3(ctx genContext, schema *openapi3.Schema, path []string, ext
 	}
 	var err error
 	ctx.mergingMadeUp = ctx.madeUp[schema]
+	ctx.composing = schema
 	ctx.unionEnums = false
 	if raw, ok := extensions[extOapiCodegenEnumMerge]; ok {
 		if ctx.unionEnums, err = extParseEnumMerge(raw); err != nil {
