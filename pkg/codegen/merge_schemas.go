@@ -309,6 +309,13 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	// match, the same as 3.0's `nullable`; so `[object]` and
 	// `[object, "null"]` merge into a nullable object instead of failing.
 	// The remaining types compare as sets, so their order doesn't matter.
+	//
+	// The union is deliberate, not an oversight of allOf's intersection
+	// semantics. Read as an intersection, "null" in one member would mean
+	// nothing unless every member declared it, yet a member only says it to
+	// make the composed type nullable, as in the 3.0 idiom
+	// `allOf: [$ref X, {nullable: true}]` (issue #1898). Both spec versions
+	// give it that meaning.
 	t1, t2 := nonNullTypes(s1.Type), nonNullTypes(s2.Type)
 	if len(t1) > 0 && len(t2) > 0 && !sameTypeSet(t1, t2) {
 		return openapi3.Schema{}, fmt.Errorf("can not merge incompatible types: %v, %v", s1.Type.Slice(), s2.Type.Slice())

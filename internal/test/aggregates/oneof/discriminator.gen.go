@@ -315,18 +315,25 @@ func (t *ConflictError) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// adoptUnion reconciles PetByKind's own fields with union data that From* or
-// Merge* just set, for the keys b defines. A property that is still unset takes the
-// union's value, rather than overwriting it with a zero value when marshaling, and a
-// matching additional property is dropped, so that an older copy of the key cannot
-// shadow the new union data.
-func (t *PetByKind) adoptUnion(b json.RawMessage) {
+// adoptUnion reconciles PetByKind's own fields with the union data b that From*
+// or Merge* just put in place of previous, for the keys b defines. A property that is
+// unset, or still holds the value previous had for it, takes b's value; one the caller
+// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
+// value, would overwrite b's when marshaling. A matching additional property is
+// dropped, so that an older copy of the key cannot shadow the new union data.
+func (t *PetByKind) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
 		return
 	}
-	if raw, found := object["kind"]; found && reflect.ValueOf(t.Kind).IsZero() {
-		_ = json.Unmarshal(raw, &t.Kind)
+	held := make(map[string]json.RawMessage)
+	_ = json.Unmarshal(previous, &held)
+	if raw, found := object["kind"]; found {
+		var old, next *string
+		unchanged := json.Unmarshal(held["kind"], &old) == nil && reflect.DeepEqual(old, t.Kind)
+		if (unchanged || reflect.ValueOf(t.Kind).IsZero()) && json.Unmarshal(raw, &next) == nil {
+			t.Kind = next
+		}
 	}
 }
 
@@ -346,9 +353,10 @@ func (t *PetByKind) FromKindCat(v KindCat) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"kind":"cat"}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -366,10 +374,11 @@ func (t *PetByKind) MergeKindCat(v KindCat) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -390,9 +399,10 @@ func (t *PetByKind) FromKindDog(v KindDog) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"kind":"dog"}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -410,10 +420,11 @@ func (t *PetByKind) MergeKindDog(v KindDog) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -485,18 +496,25 @@ func (t *PetByKind) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// adoptUnion reconciles RenamedPetByKind's own fields with union data that From* or
-// Merge* just set, for the keys b defines. A property that is still unset takes the
-// union's value, rather than overwriting it with a zero value when marshaling, and a
-// matching additional property is dropped, so that an older copy of the key cannot
-// shadow the new union data.
-func (t *RenamedPetByKind) adoptUnion(b json.RawMessage) {
+// adoptUnion reconciles RenamedPetByKind's own fields with the union data b that From*
+// or Merge* just put in place of previous, for the keys b defines. A property that is
+// unset, or still holds the value previous had for it, takes b's value; one the caller
+// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
+// value, would overwrite b's when marshaling. A matching additional property is
+// dropped, so that an older copy of the key cannot shadow the new union data.
+func (t *RenamedPetByKind) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
 		return
 	}
-	if raw, found := object["kind"]; found && reflect.ValueOf(t.Species).IsZero() {
-		_ = json.Unmarshal(raw, &t.Species)
+	held := make(map[string]json.RawMessage)
+	_ = json.Unmarshal(previous, &held)
+	if raw, found := object["kind"]; found {
+		var old, next *string
+		unchanged := json.Unmarshal(held["kind"], &old) == nil && reflect.DeepEqual(old, t.Species)
+		if (unchanged || reflect.ValueOf(t.Species).IsZero()) && json.Unmarshal(raw, &next) == nil {
+			t.Species = next
+		}
 	}
 }
 
@@ -516,9 +534,10 @@ func (t *RenamedPetByKind) FromKindCat(v KindCat) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"kind":"cat"}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -536,10 +555,11 @@ func (t *RenamedPetByKind) MergeKindCat(v KindCat) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -560,9 +580,10 @@ func (t *RenamedPetByKind) FromKindDog(v KindDog) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"kind":"dog"}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -580,10 +601,11 @@ func (t *RenamedPetByKind) MergeKindDog(v KindDog) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }

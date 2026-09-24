@@ -146,18 +146,25 @@ type HolderJSONRequestBody = Holder
 // HolderInlineJSONRequestBody defines body for HolderInline for application/json ContentType.
 type HolderInlineJSONRequestBody = InlineHolder
 
-// adoptUnion reconciles InlineHolder_List_Item's own fields with union data that From* or
-// Merge* just set, for the keys b defines. A property that is still unset takes the
-// union's value, rather than overwriting it with a zero value when marshaling, and a
-// matching additional property is dropped, so that an older copy of the key cannot
-// shadow the new union data.
-func (t *InlineHolder_List_Item) adoptUnion(b json.RawMessage) {
+// adoptUnion reconciles InlineHolder_List_Item's own fields with the union data b that From*
+// or Merge* just put in place of previous, for the keys b defines. A property that is
+// unset, or still holds the value previous had for it, takes b's value; one the caller
+// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
+// value, would overwrite b's when marshaling. A matching additional property is
+// dropped, so that an older copy of the key cannot shadow the new union data.
+func (t *InlineHolder_List_Item) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
 		return
 	}
-	if raw, found := object["version"]; found && reflect.ValueOf(t.Version).IsZero() {
-		_ = json.Unmarshal(raw, &t.Version)
+	held := make(map[string]json.RawMessage)
+	_ = json.Unmarshal(previous, &held)
+	if raw, found := object["version"]; found {
+		var old, next int
+		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+			t.Version = next
+		}
 	}
 }
 
@@ -176,9 +183,10 @@ func (t *InlineHolder_List_Item) FromV1(v V1) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":1}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -195,10 +203,11 @@ func (t *InlineHolder_List_Item) MergeV1(v V1) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -218,9 +227,10 @@ func (t *InlineHolder_List_Item) FromV2(v V2) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":2}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -237,10 +247,11 @@ func (t *InlineHolder_List_Item) MergeV2(v V2) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -324,18 +335,25 @@ func (t *InlineHolder_List_Item) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// adoptUnion reconciles InlineHolder_Map_AdditionalProperties's own fields with union data that From* or
-// Merge* just set, for the keys b defines. A property that is still unset takes the
-// union's value, rather than overwriting it with a zero value when marshaling, and a
-// matching additional property is dropped, so that an older copy of the key cannot
-// shadow the new union data.
-func (t *InlineHolder_Map_AdditionalProperties) adoptUnion(b json.RawMessage) {
+// adoptUnion reconciles InlineHolder_Map_AdditionalProperties's own fields with the union data b that From*
+// or Merge* just put in place of previous, for the keys b defines. A property that is
+// unset, or still holds the value previous had for it, takes b's value; one the caller
+// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
+// value, would overwrite b's when marshaling. A matching additional property is
+// dropped, so that an older copy of the key cannot shadow the new union data.
+func (t *InlineHolder_Map_AdditionalProperties) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
 		return
 	}
-	if raw, found := object["version"]; found && reflect.ValueOf(t.Version).IsZero() {
-		_ = json.Unmarshal(raw, &t.Version)
+	held := make(map[string]json.RawMessage)
+	_ = json.Unmarshal(previous, &held)
+	if raw, found := object["version"]; found {
+		var old, next int
+		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+			t.Version = next
+		}
 	}
 }
 
@@ -354,9 +372,10 @@ func (t *InlineHolder_Map_AdditionalProperties) FromV1(v V1) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":1}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -373,10 +392,11 @@ func (t *InlineHolder_Map_AdditionalProperties) MergeV1(v V1) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -396,9 +416,10 @@ func (t *InlineHolder_Map_AdditionalProperties) FromV2(v V2) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":2}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -415,10 +436,11 @@ func (t *InlineHolder_Map_AdditionalProperties) MergeV2(v V2) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -502,18 +524,25 @@ func (t *InlineHolder_Map_AdditionalProperties) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// adoptUnion reconciles InlineHolder_One's own fields with union data that From* or
-// Merge* just set, for the keys b defines. A property that is still unset takes the
-// union's value, rather than overwriting it with a zero value when marshaling, and a
-// matching additional property is dropped, so that an older copy of the key cannot
-// shadow the new union data.
-func (t *InlineHolder_One) adoptUnion(b json.RawMessage) {
+// adoptUnion reconciles InlineHolder_One's own fields with the union data b that From*
+// or Merge* just put in place of previous, for the keys b defines. A property that is
+// unset, or still holds the value previous had for it, takes b's value; one the caller
+// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
+// value, would overwrite b's when marshaling. A matching additional property is
+// dropped, so that an older copy of the key cannot shadow the new union data.
+func (t *InlineHolder_One) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
 		return
 	}
-	if raw, found := object["version"]; found && reflect.ValueOf(t.Version).IsZero() {
-		_ = json.Unmarshal(raw, &t.Version)
+	held := make(map[string]json.RawMessage)
+	_ = json.Unmarshal(previous, &held)
+	if raw, found := object["version"]; found {
+		var old, next int
+		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+			t.Version = next
+		}
 	}
 }
 
@@ -532,9 +561,10 @@ func (t *InlineHolder_One) FromV1(v V1) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":1}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -551,10 +581,11 @@ func (t *InlineHolder_One) MergeV1(v V1) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -574,9 +605,10 @@ func (t *InlineHolder_One) FromV2(v V2) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":2}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -593,10 +625,11 @@ func (t *InlineHolder_One) MergeV2(v V2) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -680,18 +713,25 @@ func (t *InlineHolder_One) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// adoptUnion reconciles Subject's own fields with union data that From* or
-// Merge* just set, for the keys b defines. A property that is still unset takes the
-// union's value, rather than overwriting it with a zero value when marshaling, and a
-// matching additional property is dropped, so that an older copy of the key cannot
-// shadow the new union data.
-func (t *Subject) adoptUnion(b json.RawMessage) {
+// adoptUnion reconciles Subject's own fields with the union data b that From*
+// or Merge* just put in place of previous, for the keys b defines. A property that is
+// unset, or still holds the value previous had for it, takes b's value; one the caller
+// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
+// value, would overwrite b's when marshaling. A matching additional property is
+// dropped, so that an older copy of the key cannot shadow the new union data.
+func (t *Subject) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
 		return
 	}
-	if raw, found := object["version"]; found && reflect.ValueOf(t.Version).IsZero() {
-		_ = json.Unmarshal(raw, &t.Version)
+	held := make(map[string]json.RawMessage)
+	_ = json.Unmarshal(previous, &held)
+	if raw, found := object["version"]; found {
+		var old, next int
+		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+			t.Version = next
+		}
 	}
 }
 
@@ -710,9 +750,10 @@ func (t *Subject) FromV1(v V1) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":1}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -729,10 +770,11 @@ func (t *Subject) MergeV1(v V1) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -752,9 +794,10 @@ func (t *Subject) FromV2(v V2) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":2}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -771,10 +814,11 @@ func (t *Subject) MergeV2(v V2) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -858,18 +902,25 @@ func (t *Subject) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// adoptUnion reconciles InlineSubjectResponse's own fields with union data that From* or
-// Merge* just set, for the keys b defines. A property that is still unset takes the
-// union's value, rather than overwriting it with a zero value when marshaling, and a
-// matching additional property is dropped, so that an older copy of the key cannot
-// shadow the new union data.
-func (t *InlineSubjectResponse) adoptUnion(b json.RawMessage) {
+// adoptUnion reconciles InlineSubjectResponse's own fields with the union data b that From*
+// or Merge* just put in place of previous, for the keys b defines. A property that is
+// unset, or still holds the value previous had for it, takes b's value; one the caller
+// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
+// value, would overwrite b's when marshaling. A matching additional property is
+// dropped, so that an older copy of the key cannot shadow the new union data.
+func (t *InlineSubjectResponse) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
 		return
 	}
-	if raw, found := object["version"]; found && reflect.ValueOf(t.Version).IsZero() {
-		_ = json.Unmarshal(raw, &t.Version)
+	held := make(map[string]json.RawMessage)
+	_ = json.Unmarshal(previous, &held)
+	if raw, found := object["version"]; found {
+		var old, next int
+		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+			t.Version = next
+		}
 	}
 }
 
@@ -888,9 +939,10 @@ func (t *InlineSubjectResponse) FromV1(v V1) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":1}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -907,10 +959,11 @@ func (t *InlineSubjectResponse) MergeV1(v V1) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -930,9 +983,10 @@ func (t *InlineSubjectResponse) FromV2(v V2) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":2}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -949,10 +1003,11 @@ func (t *InlineSubjectResponse) MergeV2(v V2) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -1036,18 +1091,25 @@ func (t *InlineSubjectResponse) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// adoptUnion reconciles InlineSubjectBody's own fields with union data that From* or
-// Merge* just set, for the keys b defines. A property that is still unset takes the
-// union's value, rather than overwriting it with a zero value when marshaling, and a
-// matching additional property is dropped, so that an older copy of the key cannot
-// shadow the new union data.
-func (t *InlineSubjectBody) adoptUnion(b json.RawMessage) {
+// adoptUnion reconciles InlineSubjectBody's own fields with the union data b that From*
+// or Merge* just put in place of previous, for the keys b defines. A property that is
+// unset, or still holds the value previous had for it, takes b's value; one the caller
+// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
+// value, would overwrite b's when marshaling. A matching additional property is
+// dropped, so that an older copy of the key cannot shadow the new union data.
+func (t *InlineSubjectBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
 		return
 	}
-	if raw, found := object["version"]; found && reflect.ValueOf(t.Version).IsZero() {
-		_ = json.Unmarshal(raw, &t.Version)
+	held := make(map[string]json.RawMessage)
+	_ = json.Unmarshal(previous, &held)
+	if raw, found := object["version"]; found {
+		var old, next int
+		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+			t.Version = next
+		}
 	}
 }
 
@@ -1066,9 +1128,10 @@ func (t *InlineSubjectBody) FromV1(v V1) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":1}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -1085,10 +1148,11 @@ func (t *InlineSubjectBody) MergeV1(v V1) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -1108,9 +1172,10 @@ func (t *InlineSubjectBody) FromV2(v V2) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":2}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -1127,10 +1192,11 @@ func (t *InlineSubjectBody) MergeV2(v V2) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -1214,18 +1280,25 @@ func (t *InlineSubjectBody) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// adoptUnion reconciles BodyComponentInlineJSONBody's own fields with union data that From* or
-// Merge* just set, for the keys b defines. A property that is still unset takes the
-// union's value, rather than overwriting it with a zero value when marshaling, and a
-// matching additional property is dropped, so that an older copy of the key cannot
-// shadow the new union data.
-func (t *BodyComponentInlineJSONBody) adoptUnion(b json.RawMessage) {
+// adoptUnion reconciles BodyComponentInlineJSONBody's own fields with the union data b that From*
+// or Merge* just put in place of previous, for the keys b defines. A property that is
+// unset, or still holds the value previous had for it, takes b's value; one the caller
+// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
+// value, would overwrite b's when marshaling. A matching additional property is
+// dropped, so that an older copy of the key cannot shadow the new union data.
+func (t *BodyComponentInlineJSONBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
 		return
 	}
-	if raw, found := object["version"]; found && reflect.ValueOf(t.Version).IsZero() {
-		_ = json.Unmarshal(raw, &t.Version)
+	held := make(map[string]json.RawMessage)
+	_ = json.Unmarshal(previous, &held)
+	if raw, found := object["version"]; found {
+		var old, next int
+		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+			t.Version = next
+		}
 	}
 }
 
@@ -1244,9 +1317,10 @@ func (t *BodyComponentInlineJSONBody) FromV1(v V1) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":1}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -1263,10 +1337,11 @@ func (t *BodyComponentInlineJSONBody) MergeV1(v V1) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -1286,9 +1361,10 @@ func (t *BodyComponentInlineJSONBody) FromV2(v V2) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":2}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -1305,10 +1381,11 @@ func (t *BodyComponentInlineJSONBody) MergeV2(v V2) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -1392,18 +1469,25 @@ func (t *BodyComponentInlineJSONBody) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// adoptUnion reconciles BodyInlineJSONBody's own fields with union data that From* or
-// Merge* just set, for the keys b defines. A property that is still unset takes the
-// union's value, rather than overwriting it with a zero value when marshaling, and a
-// matching additional property is dropped, so that an older copy of the key cannot
-// shadow the new union data.
-func (t *BodyInlineJSONBody) adoptUnion(b json.RawMessage) {
+// adoptUnion reconciles BodyInlineJSONBody's own fields with the union data b that From*
+// or Merge* just put in place of previous, for the keys b defines. A property that is
+// unset, or still holds the value previous had for it, takes b's value; one the caller
+// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
+// value, would overwrite b's when marshaling. A matching additional property is
+// dropped, so that an older copy of the key cannot shadow the new union data.
+func (t *BodyInlineJSONBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
 		return
 	}
-	if raw, found := object["version"]; found && reflect.ValueOf(t.Version).IsZero() {
-		_ = json.Unmarshal(raw, &t.Version)
+	held := make(map[string]json.RawMessage)
+	_ = json.Unmarshal(previous, &held)
+	if raw, found := object["version"]; found {
+		var old, next int
+		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+			t.Version = next
+		}
 	}
 }
 
@@ -1422,9 +1506,10 @@ func (t *BodyInlineJSONBody) FromV1(v V1) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":1}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -1441,10 +1526,11 @@ func (t *BodyInlineJSONBody) MergeV1(v V1) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -1464,9 +1550,10 @@ func (t *BodyInlineJSONBody) FromV2(v V2) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":2}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -1483,10 +1570,11 @@ func (t *BodyInlineJSONBody) MergeV2(v V2) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -1570,18 +1658,25 @@ func (t *BodyInlineJSONBody) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// adoptUnion reconciles BodyInline200JSONResponseBody's own fields with union data that From* or
-// Merge* just set, for the keys b defines. A property that is still unset takes the
-// union's value, rather than overwriting it with a zero value when marshaling, and a
-// matching additional property is dropped, so that an older copy of the key cannot
-// shadow the new union data.
-func (t *BodyInline200JSONResponseBody) adoptUnion(b json.RawMessage) {
+// adoptUnion reconciles BodyInline200JSONResponseBody's own fields with the union data b that From*
+// or Merge* just put in place of previous, for the keys b defines. A property that is
+// unset, or still holds the value previous had for it, takes b's value; one the caller
+// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
+// value, would overwrite b's when marshaling. A matching additional property is
+// dropped, so that an older copy of the key cannot shadow the new union data.
+func (t *BodyInline200JSONResponseBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
 		return
 	}
-	if raw, found := object["version"]; found && reflect.ValueOf(t.Version).IsZero() {
-		_ = json.Unmarshal(raw, &t.Version)
+	held := make(map[string]json.RawMessage)
+	_ = json.Unmarshal(previous, &held)
+	if raw, found := object["version"]; found {
+		var old, next int
+		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+			t.Version = next
+		}
 	}
 }
 
@@ -1600,9 +1695,10 @@ func (t *BodyInline200JSONResponseBody) FromV1(v V1) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":1}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -1619,10 +1715,11 @@ func (t *BodyInline200JSONResponseBody) MergeV1(v V1) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -1642,9 +1739,10 @@ func (t *BodyInline200JSONResponseBody) FromV2(v V2) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"version":2}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -1661,10 +1759,11 @@ func (t *BodyInline200JSONResponseBody) MergeV2(v V2) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }

@@ -126,13 +126,13 @@ func (t *IntOrString) MergeIntOrString1(v IntOrString1) error {
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is a valid JSON
-// integer is taken as one; anything else is a string.
+// parameter, which carries no JSON type. Text that is exactly a JSON
+// integer, with nothing around it, is taken as one; anything else is a string.
 func (t *IntOrString) UnmarshalText(text []byte) error {
 	var value any
 	decoder := json.NewDecoder(bytes.NewReader(text))
 	decoder.UseNumber()
-	if decoder.Decode(&value) == nil && !decoder.More() {
+	if len(bytes.TrimSpace(text)) == len(text) && json.Valid(text) && decoder.Decode(&value) == nil {
 		if number, ok := value.(json.Number); ok {
 			if _, err := number.Int64(); err == nil {
 				t.union = json.RawMessage(number.String())
@@ -216,13 +216,13 @@ func (t *GetThingParamsQ) MergeGetThingParamsQ1(v GetThingParamsQ1) error {
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is a valid JSON
-// integer is taken as one; anything else is a string.
+// parameter, which carries no JSON type. Text that is exactly a JSON
+// integer, with nothing around it, is taken as one; anything else is a string.
 func (t *GetThingParamsQ) UnmarshalText(text []byte) error {
 	var value any
 	decoder := json.NewDecoder(bytes.NewReader(text))
 	decoder.UseNumber()
-	if decoder.Decode(&value) == nil && !decoder.More() {
+	if len(bytes.TrimSpace(text)) == len(text) && json.Valid(text) && decoder.Decode(&value) == nil {
 		if number, ok := value.(json.Number); ok {
 			if _, err := number.Int64(); err == nil {
 				t.union = json.RawMessage(number.String())
@@ -306,13 +306,13 @@ func (t *GetThingParamsXAmount) MergeGetThingParamsXAmount1(v GetThingParamsXAmo
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is a valid JSON
-// boolean number is taken as one; anything else is an error.
+// parameter, which carries no JSON type. Text that is exactly a JSON
+// boolean number, with nothing around it, is taken as one; anything else is an error.
 func (t *GetThingParamsXAmount) UnmarshalText(text []byte) error {
 	var value any
 	decoder := json.NewDecoder(bytes.NewReader(text))
 	decoder.UseNumber()
-	if decoder.Decode(&value) == nil && !decoder.More() {
+	if len(bytes.TrimSpace(text)) == len(text) && json.Valid(text) && decoder.Decode(&value) == nil {
 		if _, ok := value.(bool); ok {
 			t.union = append(json.RawMessage(nil), text...)
 			return nil
@@ -393,13 +393,13 @@ func (t *GetThingParamsAccept) MergeGetThingParamsAccept1(v GetThingParamsAccept
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is a valid JSON
-// boolean is taken as one; anything else is a string.
+// parameter, which carries no JSON type. Text that is exactly a JSON
+// boolean, with nothing around it, is taken as one; anything else is a string.
 func (t *GetThingParamsAccept) UnmarshalText(text []byte) error {
 	var value any
 	decoder := json.NewDecoder(bytes.NewReader(text))
 	decoder.UseNumber()
-	if decoder.Decode(&value) == nil && !decoder.More() {
+	if len(bytes.TrimSpace(text)) == len(text) && json.Valid(text) && decoder.Decode(&value) == nil {
 		if _, ok := value.(bool); ok {
 			t.union = append(json.RawMessage(nil), text...)
 			return nil

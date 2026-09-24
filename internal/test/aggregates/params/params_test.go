@@ -108,6 +108,12 @@ func TestUnmarshalText(t *testing.T) {
 		{"true", `"true"`},
 		{"abc", `"abc"`},
 		{"", `""`},
+		// Only text that is exactly one JSON value, with nothing around it,
+		// is taken as a number.
+		{"123}", `"123}"`},
+		{"123]", `"123]"`},
+		{" 5", `" 5"`},
+		{"5 ", `"5 "`},
 	} {
 		var q GetThingParamsQ
 		require.NoError(t, q.UnmarshalText([]byte(tc.text)), tc.text)
@@ -121,4 +127,6 @@ func TestUnmarshalText(t *testing.T) {
 	b, _ := amount.MarshalJSON()
 	assert.JSONEq(t, `1000`, string(b))
 	assert.Error(t, amount.UnmarshalText([]byte("abc")), "number|boolean has no string branch")
+	assert.Error(t, amount.UnmarshalText([]byte("1}")), "malformed text is not a number")
+	assert.Error(t, amount.UnmarshalText([]byte("true]")), "malformed text is not a boolean")
 }

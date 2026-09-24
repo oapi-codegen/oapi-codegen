@@ -24,18 +24,25 @@ type ViewedStatus struct {
 	Viewed *bool `json:"viewed,omitempty"`
 }
 
-// adoptUnion reconciles PRFile's own fields with union data that From* or
-// Merge* just set, for the keys b defines. A property that is still unset takes the
-// union's value, rather than overwriting it with a zero value when marshaling, and a
-// matching additional property is dropped, so that an older copy of the key cannot
-// shadow the new union data.
-func (t *PRFile) adoptUnion(b json.RawMessage) {
+// adoptUnion reconciles PRFile's own fields with the union data b that From*
+// or Merge* just put in place of previous, for the keys b defines. A property that is
+// unset, or still holds the value previous had for it, takes b's value; one the caller
+// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
+// value, would overwrite b's when marshaling. A matching additional property is
+// dropped, so that an older copy of the key cannot shadow the new union data.
+func (t *PRFile) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
 		return
 	}
-	if raw, found := object["viewed"]; found && reflect.ValueOf(t.Viewed).IsZero() {
-		_ = json.Unmarshal(raw, &t.Viewed)
+	held := make(map[string]json.RawMessage)
+	_ = json.Unmarshal(previous, &held)
+	if raw, found := object["viewed"]; found {
+		var old, next *bool
+		unchanged := json.Unmarshal(held["viewed"], &old) == nil && reflect.DeepEqual(old, t.Viewed)
+		if (unchanged || reflect.ValueOf(t.Viewed).IsZero()) && json.Unmarshal(raw, &next) == nil {
+			t.Viewed = next
+		}
 	}
 }
 
@@ -53,9 +60,10 @@ func (t *PRFile) FromExternalRef0GitDiffFile(v externalRef0.GitDiffFile) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"diff_type":"GitDiffFile"}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -71,10 +79,11 @@ func (t *PRFile) MergeExternalRef0GitDiffFile(v externalRef0.GitDiffFile) error 
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -93,9 +102,10 @@ func (t *PRFile) FromExternalRef0AddedImageDiffFile(v externalRef0.AddedImageDif
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"diff_type":"AddedImageDiffFile"}`))
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -111,10 +121,11 @@ func (t *PRFile) MergeExternalRef0AddedImageDiffFile(v externalRef0.AddedImageDi
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }

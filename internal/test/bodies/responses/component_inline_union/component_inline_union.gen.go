@@ -123,18 +123,25 @@ func (t *BadRequest) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// adoptUnion reconciles Conflict's own fields with union data that From* or
-// Merge* just set, for the keys b defines. A property that is still unset takes the
-// union's value, rather than overwriting it with a zero value when marshaling, and a
-// matching additional property is dropped, so that an older copy of the key cannot
-// shadow the new union data.
-func (t *Conflict) adoptUnion(b json.RawMessage) {
+// adoptUnion reconciles Conflict's own fields with the union data b that From*
+// or Merge* just put in place of previous, for the keys b defines. A property that is
+// unset, or still holds the value previous had for it, takes b's value; one the caller
+// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
+// value, would overwrite b's when marshaling. A matching additional property is
+// dropped, so that an older copy of the key cannot shadow the new union data.
+func (t *Conflict) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
 		return
 	}
-	if raw, found := object["traceId"]; found && reflect.ValueOf(t.TraceId).IsZero() {
-		_ = json.Unmarshal(raw, &t.TraceId)
+	held := make(map[string]json.RawMessage)
+	_ = json.Unmarshal(previous, &held)
+	if raw, found := object["traceId"]; found {
+		var old, next string
+		unchanged := json.Unmarshal(held["traceId"], &old) == nil && reflect.DeepEqual(old, t.TraceId)
+		if (unchanged || reflect.ValueOf(t.TraceId).IsZero()) && json.Unmarshal(raw, &next) == nil {
+			t.TraceId = next
+		}
 	}
 }
 
@@ -148,9 +155,10 @@ func (t Conflict) AsError() (Error, error) {
 // FromError overwrites any union data inside the Conflict as the provided Error
 func (t *Conflict) FromError(v Error) error {
 	b, err := json.Marshal(v)
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -162,10 +170,11 @@ func (t *Conflict) MergeError(v Error) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -180,9 +189,10 @@ func (t Conflict) AsValidationError() (ValidationError, error) {
 // FromValidationError overwrites any union data inside the Conflict as the provided ValidationError
 func (t *Conflict) FromValidationError(v ValidationError) error {
 	b, err := json.Marshal(v)
+	previous := t.union
 	t.union = b
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }
@@ -194,10 +204,11 @@ func (t *Conflict) MergeValidationError(v ValidationError) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	if err == nil {
-		t.adoptUnion(b)
+		t.adoptUnion(previous, b)
 	}
 	return err
 }

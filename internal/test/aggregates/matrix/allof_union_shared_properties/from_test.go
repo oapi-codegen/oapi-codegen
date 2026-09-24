@@ -42,3 +42,39 @@ func TestMergeAdoptsSharedProperty(t *testing.T) {
 	require.NoError(t, err)
 	assert.JSONEq(t, `{"id": "dog-1", "bark": "woof"}`, string(b))
 }
+
+// TestFromReplacesAdoptedProperty: a value the union adopted from an earlier
+// From* is replaced by the next one, rather than overwriting it with the old
+// value when marshaling.
+func TestFromReplacesAdoptedProperty(t *testing.T) {
+	var s Subject
+	require.NoError(t, s.FromCat(Cat{Id: "old", Meow: "purr"}))
+	require.NoError(t, s.FromCat(Cat{Id: "new", Meow: "hiss"}))
+	assert.Equal(t, "new", s.Id)
+
+	b, err := json.Marshal(s)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"id": "new", "meow": "hiss"}`, string(b))
+}
+
+// TestFromReplacesUnmarshaledProperty: the same after UnmarshalJSON, which
+// fills the union and its own fields from the same document.
+func TestFromReplacesUnmarshaledProperty(t *testing.T) {
+	var s Subject
+	require.NoError(t, json.Unmarshal([]byte(`{"id": "old", "bark": "woof"}`), &s))
+	require.NoError(t, s.FromCat(Cat{Id: "new", Meow: "purr"}))
+
+	b, err := json.Marshal(s)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"id": "new", "meow": "purr"}`, string(b))
+}
+
+// TestFromKeepsPropertyChangedByCaller: once the caller has changed the
+// union's own field, a later From* does not overwrite it.
+func TestFromKeepsPropertyChangedByCaller(t *testing.T) {
+	var s Subject
+	require.NoError(t, s.FromCat(Cat{Id: "old", Meow: "purr"}))
+	s.Id = "custom"
+	require.NoError(t, s.FromCat(Cat{Id: "new", Meow: "hiss"}))
+	assert.Equal(t, "custom", s.Id)
+}

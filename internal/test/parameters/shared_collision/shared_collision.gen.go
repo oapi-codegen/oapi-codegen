@@ -154,8 +154,8 @@ func (t *Hd147675Id) MergeHd147675Id1(v Hd147675Id1) error {
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is a valid JSON
-// is taken as one; anything else is a string.
+// parameter, which carries no JSON type. Text that is exactly a JSON
+// , with nothing around it, is taken as one; anything else is a string.
 func (t *Hd147675Id) UnmarshalText(text []byte) error {
 	b, err := json.Marshal(string(text))
 	if err != nil {
@@ -233,8 +233,8 @@ func (t *Hdf81445Id) MergeHdf81445Id1(v Hdf81445Id1) error {
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is a valid JSON
-// is taken as one; anything else is a string.
+// parameter, which carries no JSON type. Text that is exactly a JSON
+// , with nothing around it, is taken as one; anything else is a string.
 func (t *Hdf81445Id) UnmarshalText(text []byte) error {
 	b, err := json.Marshal(string(text))
 	if err != nil {
@@ -312,8 +312,8 @@ func (t *Ref) MergeRef1(v Ref1) error {
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is a valid JSON
-// is taken as one; anything else is a string.
+// parameter, which carries no JSON type. Text that is exactly a JSON
+// , with nothing around it, is taken as one; anything else is a string.
 func (t *Ref) UnmarshalText(text []byte) error {
 	b, err := json.Marshal(string(text))
 	if err != nil {
@@ -391,8 +391,8 @@ func (t *Wid) MergeWid1(v Wid1) error {
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is a valid JSON
-// is taken as one; anything else is a string.
+// parameter, which carries no JSON type. Text that is exactly a JSON
+// , with nothing around it, is taken as one; anything else is a string.
 func (t *Wid) UnmarshalText(text []byte) error {
 	b, err := json.Marshal(string(text))
 	if err != nil {
@@ -470,8 +470,8 @@ func (t *Whid) MergeWhid1(v Whid1) error {
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is a valid JSON
-// is taken as one; anything else is a string.
+// parameter, which carries no JSON type. Text that is exactly a JSON
+// , with nothing around it, is taken as one; anything else is a string.
 func (t *Whid) UnmarshalText(text []byte) error {
 	b, err := json.Marshal(string(text))
 	if err != nil {
@@ -549,8 +549,8 @@ func (t *Cbid) MergeCbid1(v Cbid1) error {
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is a valid JSON
-// is taken as one; anything else is a string.
+// parameter, which carries no JSON type. Text that is exactly a JSON
+// , with nothing around it, is taken as one; anything else is a string.
 func (t *Cbid) UnmarshalText(text []byte) error {
 	b, err := json.Marshal(string(text))
 	if err != nil {

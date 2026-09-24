@@ -4,19 +4,26 @@
     {{$schema := .Schema -}}
     {{$adopts := or (ne 0 (len .Schema.Properties)) .Schema.HasAdditionalProperties -}}
     {{if $adopts}}
-        // adoptUnion reconciles {{$typeName}}'s own fields with union data that From* or
-        // Merge* just set, for the keys b defines. A property that is still unset takes the
-        // union's value, rather than overwriting it with a zero value when marshaling, and a
-        // matching additional property is dropped, so that an older copy of the key cannot
-        // shadow the new union data.
-        func (t *{{$typeName}}) adoptUnion(b json.RawMessage) {
+        // adoptUnion reconciles {{$typeName}}'s own fields with the union data b that From*
+        // or Merge* just put in place of previous, for the keys b defines. A property that is
+        // unset, or still holds the value previous had for it, takes b's value; one the caller
+        // has set to something else keeps it. Otherwise a zero value, or an earlier variant's
+        // value, would overwrite b's when marshaling. A matching additional property is
+        // dropped, so that an older copy of the key cannot shadow the new union data.
+        func (t *{{$typeName}}) adoptUnion(previous, b json.RawMessage) {
             object := make(map[string]json.RawMessage)
             if json.Unmarshal(b, &object) != nil {
                 return
             }
+            held := make(map[string]json.RawMessage)
+            _ = json.Unmarshal(previous, &held)
             {{range .Schema.Properties -}}
-                if raw, found := object["{{.JsonFieldName}}"]; found && reflect.ValueOf(t.{{.GoFieldName}}).IsZero() {
-                    _ = json.Unmarshal(raw, &t.{{.GoFieldName}})
+                if raw, found := object["{{.JsonFieldName}}"]; found {
+                    var old, next {{.GoTypeDef}}
+                    unchanged := json.Unmarshal(held["{{.JsonFieldName}}"], &old) == nil && reflect.DeepEqual(old, t.{{.GoFieldName}})
+                    if (unchanged || reflect.ValueOf(t.{{.GoFieldName}}).IsZero()) && json.Unmarshal(raw, &next) == nil {
+                        t.{{.GoFieldName}} = next
+                    }
                 }
             {{end -}}
             {{if .Schema.HasAdditionalProperties -}}
@@ -52,10 +59,13 @@
                 }
                 b, err = runtime.JSONMerge(b, []byte(`{{$stamp.JSONPatch}}`))
             {{end -}}
+            {{if $adopts -}}
+                previous := t.union
+            {{end -}}
             t.union = b
             {{if $adopts -}}
                 if err == nil {
-                    t.adoptUnion(b)
+                    t.adoptUnion(previous, b)
                 }
             {{end -}}
             return err
@@ -81,11 +91,14 @@
                     return err
                 }
             {{end}}
+            {{if $adopts -}}
+                previous := t.union
+            {{end -}}
             merged, err := runtime.JSONMerge(t.union, b)
             t.union = merged
             {{if $adopts -}}
                 if err == nil {
-                    t.adoptUnion(b)
+                    t.adoptUnion(previous, b)
                 }
             {{end -}}
             return err
@@ -145,17 +158,17 @@
 
     {{if .Schema.UnionTextKinds}}
         // UnmarshalText sets the union from the text of a path, query, header or cookie
-        // parameter, which carries no JSON type. Text that is a valid JSON
+        // parameter, which carries no JSON type. Text that is exactly a JSON
         // {{- if .Schema.UnionTextAccepts "boolean"}} boolean{{end}}
         {{- if .Schema.UnionTextAccepts "integer"}} integer{{end}}
-        {{- if .Schema.UnionTextAccepts "number"}} number{{end}} is taken as one;
+        {{- if .Schema.UnionTextAccepts "number"}} number{{end}}, with nothing around it, is taken as one;
         {{- if .Schema.UnionTextAccepts "string"}} anything else is a string.{{else}} anything else is an error.{{end}}
         func (t *{{.TypeName}}) UnmarshalText(text []byte) error {
             {{if or (.Schema.UnionTextAccepts "boolean") (.Schema.UnionTextAccepts "integer") (.Schema.UnionTextAccepts "number") -}}
             var value any
             decoder := json.NewDecoder(bytes.NewReader(text))
             decoder.UseNumber()
-            if decoder.Decode(&value) == nil && !decoder.More() {
+            if len(bytes.TrimSpace(text)) == len(text) && json.Valid(text) && decoder.Decode(&value) == nil {
                 {{- if .Schema.UnionTextAccepts "boolean"}}
                 if _, ok := value.(bool); ok {
                     t.union = append(json.RawMessage(nil), text...)
