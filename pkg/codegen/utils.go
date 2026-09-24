@@ -1023,8 +1023,11 @@ func PathToTypeName(path []string) string {
 	// same prefix) are unaffected, and callers that use this result
 	// as-is (the various anonymous-schema hoist paths) now also get a
 	// valid identifier.
-	if len(name) > 0 && unicode.IsDigit(rune(name[0])) {
-		name = "N" + name
+	for _, r := range name {
+		if unicode.IsDigit(r) {
+			name = "N" + name
+		}
+		break
 	}
 
 	return name

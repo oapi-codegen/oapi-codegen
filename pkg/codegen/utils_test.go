@@ -844,6 +844,41 @@ func TestSchemaNameToTypeName(t *testing.T) {
 	}
 }
 
+// TestPathToTypeName_LeadingDigit covers issue #2555 (a path built from a
+// bare numeric HTTP status segment, e.g. ["400", "Errors"], must not
+// assemble into an invalid Go identifier) and its Unicode follow-on: the
+// leading-digit check must look at the first rune, not the first UTF-8
+// byte, or a path starting with a multi-byte Unicode digit keeps an
+// invalid leading rune.
+func TestPathToTypeName_LeadingDigit(t *testing.T) {
+	t.Parallel()
+
+	for name, tc := range map[string]struct {
+		path []string
+		want string
+	}{
+		"ascii digit": {
+			path: []string{"400", "Errors"},
+			want: "N400_Errors",
+		},
+		"multi-byte unicode digit": {
+			// U+0664 ARABIC-INDIC DIGIT FOUR is 2 bytes in UTF-8; indexing
+			// name[0] would read only the leading byte of that encoding,
+			// which is not itself a digit, and miss the prefix.
+			path: []string{"\u0664", "Errors"},
+			want: "N\u0664_Errors",
+		},
+		"non-digit leading rune is unaffected": {
+			path: []string{"Widget", "Errors"},
+			want: "Widget_Errors",
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, tc.want, PathToTypeName(tc.path))
+		})
+	}
+}
+
 func TestTypeDefinitionsEquivalent(t *testing.T) {
 	def1 := TypeDefinition{TypeName: "name", Schema: Schema{
 		OAPISchema: &openapi3.Schema{},
