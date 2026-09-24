@@ -690,7 +690,7 @@ func (t *FilterValue) MergeFilterValue2(v FilterValue2) error {
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
 // parameter, which carries no JSON type.
-// Text that is exactly a JSON boolean number, with nothing around it, is taken as one; anything else is a string.
+// Text that is exactly a JSON boolean or number, with nothing around it, is taken as one; anything else is a string.
 func (t *FilterValue) UnmarshalText(text []byte) error {
 	var value any
 	decoder := json.NewDecoder(bytes.NewReader(text))

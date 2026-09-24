@@ -549,7 +549,7 @@ func (t *OneOfObject11_AdditionalProperties) MergeOneOfObject112(v OneOfObject11
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
 // parameter, which carries no JSON type.
-// Text that is exactly a JSON boolean number, with nothing around it, is taken as one; anything else is a string.
+// Text that is exactly a JSON boolean or number, with nothing around it, is taken as one; anything else is a string.
 func (t *OneOfObject11_AdditionalProperties) UnmarshalText(text []byte) error {
 	var value any
 	decoder := json.NewDecoder(bytes.NewReader(text))

@@ -87,6 +87,7 @@ type IdParam struct {
 type GetThingParams struct {
 	Q       *GetThingParamsQ       `form:"q,omitempty" json:"q,omitempty"`
 	R       *IntOrString           `form:"r,omitempty" json:"r,omitempty"`
+	N       *GetThingParamsN       `form:"n,omitempty" json:"n,omitempty"`
 	XAmount *GetThingParamsXAmount `json:"X-Amount,omitempty"`
 }
 
@@ -98,6 +99,14 @@ type GetThingParamsQ1 = string
 
 // GetThingParamsQ defines parameters for GetThing.
 type GetThingParamsQ struct {
+	union json.RawMessage
+}
+
+// GetThingParamsN1 defines parameters for GetThing.
+type GetThingParamsN1 = bool
+
+// GetThingParamsN defines parameters for GetThing.
+type GetThingParamsN struct {
 	union json.RawMessage
 }
 
@@ -357,7 +366,7 @@ func (t *GetItemParamsSession) MergeGetItemParamsSession1(v GetItemParamsSession
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
 // parameter, which carries no JSON type.
-// Text that is exactly a JSON boolean integer, with nothing around it, is taken as one; anything else is an error.
+// Text that is exactly a JSON boolean or integer, with nothing around it, is taken as one; anything else is an error.
 func (t *GetItemParamsSession) UnmarshalText(text []byte) error {
 	var value any
 	decoder := json.NewDecoder(bytes.NewReader(text))
@@ -572,6 +581,100 @@ func (t *GetThingParamsQ) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsIntOrString returns the union data inside the GetThingParamsN as a IntOrString
+func (t GetThingParamsN) AsIntOrString() (IntOrString, error) {
+	var body IntOrString
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromIntOrString overwrites any union data inside the GetThingParamsN as the provided IntOrString
+func (t *GetThingParamsN) FromIntOrString(v IntOrString) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeIntOrString performs a merge with any union data inside the GetThingParamsN, using the provided IntOrString
+func (t *GetThingParamsN) MergeIntOrString(v IntOrString) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsGetThingParamsN1 returns the union data inside the GetThingParamsN as a GetThingParamsN1
+func (t GetThingParamsN) AsGetThingParamsN1() (GetThingParamsN1, error) {
+	var body GetThingParamsN1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromGetThingParamsN1 overwrites any union data inside the GetThingParamsN as the provided GetThingParamsN1
+func (t *GetThingParamsN) FromGetThingParamsN1(v GetThingParamsN1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeGetThingParamsN1 performs a merge with any union data inside the GetThingParamsN, using the provided GetThingParamsN1
+func (t *GetThingParamsN) MergeGetThingParamsN1(v GetThingParamsN1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON boolean or integer, with nothing around it, is taken as one; anything else is a string.
+func (t *GetThingParamsN) UnmarshalText(text []byte) error {
+	var value any
+	decoder := json.NewDecoder(bytes.NewReader(text))
+	decoder.UseNumber()
+	if len(bytes.TrimSpace(text)) == len(text) && json.Valid(text) && decoder.Decode(&value) == nil {
+		if _, ok := value.(bool); ok {
+			t.union = append(json.RawMessage(nil), text...)
+			return nil
+		}
+		if number, ok := value.(json.Number); ok {
+			if _, err := number.Int64(); err == nil {
+				t.union = json.RawMessage(number.String())
+				return nil
+			}
+		}
+	}
+	b, err := json.Marshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *GetThingParamsN) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
+}
+
+func (t GetThingParamsN) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *GetThingParamsN) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsGetThingParamsXAmount0 returns the union data inside the GetThingParamsXAmount as a GetThingParamsXAmount0
 func (t GetThingParamsXAmount) AsGetThingParamsXAmount0() (GetThingParamsXAmount0, error) {
 	var body GetThingParamsXAmount0
@@ -626,7 +729,7 @@ func (t *GetThingParamsXAmount) MergeGetThingParamsXAmount1(v GetThingParamsXAmo
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
 // parameter, which carries no JSON type.
-// Text that is exactly a JSON boolean number, with nothing around it, is taken as one; anything else is an error.
+// Text that is exactly a JSON boolean or number, with nothing around it, is taken as one; anything else is an error.
 func (t *GetThingParamsXAmount) UnmarshalText(text []byte) error {
 	var value any
 	decoder := json.NewDecoder(bytes.NewReader(text))
@@ -982,6 +1085,18 @@ func NewGetThingRequest(server string, accept GetThingParamsAccept, params *GetT
 		if params.R != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "r", *params.R, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.N != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "n", *params.N, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {
@@ -1361,6 +1476,19 @@ func (siw *ServerInterfaceWrapper) GetThing(w http.ResponseWriter, r *http.Reque
 			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "r"})
 		} else {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "r", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "n" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "n", r.URL.Query(), &params.N, runtime.BindQueryParameterOptions{Type: "", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "n"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "n", Err: err})
 		}
 		return
 	}

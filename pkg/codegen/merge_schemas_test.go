@@ -1008,6 +1008,16 @@ components:
       oneOf:
         - required: [email]
         - required: [phone]
+    NeedEmail:
+      required: [email]
+    NeedPhone:
+      required: [phone]
+    OneWayByRef:
+      allOf:
+        - $ref: '#/components/schemas/Contact'
+      oneOf:
+        - $ref: '#/components/schemas/NeedEmail'
+        - $ref: '#/components/schemas/NeedPhone'
 `
 	code := generateSpec(t, spec)
 
@@ -1016,8 +1026,10 @@ components:
 	assert.Contains(t, code, "func (t Pet) AsDog() (Dog, error)")
 
 	// Branches that only add constraints are not types to choose between;
-	// the schema stays what it was, an alias of its allOf member.
+	// the schema stays what it was, an alias of its allOf member. That holds
+	// when the branches are $refs to such schemas, too.
 	assert.Contains(t, code, "type OneWayToReach = Contact")
+	assert.Contains(t, code, "type OneWayByRef = Contact")
 }
 
 // TestAnyOfAndOneOfOnOneSchema is issue #839: inline members of an anyOf and

@@ -24,6 +24,12 @@ paths:
           in: query
           schema:
             $ref: '#/components/schemas/IntOrString'
+        - name: n
+          in: query
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/IntOrString'
+              - type: boolean
         - name: X-Amount
           in: header
           schema:

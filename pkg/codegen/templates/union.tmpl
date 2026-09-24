@@ -173,10 +173,7 @@
         // UnmarshalText sets the union from the text of a path, query, header or cookie
         // parameter, which carries no JSON type.
         {{- if or (.Schema.UnionTextAccepts "boolean") (.Schema.UnionTextAccepts "integer") (.Schema.UnionTextAccepts "number")}}
-        // Text that is exactly a JSON
-        {{- if .Schema.UnionTextAccepts "boolean"}} boolean{{end}}
-        {{- if .Schema.UnionTextAccepts "integer"}} integer{{end}}
-        {{- if .Schema.UnionTextAccepts "number"}} number{{end}}, with nothing around it, is taken as one;
+        // Text that is exactly a JSON {{.Schema.UnionTextNonStringKinds}}, with nothing around it, is taken as one;
         {{- if .Schema.UnionTextAccepts "string"}} anything else is a string.{{else}} anything else is an error.{{end}}
         {{- else}}
         // The text is taken as a string.

@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go/ast"
+	"go/parser"
 	"maps"
 	"math"
 	"slices"
@@ -448,23 +450,34 @@ func (t *TypeDefinition) IsAlias() bool {
 // mentionsTypeName reports whether the Go type expression decl refers to the
 // unqualified type name, as `[]Node` does for Node. An alias cannot refer to
 // itself (`type Node = []Node` is an invalid recursive alias), but a defined
-// type can, so such a type is declared as a defined type instead.
+// type can, so such a type is declared as a defined type instead. Only type
+// positions count: in `[]struct{ Node *string }` the field is merely named
+// Node. A decl that does not parse is treated as not referring to it.
 func mentionsTypeName(decl, name string) bool {
-	isIdent := func(b byte) bool {
-		return b == '_' || b == '.' || (b >= '0' && b <= '9') || (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z')
+	expr, err := parser.ParseExpr(decl)
+	if err != nil {
+		return false
 	}
-	for i := 0; i+len(name) <= len(decl); {
-		j := strings.Index(decl[i:], name)
-		if j < 0 {
+	found := false
+	var visit func(ast.Node) bool
+	visit = func(n ast.Node) bool {
+		switch n := n.(type) {
+		case *ast.Field:
+			// Field and method names, and struct tags, are not types.
+			ast.Inspect(n.Type, visit)
 			return false
+		case *ast.SelectorExpr:
+			// pkg.Name is another package's type.
+			return false
+		case *ast.Ident:
+			if n.Name == name {
+				found = true
+			}
 		}
-		start, end := i+j, i+j+len(name)
-		if (start == 0 || !isIdent(decl[start-1])) && (end == len(decl) || !isIdent(decl[end])) {
-			return true
-		}
-		i = start + 1
+		return !found
 	}
-	return false
+	ast.Inspect(expr, visit)
+	return found
 }
 
 type Discriminator struct {
@@ -2161,10 +2174,23 @@ func generateUnion(ctx genContext, outSchema *Schema, elements openapi3.SchemaRe
 }
 
 // unionTextKinds returns the sorted JSON types of a union's branches when
-// every branch (other than a 3.1 null branch) is a single scalar type, and nil
-// otherwise.
+// every branch (other than a 3.1 null branch) is a single scalar type, or is
+// itself a union of scalar types, such as a `$ref` to one; and nil otherwise.
 func unionTextKinds(branches openapi3.SchemaRefs) []string {
+	return unionTextKindsAt(branches, 0)
+}
+
+func unionTextKindsAt(branches openapi3.SchemaRefs, depth int) []string {
+	if depth > 8 {
+		// A union that contains itself; it can't be bound from text.
+		return nil
+	}
 	var kinds []string
+	add := func(kind string) {
+		if !slices.Contains(kinds, kind) {
+			kinds = append(kinds, kind)
+		}
+	}
 	for _, b := range branches {
 		if b == nil || b.Value == nil {
 			return nil
@@ -2173,9 +2199,21 @@ func unionTextKinds(branches openapi3.SchemaRefs) []string {
 		if isNullTypeSchema(v) {
 			continue
 		}
-		if len(v.Properties) > 0 || v.Items != nil || len(v.AllOf) > 0 || len(v.AnyOf) > 0 || len(v.OneOf) > 0 ||
-			v.AdditionalProperties.Schema != nil {
+		if len(v.Properties) > 0 || v.Items != nil || len(v.AllOf) > 0 || v.AdditionalProperties.Schema != nil {
 			return nil
+		}
+		if len(v.AnyOf) > 0 || len(v.OneOf) > 0 {
+			if v.Type.Slice() != nil {
+				return nil
+			}
+			nested := unionTextKindsAt(slices.Concat(v.AnyOf, v.OneOf), depth+1)
+			if nested == nil {
+				return nil
+			}
+			for _, kind := range nested {
+				add(kind)
+			}
+			continue
 		}
 		types := nonNullTypes(v.Type)
 		if len(types) != 1 {
@@ -2183,9 +2221,7 @@ func unionTextKinds(branches openapi3.SchemaRefs) []string {
 		}
 		switch types[0] {
 		case openapi3.TypeBoolean, openapi3.TypeInteger, openapi3.TypeNumber, openapi3.TypeString:
-			if !slices.Contains(kinds, types[0]) {
-				kinds = append(kinds, types[0])
-			}
+			add(types[0])
 		default:
 			return nil
 		}
@@ -2206,6 +2242,19 @@ func (s Schema) AdoptedProperties() []Property {
 		}
 	}
 	return out
+}
+
+// UnionTextNonStringKinds names the JSON types other than string that a
+// scalar union accepts, for its UnmarshalText doc comment: "boolean or
+// integer"; see UnionTextKinds.
+func (s Schema) UnionTextNonStringKinds() string {
+	var kinds []string
+	for _, kind := range s.UnionTextKinds {
+		if kind != openapi3.TypeString {
+			kinds = append(kinds, kind)
+		}
+	}
+	return strings.Join(kinds, " or ")
 }
 
 // UnionTextAccepts reports whether a scalar union has a branch of the given
@@ -2350,9 +2399,10 @@ func hasStructuralSiblings(s *openapi3.Schema) bool {
 // rather than naming alternative types. Such a list next to allOf used to be
 // dropped; it keeps being dropped, since generating a union of `any` branches
 // would turn the merged type into something harder to use, not more correct.
+// A `$ref` branch is judged by the schema it refers to.
 func isConstraintOnlyUnion(branches openapi3.SchemaRefs) bool {
 	for _, b := range branches {
-		if b == nil || b.Ref != "" || b.Value == nil {
+		if b == nil || b.Value == nil {
 			return false
 		}
 		v := b.Value

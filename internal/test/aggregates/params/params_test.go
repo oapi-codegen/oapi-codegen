@@ -38,6 +38,11 @@ func (server) GetThing(_ context.Context, req GetThingRequestObject) (GetThingRe
 			return nil, err
 		}
 	}
+	if req.Params.N != nil {
+		if err := put("n", req.Params.N); err != nil {
+			return nil, err
+		}
+	}
 	return bound, nil
 }
 
@@ -178,4 +183,43 @@ func TestSharedComponentAndCookieUnionParameters(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, 200, resp.StatusCode(), string(resp.Body))
 	assert.JSONEq(t, `{"id": "abc", "filter": 7}`, string(resp.Body))
+}
+
+// TestUnionOfUnionParameter: a union parameter whose branch is a $ref to
+// another union of scalars binds like any scalar union.
+func TestUnionOfUnionParameter(t *testing.T) {
+	c := newClient(t)
+	var accept GetThingParamsAccept
+	require.NoError(t, accept.FromGetThingParamsAccept1("x"))
+
+	for _, tc := range []struct {
+		name string
+		set  func(*GetThingParamsN) error
+		want string
+	}{
+		{"integer through the referenced union", func(n *GetThingParamsN) error {
+			var inner IntOrString
+			if err := inner.FromIntOrString0(5); err != nil {
+				return err
+			}
+			return n.FromIntOrString(inner)
+		}, `5`},
+		{"string through the referenced union", func(n *GetThingParamsN) error {
+			var inner IntOrString
+			if err := inner.FromIntOrString1("abc"); err != nil {
+				return err
+			}
+			return n.FromIntOrString(inner)
+		}, `"abc"`},
+		{"boolean", func(n *GetThingParamsN) error { return n.FromGetThingParamsN1(true) }, `true`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			var n GetThingParamsN
+			require.NoError(t, tc.set(&n))
+			resp, err := c.GetThingWithResponse(context.Background(), accept, &GetThingParams{N: &n})
+			require.NoError(t, err)
+			require.Equal(t, 200, resp.StatusCode(), string(resp.Body))
+			assert.JSONEq(t, `{"accept": "x", "n": `+tc.want+`}`, string(resp.Body))
+		})
+	}
 }

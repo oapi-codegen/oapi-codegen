@@ -1472,11 +1472,18 @@ components:
     Forest:
       type: array
       items: {$ref: '#/components/schemas/Tree'}
+    Data:
+      type: array
+      items:
+        type: object
+        properties:
+          data: {type: string}
 `
 	code := generateSpec(t, spec)
 	assert.Contains(t, code, "type Tree []Tree")
 	assert.Contains(t, code, "type NodeList []NodeList")
 	assert.Contains(t, code, "type Forest = []Tree", "an array of another type stays an alias")
+	assert.Contains(t, code, "type Data = []struct {", "a field merely named like the type is not a self-reference")
 }
 
 func TestMentionsTypeName(t *testing.T) {
@@ -1492,6 +1499,12 @@ func TestMentionsTypeName(t *testing.T) {
 		{"[]MyNode", false},
 		{"[]externalRef0.Node", false},
 		{"[]Node_Item", false},
+		// A field named like the type is not a reference to it; a field of
+		// that type is.
+		{"[]struct {\n    Node *string `json:\"node,omitempty\"`\n}", false},
+		{"[]struct {\n    Next *Node `json:\"next,omitempty\"`\n}", true},
+		{"map[string]struct {\n    // Node is documented.\n    Node int `json:\"node\"`\n}", false},
+		{"not a type (", false},
 	} {
 		assert.Equal(t, tc.want, mentionsTypeName(tc.decl, "Node"), tc.decl)
 	}
@@ -1519,4 +1532,38 @@ components:
 	assert.Contains(t, code, "// parameter, which carries no JSON type.\n// The text is taken as a string.\nfunc (t *Color) UnmarshalText(")
 	assert.Contains(t, code, "// Text that is exactly a JSON number, with nothing around it, is taken as one; anything else is a string.\nfunc (t *Amount) UnmarshalText(")
 	assert.NotContains(t, code, "a JSON ,")
+}
+
+// TestUnionOfScalarUnionsBindsText: a union whose branch is itself a union of
+// scalars, here through a $ref, can still be bound from parameter text. A
+// union that contains itself cannot, and working that out must terminate.
+func TestUnionOfScalarUnionsBindsText(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    IntOrString:
+      oneOf:
+        - type: integer
+        - type: string
+    Flag:
+      oneOf:
+        - $ref: '#/components/schemas/IntOrString'
+        - type: boolean
+    WithArray:
+      oneOf:
+        - $ref: '#/components/schemas/IntOrString'
+        - type: array
+          items: {type: string}
+    Loop:
+      oneOf:
+        - $ref: '#/components/schemas/Loop'
+        - type: string
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "func (t *Flag) UnmarshalText(text []byte) error {")
+	assert.Contains(t, code, "// Text that is exactly a JSON boolean or integer, with nothing around it, is taken as one; anything else is a string.\nfunc (t *Flag) UnmarshalText(")
+	assert.NotContains(t, code, "func (t *WithArray) UnmarshalText(", "an array branch can't be bound from text")
+	assert.NotContains(t, code, "func (t *Loop) UnmarshalText(", "a union that contains itself can't be bound from text")
 }
