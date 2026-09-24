@@ -60,7 +60,8 @@ type Schema struct {
 	// aliasOf is the OpenAPI schema of the type this schema is an alias of,
 	// when an allOf generated as another type, such as the $ref in
 	// `allOf: [$ref X, {description: ...}]`. OAPISchema is the allOf itself.
-	// schema-merging-behavior v3 sets it; generatesMarshalJSON follows it.
+	// generateAllOfV2 and generateAllOfV3 set it; generatesMarshalJSON follows
+	// it.
 	aliasOf *openapi3.Schema
 }
 
