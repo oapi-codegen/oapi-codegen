@@ -3,6 +3,11 @@ package: allofmergeextensions
 generate:
   models: true
 output: allof_merge_extensions.gen.go
+compatibility:
+  # DerivedNoOverride (issue #2335) merges a schema that x-go-type replaces
+  # with properties of its own. Later schema-merging-behavior versions reject
+  # that; this tests v2's output.
+  schema-merging-behavior: v2
 output-options:
   skip-prune: true
   overlay:

@@ -24,6 +24,16 @@ func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 		return generateGoSchema(ctx, allOf[0], path)
 	}
 
+	// A member whose schema the merge can't read can only be annotated by the
+	// others, and then the composition is that member's type.
+	opaque, err := opaqueMember(allOf)
+	if err != nil {
+		return Schema{}, err
+	}
+	if opaque != nil {
+		return generateAnnotatedOpaque(ctx, opaque, allOf, path)
+	}
+
 	// Distinguish two uses of allOf:
 	//
 	//   1. Decorator idiom — at least one INLINE member (Ref == "") is
@@ -35,10 +45,9 @@ func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 	//
 	//   2. Real composition — every member either contributes structural
 	//      content or is a $ref contributing the referenced schema. The
-	//      result is a NEW distinct type, and extensions like x-go-type on
-	//      a source schema do NOT transfer (see issue #2335: Client has
-	//      x-go-type=OverlayClient, but allOf[Client, {properties:{id}}]
-	//      is ClientWithId — a different shape, not OverlayClient).
+	//      result is a NEW distinct type, and extensions that name a source
+	//      schema's type, such as x-go-type-name, do NOT transfer. (A member
+	//      with x-go-type never gets this far: see opaqueMember.)
 	//
 	// A $ref member is excluded from the decorator check because it is by
 	// construction delivering the referenced schema, not "decorating"
@@ -53,7 +62,7 @@ func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 		}
 	}
 
-	schema, err := valueWithPropagatedRefV3(allOf[0])
+	schema, err := memberValue(allOf[0])
 	if err != nil {
 		return Schema{}, err
 	}
@@ -66,7 +75,7 @@ func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 	}
 
 	for i := 1; i < n; i++ {
-		oneOfSchema, err := valueWithPropagatedRefV3(allOf[i])
+		oneOfSchema, err := memberValue(allOf[i])
 		if err != nil {
 			return Schema{}, err
 		}
@@ -144,75 +153,243 @@ func isExtensionOnlySchemaV3(s *openapi3.Schema) bool {
 	return reflect.DeepEqual(tmp, openapi3.Schema{})
 }
 
-// valueWithPropagatedRefV3 returns a copy of ref's schema with its Properties
-// refs rewritten when ref itself is external, and with extensions placed
-// next to the $ref folded in (ref-side wins over value-side). This is what
-// allows allOf members to carry per-use sibling directives without
+// memberValue returns a copy of an allOf member's schema, with extensions
+// placed next to its $ref folded in (ref-side wins over value-side). This is
+// what allows allOf members to carry per-use sibling directives without
 // mutating the referenced schema.
-func valueWithPropagatedRefV3(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
+//
+// Reading a schema the merge can't read is an error (see isOpaqueSchema). Every
+// read of a member goes through here, so however deep a merge flattens nested
+// allOfs and array items, it never copies such a schema's body.
+func memberValue(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
+	if isOpaqueSchema(ref) {
+		return openapi3.Schema{}, opaqueMergeError(ref, ref, nil)
+	}
 	schema := *ref.Value
 	schema.Extensions = combinedSchemaExtensions(ref)
-
-	if len(ref.Ref) == 0 || ref.Ref[0] == '#' {
-		return schema, nil
-	}
-
-	pathParts := strings.Split(ref.Ref, "#")
-	if len(pathParts) < 1 || len(pathParts) > 2 {
-		return openapi3.Schema{}, fmt.Errorf("unsupported reference: %s", ref.Ref)
-	}
-	remoteComponent := pathParts[0]
-
-	propagateRemoteRefsV3(remoteComponent, &schema)
-
 	return schema, nil
 }
 
-// propagateRemoteRefsV3 rewrites local "#/..." refs within a schema to be
-// qualified with the remote component path. This is needed so that when an
-// external schema is flattened via allOf, nested type references (array items,
-// additionalProperties, sub-object properties) retain their external
-// qualification. See https://github.com/oapi-codegen/oapi-codegen/issues/2288
-func propagateRemoteRefsV3(remoteComponent string, schema *openapi3.Schema) {
-	for _, value := range schema.Properties {
-		qualifyRemoteRefV3(remoteComponent, value)
+// isOpaqueSchema reports whether the merge can't read a schema:
+//
+//   - a schema in another document, which another generator run turns into a
+//     Go type, with its own configuration; its body is not ours to copy, and
+//     the refs inside it point into a document this run doesn't generate
+//     (#2288). That includes a component of this document that is only a $ref
+//     to one (see isRefInExternalDocument);
+//   - a schema that x-go-type replaces with a Go type whose fields we can't
+//     see.
+//
+// Such a schema can be annotated, but not merged with other schemas.
+func isOpaqueSchema(ref *openapi3.SchemaRef) bool {
+	if ref == nil {
+		return false
 	}
-	qualifyRemoteRefV3(remoteComponent, schema.Items)
-	qualifyRemoteRefV3(remoteComponent, schema.AdditionalProperties.Schema)
-	for _, list := range [][]*openapi3.SchemaRef{schema.AllOf, schema.AnyOf, schema.OneOf} {
-		for _, ref := range list {
-			qualifyRemoteRefV3(remoteComponent, ref)
-		}
+	if isRefInExternalDocument(ref.Ref) {
+		return true
 	}
-	qualifyRemoteRefV3(remoteComponent, schema.Not)
+	_, ok := combinedSchemaExtensions(ref)[extPropGoType]
+	return ok
 }
 
-// qualifyRemoteRefV3 qualifies one position inside a schema being flattened out
-// of a remote document: a local "#/..." ref is rewritten to point at that
-// document, and an inline schema is walked for positions of its own.
-//
-// A $ref is never followed. The schema it names becomes a Go type generated
-// from the document it lives in, so its body is not ours to rewrite — and a
-// ref already qualified for some document must not be re-qualified for this
-// one. Not following refs is also what makes this terminate: a schema can
-// only refer back to itself through a $ref, so walking inline schemas alone
-// cannot cycle. Following them recursed forever the second time a
-// self-recursive remote schema was flattened, because the first pass had
-// rewritten the very refs whose "#" prefix stopped the walk
-// (https://github.com/oapi-codegen/oapi-codegen/issues/2557).
-func qualifyRemoteRefV3(remoteComponent string, ref *openapi3.SchemaRef) {
-	if ref == nil {
-		return
-	}
-	if len(ref.Ref) > 0 {
-		if ref.Ref[0] == '#' {
-			ref.Ref = remoteComponent + ref.Ref
+// isRefInExternalDocument reports whether ref points into another document.
+// A local ref does when it names a component schema that is only a $ref into
+// another document, directly or through other such components: kin-openapi
+// hands us the other document's schema for it, with nothing to say where it
+// came from.
+func isRefInExternalDocument(ref string) bool {
+	seen := make(map[string]bool)
+	for ref != "" && !seen[ref] {
+		if ref[0] != '#' {
+			return true
 		}
-		return
+		seen[ref] = true
+		name, ok := strings.CutPrefix(ref, "#/components/schemas/")
+		if !ok || strings.Contains(name, "/") || globalState.spec == nil || globalState.spec.Components == nil {
+			return false
+		}
+		component := globalState.spec.Components.Schemas[name]
+		if component == nil {
+			return false
+		}
+		ref = component.Ref
 	}
-	if ref.Value != nil {
-		propagateRemoteRefsV3(remoteComponent, ref.Value)
+	return false
+}
+
+// opaqueSchemaFor returns the opaque schema (see isOpaqueSchema) an allOf member
+// stands for, or nil. That is the member itself when it is opaque, and
+// otherwise the opaque member of an allOf that the member is, when that allOf
+// only annotates it: such a member generates as the opaque schema's type, so
+// it is just as opaque.
+func opaqueSchemaFor(ref *openapi3.SchemaRef, seen map[*openapi3.Schema]bool) *openapi3.SchemaRef {
+	if ref == nil {
+		return nil
 	}
+	if isOpaqueSchema(ref) {
+		return ref
+	}
+	s := ref.Value
+	if s == nil || len(s.AllOf) == 0 || seen[s] || hasStructuralSiblingsV3(s) {
+		return nil
+	}
+	if seen == nil {
+		seen = make(map[*openapi3.Schema]bool)
+	}
+	seen[s] = true
+	for _, m := range s.AllOf {
+		target := opaqueSchemaFor(m, seen)
+		if target == nil {
+			continue
+		}
+		for _, other := range s.AllOf {
+			if other != m && !annotatesOnly(other) {
+				return nil
+			}
+		}
+		return target
+	}
+	return nil
+}
+
+// opaqueMember looks for an allOf member that stands for an opaque
+// schema (see opaqueSchemaFor). It returns nil when there is none. When every
+// other member only annotates it, it returns that member, whose type is the
+// composition's type. Any other combination would need fields the merge can't
+// read, so it is an error.
+func opaqueMember(allOf []*openapi3.SchemaRef) (*openapi3.SchemaRef, error) {
+	for _, m := range allOf {
+		target := opaqueSchemaFor(m, nil)
+		if target == nil {
+			continue
+		}
+		for _, other := range allOf {
+			if other != m && !annotatesOnly(other) {
+				return nil, opaqueMergeError(m, target, other)
+			}
+		}
+		return m, nil
+	}
+	return nil, nil
+}
+
+// generateAnnotatedOpaque generates an allOf of an opaque member and members that
+// only annotate it: the opaque member's type. Nullability needs nothing here,
+// since schemaIsNullable finds a nullable member wherever the type is used.
+func generateAnnotatedOpaque(ctx genContext, opaque *openapi3.SchemaRef, allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+	out, err := generateGoSchema(ctx, opaque, path)
+	if err != nil {
+		return Schema{}, err
+	}
+	for _, m := range allOf {
+		if m == opaque {
+			continue
+		}
+		// The idiom of issue #1957: a member that sets
+		// x-go-type-skip-optional-pointer for the composed type.
+		if ext, ok := m.Value.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+			out.SkipOptionalPointer, err = extParsePropGoTypeSkipOptionalPointer(ext)
+			if err != nil {
+				return Schema{}, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
+			}
+		}
+	}
+	return out, nil
+}
+
+// annotatesOnly reports whether an allOf member only annotates the others:
+// it is inline, has no x-go-type, and has no keyword that shapes a Go type
+// (see typeKeywords).
+func annotatesOnly(ref *openapi3.SchemaRef) bool {
+	if ref == nil || ref.Ref != "" || ref.Value == nil {
+		return false
+	}
+	if _, ok := ref.Value.Extensions[extPropGoType]; ok {
+		return false
+	}
+	return len(typeKeywords(*ref.Value)) == 0
+}
+
+// typeKeywords lists the keywords of a schema that shape a Go type, by their
+// JSON names. Those are all of them but documentation, nullability, validation
+// constraints oapi-codegen doesn't turn into Go types (minLength, pattern,
+// maxItems, ...) and extensions. It clears those and lists what's left, so a
+// keyword kin-openapi adds later counts as shaping the type until it's added
+// here.
+func typeKeywords(s openapi3.Schema) []string {
+	// Documentation.
+	s.Title, s.Description, s.Comment = "", "", ""
+	s.Default, s.Example, s.Examples = nil, nil, nil
+	s.ExternalDocs, s.XML = nil, nil
+	s.Deprecated, s.ReadOnly, s.WriteOnly, s.AllowEmptyValue = false, false, false, false
+	// Nullability. A 3.1 type array of only "null" says nullable.
+	s.Nullable = false
+	if len(nonNullTypes(s.Type)) == 0 {
+		s.Type = nil
+	}
+	// Validation.
+	s.Min, s.Max, s.MultipleOf = nil, nil, nil
+	s.ExclusiveMin, s.ExclusiveMax = openapi3.ExclusiveBound{}, openapi3.ExclusiveBound{}
+	s.MinLength, s.MaxLength, s.Pattern = 0, nil, ""
+	s.MinItems, s.MaxItems, s.UniqueItems = 0, nil, false
+	s.MinProps, s.MaxProps = 0, nil
+	s.Not = nil
+	// Extensions, and kin-openapi's source locations.
+	s.Extensions, s.Origin = nil, nil
+
+	var keywords []string
+	v := reflect.ValueOf(s)
+	for i := range v.NumField() {
+		f := v.Field(i)
+		if f.IsZero() || ((f.Kind() == reflect.Slice || f.Kind() == reflect.Map) && f.Len() == 0) {
+			continue
+		}
+		name, _, _ := strings.Cut(v.Type().Field(i).Tag.Get("json"), ",")
+		keywords = append(keywords, name)
+	}
+	return keywords
+}
+
+// opaqueMergeError reports an allOf that would merge member, which stands
+// for the opaque schema target, with other. other is nil when the merge found
+// the opaque schema deeper down, inside a member it was flattening.
+func opaqueMergeError(member, target, other *openapi3.SchemaRef) error {
+	what := describeAllOfMember(member)
+	if member != target {
+		what += " (an allOf over " + describeAllOfMember(target) + ")"
+	}
+	with := "other schemas"
+	if other != nil {
+		with = describeAllOfMember(other)
+	}
+	if isRefInExternalDocument(target.Ref) {
+		return fmt.Errorf("allOf can't merge %s with %s: a reference to another document can't be merged "+
+			"with other allOf members, only annotated (description, nullable, ...). "+
+			"Define the schema in this document",
+			what, with)
+	}
+	return fmt.Errorf("allOf can't merge %s with %s: x-go-type replaces %s with %v, whose fields are unknown, "+
+		"so it can only be annotated (description, nullable, ...). "+
+		"Give the composition an x-go-type of its own",
+		what, with, describeAllOfMember(target), combinedSchemaExtensions(target)[extPropGoType])
+}
+
+// describeAllOfMember names an allOf member for an error message: its $ref,
+// or what an inline member declares.
+func describeAllOfMember(ref *openapi3.SchemaRef) string {
+	if ref.Ref != "" {
+		if ref.Ref[0] == '#' && isRefInExternalDocument(ref.Ref) {
+			return ref.Ref + " (a $ref to another document)"
+		}
+		return ref.Ref
+	}
+	if ref.Value == nil {
+		return "an inline schema"
+	}
+	if keywords := typeKeywords(*ref.Value); len(keywords) > 0 {
+		return "an inline schema with " + strings.Join(keywords, ", ")
+	}
+	return "an inline schema"
 }
 
 func mergeAllOfV3(allOf []*openapi3.SchemaRef, seenSchemaRef map[string]bool) (openapi3.Schema, error) {
@@ -224,10 +401,10 @@ func mergeAllOfV3(allOf []*openapi3.SchemaRef, seenSchemaRef map[string]bool) (o
 		if schemaRef.Ref != "" {
 			seenSchemaRef[schemaRef.Ref] = true
 		}
-		// Use valueWithPropagatedRefV3 so sibling extensions on a $ref
-		// member of a transitively-flattened allOf reach the merged
-		// schema, matching mergeSchemasV3' top-level handling.
-		member, err := valueWithPropagatedRefV3(schemaRef)
+		// Use memberValue so sibling extensions on a $ref member of a
+		// transitively-flattened allOf reach the merged schema, matching
+		// mergeSchemasV3's top-level handling.
+		member, err := memberValue(schemaRef)
 		if err != nil {
 			return openapi3.Schema{}, err
 		}
@@ -262,7 +439,7 @@ func mergeOpenapiSchemasV3(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map
 		var merged openapi3.Schema
 		merged, err = mergeAllOfV3(s1.AllOf, seenSchemaRef)
 		if err != nil {
-			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 1")
+			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 1: %w", err)
 		}
 		oneOf = append(oneOf, merged.OneOf...)
 		anyOf = append(anyOf, merged.AnyOf...)
@@ -272,7 +449,7 @@ func mergeOpenapiSchemasV3(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map
 		var merged openapi3.Schema
 		merged, err = mergeAllOfV3(s2.AllOf, seenSchemaRef)
 		if err != nil {
-			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 2")
+			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 2: %w", err)
 		}
 		oneOf = append(oneOf, merged.OneOf...)
 		anyOf = append(anyOf, merged.AnyOf...)
@@ -516,17 +693,26 @@ func mergeItemsV3(i1, i2 *openapi3.SchemaRef, seenSchemaRef map[string]bool) (*o
 		// (dropping them) rather than recursing forever.
 		return nil, nil
 	}
+	// Item schemas the merge can't read follow the allOf rule: they can be
+	// annotated, not merged.
+	opaque, err := opaqueMember([]*openapi3.SchemaRef{i1, i2})
+	if err != nil {
+		return nil, fmt.Errorf("error merging array items: %w", err)
+	}
+	if opaque != nil {
+		return opaque, nil
+	}
 	seen := maps.Clone(seenSchemaRef)
 	for _, r := range []*openapi3.SchemaRef{i1, i2} {
 		if r.Ref != "" {
 			seen[r.Ref] = true
 		}
 	}
-	v1, err := valueWithPropagatedRefV3(i1)
+	v1, err := memberValue(i1)
 	if err != nil {
 		return nil, err
 	}
-	v2, err := valueWithPropagatedRefV3(i2)
+	v2, err := memberValue(i2)
 	if err != nil {
 		return nil, err
 	}
