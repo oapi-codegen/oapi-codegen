@@ -1,4 +1,4 @@
-versions: [v1, v2]
+versions: [v1, v2, v3]
 description: >-
   allOf with a oneOf next to it whose branches are $refs to schemas that only
   add constraints. Like inline constraint-only branches, the oneOf is dropped,

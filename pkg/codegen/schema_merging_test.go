@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -17,12 +18,15 @@ func TestSchemaMergingBehaviorValidate(t *testing.T) {
 		{name: "v1", compat: CompatibilityOptions{SchemaMergingBehavior: "v1"}},
 		{name: "v2", compat: CompatibilityOptions{SchemaMergingBehavior: "v2"}},
 		{name: "unknown", compat: CompatibilityOptions{SchemaMergingBehavior: "v2.9"}, invalid: true},
-		{name: "not a version yet", compat: CompatibilityOptions{SchemaMergingBehavior: "v3"}, invalid: true},
+		{name: "v3", compat: CompatibilityOptions{SchemaMergingBehavior: "v3"}},
+		{name: "not a version yet", compat: CompatibilityOptions{SchemaMergingBehavior: "v4"}, invalid: true},
 		{name: "old-merge-schemas alone", compat: CompatibilityOptions{OldMergeSchemas: true}},
 		{name: "old-merge-schemas with v1", compat: CompatibilityOptions{OldMergeSchemas: true, SchemaMergingBehavior: "v1"}},
 		{name: "old-merge-schemas with v2", compat: CompatibilityOptions{OldMergeSchemas: true, SchemaMergingBehavior: "v2"}, invalid: true},
+		{name: "old-merge-schemas with v3", compat: CompatibilityOptions{OldMergeSchemas: true, SchemaMergingBehavior: "v3"}, invalid: true},
 		{name: "old-allof-sibling-merging with v1", compat: CompatibilityOptions{OldAllOfSiblingMerging: true, SchemaMergingBehavior: "v1"}},
 		{name: "old-allof-sibling-merging with v2", compat: CompatibilityOptions{OldAllOfSiblingMerging: true, SchemaMergingBehavior: "v2"}},
+		{name: "old-allof-sibling-merging with v3", compat: CompatibilityOptions{OldAllOfSiblingMerging: true, SchemaMergingBehavior: "v3"}, invalid: true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			problems := tc.compat.Validate()
@@ -35,6 +39,24 @@ func TestSchemaMergingBehaviorValidate(t *testing.T) {
 	}
 }
 
+// TestConfigurationValidateReportsSchemaMerging: the problem reaches
+// Configuration.Validate, which is what the CLI calls.
+func TestConfigurationValidateReportsSchemaMerging(t *testing.T) {
+	cfg := Configuration{PackageName: "api", Compatibility: CompatibilityOptions{SchemaMergingBehavior: "v4"}}
+	err := cfg.Validate()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "schema-merging-behavior")
+}
+
+// TestSchemaMergerFor: every version maps to its own allOf merge.
+func TestSchemaMergerFor(t *testing.T) {
+	pointer := func(f any) uintptr { return reflect.ValueOf(f).Pointer() }
+	assert.Equal(t, pointer(mergeSchemasV2), pointer(schemaMergerFor(SchemaMergingV2)))
+	assert.Equal(t, pointer(mergeSchemasV3), pointer(schemaMergerFor(schemaMergingV3)))
+	assert.NotEqual(t, pointer(mergeSchemasV2), pointer(schemaMergerFor(SchemaMergingV1)), "v1 has a merge of its own")
+	assert.Panics(t, func() { schemaMergerFor("v4") })
+}
+
 func TestSchemaMergingVersion(t *testing.T) {
 	for _, tc := range []struct {
 		compat CompatibilityOptions
@@ -44,6 +66,7 @@ func TestSchemaMergingVersion(t *testing.T) {
 		{CompatibilityOptions{OldMergeSchemas: true}, SchemaMergingV1},
 		{CompatibilityOptions{SchemaMergingBehavior: "v1"}, SchemaMergingV1},
 		{CompatibilityOptions{SchemaMergingBehavior: "v2"}, SchemaMergingV2},
+		{CompatibilityOptions{SchemaMergingBehavior: "v3"}, schemaMergingV3},
 	} {
 		got, err := tc.compat.schemaMergingVersion()
 		require.NoError(t, err)
@@ -59,8 +82,9 @@ info: {title: repro, version: "1.0.0"}
 paths: {}
 `
 	for _, compat := range []CompatibilityOptions{
-		{SchemaMergingBehavior: "v3"},
+		{SchemaMergingBehavior: "v4"},
 		{OldMergeSchemas: true, SchemaMergingBehavior: "v2"},
+		{OldAllOfSiblingMerging: true, SchemaMergingBehavior: "v3"},
 	} {
 		_, err := generateSpecErr(spec, func(c *Configuration) { c.Compatibility = compat })
 		require.Error(t, err, "%+v", compat)

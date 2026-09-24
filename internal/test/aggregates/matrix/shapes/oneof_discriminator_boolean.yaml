@@ -1,3 +1,4 @@
+versions: [v2, v3]
 description: >-
   oneOf with a boolean discriminator (#1619). From* used to stamp the value as
   the JSON string "false", which the variant then failed to decode, and

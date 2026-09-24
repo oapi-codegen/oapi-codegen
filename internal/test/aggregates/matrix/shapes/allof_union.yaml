@@ -1,4 +1,4 @@
-versions: [v1, v2]
+versions: [v1, v2, v3]
 broken:
   v1: "v1 drops the union inside the allOf."
 description: allOf over a $ref object schema and an inline oneOf (the union comes out of the merge).

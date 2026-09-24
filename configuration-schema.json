@@ -84,7 +84,7 @@
         "schema-merging-behavior": {
           "type": "string",
           "enum": ["v1", "v2"],
-          "description": "Selects how schemas composed with `allOf` are merged into Go types, and how `anyOf` and `oneOf` are turned into Go unions. `v1`: `allOf` members that are `$ref`s are embedded in the Go struct and the fields of inline members are inlined; the only behavior before v1.11.0, and what `old-merge-schemas: true` is an alias for. `v2`: `allOf` members are merged keyword by keyword into one Go type, and `anyOf`/`oneOf` become a union type with `As*`, `From*` and `Merge*` methods; the default since v1.11.0. Leaving it unset means `v2`."
+          "description": "Selects how schemas composed with `allOf` are merged into Go types, and how `anyOf` and `oneOf` are turned into Go unions. `v1`: `allOf` members that are `$ref`s are embedded in the Go struct and the fields of inline members are inlined, while `anyOf`/`oneOf` are handled as in `v2`; the only behavior before v1.11.0, and what `old-merge-schemas: true` is an alias for. `v2`: `allOf` members are merged keyword by keyword into one Go type, and `anyOf`/`oneOf` become a union type with `As*`, `From*` and `Merge*` methods; the default since v1.11.0. Leaving it unset means `v2`."
         },
         "old-allof-sibling-merging": {
           "type": "boolean",

@@ -1,3 +1,4 @@
+versions: [v2, v3]
 description: 'A nullable anyOf (an OpenAPI 3.1 `type: null` branch).'
 openapi: 3.1.0
 subject:

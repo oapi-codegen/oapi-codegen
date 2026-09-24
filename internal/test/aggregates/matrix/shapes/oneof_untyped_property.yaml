@@ -1,3 +1,4 @@
+versions: [v2, v3]
 description: >-
   A union with an untyped property of its own (Go type any) that a variant
   also carries. From* must not panic on the property's nil interface value.

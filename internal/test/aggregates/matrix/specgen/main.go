@@ -39,13 +39,12 @@ var allPositions = []string{
 	"body-headers",          // a response with a header, so the strict envelope is a struct with Body and Headers
 }
 
-// newestVersion is the schema-merging-behavior version that aggregate work
-// goes into next. It isn't implemented yet, so no shape can list it. The tests
-// of every version before it guard against regressions, and say so.
+// newestVersion is the schema-merging-behavior version under development. The
+// tests of every version before it guard against regressions, and say so.
 const newestVersion = "v3"
 
 // allVersions are the versions a shape can list.
-var allVersions = []string{"v1", "v2"}
+var allVersions = []string{"v1", "v2", "v3"}
 
 type shape struct {
 	// Name is the file name without .yaml; it names the output directory.
@@ -72,8 +71,9 @@ type shape struct {
 	// Skip maps a position to the reason it is left out of this shape.
 	Skip map[string]string `yaml:"skip"`
 	// Broken maps a version older than the newest to the reason its
-	// generated code can't round-trip the samples. The code is still generated and compiled, so
-	// its output stays pinned, but the round trips are skipped.
+	// generated code can't round-trip the samples. The code is still
+	// generated and compiled, so its output stays pinned, but the round
+	// trips are skipped.
 	Broken map[string]string `yaml:"broken"`
 }
 
