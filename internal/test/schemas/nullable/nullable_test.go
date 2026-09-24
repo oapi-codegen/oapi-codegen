@@ -467,6 +467,56 @@ func TestNullableDiscriminatedUnion_3_1(t *testing.T) {
 	assert.True(t, *dog.Bark)
 }
 
+func TestNestedNullableUnionsRoundTrip_3_1(t *testing.T) {
+	for name, input := range map[string]string{
+		"single":       `{"single":{"kind":"cat","meow":true},"multiple":null}`,
+		"multiple cat": `{"single":null,"multiple":{"kind":"cat","meow":true}}`,
+		"multiple dog": `{"single":null,"multiple":{"kind":"dog","bark":true}}`,
+		"null":         `{"single":null,"multiple":null}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			var value spec31.NestedNullableUnions
+			require.NoError(t, json.Unmarshal([]byte(input), &value))
+			encoded, err := json.Marshal(value)
+			require.NoError(t, err)
+			assert.JSONEq(t, input, string(encoded))
+		})
+	}
+}
+
+func TestNestedNullableUnionsAccessors_3_1(t *testing.T) {
+	var single spec31.NestedNullableUnions_Single
+	require.NoError(t, single.FromCat(spec31.Cat{Meow: ptr(true)}))
+	cat, err := single.AsCat()
+	require.NoError(t, err)
+	assert.Equal(t, "cat", cat.Kind)
+	require.NotNil(t, cat.Meow)
+	assert.True(t, *cat.Meow)
+	value, err := single.ValueByDiscriminator()
+	require.NoError(t, err)
+	assert.Equal(t, cat, value)
+
+	var multiple spec31.NestedNullableUnions_Multiple
+	require.NoError(t, multiple.FromDog(spec31.Dog{Bark: ptr(true)}))
+	dog, err := multiple.AsDog()
+	require.NoError(t, err)
+	assert.Equal(t, "dog", dog.Kind)
+	require.NotNil(t, dog.Bark)
+	assert.True(t, *dog.Bark)
+	value, err = multiple.ValueByDiscriminator()
+	require.NoError(t, err)
+	assert.Equal(t, dog, value)
+
+	encoded, err := json.Marshal(spec31.NestedNullableUnions{Single: &single, Multiple: &multiple})
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"single":{"kind":"cat","meow":true},"multiple":{"kind":"dog","bark":true}}`, string(encoded))
+
+	var empty spec31.NestedNullableUnions
+	require.NoError(t, json.Unmarshal([]byte(`{"single":null,"multiple":null}`), &empty))
+	assert.Nil(t, empty.Single)
+	assert.Nil(t, empty.Multiple)
+}
+
 // ---- issue #2430: bare OpenAPI 3.1 `type: "null"` schemas map to Go `any` ----
 //
 // Regression test for https://github.com/oapi-codegen/oapi-codegen/issues/2430.
