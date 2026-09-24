@@ -6,6 +6,7 @@ package aggregatesallof
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 
 	"github.com/oapi-codegen/runtime"
 )
@@ -1432,6 +1433,21 @@ func (a WithStringAdditional2) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
+// adoptUnion reconciles NestedOneOfInAllOf's own fields with union data that From* or
+// Merge* just set, for the keys b defines. A property that is still unset takes the
+// union's value, rather than overwriting it with a zero value when marshaling, and a
+// matching additional property is dropped, so that an older copy of the key cannot
+// shadow the new union data.
+func (t *NestedOneOfInAllOf) adoptUnion(b json.RawMessage) {
+	object := make(map[string]json.RawMessage)
+	if json.Unmarshal(b, &object) != nil {
+		return
+	}
+	if raw, found := object["a_foo"]; found && reflect.ValueOf(t.AFoo).IsZero() {
+		_ = json.Unmarshal(raw, &t.AFoo)
+	}
+}
+
 // AsNestedOneOfInAllOf0 returns the union data inside the NestedOneOfInAllOf as a NestedOneOfInAllOf0
 func (t NestedOneOfInAllOf) AsNestedOneOfInAllOf0() (NestedOneOfInAllOf0, error) {
 	var body NestedOneOfInAllOf0
@@ -1443,6 +1459,9 @@ func (t NestedOneOfInAllOf) AsNestedOneOfInAllOf0() (NestedOneOfInAllOf0, error)
 func (t *NestedOneOfInAllOf) FromNestedOneOfInAllOf0(v NestedOneOfInAllOf0) error {
 	b, err := json.Marshal(v)
 	t.union = b
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -1455,6 +1474,9 @@ func (t *NestedOneOfInAllOf) MergeNestedOneOfInAllOf0(v NestedOneOfInAllOf0) err
 
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -1469,6 +1491,9 @@ func (t NestedOneOfInAllOf) AsNestedOneOfInAllOf1() (NestedOneOfInAllOf1, error)
 func (t *NestedOneOfInAllOf) FromNestedOneOfInAllOf1(v NestedOneOfInAllOf1) error {
 	b, err := json.Marshal(v)
 	t.union = b
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -1481,6 +1506,9 @@ func (t *NestedOneOfInAllOf) MergeNestedOneOfInAllOf1(v NestedOneOfInAllOf1) err
 
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 

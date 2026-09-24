@@ -281,10 +281,26 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 	for _, paramOrRef := range params {
 		param := paramOrRef.Value
 
-		goType, err := paramToGoType(param, append(path, param.Name))
+		paramPath := append(slices.Clone(path), param.Name)
+		goType, err := paramToGoType(param, paramPath)
 		if err != nil {
 			return nil, fmt.Errorf("error generating type for param (%s): %s",
 				param.Name, err)
+		}
+
+		// An inline oneOf/anyOf parameter is a union struct whose only field
+		// is unexported, so left anonymous it could be neither named nor
+		// built outside the generated package (issue #2560). Name it the way
+		// its members already are, <Op>Params<Name> next to
+		// <Op>Params<Name>0, so it gets the union's methods.
+		if len(goType.UnionElements) > 0 && goType.RefType == "" && !IsGoTypeReference(paramOrRef.Ref) {
+			typeName := SchemaNameToTypeName(PathToTypeName(slices.Clone(paramPath)))
+			goType.AdditionalTypes = append(goType.AdditionalTypes, TypeDefinition{
+				TypeName: typeName,
+				JsonName: strings.Join(paramPath, "."),
+				Schema:   goType,
+			})
+			goType.RefType = typeName
 		}
 
 		pd := ParameterDefinition{
@@ -2068,6 +2084,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 				td := TypeDefinition{
 					TypeName: bodyTypeName,
 					Schema:   bodySchema,
+					Comment:  fmt.Sprintf("// %s defines body for %s for %s ContentType.", bodyTypeName, operationID, contentType),
 				}
 				typeDefinitions = append(typeDefinitions, td)
 				// The body schema now is a reference to a type
@@ -2164,16 +2181,48 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			// When the operation came from an externally-ref'd path item,
 			// the imported package generated the same hoisted name, so we
 			// reference it instead of redeclaring locally.
-			if !IsGoTypeReference(responseOrRef.Ref) && contentSchema.RefType == "" &&
+			//
+			// A response that lives in components/responses is named once,
+			// by the model pass (GenerateTypesForResponses), and everything
+			// else must point at that name rather than hoist a second copy
+			// (issue #2539). That applies both when we are generating the
+			// component envelopes themselves (operationID is empty and
+			// statusCode is the component name) and when an operation
+			// reaches the response through `$ref`. The model pass only
+			// declares JSON content, so only JSON media types can be
+			// redirected this way.
+			componentTypeName := ""
+			if externalPkg == "" && util.IsMediaTypeJson(contentType) {
+				switch {
+				case responseOrRef.Ref != "":
+					// An operation (or another component) reaching a
+					// components/responses entry through `$ref`. Resolve the
+					// entry so we pick up exactly the name the model pass
+					// gave it (x-go-name, resolve-type-name-collisions, ...).
+					componentTypeName, err = componentResponseRefTypeName(responseOrRef.Ref, contentType)
+				case operationID == "":
+					// Generating the component's own envelope.
+					componentTypeName, err = componentResponseTypeName(statusCode, responseOrRef, contentType)
+				}
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if contentSchema.RefType == "" && (componentTypeName != "" || !IsGoTypeReference(responseOrRef.Ref)) &&
 				(len(contentSchema.UnionElements) != 0 || contentSchema.HasAdditionalProperties ||
 					(globalState.options.OutputOptions.GenerateTypesForAnonymousSchemas && len(contentSchema.Properties) > 0)) {
-				if externalPkg != "" {
+				switch {
+				case externalPkg != "":
 					contentSchema.RefType = fmt.Sprintf("%s.%s", externalPkg, responseBodyTypeName)
-				} else {
+				case componentTypeName != "":
+					contentSchema.RefType = componentTypeName
+				default:
 					contentSchema.AdditionalTypes = append(contentSchema.AdditionalTypes, TypeDefinition{
 						TypeName: responseBodyTypeName,
 						JsonName: responseBodyTypeName,
 						Schema:   contentSchema,
+						Comment:  fmt.Sprintf("// %s defines the %s response body for %s for %s ContentType.", responseBodyTypeName, statusCode, operationID, contentType),
 					})
 					contentSchema.RefType = responseBodyTypeName
 				}
@@ -2313,16 +2362,32 @@ func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 		typeDefs = append(typeDefs, param.Schema.AdditionalTypes...)
 	}
 
+	// Types hoisted out of bodies (inline union members, nested objects, ...)
+	// are rendered by the same template as the parameter types, whose default
+	// comment says "defines parameters for"; describe them as models instead.
 	for _, body := range op.Bodies {
-		typeDefs = append(typeDefs, body.Schema.AdditionalTypes...)
+		typeDefs = append(typeDefs, withModelComments(body.Schema.AdditionalTypes)...)
 	}
 
 	for _, resp := range op.Responses {
 		for _, content := range resp.Contents {
-			typeDefs = append(typeDefs, content.Schema.AdditionalTypes...)
+			typeDefs = append(typeDefs, withModelComments(content.Schema.AdditionalTypes)...)
 		}
 	}
 	return typeDefs
+}
+
+// withModelComments returns copies of typeDefs in which every type without a
+// Comment gets the doc comment component schemas get, "X defines model for Y.".
+func withModelComments(typeDefs []TypeDefinition) []TypeDefinition {
+	out := make([]TypeDefinition, len(typeDefs))
+	for i, td := range typeDefs {
+		if td.Comment == "" {
+			td.Comment = fmt.Sprintf("// %s defines model for %s.", td.TypeName, td.JsonName)
+		}
+		out[i] = td
+	}
+	return out
 }
 
 // GenerateParamsTypes defines the schema for a parameters definition object

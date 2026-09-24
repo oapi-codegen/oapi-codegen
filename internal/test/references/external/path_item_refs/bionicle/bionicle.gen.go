@@ -29,7 +29,7 @@ type Bionicle struct {
 // BionicleName defines model for bionicleName.
 type BionicleName = string
 
-// GetBionicleName400JSONResponseBody defines parameters for GetBionicleName.
+// GetBionicleName400JSONResponseBody defines the 400 response body for GetBionicleName for application/json ContentType.
 type GetBionicleName400JSONResponseBody struct {
 	union json.RawMessage
 }

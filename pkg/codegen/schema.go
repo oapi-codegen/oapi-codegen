@@ -33,6 +33,12 @@ type Schema struct {
 	Description string // The description of the element
 
 	UnionElements []UnionElement // Possible elements of oneOf/anyOf union
+
+	// UnionTextKinds lists the JSON types ("boolean", "integer", "number",
+	// "string") of a union whose branches are all scalars, so that it can be
+	// bound from a parameter's text; nil for any other union.
+	UnionTextKinds []string
+
 	Discriminator *Discriminator // Describes which value is stored in a union
 
 	// If this is set, the schema will declare a type via alias, eg,
@@ -147,11 +153,16 @@ func (s Schema) HasCustomMarshalJSON() bool {
 }
 
 // HasCustomMarshalJSONForRequestBody reports whether a named request body
-// wrapper needs to delegate JSON marshaling to its underlying union type.
-// Unlike strict response types, request body wrappers have no direct union
-// encoding path, so local inline unions need delegation as well.
+// wrapper needs to delegate JSON marshaling to its underlying type.
+//
+// The request-body template only asks when it declares the wrapper as a
+// defined type (`type XJSONRequestBody XJSONBody`), and a defined type has an
+// empty method set, so the answer is simply whether the underlying type has
+// generated marshalling. That includes an inline body with properties and
+// additionalProperties, which HasCustomMarshalJSON's alias shortcut would miss:
+// the body is a local RefType, yet the wrapper is not an alias of it.
 func (s Schema) HasCustomMarshalJSONForRequestBody() bool {
-	return len(s.UnionElements) > 0 || s.HasCustomMarshalJSON()
+	return s.generatesMarshalJSON()
 }
 
 func (s Schema) TypeDecl() string {
@@ -434,6 +445,37 @@ type Discriminator struct {
 
 	// JSON property name that holds the discriminator
 	Property string
+
+	// ValueType is the JSON type of the discriminator property's values:
+	// "boolean", "integer" or "number" when the schemas declare one, and ""
+	// for the usual string discriminator.
+	ValueType string
+}
+
+// IsString reports whether the discriminator's values are JSON strings.
+func (d *Discriminator) IsString() bool {
+	return d.ValueType == "" || d.ValueType == openapi3.TypeString
+}
+
+// literal renders a mapping value as a literal of the discriminator's type,
+// valid in both JSON and Go. A value that doesn't parse as that type stays a
+// string, which is what every discriminator used to be.
+func (d *Discriminator) literal(value string) string {
+	var ok bool
+	switch d.ValueType {
+	case openapi3.TypeBoolean:
+		ok = value == "true" || value == "false"
+	case openapi3.TypeInteger:
+		_, err := strconv.ParseInt(value, 10, 64)
+		ok = err == nil
+	case openapi3.TypeNumber:
+		_, err := strconv.ParseFloat(value, 64)
+		ok = err == nil
+	}
+	if ok {
+		return value
+	}
+	return `"` + value + `"`
 }
 
 func (d *Discriminator) JSONTag() string {
@@ -459,6 +501,10 @@ func (d *Discriminator) PropertyName() string {
 type DiscriminatorStamp struct {
 	// Value is the discriminator value mapped to this union element.
 	Value string
+	// Literal is Value written as a JSON and Go literal of the
+	// discriminator's type: "cat" for a string discriminator, false for a
+	// boolean one (issue #1619).
+	Literal string
 	// Property is the union struct's own discriminator field, matched by
 	// JSON property name, when it declares one; nil when it doesn't.
 	Property *Property
@@ -490,7 +536,8 @@ func (s Schema) DiscriminatorStampFor(element UnionElement) *DiscriminatorStamp 
 	if !found {
 		return nil
 	}
-	stamp.JSONPatch = fmt.Sprintf(`{"%s":"%s"}`, d.Property, stamp.Value)
+	stamp.Literal = d.literal(stamp.Value)
+	stamp.JSONPatch = fmt.Sprintf(`{"%s":%s}`, d.Property, stamp.Literal)
 	// Match by JSON property name: the discriminator is a JSON-level
 	// concept, and the Go field may be renamed via x-go-name.
 	for i := range s.Properties {
@@ -1414,15 +1461,28 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 				}
 			}
 
+			// Inline union members are named <path><index>. A schema with both
+			// anyOf and oneOf would name both lists' members the same way and
+			// fail with a duplicate type name (issue #839), so each list gets
+			// its own path segment then. A schema with only one keeps its
+			// names.
+			anyOfPath, oneOfPath := path, path
+			if schema.AnyOf != nil && schema.OneOf != nil {
+				anyOfPath = append(slices.Clone(path), "AnyOf")
+				oneOfPath = append(slices.Clone(path), "OneOf")
+			}
 			if schema.AnyOf != nil {
-				if err := generateUnion(ctx, &outSchema, schema.AnyOf, schema.Discriminator, path); err != nil {
+				if err := generateUnion(ctx, &outSchema, schema.AnyOf, schema.Discriminator, anyOfPath); err != nil {
 					return Schema{}, fmt.Errorf("error generating type for anyOf: %w", err)
 				}
 			}
 			if schema.OneOf != nil {
-				if err := generateUnion(ctx, &outSchema, schema.OneOf, schema.Discriminator, path); err != nil {
+				if err := generateUnion(ctx, &outSchema, schema.OneOf, schema.Discriminator, oneOfPath); err != nil {
 					return Schema{}, fmt.Errorf("error generating type for oneOf: %w", err)
 				}
+			}
+			if len(outSchema.UnionElements) > 0 && len(outSchema.Properties) == 0 && !outSchema.HasAdditionalProperties {
+				outSchema.UnionTextKinds = unionTextKinds(slices.Concat(schema.AnyOf, schema.OneOf))
 			}
 
 			// Only generate a struct literal if the schema actually has
@@ -1939,8 +1999,9 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 func generateUnion(ctx genContext, outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string) error {
 	if discriminator != nil {
 		outSchema.Discriminator = &Discriminator{
-			Property: discriminator.PropertyName,
-			Mapping:  make(map[string]string),
+			Property:  discriminator.PropertyName,
+			Mapping:   make(map[string]string),
+			ValueType: discriminatorValueType(outSchema, elements, discriminator.PropertyName),
 		}
 	}
 
@@ -2061,6 +2122,111 @@ func generateUnion(ctx genContext, outSchema *Schema, elements openapi3.SchemaRe
 	return nil
 }
 
+// unionTextKinds returns the sorted JSON types of a union's branches when
+// every branch (other than a 3.1 null branch) is a single scalar type, and nil
+// otherwise.
+func unionTextKinds(branches openapi3.SchemaRefs) []string {
+	var kinds []string
+	for _, b := range branches {
+		if b == nil || b.Value == nil {
+			return nil
+		}
+		v := b.Value
+		if isNullTypeSchema(v) {
+			continue
+		}
+		if len(v.Properties) > 0 || v.Items != nil || len(v.AllOf) > 0 || len(v.AnyOf) > 0 || len(v.OneOf) > 0 ||
+			v.AdditionalProperties.Schema != nil {
+			return nil
+		}
+		types := nonNullTypes(v.Type)
+		if len(types) != 1 {
+			return nil
+		}
+		switch types[0] {
+		case openapi3.TypeBoolean, openapi3.TypeInteger, openapi3.TypeNumber, openapi3.TypeString:
+			if !slices.Contains(kinds, types[0]) {
+				kinds = append(kinds, types[0])
+			}
+		default:
+			return nil
+		}
+	}
+	slices.Sort(kinds)
+	return kinds
+}
+
+// UnionTextAccepts reports whether a scalar union has a branch of the given
+// JSON type; see UnionTextKinds.
+func (s Schema) UnionTextAccepts(kind string) bool {
+	return slices.Contains(s.UnionTextKinds, kind)
+}
+
+// discriminatorValueType returns the JSON type of a union's discriminator
+// property when it is boolean, integer or number, and "" (a string) otherwise.
+// The union's own declaration of the property wins; failing that, every
+// element that declares it must agree.
+func discriminatorValueType(outSchema *Schema, elements openapi3.SchemaRefs, property string) string {
+	for _, p := range outSchema.Properties {
+		if p.JsonFieldName == property {
+			return scalarType(p.Schema.OAPISchema)
+		}
+	}
+	found := ""
+	for _, e := range elements {
+		if e == nil || e.Value == nil || isNullTypeSchema(e.Value) {
+			continue
+		}
+		prop := findProperty(e.Value, property, 0)
+		if prop == nil {
+			continue
+		}
+		typ := scalarType(prop)
+		if found != "" && typ != found {
+			return ""
+		}
+		found = typ
+	}
+	return found
+}
+
+// findProperty looks up a property on a schema, including properties it
+// gets from allOf members, as a variant that extends a base schema does.
+func findProperty(s *openapi3.Schema, name string, depth int) *openapi3.Schema {
+	if s == nil || depth > 8 {
+		return nil
+	}
+	if p, ok := s.Properties[name]; ok && p != nil {
+		return p.Value
+	}
+	for _, m := range s.AllOf {
+		if m == nil {
+			continue
+		}
+		if p := findProperty(m.Value, name, depth+1); p != nil {
+			return p
+		}
+	}
+	return nil
+}
+
+// scalarType returns "boolean", "integer" or "number" for a schema of that
+// single (non-null) type, and "" for anything else.
+func scalarType(s *openapi3.Schema) string {
+	if s == nil {
+		return ""
+	}
+	types := nonNullTypes(s.Type)
+	if len(types) != 1 {
+		return ""
+	}
+	switch types[0] {
+	case openapi3.TypeBoolean, openapi3.TypeInteger, openapi3.TypeNumber:
+		return types[0]
+	}
+	return ""
+}
+
 // setSkipOptionalPointerForContainerType ensures that the "optional pointer" is skipped on container types (such as a slice or a map).
 // This is controlled using the `prefer-skip-optional-pointer-on-container-types` Output Option
 // NOTE that it is still possible to override this on a per-field basis with `x-go-type-skip-optional-pointer`
@@ -2093,9 +2259,13 @@ func combinedSchemaExtensions(r *openapi3.SchemaRef) map[string]any {
 //
 // Description and Title are excluded — they are metadata, not structural,
 // and the caller propagates them separately. Nullable/ReadOnly/WriteOnly
-// are also excluded for now: their strict-equality check in
-// mergeOpenapiSchemas conflates the bool zero value with "unset" and would
-// regress simple wrappers like {allOf: [X-with-nullable:true]}.
+// are also excluded: merging would turn a pure wrapper such as
+// {allOf: [$ref X], nullable: true}, which aliases X, into a copy of X.
+// `type` is excluded for the same reason: {type: object, allOf: [$ref X]}
+// must stay an alias of X.
+//
+// A oneOf or anyOf next to allOf adds a union to the merged type, unless its
+// branches only add constraints (see isConstraintOnlyUnion).
 func hasStructuralSiblings(s *openapi3.Schema) bool {
 	if s == nil {
 		return false
@@ -2103,7 +2273,29 @@ func hasStructuralSiblings(s *openapi3.Schema) bool {
 	return len(s.Properties) > 0 ||
 		len(s.Required) > 0 ||
 		s.AdditionalProperties.Has != nil ||
-		s.AdditionalProperties.Schema != nil
+		s.AdditionalProperties.Schema != nil ||
+		(len(s.OneOf) > 0 && !isConstraintOnlyUnion(s.OneOf)) ||
+		(len(s.AnyOf) > 0 && !isConstraintOnlyUnion(s.AnyOf))
+}
+
+// isConstraintOnlyUnion reports whether every branch of a oneOf/anyOf only
+// adds constraints, such as `oneOf: [{required: [email]}, {required: [phone]}]`,
+// rather than naming alternative types. Such a list next to allOf used to be
+// dropped; it keeps being dropped, since generating a union of `any` branches
+// would turn the merged type into something harder to use, not more correct.
+func isConstraintOnlyUnion(branches openapi3.SchemaRefs) bool {
+	for _, b := range branches {
+		if b == nil || b.Ref != "" || b.Value == nil {
+			return false
+		}
+		v := b.Value
+		if v.Type.Slice() != nil || len(v.Properties) > 0 || v.Items != nil ||
+			len(v.AllOf) > 0 || len(v.AnyOf) > 0 || len(v.OneOf) > 0 ||
+			len(v.Enum) > 0 || v.AdditionalProperties.Schema != nil {
+			return false
+		}
+	}
+	return true
 }
 
 // hasInlineStructuralContent reports whether a generated Schema is an

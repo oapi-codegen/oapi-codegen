@@ -29,13 +29,13 @@ type SameName struct {
 // Reusableresponse defines model for reusableresponse.
 type Reusableresponse = Example
 
-// MultipleRequestAndResponseTypesTextBody defines parameters for MultipleRequestAndResponseTypes.
+// MultipleRequestAndResponseTypesTextBody defines body for MultipleRequestAndResponseTypes for text/plain ContentType.
 type MultipleRequestAndResponseTypesTextBody = string
 
-// RequiredTextBodyTextBody defines parameters for RequiredTextBody.
+// RequiredTextBodyTextBody defines body for RequiredTextBody for text/plain ContentType.
 type RequiredTextBodyTextBody = string
 
-// TextExampleTextBody defines parameters for TextExample.
+// TextExampleTextBody defines body for TextExample for text/plain ContentType.
 type TextExampleTextBody = string
 
 // HeadersExampleParams defines parameters for HeadersExample.
@@ -44,10 +44,10 @@ type HeadersExampleParams struct {
 	Header2 *int   `json:"header2,omitempty"`
 }
 
-// UnionExample200JSONResponseBody0 defines parameters for UnionExample.
+// UnionExample200JSONResponseBody0 defines model for UnionExample200JSONResponseBody.0.
 type UnionExample200JSONResponseBody0 = string
 
-// UnionExample200JSONResponseBody defines parameters for UnionExample.
+// UnionExample200JSONResponseBody defines the 200 response body for UnionExample for application/json ContentType.
 type UnionExample200JSONResponseBody struct {
 	union json.RawMessage
 }

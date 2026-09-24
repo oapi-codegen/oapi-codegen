@@ -19,7 +19,7 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// UpdateThingJSONBody defines parameters for UpdateThing.
+// UpdateThingJSONBody defines body for UpdateThing for application/json ContentType.
 type UpdateThingJSONBody = any
 
 // UpdateThingParams defines parameters for UpdateThing.

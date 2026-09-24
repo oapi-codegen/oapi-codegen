@@ -1,0 +1,26 @@
+description: oneOf over two $ref variants with a discriminator and an explicit mapping.
+subject:
+  oneOf:
+    - $ref: '#/components/schemas/Cat'
+    - $ref: '#/components/schemas/Dog'
+  discriminator:
+    propertyName: petType
+    mapping:
+      cat: '#/components/schemas/Cat'
+      dog: '#/components/schemas/Dog'
+components:
+  Cat:
+    type: object
+    required: [petType, meow]
+    properties:
+      petType: {type: string}
+      meow: {type: string}
+  Dog:
+    type: object
+    required: [petType, bark]
+    properties:
+      petType: {type: string}
+      bark: {type: string}
+samples:
+  - '{"petType": "cat", "meow": "purr"}'
+  - '{"petType": "dog", "bark": "woof"}'

@@ -1,0 +1,27 @@
+description: >-
+  anyOf and oneOf on the same schema, with inline members. Both lists used to
+  name their members <Schema><index> and failed with a duplicate type name
+  (#839).
+subject:
+  type: object
+  anyOf:
+    - type: object
+      required: [a]
+      properties:
+        a: {type: string}
+    - type: object
+      required: [b]
+      properties:
+        b: {type: string}
+  oneOf:
+    - type: object
+      required: [c]
+      properties:
+        c: {type: string}
+    - type: object
+      required: [d]
+      properties:
+        d: {type: string}
+samples:
+  - '{"a": "1", "c": "2"}'
+  - '{"b": "1", "d": "2"}'

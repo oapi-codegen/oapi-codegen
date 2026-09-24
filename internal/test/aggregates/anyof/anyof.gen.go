@@ -4,6 +4,7 @@
 package aggregatesanyof
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -192,7 +193,7 @@ type RefRat struct {
 	Squeaks *bool   `json:"squeaks,omitempty"`
 }
 
-// GetInlinePets200JSONResponseBody_Data_Item defines parameters for GetInlinePets.
+// GetInlinePets200JSONResponseBody_Data_Item defines model for GetInlinePets200JSONResponseBody.data.Item.
 type GetInlinePets200JSONResponseBody_Data_Item struct {
 	union json.RawMessage
 }
@@ -343,6 +344,23 @@ func (t *Issue1189Test_FieldA) MergeIssue1189TestFieldA1(v Issue1189TestFieldA1)
 	return err
 }
 
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type. Text that is a valid JSON
+// is taken as one; anything else is a string.
+func (t *Issue1189Test_FieldA) UnmarshalText(text []byte) error {
+	b, err := json.Marshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *Issue1189Test_FieldA) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
+}
+
 func (t Issue1189Test_FieldA) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
 	return b, err
@@ -403,6 +421,23 @@ func (t *Issue1189Test_FieldC) MergeIssue1189TestFieldC1(v Issue1189TestFieldC1)
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type. Text that is a valid JSON
+// is taken as one; anything else is a string.
+func (t *Issue1189Test_FieldC) UnmarshalText(text []byte) error {
+	b, err := json.Marshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *Issue1189Test_FieldC) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
 }
 
 func (t Issue1189Test_FieldC) MarshalJSON() ([]byte, error) {
@@ -527,6 +562,34 @@ func (t *ParamOneOf) MergeParamOneOf1(v ParamOneOf1) error {
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type. Text that is a valid JSON
+// integer is taken as one; anything else is a string.
+func (t *ParamOneOf) UnmarshalText(text []byte) error {
+	var value any
+	decoder := json.NewDecoder(bytes.NewReader(text))
+	decoder.UseNumber()
+	if decoder.Decode(&value) == nil && !decoder.More() {
+		if number, ok := value.(json.Number); ok {
+			if _, err := number.Int64(); err == nil {
+				t.union = json.RawMessage(number.String())
+				return nil
+			}
+		}
+	}
+	b, err := json.Marshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *ParamOneOf) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
 }
 
 func (t ParamOneOf) MarshalJSON() ([]byte, error) {

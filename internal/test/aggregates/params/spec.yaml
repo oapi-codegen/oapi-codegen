@@ -1,0 +1,48 @@
+openapi: 3.0.3
+info:
+  title: Union parameters
+  version: 1.0.0
+paths:
+  /things/{accept}:
+    get:
+      operationId: getThing
+      parameters:
+        - name: accept
+          in: path
+          required: true
+          schema:
+            anyOf:
+              - type: boolean
+              - type: string
+        - name: q
+          in: query
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+        - name: r
+          in: query
+          schema:
+            $ref: '#/components/schemas/IntOrString'
+        - name: X-Amount
+          in: header
+          schema:
+            oneOf:
+              - type: number
+              - type: boolean
+      responses:
+        "200":
+          description: The parameters the server bound, as JSON.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bound'
+components:
+  schemas:
+    IntOrString:
+      oneOf:
+        - type: integer
+        - type: string
+    Bound:
+      type: object
+      additionalProperties: true

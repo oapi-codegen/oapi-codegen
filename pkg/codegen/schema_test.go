@@ -1247,3 +1247,91 @@ components:
 		assert.Contains(t, out, "type "+name+"200JSONResponse = "+name+"200JSONResponseBody")
 	}
 }
+
+// TestStrictComponentResponseWithInlineUnion pins the strict envelopes
+// generated for components/responses entries whose inline schema needs
+// hoisting: they must reference the type the model pass declared for the
+// component, not a <Name>JSONResponseBody that nothing declares.
+// See https://github.com/oapi-codegen/oapi-codegen/issues/2539.
+func TestStrictComponentResponseWithInlineUnion(t *testing.T) {
+	spec := `
+openapi: "3.0.3"
+info: {title: t, version: "1"}
+paths:
+  /things:
+    get:
+      operationId: listThings
+      responses:
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ServiceError'}
+        default: {$ref: '#/components/responses/BadRequest'}
+components:
+  schemas:
+    Base:
+      type: object
+      required: [id]
+      properties:
+        id: {type: string}
+    Cat:
+      type: object
+      properties:
+        meow: {type: string}
+    Dog:
+      type: object
+      properties:
+        woof: {type: string}
+  responses:
+    BadRequest:
+      description: inline union
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Cat'
+              - $ref: '#/components/schemas/Dog'
+    Conflict:
+      description: inline allOf-merged union
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Base'
+              - oneOf:
+                  - $ref: '#/components/schemas/Cat'
+                  - $ref: '#/components/schemas/Dog'
+    ServiceError:
+      description: inline union behind response headers
+      headers:
+        X-Request-Id:
+          required: true
+          schema: {type: string}
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Cat'
+              - $ref: '#/components/schemas/Dog'
+`
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	require.NoError(t, err)
+	out, err := Generate(swagger, Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{Models: true, StdHTTPServer: true, Strict: true},
+	})
+	require.NoError(t, err)
+
+	// The envelopes alias the component models declared by the model pass.
+	assert.Contains(t, out, "type BadRequestJSONResponse = BadRequest\n")
+	assert.Contains(t, out, "type ConflictJSONResponse = Conflict\n")
+	// With headers the envelope is a struct whose Body is the component model.
+	assert.Contains(t, out, "type ServiceErrorJSONResponse struct {\n\tBody ServiceError\n")
+	// A non-fixed status code also wraps the component model, not an
+	// anonymous struct with an unexported union field.
+	assert.Contains(t, out, "type ListThingsdefaultJSONResponse struct {\n\tBody       BadRequest")
+	assert.NotContains(t, out, "JSONResponseBody", "no synthetic body type may be referenced for components/responses")
+	assert.NotContains(t, out, ".union)", "visitors must not encode the raw union field")
+	// The aliases must not redeclare the model's marshallers.
+	assert.NotContains(t, out, "func (t BadRequestJSONResponse) MarshalJSON()")
+	assert.NotContains(t, out, "func (t ConflictJSONResponse) MarshalJSON()")
+}

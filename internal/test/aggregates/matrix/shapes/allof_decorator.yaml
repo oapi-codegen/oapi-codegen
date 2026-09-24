@@ -1,0 +1,15 @@
+description: >-
+  allOf over a $ref and annotation-only members: the "decorate a $ref" idiom
+  OpenAPI 3.0 needs because it forbids siblings next to $ref.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Named'
+    - description: A decorated Named.
+components:
+  Named:
+    type: object
+    required: [name]
+    properties:
+      name: {type: string}
+samples:
+  - '{"name": "rex"}'

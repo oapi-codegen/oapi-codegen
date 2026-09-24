@@ -194,7 +194,7 @@ type GetOtherExample400JSONResponse struct{ externalRef0.N400JSONResponse }
 func (response GetOtherExample400JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.N400JSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

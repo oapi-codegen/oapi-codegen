@@ -86,7 +86,10 @@
                 {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
                 {{if .IsJSON -}}
                     var buf bytes.Buffer
-                    if err := json.NewEncoder(&buf).Encode(response{{if $hasBodyVar}}.Body{{end}}); err != nil {
+                    {{/* A $ref response without headers embeds the component's envelope, and a
+                    non-struct envelope (an array, map or primitive body) embedded in a struct
+                    encodes as a field named after its type, so encode the envelope itself. */ -}}
+                    if err := json.NewEncoder(&buf).Encode(response{{if $hasBodyVar}}.Body{{else if $isRef}}.{{$ref | withoutPkgName}}{{.NameTagOrContentType}}Response{{end}}); err != nil {
                         return err
                     }
                     w.Header().Set("Content-Type", {{if .HasFixedContentType }}{{.ContentType | toGoString}}{{else}}response.ContentType{{end}})

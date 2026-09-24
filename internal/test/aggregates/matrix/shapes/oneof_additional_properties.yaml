@@ -1,0 +1,26 @@
+description: >-
+  oneOf over two $ref variants next to a fixed property and untyped
+  additionalProperties.
+subject:
+  type: object
+  required: [kind]
+  properties:
+    kind: {type: string}
+  additionalProperties: true
+  oneOf:
+    - $ref: '#/components/schemas/Cat'
+    - $ref: '#/components/schemas/Dog'
+components:
+  Cat:
+    type: object
+    required: [meow]
+    properties:
+      meow: {type: string}
+  Dog:
+    type: object
+    required: [bark]
+    properties:
+      bark: {type: string}
+samples:
+  - '{"kind": "cat", "meow": "purr"}'
+  - '{"kind": "dog", "bark": "woof", "extra": 7}'

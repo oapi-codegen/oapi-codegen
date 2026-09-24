@@ -1,0 +1,13 @@
+description: 'allOf over a $ref and `nullable: true`, the OpenAPI 3.0 nullable-$ref idiom (#1898).'
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Named'
+    - nullable: true
+components:
+  Named:
+    type: object
+    required: [name]
+    properties:
+      name: {type: string}
+samples:
+  - '{"name": "rex"}'

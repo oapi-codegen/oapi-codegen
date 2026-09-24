@@ -11,6 +11,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"reflect"
 
 	"github.com/oapi-codegen/runtime"
 )
@@ -110,7 +111,7 @@ type Thing struct {
 	union json.RawMessage
 }
 
-// GetInlineThing200JSONResponseBody defines parameters for GetInlineThing.
+// GetInlineThing200JSONResponseBody defines the 200 response body for GetInlineThing for application/json ContentType.
 type GetInlineThing200JSONResponseBody struct {
 	Id    string `json:"id"`
 	union json.RawMessage
@@ -199,6 +200,24 @@ func (a *Both) Set(fieldName string, value any) {
 	a.AdditionalProperties[fieldName] = value
 }
 
+// adoptUnion reconciles Both's own fields with union data that From* or
+// Merge* just set, for the keys b defines. A property that is still unset takes the
+// union's value, rather than overwriting it with a zero value when marshaling, and a
+// matching additional property is dropped, so that an older copy of the key cannot
+// shadow the new union data.
+func (t *Both) adoptUnion(b json.RawMessage) {
+	object := make(map[string]json.RawMessage)
+	if json.Unmarshal(b, &object) != nil {
+		return
+	}
+	if raw, found := object["kind"]; found && reflect.ValueOf(t.Kind).IsZero() {
+		_ = json.Unmarshal(raw, &t.Kind)
+	}
+	for fieldName := range object {
+		delete(t.AdditionalProperties, fieldName)
+	}
+}
+
 // AsCat returns the union data inside the Both as a Cat
 func (t Both) AsCat() (Cat, error) {
 	var body Cat
@@ -210,6 +229,9 @@ func (t Both) AsCat() (Cat, error) {
 func (t *Both) FromCat(v Cat) error {
 	b, err := json.Marshal(v)
 	t.union = b
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -222,6 +244,9 @@ func (t *Both) MergeCat(v Cat) error {
 
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -236,6 +261,9 @@ func (t Both) AsDog() (Dog, error) {
 func (t *Both) FromDog(v Dog) error {
 	b, err := json.Marshal(v)
 	t.union = b
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -248,6 +276,9 @@ func (t *Both) MergeDog(v Dog) error {
 
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -375,6 +406,21 @@ func (t *EventImpl) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// adoptUnion reconciles Thing's own fields with union data that From* or
+// Merge* just set, for the keys b defines. A property that is still unset takes the
+// union's value, rather than overwriting it with a zero value when marshaling, and a
+// matching additional property is dropped, so that an older copy of the key cannot
+// shadow the new union data.
+func (t *Thing) adoptUnion(b json.RawMessage) {
+	object := make(map[string]json.RawMessage)
+	if json.Unmarshal(b, &object) != nil {
+		return
+	}
+	if raw, found := object["id"]; found && reflect.ValueOf(t.Id).IsZero() {
+		_ = json.Unmarshal(raw, &t.Id)
+	}
+}
+
 // AsCat returns the union data inside the Thing as a Cat
 func (t Thing) AsCat() (Cat, error) {
 	var body Cat
@@ -386,6 +432,9 @@ func (t Thing) AsCat() (Cat, error) {
 func (t *Thing) FromCat(v Cat) error {
 	b, err := json.Marshal(v)
 	t.union = b
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -398,6 +447,9 @@ func (t *Thing) MergeCat(v Cat) error {
 
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -412,6 +464,9 @@ func (t Thing) AsDog() (Dog, error) {
 func (t *Thing) FromDog(v Dog) error {
 	b, err := json.Marshal(v)
 	t.union = b
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -424,6 +479,9 @@ func (t *Thing) MergeDog(v Dog) error {
 
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -470,6 +528,21 @@ func (t *Thing) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// adoptUnion reconciles GetInlineThing200JSONResponseBody's own fields with union data that From* or
+// Merge* just set, for the keys b defines. A property that is still unset takes the
+// union's value, rather than overwriting it with a zero value when marshaling, and a
+// matching additional property is dropped, so that an older copy of the key cannot
+// shadow the new union data.
+func (t *GetInlineThing200JSONResponseBody) adoptUnion(b json.RawMessage) {
+	object := make(map[string]json.RawMessage)
+	if json.Unmarshal(b, &object) != nil {
+		return
+	}
+	if raw, found := object["id"]; found && reflect.ValueOf(t.Id).IsZero() {
+		_ = json.Unmarshal(raw, &t.Id)
+	}
+}
+
 // AsCat returns the union data inside the GetInlineThing200JSONResponseBody as a Cat
 func (t GetInlineThing200JSONResponseBody) AsCat() (Cat, error) {
 	var body Cat
@@ -481,6 +554,9 @@ func (t GetInlineThing200JSONResponseBody) AsCat() (Cat, error) {
 func (t *GetInlineThing200JSONResponseBody) FromCat(v Cat) error {
 	b, err := json.Marshal(v)
 	t.union = b
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -493,6 +569,9 @@ func (t *GetInlineThing200JSONResponseBody) MergeCat(v Cat) error {
 
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -507,6 +586,9 @@ func (t GetInlineThing200JSONResponseBody) AsDog() (Dog, error) {
 func (t *GetInlineThing200JSONResponseBody) FromDog(v Dog) error {
 	b, err := json.Marshal(v)
 	t.union = b
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -519,6 +601,9 @@ func (t *GetInlineThing200JSONResponseBody) MergeDog(v Dog) error {
 
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 

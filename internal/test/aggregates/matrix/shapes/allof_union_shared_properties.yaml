@@ -1,0 +1,35 @@
+description: >-
+  A union whose variants share a property with the union's own fields: Pet is
+  allOf a Base and a oneOf of Cat and Dog, and Cat and Dog are themselves allOf
+  the same Base. From* used to leave the union's copy of the shared
+  property at its zero value, which then overwrote the variant's value when
+  marshaling.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Base'
+    - oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+components:
+  Base:
+    type: object
+    required: [id]
+    properties:
+      id: {type: string}
+  Cat:
+    allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        required: [meow]
+        properties:
+          meow: {type: string}
+  Dog:
+    allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        required: [bark]
+        properties:
+          bark: {type: string}
+samples:
+  - '{"id": "cat-1", "meow": "purr"}'
+  - '{"id": "dog-1", "bark": "woof"}'

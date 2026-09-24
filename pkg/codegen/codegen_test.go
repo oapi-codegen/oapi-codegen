@@ -838,3 +838,31 @@ paths:
 
 //go:embed test_spec.yaml
 var testOpenAPIDefinition string
+
+// TestDedupeImportLines covers the import block of the rendered imports
+// template: a repeated import line is dropped, anything else is untouched.
+func TestDedupeImportLines(t *testing.T) {
+	src := "package p\n\nimport (\n\t\"time\"\n\n\t\"time\"\n\tfoo \"example.com/foo\"\n\t\"example.com/foo\"\n)\n\n// \"time\"\n// \"time\"\n"
+	want := "package p\n\nimport (\n\t\"time\"\n\n\tfoo \"example.com/foo\"\n\t\"example.com/foo\"\n)\n\n// \"time\"\n// \"time\"\n"
+	assert.Equal(t, want, dedupeImportLines(src))
+}
+
+// TestXGoTypeImportOfTemplatePackage: an x-go-type-import of a package
+// the imports template already imports, such as time, was emitted twice and
+// did not compile.
+func TestXGoTypeImportOfTemplatePackage(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    When:
+      type: string
+      format: date-time
+      x-go-type: time.Time
+      x-go-type-import:
+        path: time
+`
+	code := generateSpec(t, spec)
+	assert.Equal(t, 1, strings.Count(code, `"time"`), code)
+}

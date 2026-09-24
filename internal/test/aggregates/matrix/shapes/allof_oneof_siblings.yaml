@@ -1,0 +1,28 @@
+description: >-
+  allOf with a oneOf next to it on the same schema. The oneOf used to be
+  dropped, leaving an alias of the allOf member.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Base'
+  oneOf:
+    - $ref: '#/components/schemas/Cat'
+    - $ref: '#/components/schemas/Dog'
+components:
+  Base:
+    type: object
+    required: [id]
+    properties:
+      id: {type: string}
+  Cat:
+    type: object
+    required: [meow]
+    properties:
+      meow: {type: string}
+  Dog:
+    type: object
+    required: [bark]
+    properties:
+      bark: {type: string}
+samples:
+  - '{"id": "1", "meow": "purr"}'
+  - '{"id": "2", "bark": "woof"}'

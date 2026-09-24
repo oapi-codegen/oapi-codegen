@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/discriminated_union_allof/gen/common"
 	"github.com/oapi-codegen/runtime"
@@ -21,6 +22,21 @@ type PRFile struct {
 // ViewedStatus defines model for ViewedStatus.
 type ViewedStatus struct {
 	Viewed *bool `json:"viewed,omitempty"`
+}
+
+// adoptUnion reconciles PRFile's own fields with union data that From* or
+// Merge* just set, for the keys b defines. A property that is still unset takes the
+// union's value, rather than overwriting it with a zero value when marshaling, and a
+// matching additional property is dropped, so that an older copy of the key cannot
+// shadow the new union data.
+func (t *PRFile) adoptUnion(b json.RawMessage) {
+	object := make(map[string]json.RawMessage)
+	if json.Unmarshal(b, &object) != nil {
+		return
+	}
+	if raw, found := object["viewed"]; found && reflect.ValueOf(t.Viewed).IsZero() {
+		_ = json.Unmarshal(raw, &t.Viewed)
+	}
 }
 
 // AsExternalRef0GitDiffFile returns the union data inside the PRFile as a externalRef0.GitDiffFile
@@ -38,6 +54,9 @@ func (t *PRFile) FromExternalRef0GitDiffFile(v externalRef0.GitDiffFile) error {
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"diff_type":"GitDiffFile"}`))
 	t.union = b
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -54,6 +73,9 @@ func (t *PRFile) MergeExternalRef0GitDiffFile(v externalRef0.GitDiffFile) error 
 
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -72,6 +94,9 @@ func (t *PRFile) FromExternalRef0AddedImageDiffFile(v externalRef0.AddedImageDif
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"diff_type":"AddedImageDiffFile"}`))
 	t.union = b
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
@@ -88,6 +113,9 @@ func (t *PRFile) MergeExternalRef0AddedImageDiffFile(v externalRef0.AddedImageDi
 
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
+	if err == nil {
+		t.adoptUnion(b)
+	}
 	return err
 }
 
