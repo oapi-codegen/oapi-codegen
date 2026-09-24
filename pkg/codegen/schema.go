@@ -2,7 +2,6 @@ package codegen
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"go/ast"
 	"go/parser"
@@ -601,7 +600,7 @@ type DiscriminatorCase struct {
 
 // DiscriminatorCases returns the ValueByDiscriminator() switch arms for the
 // union, sorted by discriminator value for deterministic output. Each mapping
-// value is the Go type of a union element (generateUnion writes both from the
+// value is the Go type of a union element (generateUnionV2 writes both from the
 // same elementSchema.GoType), so it resolves to that element's Method(). A
 // mapping value not found among the union elements is skipped: it has no As*
 // helper to dispatch to, so no case is emitted and it falls through to the
@@ -665,7 +664,7 @@ func schemaIsNullable(s *openapi3.Schema) bool {
 // schemaIsNullableRec is schemaIsNullable's implementation, carrying a
 // `seen` set of already-visited schema values so that a cyclic allOf (a
 // $ref member resolving back to an ancestor — the same cycles
-// mergeOpenapiSchemas guards against) cannot cause unbounded recursion.
+// mergeOpenapiSchemasV2 guards against) cannot cause unbounded recursion.
 // The set is allocated lazily: the common case (no allOf) never touches it.
 func schemaIsNullableRec(s *openapi3.Schema, seen map[*openapi3.Schema]bool) bool {
 	if s == nil {
@@ -677,9 +676,9 @@ func schemaIsNullableRec(s *openapi3.Schema, seen map[*openapi3.Schema]bool) boo
 	// way to decorate a referenced schema as nullable (issue #1898). This
 	// is where the flag lives — the outer schema's own Nullable is unset —
 	// so descend into the members. Descent is transitive to match the
-	// transitive allOf flattening in mergeOpenapiSchemas, and equally valid
+	// transitive allOf flattening in mergeOpenapiSchemasV2, and equally valid
 	// under 3.1's type-array idiom, hence checked before the version
-	// branch. mergeOpenapiSchemas unions nullability into the merged type;
+	// branch. mergeOpenapiSchemasV2 unions nullability into the merged type;
 	// this surfaces it at the use site so the field is wrapped in a pointer
 	// / nullable.Nullable[T].
 	for _, member := range s.AllOf {
@@ -722,7 +721,7 @@ func schemaIsNullableRec(s *openapi3.Schema, seen map[*openapi3.Schema]bool) boo
 // `{"type": "null"}` -- i.e. a schema whose only type is "null" and
 // which is otherwise empty of constraints. Used to detect the
 // nullability-via-anyOf idiom in `schemaIsNullable` and to filter such
-// branches out of `generateUnion` (they're nullability markers, not
+// branches out of `generateUnionV2` (they're nullability markers, not
 // union variants for which we need a Go type).
 func isNullTypeSchema(s *openapi3.Schema) bool {
 	if s == nil || s.Type == nil {
@@ -1215,117 +1214,14 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 	// so that in a RESTful paradigm, the Create operation can return
 	// (object, id), so that other operations can refer to (id)
 	if schema.AllOf != nil {
-		// An enclosing frame is already generating this composition. Refer to
-		// the type it is building instead of inlining the body a second time,
-		// which is what used to recurse until the stack ran out (issue #2542).
-		if frame, ok := ctx.inProgress[schema]; ok {
-			frame.consulted = true
-			return Schema{
-				GoType:              frame.typeName,
-				RefType:             frame.typeName,
-				DefineViaAlias:      true,
-				SkipOptionalPointer: skipOptionalPointer,
-				OAPISchema:          schema,
-			}, nil
-		}
-		var err error
-		frame := &mergeFrame{typeName: ctx.typeName(path)}
-		ctx.inProgress[schema] = frame
-		defer delete(ctx.inProgress, schema)
-
-		var mergedSchema Schema
-		// Behavior is gated on Compatibility.OldAllOfSiblingMerging:
-		// when set, the parent's structural siblings and Description are
-		// silently discarded (the historical behavior). When unset
-		// (default), they are merged into the result.
-		mergeSiblings := !globalState.options.Compatibility.OldAllOfSiblingMerging
-		if mergeSiblings && hasStructuralSiblings(schema) {
-			// Inject the parent (with AllOf cleared) as the final allOf
-			// member so its structural siblings — Properties, Required,
-			// AdditionalProperties — are merged with the allOf members
-			// rather than discarded. Issues #697, #931, #1710, #2102.
-			//
-			// Allocate a fresh slice rather than appending to schema.AllOf
-			// directly: if kin-openapi gave us a slice with spare capacity,
-			// `append` would write the new element into the shared backing
-			// array, mutating any other view that has been extended past
-			// len(schema.AllOf).
-			s := *schema
-			s.AllOf = nil
-			allOfRefs := make([]*openapi3.SchemaRef, 0, len(schema.AllOf)+1)
-			allOfRefs = append(allOfRefs, schema.AllOf...)
-			allOfRefs = append(allOfRefs, &openapi3.SchemaRef{Value: &s})
-			mergedSchema, err = mergeSchemasCtx(ctx, allOfRefs, path)
-		} else {
-			// Either the user opted into legacy behavior, or the parent is
-			// a pure wrapper with no structural siblings. In the wrapper
-			// case, MergeSchemas' single-element fast path returns the
-			// referenced type unchanged, preserving named-type identity.
-			mergedSchema, err = mergeSchemasCtx(ctx, schema.AllOf, path)
-		}
-		if err != nil {
-			return Schema{}, fmt.Errorf("error merging schemas: %w", err)
-		}
-		mergedSchema.OAPISchema = schema
-		// Description is metadata, not a structural constraint, so it
-		// doesn't go through the merge. Copy it from the parent when set.
-		// Issue #1960. Gated on the same compatibility flag as the
-		// sibling-merge above.
-		if mergeSiblings && schema.Description != "" {
-			mergedSchema.Description = schema.Description
-		}
-		// x-go-type on the parent is handled by the early return above
-		// (combined extensions). For x-go-type-skip-optional-pointer, only
-		// override the merged value when the parent sets it explicitly —
-		// otherwise we would clobber the value MergeSchemas computed from
-		// the decorator idiom (an inline allOf member that carries the
-		// extension; see merge_schemas.go and issue #1957).
-		if _, ok := extensions[extPropGoTypeSkipOptionalPointer]; ok {
-			mergedSchema.SkipOptionalPointer = skipOptionalPointer
-		}
-		// Something underneath referred back to this composition, so it has
-		// to resolve to a named type. When nothing did — the overwhelmingly
-		// common case — fall through with the anonymous struct this has
-		// always produced, byte for byte.
-		if frame.consulted {
-			switch {
-			case mergedSchema.RefType == frame.typeName:
-				// Already defined under the promised name: generating the
-				// merged body hoisted it (generate-types-for-anonymous-schemas).
-			case mergedSchema.RefType != "":
-				// The name handed to the recursive members is not the one the
-				// type ended up with, so those references would dangle. Fail
-				// loudly rather than emit code that does not compile.
-				return Schema{}, fmt.Errorf(
-					"recursive allOf composition at %s was generated as %q but its self-references were resolved to %q",
-					strings.Join(ctx.nameHint, "."), mergedSchema.RefType, frame.typeName)
-			case ctx.rootPosition:
-				// GenerateTypesForSchemas names this one, from renameSchema
-				// rather than from the path, so the name handed to the
-				// members above is not the one it will be defined under.
-				// Believed unreachable (see genContext.rootPosition); say so
-				// rather than emit code that will not compile.
-				return Schema{}, fmt.Errorf(
-					"recursive allOf composition at the root of %s is not supported: give the composition its own schema",
-					strings.Join(ctx.nameHint, "."))
-			default:
-				typeDef := TypeDefinition{
-					TypeName: frame.typeName,
-					JsonName: strings.Join(ctx.nameHint, "."),
-					Schema:   mergedSchema,
-				}
-				mergedSchema.AdditionalTypes = append(mergedSchema.AdditionalTypes, typeDef)
-				mergedSchema.RefType = frame.typeName
-			}
-		}
-		return mergedSchema, nil
+		return generateAllOf(ctx, schema, path, extensions, skipOptionalPointer)
 	}
 
 	// OpenAPI 3.1 enum-via-oneOf: a scalar schema whose oneOf branches
 	// each carry `title` + `const` is rendered as a Go typed enum, not as
 	// a union. Detection is gated by version + the SkipEnumViaOneOf flag;
 	// when the idiom does not match, fall through to standard handling
-	// (which routes oneOf into generateUnion further below).
+	// (which routes oneOf into generateUnions further below).
 	// The outer `type` may be absent, in which case typeSource carries the
 	// scalar type inferred from the branch consts; see detectEnumViaOneOf.
 	// A nil error with nil items just means this is not the idiom.
@@ -1502,32 +1398,15 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 				}
 			}
 
-			// Inline union members are named <path><index>. A schema with both
-			// anyOf and oneOf would name both lists' members the same way and
-			// fail with a duplicate type name (issue #839), so each list gets
-			// its own path segment then. A schema with only one keeps its
-			// names.
-			anyOfPath, oneOfPath := path, path
-			if schema.AnyOf != nil && schema.OneOf != nil {
-				anyOfPath = append(slices.Clone(path), "AnyOf")
-				oneOfPath = append(slices.Clone(path), "OneOf")
-			}
-			if schema.AnyOf != nil {
-				if err := generateUnion(ctx, &outSchema, schema.AnyOf, schema.Discriminator, anyOfPath); err != nil {
-					return Schema{}, fmt.Errorf("error generating type for anyOf: %w", err)
-				}
-			}
-			if schema.OneOf != nil {
-				if err := generateUnion(ctx, &outSchema, schema.OneOf, schema.Discriminator, oneOfPath); err != nil {
-					return Schema{}, fmt.Errorf("error generating type for oneOf: %w", err)
-				}
+			if err := generateUnions(ctx, &outSchema, schema, path); err != nil {
+				return Schema{}, err
 			}
 			if len(outSchema.UnionElements) > 0 && len(outSchema.Properties) == 0 && !outSchema.HasAdditionalProperties {
 				outSchema.UnionTextKinds = unionTextKinds(slices.Concat(schema.AnyOf, schema.OneOf))
 			}
 
 			// Only generate a struct literal if the schema actually has
-			// struct content. When `generateUnion` collapses a one-
+			// struct content. When `generateUnionV2` collapses a one-
 			// element nullable union (`anyOf: [{type: X}, {type: "null"}]`)
 			// down to the bare X branch, it sets outSchema.GoType to the
 			// primitive's Go type and clears the struct-shaped fields;
@@ -2037,140 +1916,11 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	return GenerateGoSchema(mt.Schema, path)
 }
 
-func generateUnion(ctx genContext, outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string) error {
-	if discriminator != nil {
-		outSchema.Discriminator = &Discriminator{
-			Property:  discriminator.PropertyName,
-			Mapping:   make(map[string]string),
-			ValueType: discriminatorValueType(outSchema, elements, discriminator.PropertyName),
-		}
-	}
-
-	// First pass: count effective (non-null) branches. In OpenAPI 3.1, a
-	// bare `{"type": "null"}` branch in anyOf/oneOf is a nullability
-	// marker, not a real union variant -- there's no Go type that
-	// corresponds to "only the JSON value null". The parent schema's
-	// nullability is captured by schemaIsNullable, which inspects
-	// anyOf/oneOf for the same idiom and wraps the result in a pointer
-	// at the call site.
-	effectiveCount := 0
-	hadNullBranch := false
-	var soleEffective *openapi3.SchemaRef
-	for _, e := range elements {
-		if e != nil && isNullTypeSchema(e.Value) {
-			hadNullBranch = true
-			continue
-		}
-		effectiveCount++
-		if soleEffective == nil {
-			soleEffective = e
-		}
-	}
-
-	// Collapse: if filtering out null branches leaves exactly one
-	// effective branch and there is no discriminator, the schema is
-	// semantically equivalent to that single branch (made nullable by
-	// the original null branch). Produce the same Go shape the
-	// type-array idiom would: `anyOf: [{type: string}, {type: "null"}]`
-	// must generate the same `*string` field as `type: ["string",
-	// "null"]`. Without this, the single remaining branch would be
-	// wrapped in a one-variant union type, exposing a needless
-	// `FromX`/`AsX` accessor API.
-	//
-	// We do not collapse when there was no null branch (`anyOf: [{type:
-	// X}]` alone) to avoid changing behavior for existing single-branch
-	// union specs that may rely on the wrapper shape. The narrow
-	// condition keeps this change scoped to the bug fix.
-	if effectiveCount == 1 && hadNullBranch && discriminator == nil {
-		elementSchema, err := generateGoSchema(ctx.at(path), soleEffective, path)
-		if err != nil {
-			return err
-		}
-		// Inherit the single branch's underlying representation. The
-		// caller will apply nullability (schemaIsNullable returns true
-		// because the original anyOf/oneOf contained a null branch).
-		outSchema.GoType = elementSchema.GoType
-		outSchema.RefType = elementSchema.RefType
-		outSchema.DefineViaAlias = elementSchema.DefineViaAlias
-		outSchema.Properties = elementSchema.Properties
-		outSchema.HasAdditionalProperties = elementSchema.HasAdditionalProperties
-		outSchema.AdditionalPropertiesType = elementSchema.AdditionalPropertiesType
-		outSchema.ArrayType = elementSchema.ArrayType
-		outSchema.SkipOptionalPointer = elementSchema.SkipOptionalPointer
-		outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
-		return nil
-	}
-
-	refToGoTypeMap := make(map[string]string)
-	for i, element := range elements {
-		// Skip null-only branches: nullability marker, not a real
-		// union variant. See the collapse comment above for context.
-		if element != nil && isNullTypeSchema(element.Value) {
-			continue
-		}
-		elementPath := append(path, fmt.Sprint(i))
-		elementSchema, err := generateGoSchema(ctx.at(elementPath), element, elementPath)
-		if err != nil {
-			return err
-		}
-
-		if element.Ref == "" {
-			elementName := SchemaNameToTypeName(PathToTypeName(elementPath))
-			if elementSchema.TypeDecl() == elementName {
-				elementSchema.GoType = elementName
-			} else {
-				td := TypeDefinition{Schema: elementSchema, TypeName: elementName, JsonName: strings.Join(elementPath, ".")}
-				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
-				elementSchema.GoType = td.TypeName
-			}
-			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
-		} else {
-			refToGoTypeMap[element.Ref] = elementSchema.GoType
-		}
-
-		if discriminator != nil {
-			if len(discriminator.Mapping) != 0 && element.Ref == "" {
-				return errors.New("ambiguous discriminator.mapping: please replace inlined object with $ref")
-			}
-
-			// Explicit mapping.
-			var mapped bool
-			for k, v := range discriminator.Mapping {
-				if v.Ref == element.Ref {
-					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
-					mapped = true
-				}
-			}
-			// Implicit mapping.
-			if !mapped {
-				outSchema.Discriminator.Mapping[RefPathToObjName(element.Ref)] = elementSchema.GoType
-			}
-		}
-		// The same type can appear twice, e.g. as a member of both an anyOf
-		// and a oneOf; its accessors are generated once.
-		if !slices.Contains(outSchema.UnionElements, UnionElement(elementSchema.GoType)) {
-			outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
-		}
-		for _, name := range propertyNames(element.Value, 0) {
-			if !slices.Contains(outSchema.UnionVariantProperties, name) {
-				outSchema.UnionVariantProperties = append(outSchema.UnionVariantProperties, name)
-			}
-		}
-	}
-	slices.Sort(outSchema.UnionVariantProperties)
-
-	// Compare against effectiveCount (non-null branches actually
-	// processed) rather than len(elements). For a nullable
-	// discriminated union (`oneOf: [Cat, Dog, {type: "null"}]`), the
-	// null-branch skip above leaves the discriminator with one fewer
-	// mapping than the raw element count, and we must not flag that as
-	// incomplete -- the null branch is a nullability marker, not a real
-	// variant that needs a mapping.
-	if (outSchema.Discriminator != nil) && len(outSchema.Discriminator.Mapping) < effectiveCount {
-		return errors.New("discriminator: not all schemas were mapped")
-	}
-
-	return nil
+// generateUnions generates the anyOf and oneOf of an object schema into
+// outSchema's union members, the way the schema-merging-behavior in effect
+// does. v1 and v2 share v2's code.
+func generateUnions(ctx genContext, outSchema *Schema, schema *openapi3.Schema, path []string) error {
+	return generateUnionsV2(ctx, outSchema, schema, path)
 }
 
 // unionTextKinds returns the sorted JSON types of a union's branches when
@@ -2367,52 +2117,6 @@ func combinedSchemaExtensions(r *openapi3.SchemaRef) map[string]any {
 	maps.Copy(combined, r.Extensions)
 
 	return combined
-}
-
-// hasStructuralSiblings reports whether a schema with allOf also carries
-// fields outside allOf that materially affect the generated Go type.
-// Such fields must be merged with the allOf members rather than discarded.
-//
-// Description and Title are excluded — they are metadata, not structural,
-// and the caller propagates them separately. Nullable/ReadOnly/WriteOnly
-// are also excluded: merging would turn a pure wrapper such as
-// {allOf: [$ref X], nullable: true}, which aliases X, into a copy of X.
-// `type` is excluded for the same reason: {type: object, allOf: [$ref X]}
-// must stay an alias of X.
-//
-// A oneOf or anyOf next to allOf adds a union to the merged type, unless its
-// branches only add constraints (see isConstraintOnlyUnion).
-func hasStructuralSiblings(s *openapi3.Schema) bool {
-	if s == nil {
-		return false
-	}
-	return len(s.Properties) > 0 ||
-		len(s.Required) > 0 ||
-		s.AdditionalProperties.Has != nil ||
-		s.AdditionalProperties.Schema != nil ||
-		(len(s.OneOf) > 0 && !isConstraintOnlyUnion(s.OneOf)) ||
-		(len(s.AnyOf) > 0 && !isConstraintOnlyUnion(s.AnyOf))
-}
-
-// isConstraintOnlyUnion reports whether every branch of a oneOf/anyOf only
-// adds constraints, such as `oneOf: [{required: [email]}, {required: [phone]}]`,
-// rather than naming alternative types. Such a list next to allOf used to be
-// dropped; it keeps being dropped, since generating a union of `any` branches
-// would turn the merged type into something harder to use, not more correct.
-// A `$ref` branch is judged by the schema it refers to.
-func isConstraintOnlyUnion(branches openapi3.SchemaRefs) bool {
-	for _, b := range branches {
-		if b == nil || b.Value == nil {
-			return false
-		}
-		v := b.Value
-		if v.Type.Slice() != nil || len(v.Properties) > 0 || v.Items != nil ||
-			len(v.AllOf) > 0 || len(v.AnyOf) > 0 || len(v.OneOf) > 0 ||
-			len(v.Enum) > 0 || v.AdditionalProperties.Schema != nil {
-			return false
-		}
-	}
-	return true
 }
 
 // hasInlineStructuralContent reports whether a generated Schema is an

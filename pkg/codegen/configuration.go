@@ -143,6 +143,10 @@ func (o Configuration) Warnings() map[string]string {
 		warnings["generate-types-for-anonymous-schemas"] = "the flag is set with `generate.models: false` and a client/server generator. The hoisted named types this config emits references to will not be declared by this config. If a sibling config emits `generate.models: true` into the same Go package with the same flag setting, you can ignore this warning. Otherwise, set `generate.models: true` in this config or remove the flag to fall back to anonymous structs."
 	}
 
+	if o.Compatibility.OldMergeSchemas {
+		warnings["old-merge-schemas"] = fmt.Sprintf("is deprecated; set `compatibility.schema-merging-behavior: %s` instead, which it is an alias for.", SchemaMergingV1)
+	}
+
 	return warnings
 }
 
@@ -271,7 +275,24 @@ type CompatibilityOptions struct {
 	// level. So, new behavior merges OpenAPI specs but generates different code
 	// than we have in the past. Set OldMergeSchemas to true for the old behavior.
 	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/531
+	//
+	// Deprecated: set SchemaMergingBehavior to "v1" instead, which this is an
+	// alias for.
 	OldMergeSchemas bool `yaml:"old-merge-schemas,omitempty"`
+	// SchemaMergingBehavior selects how schemas composed with allOf are merged
+	// into Go types, and how anyOf and oneOf are turned into Go unions. Each
+	// value is a version of that behavior:
+	//
+	//   - "v1": allOf members that are $refs are embedded in the Go struct, and
+	//     the fields of inline members are inlined. This was the only behavior
+	//     before v1.11.0; OldMergeSchemas: true is an alias for it. For anyOf and
+	//     oneOf it does what v2 does.
+	//   - "v2": allOf members are merged keyword by keyword into one Go type,
+	//     and anyOf and oneOf become a union type with As*, From* and Merge*
+	//     methods. The default since v1.11.0.
+	//
+	// Leaving it unset means "v2".
+	SchemaMergingBehavior string `yaml:"schema-merging-behavior,omitempty"`
 	// In the past, when a schema combined `allOf` with sibling fields at the
 	// same level (`properties`, `required`, `additionalProperties`,
 	// `description`), those siblings were silently discarded and the schema
@@ -399,7 +420,41 @@ type CompatibilityOptions struct {
 	SortHandlerRegistrations bool `yaml:"sort-handler-registrations,omitempty"`
 }
 
+// The values of CompatibilityOptions.SchemaMergingBehavior.
+const (
+	SchemaMergingV1 = "v1"
+	SchemaMergingV2 = "v2"
+)
+
+// schemaMergingVersion returns the schema-merging-behavior these options
+// select: the configured version, v1 for the deprecated OldMergeSchemas, and
+// v2 when neither is set. Both Validate and Generate reject the options when
+// it returns an error.
+func (co CompatibilityOptions) schemaMergingVersion() (string, error) {
+	switch co.SchemaMergingBehavior {
+	case "":
+		if co.OldMergeSchemas {
+			return SchemaMergingV1, nil
+		}
+		return SchemaMergingV2, nil
+	case SchemaMergingV1:
+		return SchemaMergingV1, nil
+	case SchemaMergingV2:
+		if co.OldMergeSchemas {
+			return "", fmt.Errorf("`old-merge-schemas: true` is an alias for `schema-merging-behavior: %s`, which conflicts with `schema-merging-behavior: %s`",
+				SchemaMergingV1, co.SchemaMergingBehavior)
+		}
+		return SchemaMergingV2, nil
+	default:
+		return "", fmt.Errorf("unknown `schema-merging-behavior` %q; valid values are %q and %q",
+			co.SchemaMergingBehavior, SchemaMergingV1, SchemaMergingV2)
+	}
+}
+
 func (co CompatibilityOptions) Validate() map[string]string {
+	if _, err := co.schemaMergingVersion(); err != nil {
+		return map[string]string{"schema-merging-behavior": err.Error()}
+	}
 	return nil
 }
 

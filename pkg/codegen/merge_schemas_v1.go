@@ -1,5 +1,15 @@
 package codegen
 
+// This file holds schema-merging-behavior v1: allOf members that are $refs
+// are embedded in the Go struct, and the fields of inline members are inlined.
+// It was the only behavior before oapi-codegen v1.11.0, and OldMergeSchemas:
+// true selects it too. For the rest of allOf (the parent's siblings, recursive
+// compositions) and for anyOf/oneOf, v1 uses v2's code.
+//
+// v1 is kept for compatibility. Bug fixes are welcome, but a change here
+// must not cause a regression: a spec that generated working code must keep
+// generating it. New behavior goes into a new version, in files of its own.
+
 import (
 	"errors"
 	"fmt"

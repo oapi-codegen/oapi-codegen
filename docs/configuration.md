@@ -47,7 +47,8 @@ generate:
 # behavior when a bug fix or improvement changes generated output.
 # See <a href="https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen#CompatibilityOptions">CompatibilityOptions</a>
 compatibility:
-  old-merge-schemas: false
+  schema-merging-behavior: v2   # v1 or v2: how allOf, anyOf and oneOf become Go types
+  old-merge-schemas: false      # deprecated: an alias for schema-merging-behavior: v1
   old-allof-sibling-merging: false
   old-enum-conflicts: false
   old-aliasing: false
