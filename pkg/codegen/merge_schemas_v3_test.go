@@ -4,12 +4,27 @@ package codegen
 // started as a copy of v2's (merge_schemas_v2_test.go).
 
 import (
+	"maps"
+	"slices"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// mergeTwoV3 merges two allOf members, allOf/0 and allOf/1, with
+// schema-merging-behavior v3's rules.
+func mergeTwoV3(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
+	m := newAllOfMerge()
+	if err := m.add(s1, "allOf/0", map[string]bool{}); err != nil {
+		return openapi3.Schema{}, err
+	}
+	if err := m.add(s2, "allOf/1", map[string]bool{}); err != nil {
+		return openapi3.Schema{}, err
+	}
+	return m.result()
+}
 
 func TestMergeOpenapiSchemas_DiscriminatorPropagationV3(t *testing.T) {
 	disc := &openapi3.Discriminator{
@@ -20,7 +35,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagationV3(t *testing.T) {
 		s1 := openapi3.Schema{Discriminator: disc}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		assert.Equal(t, disc, result.Discriminator)
 	})
@@ -29,44 +44,42 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagationV3(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Discriminator: disc}
 
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		assert.Equal(t, disc, result.Discriminator)
 	})
 
-	t.Run("allOf with discriminators on both schemas errors", func(t *testing.T) {
+	t.Run("allOf with different discriminators errors", func(t *testing.T) {
 		disc2 := &openapi3.Discriminator{PropertyName: "kind"}
 		s1 := openapi3.Schema{Discriminator: disc}
 		s2 := openapi3.Schema{Discriminator: disc2}
 
-		_, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		_, err := mergeTwoV3(s1, s2)
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "discriminators")
+		assert.Contains(t, err.Error(), "allOf can't merge allOf/0 (discriminator type) with allOf/1 (discriminator kind)")
+	})
+
+	t.Run("allOf with the same discriminator on both schemas merges", func(t *testing.T) {
+		mapping := map[string]openapi3.MappingRef{"cat": {Ref: "#/components/schemas/Cat"}}
+		s1 := openapi3.Schema{Discriminator: &openapi3.Discriminator{PropertyName: "type", Mapping: mapping}}
+		s2 := openapi3.Schema{Discriminator: &openapi3.Discriminator{PropertyName: "type", Mapping: maps.Clone(mapping)}}
+
+		result, err := mergeTwoV3(s1, s2)
+		require.NoError(t, err)
+		assert.Equal(t, "type", result.Discriminator.PropertyName)
+
+		s2.Discriminator.Mapping["dog"] = openapi3.MappingRef{Ref: "#/components/schemas/Dog"}
+		_, err = mergeTwoV3(s1, s2)
+		require.Error(t, err, "a different mapping is a different discriminator")
 	})
 
 	t.Run("allOf with no discriminators succeeds with nil discriminator", func(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		assert.Nil(t, result.Discriminator)
-	})
-
-	t.Run("non-allOf with discriminator on s1 errors", func(t *testing.T) {
-		s1 := openapi3.Schema{Discriminator: disc}
-		s2 := openapi3.Schema{}
-
-		_, err := mergeOpenapiSchemasV3(s1, s2, false, make(map[string]bool))
-		require.Error(t, err)
-	})
-
-	t.Run("non-allOf with discriminator on s2 errors", func(t *testing.T) {
-		s1 := openapi3.Schema{}
-		s2 := openapi3.Schema{Discriminator: disc}
-
-		_, err := mergeOpenapiSchemasV3(s1, s2, false, make(map[string]bool))
-		require.Error(t, err)
 	})
 }
 
@@ -83,7 +96,7 @@ func TestMergeOpenapiSchemas_TypePropagationV3(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Type: stringType}
 
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		assert.Equal(t, stringType, result.Type)
 	})
@@ -92,7 +105,7 @@ func TestMergeOpenapiSchemas_TypePropagationV3(t *testing.T) {
 		s1 := openapi3.Schema{Type: stringType}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		assert.Equal(t, stringType, result.Type)
 	})
@@ -105,7 +118,7 @@ func TestMergeOpenapiSchemas_TypePropagationV3(t *testing.T) {
 		}
 		s2 := openapi3.Schema{Type: unionType}
 
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		assert.Equal(t, unionType, result.Type)
 	})
@@ -114,7 +127,7 @@ func TestMergeOpenapiSchemas_TypePropagationV3(t *testing.T) {
 		s1 := openapi3.Schema{Type: stringType}
 		s2 := openapi3.Schema{Type: stringType}
 
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		assert.Equal(t, stringType, result.Type)
 	})
@@ -123,16 +136,31 @@ func TestMergeOpenapiSchemas_TypePropagationV3(t *testing.T) {
 		s1 := openapi3.Schema{Type: stringType}
 		s2 := openapi3.Schema{Type: numberType}
 
-		_, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		_, err := mergeTwoV3(s1, s2)
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "incompatible types")
+		assert.EqualError(t, err, "allOf can't merge allOf/0 (type string) with allOf/1 (type number): no value has both types")
+	})
+
+	t.Run("integer narrows number", func(t *testing.T) {
+		for _, types := range [][2]*openapi3.Types{{numberType, {"integer"}}, {{"integer"}, numberType}} {
+			result, err := mergeTwoV3(openapi3.Schema{Type: types[0]}, openapi3.Schema{Type: types[1]})
+			require.NoError(t, err)
+			assert.Equal(t, []string{"integer"}, result.Type.Slice())
+		}
+	})
+
+	t.Run("multi-type arrays intersect", func(t *testing.T) {
+		result, err := mergeTwoV3(openapi3.Schema{Type: &openapi3.Types{"string", "number", "boolean"}},
+			openapi3.Schema{Type: &openapi3.Types{"integer", "string"}})
+		require.NoError(t, err)
+		assert.Equal(t, []string{"string", "integer"}, result.Type.Slice())
 	})
 
 	t.Run("neither member typed stays typeless", func(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		assert.Nil(t, result.Type.Slice())
 	})
@@ -147,7 +175,7 @@ func TestMergeOpenapiSchemas_FormatPropagationV3(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Format: "uuid"}
 
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		assert.Equal(t, "uuid", result.Format)
 	})
@@ -156,7 +184,7 @@ func TestMergeOpenapiSchemas_FormatPropagationV3(t *testing.T) {
 		s1 := openapi3.Schema{Format: "uuid"}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		assert.Equal(t, "uuid", result.Format)
 	})
@@ -165,7 +193,7 @@ func TestMergeOpenapiSchemas_FormatPropagationV3(t *testing.T) {
 		s1 := openapi3.Schema{Format: "uuid"}
 		s2 := openapi3.Schema{Format: "uuid"}
 
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		assert.Equal(t, "uuid", result.Format)
 	})
@@ -174,16 +202,16 @@ func TestMergeOpenapiSchemas_FormatPropagationV3(t *testing.T) {
 		s1 := openapi3.Schema{Format: "uuid"}
 		s2 := openapi3.Schema{Format: "date-time"}
 
-		_, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		_, err := mergeTwoV3(s1, s2)
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "incompatible formats")
+		assert.EqualError(t, err, "allOf can't merge allOf/0 (format uuid) with allOf/1 (format date-time): a value can't have both formats")
 	})
 
 	t.Run("nullable decorator over format-carrying scalar merges", func(t *testing.T) {
 		s1 := openapi3.Schema{Type: &openapi3.Types{"string"}, Format: "uuid"}
 		s2 := openapi3.Schema{Nullable: true}
 
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		assert.Equal(t, "uuid", result.Format)
 		assert.True(t, result.Nullable)
@@ -198,7 +226,7 @@ func TestMergeOpenapiSchemas_NullableUnionV3(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Nullable: true}
 
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		assert.True(t, result.Nullable)
 	})
@@ -207,7 +235,7 @@ func TestMergeOpenapiSchemas_NullableUnionV3(t *testing.T) {
 		s1 := openapi3.Schema{Nullable: true}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		assert.True(t, result.Nullable)
 	})
@@ -216,7 +244,7 @@ func TestMergeOpenapiSchemas_NullableUnionV3(t *testing.T) {
 		s1 := openapi3.Schema{Nullable: true}
 		s2 := openapi3.Schema{Nullable: true}
 
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		assert.True(t, result.Nullable)
 	})
@@ -225,7 +253,7 @@ func TestMergeOpenapiSchemas_NullableUnionV3(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		assert.False(t, result.Nullable)
 	})
@@ -237,7 +265,7 @@ func TestMergeOpenapiSchemas_NullableUnionV3(t *testing.T) {
 func TestMergeOpenapiSchemas_AnnotationsV3(t *testing.T) {
 	merge := func(t *testing.T, s1, s2 openapi3.Schema) openapi3.Schema {
 		t.Helper()
-		result, err := mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		result, err := mergeTwoV3(s1, s2)
 		require.NoError(t, err)
 		return result
 	}
@@ -282,7 +310,7 @@ func TestMergeOpenapiSchemas_NullInTypeArrayV3(t *testing.T) {
 	nullableObject := &openapi3.Types{"object", "null"}
 
 	merge := func(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
-		return mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		return mergeTwoV3(s1, s2)
 	}
 
 	t.Run("a nullable member makes the result nullable", func(t *testing.T) {
@@ -298,10 +326,10 @@ func TestMergeOpenapiSchemas_NullInTypeArrayV3(t *testing.T) {
 		}
 	})
 
-	t.Run("types that already agree are passed through unchanged", func(t *testing.T) {
+	t.Run("types that already agree stay as they are", func(t *testing.T) {
 		result, err := merge(openapi3.Schema{Type: object}, openapi3.Schema{Type: &openapi3.Types{"object"}})
 		require.NoError(t, err)
-		assert.Same(t, object, result.Type)
+		assert.Equal(t, []string{"object"}, result.Type.Slice())
 	})
 
 	t.Run("type arrays compare as sets", func(t *testing.T) {
@@ -314,7 +342,7 @@ func TestMergeOpenapiSchemas_NullInTypeArrayV3(t *testing.T) {
 		_, err := merge(openapi3.Schema{Type: &openapi3.Types{"string"}},
 			openapi3.Schema{Type: &openapi3.Types{"integer", "null"}})
 		require.Error(t, err)
-		assert.Contains(t, err.Error(), "incompatible types")
+		assert.Contains(t, err.Error(), "no value has both types")
 	})
 }
 
@@ -325,7 +353,7 @@ func TestMergeOpenapiSchemas_AdditionalPropertiesV3(t *testing.T) {
 		return openapi3.Schema{AdditionalProperties: openapi3.AdditionalProperties{Schema: ap}}
 	}
 	merge := func(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
-		return mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		return mergeTwoV3(s1, s2)
 	}
 
 	t.Run("identical inline schemas merge", func(t *testing.T) {
@@ -357,7 +385,7 @@ func TestMergeOpenapiSchemas_AdditionalPropertiesV3(t *testing.T) {
 // by every allOf merge.
 func TestMergeOpenapiSchemas_ItemsV3(t *testing.T) {
 	merge := func(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
-		return mergeOpenapiSchemasV3(s1, s2, true, make(map[string]bool))
+		return mergeTwoV3(s1, s2)
 	}
 	itemRef := openapi3.NewSchemaRef("#/components/schemas/Item", openapi3.NewObjectSchema())
 
@@ -397,5 +425,144 @@ func TestMergeOpenapiSchemas_ItemsV3(t *testing.T) {
 			openapi3.Schema{Items: openapi3.NewSchemaRef("", openapi3.NewIntegerSchema())})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "array items")
+	})
+}
+
+func TestMergeOpenapiSchemas_EnumV3(t *testing.T) {
+	named := func(enum []any, names ...any) openapi3.Schema {
+		s := openapi3.Schema{Enum: enum}
+		if len(names) > 0 {
+			s.Extensions = map[string]any{extEnumVarNames: names}
+		}
+		return s
+	}
+
+	t.Run("an enum on one member is kept", func(t *testing.T) {
+		result, err := mergeTwoV3(named([]any{"a", "b"}, "A", "B"), openapi3.Schema{})
+		require.NoError(t, err)
+		assert.Equal(t, []any{"a", "b"}, result.Enum)
+		assert.Equal(t, []any{"A", "B"}, result.Extensions[extEnumVarNames])
+	})
+
+	t.Run("two enums intersect, keeping the first member's order and names (issue #1633)", func(t *testing.T) {
+		result, err := mergeTwoV3(named([]any{"a", "b", "c"}, "A", "B", "C"), named([]any{"c", "a", "z"}, "X", "Y", "Z"))
+		require.NoError(t, err)
+		assert.Equal(t, []any{"a", "c"}, result.Enum)
+		assert.Equal(t, []any{"A", "C"}, result.Extensions[extEnumVarNames])
+	})
+
+	t.Run("names come from the second member when the first has none", func(t *testing.T) {
+		result, err := mergeTwoV3(named([]any{"a", "b", "c"}), named([]any{"c", "a"}, "X", "Y"))
+		require.NoError(t, err)
+		assert.Equal(t, []any{"a", "c"}, result.Enum)
+		assert.Equal(t, []any{"Y", "X"}, result.Extensions[extEnumVarNames])
+	})
+
+	t.Run("a member without an enum can rename its values", func(t *testing.T) {
+		result, err := mergeTwoV3(named([]any{"a", "b"}, "A", "B"),
+			openapi3.Schema{Extensions: map[string]any{extEnumNames: []any{"First", "Second"}}})
+		require.NoError(t, err)
+		assert.Equal(t, []any{"First", "Second"}, result.Extensions[extEnumVarNames])
+	})
+
+	t.Run("enums with no value in common error", func(t *testing.T) {
+		_, err := mergeTwoV3(named([]any{"a", "b"}), named([]any{"c"}))
+		assert.EqualError(t, err, "allOf can't merge allOf/0 (enum [a b]) with allOf/1 (enum [c]): no value is in both")
+	})
+}
+
+func TestMergeOpenapiSchemas_ConstV3(t *testing.T) {
+	t.Run("the same const merges", func(t *testing.T) {
+		result, err := mergeTwoV3(openapi3.Schema{Const: "cat"}, openapi3.Schema{Const: "cat"})
+		require.NoError(t, err)
+		assert.Equal(t, "cat", result.Const)
+	})
+
+	t.Run("different consts error", func(t *testing.T) {
+		_, err := mergeTwoV3(openapi3.Schema{Const: "cat"}, openapi3.Schema{Const: "dog"})
+		assert.EqualError(t, err, "allOf can't merge allOf/0 (const cat) with allOf/1 (const dog): no value is both")
+	})
+
+	t.Run("a const narrows an enum", func(t *testing.T) {
+		result, err := mergeTwoV3(openapi3.Schema{Enum: []any{"cat", "dog"}}, openapi3.Schema{Const: "dog"})
+		require.NoError(t, err)
+		assert.Equal(t, []any{"dog"}, result.Enum)
+	})
+
+	t.Run("a const the enum doesn't allow errors", func(t *testing.T) {
+		_, err := mergeTwoV3(openapi3.Schema{Enum: []any{"cat", "dog"}}, openapi3.Schema{Const: "cow"})
+		assert.EqualError(t, err, "allOf can't merge allOf/1 (const cow) with allOf/0 (enum [cat dog]): the enum doesn't allow the const")
+	})
+}
+
+func TestMergeOpenapiSchemas_RequiredV3(t *testing.T) {
+	result, err := mergeTwoV3(openapi3.Schema{Required: []string{"a", "b"}}, openapi3.Schema{Required: []string{"b", "c"}})
+	require.NoError(t, err)
+	assert.Equal(t, []string{"a", "b", "c"}, result.Required)
+}
+
+// TestMergeOpenapiSchemas_NestedAllOfV3: a member that is itself an allOf
+// contributes its members and its own keywords; v2 dropped the latter.
+func TestMergeOpenapiSchemas_NestedAllOfV3(t *testing.T) {
+	nested := openapi3.Schema{
+		Properties: openapi3.Schemas{"own": openapi3.NewSchemaRef("", openapi3.NewStringSchema())},
+		AllOf: openapi3.SchemaRefs{openapi3.NewSchemaRef("", &openapi3.Schema{
+			Properties: openapi3.Schemas{"inner": openapi3.NewSchemaRef("", openapi3.NewStringSchema())},
+		})},
+	}
+	result, err := mergeTwoV3(nested, openapi3.Schema{
+		Properties: openapi3.Schemas{"other": openapi3.NewSchemaRef("", openapi3.NewStringSchema())},
+	})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"own", "inner", "other"}, slices.Collect(maps.Keys(result.Properties)))
+
+	nested.AllOf[0].Value.Type = &openapi3.Types{"array"}
+	_, err = mergeTwoV3(nested, openapi3.Schema{Type: &openapi3.Types{"object"}})
+	assert.EqualError(t, err, "allOf can't merge allOf/0/allOf/0 (type array) with allOf/1 (type object): no value has both types",
+		"the error names the nested member")
+}
+
+func TestMergeSchemasV3EndToEnd(t *testing.T) {
+	t.Run("integer narrows number", func(t *testing.T) {
+		code := generateSpec(t, opaqueSpecHeader+`
+    Count:
+      allOf:
+        - type: number
+        - type: integer
+          format: int64
+`, withV3)
+		assert.Contains(t, code, "type Count = int64")
+	})
+
+	t.Run("a conflict names both members", func(t *testing.T) {
+		_, err := generateSpecErr(opaqueSpecHeader+`
+    Base:
+      allOf:
+        - type: object
+          properties:
+            name: {type: string}
+    Odd:
+      type: object
+      properties:
+        extra: {type: string}
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - type: string
+`, withV3)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "error converting Schema Odd to Go type: error merging schemas: "+
+			"allOf can't merge #/components/schemas/Base/allOf/0 (type object) with allOf/1 (type string): no value has both types")
+	})
+
+	t.Run("the schema's own keywords are the schema itself", func(t *testing.T) {
+		_, err := generateSpecErr(opaqueSpecHeader+`
+    Odd:
+      type: string
+      required: [x]
+      allOf:
+        - type: integer
+`, withV3)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "allOf can't merge allOf/0 (type integer) with the schema itself (type string)")
 	})
 }

@@ -46,6 +46,13 @@ type genContext struct {
 	// rather than handing to generateGoSchema — so this is a diagnostic for
 	// a case believed impossible, not a supported path.
 	rootPosition bool
+
+	// memberLabels names the allOf members the generator makes up rather
+	// than reads from the spec, for error messages that name the members of
+	// a composition: the parent's own keywords, which generateAllOfV3 merges
+	// as a member, are the schema itself (""). Only schema-merging-behavior
+	// v3 uses it.
+	memberLabels map[*openapi3.SchemaRef]string
 }
 
 // mergeFrame describes an allOf merge that an enclosing frame is part-way
@@ -64,8 +71,9 @@ type mergeFrame struct {
 // newGenContext returns a context rooted at a top-level schema position.
 func newGenContext(nameHint []string) genContext {
 	return genContext{
-		inProgress: make(map[*openapi3.Schema]*mergeFrame),
-		nameHint:   slices.Clone(nameHint),
+		inProgress:   make(map[*openapi3.Schema]*mergeFrame),
+		nameHint:     slices.Clone(nameHint),
+		memberLabels: make(map[*openapi3.SchemaRef]string),
 	}
 }
 
