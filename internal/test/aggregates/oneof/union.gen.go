@@ -45,6 +45,34 @@ func (e RepeatableEventKind) Valid() bool {
 	}
 }
 
+// Bag defines model for Bag.
+type Bag struct {
+	Kind                 string         `json:"kind"`
+	AdditionalProperties map[string]any `json:"-"`
+}
+
+// Base defines model for Base.
+type Base struct {
+	Id string `json:"id"`
+}
+
+// Both defines model for Both.
+type Both struct {
+	Kind                 string         `json:"kind"`
+	AdditionalProperties map[string]any `json:"-"`
+	union                json.RawMessage
+}
+
+// Cat defines model for Cat.
+type Cat struct {
+	Meow *string `json:"meow,omitempty"`
+}
+
+// Dog defines model for Dog.
+type Dog struct {
+	Woof *string `json:"woof,omitempty"`
+}
+
 // Event defines model for Event.
 type Event struct {
 	union json.RawMessage
@@ -59,6 +87,14 @@ type OnetimeEvent struct {
 // OnetimeEventKind defines model for OnetimeEvent.Kind.
 type OnetimeEventKind string
 
+// RenamedEvent defines model for RenamedEvent.
+type RenamedEvent = EventImpl
+
+// EventImpl defines model for RenamedEvent.
+type EventImpl struct {
+	union json.RawMessage
+}
+
 // RepeatableEvent defines model for RepeatableEvent.
 type RepeatableEvent struct {
 	Interval string              `json:"interval"`
@@ -67,6 +103,153 @@ type RepeatableEvent struct {
 
 // RepeatableEventKind defines model for RepeatableEvent.Kind.
 type RepeatableEventKind string
+
+// Thing defines model for Thing.
+type Thing struct {
+	Id    string `json:"id"`
+	union json.RawMessage
+}
+
+// GetInlineThing200JSONResponseBody defines parameters for GetInlineThing.
+type GetInlineThing200JSONResponseBody struct {
+	Id    string `json:"id"`
+	union json.RawMessage
+}
+
+// Getter for additional properties for Bag. Returns the specified
+// element and whether it was found
+func (a Bag) Get(fieldName string) (value any, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Bag
+func (a *Bag) Set(fieldName string, value any) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]any)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Bag to handle AdditionalProperties
+func (a *Bag) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["kind"]; found {
+		err = json.Unmarshal(raw, &a.Kind)
+		if err != nil {
+			return fmt.Errorf("error reading 'kind': %w", err)
+		}
+		delete(object, "kind")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]any)
+		for fieldName, fieldBuf := range object {
+			var fieldVal any
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Bag to handle AdditionalProperties
+func (a Bag) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["kind"], err = json.Marshal(a.Kind)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Both. Returns the specified
+// element and whether it was found
+func (a Both) Get(fieldName string) (value any, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Both
+func (a *Both) Set(fieldName string, value any) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]any)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// AsCat returns the union data inside the Both as a Cat
+func (t Both) AsCat() (Cat, error) {
+	var body Cat
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCat overwrites any union data inside the Both as the provided Cat
+func (t *Both) FromCat(v Cat) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCat performs a merge with any union data inside the Both, using the provided Cat
+func (t *Both) MergeCat(v Cat) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDog returns the union data inside the Both as a Dog
+func (t Both) AsDog() (Dog, error) {
+	var body Dog
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDog overwrites any union data inside the Both as the provided Dog
+func (t *Both) FromDog(v Dog) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDog performs a merge with any union data inside the Both, using the provided Dog
+func (t *Both) MergeDog(v Dog) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
 
 // AsOnetimeEvent returns the union data inside the Event as a OnetimeEvent
 func (t Event) AsOnetimeEvent() (OnetimeEvent, error) {
@@ -130,11 +313,341 @@ func (t *Event) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsCat returns the union data inside the EventImpl as a Cat
+func (t EventImpl) AsCat() (Cat, error) {
+	var body Cat
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCat overwrites any union data inside the EventImpl as the provided Cat
+func (t *EventImpl) FromCat(v Cat) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCat performs a merge with any union data inside the EventImpl, using the provided Cat
+func (t *EventImpl) MergeCat(v Cat) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDog returns the union data inside the EventImpl as a Dog
+func (t EventImpl) AsDog() (Dog, error) {
+	var body Dog
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDog overwrites any union data inside the EventImpl as the provided Dog
+func (t *EventImpl) FromDog(v Dog) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDog performs a merge with any union data inside the EventImpl, using the provided Dog
+func (t *EventImpl) MergeDog(v Dog) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t EventImpl) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *EventImpl) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsCat returns the union data inside the Thing as a Cat
+func (t Thing) AsCat() (Cat, error) {
+	var body Cat
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCat overwrites any union data inside the Thing as the provided Cat
+func (t *Thing) FromCat(v Cat) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCat performs a merge with any union data inside the Thing, using the provided Cat
+func (t *Thing) MergeCat(v Cat) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDog returns the union data inside the Thing as a Dog
+func (t Thing) AsDog() (Dog, error) {
+	var body Dog
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDog overwrites any union data inside the Thing as the provided Dog
+func (t *Thing) FromDog(v Dog) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDog performs a merge with any union data inside the Thing, using the provided Dog
+func (t *Thing) MergeDog(v Dog) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t Thing) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["id"], err = json.Marshal(t.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'id': %w", err)
+	}
+
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *Thing) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["id"]; found {
+		err = json.Unmarshal(raw, &t.Id)
+		if err != nil {
+			return fmt.Errorf("error reading 'id': %w", err)
+		}
+	}
+
+	return err
+}
+
+// AsCat returns the union data inside the GetInlineThing200JSONResponseBody as a Cat
+func (t GetInlineThing200JSONResponseBody) AsCat() (Cat, error) {
+	var body Cat
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCat overwrites any union data inside the GetInlineThing200JSONResponseBody as the provided Cat
+func (t *GetInlineThing200JSONResponseBody) FromCat(v Cat) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCat performs a merge with any union data inside the GetInlineThing200JSONResponseBody, using the provided Cat
+func (t *GetInlineThing200JSONResponseBody) MergeCat(v Cat) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDog returns the union data inside the GetInlineThing200JSONResponseBody as a Dog
+func (t GetInlineThing200JSONResponseBody) AsDog() (Dog, error) {
+	var body Dog
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDog overwrites any union data inside the GetInlineThing200JSONResponseBody as the provided Dog
+func (t *GetInlineThing200JSONResponseBody) FromDog(v Dog) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDog performs a merge with any union data inside the GetInlineThing200JSONResponseBody, using the provided Dog
+func (t *GetInlineThing200JSONResponseBody) MergeDog(v Dog) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t GetInlineThing200JSONResponseBody) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["id"], err = json.Marshal(t.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'id': %w", err)
+	}
+
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *GetInlineThing200JSONResponseBody) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["id"]; found {
+		err = json.Unmarshal(raw, &t.Id)
+		if err != nil {
+			return fmt.Errorf("error reading 'id': %w", err)
+		}
+	}
+
+	return err
+}
+
+// Override default JSON handling for Both to handle AdditionalProperties and union
+func (a *Both) UnmarshalJSON(b []byte) error {
+	err := a.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["kind"]; found {
+		err = json.Unmarshal(raw, &a.Kind)
+		if err != nil {
+			return fmt.Errorf("error reading 'kind': %w", err)
+		}
+		delete(object, "kind")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]any)
+		for fieldName, fieldBuf := range object {
+			var fieldVal any
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Both to handle AdditionalProperties and union
+func (a Both) MarshalJSON() ([]byte, error) {
+	var err error
+	b, err := a.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if a.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["kind"], err = json.Marshal(a.Kind)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
+	// (GET /bag)
+	GetBag(w http.ResponseWriter, r *http.Request)
+
+	// (GET /both)
+	GetBoth(w http.ResponseWriter, r *http.Request)
+
 	// (GET /event)
 	GetEvent(w http.ResponseWriter, r *http.Request)
+
+	// (GET /inline-thing)
+	GetInlineThing(w http.ResponseWriter, r *http.Request)
+
+	// (GET /renamed)
+	GetRenamed(w http.ResponseWriter, r *http.Request)
+
+	// (GET /thing)
+	GetThing(w http.ResponseWriter, r *http.Request)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -146,11 +659,81 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc func(http.Handler) http.Handler
 
+// GetBag operation middleware
+func (siw *ServerInterfaceWrapper) GetBag(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetBag(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetBoth operation middleware
+func (siw *ServerInterfaceWrapper) GetBoth(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetBoth(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetEvent operation middleware
 func (siw *ServerInterfaceWrapper) GetEvent(w http.ResponseWriter, r *http.Request) {
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetEvent(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetInlineThing operation middleware
+func (siw *ServerInterfaceWrapper) GetInlineThing(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetInlineThing(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetRenamed operation middleware
+func (siw *ServerInterfaceWrapper) GetRenamed(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetRenamed(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetThing operation middleware
+func (siw *ServerInterfaceWrapper) GetThing(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetThing(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -281,8 +864,71 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/event", wrapper.GetEvent)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/thing", wrapper.GetThing)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/bag", wrapper.GetBag)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/both", wrapper.GetBoth)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/inline-thing", wrapper.GetInlineThing)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/renamed", wrapper.GetRenamed)
 
 	return m
+}
+
+type GetBagRequestObject struct {
+}
+
+type GetBagResponseObject interface {
+	VisitGetBagResponse(w http.ResponseWriter) error
+}
+
+type GetBag200JSONResponse Bag
+
+func (t GetBag200JSONResponse) MarshalJSON() ([]byte, error) {
+	return Bag(t).MarshalJSON()
+}
+
+func (t *GetBag200JSONResponse) UnmarshalJSON(b []byte) error {
+	return (*Bag)(t).UnmarshalJSON(b)
+}
+
+func (response GetBag200JSONResponse) VisitGetBagResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBothRequestObject struct {
+}
+
+type GetBothResponseObject interface {
+	VisitGetBothResponse(w http.ResponseWriter) error
+}
+
+type GetBoth200JSONResponse Both
+
+func (t GetBoth200JSONResponse) MarshalJSON() ([]byte, error) {
+	return Both(t).MarshalJSON()
+}
+
+func (t *GetBoth200JSONResponse) UnmarshalJSON(b []byte) error {
+	return (*Both)(t).UnmarshalJSON(b)
+}
+
+func (response GetBoth200JSONResponse) VisitGetBothResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type GetEventRequestObject struct {
@@ -314,11 +960,105 @@ func (response GetEvent200JSONResponse) VisitGetEventResponse(w http.ResponseWri
 	return err
 }
 
+type GetInlineThingRequestObject struct {
+}
+
+type GetInlineThingResponseObject interface {
+	VisitGetInlineThingResponse(w http.ResponseWriter) error
+}
+
+type GetInlineThing200JSONResponse = GetInlineThing200JSONResponseBody
+
+func (response GetInlineThing200JSONResponse) VisitGetInlineThingResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetRenamedRequestObject struct {
+}
+
+type GetRenamedResponseObject interface {
+	VisitGetRenamedResponse(w http.ResponseWriter) error
+}
+
+type GetRenamed200JSONResponse RenamedEvent
+
+func (t GetRenamed200JSONResponse) MarshalJSON() ([]byte, error) {
+	return RenamedEvent(t).MarshalJSON()
+}
+
+func (t *GetRenamed200JSONResponse) UnmarshalJSON(b []byte) error {
+	return (*RenamedEvent)(t).UnmarshalJSON(b)
+}
+
+func (response GetRenamed200JSONResponse) VisitGetRenamedResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetThingRequestObject struct {
+}
+
+type GetThingResponseObject interface {
+	VisitGetThingResponse(w http.ResponseWriter) error
+}
+
+type GetThing200JSONResponse Thing
+
+func (t GetThing200JSONResponse) MarshalJSON() ([]byte, error) {
+	return Thing(t).MarshalJSON()
+}
+
+func (t *GetThing200JSONResponse) UnmarshalJSON(b []byte) error {
+	return (*Thing)(t).UnmarshalJSON(b)
+}
+
+func (response GetThing200JSONResponse) VisitGetThingResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
+	// (GET /bag)
+	GetBag(ctx context.Context, request GetBagRequestObject) (GetBagResponseObject, error)
+
+	// (GET /both)
+	GetBoth(ctx context.Context, request GetBothRequestObject) (GetBothResponseObject, error)
+
 	// (GET /event)
 	GetEvent(ctx context.Context, request GetEventRequestObject) (GetEventResponseObject, error)
+
+	// (GET /inline-thing)
+	GetInlineThing(ctx context.Context, request GetInlineThingRequestObject) (GetInlineThingResponseObject, error)
+
+	// (GET /renamed)
+	GetRenamed(ctx context.Context, request GetRenamedRequestObject) (GetRenamedResponseObject, error)
+
+	// (GET /thing)
+	GetThing(ctx context.Context, request GetThingRequestObject) (GetThingResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -360,6 +1100,54 @@ type strictHandler struct {
 	options     StrictHTTPServerOptions
 }
 
+// GetBag operation middleware
+func (sh *strictHandler) GetBag(w http.ResponseWriter, r *http.Request) {
+	var request GetBagRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetBag(ctx, request.(GetBagRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetBag")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetBagResponseObject); ok {
+		if err := validResponse.VisitGetBagResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetBoth operation middleware
+func (sh *strictHandler) GetBoth(w http.ResponseWriter, r *http.Request) {
+	var request GetBothRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetBoth(ctx, request.(GetBothRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetBoth")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetBothResponseObject); ok {
+		if err := validResponse.VisitGetBothResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetEvent operation middleware
 func (sh *strictHandler) GetEvent(w http.ResponseWriter, r *http.Request) {
 	var request GetEventRequestObject
@@ -377,6 +1165,78 @@ func (sh *strictHandler) GetEvent(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetEventResponseObject); ok {
 		if err := validResponse.VisitGetEventResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetInlineThing operation middleware
+func (sh *strictHandler) GetInlineThing(w http.ResponseWriter, r *http.Request) {
+	var request GetInlineThingRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetInlineThing(ctx, request.(GetInlineThingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetInlineThing")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetInlineThingResponseObject); ok {
+		if err := validResponse.VisitGetInlineThingResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetRenamed operation middleware
+func (sh *strictHandler) GetRenamed(w http.ResponseWriter, r *http.Request) {
+	var request GetRenamedRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetRenamed(ctx, request.(GetRenamedRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetRenamed")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetRenamedResponseObject); ok {
+		if err := validResponse.VisitGetRenamedResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetThing operation middleware
+func (sh *strictHandler) GetThing(w http.ResponseWriter, r *http.Request) {
+	var request GetThingRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetThing(ctx, request.(GetThingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetThing")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetThingResponseObject); ok {
+		if err := validResponse.VisitGetThingResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

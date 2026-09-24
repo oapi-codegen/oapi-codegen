@@ -1012,7 +1012,7 @@ func (response UnionExample200JSONResponse) VisitUnionExampleResponse(ctx iris.C
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
 	ctx.StatusCode(200)
 
-	return ctx.JSON(&response.Body.union)
+	return ctx.JSON(&response.Body)
 }
 
 type UnionExample400Response = BadrequestResponse
