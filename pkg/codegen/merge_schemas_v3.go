@@ -7,7 +7,6 @@ package codegen
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"maps"
 	"reflect"
@@ -62,36 +61,27 @@ func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 		}
 	}
 
-	schema, err := memberValue(allOf[0])
-	if err != nil {
-		return Schema{}, err
-	}
-
-	// Seed allOf[0]'s ref so that if s1's own AllOf contains a back-reference
-	// to itself, the cycle is detected during recursive merging.
+	merged := newAllOfMerge(ctx)
+	// The $refs of the members merged so far, so that a nested allOf that
+	// refers back to one is not flattened into itself.
 	seenTopLevel := make(map[string]bool)
-	if allOf[0].Ref != "" {
-		seenTopLevel[allOf[0].Ref] = true
-	}
-
-	for i := 1; i < n; i++ {
-		oneOfSchema, err := memberValue(allOf[i])
+	for i, member := range allOf {
+		value, err := memberValue(member)
 		if err != nil {
 			return Schema{}, err
 		}
-
-		seenSchemaRef := make(map[string]bool)
-		for k := range seenTopLevel {
-			seenSchemaRef[k] = true
+		seen := maps.Clone(seenTopLevel)
+		if member.Ref != "" {
+			seen[member.Ref] = true
+			seenTopLevel[member.Ref] = true
 		}
-		if allOf[i].Ref != "" {
-			seenSchemaRef[allOf[i].Ref] = true
-			seenTopLevel[allOf[i].Ref] = true
+		if err := merged.add(value, allOfMemberLabel(ctx, member, i), seen); err != nil {
+			return Schema{}, err
 		}
-		schema, err = mergeOpenapiSchemasV3(schema, oneOfSchema, true, seenSchemaRef)
-		if err != nil {
-			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
-		}
+	}
+	schema, err := merged.result()
+	if err != nil {
+		return Schema{}, err
 	}
 
 	if !decoratorIdiom {
@@ -100,12 +90,6 @@ func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 		// have concrete evidence that the identity-bound ones cause
 		// incorrect aliasing across composition.
 		//
-		// Clone before mutating: the current merge path always
-		// reallocates schema.Extensions in mergeOpenapiSchemasV3 before
-		// we reach here, so the delete is safe today — but the
-		// defensive copy keeps this correct if that invariant changes
-		// (e.g. an allocation-skipping optimization). Cost is a small
-		// map copy on a single code path.
 		ext := maps.Clone(schema.Extensions)
 		delete(ext, extGoTypeName)
 		delete(ext, extPropGoImport)
@@ -462,275 +446,526 @@ func describeAllOfMember(ref *openapi3.SchemaRef) string {
 	return "an inline schema with " + strings.Join(declares, ", ")
 }
 
-func mergeAllOfV3(allOf []*openapi3.SchemaRef, seenSchemaRef map[string]bool) (openapi3.Schema, error) {
-	var schema openapi3.Schema
-	for _, schemaRef := range allOf {
-		if schemaRef.Ref != "" && seenSchemaRef[schemaRef.Ref] {
-			continue
-		}
-		if schemaRef.Ref != "" {
-			seenSchemaRef[schemaRef.Ref] = true
-		}
-		// Use memberValue so sibling extensions on a $ref member of a
-		// transitively-flattened allOf reach the merged schema, matching
-		// mergeSchemasV3's top-level handling.
-		member, err := memberValue(schemaRef)
-		if err != nil {
-			return openapi3.Schema{}, err
-		}
-		schema, err = mergeOpenapiSchemasV3(schema, member, true, seenSchemaRef)
-		if err != nil {
-			return openapi3.Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
-		}
+// allOfMemberLabel names an allOf member for error messages: the label the
+// generator gave a member it made up, the member's $ref, or its place in the
+// allOf.
+func allOfMemberLabel(ctx genContext, member *openapi3.SchemaRef, i int) string {
+	if label, ok := ctx.memberLabels[member]; ok {
+		return label
 	}
-	return schema, nil
+	if member.Ref != "" {
+		return member.Ref
+	}
+	return fmt.Sprintf("allOf/%d", i)
 }
 
-// mergeOpenapiSchemasV3 merges two openAPI schemas and returns the schema
-// all of whose fields are composed.
-func mergeOpenapiSchemasV3(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[string]bool) (openapi3.Schema, error) {
-	var result openapi3.Schema
+// allOfMerge merges the members of an allOf into one schema, keyword by
+// keyword, keeping the keywords that shape a Go type:
+//
+//   - type: the types every member allows. integer narrows number, and "null"
+//     is nullability, which any member can add (see nullable).
+//   - format, const, discriminator: the one a member declares, or the same one
+//     declared by several.
+//   - enum: the values every member's enum allows, with their names
+//     (x-enum-varnames). A composition that adds values to an enum can ask
+//     for the values any member's enum allows instead, with
+//     x-oapi-codegen-enum-merge: union.
+//   - required: every member's.
+//   - nullable, readOnly, writeOnly: set when any member sets them. Read
+//     literally, a nullable member would change nothing unless every member
+//     were nullable, but a member only says it to make the composed type
+//     nullable, as in OpenAPI 3.0's `allOf: [$ref X, {nullable: true}]`
+//     (issue #1898).
+//   - properties, items, additionalProperties: a schema that only one member
+//     declares, or that several declare alike, is kept as it is. Different
+//     schemas that several members declare for the same position are merged
+//     the way allOf merges them, as an allOf of the lot (issue #2107), so
+//     `allOf: [$ref Base, {properties: {name: {nullable: true}}}]` makes
+//     Base's name nullable instead of replacing it. additionalProperties:
+//     false on any member closes the composed object: read literally, the
+//     other members' properties could never appear.
+//   - oneOf, anyOf: collected from every member.
+//
+// Documentation and validation constraints never conflict. Any other
+// disagreement is an error naming both members: no Go type can hold what the
+// composition describes, and picking one member's word would silently
+// generate a type that disagrees with the other.
+type allOfMerge struct {
+	ctx    genContext
+	schema openapi3.Schema
+	// properties, items and additional collect each member's schema for
+	// those positions, merged by result.
+	properties    map[string][]labeledSchema
+	items         []labeledSchema
+	additional    []labeledSchema
+	anyAdditional bool
+	closed        bool
+	// from records the member each keyword that can conflict came from.
+	from map[string]string
+	// enumNames are the names of schema.Enum's values, or nil.
+	enumNames []string
+	// renames are names from a member that has no enum of its own, such as
+	// `allOf: [$ref Color, {x-enum-varnames: [...]}]`.
+	renames []string
+	// nullInType records a 3.1 "null" in a member's type array.
+	nullInType bool
+	// unionEnums merges enums into their union rather than their
+	// intersection.
+	unionEnums bool
+}
 
-	result.Extensions = make(map[string]any, len(s1.Extensions)+len(s2.Extensions))
-	maps.Copy(result.Extensions, s1.Extensions)
-	// TODO: Check for collisions
-	maps.Copy(result.Extensions, s2.Extensions)
+// labeledSchema is a member's schema for a position, with its label.
+type labeledSchema struct {
+	ref   *openapi3.SchemaRef
+	label string
+}
 
-	// Capture top-level OneOf/AnyOf before overwriting s1/s2 with transitive
-	// AllOf merges. The merges may surface additional OneOf/AnyOf members from
-	// nested allOf members (issue #1905), so we accumulate from both sources.
-	oneOf := append(s1.OneOf, s2.OneOf...)
-	anyOf := append(s1.AnyOf, s2.AnyOf...)
+func newAllOfMerge(ctx genContext) *allOfMerge {
+	return &allOfMerge{
+		ctx:        ctx,
+		unionEnums: ctx.unionEnums,
+		schema:     openapi3.Schema{Extensions: map[string]any{}},
+		from:       map[string]string{},
+		properties: map[string][]labeledSchema{},
+	}
+}
 
-	// We are going to make AllOf transitive, so that merging an AllOf that
-	// contains AllOf's will result in a flat object.
-	var err error
-	if s1.AllOf != nil {
-		var merged openapi3.Schema
-		merged, err = mergeAllOfV3(s1.AllOf, seenSchemaRef)
+// add merges one member, named by label for error messages. A member that is
+// an allOf itself contributes its members, then its own keywords. seen holds
+// the $refs being flattened, so that a cycle back into one is skipped.
+func (m *allOfMerge) add(v openapi3.Schema, label string, seen map[string]bool) error {
+	// A member that is an allOf merging its enums its own way is merged that
+	// way first, so decorating a composition that adds values to an enum
+	// doesn't take them away again.
+	if raw, ok := v.Extensions[extOapiCodegenEnumMerge]; ok && len(v.AllOf) > 0 {
+		union, err := extParseEnumMerge(raw)
 		if err != nil {
-			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 1: %w", err)
+			return fmt.Errorf("invalid value for %q in %s: %w", extOapiCodegenEnumMerge, displayLabel(label), err)
 		}
-		oneOf = append(oneOf, merged.OneOf...)
-		anyOf = append(anyOf, merged.AnyOf...)
-		s1 = merged
+		if union != m.unionEnums {
+			own := newAllOfMerge(m.ctx)
+			own.unionEnums = union
+			if err := own.add(v, label, seen); err != nil {
+				return err
+			}
+			merged, err := own.result()
+			if err != nil {
+				return err
+			}
+			return m.add(merged, label, seen)
+		}
 	}
-	if s2.AllOf != nil {
-		var merged openapi3.Schema
-		merged, err = mergeAllOfV3(s2.AllOf, seenSchemaRef)
+	for j, inner := range v.AllOf {
+		if inner.Ref != "" {
+			if seen[inner.Ref] {
+				continue
+			}
+			seen[inner.Ref] = true
+		}
+		iv, err := memberValue(inner)
 		if err != nil {
-			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 2: %w", err)
+			return err
 		}
-		oneOf = append(oneOf, merged.OneOf...)
-		anyOf = append(anyOf, merged.AnyOf...)
-		s2 = merged
-	}
-
-	result.OneOf = oneOf
-	result.AnyOf = anyOf
-	result.AllOf = append(s1.AllOf, s2.AllOf...)
-
-	// Type conflicts are an error only when both members declare a type.
-	// When exactly one declares one, it propagates: a typeless member
-	// contributes its other constraints (properties, required, ...) without
-	// erasing the sibling's type. Taking s1.Type unconditionally here used
-	// to silently drop s2's type, making the generated shape depend on
-	// allOf member order (issue #2524).
-	//
-	// "null" is left out of the comparison. In 3.1 it is how a type array
-	// spells nullability, which is unioned below rather than required to
-	// match, the same as 3.0's `nullable`; so `[object]` and
-	// `[object, "null"]` merge into a nullable object instead of failing.
-	// The remaining types compare as sets, so their order doesn't matter.
-	//
-	// The union is deliberate, not an oversight of allOf's intersection
-	// semantics. Read as an intersection, "null" in one member would mean
-	// nothing unless every member declared it, yet a member only says it to
-	// make the composed type nullable, as in the 3.0 idiom
-	// `allOf: [$ref X, {nullable: true}]` (issue #1898). Both spec versions
-	// give it that meaning.
-	t1, t2 := nonNullTypes(s1.Type), nonNullTypes(s2.Type)
-	if len(t1) > 0 && len(t2) > 0 && !sameTypeSetV3(t1, t2) {
-		return openapi3.Schema{}, fmt.Errorf("can not merge incompatible types: %v, %v", s1.Type.Slice(), s2.Type.Slice())
-	}
-	result.Type = mergeTypesV3(s1.Type, s2.Type)
-
-	// Format follows the same rule: error only when both members declare
-	// a format and they differ. Erroring on the set-vs-unset case made the
-	// allOf decorator idiom (e.g. $ref + nullable, issue #1898) fail for
-	// refs to format-carrying scalars.
-	if s1.Format != "" && s2.Format != "" && s1.Format != s2.Format {
-		return openapi3.Schema{}, errors.New("can not merge incompatible formats")
-	}
-	result.Format = s1.Format
-	if result.Format == "" {
-		result.Format = s2.Format
-	}
-
-	// For Enums, do we union, or intersect? This is a bit vague. I choose
-	// to be more permissive and union.
-	result.Enum = append(s1.Enum, s2.Enum...)
-
-	// Defaults are annotations: they don't affect the generated Go type, so
-	// they can't conflict. Keep the later member's. This used to fail when
-	// *either* member had a default, which rejected the everyday
-	// `allOf: [$ref EnumWithDefault, {description: ...}]` decorator (issue
-	// #1379).
-	result.Default = s1.Default
-	if s2.Default != nil {
-		result.Default = s2.Default
-	}
-
-	// We skip Example
-	// We skip ExternalDocs
-
-	// uniqueItems and the exclusive bounds are validation constraints that
-	// don't shape the Go type. Disagreeing on them used to be an error,
-	// which rejected decorators such as `allOf: [$ref UniqueTags,
-	// {description: ...}]`: kin-openapi can't tell an unset flag from an
-	// explicit false. allOf requires every member's constraints, so a flag
-	// set by either member is set on the result; a bound set by only one
-	// member carries over.
-	result.UniqueItems = s1.UniqueItems || s2.UniqueItems
-
-	result.ExclusiveMin = s1.ExclusiveMin
-	if !result.ExclusiveMin.IsSet() {
-		result.ExclusiveMin = s2.ExclusiveMin
-	}
-
-	result.ExclusiveMax = s1.ExclusiveMax
-	if !result.ExclusiveMax.IsSet() {
-		result.ExclusiveMax = s2.ExclusiveMax
-	}
-
-	// Compare nullability via schemaIsNullable so this works the same way
-	// regardless of spec version: in 3.0 it reads s.Nullable, in 3.1 it
-	// reads "null" from the type array. Type merging itself is NOT version
-	// branched -- the type check at result.Type assignment above ignores
-	// "null" and mergeTypesV3 adds it back when either member has it:
-	//
-	//   3.0: ["string"] vs ["string"]                 -> ["string"]
-	//   3.1: ["string","null"] vs ["string","null"]   -> ["string","null"]
-	//   3.1: ["string","null"] vs ["string"]          -> ["string","null"]
-	//
-	// Because result.Type already carries a "null" entry when either
-	// member had one, the merged result is correctly nullable in 3.1
-	// without needing to touch result.Nullable. The result.Nullable copy
-	// below is a no-op in 3.1 (s1.Nullable is always false there) but kept
-	// for 3.0 correctness, where Nullable is the only nullability carrier.
-	//
-	// Nullability is UNIONed rather than required to match: if any member
-	// is nullable, the merged schema is nullable. This supports the common
-	// OpenAPI 3.0 idiom of decorating a $ref with nullability, which is only
-	// expressible through allOf because 3.0 forbids siblings next to $ref
-	// (issue #1898):
-	//
-	//   allOf:
-	//     - $ref: "#/components/schemas/user"
-	//     - nullable: true
-	//
-	// kin-openapi represents Nullable as a plain bool, so an unset value is
-	// indistinguishable from an explicit `nullable: false`; erroring on a
-	// mismatch made this widely-used idiom unusable. Union is also
-	// consistent with how Required is merged below.
-	if schemaIsNullable(&s1) || schemaIsNullable(&s2) {
-		result.Nullable = true
-	}
-
-	// readOnly, writeOnly and allowEmptyValue are ORed for the same reason:
-	// requiring them to match rejected `allOf: [$ref X, {readOnly: true}]`,
-	// the only way OpenAPI 3.0 can mark a $ref read-only.
-	result.ReadOnly = s1.ReadOnly || s2.ReadOnly
-	result.WriteOnly = s1.WriteOnly || s2.WriteOnly
-	result.AllowEmptyValue = s1.AllowEmptyValue || s2.AllowEmptyValue
-
-	// Required. We merge these.
-	result.Required = append(s1.Required, s2.Required...)
-
-	// Items used to be dropped, so an allOf over an array schema, such as
-	// `allOf: [$ref ArrayOfX, {minItems: 1}]`, generated []any.
-	result.Items, err = mergeItemsV3(s1.Items, s2.Items, seenSchemaRef)
-	if err != nil {
-		return openapi3.Schema{}, err
-	}
-
-	// We merge all properties
-	result.Properties = make(map[string]*openapi3.SchemaRef, len(s1.Properties)+len(s2.Properties))
-	maps.Copy(result.Properties, s1.Properties)
-	// TODO: detect conflicts
-	maps.Copy(result.Properties, s2.Properties)
-
-	if isAdditionalPropertiesExplicitFalse(&s1) || isAdditionalPropertiesExplicitFalse(&s2) {
-		result.WithoutAdditionalProperties()
-	} else if s1.AdditionalProperties.Schema != nil {
-		// Two additionalProperties schemas merge only when they are the same
-		// schema, e.g. two members that each allow extra string values.
-		if s2.AdditionalProperties.Schema != nil && !sameSchemaV3(s1.AdditionalProperties.Schema, s2.AdditionalProperties.Schema) {
-			return openapi3.Schema{}, errors.New("merging two schemas with different additional properties, this is unhandled")
+		innerLabel, ok := m.ctx.memberLabels[inner]
+		switch {
+		case ok:
+		case inner.Ref != "":
+			innerLabel = inner.Ref
+		default:
+			innerLabel = childLabel(label, fmt.Sprintf("allOf/%d", j))
 		}
-		result.AdditionalProperties.Schema = s1.AdditionalProperties.Schema
-	} else {
-		if s2.AdditionalProperties.Schema != nil {
-			result.AdditionalProperties.Schema = s2.AdditionalProperties.Schema
-		} else {
-			if s1.AdditionalProperties.Has != nil || s2.AdditionalProperties.Has != nil {
-				result.WithAnyAdditionalProperties()
+		if err := m.add(iv, innerLabel, seen); err != nil {
+			return err
+		}
+	}
+
+	for k, ext := range v.Extensions {
+		if k != extEnumVarNames && k != extEnumNames {
+			m.schema.Extensions[k] = ext
+		}
+	}
+	m.schema.OneOf = append(m.schema.OneOf, v.OneOf...)
+	m.schema.AnyOf = append(m.schema.AnyOf, v.AnyOf...)
+
+	if err := m.addType(v, label); err != nil {
+		return err
+	}
+	if v.Format != "" {
+		if m.schema.Format != "" && m.schema.Format != v.Format {
+			return mergeConflict(m.from["format"], "format "+m.schema.Format, label, "format "+v.Format,
+				"a value can't have both formats")
+		}
+		if m.schema.Format == "" {
+			m.schema.Format, m.from["format"] = v.Format, label
+		}
+	}
+	if err := m.addEnum(v, label); err != nil {
+		return err
+	}
+	if v.Const != nil {
+		if m.schema.Const != nil && !reflect.DeepEqual(m.schema.Const, v.Const) {
+			return mergeConflict(m.from["const"], fmt.Sprintf("const %v", m.schema.Const), label,
+				fmt.Sprintf("const %v", v.Const), "no value is both")
+		}
+		if m.schema.Const == nil {
+			m.schema.Const, m.from["const"] = v.Const, label
+		}
+	}
+	if v.Discriminator != nil {
+		if m.schema.Discriminator != nil && !sameDiscriminator(m.schema.Discriminator, v.Discriminator) {
+			return mergeConflict(m.from["discriminator"], "discriminator "+m.schema.Discriminator.PropertyName,
+				label, "discriminator "+v.Discriminator.PropertyName, "a value has one discriminator")
+		}
+		if m.schema.Discriminator == nil {
+			m.schema.Discriminator, m.from["discriminator"] = v.Discriminator, label
+		}
+	}
+
+	// Annotations: a default is kept from the last member that has one.
+	if v.Default != nil {
+		m.schema.Default = v.Default
+	}
+	if schemaIsNullable(&v) {
+		m.schema.Nullable = true
+	}
+	m.schema.ReadOnly = m.schema.ReadOnly || v.ReadOnly
+	m.schema.WriteOnly = m.schema.WriteOnly || v.WriteOnly
+	m.schema.AllowEmptyValue = m.schema.AllowEmptyValue || v.AllowEmptyValue
+	m.schema.UniqueItems = m.schema.UniqueItems || v.UniqueItems
+	if !m.schema.ExclusiveMin.IsSet() {
+		m.schema.ExclusiveMin = v.ExclusiveMin
+	}
+	if !m.schema.ExclusiveMax.IsSet() {
+		m.schema.ExclusiveMax = v.ExclusiveMax
+	}
+
+	for _, name := range v.Required {
+		if !slices.Contains(m.schema.Required, name) {
+			m.schema.Required = append(m.schema.Required, name)
+		}
+	}
+
+	for name, p := range v.Properties {
+		m.properties[name] = append(m.properties[name], labeledSchema{p, childLabel(label, "properties/"+name)})
+	}
+	if v.Items != nil {
+		m.items = append(m.items, labeledSchema{v.Items, childLabel(label, "items")})
+	}
+	switch {
+	case isAdditionalPropertiesExplicitFalse(&v):
+		m.closed = true
+	case v.AdditionalProperties.Schema != nil:
+		m.additional = append(m.additional, labeledSchema{v.AdditionalProperties.Schema, childLabel(label, "additionalProperties")})
+	case v.AdditionalProperties.Has != nil:
+		m.anyAdditional = true
+	}
+	return nil
+}
+
+// subschema merges the schemas members declare for one position (a property,
+// items or additionalProperties): one schema, or several alike, is that
+// schema, and different ones become an allOf of them, which generates the way
+// any allOf does.
+//
+// The same schemas always make the same allOf. A schema that refers back to
+// the composition merges the same schemas again, and generating the same allOf
+// again is what genContext.inProgress recognises as recursion.
+func (m *allOfMerge) subschema(schemas []labeledSchema) *openapi3.SchemaRef {
+	switch len(schemas) {
+	case 0:
+		return nil
+	case 1:
+		return schemas[0].ref
+	}
+	// The result is kept by the schemas it's made of, so the same schemas
+	// always give the same result, even when that is a schema made here.
+	keys := make([]string, len(schemas))
+	for i, s := range schemas {
+		keys[i] = fmt.Sprintf("%p", s.ref)
+	}
+	key := strings.Join(keys, " ")
+	if merged, ok := m.ctx.subschemas[key]; ok {
+		return merged
+	}
+
+	var distinct []labeledSchema
+	for _, s := range schemas {
+		i := slices.IndexFunc(distinct, func(d labeledSchema) bool { return d.ref == s.ref || sameSchemaV3(d.ref, s.ref) })
+		switch {
+		case i < 0:
+			distinct = append(distinct, s)
+		case s.ref.Ref != "" && len(s.ref.Extensions) > 0:
+			// The same $ref, with extensions next to it, such as x-go-name.
+			// It stays one $ref, keeping its type, with both members'
+			// extensions; the later member's win, as they do in the merge.
+			ext := maps.Clone(distinct[i].ref.Extensions)
+			if ext == nil {
+				ext = make(map[string]any, len(s.ref.Extensions))
+			}
+			maps.Copy(ext, s.ref.Extensions)
+			distinct[i].ref = &openapi3.SchemaRef{Ref: s.ref.Ref, Value: s.ref.Value, Extensions: ext}
+		}
+	}
+	if len(distinct) == 1 {
+		m.ctx.subschemas[key] = distinct[0].ref
+		return distinct[0].ref
+	}
+
+	merged := &openapi3.Schema{Extensions: map[string]any{}}
+	for _, d := range distinct {
+		// A copy of the member, so that its label belongs to this allOf.
+		member := &openapi3.SchemaRef{Ref: d.ref.Ref, Value: d.ref.Value, Extensions: d.ref.Extensions}
+		m.ctx.memberLabels[member] = d.label
+		merged.AllOf = append(merged.AllOf, member)
+
+		// What the generator reads from a property's own schema rather than
+		// from its type: documentation, and field-level extensions such as
+		// x-go-name. The members' types merge through the allOf instead.
+		v := d.ref.Value
+		if v == nil {
+			continue
+		}
+		if v.Description != "" {
+			merged.Description = v.Description
+		}
+		if v.Example != nil {
+			merged.Example = v.Example
+		}
+		if len(v.Examples) > 0 {
+			merged.Examples = v.Examples
+		}
+		merged.Deprecated = merged.Deprecated || v.Deprecated
+		merged.ReadOnly = merged.ReadOnly || v.ReadOnly
+		merged.WriteOnly = merged.WriteOnly || v.WriteOnly
+		for k, ext := range combinedSchemaExtensions(d.ref) {
+			switch k {
+			case extPropGoType, extPropGoImport, extGoTypeName, extEnumVarNames, extEnumNames:
+			default:
+				merged.Extensions[k] = ext
 			}
 		}
 	}
-
-	// Allow discriminators for allOf merges, but disallow for one/anyOfs.
-	if !allOf && (s1.Discriminator != nil || s2.Discriminator != nil) {
-		return openapi3.Schema{}, errors.New("merging two schemas with discriminators is not supported")
-	}
-
-	// For allOf merges, propagate a discriminator if only one schema has it.
-	// Merging two different discriminators is not supported.
-	if s1.Discriminator != nil && s2.Discriminator != nil {
-		return openapi3.Schema{}, errors.New("merging two schemas with discriminators is not supported")
-	}
-	if s1.Discriminator != nil {
-		result.Discriminator = s1.Discriminator
-	} else if s2.Discriminator != nil {
-		result.Discriminator = s2.Discriminator
-	}
-
-	return result, nil
+	ref := &openapi3.SchemaRef{Value: merged}
+	m.ctx.subschemas[key] = ref
+	return ref
 }
 
-// sameTypeSetV3 reports whether two type lists name the same types, in any
-// order.
-func sameTypeSetV3(t1, t2 []string) bool {
-	if len(t1) != len(t2) {
+// addType intersects the member's types with those merged so far.
+func (m *allOfMerge) addType(v openapi3.Schema, label string) error {
+	if slices.Contains(v.Type.Slice(), openapi3.TypeNull) {
+		m.nullInType = true
+	}
+	types := nonNullTypes(v.Type)
+	if len(types) == 0 {
+		return nil
+	}
+	merged := m.schema.Type.Slice()
+	if len(merged) == 0 {
+		m.schema.Type, m.from["type"] = (*openapi3.Types)(&types), label
+		return nil
+	}
+	both := intersectTypes(merged, types)
+	if len(both) == 0 {
+		return mergeConflict(m.from["type"], "type "+strings.Join(merged, ", "), label,
+			"type "+strings.Join(types, ", "), "no value has both types")
+	}
+	m.schema.Type = (*openapi3.Types)(&both)
+	return nil
+}
+
+// intersectTypes returns the JSON Schema types in both a and b. An integer is
+// a number, so integer and number have integer in common, and a list with
+// both says number.
+func intersectTypes(a, b []string) []string {
+	a, b = withoutIntegerUnderNumber(a), withoutIntegerUnderNumber(b)
+	var both []string
+	for _, t := range a {
+		switch {
+		case slices.Contains(b, t):
+		case t == openapi3.TypeInteger && slices.Contains(b, openapi3.TypeNumber),
+			t == openapi3.TypeNumber && slices.Contains(b, openapi3.TypeInteger):
+			t = openapi3.TypeInteger
+		default:
+			continue
+		}
+		if !slices.Contains(both, t) {
+			both = append(both, t)
+		}
+	}
+	return both
+}
+
+// withoutIntegerUnderNumber drops integer from a type list that also has
+// number, which already allows every integer.
+func withoutIntegerUnderNumber(types []string) []string {
+	if !slices.Contains(types, openapi3.TypeNumber) || !slices.Contains(types, openapi3.TypeInteger) {
+		return types
+	}
+	return slices.DeleteFunc(slices.Clone(types), func(t string) bool { return t == openapi3.TypeInteger })
+}
+
+// addEnum intersects the member's enum with the values merged so far, keeping
+// each value's name.
+func (m *allOfMerge) addEnum(v openapi3.Schema, label string) error {
+	names := memberEnumNames(v)
+	if len(v.Enum) == 0 {
+		if names != nil {
+			m.renames = names
+		}
+		return nil
+	}
+	if len(names) != len(v.Enum) {
+		names = nil
+	}
+	if m.schema.Enum == nil {
+		m.schema.Enum, m.enumNames, m.from["enum"] = v.Enum, names, label
+		return nil
+	}
+	// A value without a name is named after itself, as it would be if no
+	// member named any; the names are only kept when some member does.
+	named := m.enumNames != nil || names != nil
+	nameOf := func(names []string, i int, value any) string {
+		if names != nil {
+			return names[i]
+		}
+		return fmt.Sprintf("%v", value)
+	}
+	var enum []any
+	var enumNames []string
+	if m.unionEnums {
+		for i, value := range m.schema.Enum {
+			enum = append(enum, value)
+			enumNames = append(enumNames, nameOf(m.enumNames, i, value))
+		}
+		for j, value := range v.Enum {
+			if !slices.ContainsFunc(enum, func(other any) bool { return reflect.DeepEqual(value, other) }) {
+				enum = append(enum, value)
+				enumNames = append(enumNames, nameOf(names, j, value))
+			}
+		}
+	} else {
+		for i, value := range m.schema.Enum {
+			j := slices.IndexFunc(v.Enum, func(other any) bool { return reflect.DeepEqual(value, other) })
+			if j < 0 {
+				continue
+			}
+			enum = append(enum, value)
+			if m.enumNames != nil {
+				enumNames = append(enumNames, m.enumNames[i])
+			} else {
+				enumNames = append(enumNames, nameOf(names, j, value))
+			}
+		}
+	}
+	if len(enum) == 0 {
+		return mergeConflict(m.from["enum"], fmt.Sprintf("enum %v", m.schema.Enum), label,
+			fmt.Sprintf("enum %v", v.Enum), "no value is in both. To allow the values of either, "+
+				"set x-oapi-codegen-enum-merge: union on the composition")
+	}
+	if !named {
+		enumNames = nil
+	}
+	m.schema.Enum, m.enumNames = enum, enumNames
+	return nil
+}
+
+// memberEnumNames returns the names a schema gives its enum values, or nil.
+func memberEnumNames(v openapi3.Schema) []string {
+	for _, key := range []string{extEnumVarNames, extEnumNames} {
+		if ext, ok := v.Extensions[key]; ok {
+			if names, err := extParseEnumVarNames(ext); err == nil {
+				return names
+			}
+		}
+	}
+	return nil
+}
+
+// result returns the merged schema.
+func (m *allOfMerge) result() (openapi3.Schema, error) {
+	s := m.schema
+	if len(m.properties) > 0 {
+		s.Properties = make(openapi3.Schemas, len(m.properties))
+		for name, schemas := range m.properties {
+			s.Properties[name] = m.subschema(schemas)
+		}
+	}
+	s.Items = m.subschema(m.items)
+	switch {
+	case m.closed:
+		s.WithoutAdditionalProperties()
+	case len(m.additional) > 0:
+		s.AdditionalProperties = openapi3.AdditionalProperties{Schema: m.subschema(m.additional)}
+	case m.anyAdditional:
+		s.WithAnyAdditionalProperties()
+	}
+	if m.nullInType {
+		types := append(slices.Clone(s.Type.Slice()), openapi3.TypeNull)
+		s.Type = (*openapi3.Types)(&types)
+	}
+	if s.Const != nil && s.Enum != nil {
+		i := slices.IndexFunc(s.Enum, func(value any) bool { return reflect.DeepEqual(value, s.Const) })
+		if i < 0 {
+			return openapi3.Schema{}, mergeConflict(m.from["const"], fmt.Sprintf("const %v", s.Const),
+				m.from["enum"], fmt.Sprintf("enum %v", s.Enum), "the enum doesn't allow the const")
+		}
+		s.Enum = s.Enum[i : i+1]
+		if m.enumNames != nil {
+			m.enumNames = m.enumNames[i : i+1]
+		}
+	}
+	names := m.enumNames
+	if m.renames != nil && len(m.renames) == len(s.Enum) {
+		names = m.renames
+	}
+	if names != nil {
+		ext := make([]any, len(names))
+		for i, name := range names {
+			ext[i] = name
+		}
+		s.Extensions[extEnumVarNames] = ext
+	}
+	return s, nil
+}
+
+// sameDiscriminator reports whether two discriminators name the same property
+// with the same mapping.
+func sameDiscriminator(a, b *openapi3.Discriminator) bool {
+	if a == b {
+		return true
+	}
+	if a.PropertyName != b.PropertyName || len(a.Mapping) != len(b.Mapping) {
 		return false
 	}
-	for _, typ := range t1 {
-		if !slices.Contains(t2, typ) {
+	for key, ref := range a.Mapping {
+		if other, ok := b.Mapping[key]; !ok || other.Ref != ref.Ref {
 			return false
 		}
 	}
 	return true
 }
 
-// mergeTypesV3 returns the type of an allOf merge whose members' non-null types
-// are already known to agree: whichever member declares types, plus "null"
-// when either member's type array has it. The member's own Types value is
-// returned whenever it already says that, so merges that worked before
-// produce identical output.
-func mergeTypesV3(t1, t2 *openapi3.Types) *openapi3.Types {
-	base := t1
-	if len(nonNullTypes(t1)) == 0 && t2.Slice() != nil {
-		base = t2
+// childLabel names a position inside a member for error messages, relative to
+// the composition: "allOf/1" and "properties/name" make "allOf/1/properties/name".
+// The composition itself is "".
+func childLabel(label, child string) string {
+	if label == "" {
+		return child
 	}
-	if base.Slice() == nil {
-		return base
+	return label + "/" + child
+}
+
+// displayLabel shows a member's label in an error message.
+func displayLabel(label string) string {
+	if label == "" {
+		return "the schema itself"
 	}
-	needsNull := slices.Contains(t1.Slice(), openapi3.TypeNull) || slices.Contains(t2.Slice(), openapi3.TypeNull)
-	if !needsNull || slices.Contains(base.Slice(), openapi3.TypeNull) {
-		return base
-	}
-	merged := openapi3.Types(append(slices.Clone(base.Slice()), openapi3.TypeNull))
-	return &merged
+	return label
+}
+
+// mergeConflict reports two members that no value can satisfy together.
+func mergeConflict(labelA, a, labelB, b, why string) error {
+	return fmt.Errorf("allOf can't merge %s (%s) with %s (%s): %s", displayLabel(labelA), a, displayLabel(labelB), b, why)
 }
 
 // sameSchemaV3 reports whether two schema positions describe the same schema:
@@ -744,55 +979,6 @@ func sameSchemaV3(r1, r2 *openapi3.SchemaRef) bool {
 	b1, err1 := json.Marshal(r1.Value)
 	b2, err2 := json.Marshal(r2.Value)
 	return err1 == nil && err2 == nil && bytes.Equal(b1, b2)
-}
-
-// mergeItemsV3 merges the array items of two allOf members. A one-sided items
-// carries over, and two different item schemas are merged with the same rules
-// as their parents.
-func mergeItemsV3(i1, i2 *openapi3.SchemaRef, seenSchemaRef map[string]bool) (*openapi3.SchemaRef, error) {
-	switch {
-	case i1 == nil:
-		return i2, nil
-	case i2 == nil:
-		return i1, nil
-	case sameSchemaV3(i1, i2):
-		return i1, nil
-	case (i1.Ref != "" && seenSchemaRef[i1.Ref]) || (i2.Ref != "" && seenSchemaRef[i2.Ref]):
-		// Merging these items would re-enter a schema this merge is already
-		// inside. Keep the behavior from before items were merged at all
-		// (dropping them) rather than recursing forever.
-		return nil, nil
-	}
-	// Item schemas the merge can't read follow the allOf rule: they can be
-	// annotated, not merged. The items become an allOf of the two, which
-	// generates as the opaque one's type, and keeps the other's annotations
-	// where the item type is used, such as nullable.
-	opaque, err := opaqueMember([]*openapi3.SchemaRef{i1, i2})
-	if err != nil {
-		return nil, fmt.Errorf("error merging array items: %w", err)
-	}
-	if opaque != nil {
-		return openapi3.NewSchemaRef("", &openapi3.Schema{AllOf: openapi3.SchemaRefs{i1, i2}}), nil
-	}
-	seen := maps.Clone(seenSchemaRef)
-	for _, r := range []*openapi3.SchemaRef{i1, i2} {
-		if r.Ref != "" {
-			seen[r.Ref] = true
-		}
-	}
-	v1, err := memberValue(i1)
-	if err != nil {
-		return nil, err
-	}
-	v2, err := memberValue(i2)
-	if err != nil {
-		return nil, err
-	}
-	merged, err := mergeOpenapiSchemasV3(v1, v2, true, seen)
-	if err != nil {
-		return nil, fmt.Errorf("error merging array items: %w", err)
-	}
-	return openapi3.NewSchemaRef("", &merged), nil
 }
 
 // hasStructuralSiblingsV3 reports whether a schema with allOf also carries
@@ -859,6 +1045,12 @@ func generateAllOfV3(ctx genContext, schema *openapi3.Schema, path []string, ext
 		}, nil
 	}
 	var err error
+	ctx.unionEnums = false
+	if raw, ok := extensions[extOapiCodegenEnumMerge]; ok {
+		if ctx.unionEnums, err = extParseEnumMerge(raw); err != nil {
+			return Schema{}, fmt.Errorf("invalid value for %q: %w", extOapiCodegenEnumMerge, err)
+		}
+	}
 	frame := &mergeFrame{typeName: ctx.typeName(path)}
 	ctx.inProgress[schema] = frame
 	defer delete(ctx.inProgress, schema)
@@ -879,6 +1071,9 @@ func generateAllOfV3(ctx genContext, schema *openapi3.Schema, path []string, ext
 		// len(schema.AllOf).
 		s := *schema
 		s.AllOf = nil
+		own := &openapi3.SchemaRef{Value: &s}
+		ctx.memberLabels[own] = ""
+		defer delete(ctx.memberLabels, own)
 		// An opaque member can't be merged with the siblings either. Say
 		// so here, where they can be named as the schema's own.
 		for _, m := range schema.AllOf {
@@ -889,7 +1084,7 @@ func generateAllOfV3(ctx genContext, schema *openapi3.Schema, path []string, ext
 		}
 		allOfRefs := make([]*openapi3.SchemaRef, 0, len(schema.AllOf)+1)
 		allOfRefs = append(allOfRefs, schema.AllOf...)
-		allOfRefs = append(allOfRefs, &openapi3.SchemaRef{Value: &s})
+		allOfRefs = append(allOfRefs, own)
 		mergedSchema, err = merge(ctx, allOfRefs, path)
 	} else {
 		// The parent is a pure wrapper with no structural siblings.

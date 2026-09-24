@@ -1,0 +1,13 @@
+versions: [v2, v3]
+description: >-
+  allOf over a number and an integer: every value is an integer, so the
+  composition is one.
+subject:
+  allOf:
+    - type: number
+    - type: integer
+samples:
+  - '3'
+  - '0'
+rejects:
+  v2: "can not merge incompatible types: [number], [integer]"

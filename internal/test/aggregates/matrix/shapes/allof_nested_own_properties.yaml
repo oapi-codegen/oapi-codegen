@@ -1,4 +1,4 @@
-versions: [v2]
+versions: [v2, v3]
 description: >-
   allOf over a $ref to a schema that has properties of its own next to an
   allOf of its own. Merging it has to keep both.

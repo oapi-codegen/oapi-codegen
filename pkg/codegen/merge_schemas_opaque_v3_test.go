@@ -369,7 +369,8 @@ func TestExternalArrayItems(t *testing.T) {
               extra: {type: string}
 `)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "error merging array items: allOf can't merge ./common.yaml#/components/schemas/User")
+	assert.Contains(t, err.Error(), "error generating type for array: error merging schemas: "+
+		"allOf can't merge ./common.yaml#/components/schemas/User with an inline schema with properties")
 }
 
 // TestExternalRefsOneLevelDown: an external schema used as a property, items
