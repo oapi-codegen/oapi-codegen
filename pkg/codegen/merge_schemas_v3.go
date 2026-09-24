@@ -252,6 +252,14 @@ func annotatedRefMember(ctx genContext, allOf []*openapi3.SchemaRef) *openapi3.S
 // the composition stands for: it only annotates (see annotatesOnly), it
 // restates target's type (see restatesType), or it is the same $ref again.
 func annotates(member, target *openapi3.SchemaRef) bool {
+	// A oneOf or anyOf in the member may only add constraints to the target,
+	// such as `oneOf: [{type: object, required: [email]}, ...]` next to an
+	// object; the member's own lack of a type doesn't make them types.
+	if member != nil && member.Ref == "" && member.Value != nil && target.Value != nil {
+		if v := withoutConstraintOnlyUnionsV3(member.Value, target.Value); v != member.Value {
+			member = &openapi3.SchemaRef{Value: v}
+		}
+	}
 	if annotatesOnly(member) || restatesType(member, target) {
 		return true
 	}
@@ -291,15 +299,41 @@ func restatesType(member, target *openapi3.SchemaRef) bool {
 	if restated.Format != "" && restated.Format != declared.Format {
 		return false
 	}
-	types := nonNullTypes(declared.Type)
-	if len(types) == 0 && (len(declared.Properties) > 0 || declared.AdditionalProperties.Schema != nil ||
-		declared.AdditionalProperties.Has != nil) {
-		types = []string{openapi3.TypeObject}
-	}
+	types := declaredTypes(declared)
 	if len(types) == 0 && external {
 		return true
 	}
 	return sameTypes(types, nonNullTypes(restated.Type))
+}
+
+// declaredTypes returns the JSON types a schema says its values have: its
+// type; or object, when it has properties or additionalProperties; or, for an
+// allOf, the types the first member that says declares. It returns nil when
+// the schema doesn't say.
+func declaredTypes(s *openapi3.Schema) []string {
+	seen := make(map[*openapi3.Schema]bool)
+	var declared func(s *openapi3.Schema) []string
+	declared = func(s *openapi3.Schema) []string {
+		if s == nil || seen[s] {
+			return nil
+		}
+		seen[s] = true
+		if types := nonNullTypes(s.Type); len(types) > 0 {
+			return types
+		}
+		if len(s.Properties) > 0 || s.AdditionalProperties.Schema != nil || s.AdditionalProperties.Has != nil {
+			return []string{openapi3.TypeObject}
+		}
+		for _, m := range s.AllOf {
+			if m != nil {
+				if types := declared(m.Value); len(types) > 0 {
+					return types
+				}
+			}
+		}
+		return nil
+	}
+	return declared(s)
 }
 
 // sameTypes reports whether two type lists allow the same values: the same
@@ -471,12 +505,19 @@ func annotatesOnly(ref *openapi3.SchemaRef) bool {
 }
 
 // typeKeywords lists the keywords of a schema that shape a Go type, by their
-// JSON names. Those are all of them but documentation, nullability, validation
-// constraints oapi-codegen doesn't turn into Go types (minLength, pattern,
-// maxItems, ...) and extensions. It clears those and lists what's left, so a
-// keyword kin-openapi adds later counts as shaping the type until it's added
-// here.
+// JSON names (see shallowTypeKeywords), leaving out a oneOf or anyOf whose
+// branches only add constraints (see isConstraintOnlyUnionV3).
 func typeKeywords(s openapi3.Schema) []string {
+	return shallowTypeKeywords(*withoutConstraintOnlyUnionsV3(&s, nil))
+}
+
+// shallowTypeKeywords lists the keywords of a schema that shape a Go type, by
+// their JSON names, whatever the branches of its oneOf and anyOf are. Those
+// are all of them but documentation, nullability, validation constraints
+// oapi-codegen doesn't turn into Go types (minLength, pattern, maxItems, ...)
+// and extensions. It clears those and lists what's left, so a keyword
+// kin-openapi adds later counts as shaping the type until it's added here.
+func shallowTypeKeywords(s openapi3.Schema) []string {
 	// Documentation.
 	s.Title, s.Description, s.Comment = "", "", ""
 	s.Default, s.Example, s.Examples = nil, nil, nil
@@ -715,8 +756,13 @@ func (m *allOfMerge) add(v openapi3.Schema, label string, seen map[string]bool) 
 			m.schema.Extensions[k] = ext
 		}
 	}
-	m.schema.OneOf = append(m.schema.OneOf, v.OneOf...)
-	m.schema.AnyOf = append(m.schema.AnyOf, v.AnyOf...)
+	// A oneOf or anyOf that only adds constraints makes no union.
+	if !isConstraintOnlyUnionV3(v.OneOf, &v) {
+		m.schema.OneOf = append(m.schema.OneOf, v.OneOf...)
+	}
+	if !isConstraintOnlyUnionV3(v.AnyOf, &v) {
+		m.schema.AnyOf = append(m.schema.AnyOf, v.AnyOf...)
+	}
 
 	if err := m.addType(v, label); err != nil {
 		return err
@@ -1132,36 +1178,77 @@ func hasStructuralSiblingsV3(s *openapi3.Schema) bool {
 	if s == nil {
 		return false
 	}
-	own := *s
+	// The schema's own oneOf or anyOf may only add constraints to what its
+	// allOf members declare, so judge them against the whole schema.
+	own := *withoutConstraintOnlyUnionsV3(s, s)
 	own.AllOf = nil
-	if isConstraintOnlyUnionV3(own.OneOf) {
-		own.OneOf = nil
-	}
-	if isConstraintOnlyUnionV3(own.AnyOf) {
-		own.AnyOf = nil
-	}
-	return len(typeKeywords(own)) > 0
+	return len(shallowTypeKeywords(own)) > 0
 }
 
-// isConstraintOnlyUnionV3 reports whether every branch of a oneOf/anyOf only
-// adds constraints, such as `oneOf: [{required: [email]}, {required: [phone]}]`,
-// rather than naming alternative types. Such a list next to allOf used to be
-// dropped; it keeps being dropped, since generating a union of `any` branches
-// would turn the merged type into something harder to use, not more correct.
-// A `$ref` branch is judged by the schema it refers to.
-func isConstraintOnlyUnionV3(branches openapi3.SchemaRefs) bool {
+// isConstraintOnlyUnionV3 reports whether a oneOf or anyOf only adds
+// constraints to owner, the schema it constrains, such as
+// `oneOf: [{required: [email]}, {required: [phone]}]`, rather than naming
+// alternative types. Every branch declares nothing that shapes a Go type but
+// `required` and a boolean `additionalProperties`, and at most restates
+// owner's type (see declaredTypes). v3 generates no union for such a list,
+// wherever it is (issue #839): a union of `any` branches would make the type
+// harder to use, not more correct.
+//
+// A local $ref branch is judged by the schema it refers to. A $ref into
+// another document is a type. A 3.1 `{type: "null"}` branch says the schema
+// is nullable, which is read from the schema where its type is used, so it is
+// passed over; a list of nothing else isn't one of constraints.
+func isConstraintOnlyUnionV3(branches openapi3.SchemaRefs, owner *openapi3.Schema) bool {
+	constraints := 0
 	for _, b := range branches {
-		if b == nil || b.Value == nil {
+		if b == nil || b.Value == nil || isRefInExternalDocument(b.Ref) {
 			return false
 		}
-		v := b.Value
-		if v.Type.Slice() != nil || len(v.Properties) > 0 || v.Items != nil ||
-			len(v.AllOf) > 0 || len(v.AnyOf) > 0 || len(v.OneOf) > 0 ||
-			len(v.Enum) > 0 || v.AdditionalProperties.Schema != nil {
+		if isNullTypeSchema(b.Value) {
+			continue
+		}
+		if _, ok := combinedSchemaExtensions(b)[extPropGoType]; ok {
 			return false
 		}
+		for _, keyword := range shallowTypeKeywords(*b.Value) {
+			switch keyword {
+			case "required":
+			case "additionalProperties":
+				if b.Value.AdditionalProperties.Schema != nil {
+					return false
+				}
+			case "type":
+				if !sameTypes(declaredTypes(owner), nonNullTypes(b.Value.Type)) {
+					return false
+				}
+			default:
+				return false
+			}
+		}
+		constraints++
 	}
-	return true
+	return constraints > 0
+}
+
+// withoutConstraintOnlyUnionsV3 returns s without a oneOf or anyOf that only
+// adds constraints to owner, which is s when nil (see
+// isConstraintOnlyUnionV3). v3 generates no union for such a list.
+func withoutConstraintOnlyUnionsV3(s, owner *openapi3.Schema) *openapi3.Schema {
+	if owner == nil {
+		owner = s
+	}
+	oneOf, anyOf := isConstraintOnlyUnionV3(s.OneOf, owner), isConstraintOnlyUnionV3(s.AnyOf, owner)
+	if !oneOf && !anyOf {
+		return s
+	}
+	c := *s
+	if oneOf {
+		c.OneOf = nil
+	}
+	if anyOf {
+		c.AnyOf = nil
+	}
+	return &c
 }
 
 // generateAllOfV3 lowers a schema with allOf for generateGoSchema: the

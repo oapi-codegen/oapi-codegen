@@ -1245,6 +1245,13 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 		return generateAllOf(ctx, schema, path, extensions, skipOptionalPointer)
 	}
 
+	// schema-merging-behavior v3 generates no union for a oneOf or anyOf
+	// whose branches only add constraints, such as
+	// `oneOf: [{required: [email]}, {required: [phone]}]`.
+	if schemaMergingInEffect() == schemaMergingV3 {
+		schema = withoutConstraintOnlyUnionsV3(schema, nil)
+	}
+
 	// OpenAPI 3.1 enum-via-oneOf: a scalar schema whose oneOf branches
 	// each carry `title` + `const` is rendered as a Go typed enum, not as
 	// a union. Detection is gated by version + the SkipEnumViaOneOf flag;

@@ -937,3 +937,120 @@ func TestOwnKeywordsV3(t *testing.T) {
 	assert.Contains(t, err.Error(),
 		"allOf can't merge #/components/schemas/Base (type object) with the schema itself (type string): no value has both types")
 }
+
+func TestConstraintOnlyUnionV3(t *testing.T) {
+	object := &openapi3.Schema{Type: &openapi3.Types{"object"}}
+	required := func(names ...string) *openapi3.SchemaRef {
+		return openapi3.NewSchemaRef("", &openapi3.Schema{Required: names})
+	}
+	null := openapi3.NewSchemaRef("", &openapi3.Schema{Type: &openapi3.Types{"null"}})
+	closed := false
+	for name, tc := range map[string]struct {
+		branches openapi3.SchemaRefs
+		want     bool
+	}{
+		"required only":                {openapi3.SchemaRefs{required("a"), required("b")}, true},
+		"restated type":                {openapi3.SchemaRefs{openapi3.NewSchemaRef("", &openapi3.Schema{Type: &openapi3.Types{"object"}, Required: []string{"a"}})}, true},
+		"validation too":               {openapi3.SchemaRefs{openapi3.NewSchemaRef("", &openapi3.Schema{Required: []string{"a"}, MinProps: 1})}, true},
+		"another type":                 {openapi3.SchemaRefs{openapi3.NewSchemaRef("", &openapi3.Schema{Type: &openapi3.Types{"string"}})}, false},
+		"properties":                   {openapi3.SchemaRefs{openapi3.NewSchemaRef("", openapi3.NewObjectSchema().WithProperty("a", openapi3.NewStringSchema()))}, false},
+		"a type branch":                {openapi3.SchemaRefs{required("a"), openapi3.NewSchemaRef("#/components/schemas/A", openapi3.NewObjectSchema().WithProperty("a", openapi3.NewStringSchema()))}, false},
+		"a local $ref to a constraint": {openapi3.SchemaRefs{openapi3.NewSchemaRef("#/components/schemas/NeedA", &openapi3.Schema{Required: []string{"a"}})}, true},
+		"a $ref into another document": {openapi3.SchemaRefs{openapi3.NewSchemaRef("./other.yaml#/components/schemas/NeedA", &openapi3.Schema{Required: []string{"a"}})}, false},
+		"a null branch":                {openapi3.SchemaRefs{required("a"), null}, true},
+		"only a null branch":           {openapi3.SchemaRefs{null}, false},
+		"closed":                       {openapi3.SchemaRefs{openapi3.NewSchemaRef("", &openapi3.Schema{Required: []string{"a"}, AdditionalProperties: openapi3.AdditionalProperties{Has: &closed}})}, true},
+		"additionalProperties schema":  {openapi3.SchemaRefs{openapi3.NewSchemaRef("", &openapi3.Schema{AdditionalProperties: openapi3.AdditionalProperties{Schema: openapi3.NewStringSchema().NewRef()}})}, false},
+		"x-go-type":                    {openapi3.SchemaRefs{openapi3.NewSchemaRef("", &openapi3.Schema{Required: []string{"a"}, Extensions: map[string]any{extPropGoType: "T"}})}, false},
+		"empty":                        {nil, false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, tc.want, isConstraintOnlyUnionV3(tc.branches, object))
+		})
+	}
+
+	// An owner with no type of its own has the type its allOf members declare.
+	composed := &openapi3.Schema{AllOf: openapi3.SchemaRefs{openapi3.NewSchemaRef("#/components/schemas/Contact", object)}}
+	restated := openapi3.SchemaRefs{openapi3.NewSchemaRef("", &openapi3.Schema{Type: &openapi3.Types{"object"}, Required: []string{"a"}})}
+	assert.True(t, isConstraintOnlyUnionV3(restated, composed))
+	assert.False(t, isConstraintOnlyUnionV3(restated, &openapi3.Schema{}), "nothing is declared to restate")
+	annotated := &openapi3.Schema{AllOf: openapi3.SchemaRefs{
+		{Value: &openapi3.Schema{AllOf: openapi3.SchemaRefs{{Value: &openapi3.Schema{Description: "x"}}}}},
+		openapi3.NewSchemaRef("#/components/schemas/Contact", object),
+	}}
+	assert.True(t, isConstraintOnlyUnionV3(restated, annotated), "a later member declares the type")
+}
+
+// TestConstraintOnlyUnionEndToEndV3: a oneOf or anyOf that only adds
+// constraints makes no union wherever it is (issue #839).
+func TestConstraintOnlyUnionEndToEndV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+`
+    Contact:
+      type: object
+      properties:
+        email: {type: string}
+        phone: {type: string}
+      oneOf:
+        - required: [email]
+        - required: [phone]
+    Holder:
+      type: object
+      properties:
+        contact:
+          properties:
+            email: {type: string}
+          anyOf:
+            - required: [email]
+    Nested:
+      allOf:
+        - allOf:
+            - $ref: '#/components/schemas/Contact'
+            - oneOf:
+                - required: [email]
+        - properties:
+            extra: {type: string}
+    Dated:
+      oneOf:
+        - type: string
+          format: date
+        - type: string
+          format: date-time
+`, withV3)
+	assert.Equal(t, 1, strings.Count(code, "union json.RawMessage"), "only Dated is a union")
+	assert.NotContains(t, code, "Contact0")
+	assert.Contains(t, code, "type Contact struct {")
+	assert.Regexp(t, `Contact \*struct \{\n\t\tEmail \*string`, code)
+	assert.Contains(t, code, "type Nested struct {")
+	assert.Contains(t, code, "func (t Dated) AsDated0()", "branches with a type and format of their own are types")
+}
+
+// TestConstraintOnlyUnionRestatedTypeV3: a oneOf restating the type an allOf
+// member declares still only adds constraints, whether it's in a member of
+// the allOf or next to it, so the composition is the member's type.
+func TestConstraintOnlyUnionRestatedTypeV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+`
+    Contact:
+      type: object
+      properties:
+        email: {type: string}
+        phone: {type: string}
+    InMember:
+      allOf:
+        - $ref: '#/components/schemas/Contact'
+        - oneOf:
+            - type: object
+              required: [email]
+            - type: object
+              required: [phone]
+    Beside:
+      allOf:
+        - $ref: '#/components/schemas/Contact'
+      oneOf:
+        - type: object
+          required: [email]
+        - {type: 'null'}
+`, withV3)
+	assert.NotContains(t, code, "union json.RawMessage")
+	assert.Contains(t, code, "type InMember = Contact")
+	assert.Contains(t, code, "type Beside = Contact")
+}
