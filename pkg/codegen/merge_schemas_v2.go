@@ -554,15 +554,26 @@ func mergeItemsV2(i1, i2 *openapi3.SchemaRef, seenSchemaRef map[string]bool) (*o
 // which loses them: allOf over a $ref to `{properties: {b}, allOf: [$ref
 // Named]}` generated a struct without b.
 //
-// Only properties that schema doesn't have are added, with whether they are
-// required. Where another member declares the same property, its schema won
-// before and still does, so the fix adds fields and changes none. Under
-// old-allof-sibling-merging, which keeps the output that discards a schema's
-// own properties next to its allOf, nothing is added.
+// The fix only adds fields to a struct that already has some:
+//   - Only properties that schema doesn't have are added. Where another member
+//     declares the same property, its schema won before and still does.
+//   - Where several of the dropped declarations name the same property, the
+//     later one wins, as in the merge. A member's own properties come after
+//     its allOf's, the way the schema's own properties are merged last.
+//   - An added property is required when any of the dropped declarations
+//     requires it. Their required lists don't touch properties that were
+//     already there, which would turn optional fields into required ones.
+//   - Nothing is added to a schema without properties: v2 generates that as a
+//     map, from additionalProperties, or as a union, and adding a property
+//     would turn it into a struct.
+//   - Nothing is added under old-allof-sibling-merging, which keeps the output
+//     that discards a schema's own properties next to its allOf.
 func addNestedOwnPropertiesV2(schema *openapi3.Schema, allOf []*openapi3.SchemaRef) error {
-	if globalState.options.Compatibility.OldAllOfSiblingMerging {
+	if globalState.options.Compatibility.OldAllOfSiblingMerging || len(schema.Properties) == 0 {
 		return nil
 	}
+	added := make(map[string]*openapi3.SchemaRef)
+	required := make(map[string]bool)
 	seen := make(map[string]bool)
 	var visit func(ref *openapi3.SchemaRef) error
 	visit = func(ref *openapi3.SchemaRef) error {
@@ -582,28 +593,30 @@ func addNestedOwnPropertiesV2(schema *openapi3.Schema, allOf []*openapi3.SchemaR
 		if len(v.AllOf) == 0 {
 			return nil
 		}
-		for name, p := range v.Properties {
-			if _, ok := schema.Properties[name]; ok {
-				continue
-			}
-			if schema.Properties == nil {
-				schema.Properties = make(openapi3.Schemas)
-			}
-			schema.Properties[name] = p
-			if slices.Contains(v.Required, name) && !slices.Contains(schema.Required, name) {
-				schema.Required = append(slices.Clone(schema.Required), name)
-			}
-		}
 		for _, m := range v.AllOf {
 			if err := visit(m); err != nil {
 				return err
 			}
+		}
+		for name, p := range v.Properties {
+			if _, ok := schema.Properties[name]; !ok {
+				added[name] = p
+			}
+		}
+		for _, name := range v.Required {
+			required[name] = true
 		}
 		return nil
 	}
 	for _, m := range allOf {
 		if err := visit(m); err != nil {
 			return err
+		}
+	}
+	for _, name := range SortedMapKeys(added) {
+		schema.Properties[name] = added[name]
+		if required[name] && !slices.Contains(schema.Required, name) {
+			schema.Required = append(slices.Clone(schema.Required), name)
 		}
 	}
 	return nil
