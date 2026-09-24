@@ -260,16 +260,22 @@ func annotates(member, target *openapi3.SchemaRef) bool {
 
 // restatesType reports whether member only restates target's type and format,
 // as in `allOf: [$ref A, {type: object, description: ...}]`: it is inline,
-// declares nothing else that shapes a Go type, and declares the same types
-// and format as target. A target with properties or additionalProperties but
-// no type is an object. A schema in another document isn't read, so a type
-// restated next to one is taken at its word.
+// declares nothing else that shapes a Go type (nor x-go-type or enum names),
+// and declares the same types and format as target. A target with properties
+// or additionalProperties but no type is an object.
+//
+// For a schema in another document, only its type and format are read, to
+// check the restatement; its body never is. When it doesn't say what it is at
+// the top, as an allOf of its own doesn't, a restated type is taken at its
+// word.
 func restatesType(member, target *openapi3.SchemaRef) bool {
 	if member == nil || member.Ref != "" || member.Value == nil {
 		return false
 	}
-	if _, ok := member.Value.Extensions[extPropGoType]; ok {
-		return false
+	for _, ext := range []string{extPropGoType, extEnumVarNames, extEnumNames} {
+		if _, ok := member.Value.Extensions[ext]; ok {
+			return false
+		}
 	}
 	restated := member.Value
 	for _, keyword := range typeKeywords(*restated) {
@@ -277,12 +283,10 @@ func restatesType(member, target *openapi3.SchemaRef) bool {
 			return false
 		}
 	}
-	if isRefInExternalDocument(target.Ref) {
-		return true
-	}
+	external := isRefInExternalDocument(target.Ref)
 	declared := target.Value
 	if declared == nil {
-		return false
+		return external
 	}
 	if restated.Format != "" && restated.Format != declared.Format {
 		return false
@@ -291,6 +295,9 @@ func restatesType(member, target *openapi3.SchemaRef) bool {
 	if len(types) == 0 && (len(declared.Properties) > 0 || declared.AdditionalProperties.Schema != nil ||
 		declared.AdditionalProperties.Has != nil) {
 		types = []string{openapi3.TypeObject}
+	}
+	if len(types) == 0 && external {
+		return true
 	}
 	return sameTypes(types, nonNullTypes(restated.Type))
 }

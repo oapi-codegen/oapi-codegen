@@ -884,6 +884,17 @@ func TestEnumRenameMakesANewEnumV3(t *testing.T) {
 	assert.Contains(t, code, "type Renamed string")
 	assert.Contains(t, code, `Rouge Renamed = "red"`)
 	assert.Contains(t, code, `Vert  Renamed = "green"`)
+
+	// Restating the enum's type doesn't make the names an annotation.
+	code = generateSpec(t, opaqueSpecHeader+decoratorComponents+`
+    Renamed:
+      allOf:
+        - $ref: '#/components/schemas/Color'
+        - type: string
+          x-enumNames: [Rouge, Vert]
+`, withV3)
+	assert.Contains(t, code, "type Renamed string")
+	assert.Contains(t, code, `Rouge Renamed = "red"`)
 }
 
 // TestOwnKeywordsV3: the schema's own keywords next to allOf constrain the

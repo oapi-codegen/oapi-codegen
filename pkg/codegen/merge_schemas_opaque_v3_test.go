@@ -303,8 +303,8 @@ func TestExternalAllOfMember31(t *testing.T) {
 	require.NoError(t, err)
 	assertField(t, code, "User", "*externalRef0.User")
 
-	// A restated type next to a schema in another document is taken at its
-	// word: the schema isn't read to check it.
+	// A type restated next to a schema in another document only annotates
+	// it: its type is read to check the restatement, its body never is.
 	code, err = generateWithCommonV3(t, opaqueSpecHeader31+`
     Holder:
       type: object
@@ -657,4 +657,34 @@ func TestAnnotatesOnly(t *testing.T) {
 		Extensions: map[string]any{extPropGoType: "T"},
 	}}), "an x-go-type member is a type")
 	assert.False(t, annotatesOnly(&openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"object"}}}))
+}
+
+// TestExternalAllOfMemberRestatedType: a type or format next to a schema in
+// another document must be the one it declares; another is an error, like
+// any other keyword that shapes the type.
+func TestExternalAllOfMemberRestatedType(t *testing.T) {
+	code, err := generateWithCommonV3(t, opaqueSpecHeader+`
+    Restated:
+      type: object
+      allOf:
+        - $ref: './common.yaml#/components/schemas/User'
+`)
+	require.NoError(t, err)
+	assert.Contains(t, code, "type Restated = externalRef0.User")
+
+	for name, tc := range map[string]struct{ member, declares string }{
+		"another type":   {"type: string", "type"},
+		"another format": {"type: object\n          format: date", "type, format"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := generateWithCommonV3(t, opaqueSpecHeader+`
+    Odd:
+      allOf:
+        - $ref: './common.yaml#/components/schemas/User'
+        - `+tc.member+"\n")
+			require.Error(t, err)
+			assert.Contains(t, err.Error(),
+				"allOf can't merge ./common.yaml#/components/schemas/User with an inline schema with "+tc.declares+":")
+		})
+	}
 }
