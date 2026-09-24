@@ -114,27 +114,40 @@ func (s Schema) generatesMarshalJSON() bool {
 		return true
 	}
 	if wrapped, ok := s.goTypeNameWrapper(); ok {
-		return len(wrapped.UnionElements) > 0 || wrapped.HasAdditionalProperties
+		return wrapped.aliasGeneratesMarshalJSON(s.TypeDecl())
 	}
 	if s.OAPISchema == nil {
 		return false
 	}
 	target, err := GenerateGoSchema(&openapi3.SchemaRef{Value: s.OAPISchema}, []string{s.TypeDecl()})
-	// An allOf can generate as an alias of another type, whose flags live on
-	// that type's own schema: follow the aliases to it.
-	for range 16 {
-		if err != nil {
+	if err != nil {
+		return false
+	}
+	return target.aliasGeneratesMarshalJSON(s.TypeDecl())
+}
+
+// aliasGeneratesMarshalJSON reports whether s, or the type it is an alias of,
+// carries a generated MarshalJSON. An allOf can generate as an alias of
+// another type (see aliasOf), whose flags live on that type's own schema, so
+// this follows the aliases to it: up to 100 of them, far more than any spec
+// chains.
+func (s Schema) aliasGeneratesMarshalJSON(typeDecl string) bool {
+	for range 100 {
+		if wrapped, ok := s.goTypeNameWrapper(); ok {
+			s = wrapped
+		}
+		if len(s.UnionElements) > 0 || s.HasAdditionalProperties {
+			return true
+		}
+		if s.aliasOf == nil {
 			return false
 		}
-		if wrapped, ok := target.goTypeNameWrapper(); ok {
-			target = wrapped
+		var err error
+		if s, err = GenerateGoSchema(&openapi3.SchemaRef{Value: s.aliasOf}, []string{typeDecl}); err != nil {
+			return false
 		}
-		if len(target.UnionElements) > 0 || target.HasAdditionalProperties || target.aliasOf == nil {
-			break
-		}
-		target, err = GenerateGoSchema(&openapi3.SchemaRef{Value: target.aliasOf}, []string{s.TypeDecl()})
 	}
-	return len(target.UnionElements) > 0 || target.HasAdditionalProperties
+	return false
 }
 
 // goTypeNameWrapper returns the schema that x-go-type-name (or the

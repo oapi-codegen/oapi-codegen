@@ -5,6 +5,7 @@ package codegen
 // as a copy of the schema it refers to.
 
 import (
+	"fmt"
 	"strings"
 	"testing"
 
@@ -217,6 +218,142 @@ components:
 	})
 	assert.Contains(t, code, "type Decorated = Open")
 	for _, envelope := range []string{"GetSingle200JSONResponse", "GetDecorated200JSONResponse"} {
+		assert.Regexp(t, `func \(\w+ `+envelope+`\) MarshalJSON\(\)`, code)
+	}
+}
+
+// TestAnnotatedRefV3Restatements: a member that restates the $ref's own type
+// and format only annotates it, whether it's a member, nested, or the
+// schema's own keywords; one that narrows or changes the type doesn't.
+func TestAnnotatedRefV3Restatements(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+decoratorComponents+`
+    Amount: {type: number}
+    Id: {type: string, format: uuid}
+    Untyped:
+      properties:
+        a: {type: string}
+    Typed:
+      type: string
+      x-go-type: MyString
+    Nested:
+      allOf:
+        - allOf:
+            - $ref: '#/components/schemas/Named'
+            - type: object
+        - description: A restatement inside a wrapper.
+    OwnType:
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/Named'
+    FormatToo:
+      allOf:
+        - $ref: '#/components/schemas/Id'
+        - type: string
+          format: uuid
+    ObjectByProperties:
+      allOf:
+        - $ref: '#/components/schemas/Untyped'
+        - type: object
+    Twice:
+      allOf:
+        - $ref: '#/components/schemas/Named'
+        - $ref: '#/components/schemas/Named'
+    TypedAgain:
+      allOf:
+        - $ref: '#/components/schemas/Typed'
+        - type: string
+          minLength: 1
+    Narrowed:
+      allOf:
+        - $ref: '#/components/schemas/Amount'
+        - type: integer
+`, withV3)
+	for _, alias := range []string{
+		"type Nested = Named",
+		"type OwnType = Named",
+		"type FormatToo = Id",
+		"type ObjectByProperties = Untyped",
+		"type Twice = Named",
+		"type TypedAgain = Typed",
+	} {
+		assert.Contains(t, code, alias)
+	}
+	assert.Contains(t, code, "type Narrowed = int", "integer narrows number, so it isn't a restatement")
+
+	_, err := generateSpecErr(opaqueSpecHeader+`
+    Typed:
+      type: string
+      x-go-type: MyString
+    Odd:
+      allOf:
+        - $ref: '#/components/schemas/Typed'
+        - type: integer
+`, withV3)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "allOf can't merge #/components/schemas/Typed with an inline schema with type")
+}
+
+// TestAnnotatedRefV3Description: an annotating member's description describes
+// the alias.
+func TestAnnotatedRefV3Description(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+decoratorComponents+`
+    Described:
+      allOf:
+        - $ref: '#/components/schemas/Named'
+        - description: A described Named.
+`, withV3)
+	assert.Contains(t, code, "// Described A described Named.\ntype Described = Named")
+}
+
+// TestAnnotatedRefV3CustomJSONThroughAliases: a response that reaches a type
+// with generated MarshalJSON through x-go-type-name, or through a long chain
+// of annotated $refs, still gets an envelope that delegates to it.
+func TestAnnotatedRefV3CustomJSONThroughAliases(t *testing.T) {
+	var spec strings.Builder
+	spec.WriteString(`openapi: 3.0.3
+info: {title: repro, version: "1.0.0"}
+paths:
+  /named:
+    get:
+      operationId: getNamed
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Open'
+                  - x-go-type-name: NamedOpen
+  /chain:
+    get:
+      operationId: getChain
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Link60'}
+components:
+  schemas:
+    Open:
+      type: object
+      properties:
+        b: {type: string}
+      additionalProperties: {type: string}
+    Link0:
+      $ref: '#/components/schemas/Open'
+`)
+	for i := 1; i <= 60; i++ {
+		fmt.Fprintf(&spec, "    Link%d:\n      allOf:\n        - $ref: '#/components/schemas/Link%d'\n        - description: Link %d.\n", i, i-1, i)
+	}
+	code := generateSpec(t, spec.String(), withV3, func(c *Configuration) {
+		c.Generate.Strict = true
+		c.Generate.StdHTTPServer = true
+	})
+	assert.Contains(t, code, "type Link60 = Link59")
+	assert.Contains(t, code, "type NamedOpen = Open")
+	for _, envelope := range []string{"GetNamed200JSONResponse", "GetChain200JSONResponse"} {
 		assert.Regexp(t, `func \(\w+ `+envelope+`\) MarshalJSON\(\)`, code)
 	}
 }

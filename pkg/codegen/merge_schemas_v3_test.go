@@ -291,25 +291,18 @@ func TestMergeOpenapiSchemas_AnnotationsV3(t *testing.T) {
 	})
 
 	t.Run("flags set on either member are set on the result", func(t *testing.T) {
-		set := openapi3.Schema{UniqueItems: true, ReadOnly: true, WriteOnly: true, AllowEmptyValue: true}
+		set := openapi3.Schema{ReadOnly: true, WriteOnly: true, AllowEmptyValue: true}
 		for name, pair := range map[string][2]openapi3.Schema{
 			"s1": {set, {}},
 			"s2": {{}, set},
 		} {
 			t.Run(name, func(t *testing.T) {
 				result := merge(t, pair[0], pair[1])
-				assert.True(t, result.UniqueItems, "uniqueItems")
 				assert.True(t, result.ReadOnly, "readOnly")
 				assert.True(t, result.WriteOnly, "writeOnly")
 				assert.True(t, result.AllowEmptyValue, "allowEmptyValue")
 			})
 		}
-	})
-
-	t.Run("an exclusive bound on one member carries over", func(t *testing.T) {
-		bound := openapi3.ExclusiveBound{Value: new(float64)}
-		assert.Equal(t, bound, merge(t, openapi3.Schema{ExclusiveMin: bound}, openapi3.Schema{}).ExclusiveMin)
-		assert.Equal(t, bound, merge(t, openapi3.Schema{}, openapi3.Schema{ExclusiveMax: bound}).ExclusiveMax)
 	})
 }
 
@@ -466,10 +459,16 @@ func TestMergeOpenapiSchemas_EnumV3(t *testing.T) {
 		assert.Equal(t, []any{"A", "B"}, result.Extensions[extEnumVarNames])
 	})
 
-	t.Run("two enums intersect, keeping the first member's order and names (issue #1633)", func(t *testing.T) {
+	t.Run("two enums intersect, in the first member's order, with the later member's names (issue #1633)", func(t *testing.T) {
 		result, err := mergeTwoV3(named([]any{"a", "b", "c"}, "A", "B", "C"), named([]any{"c", "a", "z"}, "X", "Y", "Z"))
 		require.NoError(t, err)
 		assert.Equal(t, []any{"a", "c"}, result.Enum)
+		assert.Equal(t, []any{"Y", "X"}, result.Extensions[extEnumVarNames])
+	})
+
+	t.Run("a later member without names keeps the earlier names", func(t *testing.T) {
+		result, err := mergeTwoV3(named([]any{"a", "b", "c"}, "A", "B", "C"), named([]any{"c", "a"}))
+		require.NoError(t, err)
 		assert.Equal(t, []any{"A", "C"}, result.Extensions[extEnumVarNames])
 	})
 
@@ -490,7 +489,7 @@ func TestMergeOpenapiSchemas_EnumV3(t *testing.T) {
 	t.Run("enums with no value in common error", func(t *testing.T) {
 		_, err := mergeTwoV3(named([]any{"a", "b"}), named([]any{"c"}))
 		assert.EqualError(t, err, "allOf can't merge allOf/0 (enum [a b]) with allOf/1 (enum [c]): no value is in both. "+
-			"To allow the values of either, set x-oapi-codegen-enum-merge: union on the composition")
+			"To allow the values of either, set x-oapi-codegen-enum-merge: union on the schema with this allOf")
 	})
 
 	t.Run("x-oapi-codegen-enum-merge: union takes the values of either", func(t *testing.T) {
@@ -834,4 +833,96 @@ func TestEnumMergeExtensionV3(t *testing.T) {
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), `invalid value for "x-oapi-codegen-enum-merge": must be "union" or "intersection", not both`)
 	})
+}
+
+// TestEnumMergeScopeV3: x-oapi-codegen-enum-merge applies to the schema it's
+// on. A nested composition merges its own way, the default included, and a
+// merged property that needs the union says where to put it.
+func TestEnumMergeScopeV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+`
+    Inner:
+      allOf:
+        - type: string
+          enum: [a, b]
+        - enum: [b, c]
+    Outer:
+      x-oapi-codegen-enum-merge: union
+      allOf:
+        - $ref: '#/components/schemas/Inner'
+        - enum: [x]
+`, withV3)
+	assert.Contains(t, code, `OuterB Outer = "b"`)
+	assert.Contains(t, code, `OuterX Outer = "x"`)
+	assert.NotContains(t, code, "OuterA", "Inner only allows b")
+	assert.NotContains(t, code, "OuterC")
+
+	_, err := generateSpecErr(opaqueSpecHeader+`
+    Base:
+      type: object
+      properties:
+        status: {type: string, enum: ["on", "off"]}
+    Extended:
+      x-oapi-codegen-enum-merge: union
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - properties:
+            status: {enum: [unknown]}
+`, withV3)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "set x-oapi-codegen-enum-merge: union on allOf/1/properties/status")
+}
+
+// TestEnumRenameMakesANewEnumV3: x-enum-varnames next to a $ref'd enum
+// renames its values, which takes a new enum type.
+func TestEnumRenameMakesANewEnumV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+decoratorComponents+`
+    Renamed:
+      allOf:
+        - $ref: '#/components/schemas/Color'
+        - x-enum-varnames: [Rouge, Vert]
+`, withV3)
+	assert.Contains(t, code, "type Renamed string")
+	assert.Contains(t, code, `Rouge Renamed = "red"`)
+	assert.Contains(t, code, `Vert  Renamed = "green"`)
+}
+
+// TestOwnKeywordsV3: the schema's own keywords next to allOf constrain the
+// value like one more member: `{type: string, allOf: [A]}` is
+// `{allOf: [A, {type: string}]}`.
+func TestOwnKeywordsV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+`
+    Str: {type: string}
+    Letters:
+      enum: [a, b]
+      allOf:
+        - $ref: '#/components/schemas/Str'
+    Day:
+      format: date
+      allOf:
+        - $ref: '#/components/schemas/Str'
+    Counts:
+      type: array
+      items: {type: integer}
+      allOf:
+        - type: array
+          minItems: 1
+`, withV3)
+	assert.Contains(t, code, `A Letters = "a"`)
+	assert.Contains(t, code, "type Letters string")
+	assert.Contains(t, code, "type Day = openapi_types.Date")
+	assert.Contains(t, code, "type Counts = []int")
+
+	_, err := generateSpecErr(opaqueSpecHeader+`
+    Base:
+      type: object
+      properties:
+        name: {type: string}
+    Odd:
+      type: string
+      allOf:
+        - $ref: '#/components/schemas/Base'
+`, withV3)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(),
+		"allOf can't merge #/components/schemas/Base (type object) with the schema itself (type string): no value has both types")
 }

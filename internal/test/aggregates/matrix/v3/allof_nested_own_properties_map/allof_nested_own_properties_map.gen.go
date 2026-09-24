@@ -38,16 +38,16 @@ type Mid struct {
 	AdditionalProperties map[string]string `json:"-"`
 }
 
-// Subject defines model for Subject.
+// Subject A map with a property.
 type Subject = Mid
 
-// InlineSubjectResponse defines model for InlineSubjectResponse.
+// InlineSubjectResponse A map with a property.
 type InlineSubjectResponse = Mid
 
 // SubjectResponse defines model for SubjectResponse.
 type SubjectResponse = Subject
 
-// InlineSubjectBody defines model for InlineSubjectBody.
+// InlineSubjectBody A map with a property.
 type InlineSubjectBody = Mid
 
 // SubjectBody defines model for SubjectBody.

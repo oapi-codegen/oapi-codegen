@@ -303,14 +303,29 @@ func TestExternalAllOfMember31(t *testing.T) {
 	require.NoError(t, err)
 	assertField(t, code, "User", "*externalRef0.User")
 
+	// A restated type next to a schema in another document is taken at its
+	// word: the schema isn't read to check it.
+	code, err = generateWithCommonV3(t, opaqueSpecHeader31+`
+    Holder:
+      type: object
+      properties:
+        user:
+          allOf:
+            - $ref: './common.yaml#/components/schemas/User'
+            - type: [object, "null"]
+`)
+	require.NoError(t, err)
+	assertField(t, code, "User", "*externalRef0.User")
+
 	_, err = generateWithCommonV3(t, opaqueSpecHeader31+`
     Enriched:
       allOf:
         - $ref: './common.yaml#/components/schemas/User'
         - type: [object, "null"]
+          required: [name]
 `)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "with an inline schema with type: ")
+	assert.Contains(t, err.Error(), "with an inline schema with type, required: ")
 	assert.Contains(t, err.Error(), `only annotated (description, type: "null", ...)`)
 }
 

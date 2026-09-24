@@ -53,16 +53,16 @@ type InlineHolder struct {
 // Sort defines model for Sort.
 type Sort string
 
-// Subject defines model for Subject.
+// Subject The sort order.
 type Subject = Sort
 
-// InlineSubjectResponse defines model for InlineSubjectResponse.
+// InlineSubjectResponse The sort order.
 type InlineSubjectResponse = Sort
 
 // SubjectResponse defines model for SubjectResponse.
 type SubjectResponse = Subject
 
-// InlineSubjectBody defines model for InlineSubjectBody.
+// InlineSubjectBody The sort order.
 type InlineSubjectBody = Sort
 
 // SubjectBody defines model for SubjectBody.

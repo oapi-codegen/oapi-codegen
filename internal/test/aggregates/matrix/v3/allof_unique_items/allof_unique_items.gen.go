@@ -32,19 +32,19 @@ type InlineHolder struct {
 	One  *Tags            `json:"one,omitempty"`
 }
 
-// Subject defines model for Subject.
+// Subject Some tags.
 type Subject = Tags
 
 // Tags defines model for Tags.
 type Tags = []string
 
-// InlineSubjectResponse defines model for InlineSubjectResponse.
+// InlineSubjectResponse Some tags.
 type InlineSubjectResponse = Tags
 
 // SubjectResponse defines model for SubjectResponse.
 type SubjectResponse = Subject
 
-// InlineSubjectBody defines model for InlineSubjectBody.
+// InlineSubjectBody Some tags.
 type InlineSubjectBody = Tags
 
 // SubjectBody defines model for SubjectBody.

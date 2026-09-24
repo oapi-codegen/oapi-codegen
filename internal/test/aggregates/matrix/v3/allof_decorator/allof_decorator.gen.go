@@ -37,16 +37,16 @@ type Named struct {
 	Name string `json:"name"`
 }
 
-// Subject defines model for Subject.
+// Subject A decorated Named.
 type Subject = Named
 
-// InlineSubjectResponse defines model for InlineSubjectResponse.
+// InlineSubjectResponse A decorated Named.
 type InlineSubjectResponse = Named
 
 // SubjectResponse defines model for SubjectResponse.
 type SubjectResponse = Subject
 
-// InlineSubjectBody defines model for InlineSubjectBody.
+// InlineSubjectBody A decorated Named.
 type InlineSubjectBody = Named
 
 // SubjectBody defines model for SubjectBody.
