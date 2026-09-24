@@ -530,9 +530,11 @@ type Discriminator struct {
 	// for the usual string discriminator.
 	ValueType string
 
-	// variants are the union members the discriminator tells apart, when
-	// they are only some of the union's: a union that combines several
-	// (see Schema.UnionOwnedKeys) has the discriminator of one of them.
+	// variants are the union members the discriminator tells apart, which can
+	// be only some of the union's: a union that combines several (see
+	// Schema.UnionOwnedKeys) has the discriminator of one of them, and an
+	// inline variant that pins no value has none. v1 and v2 leave it nil for
+	// all of the union's members.
 	variants []UnionElement
 }
 

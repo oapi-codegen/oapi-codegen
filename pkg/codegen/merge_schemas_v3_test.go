@@ -1413,6 +1413,229 @@ func TestUnionComponentsDiscriminatorV3(t *testing.T) {
 	}
 }
 
+// TestInlineDiscriminatorValue: an inline variant's discriminator value is a
+// const or a single-value enum on the discriminator property, spelled as the
+// mapping spells it.
+func TestInlineDiscriminatorValue(t *testing.T) {
+	variant := func(p *openapi3.Schema) *openapi3.Schema {
+		return openapi3.NewObjectSchema().WithProperty("kind", p)
+	}
+	for name, tc := range map[string]struct {
+		schema *openapi3.Schema
+		want   string
+		ok     bool
+	}{
+		"const":             {variant(&openapi3.Schema{Const: "cat"}), "cat", true},
+		"single enum":       {variant(openapi3.NewStringSchema().WithEnum("cat")), "cat", true},
+		"integer":           {variant(&openapi3.Schema{Const: float64(2)}), "2", true},
+		"boolean":           {variant(&openapi3.Schema{Enum: []any{true}}), "true", true},
+		"two values":        {variant(openapi3.NewStringSchema().WithEnum("cat", "dog")), "", false},
+		"no value":          {variant(openapi3.NewStringSchema()), "", false},
+		"no property":       {openapi3.NewObjectSchema(), "", false},
+		"from allOf member": {&openapi3.Schema{AllOf: openapi3.SchemaRefs{variant(&openapi3.Schema{Const: "cat"}).NewRef()}}, "cat", true},
+		"from a later member": {&openapi3.Schema{AllOf: openapi3.SchemaRefs{
+			variant(openapi3.NewStringSchema()).NewRef(),
+			variant(openapi3.NewStringSchema().WithEnum("cat")).NewRef(),
+		}}, "cat", true},
+		"in the property's allOf": {variant(&openapi3.Schema{AllOf: openapi3.SchemaRefs{
+			openapi3.NewStringSchema().NewRef(), {Value: &openapi3.Schema{Enum: []any{"cat"}}},
+		}}), "cat", true},
+		"nullable enum": {variant(&openapi3.Schema{Enum: []any{"cat", nil}}), "cat", true},
+		"large number":  {variant(&openapi3.Schema{Const: 1e21}), "1e+21", true},
+		"fractional":    {variant(&openapi3.Schema{Const: 2.5}), "2.5", true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			got, ok := inlineDiscriminatorValue(tc.schema, "kind")
+			assert.Equal(t, tc.ok, ok)
+			assert.Equal(t, tc.want, got)
+		})
+	}
+}
+
+// TestInlineDiscriminatedVariantsV3: inline variants of a discriminated union
+// take the value their discriminator property pins, with or without a
+// mapping for the other variants.
+func TestInlineDiscriminatedVariantsV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+`
+    Dog:
+      type: object
+      properties:
+        petType: {type: string}
+        bark: {type: string}
+    Implicit:
+      oneOf:
+        - type: object
+          properties:
+            petType: {type: string, enum: [cat]}
+            meow: {type: string}
+        - type: object
+          properties:
+            petType: {const: dog}
+            bark: {type: string}
+      discriminator:
+        propertyName: petType
+    Mapped:
+      oneOf:
+        - type: object
+          properties:
+            petType: {type: string, enum: [cat]}
+            meow: {type: string}
+        - $ref: '#/components/schemas/Dog'
+      discriminator:
+        propertyName: petType
+        mapping:
+          dog: '#/components/schemas/Dog'
+    Versioned:
+      oneOf:
+        - type: object
+          properties:
+            version: {type: integer, enum: [1]}
+        - type: object
+          properties:
+            version: {type: integer, enum: [2]}
+      discriminator:
+        propertyName: version
+    Base:
+      type: object
+      properties:
+        petType: {type: string}
+    Extended:
+      oneOf:
+        - allOf:
+            - $ref: '#/components/schemas/Base'
+            - type: object
+              properties:
+                petType: {type: string, enum: [cat]}
+                meow: {type: string}
+        - $ref: '#/components/schemas/Dog'
+      discriminator:
+        propertyName: petType
+        mapping:
+          dog: '#/components/schemas/Dog'
+`, withV3)
+	implicit := methodBody(t, code, "func (t Implicit) ValueByDiscriminator(")
+	assert.Contains(t, implicit, `case "cat":`+"\n\t\treturn t.AsImplicit0()")
+	assert.Contains(t, implicit, `case "dog":`+"\n\t\treturn t.AsImplicit1()")
+	assert.Contains(t, methodBody(t, code, "func (t *Implicit) FromImplicit1("), "`{\"petType\":\"dog\"}`")
+	mapped := methodBody(t, code, "func (t Mapped) ValueByDiscriminator(")
+	assert.Contains(t, mapped, `case "cat":`+"\n\t\treturn t.AsMapped0()")
+	assert.Contains(t, mapped, `case "dog":`+"\n\t\treturn t.AsDog()")
+	assert.Contains(t, methodBody(t, code, "func (t *Versioned) FromVersioned1("), "`{\"version\":2}`")
+	extended := methodBody(t, code, "func (t Extended) ValueByDiscriminator(")
+	assert.Contains(t, extended, `case "cat":`+"\n\t\treturn t.AsExtended0()", "a later allOf member pins the value")
+
+	// A 3.1 const without a type is a value of the const's JSON type.
+	code = generateSpec(t, opaqueSpecHeader31+`
+    Flag:
+      oneOf:
+        - type: object
+          properties:
+            enabled: {const: true}
+            on: {type: string}
+        - type: object
+          properties:
+            enabled: {const: false}
+            off: {type: string}
+      discriminator:
+        propertyName: enabled
+`, withV3)
+	assert.Contains(t, methodBody(t, code, "func (t *Flag) FromFlag0("), "`{\"enabled\":true}`")
+	assert.Contains(t, methodBody(t, code, "func (t Flag) Discriminator("), "json.RawMessage")
+
+	// A declared type wins over what the values pinned look like.
+	code = generateSpec(t, opaqueSpecHeader31+`
+    Flag:
+      type: object
+      properties:
+        enabled: {type: string}
+      oneOf:
+        - type: object
+          properties:
+            enabled: {type: string, const: true}
+        - type: object
+          properties:
+            enabled: {type: string, const: false}
+      discriminator:
+        propertyName: enabled
+`, withV3)
+	assert.Contains(t, methodBody(t, code, "func (t *Flag) FromFlag0("), "`{\"enabled\":\"true\"}`")
+}
+
+// TestInlineDiscriminatedVariantErrorsV3: two variants can't take one
+// value, and a value must fit in the generated string literals.
+func TestInlineDiscriminatedVariantErrorsV3(t *testing.T) {
+	for name, tc := range map[string]struct{ spec, want string }{
+		"a mapped value": {`
+    Dog:
+      type: object
+      properties:
+        petType: {type: string}
+    Pet:
+      oneOf:
+        - type: object
+          properties:
+            petType: {const: dog}
+        - $ref: '#/components/schemas/Dog'
+      discriminator:
+        propertyName: petType
+        mapping:
+          dog: '#/components/schemas/Dog'
+`, `the inline schema Pet.0 takes the petType value "dog", which another schema is mapped to`},
+		"another inline variant's value": {`
+    Pet:
+      oneOf:
+        - type: object
+          properties:
+            petType: {const: cat}
+        - type: object
+          properties:
+            petType: {const: cat}
+      discriminator:
+        propertyName: petType
+`, `the inline schema Pet.1 takes the petType value "cat"`},
+		"a $ref's implicit value": {`
+    Dog:
+      type: object
+      properties:
+        petType: {type: string}
+    Pet:
+      oneOf:
+        - type: object
+          properties:
+            petType: {const: Dog}
+        - $ref: '#/components/schemas/Dog'
+      discriminator:
+        propertyName: petType
+`, `#/components/schemas/Dog takes the petType value "Dog", which an inline schema also takes`},
+		"a $ref's implicit value first": {`
+    Dog:
+      type: object
+      properties:
+        petType: {type: string}
+    Pet:
+      oneOf:
+        - $ref: '#/components/schemas/Dog'
+        - type: object
+          properties:
+            petType: {const: Dog}
+      discriminator:
+        propertyName: petType
+`, `the inline schema Pet.1 takes the petType value "Dog", which another schema is mapped to`},
+		"a backtick": {"\n    Pet:\n      oneOf:\n        - type: object\n          properties:\n            petType: {const: 'a`b'}\n      discriminator:\n        propertyName: petType\n",
+			`the petType value "a` + "`" + `b" of the inline schema Pet.0 may not contain a backtick`},
+		"a quote": {"\n    Pet:\n      oneOf:\n        - type: object\n          properties:\n            petType: {enum: ['a\"b']}\n      discriminator:\n        propertyName: petType\n",
+			`may not contain`},
+		"a backslash": {"\n    Pet:\n      oneOf:\n        - type: object\n          properties:\n            petType: {enum: ['a\\b']}\n      discriminator:\n        propertyName: petType\n",
+			`may not contain`},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := generateSpecErr(opaqueSpecHeader+tc.spec, withV3)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tc.want)
+		})
+	}
+}
+
 // TestUnionComponentsDedupeV3: a union an allOf brings twice is one, with the
 // $ref accessors either copy has; a union of only 3.1 null branches says
 // nullable, and isn't one of the unions.
@@ -1563,6 +1786,57 @@ func TestUnionComponentsDiscriminatorKeyV3(t *testing.T) {
 	assert.Contains(t, methodBody(t, code, "func (t *Order) FromCard("), `delete(kept, "kind")`)
 	assert.Contains(t, methodBody(t, code, "func (t *Order) FromPayment("), `delete(kept, "kind")`)
 	assert.NotContains(t, methodBody(t, code, "func (t *Order) FromCourier("), `delete(kept, "kind")`)
+}
+
+// TestInlineUnpinnedVariantsV3: an inline variant that pins no discriminator
+// value has none, with or without a mapping: the discriminator doesn't lead
+// to it and From* stamps none, while the variants that have a value keep
+// theirs.
+func TestInlineUnpinnedVariantsV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+`
+    Dog:
+      type: object
+      properties:
+        petType: {type: string}
+    Unmapped:
+      oneOf:
+        - type: object
+          properties:
+            petType: {const: cat}
+        - type: object
+          properties:
+            petType: {type: string}
+            bark: {type: string}
+        - type: object
+          properties:
+            petType: {type: string}
+            chirp: {type: string}
+      discriminator:
+        propertyName: petType
+    Mapped:
+      oneOf:
+        - type: object
+          properties:
+            petType: {type: string}
+            meow: {type: string}
+        - $ref: '#/components/schemas/Dog'
+      discriminator:
+        propertyName: petType
+        mapping:
+          dog: '#/components/schemas/Dog'
+`, withV3)
+	unmapped := methodBody(t, code, "func (t Unmapped) ValueByDiscriminator(")
+	assert.Contains(t, unmapped, `case "cat":`)
+	assert.NotContains(t, unmapped, `case "":`)
+	assert.Contains(t, methodBody(t, code, "func (t *Unmapped) FromUnmapped0("), "`{\"petType\":\"cat\"}`")
+	assert.NotContains(t, methodBody(t, code, "func (t *Unmapped) FromUnmapped1("), "petType")
+	assert.Contains(t, code, "func (t Unmapped) AsUnmapped2() (Unmapped2, error)")
+
+	mapped := methodBody(t, code, "func (t Mapped) ValueByDiscriminator(")
+	assert.Contains(t, mapped, `case "dog":`)
+	assert.NotContains(t, mapped, "Mapped0")
+	assert.Contains(t, methodBody(t, code, "func (t *Mapped) FromDog("), "`{\"petType\":\"dog\"}`")
+	assert.NotContains(t, methodBody(t, code, "func (t *Mapped) FromMapped0("), "petType")
 }
 
 // TestConstraintOnlyUnionMemberV3: a member's list whose branches restate the
