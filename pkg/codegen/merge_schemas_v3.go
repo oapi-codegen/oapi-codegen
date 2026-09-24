@@ -107,7 +107,6 @@ func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 		// (e.g. an allocation-skipping optimization). Cost is a small
 		// map copy on a single code path.
 		ext := maps.Clone(schema.Extensions)
-		delete(ext, extPropGoType)
 		delete(ext, extGoTypeName)
 		delete(ext, extPropGoImport)
 		schema.Extensions = ext
@@ -163,7 +162,7 @@ func isExtensionOnlySchemaV3(s *openapi3.Schema) bool {
 // allOfs and array items, it never copies such a schema's body.
 func memberValue(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
 	if isOpaqueSchema(ref) {
-		return openapi3.Schema{}, opaqueMergeError(ref, ref, nil)
+		return openapi3.Schema{}, opaqueMergeError(ref, ref, "other schemas")
 	}
 	schema := *ref.Value
 	schema.Extensions = combinedSchemaExtensions(ref)
@@ -197,11 +196,15 @@ func isOpaqueSchema(ref *openapi3.SchemaRef) bool {
 // another document, directly or through other such components: kin-openapi
 // hands us the other document's schema for it, with nothing to say where it
 // came from.
+//
+// A $ref to a whole document ("./user.yaml", no fragment) doesn't point into
+// one. oapi-codegen has no Go type for such a schema, and inlines it wherever
+// it is used, so it is part of this run's output like any inline schema.
 func isRefInExternalDocument(ref string) bool {
 	seen := make(map[string]bool)
 	for ref != "" && !seen[ref] {
 		if ref[0] != '#' {
-			return true
+			return IsGoTypeReference(ref)
 		}
 		seen[ref] = true
 		name, ok := strings.CutPrefix(ref, "#/components/schemas/")
@@ -252,11 +255,38 @@ func opaqueSchemaFor(ref *openapi3.SchemaRef, seen map[*openapi3.Schema]bool) *o
 	return nil
 }
 
+// opaqueSchemaWithin returns an opaque schema (see isOpaqueSchema) that
+// merging ref would have to read, or nil: ref itself, or an opaque member of
+// an allOf that the merge flattens out of ref, however deep.
+func opaqueSchemaWithin(ref *openapi3.SchemaRef, seen map[*openapi3.Schema]bool) *openapi3.SchemaRef {
+	if ref == nil {
+		return nil
+	}
+	if isOpaqueSchema(ref) {
+		return ref
+	}
+	s := ref.Value
+	if s == nil || seen[s] {
+		return nil
+	}
+	if seen == nil {
+		seen = make(map[*openapi3.Schema]bool)
+	}
+	seen[s] = true
+	for _, m := range s.AllOf {
+		if target := opaqueSchemaWithin(m, seen); target != nil {
+			return target
+		}
+	}
+	return nil
+}
+
 // opaqueMember looks for an allOf member that stands for an opaque
 // schema (see opaqueSchemaFor). It returns nil when there is none. When every
 // other member only annotates it, it returns that member, whose type is the
 // composition's type. Any other combination would need fields the merge can't
-// read, so it is an error.
+// read, so it is an error, as is a member whose own allOf includes an opaque
+// schema that merging it would flatten.
 func opaqueMember(allOf []*openapi3.SchemaRef) (*openapi3.SchemaRef, error) {
 	for _, m := range allOf {
 		target := opaqueSchemaFor(m, nil)
@@ -265,10 +295,19 @@ func opaqueMember(allOf []*openapi3.SchemaRef) (*openapi3.SchemaRef, error) {
 		}
 		for _, other := range allOf {
 			if other != m && !annotatesOnly(other) {
-				return nil, opaqueMergeError(m, target, other)
+				return nil, opaqueMergeError(m, target, describeAllOfMember(other))
 			}
 		}
 		return m, nil
+	}
+	for i, m := range allOf {
+		if target := opaqueSchemaWithin(m, nil); target != nil {
+			other := allOf[0]
+			if i == 0 {
+				other = allOf[1]
+			}
+			return nil, opaqueMergeError(m, target, describeAllOfMember(other))
+		}
 	}
 	return nil, nil
 }
@@ -281,6 +320,7 @@ func generateAnnotatedOpaque(ctx genContext, opaque *openapi3.SchemaRef, allOf [
 	if err != nil {
 		return Schema{}, err
 	}
+	var typeName string
 	for _, m := range allOf {
 		if m == opaque {
 			continue
@@ -292,6 +332,27 @@ func generateAnnotatedOpaque(ctx genContext, opaque *openapi3.SchemaRef, allOf [
 			if err != nil {
 				return Schema{}, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
 			}
+		}
+		if ext, ok := m.Value.Extensions[extGoTypeName]; ok {
+			typeName, err = extTypeName(ext)
+			if err != nil {
+				return Schema{}, fmt.Errorf("invalid value for %q: %w", extGoTypeName, err)
+			}
+		}
+	}
+	if typeName != "" {
+		// As x-go-type-name does anywhere else: define the named type, and
+		// use it here.
+		out = Schema{
+			Description:         out.Description,
+			GoType:              typeName,
+			DefineViaAlias:      true,
+			SkipOptionalPointer: out.SkipOptionalPointer,
+			AdditionalTypes: append(out.AdditionalTypes, TypeDefinition{
+				TypeName: typeName,
+				JsonName: strings.Join(path, "."),
+				Schema:   out,
+			}),
 		}
 	}
 	return out, nil
@@ -350,28 +411,32 @@ func typeKeywords(s openapi3.Schema) []string {
 	return keywords
 }
 
-// opaqueMergeError reports an allOf that would merge member, which stands
-// for the opaque schema target, with other. other is nil when the merge found
-// the opaque schema deeper down, inside a member it was flattening.
-func opaqueMergeError(member, target, other *openapi3.SchemaRef) error {
+// opaqueMergeError reports an allOf that would merge member, which is or
+// includes the opaque schema target, with what with describes.
+func opaqueMergeError(member, target *openapi3.SchemaRef, with string) error {
 	what := describeAllOfMember(member)
 	if member != target {
-		what += " (an allOf over " + describeAllOfMember(target) + ")"
+		what += " (whose allOf includes " + describeAllOfMember(target) + ")"
 	}
-	with := "other schemas"
-	if other != nil {
-		with = describeAllOfMember(other)
+	// How the spec's OpenAPI version says nullable.
+	annotations := "description, nullable, ..."
+	if globalState.is31 {
+		annotations = `description, type: "null", ...`
 	}
 	if isRefInExternalDocument(target.Ref) {
 		return fmt.Errorf("allOf can't merge %s with %s: a reference to another document can't be merged "+
-			"with other allOf members, only annotated (description, nullable, ...). "+
+			"with other allOf members, only annotated (%s). "+
 			"Define the schema in this document",
-			what, with)
+			what, with, annotations)
+	}
+	replaced := "an inline schema"
+	if target.Ref != "" {
+		replaced = target.Ref
 	}
 	return fmt.Errorf("allOf can't merge %s with %s: x-go-type replaces %s with %v, whose fields are unknown, "+
-		"so it can only be annotated (description, nullable, ...). "+
+		"so it can only be annotated (%s). "+
 		"Give the composition an x-go-type of its own",
-		what, with, describeAllOfMember(target), combinedSchemaExtensions(target)[extPropGoType])
+		what, with, replaced, combinedSchemaExtensions(target)[extPropGoType], annotations)
 }
 
 // describeAllOfMember names an allOf member for an error message: its $ref,
@@ -386,10 +451,15 @@ func describeAllOfMember(ref *openapi3.SchemaRef) string {
 	if ref.Value == nil {
 		return "an inline schema"
 	}
-	if keywords := typeKeywords(*ref.Value); len(keywords) > 0 {
-		return "an inline schema with " + strings.Join(keywords, ", ")
+	var declares []string
+	if goType, ok := ref.Value.Extensions[extPropGoType]; ok {
+		declares = append(declares, fmt.Sprintf("x-go-type %v", goType))
 	}
-	return "an inline schema"
+	declares = append(declares, typeKeywords(*ref.Value)...)
+	if len(declares) == 0 {
+		return "an inline schema"
+	}
+	return "an inline schema with " + strings.Join(declares, ", ")
 }
 
 func mergeAllOfV3(allOf []*openapi3.SchemaRef, seenSchemaRef map[string]bool) (openapi3.Schema, error) {
@@ -694,13 +764,15 @@ func mergeItemsV3(i1, i2 *openapi3.SchemaRef, seenSchemaRef map[string]bool) (*o
 		return nil, nil
 	}
 	// Item schemas the merge can't read follow the allOf rule: they can be
-	// annotated, not merged.
+	// annotated, not merged. The items become an allOf of the two, which
+	// generates as the opaque one's type, and keeps the other's annotations
+	// where the item type is used, such as nullable.
 	opaque, err := opaqueMember([]*openapi3.SchemaRef{i1, i2})
 	if err != nil {
 		return nil, fmt.Errorf("error merging array items: %w", err)
 	}
 	if opaque != nil {
-		return opaque, nil
+		return openapi3.NewSchemaRef("", &openapi3.Schema{AllOf: openapi3.SchemaRefs{i1, i2}}), nil
 	}
 	seen := maps.Clone(seenSchemaRef)
 	for _, r := range []*openapi3.SchemaRef{i1, i2} {
@@ -791,13 +863,10 @@ func generateAllOfV3(ctx genContext, schema *openapi3.Schema, path []string, ext
 	ctx.inProgress[schema] = frame
 	defer delete(ctx.inProgress, schema)
 
+	// The parent's structural siblings are always merged: v3 rejects
+	// old-allof-sibling-merging, which discarded them.
 	var mergedSchema Schema
-	// Behavior is gated on Compatibility.OldAllOfSiblingMerging:
-	// when set, the parent's structural siblings and Description are
-	// silently discarded (the historical behavior). When unset
-	// (default), they are merged into the result.
-	mergeSiblings := !globalState.options.Compatibility.OldAllOfSiblingMerging
-	if mergeSiblings && hasStructuralSiblingsV3(schema) {
+	if hasStructuralSiblingsV3(schema) {
 		// Inject the parent (with AllOf cleared) as the final allOf
 		// member so its structural siblings — Properties, Required,
 		// AdditionalProperties — are merged with the allOf members
@@ -810,14 +879,21 @@ func generateAllOfV3(ctx genContext, schema *openapi3.Schema, path []string, ext
 		// len(schema.AllOf).
 		s := *schema
 		s.AllOf = nil
+		// An opaque member can't be merged with the siblings either. Say
+		// so here, where they can be named as the schema's own.
+		for _, m := range schema.AllOf {
+			if target := opaqueSchemaWithin(m, nil); target != nil {
+				return Schema{}, fmt.Errorf("error merging schemas: %w", opaqueMergeError(m, target,
+					"the schema's own "+strings.Join(typeKeywords(s), ", ")))
+			}
+		}
 		allOfRefs := make([]*openapi3.SchemaRef, 0, len(schema.AllOf)+1)
 		allOfRefs = append(allOfRefs, schema.AllOf...)
 		allOfRefs = append(allOfRefs, &openapi3.SchemaRef{Value: &s})
 		mergedSchema, err = merge(ctx, allOfRefs, path)
 	} else {
-		// Either the user opted into legacy behavior, or the parent is
-		// a pure wrapper with no structural siblings. In the wrapper
-		// case, mergeSchemasV3's single-element fast path returns the
+		// The parent is a pure wrapper with no structural siblings.
+		// mergeSchemasV3's single-element fast path returns the
 		// referenced type unchanged, preserving named-type identity.
 		mergedSchema, err = merge(ctx, schema.AllOf, path)
 	}
@@ -827,9 +903,8 @@ func generateAllOfV3(ctx genContext, schema *openapi3.Schema, path []string, ext
 	mergedSchema.OAPISchema = schema
 	// Description is metadata, not a structural constraint, so it
 	// doesn't go through the merge. Copy it from the parent when set.
-	// Issue #1960. Gated on the same compatibility flag as the
-	// sibling-merge above.
-	if mergeSiblings && schema.Description != "" {
+	// Issue #1960.
+	if schema.Description != "" {
 		mergedSchema.Description = schema.Description
 	}
 	// x-go-type on the parent is handled by the early return above

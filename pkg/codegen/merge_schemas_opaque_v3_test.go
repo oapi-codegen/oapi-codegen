@@ -26,12 +26,20 @@ components:
         friend: {$ref: '#/components/schemas/User'}
 `
 
+// opaqueUserDocument is a document that is a schema, for whole-document refs.
+const opaqueUserDocument = `type: object
+properties:
+  name: {type: string}
+`
+
 // generateWithCommonV3 generates models under v3 from spec, which may refer
-// to ./common.yaml (opaqueCommonSpec), imported from example.com/common.
+// to ./common.yaml (opaqueCommonSpec), imported from example.com/common, and
+// to the whole document ./user.yaml (opaqueUserDocument).
 func generateWithCommonV3(t *testing.T, spec string, opts ...func(*Configuration)) (string, error) {
 	t.Helper()
 	dir := t.TempDir()
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "common.yaml"), []byte(opaqueCommonSpec), 0o600))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "user.yaml"), []byte(opaqueUserDocument), 0o600))
 	require.NoError(t, os.WriteFile(filepath.Join(dir, "api.yaml"), []byte(spec), 0o600))
 
 	loader := openapi3.NewLoader()
@@ -56,6 +64,13 @@ func generateWithCommonV3(t *testing.T, spec string, opts ...func(*Configuration
 func withV3(c *Configuration) { c.Compatibility.SchemaMergingBehavior = schemaMergingV3 }
 
 const opaqueSpecHeader = `openapi: 3.0.3
+info: {title: api, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+`
+
+const opaqueSpecHeader31 = `openapi: 3.1.0
 info: {title: api, version: "1.0.0"}
 paths: {}
 components:
@@ -123,7 +138,7 @@ func TestExternalAllOfMemberMergedIsAnError(t *testing.T) {
       allOf:
         - $ref: './common.yaml#/components/schemas/User'
 `,
-			with: "with an inline schema with type, properties",
+			with: "with the schema's own type, properties",
 		},
 		"a local $ref (#2470)": {
 			spec: `
@@ -188,7 +203,7 @@ func TestExternalAllOfMemberThroughLocalComposition(t *testing.T) {
 `)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(),
-		"allOf can't merge #/components/schemas/Decorated (an allOf over ./common.yaml#/components/schemas/User) "+
+		"allOf can't merge #/components/schemas/Decorated (whose allOf includes ./common.yaml#/components/schemas/User) "+
 			"with an inline schema with properties")
 }
 
@@ -238,7 +253,7 @@ func TestExternalAllOfMemberThroughLocalAlias(t *testing.T) {
 }
 
 // TestExternalAllOfMemberFlattened: the merge doesn't read an external schema
-// however deep it finds one.
+// however deep it finds one, and the error names the member that has it.
 func TestExternalAllOfMemberFlattened(t *testing.T) {
 	_, err := generateWithCommonV3(t, opaqueSpecHeader+`
     Enriched:
@@ -251,7 +266,76 @@ func TestExternalAllOfMemberFlattened(t *testing.T) {
             outer: {type: string}
 `)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "allOf can't merge ./common.yaml#/components/schemas/User with other schemas")
+	assert.Contains(t, err.Error(), "allOf can't merge an inline schema with allOf "+
+		"(whose allOf includes ./common.yaml#/components/schemas/User) with an inline schema with properties")
+
+	_, err = generateWithCommonV3(t, opaqueSpecHeader+`
+    Enriched:
+      allOf:
+        - $ref: '#/components/schemas/Inner'
+        - properties:
+            outer: {type: string}
+    Inner:
+      type: object
+      properties:
+        inner: {type: string}
+      allOf:
+        - $ref: './common.yaml#/components/schemas/User'
+`)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "error converting Schema Enriched to Go type")
+	assert.Contains(t, err.Error(), "allOf can't merge #/components/schemas/Inner "+
+		"(whose allOf includes ./common.yaml#/components/schemas/User) with an inline schema with properties")
+}
+
+// TestExternalAllOfMember31: OpenAPI 3.1 says nullable with a "null" type,
+// and the error says so.
+func TestExternalAllOfMember31(t *testing.T) {
+	code, err := generateWithCommonV3(t, opaqueSpecHeader31+`
+    Holder:
+      type: object
+      properties:
+        user:
+          allOf:
+            - $ref: './common.yaml#/components/schemas/User'
+            - type: "null"
+`)
+	require.NoError(t, err)
+	assertField(t, code, "User", "*externalRef0.User")
+
+	_, err = generateWithCommonV3(t, opaqueSpecHeader31+`
+    Enriched:
+      allOf:
+        - $ref: './common.yaml#/components/schemas/User'
+        - type: [object, "null"]
+`)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "with an inline schema with type: ")
+	assert.Contains(t, err.Error(), `only annotated (description, type: "null", ...)`)
+}
+
+// TestWholeDocumentAllOfMember: a $ref to a document that is a schema has no
+// Go type of its own; oapi-codegen inlines it, so an allOf merges it like an
+// inline schema.
+func TestWholeDocumentAllOfMember(t *testing.T) {
+	code, err := generateWithCommonV3(t, opaqueSpecHeader+`
+    LocalUser:
+      $ref: './user.yaml'
+    Enriched:
+      allOf:
+        - $ref: './user.yaml'
+        - properties:
+            extra: {type: string}
+    EnrichedLocal:
+      allOf:
+        - $ref: '#/components/schemas/LocalUser'
+        - properties:
+            extra: {type: string}
+`)
+	require.NoError(t, err)
+	for _, name := range []string{"Enriched", "EnrichedLocal"} {
+		assert.Regexp(t, `type `+name+` struct \{\n\tExtra \*string [^\n]*\n\tName  \*string`, code)
+	}
 }
 
 func TestExternalArrayItems(t *testing.T) {
@@ -263,9 +347,16 @@ func TestExternalArrayItems(t *testing.T) {
         - type: array
           items: {description: A user.}
           minItems: 1
+    MaybeUsers:
+      allOf:
+        - type: array
+          items: {$ref: './common.yaml#/components/schemas/User'}
+        - type: array
+          items: {nullable: true}
 `)
 	require.NoError(t, err)
 	assert.Contains(t, code, "type Users = []externalRef0.User")
+	assert.Contains(t, code, "type MaybeUsers = []*externalRef0.User", "the annotating item's nullable is kept")
 
 	_, err = generateWithCommonV3(t, opaqueSpecHeader+`
     Users:
@@ -320,6 +411,30 @@ func TestExternalRefsInUnions(t *testing.T) {
 	assert.Contains(t, code, "func (t Either) AsExternalRef0User() (externalRef0.User, error)")
 }
 
+// TestAnnotatedOpaqueTypeName: x-go-type-name on an annotating member names
+// the composition's type, as it does anywhere else.
+func TestAnnotatedOpaqueTypeName(t *testing.T) {
+	code, err := generateWithCommonV3(t, opaqueSpecHeader+`
+    Decorated:
+      allOf:
+        - $ref: './common.yaml#/components/schemas/User'
+        - x-go-type-name: MyUser
+    Holder:
+      type: object
+      properties:
+        owner:
+          allOf:
+            - $ref: './common.yaml#/components/schemas/User'
+            - x-go-type-name: Owner
+              nullable: true
+`)
+	require.NoError(t, err)
+	assert.Contains(t, code, "type Decorated = MyUser")
+	assert.Contains(t, code, "type MyUser = externalRef0.User")
+	assert.Contains(t, code, "type Owner = externalRef0.User")
+	assertField(t, code, "Owner", "*Owner")
+}
+
 // TestExternalAllOfMemberSamePackage: a document imported into this package
 // (import-mapping "-") is still generated by another run.
 func TestExternalAllOfMemberSamePackage(t *testing.T) {
@@ -361,6 +476,36 @@ func TestXGoTypeAllOfMemberAnnotated(t *testing.T) {
 	assertField(t, code, "Count", "*int64")
 }
 
+func TestXGoTypeAllOfMemberAnnotatedMore(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+xGoTypeClient+`
+    Plain:
+      type: object
+      properties:
+        name: {type: string}
+    Clients:
+      allOf:
+        - type: array
+          items: {$ref: '#/components/schemas/Client'}
+        - type: array
+          items: {nullable: true}
+    Holder:
+      type: object
+      properties:
+        client:
+          allOf:
+            - $ref: '#/components/schemas/Client'
+            - x-go-type-skip-optional-pointer: true
+        wrapped:
+          allOf:
+            - $ref: '#/components/schemas/Plain'
+              x-go-type: Wrapper
+            - nullable: true
+`, withV3)
+	assert.Contains(t, code, "type Clients = []*Client")
+	assertField(t, code, "Client", "Client")
+	assertField(t, code, "Wrapped", "*Wrapper")
+}
+
 func TestXGoTypeAllOfMemberMergedIsAnError(t *testing.T) {
 	for name, tc := range map[string]struct {
 		spec    string
@@ -385,7 +530,7 @@ func TestXGoTypeAllOfMemberMergedIsAnError(t *testing.T) {
         - properties:
             zone: {type: string}
 `,
-			message: "allOf can't merge an inline schema with an inline schema with properties: " +
+			message: "allOf can't merge an inline schema with x-go-type time.Time with an inline schema with properties: " +
 				"x-go-type replaces an inline schema with time.Time",
 		},
 		"x-go-type next to a $ref": {
