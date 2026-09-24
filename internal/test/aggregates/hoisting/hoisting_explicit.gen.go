@@ -27,6 +27,16 @@ type SuccessfulResponse struct {
 	Ok bool `json:"ok"`
 }
 
+// N400 defines model for 400.
+type N400 struct {
+	Errors []N400_Errors `json:"errors"`
+}
+
+// N400_Errors defines model for 400.Errors.
+type N400_Errors struct {
+	Message string `json:"message"`
+}
+
 // GetRolesId200JSONResponseBody_Data defines model for GetRolesId200JSONResponseBody.Data.
 type GetRolesId200JSONResponseBody_Data struct {
 	Role Role `json:"role"`
@@ -38,4 +48,9 @@ type GetRolesId200JSONResponseBody struct {
 
 	// Ok Indicated whether the response is successful.
 	Ok bool `json:"ok"`
+}
+
+// GetWidgets400JSONResponseBody_Errors defines model for GetWidgets400JSONResponseBody.Errors.
+type GetWidgets400JSONResponseBody_Errors struct {
+	Message string `json:"message"`
 }
