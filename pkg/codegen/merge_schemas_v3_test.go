@@ -5,7 +5,9 @@ package codegen
 
 import (
 	"maps"
+	"regexp"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -478,7 +480,20 @@ func TestMergeOpenapiSchemas_EnumV3(t *testing.T) {
 
 	t.Run("enums with no value in common error", func(t *testing.T) {
 		_, err := mergeTwoV3(named([]any{"a", "b"}), named([]any{"c"}))
-		assert.EqualError(t, err, "allOf can't merge allOf/0 (enum [a b]) with allOf/1 (enum [c]): no value is in both")
+		assert.EqualError(t, err, "allOf can't merge allOf/0 (enum [a b]) with allOf/1 (enum [c]): no value is in both. "+
+			"To allow the values of either, set x-oapi-codegen-enum-merge: union on the composition")
+	})
+
+	t.Run("x-oapi-codegen-enum-merge: union takes the values of either", func(t *testing.T) {
+		m := newAllOfMerge(newGenContext(nil))
+		m.unionEnums = true
+		require.NoError(t, m.add(named([]any{"a", "b"}, "A", "B"), "allOf/0", map[string]bool{}))
+		require.NoError(t, m.add(named([]any{"b", "c"}), "allOf/1", map[string]bool{}))
+		result, err := m.result()
+		require.NoError(t, err)
+		assert.Equal(t, []any{"a", "b", "c"}, result.Enum)
+		assert.Equal(t, []any{"A", "B", "c"}, result.Extensions[extEnumVarNames],
+			"a value no member names is named after itself")
 	})
 }
 
@@ -676,5 +691,80 @@ func TestMergeSchemasV3Properties(t *testing.T) {
 	t.Run("recursive compositions still generate", func(t *testing.T) {
 		code := generateSpec(t, specRecursiveObject, withV3)
 		assert.Contains(t, code, "type Node struct {")
+	})
+}
+
+// TestEnumMergeExtensionV3 covers x-oapi-codegen-enum-merge, which lets a
+// composition add values to an enum.
+func TestEnumMergeExtensionV3(t *testing.T) {
+	const statuses = `
+    BaseStatus:
+      type: string
+      enum: [active, inactive]
+    ExtendedStatus:
+      x-oapi-codegen-enum-merge: union
+      allOf:
+        - $ref: '#/components/schemas/BaseStatus'
+        - enum: [archived]
+`
+	enumValues := func(t *testing.T, code, typeName string) []string {
+		t.Helper()
+		start := strings.Index(code, "// Defines values for "+typeName+".")
+		require.GreaterOrEqual(t, start, 0, "no enum %s", typeName)
+		block := code[start:]
+		block = block[:strings.Index(block, ")")]
+		var values []string
+		for _, m := range regexp.MustCompile(typeName+` = "([^"]*)"`).FindAllStringSubmatch(block, -1) {
+			values = append(values, m[1])
+		}
+		return values
+	}
+
+	t.Run("union", func(t *testing.T) {
+		code := generateSpec(t, opaqueSpecHeader+statuses+`
+    Decorated:
+      allOf:
+        - $ref: '#/components/schemas/ExtendedStatus'
+        - description: A decorated ExtendedStatus.
+    Holder:
+      type: object
+      properties:
+        status:
+          x-oapi-codegen-enum-merge: union
+          allOf:
+            - $ref: '#/components/schemas/BaseStatus'
+            - enum: [archived]
+    Base:
+      type: object
+      properties:
+        status: {$ref: '#/components/schemas/BaseStatus'}
+    Patch:
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - properties:
+            status:
+              enum: [archived]
+              x-oapi-codegen-enum-merge: union
+`, withV3)
+		for typeName, why := range map[string]string{
+			"ExtendedStatus": "a component",
+			"Decorated":      "decorating the composition keeps its values",
+			"HolderStatus":   "a property that is a composition",
+			"PatchStatus":    "a property a member refines, where the extension is on the member's property",
+		} {
+			assert.ElementsMatch(t, []string{"active", "inactive", "archived"}, enumValues(t, code, typeName), why)
+		}
+	})
+
+	t.Run("intersection is the default", func(t *testing.T) {
+		_, err := generateSpecErr(opaqueSpecHeader+strings.ReplaceAll(statuses, "x-oapi-codegen-enum-merge: union", "x-oapi-codegen-enum-merge: intersection"), withV3)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "no value is in both")
+	})
+
+	t.Run("an invalid value is an error", func(t *testing.T) {
+		_, err := generateSpecErr(opaqueSpecHeader+strings.ReplaceAll(statuses, "union", "both"), withV3)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `invalid value for "x-oapi-codegen-enum-merge": must be "union" or "intersection", not both`)
 	})
 }

@@ -54,6 +54,11 @@ type genContext struct {
 	// v3 uses it.
 	memberLabels map[*openapi3.SchemaRef]string
 
+	// unionEnums is set while merging an allOf whose enums merge into their
+	// union (x-oapi-codegen-enum-merge: union). generateAllOfV3 sets it for
+	// each composition it hands to the merge.
+	unionEnums bool
+
 	// subschemas holds the allOfs v3's merge makes of the schemas several
 	// members declare for one position, by those schemas, so the same ones
 	// always make the same allOf (see allOfMerge.subschema).

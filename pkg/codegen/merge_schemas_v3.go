@@ -467,7 +467,9 @@ func allOfMemberLabel(ctx genContext, member *openapi3.SchemaRef, i int) string 
 //   - format, const, discriminator: the one a member declares, or the same one
 //     declared by several.
 //   - enum: the values every member's enum allows, with their names
-//     (x-enum-varnames).
+//     (x-enum-varnames). A composition that adds values to an enum can ask
+//     for the values any member's enum allows instead, with
+//     x-oapi-codegen-enum-merge: union.
 //   - required: every member's.
 //   - nullable, readOnly, writeOnly: set when any member sets them. Read
 //     literally, a nullable member would change nothing unless every member
@@ -507,6 +509,9 @@ type allOfMerge struct {
 	renames []string
 	// nullInType records a 3.1 "null" in a member's type array.
 	nullInType bool
+	// unionEnums merges enums into their union rather than their
+	// intersection.
+	unionEnums bool
 }
 
 // labeledSchema is a member's schema for a position, with its label.
@@ -518,6 +523,7 @@ type labeledSchema struct {
 func newAllOfMerge(ctx genContext) *allOfMerge {
 	return &allOfMerge{
 		ctx:        ctx,
+		unionEnums: ctx.unionEnums,
 		schema:     openapi3.Schema{Extensions: map[string]any{}},
 		from:       map[string]string{},
 		properties: map[string][]labeledSchema{},
@@ -528,6 +534,27 @@ func newAllOfMerge(ctx genContext) *allOfMerge {
 // an allOf itself contributes its members, then its own keywords. seen holds
 // the $refs being flattened, so that a cycle back into one is skipped.
 func (m *allOfMerge) add(v openapi3.Schema, label string, seen map[string]bool) error {
+	// A member that is an allOf merging its enums its own way is merged that
+	// way first, so decorating a composition that adds values to an enum
+	// doesn't take them away again.
+	if raw, ok := v.Extensions[extOapiCodegenEnumMerge]; ok && len(v.AllOf) > 0 {
+		union, err := extParseEnumMerge(raw)
+		if err != nil {
+			return fmt.Errorf("invalid value for %q in %s: %w", extOapiCodegenEnumMerge, displayLabel(label), err)
+		}
+		if union != m.unionEnums {
+			own := newAllOfMerge(m.ctx)
+			own.unionEnums = union
+			if err := own.add(v, label, seen); err != nil {
+				return err
+			}
+			merged, err := own.result()
+			if err != nil {
+				return err
+			}
+			return m.add(merged, label, seen)
+		}
+	}
 	for j, inner := range v.AllOf {
 		if inner.Ref != "" {
 			if seen[inner.Ref] {
@@ -763,26 +790,48 @@ func (m *allOfMerge) addEnum(v openapi3.Schema, label string) error {
 		m.schema.Enum, m.enumNames, m.from["enum"] = v.Enum, names, label
 		return nil
 	}
+	// A value without a name is named after itself, as it would be if no
+	// member named any; the names are only kept when some member does.
+	named := m.enumNames != nil || names != nil
+	nameOf := func(names []string, i int, value any) string {
+		if names != nil {
+			return names[i]
+		}
+		return fmt.Sprintf("%v", value)
+	}
 	var enum []any
 	var enumNames []string
-	for i, value := range m.schema.Enum {
-		j := slices.IndexFunc(v.Enum, func(other any) bool { return reflect.DeepEqual(value, other) })
-		if j < 0 {
-			continue
+	if m.unionEnums {
+		for i, value := range m.schema.Enum {
+			enum = append(enum, value)
+			enumNames = append(enumNames, nameOf(m.enumNames, i, value))
 		}
-		enum = append(enum, value)
-		switch {
-		case m.enumNames != nil:
-			enumNames = append(enumNames, m.enumNames[i])
-		case names != nil:
-			enumNames = append(enumNames, names[j])
+		for j, value := range v.Enum {
+			if !slices.ContainsFunc(enum, func(other any) bool { return reflect.DeepEqual(value, other) }) {
+				enum = append(enum, value)
+				enumNames = append(enumNames, nameOf(names, j, value))
+			}
+		}
+	} else {
+		for i, value := range m.schema.Enum {
+			j := slices.IndexFunc(v.Enum, func(other any) bool { return reflect.DeepEqual(value, other) })
+			if j < 0 {
+				continue
+			}
+			enum = append(enum, value)
+			if m.enumNames != nil {
+				enumNames = append(enumNames, m.enumNames[i])
+			} else {
+				enumNames = append(enumNames, nameOf(names, j, value))
+			}
 		}
 	}
 	if len(enum) == 0 {
 		return mergeConflict(m.from["enum"], fmt.Sprintf("enum %v", m.schema.Enum), label,
-			fmt.Sprintf("enum %v", v.Enum), "no value is in both")
+			fmt.Sprintf("enum %v", v.Enum), "no value is in both. To allow the values of either, "+
+				"set x-oapi-codegen-enum-merge: union on the composition")
 	}
-	if len(enumNames) != len(enum) {
+	if !named {
 		enumNames = nil
 	}
 	m.schema.Enum, m.enumNames = enum, enumNames
@@ -875,15 +924,17 @@ func childLabel(label, child string) string {
 	return label + "/" + child
 }
 
+// displayLabel shows a member's label in an error message.
+func displayLabel(label string) string {
+	if label == "" {
+		return "the schema itself"
+	}
+	return label
+}
+
 // mergeConflict reports two members that no value can satisfy together.
 func mergeConflict(labelA, a, labelB, b, why string) error {
-	display := func(label string) string {
-		if label == "" {
-			return "the schema itself"
-		}
-		return label
-	}
-	return fmt.Errorf("allOf can't merge %s (%s) with %s (%s): %s", display(labelA), a, display(labelB), b, why)
+	return fmt.Errorf("allOf can't merge %s (%s) with %s (%s): %s", displayLabel(labelA), a, displayLabel(labelB), b, why)
 }
 
 // sameSchemaV3 reports whether two schema positions describe the same schema:
@@ -963,6 +1014,12 @@ func generateAllOfV3(ctx genContext, schema *openapi3.Schema, path []string, ext
 		}, nil
 	}
 	var err error
+	ctx.unionEnums = false
+	if raw, ok := extensions[extOapiCodegenEnumMerge]; ok {
+		if ctx.unionEnums, err = extParseEnumMerge(raw); err != nil {
+			return Schema{}, fmt.Errorf("invalid value for %q: %w", extOapiCodegenEnumMerge, err)
+		}
+	}
 	frame := &mergeFrame{typeName: ctx.typeName(path)}
 	ctx.inProgress[schema] = frame
 	defer delete(ctx.inProgress, schema)
