@@ -671,26 +671,46 @@ func (m *allOfMerge) add(v openapi3.Schema, label string, seen map[string]bool) 
 // the composition merges the same schemas again, and generating the same allOf
 // again is what genContext.inProgress recognises as recursion.
 func (m *allOfMerge) subschema(schemas []labeledSchema) *openapi3.SchemaRef {
-	var distinct []labeledSchema
-	for _, s := range schemas {
-		if !slices.ContainsFunc(distinct, func(d labeledSchema) bool { return d.ref == s.ref || sameSchemaV3(d.ref, s.ref) }) {
-			distinct = append(distinct, s)
-		}
-	}
-	switch len(distinct) {
+	switch len(schemas) {
 	case 0:
 		return nil
 	case 1:
-		return distinct[0].ref
+		return schemas[0].ref
 	}
-	keys := make([]string, len(distinct))
-	for i, d := range distinct {
-		keys[i] = fmt.Sprintf("%p", d.ref)
+	// The result is kept by the schemas it's made of, so the same schemas
+	// always give the same result, even when that is a schema made here.
+	keys := make([]string, len(schemas))
+	for i, s := range schemas {
+		keys[i] = fmt.Sprintf("%p", s.ref)
 	}
 	key := strings.Join(keys, " ")
 	if merged, ok := m.ctx.subschemas[key]; ok {
 		return merged
 	}
+
+	var distinct []labeledSchema
+	for _, s := range schemas {
+		i := slices.IndexFunc(distinct, func(d labeledSchema) bool { return d.ref == s.ref || sameSchemaV3(d.ref, s.ref) })
+		switch {
+		case i < 0:
+			distinct = append(distinct, s)
+		case s.ref.Ref != "" && len(s.ref.Extensions) > 0:
+			// The same $ref, with extensions next to it, such as x-go-name.
+			// It stays one $ref, keeping its type, with both members'
+			// extensions; the later member's win, as they do in the merge.
+			ext := maps.Clone(distinct[i].ref.Extensions)
+			if ext == nil {
+				ext = make(map[string]any, len(s.ref.Extensions))
+			}
+			maps.Copy(ext, s.ref.Extensions)
+			distinct[i].ref = &openapi3.SchemaRef{Ref: s.ref.Ref, Value: s.ref.Value, Extensions: ext}
+		}
+	}
+	if len(distinct) == 1 {
+		m.ctx.subschemas[key] = distinct[0].ref
+		return distinct[0].ref
+	}
+
 	merged := &openapi3.Schema{Extensions: map[string]any{}}
 	for _, d := range distinct {
 		// A copy of the member, so that its label belongs to this allOf.
@@ -754,8 +774,10 @@ func (m *allOfMerge) addType(v openapi3.Schema, label string) error {
 }
 
 // intersectTypes returns the JSON Schema types in both a and b. An integer is
-// a number, so integer and number have integer in common.
+// a number, so integer and number have integer in common, and a list with
+// both says number.
 func intersectTypes(a, b []string) []string {
+	a, b = withoutIntegerUnderNumber(a), withoutIntegerUnderNumber(b)
 	var both []string
 	for _, t := range a {
 		switch {
@@ -771,6 +793,15 @@ func intersectTypes(a, b []string) []string {
 		}
 	}
 	return both
+}
+
+// withoutIntegerUnderNumber drops integer from a type list that also has
+// number, which already allows every integer.
+func withoutIntegerUnderNumber(types []string) []string {
+	if !slices.Contains(types, openapi3.TypeNumber) || !slices.Contains(types, openapi3.TypeInteger) {
+		return types
+	}
+	return slices.DeleteFunc(slices.Clone(types), func(t string) bool { return t == openapi3.TypeInteger })
 }
 
 // addEnum intersects the member's enum with the values merged so far, keeping

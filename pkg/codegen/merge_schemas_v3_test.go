@@ -151,6 +151,15 @@ func TestMergeOpenapiSchemas_TypePropagationV3(t *testing.T) {
 		}
 	})
 
+	t.Run("a type list with number and integer is number", func(t *testing.T) {
+		intNum := func() *openapi3.Types { return &openapi3.Types{"integer", "number"} }
+		for want, other := range map[string]*openapi3.Types{"number": numberType, "integer": {"integer"}} {
+			result, err := mergeTwoV3(openapi3.Schema{Type: intNum()}, openapi3.Schema{Type: other})
+			require.NoError(t, err)
+			assert.Equal(t, []string{want}, result.Type.Slice())
+		}
+	})
+
 	t.Run("multi-type arrays intersect", func(t *testing.T) {
 		result, err := mergeTwoV3(openapi3.Schema{Type: &openapi3.Types{"string", "number", "boolean"}},
 			openapi3.Schema{Type: &openapi3.Types{"integer", "string"}})
@@ -549,6 +558,16 @@ func TestMergeOpenapiSchemas_NestedAllOfV3(t *testing.T) {
 }
 
 func TestMergeSchemasV3EndToEnd(t *testing.T) {
+	t.Run("number, and number or integer, is number (3.1)", func(t *testing.T) {
+		code := generateSpec(t, opaqueSpecHeader31+`
+    Amount:
+      allOf:
+        - type: [integer, number]
+        - type: number
+`, withV3)
+		assert.Contains(t, code, "type Amount = float32")
+	})
+
 	t.Run("integer narrows number", func(t *testing.T) {
 		code := generateSpec(t, opaqueSpecHeader+`
     Count:
@@ -686,6 +705,49 @@ func TestMergeSchemasV3Properties(t *testing.T) {
 		assert.Contains(t, code, "type Node struct {")
 		assertField(t, code, "Next", "*Node_Next")
 		assert.Contains(t, code, "type Node_Next struct {")
+	})
+
+	t.Run("the same $ref with extensions of its own stays that $ref", func(t *testing.T) {
+		code := generateSpec(t, opaqueSpecHeader+`
+    User:
+      type: object
+      properties:
+        name: {type: string}
+    Base:
+      type: object
+      properties:
+        owner: {$ref: '#/components/schemas/User'}
+    Patch:
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - properties:
+            owner:
+              $ref: '#/components/schemas/User'
+              x-go-name: Proprietor
+`, withV3)
+		patch := code[strings.Index(code, "type Patch struct"):]
+		assertField(t, patch, "Proprietor", "*User")
+	})
+
+	t.Run("a recursive $ref with extensions of its own", func(t *testing.T) {
+		code := generateSpec(t, opaqueSpecHeader+`
+    Node:
+      allOf:
+        - type: object
+          properties:
+            name: {type: string}
+            next:
+              $ref: '#/components/schemas/Node'
+              x-go-name: First
+        - properties:
+            next:
+              $ref: '#/components/schemas/Node'
+              x-go-name: Second
+        - properties:
+            next: {nullable: true}
+`, withV3)
+		assert.Contains(t, code, "type Node struct {")
+		assert.Contains(t, code, "Second *Node_Next")
 	})
 
 	t.Run("recursive compositions still generate", func(t *testing.T) {
