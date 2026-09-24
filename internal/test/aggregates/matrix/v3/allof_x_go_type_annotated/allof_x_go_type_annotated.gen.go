@@ -32,19 +32,19 @@ type InlineHolder struct {
 	One  *Typed            `json:"one,omitempty"`
 }
 
-// Subject defines model for Subject.
+// Subject A decorated Typed.
 type Subject = Typed
 
 // Typed defines model for Typed.
 type Typed = map[string]any
 
-// InlineSubjectResponse defines model for InlineSubjectResponse.
+// InlineSubjectResponse A decorated Typed.
 type InlineSubjectResponse = Typed
 
 // SubjectResponse defines model for SubjectResponse.
 type SubjectResponse = Subject
 
-// InlineSubjectBody defines model for InlineSubjectBody.
+// InlineSubjectBody A decorated Typed.
 type InlineSubjectBody = Typed
 
 // SubjectBody defines model for SubjectBody.

@@ -56,6 +56,12 @@ type Schema struct {
 
 	// The original OpenAPIv3 Schema.
 	OAPISchema *openapi3.Schema
+
+	// aliasOf is the OpenAPI schema of the type this schema is an alias of,
+	// when an allOf generated as another type, such as the $ref in
+	// `allOf: [$ref X, {description: ...}]`. OAPISchema is the allOf itself.
+	// schema-merging-behavior v3 sets it; generatesMarshalJSON follows it.
+	aliasOf *openapi3.Schema
 }
 
 // IsPrimitive returns true if the schema represents a primitive OpenAPI type
@@ -108,7 +114,7 @@ func (s Schema) generatesMarshalJSON() bool {
 		return true
 	}
 	if wrapped, ok := s.goTypeNameWrapper(); ok {
-		return len(wrapped.UnionElements) > 0 || wrapped.HasAdditionalProperties
+		return wrapped.aliasGeneratesMarshalJSON(s.TypeDecl())
 	}
 	if s.OAPISchema == nil {
 		return false
@@ -117,10 +123,31 @@ func (s Schema) generatesMarshalJSON() bool {
 	if err != nil {
 		return false
 	}
-	if wrapped, ok := target.goTypeNameWrapper(); ok {
-		target = wrapped
+	return target.aliasGeneratesMarshalJSON(s.TypeDecl())
+}
+
+// aliasGeneratesMarshalJSON reports whether s, or the type it is an alias of,
+// carries a generated MarshalJSON. An allOf can generate as an alias of
+// another type (see aliasOf), whose flags live on that type's own schema, so
+// this follows the aliases to it: up to 100 of them, far more than any spec
+// chains.
+func (s Schema) aliasGeneratesMarshalJSON(typeDecl string) bool {
+	for range 100 {
+		if wrapped, ok := s.goTypeNameWrapper(); ok {
+			s = wrapped
+		}
+		if len(s.UnionElements) > 0 || s.HasAdditionalProperties {
+			return true
+		}
+		if s.aliasOf == nil {
+			return false
+		}
+		var err error
+		if s, err = GenerateGoSchema(&openapi3.SchemaRef{Value: s.aliasOf}, []string{typeDecl}); err != nil {
+			return false
+		}
 	}
-	return len(target.UnionElements) > 0 || target.HasAdditionalProperties
+	return false
 }
 
 // goTypeNameWrapper returns the schema that x-go-type-name (or the

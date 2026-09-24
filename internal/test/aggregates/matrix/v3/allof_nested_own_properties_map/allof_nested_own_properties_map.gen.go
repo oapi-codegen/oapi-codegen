@@ -27,27 +27,9 @@ type Holder struct {
 
 // InlineHolder defines model for InlineHolder.
 type InlineHolder struct {
-	List *[]InlineHolder_List_Item                         `json:"list,omitempty"`
-	Map  *map[string]InlineHolder_Map_AdditionalProperties `json:"map,omitempty"`
-	One  *InlineHolder_One                                 `json:"one,omitempty"`
-}
-
-// InlineHolder_List_Item defines model for InlineHolder.list.Item.
-type InlineHolder_List_Item struct {
-	B                    *string           `json:"b,omitempty"`
-	AdditionalProperties map[string]string `json:"-"`
-}
-
-// InlineHolder_Map_AdditionalProperties defines model for InlineHolder.map.AdditionalProperties.
-type InlineHolder_Map_AdditionalProperties struct {
-	B                    *string           `json:"b,omitempty"`
-	AdditionalProperties map[string]string `json:"-"`
-}
-
-// InlineHolder_One defines model for InlineHolder.One.
-type InlineHolder_One struct {
-	B                    *string           `json:"b,omitempty"`
-	AdditionalProperties map[string]string `json:"-"`
+	List *[]Mid          `json:"list,omitempty"`
+	Map  *map[string]Mid `json:"map,omitempty"`
+	One  *Mid            `json:"one,omitempty"`
 }
 
 // Mid defines model for Mid.
@@ -56,61 +38,32 @@ type Mid struct {
 	AdditionalProperties map[string]string `json:"-"`
 }
 
-// Subject defines model for Subject.
-type Subject struct {
-	B                    *string           `json:"b,omitempty"`
-	AdditionalProperties map[string]string `json:"-"`
-}
+// Subject A map with a property.
+type Subject = Mid
 
-// InlineSubjectResponse defines model for InlineSubjectResponse.
-type InlineSubjectResponse struct {
-	B                    *string           `json:"b,omitempty"`
-	AdditionalProperties map[string]string `json:"-"`
-}
+// InlineSubjectResponse A map with a property.
+type InlineSubjectResponse = Mid
 
 // SubjectResponse defines model for SubjectResponse.
 type SubjectResponse = Subject
 
-// InlineSubjectBody defines model for InlineSubjectBody.
-type InlineSubjectBody struct {
-	B                    *string           `json:"b,omitempty"`
-	AdditionalProperties map[string]string `json:"-"`
-}
+// InlineSubjectBody A map with a property.
+type InlineSubjectBody = Mid
 
 // SubjectBody defines model for SubjectBody.
 type SubjectBody = Subject
 
 // BodyComponentInlineJSONBody defines body for BodyComponentInline for application/json ContentType.
-type BodyComponentInlineJSONBody struct {
-	B                    *string           `json:"b,omitempty"`
-	AdditionalProperties map[string]string `json:"-"`
-}
+type BodyComponentInlineJSONBody = Mid
 
 // BodyInlineJSONBody defines body for BodyInline for application/json ContentType.
-type BodyInlineJSONBody struct {
-	B                    *string           `json:"b,omitempty"`
-	AdditionalProperties map[string]string `json:"-"`
-}
-
-// BodyInline200JSONResponseBody defines the 200 response body for BodyInline for application/json ContentType.
-type BodyInline200JSONResponseBody struct {
-	B                    *string           `json:"b,omitempty"`
-	AdditionalProperties map[string]string `json:"-"`
-}
+type BodyInlineJSONBody = Mid
 
 // BodyComponentJSONRequestBody defines body for BodyComponent for application/json ContentType.
 type BodyComponentJSONRequestBody = Subject
 
 // BodyComponentInlineJSONRequestBody defines body for BodyComponentInline for application/json ContentType.
-type BodyComponentInlineJSONRequestBody BodyComponentInlineJSONBody
-
-func (t BodyComponentInlineJSONRequestBody) MarshalJSON() ([]byte, error) {
-	return BodyComponentInlineJSONBody(t).MarshalJSON()
-}
-
-func (t *BodyComponentInlineJSONRequestBody) UnmarshalJSON(b []byte) error {
-	return (*BodyComponentInlineJSONBody)(t).UnmarshalJSON(b)
-}
+type BodyComponentInlineJSONRequestBody = BodyComponentInlineJSONBody
 
 // BodyDefaultJSONRequestBody defines body for BodyDefault for application/json ContentType.
 type BodyDefaultJSONRequestBody = Subject
@@ -119,15 +72,7 @@ type BodyDefaultJSONRequestBody = Subject
 type BodyHeadersJSONRequestBody = Subject
 
 // BodyInlineJSONRequestBody defines body for BodyInline for application/json ContentType.
-type BodyInlineJSONRequestBody BodyInlineJSONBody
-
-func (t BodyInlineJSONRequestBody) MarshalJSON() ([]byte, error) {
-	return BodyInlineJSONBody(t).MarshalJSON()
-}
-
-func (t *BodyInlineJSONRequestBody) UnmarshalJSON(b []byte) error {
-	return (*BodyInlineJSONBody)(t).UnmarshalJSON(b)
-}
+type BodyInlineJSONRequestBody = BodyInlineJSONBody
 
 // BodyRefJSONRequestBody defines body for BodyRef for application/json ContentType.
 type BodyRefJSONRequestBody = Subject
@@ -137,210 +82,6 @@ type HolderJSONRequestBody = Holder
 
 // HolderInlineJSONRequestBody defines body for HolderInline for application/json ContentType.
 type HolderInlineJSONRequestBody = InlineHolder
-
-// Getter for additional properties for InlineHolder_List_Item. Returns the specified
-// element and whether it was found
-func (a InlineHolder_List_Item) Get(fieldName string) (value string, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for InlineHolder_List_Item
-func (a *InlineHolder_List_Item) Set(fieldName string, value string) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]string)
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for InlineHolder_List_Item to handle AdditionalProperties
-func (a *InlineHolder_List_Item) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["b"]; found {
-		err = json.Unmarshal(raw, &a.B)
-		if err != nil {
-			return fmt.Errorf("error reading 'b': %w", err)
-		}
-		delete(object, "b")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]string)
-		for fieldName, fieldBuf := range object {
-			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for InlineHolder_List_Item to handle AdditionalProperties
-func (a InlineHolder_List_Item) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	if a.B != nil {
-		object["b"], err = json.Marshal(a.B)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'b': %w", err)
-		}
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
-		}
-	}
-	return json.Marshal(object)
-}
-
-// Getter for additional properties for InlineHolder_Map_AdditionalProperties. Returns the specified
-// element and whether it was found
-func (a InlineHolder_Map_AdditionalProperties) Get(fieldName string) (value string, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for InlineHolder_Map_AdditionalProperties
-func (a *InlineHolder_Map_AdditionalProperties) Set(fieldName string, value string) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]string)
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for InlineHolder_Map_AdditionalProperties to handle AdditionalProperties
-func (a *InlineHolder_Map_AdditionalProperties) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["b"]; found {
-		err = json.Unmarshal(raw, &a.B)
-		if err != nil {
-			return fmt.Errorf("error reading 'b': %w", err)
-		}
-		delete(object, "b")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]string)
-		for fieldName, fieldBuf := range object {
-			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for InlineHolder_Map_AdditionalProperties to handle AdditionalProperties
-func (a InlineHolder_Map_AdditionalProperties) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	if a.B != nil {
-		object["b"], err = json.Marshal(a.B)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'b': %w", err)
-		}
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
-		}
-	}
-	return json.Marshal(object)
-}
-
-// Getter for additional properties for InlineHolder_One. Returns the specified
-// element and whether it was found
-func (a InlineHolder_One) Get(fieldName string) (value string, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for InlineHolder_One
-func (a *InlineHolder_One) Set(fieldName string, value string) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]string)
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for InlineHolder_One to handle AdditionalProperties
-func (a *InlineHolder_One) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["b"]; found {
-		err = json.Unmarshal(raw, &a.B)
-		if err != nil {
-			return fmt.Errorf("error reading 'b': %w", err)
-		}
-		delete(object, "b")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]string)
-		for fieldName, fieldBuf := range object {
-			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for InlineHolder_One to handle AdditionalProperties
-func (a InlineHolder_One) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	if a.B != nil {
-		object["b"], err = json.Marshal(a.B)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'b': %w", err)
-		}
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
-		}
-	}
-	return json.Marshal(object)
-}
 
 // Getter for additional properties for Mid. Returns the specified
 // element and whether it was found
@@ -391,414 +132,6 @@ func (a *Mid) UnmarshalJSON(b []byte) error {
 
 // Override default JSON handling for Mid to handle AdditionalProperties
 func (a Mid) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	if a.B != nil {
-		object["b"], err = json.Marshal(a.B)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'b': %w", err)
-		}
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
-		}
-	}
-	return json.Marshal(object)
-}
-
-// Getter for additional properties for Subject. Returns the specified
-// element and whether it was found
-func (a Subject) Get(fieldName string) (value string, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for Subject
-func (a *Subject) Set(fieldName string, value string) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]string)
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for Subject to handle AdditionalProperties
-func (a *Subject) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["b"]; found {
-		err = json.Unmarshal(raw, &a.B)
-		if err != nil {
-			return fmt.Errorf("error reading 'b': %w", err)
-		}
-		delete(object, "b")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]string)
-		for fieldName, fieldBuf := range object {
-			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for Subject to handle AdditionalProperties
-func (a Subject) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	if a.B != nil {
-		object["b"], err = json.Marshal(a.B)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'b': %w", err)
-		}
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
-		}
-	}
-	return json.Marshal(object)
-}
-
-// Getter for additional properties for InlineSubjectResponse. Returns the specified
-// element and whether it was found
-func (a InlineSubjectResponse) Get(fieldName string) (value string, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for InlineSubjectResponse
-func (a *InlineSubjectResponse) Set(fieldName string, value string) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]string)
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for InlineSubjectResponse to handle AdditionalProperties
-func (a *InlineSubjectResponse) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["b"]; found {
-		err = json.Unmarshal(raw, &a.B)
-		if err != nil {
-			return fmt.Errorf("error reading 'b': %w", err)
-		}
-		delete(object, "b")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]string)
-		for fieldName, fieldBuf := range object {
-			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for InlineSubjectResponse to handle AdditionalProperties
-func (a InlineSubjectResponse) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	if a.B != nil {
-		object["b"], err = json.Marshal(a.B)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'b': %w", err)
-		}
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
-		}
-	}
-	return json.Marshal(object)
-}
-
-// Getter for additional properties for InlineSubjectBody. Returns the specified
-// element and whether it was found
-func (a InlineSubjectBody) Get(fieldName string) (value string, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for InlineSubjectBody
-func (a *InlineSubjectBody) Set(fieldName string, value string) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]string)
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for InlineSubjectBody to handle AdditionalProperties
-func (a *InlineSubjectBody) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["b"]; found {
-		err = json.Unmarshal(raw, &a.B)
-		if err != nil {
-			return fmt.Errorf("error reading 'b': %w", err)
-		}
-		delete(object, "b")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]string)
-		for fieldName, fieldBuf := range object {
-			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for InlineSubjectBody to handle AdditionalProperties
-func (a InlineSubjectBody) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	if a.B != nil {
-		object["b"], err = json.Marshal(a.B)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'b': %w", err)
-		}
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
-		}
-	}
-	return json.Marshal(object)
-}
-
-// Getter for additional properties for BodyComponentInlineJSONBody. Returns the specified
-// element and whether it was found
-func (a BodyComponentInlineJSONBody) Get(fieldName string) (value string, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for BodyComponentInlineJSONBody
-func (a *BodyComponentInlineJSONBody) Set(fieldName string, value string) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]string)
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for BodyComponentInlineJSONBody to handle AdditionalProperties
-func (a *BodyComponentInlineJSONBody) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["b"]; found {
-		err = json.Unmarshal(raw, &a.B)
-		if err != nil {
-			return fmt.Errorf("error reading 'b': %w", err)
-		}
-		delete(object, "b")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]string)
-		for fieldName, fieldBuf := range object {
-			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for BodyComponentInlineJSONBody to handle AdditionalProperties
-func (a BodyComponentInlineJSONBody) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	if a.B != nil {
-		object["b"], err = json.Marshal(a.B)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'b': %w", err)
-		}
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
-		}
-	}
-	return json.Marshal(object)
-}
-
-// Getter for additional properties for BodyInlineJSONBody. Returns the specified
-// element and whether it was found
-func (a BodyInlineJSONBody) Get(fieldName string) (value string, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for BodyInlineJSONBody
-func (a *BodyInlineJSONBody) Set(fieldName string, value string) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]string)
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for BodyInlineJSONBody to handle AdditionalProperties
-func (a *BodyInlineJSONBody) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["b"]; found {
-		err = json.Unmarshal(raw, &a.B)
-		if err != nil {
-			return fmt.Errorf("error reading 'b': %w", err)
-		}
-		delete(object, "b")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]string)
-		for fieldName, fieldBuf := range object {
-			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for BodyInlineJSONBody to handle AdditionalProperties
-func (a BodyInlineJSONBody) MarshalJSON() ([]byte, error) {
-	var err error
-	object := make(map[string]json.RawMessage)
-
-	if a.B != nil {
-		object["b"], err = json.Marshal(a.B)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling 'b': %w", err)
-		}
-	}
-
-	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
-		if err != nil {
-			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
-		}
-	}
-	return json.Marshal(object)
-}
-
-// Getter for additional properties for BodyInline200JSONResponseBody. Returns the specified
-// element and whether it was found
-func (a BodyInline200JSONResponseBody) Get(fieldName string) (value string, found bool) {
-	if a.AdditionalProperties != nil {
-		value, found = a.AdditionalProperties[fieldName]
-	}
-	return
-}
-
-// Setter for additional properties for BodyInline200JSONResponseBody
-func (a *BodyInline200JSONResponseBody) Set(fieldName string, value string) {
-	if a.AdditionalProperties == nil {
-		a.AdditionalProperties = make(map[string]string)
-	}
-	a.AdditionalProperties[fieldName] = value
-}
-
-// Override default JSON handling for BodyInline200JSONResponseBody to handle AdditionalProperties
-func (a *BodyInline200JSONResponseBody) UnmarshalJSON(b []byte) error {
-	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
-	if err != nil {
-		return err
-	}
-
-	if raw, found := object["b"]; found {
-		err = json.Unmarshal(raw, &a.B)
-		if err != nil {
-			return fmt.Errorf("error reading 'b': %w", err)
-		}
-		delete(object, "b")
-	}
-
-	if len(object) != 0 {
-		a.AdditionalProperties = make(map[string]string)
-		for fieldName, fieldBuf := range object {
-			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
-			if err != nil {
-				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
-			}
-			a.AdditionalProperties[fieldName] = fieldVal
-		}
-	}
-	return nil
-}
-
-// Override default JSON handling for BodyInline200JSONResponseBody to handle AdditionalProperties
-func (a BodyInline200JSONResponseBody) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
@@ -1801,11 +1134,11 @@ type BodyInlineResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *BodyInline200JSONResponseBody
+	JSON200 *Mid
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r BodyInlineResponse) GetJSON200() *BodyInline200JSONResponseBody {
+func (r BodyInlineResponse) GetJSON200() *Mid {
 	return r.JSON200
 }
 
@@ -2269,7 +1602,7 @@ func ParseBodyInlineResponse(rsp *http.Response) (*BodyInlineResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest BodyInline200JSONResponseBody
+		var dest Mid
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -2639,7 +1972,15 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	return m
 }
 
-type InlineSubjectResponseJSONResponse = InlineSubjectResponse
+type InlineSubjectResponseJSONResponse Mid
+
+func (t InlineSubjectResponseJSONResponse) MarshalJSON() ([]byte, error) {
+	return Mid(t).MarshalJSON()
+}
+
+func (t *InlineSubjectResponseJSONResponse) UnmarshalJSON(b []byte) error {
+	return (*Mid)(t).UnmarshalJSON(b)
+}
 
 type SubjectResponseJSONResponse Subject
 
@@ -2766,7 +2107,15 @@ type BodyInlineResponseObject interface {
 	VisitBodyInlineResponse(w http.ResponseWriter) error
 }
 
-type BodyInline200JSONResponse = BodyInline200JSONResponseBody
+type BodyInline200JSONResponse Mid
+
+func (t BodyInline200JSONResponse) MarshalJSON() ([]byte, error) {
+	return Mid(t).MarshalJSON()
+}
+
+func (t *BodyInline200JSONResponse) UnmarshalJSON(b []byte) error {
+	return (*Mid)(t).UnmarshalJSON(b)
+}
 
 func (response BodyInline200JSONResponse) VisitBodyInlineResponse(w http.ResponseWriter) error {
 

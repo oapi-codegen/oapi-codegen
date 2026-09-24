@@ -59,6 +59,14 @@ type genContext struct {
 	// each composition it hands to the merge.
 	unionEnums bool
 
+	// mergingMadeUp is set while merging an allOf that v3's merge made up
+	// (see madeUp).
+	mergingMadeUp bool
+
+	// madeUp records the allOfs v3's merge makes for positions several
+	// members declare, which the spec doesn't spell out.
+	madeUp map[*openapi3.Schema]bool
+
 	// subschemas holds the allOfs v3's merge makes of the schemas several
 	// members declare for one position, by those schemas, so the same ones
 	// always make the same allOf (see allOfMerge.subschema).
@@ -85,6 +93,7 @@ func newGenContext(nameHint []string) genContext {
 		nameHint:     slices.Clone(nameHint),
 		memberLabels: make(map[*openapi3.SchemaRef]string),
 		subschemas:   make(map[string]*openapi3.SchemaRef),
+		madeUp:       make(map[*openapi3.Schema]bool),
 	}
 }
 
