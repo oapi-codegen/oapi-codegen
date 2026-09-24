@@ -27,9 +27,9 @@ type Holder struct {
 
 // InlineHolder defines model for InlineHolder.
 type InlineHolder struct {
-	List *[][]Item          `json:"list,omitempty"`
-	Map  *map[string][]Item `json:"map,omitempty"`
-	One  *[]Item            `json:"one,omitempty"`
+	List *[]Items          `json:"list,omitempty"`
+	Map  *map[string]Items `json:"map,omitempty"`
+	One  *Items            `json:"one,omitempty"`
 }
 
 // Item defines model for Item.
@@ -41,25 +41,25 @@ type Item struct {
 type Items = []Item
 
 // Subject defines model for Subject.
-type Subject = []Item
+type Subject = Items
 
 // InlineSubjectResponse defines model for InlineSubjectResponse.
-type InlineSubjectResponse = []Item
+type InlineSubjectResponse = Items
 
 // SubjectResponse defines model for SubjectResponse.
 type SubjectResponse = Subject
 
 // InlineSubjectBody defines model for InlineSubjectBody.
-type InlineSubjectBody = []Item
+type InlineSubjectBody = Items
 
 // SubjectBody defines model for SubjectBody.
 type SubjectBody = Subject
 
 // BodyComponentInlineJSONBody defines body for BodyComponentInline for application/json ContentType.
-type BodyComponentInlineJSONBody = []Item
+type BodyComponentInlineJSONBody = Items
 
 // BodyInlineJSONBody defines body for BodyInline for application/json ContentType.
-type BodyInlineJSONBody = []Item
+type BodyInlineJSONBody = Items
 
 // BodyComponentJSONRequestBody defines body for BodyComponent for application/json ContentType.
 type BodyComponentJSONRequestBody = Subject
@@ -1068,11 +1068,11 @@ type BodyInlineResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *[]Item
+	JSON200 *Items
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r BodyInlineResponse) GetJSON200() *[]Item {
+func (r BodyInlineResponse) GetJSON200() *Items {
 	return r.JSON200
 }
 
@@ -1536,7 +1536,7 @@ func ParseBodyInlineResponse(rsp *http.Response) (*BodyInlineResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []Item
+		var dest Items
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1906,7 +1906,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	return m
 }
 
-type InlineSubjectResponseJSONResponse []Item
+type InlineSubjectResponseJSONResponse Items
 
 type SubjectResponseJSONResponse Subject
 
@@ -2025,7 +2025,7 @@ type BodyInlineResponseObject interface {
 	VisitBodyInlineResponse(w http.ResponseWriter) error
 }
 
-type BodyInline200JSONResponse []Item
+type BodyInline200JSONResponse Items
 
 func (response BodyInline200JSONResponse) VisitBodyInlineResponse(w http.ResponseWriter) error {
 

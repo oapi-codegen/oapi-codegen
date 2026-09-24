@@ -56,6 +56,12 @@ type Schema struct {
 
 	// The original OpenAPIv3 Schema.
 	OAPISchema *openapi3.Schema
+
+	// aliasOf is the OpenAPI schema of the type this schema is an alias of,
+	// when an allOf generated as another type, such as the $ref in
+	// `allOf: [$ref X, {description: ...}]`. OAPISchema is the allOf itself.
+	// schema-merging-behavior v3 sets it; generatesMarshalJSON follows it.
+	aliasOf *openapi3.Schema
 }
 
 // IsPrimitive returns true if the schema represents a primitive OpenAPI type
@@ -114,11 +120,19 @@ func (s Schema) generatesMarshalJSON() bool {
 		return false
 	}
 	target, err := GenerateGoSchema(&openapi3.SchemaRef{Value: s.OAPISchema}, []string{s.TypeDecl()})
-	if err != nil {
-		return false
-	}
-	if wrapped, ok := target.goTypeNameWrapper(); ok {
-		target = wrapped
+	// An allOf can generate as an alias of another type, whose flags live on
+	// that type's own schema: follow the aliases to it.
+	for range 16 {
+		if err != nil {
+			return false
+		}
+		if wrapped, ok := target.goTypeNameWrapper(); ok {
+			target = wrapped
+		}
+		if len(target.UnionElements) > 0 || target.HasAdditionalProperties || target.aliasOf == nil {
+			break
+		}
+		target, err = GenerateGoSchema(&openapi3.SchemaRef{Value: target.aliasOf}, []string{s.TypeDecl()})
 	}
 	return len(target.UnionElements) > 0 || target.HasAdditionalProperties
 }

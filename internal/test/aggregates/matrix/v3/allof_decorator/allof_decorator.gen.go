@@ -27,15 +27,9 @@ type Holder struct {
 
 // InlineHolder defines model for InlineHolder.
 type InlineHolder struct {
-	List *[]struct {
-		Name string `json:"name"`
-	} `json:"list,omitempty"`
-	Map *map[string]struct {
-		Name string `json:"name"`
-	} `json:"map,omitempty"`
-	One *struct {
-		Name string `json:"name"`
-	} `json:"one,omitempty"`
+	List *[]Named          `json:"list,omitempty"`
+	Map  *map[string]Named `json:"map,omitempty"`
+	One  *Named            `json:"one,omitempty"`
 }
 
 // Named defines model for Named.
@@ -44,41 +38,31 @@ type Named struct {
 }
 
 // Subject defines model for Subject.
-type Subject struct {
-	Name string `json:"name"`
-}
+type Subject = Named
 
 // InlineSubjectResponse defines model for InlineSubjectResponse.
-type InlineSubjectResponse struct {
-	Name string `json:"name"`
-}
+type InlineSubjectResponse = Named
 
 // SubjectResponse defines model for SubjectResponse.
 type SubjectResponse = Subject
 
 // InlineSubjectBody defines model for InlineSubjectBody.
-type InlineSubjectBody struct {
-	Name string `json:"name"`
-}
+type InlineSubjectBody = Named
 
 // SubjectBody defines model for SubjectBody.
 type SubjectBody = Subject
 
 // BodyComponentInlineJSONBody defines body for BodyComponentInline for application/json ContentType.
-type BodyComponentInlineJSONBody struct {
-	Name string `json:"name"`
-}
+type BodyComponentInlineJSONBody = Named
 
 // BodyInlineJSONBody defines body for BodyInline for application/json ContentType.
-type BodyInlineJSONBody struct {
-	Name string `json:"name"`
-}
+type BodyInlineJSONBody = Named
 
 // BodyComponentJSONRequestBody defines body for BodyComponent for application/json ContentType.
 type BodyComponentJSONRequestBody = Subject
 
 // BodyComponentInlineJSONRequestBody defines body for BodyComponentInline for application/json ContentType.
-type BodyComponentInlineJSONRequestBody BodyComponentInlineJSONBody
+type BodyComponentInlineJSONRequestBody = BodyComponentInlineJSONBody
 
 // BodyDefaultJSONRequestBody defines body for BodyDefault for application/json ContentType.
 type BodyDefaultJSONRequestBody = Subject
@@ -87,7 +71,7 @@ type BodyDefaultJSONRequestBody = Subject
 type BodyHeadersJSONRequestBody = Subject
 
 // BodyInlineJSONRequestBody defines body for BodyInline for application/json ContentType.
-type BodyInlineJSONRequestBody BodyInlineJSONBody
+type BodyInlineJSONRequestBody = BodyInlineJSONBody
 
 // BodyRefJSONRequestBody defines body for BodyRef for application/json ContentType.
 type BodyRefJSONRequestBody = Subject
@@ -1081,15 +1065,11 @@ type BodyInlineResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *struct {
-		Name string `json:"name"`
-	}
+	JSON200 *Named
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r BodyInlineResponse) GetJSON200() *struct {
-	Name string `json:"name"`
-} {
+func (r BodyInlineResponse) GetJSON200() *Named {
 	return r.JSON200
 }
 
@@ -1553,9 +1533,7 @@ func ParseBodyInlineResponse(rsp *http.Response) (*BodyInlineResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			Name string `json:"name"`
-		}
+		var dest Named
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1925,9 +1903,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	return m
 }
 
-type InlineSubjectResponseJSONResponse struct {
-	Name string `json:"name"`
-}
+type InlineSubjectResponseJSONResponse Named
 
 type SubjectResponseJSONResponse Subject
 
@@ -2046,9 +2022,7 @@ type BodyInlineResponseObject interface {
 	VisitBodyInlineResponse(w http.ResponseWriter) error
 }
 
-type BodyInline200JSONResponse struct {
-	Name string `json:"name"`
-}
+type BodyInline200JSONResponse Named
 
 func (response BodyInline200JSONResponse) VisitBodyInlineResponse(w http.ResponseWriter) error {
 

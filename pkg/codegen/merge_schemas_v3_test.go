@@ -700,11 +700,10 @@ func TestMergeSchemasV3Properties(t *testing.T) {
         - properties:
             next: {nullable: true}
 `, withV3)
-		// next is an allOf of Node and {nullable: true}, generated as a type of
-		// its own that refers to itself.
+		// next is an allOf of Node and {nullable: true}, which only annotates
+		// Node: it is Node.
 		assert.Contains(t, code, "type Node struct {")
-		assertField(t, code, "Next", "*Node_Next")
-		assert.Contains(t, code, "type Node_Next struct {")
+		assertField(t, code, "Next", "*Node")
 	})
 
 	t.Run("the same $ref with extensions of its own stays that $ref", func(t *testing.T) {
@@ -747,7 +746,7 @@ func TestMergeSchemasV3Properties(t *testing.T) {
             next: {nullable: true}
 `, withV3)
 		assert.Contains(t, code, "type Node struct {")
-		assert.Contains(t, code, "Second *Node_Next")
+		assertField(t, code, "Second", "*Node")
 	})
 
 	t.Run("recursive compositions still generate", func(t *testing.T) {
@@ -788,6 +787,10 @@ func TestEnumMergeExtensionV3(t *testing.T) {
       allOf:
         - $ref: '#/components/schemas/ExtendedStatus'
         - description: A decorated ExtendedStatus.
+    Narrowed:
+      allOf:
+        - $ref: '#/components/schemas/ExtendedStatus'
+        - enum: [inactive, archived]
     Holder:
       type: object
       properties:
@@ -810,12 +813,14 @@ func TestEnumMergeExtensionV3(t *testing.T) {
 `, withV3)
 		for typeName, why := range map[string]string{
 			"ExtendedStatus": "a component",
-			"Decorated":      "decorating the composition keeps its values",
 			"HolderStatus":   "a property that is a composition",
 			"PatchStatus":    "a property a member refines, where the extension is on the member's property",
 		} {
 			assert.ElementsMatch(t, []string{"active", "inactive", "archived"}, enumValues(t, code, typeName), why)
 		}
+		assert.Contains(t, code, "type Decorated = ExtendedStatus")
+		assert.ElementsMatch(t, []string{"inactive", "archived"}, enumValues(t, code, "Narrowed"),
+			"merging the union composition with another enum starts from its values")
 	})
 
 	t.Run("intersection is the default", func(t *testing.T) {

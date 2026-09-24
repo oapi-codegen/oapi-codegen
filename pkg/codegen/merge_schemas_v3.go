@@ -30,7 +30,14 @@ func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 		return Schema{}, err
 	}
 	if opaque != nil {
-		return generateAnnotatedOpaque(ctx, opaque, allOf, path)
+		return generateAnnotated(ctx, opaque, allOf, path)
+	}
+
+	// Likewise a $ref that the other members only annotate, the way OpenAPI
+	// 3.0 puts anything next to a $ref: `allOf: [$ref A, {nullable: true}]`
+	// is A, not a copy of A.
+	if member := annotatedRefMember(ctx, allOf); member != nil {
+		return generateAnnotated(ctx, member, allOf, path)
 	}
 
 	// Distinguish two uses of allOf:
@@ -205,15 +212,26 @@ func isRefInExternalDocument(ref string) bool {
 }
 
 // opaqueSchemaFor returns the opaque schema (see isOpaqueSchema) an allOf member
-// stands for, or nil. That is the member itself when it is opaque, and
-// otherwise the opaque member of an allOf that the member is, when that allOf
-// only annotates it: such a member generates as the opaque schema's type, so
-// it is just as opaque.
+// stands for, or nil (see standsFor).
 func opaqueSchemaFor(ref *openapi3.SchemaRef, seen map[*openapi3.Schema]bool) *openapi3.SchemaRef {
+	return standsFor(ref, seen, isOpaqueSchema)
+}
+
+// refSchemaFor returns the $ref an allOf member stands for, or nil (see
+// standsFor).
+func refSchemaFor(ref *openapi3.SchemaRef) *openapi3.SchemaRef {
+	return standsFor(ref, nil, func(r *openapi3.SchemaRef) bool { return r.Ref != "" })
+}
+
+// standsFor returns the schema an allOf member stands for, when that is one
+// is reports true for, or nil. That is the member itself, or else the member
+// of an allOf that the member is, when that allOf only annotates it: such a
+// member generates as that schema's type.
+func standsFor(ref *openapi3.SchemaRef, seen map[*openapi3.Schema]bool, is func(*openapi3.SchemaRef) bool) *openapi3.SchemaRef {
 	if ref == nil {
 		return nil
 	}
-	if isOpaqueSchema(ref) {
+	if is(ref) {
 		return ref
 	}
 	s := ref.Value
@@ -225,7 +243,7 @@ func opaqueSchemaFor(ref *openapi3.SchemaRef, seen map[*openapi3.Schema]bool) *o
 	}
 	seen[s] = true
 	for _, m := range s.AllOf {
-		target := opaqueSchemaFor(m, seen)
+		target := standsFor(m, seen, is)
 		if target == nil {
 			continue
 		}
@@ -237,6 +255,81 @@ func opaqueSchemaFor(ref *openapi3.SchemaRef, seen map[*openapi3.Schema]bool) *o
 		return target
 	}
 	return nil
+}
+
+// annotatedRefMember returns the member of allOf that stands for a $ref (see
+// refSchemaFor) when every other member only annotates that $ref, or nil.
+//
+// At the top of a component schema the composition would then be defined as
+// an alias of the $ref. When the $ref leads back to the component, through
+// compositions that are aliases in turn, that alias would be an alias of
+// itself, which Go rejects, so such a composition is merged instead.
+func annotatedRefMember(ctx genContext, allOf []*openapi3.SchemaRef) *openapi3.SchemaRef {
+	for _, m := range allOf {
+		target := refSchemaFor(m)
+		if target == nil {
+			continue
+		}
+		for _, other := range allOf {
+			if other != m && !annotatesRef(other, target) {
+				return nil
+			}
+		}
+		if ctx.rootPosition && aliasesBack(ctx, target) {
+			return nil
+		}
+		return m
+	}
+	return nil
+}
+
+// annotatesRef reports whether an allOf member only annotates target, a $ref:
+// it annotates only (see annotatesOnly), or it also restates the type target
+// has, as in `allOf: [$ref A, {type: object, description: ...}]`.
+func annotatesRef(member, target *openapi3.SchemaRef) bool {
+	if annotatesOnly(member) {
+		return true
+	}
+	if member == nil || member.Ref != "" || member.Value == nil || target.Value == nil {
+		return false
+	}
+	if _, ok := member.Value.Extensions[extPropGoType]; ok {
+		return false
+	}
+	if !slices.Equal(typeKeywords(*member.Value), []string{"type"}) {
+		return false
+	}
+	restated, declared := nonNullTypes(member.Value.Type), nonNullTypes(target.Value.Type)
+	return len(declared) == len(restated) && len(intersectTypes(declared, restated)) == len(declared)
+}
+
+// aliasesBack reports whether target, a $ref an alias is about to be defined
+// as, is a composition being generated, or is an alias of one: a composition
+// that is a single $ref, or a $ref its other members only annotate.
+func aliasesBack(ctx genContext, target *openapi3.SchemaRef) bool {
+	for range 32 {
+		s := target.Value
+		if s == nil {
+			return false
+		}
+		if _, ok := ctx.inProgress[s]; ok {
+			return true
+		}
+		if len(s.AllOf) == 0 || hasStructuralSiblingsV3(s) {
+			return false
+		}
+		var next *openapi3.SchemaRef
+		if len(s.AllOf) == 1 {
+			next = refSchemaFor(s.AllOf[0])
+		} else if m := annotatedRefMember(genContext{}, s.AllOf); m != nil {
+			next = refSchemaFor(m)
+		}
+		if next == nil {
+			return false
+		}
+		target = next
+	}
+	return true
 }
 
 // opaqueSchemaWithin returns an opaque schema (see isOpaqueSchema) that
@@ -296,10 +389,11 @@ func opaqueMember(allOf []*openapi3.SchemaRef) (*openapi3.SchemaRef, error) {
 	return nil, nil
 }
 
-// generateAnnotatedOpaque generates an allOf of an opaque member and members that
-// only annotate it: the opaque member's type. Nullability needs nothing here,
-// since schemaIsNullable finds a nullable member wherever the type is used.
-func generateAnnotatedOpaque(ctx genContext, opaque *openapi3.SchemaRef, allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+// generateAnnotated generates an allOf of a member, opaque or a $ref, and
+// members that only annotate it: the member's type. Nullability needs nothing
+// here, since schemaIsNullable finds a nullable member wherever the type is
+// used.
+func generateAnnotated(ctx genContext, opaque *openapi3.SchemaRef, allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	out, err := generateGoSchema(ctx, opaque, path)
 	if err != nil {
 		return Schema{}, err
@@ -1094,6 +1188,12 @@ func generateAllOfV3(ctx genContext, schema *openapi3.Schema, path []string, ext
 	}
 	if err != nil {
 		return Schema{}, fmt.Errorf("error merging schemas: %w", err)
+	}
+	// The composition generated as an alias of another type, such as a $ref
+	// its other members only annotate: remember that type's schema, which
+	// OAPISchema no longer points to, for generatesMarshalJSON.
+	if mergedSchema.DefineViaAlias && mergedSchema.OAPISchema != nil && mergedSchema.OAPISchema != schema {
+		mergedSchema.aliasOf = mergedSchema.OAPISchema
 	}
 	mergedSchema.OAPISchema = schema
 	// Description is metadata, not a structural constraint, so it
