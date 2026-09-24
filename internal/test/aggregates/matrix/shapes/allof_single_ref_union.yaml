@@ -1,9 +1,10 @@
 versions: [v1, v2, v3]
 broken:
-  v1: >-
-    v1 embeds Either in an unnamed struct. Before Go 1.27, encoding/json
-    doesn't call Either's UnmarshalJSON for list and map elements of such a
-    struct, so their union data is lost.
+  v1:
+    holder-inline: >-
+      v1 embeds Either in an unnamed struct. Before Go 1.27, encoding/json
+      doesn't call Either's UnmarshalJSON for list and map elements of such a
+      struct, so their union data is lost.
 description: >-
   allOf over a single $ref to a oneOf. The composition is an alias of the
   union type, and keeps its generated MarshalJSON: at a strict-server

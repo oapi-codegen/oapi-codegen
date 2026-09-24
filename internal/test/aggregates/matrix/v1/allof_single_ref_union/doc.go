@@ -10,7 +10,8 @@
 // a regression: code that generated and worked before must keep doing so. A
 // commit that changes them must say why.
 //
-// The round trips are skipped: v1 embeds Either in an unnamed struct. Before Go 1.27, encoding/json doesn't call Either's UnmarshalJSON for list and map elements of such a struct, so their union data is lost.
+// The round trips are skipped at these positions:
+//   - holder-inline: v1 embeds Either in an unnamed struct. Before Go 1.27, encoding/json doesn't call Either's UnmarshalJSON for list and map elements of such a struct, so their union data is lost.
 package matrixv1allofsinglerefunion
 
 //go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml spec.yaml

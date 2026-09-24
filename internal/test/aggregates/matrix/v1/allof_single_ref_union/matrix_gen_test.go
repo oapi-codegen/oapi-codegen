@@ -116,7 +116,7 @@ func sampleName(i int, s string) string {
 }
 
 func TestMatrixSubject(t *testing.T) {
-	t.Skip("v1 embeds Either in an unnamed struct. Before Go 1.27, encoding/json doesn't call Either's UnmarshalJSON for list and map elements of such a struct, so their union data is lost.")
+
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
 			var v Subject
@@ -128,7 +128,7 @@ func TestMatrixSubject(t *testing.T) {
 	}
 }
 func TestMatrixHolder(t *testing.T) {
-	t.Skip("v1 embeds Either in an unnamed struct. Before Go 1.27, encoding/json doesn't call Either's UnmarshalJSON for list and map elements of such a struct, so their union data is lost.")
+
 	sample := holderSample(t)
 	var v Holder
 	require.NoError(t, json.Unmarshal([]byte(sample), &v))
@@ -154,7 +154,7 @@ func TestMatrixHolderInline(t *testing.T) {
 	check(t, sample, resp.StatusCode(), resp.Body, resp.JSON200)
 }
 func TestMatrixBodyRef(t *testing.T) {
-	t.Skip("v1 embeds Either in an unnamed struct. Before Go 1.27, encoding/json doesn't call Either's UnmarshalJSON for list and map elements of such a struct, so their union data is lost.")
+
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
@@ -167,7 +167,7 @@ func TestMatrixBodyRef(t *testing.T) {
 	}
 }
 func TestMatrixBodyInline(t *testing.T) {
-	t.Skip("v1 embeds Either in an unnamed struct. Before Go 1.27, encoding/json doesn't call Either's UnmarshalJSON for list and map elements of such a struct, so their union data is lost.")
+
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
@@ -180,7 +180,7 @@ func TestMatrixBodyInline(t *testing.T) {
 	}
 }
 func TestMatrixBodyComponent(t *testing.T) {
-	t.Skip("v1 embeds Either in an unnamed struct. Before Go 1.27, encoding/json doesn't call Either's UnmarshalJSON for list and map elements of such a struct, so their union data is lost.")
+
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
@@ -193,7 +193,7 @@ func TestMatrixBodyComponent(t *testing.T) {
 	}
 }
 func TestMatrixBodyComponentInline(t *testing.T) {
-	t.Skip("v1 embeds Either in an unnamed struct. Before Go 1.27, encoding/json doesn't call Either's UnmarshalJSON for list and map elements of such a struct, so their union data is lost.")
+
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
@@ -206,7 +206,7 @@ func TestMatrixBodyComponentInline(t *testing.T) {
 	}
 }
 func TestMatrixBodyDefault(t *testing.T) {
-	t.Skip("v1 embeds Either in an unnamed struct. Before Go 1.27, encoding/json doesn't call Either's UnmarshalJSON for list and map elements of such a struct, so their union data is lost.")
+
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
@@ -219,7 +219,7 @@ func TestMatrixBodyDefault(t *testing.T) {
 	}
 }
 func TestMatrixBodyHeaders(t *testing.T) {
-	t.Skip("v1 embeds Either in an unnamed struct. Before Go 1.27, encoding/json doesn't call Either's UnmarshalJSON for list and map elements of such a struct, so their union data is lost.")
+
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
