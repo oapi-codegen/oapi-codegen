@@ -1,0 +1,24 @@
+versions: [v2]
+description: >-
+  allOf over a $ref to a schema that has properties of its own next to an
+  allOf of its own. Merging it has to keep both.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Mid'
+    - type: object
+      properties:
+        c: {type: string}
+components:
+  Named:
+    type: object
+    required: [name]
+    properties:
+      name: {type: string}
+  Mid:
+    type: object
+    properties:
+      b: {type: string}
+    allOf:
+      - $ref: '#/components/schemas/Named'
+samples:
+  - '{"name": "rex", "b": "x", "c": "y"}'

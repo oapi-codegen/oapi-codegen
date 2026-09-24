@@ -6,6 +6,7 @@ package codegen
 // that changes them must say why.
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -449,4 +450,138 @@ func TestPropagateRemoteRefsLeavesForeignRefsAlone(t *testing.T) {
 	assert.Equal(t, "./other.yaml#/components/schemas/Foreign", foreign.Ref)
 	assert.Equal(t, "#/components/schemas/Inner", foreignBody.Properties["inner"].Ref,
 		"a foreign schema's body must not be re-qualified for the document being flattened")
+}
+
+// TestNestedOwnPropertiesV2: a member that declares properties next to an
+// allOf of its own keeps them when it is merged into another allOf, and
+// adding them changes no field that was already generated.
+func TestNestedOwnPropertiesV2(t *testing.T) {
+	const spec = `openapi: 3.0.3
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Named:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string}
+    Mid:
+      type: object
+      required: [b]
+      properties:
+        b: {type: string}
+      allOf:
+        - $ref: '#/components/schemas/Named'
+    Subject:
+      allOf:
+        - $ref: '#/components/schemas/Mid'
+        - properties:
+            c: {type: string}
+    Earlier:
+      allOf:
+        - properties:
+            b: {type: integer}
+        - $ref: '#/components/schemas/Mid'
+    Items:
+      allOf:
+        - type: array
+          items: {$ref: '#/components/schemas/Mid'}
+        - type: array
+          items:
+            properties:
+              c: {type: string}
+`
+	code := generateSpec(t, spec, func(c *Configuration) { c.Compatibility.SchemaMergingBehavior = SchemaMergingV2 })
+	subject := code[strings.Index(code, "type Subject struct"):]
+	assertField(t, subject, "B", "string")
+	assertField(t, subject, "C", "*string")
+	assertField(t, subject, "Name", "string")
+
+	earlier := code[strings.Index(code, "type Earlier struct"):]
+	assertField(t, earlier, "B", "*int")
+
+	assert.Regexp(t, `type Items = \[\]struct \{\n\tB    string`, code)
+
+	old := generateSpec(t, spec, func(c *Configuration) { c.Compatibility.OldAllOfSiblingMerging = true })
+	assert.NotRegexp(t, `type Subject struct \{\n\tB `, old, "old-allof-sibling-merging keeps its output")
+}
+
+// TestNestedOwnPropertiesV2Order: when several members' dropped declarations
+// name the same property, the later one wins, as in the rest of the merge, and
+// the property is required when any of them requires it.
+func TestNestedOwnPropertiesV2Order(t *testing.T) {
+	const spec = `openapi: 3.0.3
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Named:
+      type: object
+      properties:
+        name: {type: string}
+    First:
+      properties:
+        b: {type: string}
+      allOf:
+        - $ref: '#/components/schemas/Named'
+    Second:
+      required: [b]
+      properties:
+        b: {type: integer}
+      allOf:
+        - $ref: '#/components/schemas/Named'
+    Subject:
+      allOf:
+        - $ref: '#/components/schemas/First'
+        - $ref: '#/components/schemas/Second'
+`
+	code := generateSpec(t, spec)
+	assertField(t, code[strings.Index(code, "type Subject struct"):], "B", "int")
+}
+
+// TestNestedOwnPropertiesV2KeepsTypeKinds: a merge without properties is a
+// map or a union, and gets no properties, which would make it a struct.
+func TestNestedOwnPropertiesV2KeepsTypeKinds(t *testing.T) {
+	const spec = `openapi: 3.0.3
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    MidMap:
+      type: object
+      properties:
+        b: {type: string}
+      allOf:
+        - additionalProperties: {type: string}
+    SubjectMap:
+      allOf:
+        - $ref: '#/components/schemas/MidMap'
+        - description: A map.
+    MidEmpty:
+      type: object
+      properties:
+        b: {type: string}
+      allOf:
+        - type: object
+    SubjectEmpty:
+      allOf:
+        - $ref: '#/components/schemas/MidEmpty'
+        - type: object
+    MidUnion:
+      properties:
+        b: {type: string}
+      allOf:
+        - oneOf:
+            - {type: string}
+            - {type: integer}
+    SubjectUnion:
+      allOf:
+        - $ref: '#/components/schemas/MidUnion'
+        - description: A union.
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "type SubjectMap map[string]string")
+	assert.Contains(t, code, "type SubjectEmpty = map[string]any")
+	assert.Contains(t, code, "type SubjectUnion struct {\n\tunion json.RawMessage\n}")
 }

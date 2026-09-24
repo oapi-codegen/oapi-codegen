@@ -89,6 +89,9 @@ func mergeSchemasV2(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
 	}
+	if err := addNestedOwnPropertiesV2(&schema, allOf); err != nil {
+		return Schema{}, err
+	}
 
 	if !decoratorIdiom {
 		// Drop only the type-identity directives. Other extensions
@@ -539,7 +542,84 @@ func mergeItemsV2(i1, i2 *openapi3.SchemaRef, seenSchemaRef map[string]bool) (*o
 	if err != nil {
 		return nil, fmt.Errorf("error merging array items: %w", err)
 	}
+	if err := addNestedOwnPropertiesV2(&merged, []*openapi3.SchemaRef{i1, i2}); err != nil {
+		return nil, err
+	}
 	return openapi3.NewSchemaRef("", &merged), nil
+}
+
+// addNestedOwnPropertiesV2 adds to schema, the merge of allOf, the properties
+// that a member declares next to an allOf of its own, at any depth.
+// mergeOpenapiSchemasV2 replaces such a member with the merge of its allOf,
+// which loses them: allOf over a $ref to `{properties: {b}, allOf: [$ref
+// Named]}` generated a struct without b.
+//
+// The fix only adds fields to a struct that already has some:
+//   - Only properties that schema doesn't have are added. Where another member
+//     declares the same property, its schema won before and still does.
+//   - Where several of the dropped declarations name the same property, the
+//     later one wins, as in the merge. A member's own properties come after
+//     its allOf's, the way the schema's own properties are merged last.
+//   - An added property is required when any of the dropped declarations
+//     requires it. Their required lists don't touch properties that were
+//     already there, which would turn optional fields into required ones.
+//   - Nothing is added to a schema without properties: v2 generates that as a
+//     map, from additionalProperties, or as a union, and adding a property
+//     would turn it into a struct.
+//   - Nothing is added under old-allof-sibling-merging, which keeps the output
+//     that discards a schema's own properties next to its allOf.
+func addNestedOwnPropertiesV2(schema *openapi3.Schema, allOf []*openapi3.SchemaRef) error {
+	if globalState.options.Compatibility.OldAllOfSiblingMerging || len(schema.Properties) == 0 {
+		return nil
+	}
+	added := make(map[string]*openapi3.SchemaRef)
+	required := make(map[string]bool)
+	seen := make(map[string]bool)
+	var visit func(ref *openapi3.SchemaRef) error
+	visit = func(ref *openapi3.SchemaRef) error {
+		if ref == nil || ref.Value == nil {
+			return nil
+		}
+		if ref.Ref != "" {
+			if seen[ref.Ref] {
+				return nil
+			}
+			seen[ref.Ref] = true
+		}
+		v, err := valueWithPropagatedRefV2(ref)
+		if err != nil {
+			return err
+		}
+		if len(v.AllOf) == 0 {
+			return nil
+		}
+		for _, m := range v.AllOf {
+			if err := visit(m); err != nil {
+				return err
+			}
+		}
+		for name, p := range v.Properties {
+			if _, ok := schema.Properties[name]; !ok {
+				added[name] = p
+			}
+		}
+		for _, name := range v.Required {
+			required[name] = true
+		}
+		return nil
+	}
+	for _, m := range allOf {
+		if err := visit(m); err != nil {
+			return err
+		}
+	}
+	for _, name := range SortedMapKeys(added) {
+		schema.Properties[name] = added[name]
+		if required[name] && !slices.Contains(schema.Required, name) {
+			schema.Required = append(slices.Clone(schema.Required), name)
+		}
+	}
+	return nil
 }
 
 // hasStructuralSiblingsV2 reports whether a schema with allOf also carries
