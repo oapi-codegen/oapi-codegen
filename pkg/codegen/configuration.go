@@ -527,6 +527,13 @@ type OutputOptions struct {
 	// SkipResponseBodyGetters decides whether to generate getter methods for response bodies.
 	SkipResponseBodyGetters bool `yaml:"skip-response-body-getters,omitempty"`
 
+	// DefaultResponseError decides whether the generated response parsing
+	// function adds a `default:` case that returns an error for a response
+	// whose status code and content type are not matched by any declared case.
+	// When false (the default) such a response is returned with no error, as
+	// before.
+	DefaultResponseError bool `yaml:"default-response-error,omitempty"`
+
 	// NameNormalizer is the method used to normalize Go names and types, for instance converting the text `MyApi` to `MyAPI`. Corresponds with the constants defined for `codegen.NameNormalizerFunction`
 	NameNormalizer string `yaml:"name-normalizer,omitempty"`
 
