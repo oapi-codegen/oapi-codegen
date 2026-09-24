@@ -16,6 +16,7 @@ components:
     required: [id]
     properties:
       id: {type: string}
+      label: {type: string}
   Cat:
     allOf:
       - $ref: '#/components/schemas/Base'
@@ -32,4 +33,4 @@ components:
           bark: {type: string}
 samples:
   - '{"id": "cat-1", "meow": "purr"}'
-  - '{"id": "dog-1", "bark": "woof"}'
+  - '{"id": "dog-1", "label": "rex", "bark": "woof"}'

@@ -22,6 +22,11 @@ import (
 // Bound defines model for Bound.
 type Bound map[string]any
 
+// Id defines model for Id.
+type Id struct {
+	Value *string `json:"value,omitempty"`
+}
+
 // IntOrString defines model for IntOrString.
 type IntOrString struct {
 	union json.RawMessage
@@ -32,6 +37,51 @@ type IntOrString0 = int
 
 // IntOrString1 defines model for IntOrString.1.
 type IntOrString1 = string
+
+// Filter0 defines model for Filter.0.
+type Filter0 = int
+
+// Filter1 defines model for Filter.1.
+type Filter1 = string
+
+// Filter defines model for Filter.
+type Filter struct {
+	union json.RawMessage
+}
+
+// GetItemParams defines parameters for GetItem.
+type GetItemParams struct {
+	Filter  *Filter               `form:"filter,omitempty" json:"filter,omitempty"`
+	Session *GetItemParamsSession `form:"session,omitempty" json:"session,omitempty"`
+}
+
+// GetItemParamsFilter0 defines parameters for GetItem.
+type GetItemParamsFilter0 = int
+
+// GetItemParamsFilter1 defines parameters for GetItem.
+type GetItemParamsFilter1 = string
+
+// GetItemParamsSession0 defines parameters for GetItem.
+type GetItemParamsSession0 = int
+
+// GetItemParamsSession1 defines parameters for GetItem.
+type GetItemParamsSession1 = bool
+
+// GetItemParamsSession defines parameters for GetItem.
+type GetItemParamsSession struct {
+	union json.RawMessage
+}
+
+// Id0 defines parameters for GetItem.
+type Id0 = int
+
+// Id1 defines parameters for GetItem.
+type Id1 = string
+
+// IdParam defines parameters for GetItem.
+type IdParam struct {
+	union json.RawMessage
+}
 
 // GetThingParams defines parameters for GetThing.
 type GetThingParams struct {
@@ -126,8 +176,8 @@ func (t *IntOrString) MergeIntOrString1(v IntOrString1) error {
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is exactly a JSON
-// integer, with nothing around it, is taken as one; anything else is a string.
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON integer, with nothing around it, is taken as one; anything else is a string.
 func (t *IntOrString) UnmarshalText(text []byte) error {
 	var value any
 	decoder := json.NewDecoder(bytes.NewReader(text))
@@ -159,6 +209,275 @@ func (t IntOrString) MarshalJSON() ([]byte, error) {
 }
 
 func (t *IntOrString) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsFilter0 returns the union data inside the Filter as a Filter0
+func (t Filter) AsFilter0() (Filter0, error) {
+	var body Filter0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFilter0 overwrites any union data inside the Filter as the provided Filter0
+func (t *Filter) FromFilter0(v Filter0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeFilter0 performs a merge with any union data inside the Filter, using the provided Filter0
+func (t *Filter) MergeFilter0(v Filter0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsFilter1 returns the union data inside the Filter as a Filter1
+func (t Filter) AsFilter1() (Filter1, error) {
+	var body Filter1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFilter1 overwrites any union data inside the Filter as the provided Filter1
+func (t *Filter) FromFilter1(v Filter1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeFilter1 performs a merge with any union data inside the Filter, using the provided Filter1
+func (t *Filter) MergeFilter1(v Filter1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON integer, with nothing around it, is taken as one; anything else is a string.
+func (t *Filter) UnmarshalText(text []byte) error {
+	var value any
+	decoder := json.NewDecoder(bytes.NewReader(text))
+	decoder.UseNumber()
+	if len(bytes.TrimSpace(text)) == len(text) && json.Valid(text) && decoder.Decode(&value) == nil {
+		if number, ok := value.(json.Number); ok {
+			if _, err := number.Int64(); err == nil {
+				t.union = json.RawMessage(number.String())
+				return nil
+			}
+		}
+	}
+	b, err := json.Marshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *Filter) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
+}
+
+func (t Filter) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Filter) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsGetItemParamsSession0 returns the union data inside the GetItemParamsSession as a GetItemParamsSession0
+func (t GetItemParamsSession) AsGetItemParamsSession0() (GetItemParamsSession0, error) {
+	var body GetItemParamsSession0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromGetItemParamsSession0 overwrites any union data inside the GetItemParamsSession as the provided GetItemParamsSession0
+func (t *GetItemParamsSession) FromGetItemParamsSession0(v GetItemParamsSession0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeGetItemParamsSession0 performs a merge with any union data inside the GetItemParamsSession, using the provided GetItemParamsSession0
+func (t *GetItemParamsSession) MergeGetItemParamsSession0(v GetItemParamsSession0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsGetItemParamsSession1 returns the union data inside the GetItemParamsSession as a GetItemParamsSession1
+func (t GetItemParamsSession) AsGetItemParamsSession1() (GetItemParamsSession1, error) {
+	var body GetItemParamsSession1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromGetItemParamsSession1 overwrites any union data inside the GetItemParamsSession as the provided GetItemParamsSession1
+func (t *GetItemParamsSession) FromGetItemParamsSession1(v GetItemParamsSession1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeGetItemParamsSession1 performs a merge with any union data inside the GetItemParamsSession, using the provided GetItemParamsSession1
+func (t *GetItemParamsSession) MergeGetItemParamsSession1(v GetItemParamsSession1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON boolean integer, with nothing around it, is taken as one; anything else is an error.
+func (t *GetItemParamsSession) UnmarshalText(text []byte) error {
+	var value any
+	decoder := json.NewDecoder(bytes.NewReader(text))
+	decoder.UseNumber()
+	if len(bytes.TrimSpace(text)) == len(text) && json.Valid(text) && decoder.Decode(&value) == nil {
+		if _, ok := value.(bool); ok {
+			t.union = append(json.RawMessage(nil), text...)
+			return nil
+		}
+		if number, ok := value.(json.Number); ok {
+			if _, err := number.Int64(); err == nil {
+				t.union = json.RawMessage(number.String())
+				return nil
+			}
+		}
+	}
+	return fmt.Errorf("%q is not a valid GetItemParamsSession", text)
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *GetItemParamsSession) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
+}
+
+func (t GetItemParamsSession) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *GetItemParamsSession) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsId0 returns the union data inside the IdParam as a Id0
+func (t IdParam) AsId0() (Id0, error) {
+	var body Id0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromId0 overwrites any union data inside the IdParam as the provided Id0
+func (t *IdParam) FromId0(v Id0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeId0 performs a merge with any union data inside the IdParam, using the provided Id0
+func (t *IdParam) MergeId0(v Id0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsId1 returns the union data inside the IdParam as a Id1
+func (t IdParam) AsId1() (Id1, error) {
+	var body Id1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromId1 overwrites any union data inside the IdParam as the provided Id1
+func (t *IdParam) FromId1(v Id1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeId1 performs a merge with any union data inside the IdParam, using the provided Id1
+func (t *IdParam) MergeId1(v Id1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON integer, with nothing around it, is taken as one; anything else is a string.
+func (t *IdParam) UnmarshalText(text []byte) error {
+	var value any
+	decoder := json.NewDecoder(bytes.NewReader(text))
+	decoder.UseNumber()
+	if len(bytes.TrimSpace(text)) == len(text) && json.Valid(text) && decoder.Decode(&value) == nil {
+		if number, ok := value.(json.Number); ok {
+			if _, err := number.Int64(); err == nil {
+				t.union = json.RawMessage(number.String())
+				return nil
+			}
+		}
+	}
+	b, err := json.Marshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *IdParam) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
+}
+
+func (t IdParam) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *IdParam) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -216,8 +535,8 @@ func (t *GetThingParamsQ) MergeGetThingParamsQ1(v GetThingParamsQ1) error {
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is exactly a JSON
-// integer, with nothing around it, is taken as one; anything else is a string.
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON integer, with nothing around it, is taken as one; anything else is a string.
 func (t *GetThingParamsQ) UnmarshalText(text []byte) error {
 	var value any
 	decoder := json.NewDecoder(bytes.NewReader(text))
@@ -306,8 +625,8 @@ func (t *GetThingParamsXAmount) MergeGetThingParamsXAmount1(v GetThingParamsXAmo
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is exactly a JSON
-// boolean number, with nothing around it, is taken as one; anything else is an error.
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON boolean number, with nothing around it, is taken as one; anything else is an error.
 func (t *GetThingParamsXAmount) UnmarshalText(text []byte) error {
 	var value any
 	decoder := json.NewDecoder(bytes.NewReader(text))
@@ -393,8 +712,8 @@ func (t *GetThingParamsAccept) MergeGetThingParamsAccept1(v GetThingParamsAccept
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is exactly a JSON
-// boolean, with nothing around it, is taken as one; anything else is a string.
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON boolean, with nothing around it, is taken as one; anything else is a string.
 func (t *GetThingParamsAccept) UnmarshalText(text []byte) error {
 	var value any
 	decoder := json.NewDecoder(bytes.NewReader(text))
@@ -502,8 +821,24 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 // The interface specification for the client above.
 type ClientInterface interface {
 
+	// GetItem performs a GET /items/{id} (the `GetItem` operationId) request.
+	GetItem(ctx context.Context, id IdParam, params *GetItemParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetThing performs a GET /things/{accept} (the `GetThing` operationId) request.
 	GetThing(ctx context.Context, accept GetThingParamsAccept, params *GetThingParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+// GetItem performs a GET /items/{id} (the `GetItem` operationId) request.
+func (c *Client) GetItem(ctx context.Context, id IdParam, params *GetItemParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetItemRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 // GetThing performs a GET /things/{accept} (the `GetThing` operationId) request.
@@ -517,6 +852,84 @@ func (c *Client) GetThing(ctx context.Context, accept GetThingParamsAccept, para
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewGetItemRequest constructs an http.Request for the GetItem method
+func NewGetItemRequest(server string, id IdParam, params *GetItemParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithOptions("simple", false, "id", id, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationPath, Type: "", Format: ""})
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := "/items/" + pathParam0
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		// queryValues collects non-styled parameters (passthrough, JSON)
+		// that are safe to round-trip through url.Values.Encode().
+		queryValues := queryURL.Query()
+		// rawQueryFragments collects pre-encoded query fragments from
+		// styled parameters, preserving literal commas as delimiters
+		// per the OpenAPI spec (e.g. "color=blue,black,brown").
+		var rawQueryFragments []string
+
+		if params.Filter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "filter", *params.Filter, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if encoded := queryValues.Encode(); encoded != "" {
+			rawQueryFragments = append(rawQueryFragments, encoded)
+		}
+		queryURL.RawQuery = strings.Join(rawQueryFragments, "&")
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+
+		if params.Session != nil {
+			var cookieParam0 string
+
+			cookieParam0, err = runtime.StyleParamWithOptions("simple", true, "session", *params.Session, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationCookie, Type: "", Format: ""})
+			if err != nil {
+				return nil, err
+			}
+
+			cookie0 := &http.Cookie{
+				Name:  "session",
+				Value: cookieParam0,
+			}
+			req.AddCookie(cookie0)
+		}
+	}
+	return req, nil
 }
 
 // NewGetThingRequest constructs an http.Request for the GetThing method
@@ -651,10 +1064,63 @@ func WithBaseURL(baseURL string) ClientOption {
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
 
+	// GetItemWithResponse performs a GET /items/{id} (the `GetItem` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	GetItemWithResponse(ctx context.Context, id IdParam, params *GetItemParams, reqEditors ...RequestEditorFn) (*GetItemResponse, error)
+
 	// GetThingWithResponse performs a GET /things/{accept} (the `GetThing` operationId) request.
 	//
 	// Returns a wrapper object for the known response body format(s).
 	GetThingWithResponse(ctx context.Context, accept GetThingParamsAccept, params *GetThingParams, reqEditors ...RequestEditorFn) (*GetThingResponse, error)
+}
+
+type GetItemResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *Bound
+	// JSON404 the response for an HTTP 404 `application/json` response
+	JSON404 *Id
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetItemResponse) GetJSON200() *Bound {
+	return r.JSON200
+}
+
+// GetJSON404 returns the response for an HTTP 404 `application/json` response
+func (r GetItemResponse) GetJSON404() *Id {
+	return r.JSON404
+}
+
+// GetBody returns the raw response body bytes
+func (r GetItemResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetItemResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetItemResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetItemResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
 }
 
 type GetThingResponse struct {
@@ -698,6 +1164,17 @@ func (r GetThingResponse) ContentType() string {
 	return ""
 }
 
+// GetItemWithResponse performs a GET /items/{id} (the `GetItem` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) GetItemWithResponse(ctx context.Context, id IdParam, params *GetItemParams, reqEditors ...RequestEditorFn) (*GetItemResponse, error) {
+	rsp, err := c.GetItem(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetItemResponse(rsp)
+}
+
 // GetThingWithResponse performs a GET /things/{accept} (the `GetThing` operationId) request.
 //
 // Returns a wrapper object for the known response body format(s).
@@ -707,6 +1184,39 @@ func (c *ClientWithResponses) GetThingWithResponse(ctx context.Context, accept G
 		return nil, err
 	}
 	return ParseGetThingResponse(rsp)
+}
+
+// ParseGetItemResponse parses an HTTP response from a GetItemWithResponse call
+func ParseGetItemResponse(rsp *http.Response) (*GetItemResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetItemResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Bound
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Id
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParseGetThingResponse parses an HTTP response from a GetThingWithResponse call
@@ -738,6 +1248,9 @@ func ParseGetThingResponse(rsp *http.Response) (*GetThingResponse, error) {
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
+	// (GET /items/{id})
+	GetItem(w http.ResponseWriter, r *http.Request, id IdParam, params GetItemParams)
+
 	// (GET /things/{accept})
 	GetThing(w http.ResponseWriter, r *http.Request, accept GetThingParamsAccept, params GetThingParams)
 }
@@ -750,6 +1263,63 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// GetItem operation middleware
+func (siw *ServerInterfaceWrapper) GetItem(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id IdParam
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetItemParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	{
+		var cookie *http.Cookie
+
+		if cookie, err = r.Cookie("session"); err == nil {
+			var value GetItemParamsSession
+			err = runtime.BindStyledParameterWithOptions("simple", "session", cookie.Value, &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationCookie, Explode: true, Required: false, Type: "", Format: ""})
+			if err != nil {
+				siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "session", Err: err})
+				return
+			}
+			params.Session = &value
+
+		}
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetItem(w, r, id, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // GetThing operation middleware
 func (siw *ServerInterfaceWrapper) GetThing(w http.ResponseWriter, r *http.Request) {
@@ -948,8 +1518,46 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/things/{accept}", wrapper.GetThing)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{id}", wrapper.GetItem)
 
 	return m
+}
+
+type GetItemRequestObject struct {
+	Id     IdParam `json:"id"`
+	Params GetItemParams
+}
+
+type GetItemResponseObject interface {
+	VisitGetItemResponse(w http.ResponseWriter) error
+}
+
+type GetItem200JSONResponse Bound
+
+func (response GetItem200JSONResponse) VisitGetItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetItem404JSONResponse Id
+
+func (response GetItem404JSONResponse) VisitGetItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type GetThingRequestObject struct {
@@ -977,6 +1585,9 @@ func (response GetThing200JSONResponse) VisitGetThingResponse(w http.ResponseWri
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+
+	// (GET /items/{id})
+	GetItem(ctx context.Context, request GetItemRequestObject) (GetItemResponseObject, error)
 
 	// (GET /things/{accept})
 	GetThing(ctx context.Context, request GetThingRequestObject) (GetThingResponseObject, error)
@@ -1019,6 +1630,33 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// GetItem operation middleware
+func (sh *strictHandler) GetItem(w http.ResponseWriter, r *http.Request, id IdParam, params GetItemParams) {
+	var request GetItemRequestObject
+
+	request.Id = id
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetItem(ctx, request.(GetItemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetItem")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetItemResponseObject); ok {
+		if err := validResponse.VisitGetItemResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // GetThing operation middleware

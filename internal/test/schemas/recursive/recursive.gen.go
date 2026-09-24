@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"reflect"
 
 	"github.com/oapi-codegen/runtime"
 )
@@ -576,8 +575,8 @@ func (t *FilterRangeValue) MergeFilterRangeValue1(v FilterRangeValue1) error {
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is exactly a JSON
-// number, with nothing around it, is taken as one; anything else is a string.
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON number, with nothing around it, is taken as one; anything else is a string.
 func (t *FilterRangeValue) UnmarshalText(text []byte) error {
 	var value any
 	decoder := json.NewDecoder(bytes.NewReader(text))
@@ -690,8 +689,8 @@ func (t *FilterValue) MergeFilterValue2(v FilterValue2) error {
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is exactly a JSON
-// boolean number, with nothing around it, is taken as one; anything else is a string.
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON boolean number, with nothing around it, is taken as one; anything else is a string.
 func (t *FilterValue) UnmarshalText(text []byte) error {
 	var value any
 	decoder := json.NewDecoder(bytes.NewReader(text))
@@ -791,28 +790,6 @@ func (t *Node) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// adoptUnion reconciles Node_1_Children_Item's own fields with the union data b that From*
-// or Merge* just put in place of previous, for the keys b defines. A property that is
-// unset, or still holds the value previous had for it, takes b's value; one the caller
-// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
-// value, would overwrite b's when marshaling. A matching additional property is
-// dropped, so that an older copy of the key cannot shadow the new union data.
-func (t *Node_1_Children_Item) adoptUnion(previous, b json.RawMessage) {
-	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
-		return
-	}
-	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
-	if raw, found := object["extra"]; found {
-		var old, next *string
-		unchanged := json.Unmarshal(held["extra"], &old) == nil && reflect.DeepEqual(old, t.Extra)
-		if (unchanged || reflect.ValueOf(t.Extra).IsZero()) && json.Unmarshal(raw, &next) == nil {
-			t.Extra = next
-		}
-	}
-}
-
 // AsNode1Children0 returns the union data inside the Node_1_Children_Item as a Node1Children0
 func (t Node_1_Children_Item) AsNode1Children0() (Node1Children0, error) {
 	var body Node1Children0
@@ -823,11 +800,7 @@ func (t Node_1_Children_Item) AsNode1Children0() (Node1Children0, error) {
 // FromNode1Children0 overwrites any union data inside the Node_1_Children_Item as the provided Node1Children0
 func (t *Node_1_Children_Item) FromNode1Children0(v Node1Children0) error {
 	b, err := json.Marshal(v)
-	previous := t.union
 	t.union = b
-	if err == nil {
-		t.adoptUnion(previous, b)
-	}
 	return err
 }
 
@@ -838,12 +811,8 @@ func (t *Node_1_Children_Item) MergeNode1Children0(v Node1Children0) error {
 		return err
 	}
 
-	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
-	if err == nil {
-		t.adoptUnion(previous, b)
-	}
 	return err
 }
 
@@ -857,11 +826,7 @@ func (t Node_1_Children_Item) AsNode1Children1() (Node1Children1, error) {
 // FromNode1Children1 overwrites any union data inside the Node_1_Children_Item as the provided Node1Children1
 func (t *Node_1_Children_Item) FromNode1Children1(v Node1Children1) error {
 	b, err := json.Marshal(v)
-	previous := t.union
 	t.union = b
-	if err == nil {
-		t.adoptUnion(previous, b)
-	}
 	return err
 }
 
@@ -872,12 +837,8 @@ func (t *Node_1_Children_Item) MergeNode1Children1(v Node1Children1) error {
 		return err
 	}
 
-	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
-	if err == nil {
-		t.adoptUnion(previous, b)
-	}
 	return err
 }
 
@@ -987,28 +948,6 @@ func (t *NodeNestedAllOf) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// adoptUnion reconciles NodeNestedAllOf_1_Children_Item's own fields with the union data b that From*
-// or Merge* just put in place of previous, for the keys b defines. A property that is
-// unset, or still holds the value previous had for it, takes b's value; one the caller
-// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
-// value, would overwrite b's when marshaling. A matching additional property is
-// dropped, so that an older copy of the key cannot shadow the new union data.
-func (t *NodeNestedAllOf_1_Children_Item) adoptUnion(previous, b json.RawMessage) {
-	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
-		return
-	}
-	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
-	if raw, found := object["extra"]; found {
-		var old, next *string
-		unchanged := json.Unmarshal(held["extra"], &old) == nil && reflect.DeepEqual(old, t.Extra)
-		if (unchanged || reflect.ValueOf(t.Extra).IsZero()) && json.Unmarshal(raw, &next) == nil {
-			t.Extra = next
-		}
-	}
-}
-
 // AsNodeNestedAllOf1Children0 returns the union data inside the NodeNestedAllOf_1_Children_Item as a NodeNestedAllOf1Children0
 func (t NodeNestedAllOf_1_Children_Item) AsNodeNestedAllOf1Children0() (NodeNestedAllOf1Children0, error) {
 	var body NodeNestedAllOf1Children0
@@ -1019,11 +958,7 @@ func (t NodeNestedAllOf_1_Children_Item) AsNodeNestedAllOf1Children0() (NodeNest
 // FromNodeNestedAllOf1Children0 overwrites any union data inside the NodeNestedAllOf_1_Children_Item as the provided NodeNestedAllOf1Children0
 func (t *NodeNestedAllOf_1_Children_Item) FromNodeNestedAllOf1Children0(v NodeNestedAllOf1Children0) error {
 	b, err := json.Marshal(v)
-	previous := t.union
 	t.union = b
-	if err == nil {
-		t.adoptUnion(previous, b)
-	}
 	return err
 }
 
@@ -1034,12 +969,8 @@ func (t *NodeNestedAllOf_1_Children_Item) MergeNodeNestedAllOf1Children0(v NodeN
 		return err
 	}
 
-	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
-	if err == nil {
-		t.adoptUnion(previous, b)
-	}
 	return err
 }
 
@@ -1053,11 +984,7 @@ func (t NodeNestedAllOf_1_Children_Item) AsNodeNestedAllOf1Children1() (NodeNest
 // FromNodeNestedAllOf1Children1 overwrites any union data inside the NodeNestedAllOf_1_Children_Item as the provided NodeNestedAllOf1Children1
 func (t *NodeNestedAllOf_1_Children_Item) FromNodeNestedAllOf1Children1(v NodeNestedAllOf1Children1) error {
 	b, err := json.Marshal(v)
-	previous := t.union
 	t.union = b
-	if err == nil {
-		t.adoptUnion(previous, b)
-	}
 	return err
 }
 
@@ -1068,12 +995,8 @@ func (t *NodeNestedAllOf_1_Children_Item) MergeNodeNestedAllOf1Children1(v NodeN
 		return err
 	}
 
-	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
-	if err == nil {
-		t.adoptUnion(previous, b)
-	}
 	return err
 }
 

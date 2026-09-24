@@ -345,8 +345,8 @@ func (t *Issue1189Test_FieldA) MergeIssue1189TestFieldA1(v Issue1189TestFieldA1)
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is exactly a JSON
-// , with nothing around it, is taken as one; anything else is a string.
+// parameter, which carries no JSON type.
+// The text is taken as a string.
 func (t *Issue1189Test_FieldA) UnmarshalText(text []byte) error {
 	b, err := json.Marshal(string(text))
 	if err != nil {
@@ -424,8 +424,8 @@ func (t *Issue1189Test_FieldC) MergeIssue1189TestFieldC1(v Issue1189TestFieldC1)
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is exactly a JSON
-// , with nothing around it, is taken as one; anything else is a string.
+// parameter, which carries no JSON type.
+// The text is taken as a string.
 func (t *Issue1189Test_FieldC) UnmarshalText(text []byte) error {
 	b, err := json.Marshal(string(text))
 	if err != nil {
@@ -565,8 +565,8 @@ func (t *ParamOneOf) MergeParamOneOf1(v ParamOneOf1) error {
 }
 
 // UnmarshalText sets the union from the text of a path, query, header or cookie
-// parameter, which carries no JSON type. Text that is exactly a JSON
-// integer, with nothing around it, is taken as one; anything else is a string.
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON integer, with nothing around it, is taken as one; anything else is a string.
 func (t *ParamOneOf) UnmarshalText(text []byte) error {
 	var value any
 	decoder := json.NewDecoder(bytes.NewReader(text))

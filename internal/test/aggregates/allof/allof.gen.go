@@ -6,7 +6,6 @@ package aggregatesallof
 import (
 	"encoding/json"
 	"fmt"
-	"reflect"
 
 	"github.com/oapi-codegen/runtime"
 )
@@ -1433,28 +1432,6 @@ func (a WithStringAdditional2) MarshalJSON() ([]byte, error) {
 	return json.Marshal(object)
 }
 
-// adoptUnion reconciles NestedOneOfInAllOf's own fields with the union data b that From*
-// or Merge* just put in place of previous, for the keys b defines. A property that is
-// unset, or still holds the value previous had for it, takes b's value; one the caller
-// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
-// value, would overwrite b's when marshaling. A matching additional property is
-// dropped, so that an older copy of the key cannot shadow the new union data.
-func (t *NestedOneOfInAllOf) adoptUnion(previous, b json.RawMessage) {
-	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
-		return
-	}
-	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
-	if raw, found := object["a_foo"]; found {
-		var old, next *string
-		unchanged := json.Unmarshal(held["a_foo"], &old) == nil && reflect.DeepEqual(old, t.AFoo)
-		if (unchanged || reflect.ValueOf(t.AFoo).IsZero()) && json.Unmarshal(raw, &next) == nil {
-			t.AFoo = next
-		}
-	}
-}
-
 // AsNestedOneOfInAllOf0 returns the union data inside the NestedOneOfInAllOf as a NestedOneOfInAllOf0
 func (t NestedOneOfInAllOf) AsNestedOneOfInAllOf0() (NestedOneOfInAllOf0, error) {
 	var body NestedOneOfInAllOf0
@@ -1465,11 +1442,7 @@ func (t NestedOneOfInAllOf) AsNestedOneOfInAllOf0() (NestedOneOfInAllOf0, error)
 // FromNestedOneOfInAllOf0 overwrites any union data inside the NestedOneOfInAllOf as the provided NestedOneOfInAllOf0
 func (t *NestedOneOfInAllOf) FromNestedOneOfInAllOf0(v NestedOneOfInAllOf0) error {
 	b, err := json.Marshal(v)
-	previous := t.union
 	t.union = b
-	if err == nil {
-		t.adoptUnion(previous, b)
-	}
 	return err
 }
 
@@ -1480,12 +1453,8 @@ func (t *NestedOneOfInAllOf) MergeNestedOneOfInAllOf0(v NestedOneOfInAllOf0) err
 		return err
 	}
 
-	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
-	if err == nil {
-		t.adoptUnion(previous, b)
-	}
 	return err
 }
 
@@ -1499,11 +1468,7 @@ func (t NestedOneOfInAllOf) AsNestedOneOfInAllOf1() (NestedOneOfInAllOf1, error)
 // FromNestedOneOfInAllOf1 overwrites any union data inside the NestedOneOfInAllOf as the provided NestedOneOfInAllOf1
 func (t *NestedOneOfInAllOf) FromNestedOneOfInAllOf1(v NestedOneOfInAllOf1) error {
 	b, err := json.Marshal(v)
-	previous := t.union
 	t.union = b
-	if err == nil {
-		t.adoptUnion(previous, b)
-	}
 	return err
 }
 
@@ -1514,12 +1479,8 @@ func (t *NestedOneOfInAllOf) MergeNestedOneOfInAllOf1(v NestedOneOfInAllOf1) err
 		return err
 	}
 
-	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
-	if err == nil {
-		t.adoptUnion(previous, b)
-	}
 	return err
 }
 

@@ -124,11 +124,11 @@ func (t *BadRequest) UnmarshalJSON(b []byte) error {
 }
 
 // adoptUnion reconciles Conflict's own fields with the union data b that From*
-// or Merge* just put in place of previous, for the keys b defines. A property that is
-// unset, or still holds the value previous had for it, takes b's value; one the caller
-// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
-// value, would overwrite b's when marshaling. A matching additional property is
-// dropped, so that an older copy of the key cannot shadow the new union data.
+// or Merge* just put in place of previous.
+// A property that MarshalJSON always writes, and that is unset or still holds the
+// value previous had for it, takes b's value; one the caller has set to something else
+// keeps it. Otherwise a zero value, or an earlier variant's value, would overwrite b's
+// when marshaling.
 func (t *Conflict) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
@@ -139,7 +139,8 @@ func (t *Conflict) adoptUnion(previous, b json.RawMessage) {
 	if raw, found := object["traceId"]; found {
 		var old, next string
 		unchanged := json.Unmarshal(held["traceId"], &old) == nil && reflect.DeepEqual(old, t.TraceId)
-		if (unchanged || reflect.ValueOf(t.TraceId).IsZero()) && json.Unmarshal(raw, &next) == nil {
+		current := reflect.ValueOf(t.TraceId)
+		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
 			t.TraceId = next
 		}
 	}

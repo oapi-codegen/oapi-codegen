@@ -1,0 +1,32 @@
+description: >-
+  An allOf whose member is a oneOf of Cat and Dog, with an anyOf of the same
+  two next to it. Each type is a union member once, so its accessors are
+  generated once.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Base'
+    - oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+  anyOf:
+    - $ref: '#/components/schemas/Cat'
+    - $ref: '#/components/schemas/Dog'
+components:
+  Base:
+    type: object
+    required: [id]
+    properties:
+      id: {type: string}
+  Cat:
+    type: object
+    required: [meow]
+    properties:
+      meow: {type: string}
+  Dog:
+    type: object
+    required: [bark]
+    properties:
+      bark: {type: string}
+samples:
+  - '{"id": "1", "meow": "purr"}'
+  - '{"id": "2", "bark": "woof"}'

@@ -41,6 +41,29 @@ func (server) GetThing(_ context.Context, req GetThingRequestObject) (GetThingRe
 	return bound, nil
 }
 
+func (server) GetItem(_ context.Context, req GetItemRequestObject) (GetItemResponseObject, error) {
+	bound := GetItem200JSONResponse{}
+	put := func(name string, v json.Marshaler) error {
+		b, err := v.MarshalJSON()
+		bound[name] = json.RawMessage(b)
+		return err
+	}
+	if err := put("id", req.Id); err != nil {
+		return nil, err
+	}
+	if req.Params.Filter != nil {
+		if err := put("filter", req.Params.Filter); err != nil {
+			return nil, err
+		}
+	}
+	if req.Params.Session != nil {
+		if err := put("session", req.Params.Session); err != nil {
+			return nil, err
+		}
+	}
+	return bound, nil
+}
+
 func newClient(t *testing.T) *ClientWithResponses {
 	t.Helper()
 	srv := httptest.NewServer(Handler(NewStrictHandler(server{}, nil)))
@@ -129,4 +152,30 @@ func TestUnmarshalText(t *testing.T) {
 	assert.Error(t, amount.UnmarshalText([]byte("abc")), "number|boolean has no string branch")
 	assert.Error(t, amount.UnmarshalText([]byte("1}")), "malformed text is not a number")
 	assert.Error(t, amount.UnmarshalText([]byte("true]")), "malformed text is not a boolean")
+}
+
+// TestSharedComponentAndCookieUnionParameters covers a union parameter shared
+// by the path item (named IdParam, as the spec also has a schema named Id), a
+// union declared under components/parameters, and a union in a cookie.
+func TestSharedComponentAndCookieUnionParameters(t *testing.T) {
+	c := newClient(t)
+
+	var id IdParam
+	require.NoError(t, id.FromId0(42))
+	var filter Filter
+	require.NoError(t, filter.FromFilter1("recent"))
+	var session GetItemParamsSession
+	require.NoError(t, session.FromGetItemParamsSession1(true))
+
+	resp, err := c.GetItemWithResponse(context.Background(), id, &GetItemParams{Filter: &filter, Session: &session})
+	require.NoError(t, err)
+	require.Equal(t, 200, resp.StatusCode(), string(resp.Body))
+	assert.JSONEq(t, `{"id": 42, "filter": "recent", "session": true}`, string(resp.Body))
+
+	require.NoError(t, id.FromId1("abc"))
+	require.NoError(t, filter.FromFilter0(7))
+	resp, err = c.GetItemWithResponse(context.Background(), id, &GetItemParams{Filter: &filter})
+	require.NoError(t, err)
+	require.Equal(t, 200, resp.StatusCode(), string(resp.Body))
+	assert.JSONEq(t, `{"id": "abc", "filter": 7}`, string(resp.Body))
 }

@@ -78,3 +78,31 @@ func TestFromKeepsPropertyChangedByCaller(t *testing.T) {
 	require.NoError(t, s.FromCat(Cat{Id: "new", Meow: "hiss"}))
 	assert.Equal(t, "custom", s.Id)
 }
+
+// TestFromDropsOptionalPropertyOfPreviousVariant: an optional property is
+// written only when set, so From* leaves it to the union data. Switching to a
+// variant without the key drops it, instead of keeping the previous
+// variant's value.
+func TestFromDropsOptionalPropertyOfPreviousVariant(t *testing.T) {
+	var s Subject
+	require.NoError(t, s.FromDog(Dog{Id: "dog-1", Label: ptr("rex"), Bark: "woof"}))
+	require.NoError(t, s.FromCat(Cat{Id: "cat-1", Meow: "purr"}))
+
+	b, err := json.Marshal(s)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"id": "cat-1", "meow": "purr"}`, string(b))
+}
+
+// TestOptionalPropertySetByCallerWins: a value the caller sets still
+// overrides the union data.
+func TestOptionalPropertySetByCallerWins(t *testing.T) {
+	var s Subject
+	require.NoError(t, s.FromDog(Dog{Id: "dog-1", Label: ptr("rex"), Bark: "woof"}))
+	s.Label = ptr("fido")
+
+	b, err := json.Marshal(s)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"id": "dog-1", "label": "fido", "bark": "woof"}`, string(b))
+}
+
+func ptr[T any](v T) *T { return &v }

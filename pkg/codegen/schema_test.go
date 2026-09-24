@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"math"
+	"strings"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -1334,4 +1335,188 @@ components:
 	// The aliases must not redeclare the model's marshallers.
 	assert.NotContains(t, out, "func (t BadRequestJSONResponse) MarshalJSON()")
 	assert.NotContains(t, out, "func (t ConflictJSONResponse) MarshalJSON()")
+}
+
+// TestUnionAdoptUnion pins what a union's From*/Merge* reconcile with its own
+// fields: only properties MarshalJSON always writes are filled from the
+// variant, an untyped (interface) property is checked without reflect
+// panicking on nil, and variant keys are dropped from additionalProperties.
+func TestUnionAdoptUnion(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Cat:
+      type: object
+      properties:
+        id: {type: string}
+        label: {type: string}
+        meta: {}
+        meow: {type: string}
+    Dog:
+      type: object
+      properties:
+        bark: {type: string}
+    Pet:
+      type: object
+      required: [id]
+      properties:
+        id: {type: string}
+        label: {type: string}
+        meta: {}
+      additionalProperties: true
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+`
+	code := generateSpec(t, spec)
+	start := strings.Index(code, "func (t *Pet) adoptUnion(previous, b json.RawMessage) {")
+	require.GreaterOrEqual(t, start, 0, "Pet must get adoptUnion")
+	body := code[start : start+strings.Index(code[start:], "\n}\n")]
+
+	assert.Contains(t, body, `object["id"]`, "a required property is always written, so it is adopted")
+	assert.Contains(t, body, `object["meta"]`, "an untyped property without a pointer is always written, so it is adopted")
+	assert.NotContains(t, body, `object["label"]`, "an optional pointer is written only when set, so it is left to the union data")
+	assert.Contains(t, body, "!current.IsValid() || current.IsZero()", "a nil interface has no reflect.Value to ask IsZero of")
+	for _, key := range []string{"bark", "id", "label", "meow", "meta"} {
+		assert.Contains(t, body, `delete(t.AdditionalProperties, "`+key+`")`, "variant key %q", key)
+	}
+}
+
+// TestUnionWithOnlyOptionalPropertiesDoesNotAdopt: with nothing to adopt and
+// no additionalProperties, From* needs no adoptUnion at all.
+func TestUnionWithOnlyOptionalPropertiesDoesNotAdopt(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Cat:
+      type: object
+      properties:
+        meow: {type: string}
+    Pet:
+      type: object
+      properties:
+        label: {type: string}
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+`
+	code := generateSpec(t, spec)
+	assert.NotContains(t, code, "adoptUnion")
+}
+
+// TestDuplicateUnionMembers: a type that is a member of both an anyOf and a
+// oneOf gets its accessors once, whether the two lists are on one schema or
+// the oneOf comes from an allOf member.
+func TestDuplicateUnionMembers(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Base:
+      type: object
+      properties:
+        id: {type: string}
+    Cat:
+      type: object
+      properties:
+        meow: {type: string}
+    Dog:
+      type: object
+      properties:
+        bark: {type: string}
+    Both:
+      anyOf:
+        - $ref: '#/components/schemas/Cat'
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    Nested:
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - oneOf:
+            - $ref: '#/components/schemas/Cat'
+            - $ref: '#/components/schemas/Dog'
+      anyOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+`
+	code := generateSpec(t, spec)
+	for _, union := range []string{"Both", "Nested"} {
+		for _, member := range []string{"Cat", "Dog"} {
+			assert.Equal(t, 1, strings.Count(code, "func (t "+union+") As"+member+"()"), "%s.As%s", union, member)
+		}
+	}
+}
+
+// TestSelfReferentialArrayIsDefinedType: an array schema whose items refer
+// back to it is declared as a defined type, since an alias cannot refer to
+// itself. That holds for the plain schema and for one merged from allOf.
+func TestSelfReferentialArrayIsDefinedType(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Tree:
+      type: array
+      items: {$ref: '#/components/schemas/Tree'}
+    NodeList:
+      allOf:
+        - type: array
+          items: {$ref: '#/components/schemas/NodeList'}
+        - description: A list of lists.
+    Forest:
+      type: array
+      items: {$ref: '#/components/schemas/Tree'}
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "type Tree []Tree")
+	assert.Contains(t, code, "type NodeList []NodeList")
+	assert.Contains(t, code, "type Forest = []Tree", "an array of another type stays an alias")
+}
+
+func TestMentionsTypeName(t *testing.T) {
+	for _, tc := range []struct {
+		decl string
+		want bool
+	}{
+		{"[]Node", true},
+		{"map[string]Node", true},
+		{"*Node", true},
+		{"Node", true},
+		{"[]NodeList", false},
+		{"[]MyNode", false},
+		{"[]externalRef0.Node", false},
+		{"[]Node_Item", false},
+	} {
+		assert.Equal(t, tc.want, mentionsTypeName(tc.decl, "Node"), tc.decl)
+	}
+}
+
+// TestScalarUnionTextComment: the UnmarshalText doc comment reads correctly
+// for a union with only string branches.
+func TestScalarUnionTextComment(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Color:
+      anyOf:
+        - type: string
+          enum: [red]
+        - type: string
+    Amount:
+      oneOf:
+        - type: number
+        - type: string
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "// parameter, which carries no JSON type.\n// The text is taken as a string.\nfunc (t *Color) UnmarshalText(")
+	assert.Contains(t, code, "// Text that is exactly a JSON number, with nothing around it, is taken as one; anything else is a string.\nfunc (t *Amount) UnmarshalText(")
+	assert.NotContains(t, code, "a JSON ,")
 }

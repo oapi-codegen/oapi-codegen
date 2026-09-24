@@ -363,6 +363,9 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error collecting operation types: %w", err)
 		}
+		if err := checkOperationTypeNames(componentTypes, allOps); err != nil {
+			return "", fmt.Errorf("error generating code for type definitions: %w", err)
+		}
 		opDecls, err := GenerateTypesForOperations(t, allOps)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go types for operations: %w", err)
@@ -1062,6 +1065,26 @@ func collectOperationTypes(ops []OperationDefinition) ([]TypeDefinition, error) 
 	return out, nil
 }
 
+// checkOperationTypeNames reports a type declared for an operation (its
+// parameters, bodies and the types hoisted out of them) under the same name as
+// a component type. Both are declared at package level, so the generated code
+// would not compile.
+func checkOperationTypeNames(componentTypes []TypeDefinition, ops []OperationDefinition) error {
+	names := make(map[string]bool, len(componentTypes))
+	for _, td := range componentTypes {
+		names[td.TypeName] = true
+	}
+	for _, op := range ops {
+		for _, td := range op.TypeDefinitions {
+			if names[td.TypeName] {
+				return fmt.Errorf("duplicate typename '%s' detected: operation %s declares it, and so does a component; "+
+					"please use x-go-name to rename one of them", td.TypeName, op.OperationId)
+			}
+		}
+	}
+	return nil
+}
+
 // renderBoilerplate runs the enum, additionalProperties, union, and
 // union+additionalProperties passes over the union of all emitted types.
 // These passes are "inner" — they emit methods/constants subordinate to
@@ -1208,6 +1231,17 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 
 		if resolved := resolvedNameForComponent("parameters", paramName); resolved != "" {
 			goTypeName = resolved
+		}
+
+		// A oneOf/anyOf parameter's members were named from an empty path
+		// (N0, N1, ...) and never declared, so the code did not compile.
+		// Name them after the parameter's type, <Name>0, and declare them.
+		if len(goType.UnionElements) > 0 && paramOrRef.Ref == "" {
+			goType, err = paramToGoType(paramOrRef.Value, []string{goTypeName})
+			if err != nil {
+				return nil, fmt.Errorf("error generating Go type for schema in parameter %s: %w", paramName, err)
+			}
+			types = append(types, goType.AdditionalTypes...)
 		}
 
 		typeDef := TypeDefinition{

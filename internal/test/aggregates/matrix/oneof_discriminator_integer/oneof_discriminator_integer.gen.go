@@ -147,11 +147,11 @@ type HolderJSONRequestBody = Holder
 type HolderInlineJSONRequestBody = InlineHolder
 
 // adoptUnion reconciles InlineHolder_List_Item's own fields with the union data b that From*
-// or Merge* just put in place of previous, for the keys b defines. A property that is
-// unset, or still holds the value previous had for it, takes b's value; one the caller
-// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
-// value, would overwrite b's when marshaling. A matching additional property is
-// dropped, so that an older copy of the key cannot shadow the new union data.
+// or Merge* just put in place of previous.
+// A property that MarshalJSON always writes, and that is unset or still holds the
+// value previous had for it, takes b's value; one the caller has set to something else
+// keeps it. Otherwise a zero value, or an earlier variant's value, would overwrite b's
+// when marshaling.
 func (t *InlineHolder_List_Item) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
@@ -162,7 +162,8 @@ func (t *InlineHolder_List_Item) adoptUnion(previous, b json.RawMessage) {
 	if raw, found := object["version"]; found {
 		var old, next int
 		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
-		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+		current := reflect.ValueOf(t.Version)
+		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -336,11 +337,11 @@ func (t *InlineHolder_List_Item) UnmarshalJSON(b []byte) error {
 }
 
 // adoptUnion reconciles InlineHolder_Map_AdditionalProperties's own fields with the union data b that From*
-// or Merge* just put in place of previous, for the keys b defines. A property that is
-// unset, or still holds the value previous had for it, takes b's value; one the caller
-// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
-// value, would overwrite b's when marshaling. A matching additional property is
-// dropped, so that an older copy of the key cannot shadow the new union data.
+// or Merge* just put in place of previous.
+// A property that MarshalJSON always writes, and that is unset or still holds the
+// value previous had for it, takes b's value; one the caller has set to something else
+// keeps it. Otherwise a zero value, or an earlier variant's value, would overwrite b's
+// when marshaling.
 func (t *InlineHolder_Map_AdditionalProperties) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
@@ -351,7 +352,8 @@ func (t *InlineHolder_Map_AdditionalProperties) adoptUnion(previous, b json.RawM
 	if raw, found := object["version"]; found {
 		var old, next int
 		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
-		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+		current := reflect.ValueOf(t.Version)
+		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -525,11 +527,11 @@ func (t *InlineHolder_Map_AdditionalProperties) UnmarshalJSON(b []byte) error {
 }
 
 // adoptUnion reconciles InlineHolder_One's own fields with the union data b that From*
-// or Merge* just put in place of previous, for the keys b defines. A property that is
-// unset, or still holds the value previous had for it, takes b's value; one the caller
-// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
-// value, would overwrite b's when marshaling. A matching additional property is
-// dropped, so that an older copy of the key cannot shadow the new union data.
+// or Merge* just put in place of previous.
+// A property that MarshalJSON always writes, and that is unset or still holds the
+// value previous had for it, takes b's value; one the caller has set to something else
+// keeps it. Otherwise a zero value, or an earlier variant's value, would overwrite b's
+// when marshaling.
 func (t *InlineHolder_One) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
@@ -540,7 +542,8 @@ func (t *InlineHolder_One) adoptUnion(previous, b json.RawMessage) {
 	if raw, found := object["version"]; found {
 		var old, next int
 		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
-		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+		current := reflect.ValueOf(t.Version)
+		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -714,11 +717,11 @@ func (t *InlineHolder_One) UnmarshalJSON(b []byte) error {
 }
 
 // adoptUnion reconciles Subject's own fields with the union data b that From*
-// or Merge* just put in place of previous, for the keys b defines. A property that is
-// unset, or still holds the value previous had for it, takes b's value; one the caller
-// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
-// value, would overwrite b's when marshaling. A matching additional property is
-// dropped, so that an older copy of the key cannot shadow the new union data.
+// or Merge* just put in place of previous.
+// A property that MarshalJSON always writes, and that is unset or still holds the
+// value previous had for it, takes b's value; one the caller has set to something else
+// keeps it. Otherwise a zero value, or an earlier variant's value, would overwrite b's
+// when marshaling.
 func (t *Subject) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
@@ -729,7 +732,8 @@ func (t *Subject) adoptUnion(previous, b json.RawMessage) {
 	if raw, found := object["version"]; found {
 		var old, next int
 		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
-		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+		current := reflect.ValueOf(t.Version)
+		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -903,11 +907,11 @@ func (t *Subject) UnmarshalJSON(b []byte) error {
 }
 
 // adoptUnion reconciles InlineSubjectResponse's own fields with the union data b that From*
-// or Merge* just put in place of previous, for the keys b defines. A property that is
-// unset, or still holds the value previous had for it, takes b's value; one the caller
-// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
-// value, would overwrite b's when marshaling. A matching additional property is
-// dropped, so that an older copy of the key cannot shadow the new union data.
+// or Merge* just put in place of previous.
+// A property that MarshalJSON always writes, and that is unset or still holds the
+// value previous had for it, takes b's value; one the caller has set to something else
+// keeps it. Otherwise a zero value, or an earlier variant's value, would overwrite b's
+// when marshaling.
 func (t *InlineSubjectResponse) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
@@ -918,7 +922,8 @@ func (t *InlineSubjectResponse) adoptUnion(previous, b json.RawMessage) {
 	if raw, found := object["version"]; found {
 		var old, next int
 		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
-		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+		current := reflect.ValueOf(t.Version)
+		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -1092,11 +1097,11 @@ func (t *InlineSubjectResponse) UnmarshalJSON(b []byte) error {
 }
 
 // adoptUnion reconciles InlineSubjectBody's own fields with the union data b that From*
-// or Merge* just put in place of previous, for the keys b defines. A property that is
-// unset, or still holds the value previous had for it, takes b's value; one the caller
-// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
-// value, would overwrite b's when marshaling. A matching additional property is
-// dropped, so that an older copy of the key cannot shadow the new union data.
+// or Merge* just put in place of previous.
+// A property that MarshalJSON always writes, and that is unset or still holds the
+// value previous had for it, takes b's value; one the caller has set to something else
+// keeps it. Otherwise a zero value, or an earlier variant's value, would overwrite b's
+// when marshaling.
 func (t *InlineSubjectBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
@@ -1107,7 +1112,8 @@ func (t *InlineSubjectBody) adoptUnion(previous, b json.RawMessage) {
 	if raw, found := object["version"]; found {
 		var old, next int
 		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
-		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+		current := reflect.ValueOf(t.Version)
+		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -1281,11 +1287,11 @@ func (t *InlineSubjectBody) UnmarshalJSON(b []byte) error {
 }
 
 // adoptUnion reconciles BodyComponentInlineJSONBody's own fields with the union data b that From*
-// or Merge* just put in place of previous, for the keys b defines. A property that is
-// unset, or still holds the value previous had for it, takes b's value; one the caller
-// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
-// value, would overwrite b's when marshaling. A matching additional property is
-// dropped, so that an older copy of the key cannot shadow the new union data.
+// or Merge* just put in place of previous.
+// A property that MarshalJSON always writes, and that is unset or still holds the
+// value previous had for it, takes b's value; one the caller has set to something else
+// keeps it. Otherwise a zero value, or an earlier variant's value, would overwrite b's
+// when marshaling.
 func (t *BodyComponentInlineJSONBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
@@ -1296,7 +1302,8 @@ func (t *BodyComponentInlineJSONBody) adoptUnion(previous, b json.RawMessage) {
 	if raw, found := object["version"]; found {
 		var old, next int
 		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
-		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+		current := reflect.ValueOf(t.Version)
+		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -1470,11 +1477,11 @@ func (t *BodyComponentInlineJSONBody) UnmarshalJSON(b []byte) error {
 }
 
 // adoptUnion reconciles BodyInlineJSONBody's own fields with the union data b that From*
-// or Merge* just put in place of previous, for the keys b defines. A property that is
-// unset, or still holds the value previous had for it, takes b's value; one the caller
-// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
-// value, would overwrite b's when marshaling. A matching additional property is
-// dropped, so that an older copy of the key cannot shadow the new union data.
+// or Merge* just put in place of previous.
+// A property that MarshalJSON always writes, and that is unset or still holds the
+// value previous had for it, takes b's value; one the caller has set to something else
+// keeps it. Otherwise a zero value, or an earlier variant's value, would overwrite b's
+// when marshaling.
 func (t *BodyInlineJSONBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
@@ -1485,7 +1492,8 @@ func (t *BodyInlineJSONBody) adoptUnion(previous, b json.RawMessage) {
 	if raw, found := object["version"]; found {
 		var old, next int
 		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
-		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+		current := reflect.ValueOf(t.Version)
+		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -1659,11 +1667,11 @@ func (t *BodyInlineJSONBody) UnmarshalJSON(b []byte) error {
 }
 
 // adoptUnion reconciles BodyInline200JSONResponseBody's own fields with the union data b that From*
-// or Merge* just put in place of previous, for the keys b defines. A property that is
-// unset, or still holds the value previous had for it, takes b's value; one the caller
-// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
-// value, would overwrite b's when marshaling. A matching additional property is
-// dropped, so that an older copy of the key cannot shadow the new union data.
+// or Merge* just put in place of previous.
+// A property that MarshalJSON always writes, and that is unset or still holds the
+// value previous had for it, takes b's value; one the caller has set to something else
+// keeps it. Otherwise a zero value, or an earlier variant's value, would overwrite b's
+// when marshaling.
 func (t *BodyInline200JSONResponseBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
 	if json.Unmarshal(b, &object) != nil {
@@ -1674,7 +1682,8 @@ func (t *BodyInline200JSONResponseBody) adoptUnion(previous, b json.RawMessage) 
 	if raw, found := object["version"]; found {
 		var old, next int
 		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
-		if (unchanged || reflect.ValueOf(t.Version).IsZero()) && json.Unmarshal(raw, &next) == nil {
+		current := reflect.ValueOf(t.Version)
+		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}

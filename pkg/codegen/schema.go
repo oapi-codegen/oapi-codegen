@@ -39,6 +39,11 @@ type Schema struct {
 	// bound from a parameter's text; nil for any other union.
 	UnionTextKinds []string
 
+	// UnionVariantProperties lists, sorted, the JSON property names that the
+	// union's branches declare. From* and Merge* drop these keys from the
+	// union's additionalProperties, where UnmarshalJSON also puts them.
+	UnionVariantProperties []string
+
 	Discriminator *Discriminator // Describes which value is stored in a union
 
 	// If this is set, the schema will declare a type via alias, eg,
@@ -436,7 +441,30 @@ type ResponseTypeDefinition struct {
 }
 
 func (t *TypeDefinition) IsAlias() bool {
-	return !globalState.options.Compatibility.OldAliasing && t.Schema.DefineViaAlias
+	return !globalState.options.Compatibility.OldAliasing && t.Schema.DefineViaAlias &&
+		!mentionsTypeName(t.Schema.TypeDecl(), t.TypeName)
+}
+
+// mentionsTypeName reports whether the Go type expression decl refers to the
+// unqualified type name, as `[]Node` does for Node. An alias cannot refer to
+// itself (`type Node = []Node` is an invalid recursive alias), but a defined
+// type can, so such a type is declared as a defined type instead.
+func mentionsTypeName(decl, name string) bool {
+	isIdent := func(b byte) bool {
+		return b == '_' || b == '.' || (b >= '0' && b <= '9') || (b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z')
+	}
+	for i := 0; i+len(name) <= len(decl); {
+		j := strings.Index(decl[i:], name)
+		if j < 0 {
+			return false
+		}
+		start, end := i+j, i+j+len(name)
+		if (start == 0 || !isIdent(decl[start-1])) && (end == len(decl) || !isIdent(decl[end])) {
+			return true
+		}
+		i = start + 1
+	}
+	return false
 }
 
 type Discriminator struct {
@@ -2105,8 +2133,18 @@ func generateUnion(ctx genContext, outSchema *Schema, elements openapi3.SchemaRe
 				outSchema.Discriminator.Mapping[RefPathToObjName(element.Ref)] = elementSchema.GoType
 			}
 		}
-		outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
+		// The same type can appear twice, e.g. as a member of both an anyOf
+		// and a oneOf; its accessors are generated once.
+		if !slices.Contains(outSchema.UnionElements, UnionElement(elementSchema.GoType)) {
+			outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
+		}
+		for _, name := range propertyNames(element.Value, 0) {
+			if !slices.Contains(outSchema.UnionVariantProperties, name) {
+				outSchema.UnionVariantProperties = append(outSchema.UnionVariantProperties, name)
+			}
+		}
 	}
+	slices.Sort(outSchema.UnionVariantProperties)
 
 	// Compare against effectiveCount (non-null branches actually
 	// processed) rather than len(elements). For a nullable
@@ -2154,6 +2192,20 @@ func unionTextKinds(branches openapi3.SchemaRefs) []string {
 	}
 	slices.Sort(kinds)
 	return kinds
+}
+
+// AdoptedProperties returns the properties of a union that its From* and
+// Merge* helpers fill from the variant: those that MarshalJSON always writes,
+// so that a zero value would overwrite the variant's. The rest are written only
+// when set, and otherwise the union data's value is written as it is.
+func (s Schema) AdoptedProperties() []Property {
+	var out []Property
+	for _, p := range s.Properties {
+		if !p.RequiresNilCheck() {
+			out = append(out, p)
+		}
+	}
+	return out
 }
 
 // UnionTextAccepts reports whether a scalar union has a branch of the given
@@ -2208,6 +2260,21 @@ func findProperty(s *openapi3.Schema, name string, depth int) *openapi3.Schema {
 		}
 	}
 	return nil
+}
+
+// propertyNames returns the property names a schema declares, including
+// those it gets from allOf members.
+func propertyNames(s *openapi3.Schema, depth int) []string {
+	if s == nil || depth > 8 {
+		return nil
+	}
+	names := slices.Collect(maps.Keys(s.Properties))
+	for _, m := range s.AllOf {
+		if m != nil {
+			names = append(names, propertyNames(m.Value, depth+1)...)
+		}
+	}
+	return names
 }
 
 // scalarType returns "boolean", "integer" or "number" for a schema of that

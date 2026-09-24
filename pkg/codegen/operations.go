@@ -277,6 +277,13 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 // descriptors into a flat list. This makes it a lot easier to traverse the
 // data in the template engine.
 func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterDefinition, error) {
+	return describeParameters(params, path, false)
+}
+
+// describeParameters is DescribeParameters for operation parameters (shared
+// false) and for parameters shared by a whole path item (shared true), whose
+// path carries no operation name.
+func describeParameters(params openapi3.Parameters, path []string, shared bool) ([]ParameterDefinition, error) {
 	outParams := make([]ParameterDefinition, 0, len(params))
 	for _, paramOrRef := range params {
 		param := paramOrRef.Value
@@ -292,9 +299,15 @@ func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterD
 		// is unexported, so left anonymous it could be neither named nor
 		// built outside the generated package (issue #2560). Name it the way
 		// its members already are, <Op>Params<Name> next to
-		// <Op>Params<Name>0, so it gets the union's methods.
+		// <Op>Params<Name>0, so it gets the union's methods. A parameter
+		// shared by a path item has no operation name to start from, so its
+		// members are just <Name>0; the union is <Name>Param, since a bare
+		// <Name> such as Id is likely to be a schema's name too.
 		if len(goType.UnionElements) > 0 && goType.RefType == "" && !IsGoTypeReference(paramOrRef.Ref) {
 			typeName := SchemaNameToTypeName(PathToTypeName(slices.Clone(paramPath)))
+			if shared {
+				typeName += "Param"
+			}
 			goType.AdditionalTypes = append(goType.AdditionalTypes, TypeDefinition{
 				TypeName: typeName,
 				JsonName: strings.Join(paramPath, "."),
@@ -546,7 +559,7 @@ func describeSharedParameters(params openapi3.Parameters, source, token string, 
 		if collides {
 			path = []string{token}
 		}
-		described, err := DescribeParameters(openapi3.Parameters{paramRef}, path)
+		described, err := describeParameters(openapi3.Parameters{paramRef}, path, true)
 		if err != nil {
 			return nil, err
 		}

@@ -36,3 +36,16 @@ func TestAdditionalPropertySetAfterFromWins(t *testing.T) {
 	require.NoError(t, err)
 	assert.JSONEq(t, `{"kind": "cat", "meow": "purr", "extra": 8}`, string(b))
 }
+
+// TestFromDropsPreviousVariantKeys: after UnmarshalJSON, the previous
+// variant's keys are in AdditionalProperties too. Switching variants drops
+// them, and keeps genuine additional properties.
+func TestFromDropsPreviousVariantKeys(t *testing.T) {
+	var s Subject
+	require.NoError(t, json.Unmarshal([]byte(`{"kind": "dog", "bark": "woof", "extra": 7}`), &s))
+	require.NoError(t, s.FromCat(Cat{Meow: "purr"}))
+
+	b, err := json.Marshal(s)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"kind": "dog", "meow": "purr", "extra": 7}`, string(b))
+}

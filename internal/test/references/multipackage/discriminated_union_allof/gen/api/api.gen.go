@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"reflect"
 
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/discriminated_union_allof/gen/common"
 	"github.com/oapi-codegen/runtime"
@@ -24,28 +23,6 @@ type ViewedStatus struct {
 	Viewed *bool `json:"viewed,omitempty"`
 }
 
-// adoptUnion reconciles PRFile's own fields with the union data b that From*
-// or Merge* just put in place of previous, for the keys b defines. A property that is
-// unset, or still holds the value previous had for it, takes b's value; one the caller
-// has set to something else keeps it. Otherwise a zero value, or an earlier variant's
-// value, would overwrite b's when marshaling. A matching additional property is
-// dropped, so that an older copy of the key cannot shadow the new union data.
-func (t *PRFile) adoptUnion(previous, b json.RawMessage) {
-	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
-		return
-	}
-	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
-	if raw, found := object["viewed"]; found {
-		var old, next *bool
-		unchanged := json.Unmarshal(held["viewed"], &old) == nil && reflect.DeepEqual(old, t.Viewed)
-		if (unchanged || reflect.ValueOf(t.Viewed).IsZero()) && json.Unmarshal(raw, &next) == nil {
-			t.Viewed = next
-		}
-	}
-}
-
 // AsExternalRef0GitDiffFile returns the union data inside the PRFile as a externalRef0.GitDiffFile
 func (t PRFile) AsExternalRef0GitDiffFile() (externalRef0.GitDiffFile, error) {
 	var body externalRef0.GitDiffFile
@@ -60,11 +37,7 @@ func (t *PRFile) FromExternalRef0GitDiffFile(v externalRef0.GitDiffFile) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"diff_type":"GitDiffFile"}`))
-	previous := t.union
 	t.union = b
-	if err == nil {
-		t.adoptUnion(previous, b)
-	}
 	return err
 }
 
@@ -79,12 +52,8 @@ func (t *PRFile) MergeExternalRef0GitDiffFile(v externalRef0.GitDiffFile) error 
 		return err
 	}
 
-	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
-	if err == nil {
-		t.adoptUnion(previous, b)
-	}
 	return err
 }
 
@@ -102,11 +71,7 @@ func (t *PRFile) FromExternalRef0AddedImageDiffFile(v externalRef0.AddedImageDif
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"diff_type":"AddedImageDiffFile"}`))
-	previous := t.union
 	t.union = b
-	if err == nil {
-		t.adoptUnion(previous, b)
-	}
 	return err
 }
 
@@ -121,12 +86,8 @@ func (t *PRFile) MergeExternalRef0AddedImageDiffFile(v externalRef0.AddedImageDi
 		return err
 	}
 
-	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
-	if err == nil {
-		t.adoptUnion(previous, b)
-	}
 	return err
 }
 
