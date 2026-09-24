@@ -94,3 +94,18 @@ When a PR adds a test, enforce the following:
 
 - The repo is a multi-module monorepo. Cross-module changes (e.g., to `runtime/` consumers) deserve extra scrutiny.
 - Generated files are committed; CI fails if `make generate` produces a diff. If a PR's generated files look stale, that will fail CI regardless — but flagging it in review saves a round-trip.
+
+## 5. Schema-merging versions must not regress
+
+`compatibility.schema-merging-behavior` selects how `allOf`, `anyOf` and `oneOf` schemas become Go types, in sequential versions (`v1`, `v2`). These versions still receive bug fixes, but they must never regress: a spec that generated working code under a version must keep generating code that compiles against users' existing code and behaves the same way. New behavior goes into a new version, with code of its own.
+
+The tests that guard these versions are:
+
+- `pkg/codegen/merge_schemas_v2_test.go`, and the tests that cover `v1`: `TestMergeSchemasRecursionUnderOldMergeSchemas` and `TestSchemaMergingV1IsOldMergeSchemas`
+- `internal/test/aggregates/matrix/v1/` and `internal/test/aggregates/matrix/v2/`, both the generated code and the tests
+- the shape files in `internal/test/aggregates/matrix/shapes/` that run under these versions: those that list `v1` or `v2` under `versions:`, and those that list no versions, which run under `v2`
+- `internal/test/aggregates/allof/config_old_merge.yaml` and its generated `allof_old_merge.gen.go`, which cover `v1` through `old-merge-schemas`
+
+**Check that none of these tests is updated to accept a breaking change.** Adding tests is fine, and so is updating them for a bug fix: output that failed to generate, didn't compile, or lost data now works. Changing an existing expectation so that it accepts different Go types (removed or renamed types, fields or methods; changed field types) or different wire behavior for a spec that used to work is a regression: flag it. A commit that changes these tests should say why, so this can be checked. Shape files that these versions use should not be edited to test something new; new cases go into new shape files.
+
+The code of these versions is `pkg/codegen/merge_schemas_v1.go`, `pkg/codegen/merge_schemas_v2.go` and `pkg/codegen/union_v2.go`, but it also calls code every version shares, such as `generateGoSchema`, `detectEnumViaOneOf`, `schemaIsNullable` and `nonNullTypes` in `pkg/codegen`, and the union and additional-properties templates. A change there can alter these versions' output too, and the tests above are what catch it.

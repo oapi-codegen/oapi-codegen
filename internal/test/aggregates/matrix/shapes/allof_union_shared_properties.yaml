@@ -1,3 +1,6 @@
+versions: [v1, v2]
+broken:
+  v1: "v1 drops the union inside the allOf."
 description: >-
   A union whose variants share a property with the union's own fields: Pet is
   allOf a Base and a oneOf of Cat and Dog, and Cat and Dog are themselves allOf

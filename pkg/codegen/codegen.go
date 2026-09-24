@@ -167,6 +167,11 @@ func constructImportMapping(importMapping map[string]string) importMap {
 // the descriptions we've built up above from the schema objects.
 // opts defines
 func Generate(spec *openapi3.T, opts Configuration) (string, error) {
+	// Validate() already rejects these, but Generate is also called directly.
+	if _, err := opts.Compatibility.schemaMergingVersion(); err != nil {
+		return "", fmt.Errorf("invalid `compatibility` configuration: %w", err)
+	}
+
 	// This is global state
 	globalState.options = opts
 	globalState.spec = spec

@@ -1,3 +1,4 @@
+versions: [v1, v2]
 description: >-
   allOf over a $ref and annotation-only members: the "decorate a $ref" idiom
   OpenAPI 3.0 needs because it forbids siblings next to $ref.

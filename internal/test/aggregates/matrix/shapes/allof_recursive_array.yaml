@@ -1,3 +1,6 @@
+versions: [v1, v2]
+broken:
+  v1: "v1 generates a struct for an allOf over an array schema."
 description: >-
   allOf over a self-referential array schema and an annotation. The merged
   type refers to itself, so it must be a defined type: `type Subject =
