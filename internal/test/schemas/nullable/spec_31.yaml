@@ -81,6 +81,32 @@ components:
         - type: "null"
       discriminator:
         propertyName: kind
+    # From issue-2565: nullable wrappers must preserve nested union metadata.
+    NestedNullableUnions:
+      type: object
+      required:
+        - multiple
+      properties:
+        single:
+          anyOf:
+            - oneOf:
+                - $ref: "#/components/schemas/Cat"
+              discriminator:
+                propertyName: kind
+                mapping:
+                  cat: "#/components/schemas/Cat"
+            - type: "null"
+        multiple:
+          oneOf:
+            - anyOf:
+                - $ref: "#/components/schemas/Cat"
+                - $ref: "#/components/schemas/Dog"
+              discriminator:
+                propertyName: kind
+                mapping:
+                  cat: "#/components/schemas/Cat"
+                  dog: "#/components/schemas/Dog"
+            - type: "null"
     Cat:
       type: object
       required:
