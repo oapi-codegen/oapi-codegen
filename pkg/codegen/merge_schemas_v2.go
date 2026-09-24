@@ -565,7 +565,10 @@ func mergeItemsV2(i1, i2 *openapi3.SchemaRef, seenSchemaRef map[string]bool) (*o
 //     already there, which would turn optional fields into required ones.
 //   - Nothing is added to a schema without properties: v2 generates that as a
 //     map, from additionalProperties, or as a union, and adding a property
-//     would turn it into a struct.
+//     would turn it into a struct, breaking code that uses the map. Such a
+//     schema keeps losing the properties, deliberately: v2 must not change
+//     types that existing code relies on. schema-merging-behavior v3 keeps
+//     them.
 //   - Nothing is added under old-allof-sibling-merging, which keeps the output
 //     that discards a schema's own properties next to its allOf.
 func addNestedOwnPropertiesV2(schema *openapi3.Schema, allOf []*openapi3.SchemaRef) error {

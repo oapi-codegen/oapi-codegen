@@ -541,7 +541,9 @@ components:
 }
 
 // TestNestedOwnPropertiesV2KeepsTypeKinds: a merge without properties is a
-// map or a union, and gets no properties, which would make it a struct.
+// map or a union, and gets no properties, which would make it a struct. The
+// nested members' properties stay lost there on purpose: fixing that would
+// change a type existing code relies on (v3 keeps them).
 func TestNestedOwnPropertiesV2KeepsTypeKinds(t *testing.T) {
 	const spec = `openapi: 3.0.3
 info: {title: repro, version: "1.0.0"}
