@@ -1,0 +1,17 @@
+versions: [v1, v2, v3]
+description: >-
+  allOf over a single $ref to an object with additionalProperties. The
+  composition is an alias of the referenced type, and keeps its generated
+  MarshalJSON: at a strict-server response, the envelope has to delegate to
+  it, or the additional properties are lost.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Open'
+components:
+  Open:
+    type: object
+    properties:
+      b: {type: string}
+    additionalProperties: {type: string}
+samples:
+  - '{"b": "x", "k": "v"}'

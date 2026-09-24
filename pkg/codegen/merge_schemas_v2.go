@@ -727,6 +727,14 @@ func generateAllOfV2(ctx genContext, schema *openapi3.Schema, path []string, ext
 	if err != nil {
 		return Schema{}, fmt.Errorf("error merging schemas: %w", err)
 	}
+	// The composition generated as an alias of another type, such as the
+	// $ref of `allOf: [$ref X]`: remember that type's schema, which
+	// OAPISchema no longer points to, so generatesMarshalJSON can tell that X
+	// has a generated MarshalJSON, which a strict-server envelope has to
+	// delegate to.
+	if mergedSchema.DefineViaAlias && mergedSchema.OAPISchema != nil && mergedSchema.OAPISchema != schema {
+		mergedSchema.aliasOf = mergedSchema.OAPISchema
+	}
 	mergedSchema.OAPISchema = schema
 	// Description is metadata, not a structural constraint, so it
 	// doesn't go through the merge. Copy it from the parent when set.

@@ -587,3 +587,59 @@ components:
 	assert.Contains(t, code, "type SubjectEmpty = map[string]any")
 	assert.Contains(t, code, "type SubjectUnion struct {\n\tunion json.RawMessage\n}")
 }
+
+// TestSingleRefAllOfKeepsCustomJSONV2: a response whose schema is
+// `allOf: [$ref X]`, where X has a generated MarshalJSON (for
+// additionalProperties or a union), gets a strict-server envelope that
+// delegates to it. The composition is an alias of X, and without the
+// delegation the envelope, a defined type, encoded only X's fields.
+func TestSingleRefAllOfKeepsCustomJSONV2(t *testing.T) {
+	const spec = `openapi: 3.0.3
+info: {title: repro, version: "1.0.0"}
+paths:
+  /open:
+    get:
+      operationId: getOpen
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SingleOpen'}
+  /either:
+    get:
+      operationId: getEither
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SingleEither'}
+components:
+  schemas:
+    Open:
+      type: object
+      properties:
+        b: {type: string}
+      additionalProperties: {type: string}
+    Either:
+      oneOf:
+        - {type: string}
+        - {type: integer}
+    SingleOpen:
+      allOf:
+        - $ref: '#/components/schemas/Open'
+    SingleEither:
+      allOf:
+        - $ref: '#/components/schemas/Either'
+`
+	code := generateSpec(t, spec, func(c *Configuration) {
+		c.Compatibility.SchemaMergingBehavior = SchemaMergingV2
+		c.Generate.Strict = true
+		c.Generate.StdHTTPServer = true
+	})
+	assert.Contains(t, code, "type SingleOpen = Open")
+	for _, envelope := range []string{"GetOpen200JSONResponse", "GetEither200JSONResponse"} {
+		assert.Regexp(t, `func \(\w+ `+envelope+`\) MarshalJSON\(\)`, code)
+	}
+}
