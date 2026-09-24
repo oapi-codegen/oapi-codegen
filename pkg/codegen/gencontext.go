@@ -53,6 +53,11 @@ type genContext struct {
 	// as a member, are the schema itself (""). Only schema-merging-behavior
 	// v3 uses it.
 	memberLabels map[*openapi3.SchemaRef]string
+
+	// subschemas holds the allOfs v3's merge makes of the schemas several
+	// members declare for one position, by those schemas, so the same ones
+	// always make the same allOf (see allOfMerge.subschema).
+	subschemas map[string]*openapi3.SchemaRef
 }
 
 // mergeFrame describes an allOf merge that an enclosing frame is part-way
@@ -74,6 +79,7 @@ func newGenContext(nameHint []string) genContext {
 		inProgress:   make(map[*openapi3.Schema]*mergeFrame),
 		nameHint:     slices.Clone(nameHint),
 		memberLabels: make(map[*openapi3.SchemaRef]string),
+		subschemas:   make(map[string]*openapi3.SchemaRef),
 	}
 }
 

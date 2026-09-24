@@ -16,7 +16,7 @@ import (
 // mergeTwoV3 merges two allOf members, allOf/0 and allOf/1, with
 // schema-merging-behavior v3's rules.
 func mergeTwoV3(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
-	m := newAllOfMerge()
+	m := newAllOfMerge(newGenContext(nil))
 	if err := m.add(s1, "allOf/0", map[string]bool{}); err != nil {
 		return openapi3.Schema{}, err
 	}
@@ -372,13 +372,34 @@ func TestMergeOpenapiSchemas_AdditionalPropertiesV3(t *testing.T) {
 		assert.Equal(t, "#/components/schemas/X", result.AdditionalProperties.Schema.Ref)
 	})
 
-	t.Run("different schemas still error", func(t *testing.T) {
-		_, err := merge(
-			withAP(openapi3.NewSchemaRef("", openapi3.NewStringSchema())),
-			withAP(openapi3.NewSchemaRef("", openapi3.NewIntegerSchema())))
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "additional properties")
+	t.Run("different schemas become an allOf of both", func(t *testing.T) {
+		s1 := openapi3.NewSchemaRef("", openapi3.NewStringSchema())
+		s2 := openapi3.NewSchemaRef("", openapi3.NewStringSchema().WithMaxLength(3))
+		result, err := merge(withAP(s1), withAP(s2))
+		require.NoError(t, err)
+		assertAllOfOf(t, result.AdditionalProperties.Schema, s1, s2)
 	})
+
+	t.Run("false on either member closes the object", func(t *testing.T) {
+		closed := openapi3.Schema{}
+		closed.WithoutAdditionalProperties()
+		result, err := merge(withAP(openapi3.NewSchemaRef("", openapi3.NewStringSchema())), closed)
+		require.NoError(t, err)
+		assert.True(t, isAdditionalPropertiesExplicitFalse(&result))
+	})
+}
+
+// assertAllOfOf asserts that ref is an allOf of copies of the want schemas,
+// which is how the merge combines schemas that members declare for one
+// position.
+func assertAllOfOf(t *testing.T, ref *openapi3.SchemaRef, want ...*openapi3.SchemaRef) {
+	t.Helper()
+	require.NotNil(t, ref)
+	require.Len(t, ref.Value.AllOf, len(want))
+	for i, w := range want {
+		assert.Same(t, w.Value, ref.Value.AllOf[i].Value)
+		assert.Equal(t, w.Ref, ref.Value.AllOf[i].Ref)
+	}
 }
 
 // TestMergeOpenapiSchemas_ItemsV3 covers array items, which used to be dropped
@@ -409,22 +430,12 @@ func TestMergeOpenapiSchemas_ItemsV3(t *testing.T) {
 		assert.Same(t, itemRef, result.Items)
 	})
 
-	t.Run("different item schemas merge", func(t *testing.T) {
-		a := openapi3.NewObjectSchema().WithProperty("a", openapi3.NewStringSchema())
-		b := openapi3.NewObjectSchema().WithProperty("b", openapi3.NewStringSchema())
-		result, err := merge(openapi3.Schema{Items: openapi3.NewSchemaRef("", a)},
-			openapi3.Schema{Items: openapi3.NewSchemaRef("", b)})
+	t.Run("different item schemas become an allOf of both", func(t *testing.T) {
+		a := openapi3.NewSchemaRef("", openapi3.NewObjectSchema().WithProperty("a", openapi3.NewStringSchema()))
+		b := openapi3.NewSchemaRef("", openapi3.NewObjectSchema().WithProperty("b", openapi3.NewStringSchema()))
+		result, err := merge(openapi3.Schema{Items: a}, openapi3.Schema{Items: b})
 		require.NoError(t, err)
-		require.NotNil(t, result.Items)
-		assert.Contains(t, result.Items.Value.Properties, "a")
-		assert.Contains(t, result.Items.Value.Properties, "b")
-	})
-
-	t.Run("conflicting item types error", func(t *testing.T) {
-		_, err := merge(openapi3.Schema{Items: openapi3.NewSchemaRef("", openapi3.NewStringSchema())},
-			openapi3.Schema{Items: openapi3.NewSchemaRef("", openapi3.NewIntegerSchema())})
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "array items")
+		assertAllOfOf(t, result.Items, a, b)
 	})
 }
 
@@ -564,5 +575,106 @@ func TestMergeSchemasV3EndToEnd(t *testing.T) {
 `, withV3)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "allOf can't merge allOf/0 (type integer) with the schema itself (type string)")
+	})
+}
+
+// TestMergeSchemasV3Properties covers properties, items and
+// additionalProperties that several members declare (issue #2107).
+func TestMergeSchemasV3Properties(t *testing.T) {
+	const base = `
+    Base:
+      type: object
+      required: [name]
+      properties:
+        name: {type: string, description: The name.}
+        age: {type: integer}
+        address:
+          type: object
+          properties:
+            street: {type: string}
+`
+
+	t.Run("a member refines a property instead of replacing it", func(t *testing.T) {
+		code := generateSpec(t, opaqueSpecHeader+base+`
+    Patch:
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - properties:
+            name:
+              nullable: true
+              x-go-name: Moniker
+            address:
+              properties:
+                zip: {type: string}
+`, withV3)
+		assert.Regexp(t, `// Moniker The name\.\n\tMoniker \*string `+"`json:\"name\"`", code,
+			"name keeps Base's type and description, and gains nullable and the member's field name")
+		assertField(t, code, "Age", "*int")
+		assert.Regexp(t, `Address \*struct \{\n\t\tStreet \*string [^\n]*\n\t\tZip    \*string`, code)
+	})
+
+	t.Run("a property whose types conflict names both members", func(t *testing.T) {
+		_, err := generateSpecErr(opaqueSpecHeader+base+`
+    Odd:
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - properties:
+            age: {type: string}
+`, withV3)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "error generating Go schema for property 'age': error merging schemas: "+
+			"allOf can't merge #/components/schemas/Base/properties/age (type integer) with allOf/1/properties/age (type string): "+
+			"no value has both types")
+	})
+
+	t.Run("items and additionalProperties merge the same way", func(t *testing.T) {
+		code := generateSpec(t, opaqueSpecHeader+`
+    Tags:
+      allOf:
+        - type: array
+          items: {type: string}
+        - type: array
+          items: {maxLength: 10, nullable: true}
+    Labels:
+      allOf:
+        - additionalProperties: {type: string}
+        - additionalProperties: {maxLength: 10}
+`, withV3)
+		assert.Contains(t, code, "type Tags = []*string")
+		assert.Contains(t, code, "type Labels map[string]string")
+
+		_, err := generateSpecErr(opaqueSpecHeader+`
+    Tags:
+      allOf:
+        - type: array
+          items: {type: string}
+        - type: array
+          items: {type: integer}
+`, withV3)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "allOf can't merge allOf/0/items (type string) with allOf/1/items (type integer)")
+	})
+
+	t.Run("a merged property that refers back to the composition", func(t *testing.T) {
+		code := generateSpec(t, opaqueSpecHeader+`
+    Node:
+      allOf:
+        - type: object
+          properties:
+            name: {type: string}
+            next: {$ref: '#/components/schemas/Node'}
+        - properties:
+            next: {nullable: true}
+`, withV3)
+		// next is an allOf of Node and {nullable: true}, generated as a type of
+		// its own that refers to itself.
+		assert.Contains(t, code, "type Node struct {")
+		assertField(t, code, "Next", "*Node_Next")
+		assert.Contains(t, code, "type Node_Next struct {")
+	})
+
+	t.Run("recursive compositions still generate", func(t *testing.T) {
+		code := generateSpec(t, specRecursiveObject, withV3)
+		assert.Contains(t, code, "type Node struct {")
 	})
 }
