@@ -1,3 +1,4 @@
+versions: [v2, v3]
 description: oneOf over two $ref object variants, without a discriminator.
 subject:
   oneOf:

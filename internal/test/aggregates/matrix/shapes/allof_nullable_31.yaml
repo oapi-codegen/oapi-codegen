@@ -1,4 +1,4 @@
-versions: [v1, v2]
+versions: [v1, v2, v3]
 description: >-
   An OpenAPI 3.1 allOf whose inline member declares `type: [object, "null"]`.
   Failed with "can not merge incompatible types: [object], [object null]".

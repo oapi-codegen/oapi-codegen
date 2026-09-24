@@ -1,6 +1,8 @@
 package codegen
 
 import (
+	"fmt"
+
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
@@ -31,19 +33,32 @@ type schemaMerger func(ctx genContext, allOf []*openapi3.SchemaRef, path []strin
 // schemaMergerFor returns the allOf merge of a schema-merging-behavior
 // version.
 func schemaMergerFor(version string) schemaMerger {
-	if version == SchemaMergingV1 {
+	switch version {
+	case SchemaMergingV1:
 		return func(_ genContext, allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 			return mergeSchemasV1(allOf, path)
 		}
+	case SchemaMergingV2:
+		return mergeSchemasV2
+	case schemaMergingV3:
+		return mergeSchemasV3
+	default:
+		// schemaMergingVersion only returns the versions above; a new one
+		// has to be added here too.
+		panic(fmt.Sprintf("no allOf merge for schema-merging-behavior %q", version))
 	}
-	return mergeSchemasV2
 }
 
 // generateAllOf lowers a schema with allOf for generateGoSchema, the way the
 // schema-merging-behavior in effect does. v1 and v2 share v2's code, which is
 // handed the version's own merge of the members.
 func generateAllOf(ctx genContext, schema *openapi3.Schema, path []string, extensions map[string]any, skipOptionalPointer bool) (Schema, error) {
-	return generateAllOfV2(ctx, schema, path, extensions, skipOptionalPointer, schemaMergerFor(schemaMergingInEffect()))
+	version := schemaMergingInEffect()
+	merge := schemaMergerFor(version)
+	if version == schemaMergingV3 {
+		return generateAllOfV3(ctx, schema, path, extensions, skipOptionalPointer, merge)
+	}
+	return generateAllOfV2(ctx, schema, path, extensions, skipOptionalPointer, merge)
 }
 
 // nonNullTypes returns a type array's entries other than "null".

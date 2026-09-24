@@ -1,4 +1,4 @@
-versions: [v1, v2]
+versions: [v1, v2, v3]
 description: allOf over a $ref object schema and an inline object that adds properties.
 subject:
   allOf:

@@ -1,3 +1,4 @@
+versions: [v2, v3]
 description: >-
   An object with fixed properties and typed additionalProperties. Not an
   aggregate, but it gets the same custom JSON methods, and the same envelope

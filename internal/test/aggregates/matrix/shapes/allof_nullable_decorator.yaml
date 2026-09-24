@@ -1,4 +1,4 @@
-versions: [v1, v2]
+versions: [v1, v2, v3]
 description: 'allOf over a $ref and `nullable: true`, the OpenAPI 3.0 nullable-$ref idiom (#1898).'
 subject:
   allOf:

@@ -426,6 +426,10 @@ const (
 	SchemaMergingV2 = "v2"
 )
 
+// schemaMergingV3 is the version under development. It is accepted, but not
+// documented or exported until it is ready.
+const schemaMergingV3 = "v3"
+
 // schemaMergingVersion returns the schema-merging-behavior these options
 // select: the configured version, v1 for the deprecated OldMergeSchemas, and
 // v2 when neither is set. Both Validate and Generate reject the options when
@@ -445,6 +449,16 @@ func (co CompatibilityOptions) schemaMergingVersion() (string, error) {
 				SchemaMergingV1, co.SchemaMergingBehavior)
 		}
 		return SchemaMergingV2, nil
+	case schemaMergingV3:
+		if co.OldMergeSchemas {
+			return "", fmt.Errorf("`old-merge-schemas: true` is an alias for `schema-merging-behavior: %s`, which conflicts with `schema-merging-behavior: %s`",
+				SchemaMergingV1, co.SchemaMergingBehavior)
+		}
+		if co.OldAllOfSiblingMerging {
+			return "", fmt.Errorf("`old-allof-sibling-merging` applies only to `schema-merging-behavior` %s and %s",
+				SchemaMergingV1, SchemaMergingV2)
+		}
+		return schemaMergingV3, nil
 	default:
 		return "", fmt.Errorf("unknown `schema-merging-behavior` %q; valid values are %q and %q",
 			co.SchemaMergingBehavior, SchemaMergingV1, SchemaMergingV2)

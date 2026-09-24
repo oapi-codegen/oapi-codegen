@@ -1,3 +1,4 @@
+versions: [v2, v3]
 description: >-
   anyOf and oneOf on the same schema, with inline members. Both lists used to
   name their members <Schema><index> and failed with a duplicate type name

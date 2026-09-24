@@ -1,3 +1,4 @@
+versions: [v2, v3]
 description: anyOf over two $ref object variants.
 subject:
   anyOf:

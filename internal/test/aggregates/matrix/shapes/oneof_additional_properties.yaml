@@ -1,3 +1,4 @@
+versions: [v2, v3]
 description: >-
   oneOf over two $ref variants next to a fixed property and untyped
   additionalProperties.

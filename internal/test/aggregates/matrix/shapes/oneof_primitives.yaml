@@ -1,3 +1,4 @@
+versions: [v2, v3]
 description: oneOf over a string, an integer and an array of strings.
 subject:
   oneOf:

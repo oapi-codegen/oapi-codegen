@@ -1,3 +1,4 @@
+versions: [v2, v3]
 description: >-
   oneOf with an integer discriminator that the union declares itself, so the
   From* helpers also assign the value to the union's own field.
