@@ -125,7 +125,7 @@ type CreateResource2Params struct {
 	InlineQueryArgument *int `form:"inline_query_argument,omitempty" json:"inline_query_argument,omitempty"`
 }
 
-// UpdateResource3JSONBody defines parameters for UpdateResource3.
+// UpdateResource3JSONBody defines body for UpdateResource3 for application/json ContentType.
 type UpdateResource3JSONBody struct {
 	Id   *int    `json:"id,omitempty"`
 	Name *string `json:"name,omitempty"`

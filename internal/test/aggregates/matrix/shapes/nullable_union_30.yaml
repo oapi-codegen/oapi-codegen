@@ -1,0 +1,20 @@
+description: A nullable oneOf (OpenAPI 3.0 `nullable`).
+subject:
+  nullable: true
+  oneOf:
+    - $ref: '#/components/schemas/Cat'
+    - $ref: '#/components/schemas/Dog'
+components:
+  Cat:
+    type: object
+    required: [meow]
+    properties:
+      meow: {type: string}
+  Dog:
+    type: object
+    required: [bark]
+    properties:
+      bark: {type: string}
+samples:
+  - '{"meow": "purr"}'
+  - '{"bark": "woof"}'

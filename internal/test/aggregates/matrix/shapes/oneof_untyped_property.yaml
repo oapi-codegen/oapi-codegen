@@ -1,0 +1,29 @@
+description: >-
+  A union with an untyped property of its own (Go type any) that a variant
+  also carries. From* must not panic on the property's nil interface value.
+  The second sample spells out "meta": null because the union's MarshalJSON
+  writes an unset untyped property as null, which predates this shape.
+subject:
+  type: object
+  required: [id]
+  properties:
+    id: {type: string}
+    meta: {}
+  oneOf:
+    - $ref: '#/components/schemas/Cat'
+    - $ref: '#/components/schemas/Dog'
+components:
+  Cat:
+    type: object
+    required: [meow]
+    properties:
+      meow: {type: string}
+      meta: {}
+  Dog:
+    type: object
+    required: [bark]
+    properties:
+      bark: {type: string}
+samples:
+  - '{"id": "1", "meow": "purr", "meta": {"k": 1}}'
+  - '{"id": "2", "bark": "woof", "meta": null}'

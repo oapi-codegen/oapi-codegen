@@ -1,0 +1,15 @@
+description: >-
+  allOf marking a $ref readOnly, the only way OpenAPI 3.0 can. Failed with
+  "merging two schemas with different ReadOnly".
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Named'
+    - readOnly: true
+components:
+  Named:
+    type: object
+    required: [name]
+    properties:
+      name: {type: string}
+samples:
+  - '{"name": "rex"}'

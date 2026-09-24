@@ -27,12 +27,12 @@ type SuccessfulResponse struct {
 	Ok bool `json:"ok"`
 }
 
-// GetRolesId200JSONResponseBody_Data defines parameters for GetRolesId.
+// GetRolesId200JSONResponseBody_Data defines model for GetRolesId200JSONResponseBody.Data.
 type GetRolesId200JSONResponseBody_Data struct {
 	Role Role `json:"role"`
 }
 
-// GetRolesId200JSONResponseBody defines parameters for GetRolesId.
+// GetRolesId200JSONResponseBody defines the 200 response body for GetRolesId for application/json ContentType.
 type GetRolesId200JSONResponseBody struct {
 	Data GetRolesId200JSONResponseBody_Data `json:"data"`
 

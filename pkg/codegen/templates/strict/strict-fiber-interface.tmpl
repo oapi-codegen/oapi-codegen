@@ -93,7 +93,8 @@
                 ctx.Status({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
                 {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
                 {{if .IsJSON }}
-                    return ctx.JSON(&{{if $hasBodyVar}}response.Body{{else}}response{{end}})
+                    {{/* See strict-interface.tmpl: encode a $ref response's embedded envelope, not the wrapper. */ -}}
+                    return ctx.JSON(&{{if $hasBodyVar}}response.Body{{else if $isRef}}response.{{$ref | withoutPkgName}}{{.NameTagOrContentType}}Response{{else}}response{{end}})
                 {{else if .IsText -}}
                     _, err := ctx.WriteString(fmt.Sprint({{if $hasBodyVar}}response.Body{{else}}response{{end}}))
                     return err

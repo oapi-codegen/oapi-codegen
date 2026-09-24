@@ -1,0 +1,31 @@
+description: >-
+  oneOf with a boolean discriminator (#1619). From* used to stamp the value as
+  the JSON string "false", which the variant then failed to decode, and
+  Discriminator() could not read a boolean.
+subject:
+  oneOf:
+    - $ref: '#/components/schemas/ConfigHttp'
+    - $ref: '#/components/schemas/ConfigSsh'
+  discriminator:
+    propertyName: is_http
+    mapping:
+      'true': '#/components/schemas/ConfigHttp'
+      'false': '#/components/schemas/ConfigSsh'
+components:
+  ConfigHttp:
+    type: object
+    required: [is_http, host]
+    properties:
+      is_http: {type: boolean}
+      host: {type: string}
+      port: {type: integer}
+  ConfigSsh:
+    type: object
+    required: [is_http, host]
+    properties:
+      is_http: {type: boolean}
+      host: {type: string}
+      key: {type: string}
+samples:
+  - '{"is_http": true, "host": "h", "port": 80}'
+  - '{"is_http": false, "host": "h", "key": "k"}'

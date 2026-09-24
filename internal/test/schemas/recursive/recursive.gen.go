@@ -4,6 +4,7 @@
 package schemasrecursive
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -573,6 +574,32 @@ func (t *FilterRangeValue) MergeFilterRangeValue1(v FilterRangeValue1) error {
 	return err
 }
 
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON number, with nothing around it, is taken as one; anything else is a string.
+func (t *FilterRangeValue) UnmarshalText(text []byte) error {
+	var value any
+	decoder := json.NewDecoder(bytes.NewReader(text))
+	decoder.UseNumber()
+	if len(bytes.TrimSpace(text)) == len(text) && json.Valid(text) && decoder.Decode(&value) == nil {
+		if number, ok := value.(json.Number); ok {
+			t.union = json.RawMessage(number.String())
+			return nil
+		}
+	}
+	b, err := json.Marshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *FilterRangeValue) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
+}
+
 func (t FilterRangeValue) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
 	return b, err
@@ -659,6 +686,36 @@ func (t *FilterValue) MergeFilterValue2(v FilterValue2) error {
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON boolean or number, with nothing around it, is taken as one; anything else is a string.
+func (t *FilterValue) UnmarshalText(text []byte) error {
+	var value any
+	decoder := json.NewDecoder(bytes.NewReader(text))
+	decoder.UseNumber()
+	if len(bytes.TrimSpace(text)) == len(text) && json.Valid(text) && decoder.Decode(&value) == nil {
+		if _, ok := value.(bool); ok {
+			t.union = append(json.RawMessage(nil), text...)
+			return nil
+		}
+		if number, ok := value.(json.Number); ok {
+			t.union = json.RawMessage(number.String())
+			return nil
+		}
+	}
+	b, err := json.Marshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *FilterValue) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
 }
 
 func (t FilterValue) MarshalJSON() ([]byte, error) {

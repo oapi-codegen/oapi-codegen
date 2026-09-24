@@ -1,0 +1,26 @@
+description: allOf over a $ref object schema and an inline oneOf (the union comes out of the merge).
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Base'
+    - oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+components:
+  Base:
+    type: object
+    required: [id]
+    properties:
+      id: {type: string}
+  Cat:
+    type: object
+    required: [meow]
+    properties:
+      meow: {type: string}
+  Dog:
+    type: object
+    required: [bark]
+    properties:
+      bark: {type: string}
+samples:
+  - '{"id": "1", "meow": "purr"}'
+  - '{"id": "2", "bark": "woof"}'

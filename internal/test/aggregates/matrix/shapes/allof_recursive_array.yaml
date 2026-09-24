@@ -1,0 +1,12 @@
+description: >-
+  allOf over a self-referential array schema and an annotation. The merged
+  type refers to itself, so it must be a defined type: `type Subject =
+  []Subject` would be an invalid recursive alias.
+subject:
+  allOf:
+    - type: array
+      items: {$ref: '#/components/schemas/Subject'}
+    - description: A list of lists.
+samples:
+  - '[]'
+  - '[[], [[]]]'

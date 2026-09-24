@@ -1,10 +1,13 @@
 package codegen
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -300,13 +303,24 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	// erasing the sibling's type. Taking s1.Type unconditionally here used
 	// to silently drop s2's type, making the generated shape depend on
 	// allOf member order (issue #2524).
-	if s1.Type.Slice() != nil && s2.Type.Slice() != nil && !equalTypes(s1.Type, s2.Type) {
+	//
+	// "null" is left out of the comparison. In 3.1 it is how a type array
+	// spells nullability, which is unioned below rather than required to
+	// match, the same as 3.0's `nullable`; so `[object]` and
+	// `[object, "null"]` merge into a nullable object instead of failing.
+	// The remaining types compare as sets, so their order doesn't matter.
+	//
+	// The union is deliberate, not an oversight of allOf's intersection
+	// semantics. Read as an intersection, "null" in one member would mean
+	// nothing unless every member declared it, yet a member only says it to
+	// make the composed type nullable, as in the 3.0 idiom
+	// `allOf: [$ref X, {nullable: true}]` (issue #1898). Both spec versions
+	// give it that meaning.
+	t1, t2 := nonNullTypes(s1.Type), nonNullTypes(s2.Type)
+	if len(t1) > 0 && len(t2) > 0 && !sameTypeSet(t1, t2) {
 		return openapi3.Schema{}, fmt.Errorf("can not merge incompatible types: %v, %v", s1.Type.Slice(), s2.Type.Slice())
 	}
-	result.Type = s1.Type
-	if result.Type.Slice() == nil {
-		result.Type = s2.Type
-	}
+	result.Type = mergeTypes(s1.Type, s2.Type)
 
 	// Format follows the same rule: error only when both members declare
 	// a format and they differ. Erroring on the set-vs-unset case made the
@@ -324,13 +338,12 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	// to be more permissive and union.
 	result.Enum = append(s1.Enum, s2.Enum...)
 
-	// I don't know how to handle two different defaults.
-	if s1.Default != nil || s2.Default != nil {
-		return openapi3.Schema{}, errors.New("merging two sets of defaults is undefined")
-	}
-	if s1.Default != nil {
-		result.Default = s1.Default
-	}
+	// Defaults are annotations: they don't affect the generated Go type, so
+	// they can't conflict. Keep the later member's. This used to fail when
+	// *either* member had a default, which rejected the everyday
+	// `allOf: [$ref EnumWithDefault, {description: ...}]` decorator (issue
+	// #1379).
+	result.Default = s1.Default
 	if s2.Default != nil {
 		result.Default = s2.Default
 	}
@@ -338,41 +351,38 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	// We skip Example
 	// We skip ExternalDocs
 
-	// If two schemas disagree on any of these flags, we error out.
-	if s1.UniqueItems != s2.UniqueItems {
-		return openapi3.Schema{}, errors.New("merging two schemas with different UniqueItems")
+	// uniqueItems and the exclusive bounds are validation constraints that
+	// don't shape the Go type. Disagreeing on them used to be an error,
+	// which rejected decorators such as `allOf: [$ref UniqueTags,
+	// {description: ...}]`: kin-openapi can't tell an unset flag from an
+	// explicit false. allOf requires every member's constraints, so a flag
+	// set by either member is set on the result; a bound set by only one
+	// member carries over.
+	result.UniqueItems = s1.UniqueItems || s2.UniqueItems
 
-	}
-	result.UniqueItems = s1.UniqueItems
-
-	if !reflect.DeepEqual(s1.ExclusiveMin, s2.ExclusiveMin) {
-		return openapi3.Schema{}, errors.New("merging two schemas with different ExclusiveMin")
-
-	}
 	result.ExclusiveMin = s1.ExclusiveMin
-
-	if !reflect.DeepEqual(s1.ExclusiveMax, s2.ExclusiveMax) {
-		return openapi3.Schema{}, errors.New("merging two schemas with different ExclusiveMax")
-
+	if !result.ExclusiveMin.IsSet() {
+		result.ExclusiveMin = s2.ExclusiveMin
 	}
+
 	result.ExclusiveMax = s1.ExclusiveMax
+	if !result.ExclusiveMax.IsSet() {
+		result.ExclusiveMax = s2.ExclusiveMax
+	}
 
 	// Compare nullability via schemaIsNullable so this works the same way
 	// regardless of spec version: in 3.0 it reads s.Nullable, in 3.1 it
 	// reads "null" from the type array. Type merging itself is NOT version
-	// branched -- the equalTypes() check at result.Type assignment above
-	// uses the same slice-comparison code path in both modes:
+	// branched -- the type check at result.Type assignment above ignores
+	// "null" and mergeTypes adds it back when either member has it:
 	//
-	//   3.0: ["string"] vs ["string"]                 -> equal -> merged
-	//   3.1: ["string","null"] vs ["string","null"]   -> equal -> merged
-	//   3.1 mismatch: ["string","null"] vs ["string"] -> length differs
-	//                                                    -> error from
-	//                                                       equalTypes
+	//   3.0: ["string"] vs ["string"]                 -> ["string"]
+	//   3.1: ["string","null"] vs ["string","null"]   -> ["string","null"]
+	//   3.1: ["string","null"] vs ["string"]          -> ["string","null"]
 	//
-	// Because result.Type was already assigned above and carries any
-	// "null" entry forward — from whichever member declared a type — the
-	// merged result is correctly nullable in 3.1 without needing to touch
-	// result.Nullable. The result.Nullable copy
+	// Because result.Type already carries a "null" entry when either
+	// member had one, the merged result is correctly nullable in 3.1
+	// without needing to touch result.Nullable. The result.Nullable copy
 	// below is a no-op in 3.1 (s1.Nullable is always false there) but kept
 	// for 3.0 correctness, where Nullable is the only nullability carrier.
 	//
@@ -394,26 +404,22 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 		result.Nullable = true
 	}
 
-	if s1.ReadOnly != s2.ReadOnly {
-		return openapi3.Schema{}, errors.New("merging two schemas with different ReadOnly")
-
-	}
-	result.ReadOnly = s1.ReadOnly
-
-	if s1.WriteOnly != s2.WriteOnly {
-		return openapi3.Schema{}, errors.New("merging two schemas with different WriteOnly")
-
-	}
-	result.WriteOnly = s1.WriteOnly
-
-	if s1.AllowEmptyValue != s2.AllowEmptyValue {
-		return openapi3.Schema{}, errors.New("merging two schemas with different AllowEmptyValue")
-
-	}
-	result.AllowEmptyValue = s1.AllowEmptyValue
+	// readOnly, writeOnly and allowEmptyValue are ORed for the same reason:
+	// requiring them to match rejected `allOf: [$ref X, {readOnly: true}]`,
+	// the only way OpenAPI 3.0 can mark a $ref read-only.
+	result.ReadOnly = s1.ReadOnly || s2.ReadOnly
+	result.WriteOnly = s1.WriteOnly || s2.WriteOnly
+	result.AllowEmptyValue = s1.AllowEmptyValue || s2.AllowEmptyValue
 
 	// Required. We merge these.
 	result.Required = append(s1.Required, s2.Required...)
+
+	// Items used to be dropped, so an allOf over an array schema, such as
+	// `allOf: [$ref ArrayOfX, {minItems: 1}]`, generated []any.
+	result.Items, err = mergeItems(s1.Items, s2.Items, seenSchemaRef)
+	if err != nil {
+		return openapi3.Schema{}, err
+	}
 
 	// We merge all properties
 	result.Properties = make(map[string]*openapi3.SchemaRef, len(s1.Properties)+len(s2.Properties))
@@ -424,11 +430,12 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	if isAdditionalPropertiesExplicitFalse(&s1) || isAdditionalPropertiesExplicitFalse(&s2) {
 		result.WithoutAdditionalProperties()
 	} else if s1.AdditionalProperties.Schema != nil {
-		if s2.AdditionalProperties.Schema != nil {
-			return openapi3.Schema{}, errors.New("merging two schemas with additional properties, this is unhandled")
-		} else {
-			result.AdditionalProperties.Schema = s1.AdditionalProperties.Schema
+		// Two additionalProperties schemas merge only when they are the same
+		// schema, e.g. two members that each allow extra string values.
+		if s2.AdditionalProperties.Schema != nil && !sameSchema(s1.AdditionalProperties.Schema, s2.AdditionalProperties.Schema) {
+			return openapi3.Schema{}, errors.New("merging two schemas with different additional properties, this is unhandled")
 		}
+		result.AdditionalProperties.Schema = s1.AdditionalProperties.Schema
 	} else {
 		if s2.AdditionalProperties.Schema != nil {
 			result.AdditionalProperties.Schema = s2.AdditionalProperties.Schema
@@ -458,20 +465,99 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	return result, nil
 }
 
-func equalTypes(t1 *openapi3.Types, t2 *openapi3.Types) bool {
-	s1 := t1.Slice()
-	s2 := t2.Slice()
+// nonNullTypes returns a type array's entries other than "null".
+func nonNullTypes(t *openapi3.Types) []string {
+	var out []string
+	for _, typ := range t.Slice() {
+		if typ != openapi3.TypeNull {
+			out = append(out, typ)
+		}
+	}
+	return out
+}
 
-	if len(s1) != len(s2) {
+// sameTypeSet reports whether two type lists name the same types, in any
+// order.
+func sameTypeSet(t1, t2 []string) bool {
+	if len(t1) != len(t2) {
 		return false
 	}
-
-	// NOTE that ideally we'd use `slices.Equal` but as we're currently supporting Go 1.20+, we can't use it (yet https://github.com/oapi-codegen/oapi-codegen/issues/1634)
-	for i := range s1 {
-		if s1[i] != s2[i] {
+	for _, typ := range t1 {
+		if !slices.Contains(t2, typ) {
 			return false
 		}
 	}
-
 	return true
+}
+
+// mergeTypes returns the type of an allOf merge whose members' non-null types
+// are already known to agree: whichever member declares types, plus "null"
+// when either member's type array has it. The member's own Types value is
+// returned whenever it already says that, so merges that worked before
+// produce identical output.
+func mergeTypes(t1, t2 *openapi3.Types) *openapi3.Types {
+	base := t1
+	if len(nonNullTypes(t1)) == 0 && t2.Slice() != nil {
+		base = t2
+	}
+	if base.Slice() == nil {
+		return base
+	}
+	needsNull := slices.Contains(t1.Slice(), openapi3.TypeNull) || slices.Contains(t2.Slice(), openapi3.TypeNull)
+	if !needsNull || slices.Contains(base.Slice(), openapi3.TypeNull) {
+		return base
+	}
+	merged := openapi3.Types(append(slices.Clone(base.Slice()), openapi3.TypeNull))
+	return &merged
+}
+
+// sameSchema reports whether two schema positions describe the same schema:
+// the same $ref, or inline schemas with the same content. kin-openapi's
+// source-location metadata is not part of the JSON encoding, so two identical
+// schemas declared in different places compare equal.
+func sameSchema(r1, r2 *openapi3.SchemaRef) bool {
+	if r1.Ref != "" || r2.Ref != "" {
+		return r1.Ref == r2.Ref
+	}
+	b1, err1 := json.Marshal(r1.Value)
+	b2, err2 := json.Marshal(r2.Value)
+	return err1 == nil && err2 == nil && bytes.Equal(b1, b2)
+}
+
+// mergeItems merges the array items of two allOf members. A one-sided items
+// carries over, and two different item schemas are merged with the same rules
+// as their parents.
+func mergeItems(i1, i2 *openapi3.SchemaRef, seenSchemaRef map[string]bool) (*openapi3.SchemaRef, error) {
+	switch {
+	case i1 == nil:
+		return i2, nil
+	case i2 == nil:
+		return i1, nil
+	case sameSchema(i1, i2):
+		return i1, nil
+	case (i1.Ref != "" && seenSchemaRef[i1.Ref]) || (i2.Ref != "" && seenSchemaRef[i2.Ref]):
+		// Merging these items would re-enter a schema this merge is already
+		// inside. Keep the behavior from before items were merged at all
+		// (dropping them) rather than recursing forever.
+		return nil, nil
+	}
+	seen := maps.Clone(seenSchemaRef)
+	for _, r := range []*openapi3.SchemaRef{i1, i2} {
+		if r.Ref != "" {
+			seen[r.Ref] = true
+		}
+	}
+	v1, err := valueWithPropagatedRef(i1)
+	if err != nil {
+		return nil, err
+	}
+	v2, err := valueWithPropagatedRef(i2)
+	if err != nil {
+		return nil, err
+	}
+	merged, err := mergeOpenapiSchemas(v1, v2, true, seen)
+	if err != nil {
+		return nil, fmt.Errorf("error merging array items: %w", err)
+	}
+	return openapi3.NewSchemaRef("", &merged), nil
 }

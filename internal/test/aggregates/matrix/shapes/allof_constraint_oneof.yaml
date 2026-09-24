@@ -1,0 +1,19 @@
+description: >-
+  allOf with a oneOf next to it whose branches only add constraints. Unlike a
+  oneOf of types, this is still dropped, so the schema stays an alias of its
+  allOf member.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Contact'
+  oneOf:
+    - required: [email]
+    - required: [phone]
+components:
+  Contact:
+    type: object
+    properties:
+      email: {type: string}
+      phone: {type: string}
+samples:
+  - '{"email": "a@example.com"}'
+  - '{"phone": "555"}'

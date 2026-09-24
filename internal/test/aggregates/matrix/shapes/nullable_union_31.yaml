@@ -1,0 +1,21 @@
+description: 'A nullable anyOf (an OpenAPI 3.1 `type: null` branch).'
+openapi: 3.1.0
+subject:
+  anyOf:
+    - $ref: '#/components/schemas/Cat'
+    - $ref: '#/components/schemas/Dog'
+    - type: 'null'
+components:
+  Cat:
+    type: object
+    required: [meow]
+    properties:
+      meow: {type: string}
+  Dog:
+    type: object
+    required: [bark]
+    properties:
+      bark: {type: string}
+samples:
+  - '{"meow": "purr"}'
+  - '{"bark": "woof"}'

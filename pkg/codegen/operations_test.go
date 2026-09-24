@@ -1026,3 +1026,116 @@ paths:
 		})
 	}
 }
+
+// TestSharedUnionParameterName: a union parameter shared by a path item has
+// no operation name in its path, so its union type is <Name>Param. A bare
+// Id would collide with the schema of that name.
+func TestSharedUnionParameterName(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths:
+  /things/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: string
+    get:
+      operationId: getThing
+      responses:
+        '200': {description: ok}
+  /other:
+    get:
+      operationId: getOther
+      parameters:
+        - name: q
+          in: query
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+      responses:
+        '200': {description: ok}
+components:
+  schemas:
+    Id:
+      type: object
+      properties:
+        value: {type: string}
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "type Id struct {")
+	assert.Contains(t, code, "type IdParam struct {")
+	assert.Contains(t, code, "type Id0 = openapi_types.UUID", "members keep their names")
+	assert.Contains(t, code, "type GetOtherParamsQ struct {", "an operation's own parameters are prefixed by it")
+}
+
+// TestOperationTypeNameCollidingWithComponent: a type declared for an
+// operation under a component type's name is a generation error, rather than
+// generated code that does not compile.
+func TestOperationTypeNameCollidingWithComponent(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths:
+  /things/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          anyOf:
+            - type: integer
+            - type: string
+    get:
+      operationId: getThing
+      responses:
+        '200': {description: ok}
+components:
+  schemas:
+    IdParam:
+      type: object
+      properties:
+        value: {type: string}
+`
+	_, err := generateSpecErr(spec)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "duplicate typename 'IdParam'")
+	assert.Contains(t, err.Error(), "operation GetThing")
+}
+
+// TestComponentUnionParameter: a oneOf parameter under components/parameters
+// names its members after itself and declares them. They used to be named from
+// an empty path (N0, N1) and never declared.
+func TestComponentUnionParameter(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths:
+  /things:
+    get:
+      operationId: getThings
+      parameters:
+        - $ref: '#/components/parameters/Filter'
+      responses:
+        '200': {description: ok}
+components:
+  parameters:
+    Filter:
+      name: filter
+      in: query
+      schema:
+        oneOf:
+          - type: integer
+          - type: string
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "type Filter struct {")
+	assert.Contains(t, code, "type Filter0 = int")
+	assert.Contains(t, code, "type Filter1 = string")
+	assert.Contains(t, code, "func (t Filter) AsFilter0() (Filter0, error)")
+	assert.Contains(t, code, "Filter *Filter")
+	assert.NotContains(t, code, "N0")
+}

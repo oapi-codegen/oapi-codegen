@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"math"
+	"strings"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -1246,4 +1247,323 @@ components:
 	for _, name := range []string{"GetInlineThing", "GetInlineEvent"} {
 		assert.Contains(t, out, "type "+name+"200JSONResponse = "+name+"200JSONResponseBody")
 	}
+}
+
+// TestStrictComponentResponseWithInlineUnion pins the strict envelopes
+// generated for components/responses entries whose inline schema needs
+// hoisting: they must reference the type the model pass declared for the
+// component, not a <Name>JSONResponseBody that nothing declares.
+// See https://github.com/oapi-codegen/oapi-codegen/issues/2539.
+func TestStrictComponentResponseWithInlineUnion(t *testing.T) {
+	spec := `
+openapi: "3.0.3"
+info: {title: t, version: "1"}
+paths:
+  /things:
+    get:
+      operationId: listThings
+      responses:
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ServiceError'}
+        default: {$ref: '#/components/responses/BadRequest'}
+components:
+  schemas:
+    Base:
+      type: object
+      required: [id]
+      properties:
+        id: {type: string}
+    Cat:
+      type: object
+      properties:
+        meow: {type: string}
+    Dog:
+      type: object
+      properties:
+        woof: {type: string}
+  responses:
+    BadRequest:
+      description: inline union
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Cat'
+              - $ref: '#/components/schemas/Dog'
+    Conflict:
+      description: inline allOf-merged union
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Base'
+              - oneOf:
+                  - $ref: '#/components/schemas/Cat'
+                  - $ref: '#/components/schemas/Dog'
+    ServiceError:
+      description: inline union behind response headers
+      headers:
+        X-Request-Id:
+          required: true
+          schema: {type: string}
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Cat'
+              - $ref: '#/components/schemas/Dog'
+`
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	require.NoError(t, err)
+	out, err := Generate(swagger, Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{Models: true, StdHTTPServer: true, Strict: true},
+	})
+	require.NoError(t, err)
+
+	// The envelopes alias the component models declared by the model pass.
+	assert.Contains(t, out, "type BadRequestJSONResponse = BadRequest\n")
+	assert.Contains(t, out, "type ConflictJSONResponse = Conflict\n")
+	// With headers the envelope is a struct whose Body is the component model.
+	assert.Contains(t, out, "type ServiceErrorJSONResponse struct {\n\tBody ServiceError\n")
+	// A non-fixed status code also wraps the component model, not an
+	// anonymous struct with an unexported union field.
+	assert.Contains(t, out, "type ListThingsdefaultJSONResponse struct {\n\tBody       BadRequest")
+	assert.NotContains(t, out, "JSONResponseBody", "no synthetic body type may be referenced for components/responses")
+	assert.NotContains(t, out, ".union)", "visitors must not encode the raw union field")
+	// The aliases must not redeclare the model's marshallers.
+	assert.NotContains(t, out, "func (t BadRequestJSONResponse) MarshalJSON()")
+	assert.NotContains(t, out, "func (t ConflictJSONResponse) MarshalJSON()")
+}
+
+// TestUnionAdoptUnion pins what a union's From*/Merge* reconcile with its own
+// fields: only properties MarshalJSON always writes are filled from the
+// variant, an untyped (interface) property is checked without reflect
+// panicking on nil, and variant keys are dropped from additionalProperties.
+func TestUnionAdoptUnion(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Cat:
+      type: object
+      properties:
+        id: {type: string}
+        label: {type: string}
+        meta: {}
+        meow: {type: string}
+    Dog:
+      type: object
+      properties:
+        bark: {type: string}
+    Pet:
+      type: object
+      required: [id]
+      properties:
+        id: {type: string}
+        label: {type: string}
+        meta: {}
+      additionalProperties: true
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+`
+	code := generateSpec(t, spec)
+	start := strings.Index(code, "func (t *Pet) adoptUnion(previous, b json.RawMessage) {")
+	require.GreaterOrEqual(t, start, 0, "Pet must get adoptUnion")
+	body := code[start : start+strings.Index(code[start:], "\n}\n")]
+
+	assert.Contains(t, body, `object["id"]`, "a required property is always written, so it is adopted")
+	assert.Contains(t, body, `object["meta"]`, "an untyped property without a pointer is always written, so it is adopted")
+	assert.NotContains(t, body, `object["label"]`, "an optional pointer is written only when set, so it is left to the union data")
+	assert.Contains(t, body, "!current.IsValid() || current.IsZero()", "a nil interface has no reflect.Value to ask IsZero of")
+	for _, key := range []string{"bark", "id", "label", "meow", "meta"} {
+		assert.Contains(t, body, `delete(t.AdditionalProperties, "`+key+`")`, "variant key %q", key)
+	}
+}
+
+// TestUnionWithOnlyOptionalPropertiesDoesNotAdopt: with nothing to adopt and
+// no additionalProperties, From* needs no adoptUnion at all.
+func TestUnionWithOnlyOptionalPropertiesDoesNotAdopt(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Cat:
+      type: object
+      properties:
+        meow: {type: string}
+    Pet:
+      type: object
+      properties:
+        label: {type: string}
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+`
+	code := generateSpec(t, spec)
+	assert.NotContains(t, code, "adoptUnion")
+}
+
+// TestDuplicateUnionMembers: a type that is a member of both an anyOf and a
+// oneOf gets its accessors once, whether the two lists are on one schema or
+// the oneOf comes from an allOf member.
+func TestDuplicateUnionMembers(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Base:
+      type: object
+      properties:
+        id: {type: string}
+    Cat:
+      type: object
+      properties:
+        meow: {type: string}
+    Dog:
+      type: object
+      properties:
+        bark: {type: string}
+    Both:
+      anyOf:
+        - $ref: '#/components/schemas/Cat'
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    Nested:
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - oneOf:
+            - $ref: '#/components/schemas/Cat'
+            - $ref: '#/components/schemas/Dog'
+      anyOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+`
+	code := generateSpec(t, spec)
+	for _, union := range []string{"Both", "Nested"} {
+		for _, member := range []string{"Cat", "Dog"} {
+			assert.Equal(t, 1, strings.Count(code, "func (t "+union+") As"+member+"()"), "%s.As%s", union, member)
+		}
+	}
+}
+
+// TestSelfReferentialArrayIsDefinedType: an array schema whose items refer
+// back to it is declared as a defined type, since an alias cannot refer to
+// itself. That holds for the plain schema and for one merged from allOf.
+func TestSelfReferentialArrayIsDefinedType(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Tree:
+      type: array
+      items: {$ref: '#/components/schemas/Tree'}
+    NodeList:
+      allOf:
+        - type: array
+          items: {$ref: '#/components/schemas/NodeList'}
+        - description: A list of lists.
+    Forest:
+      type: array
+      items: {$ref: '#/components/schemas/Tree'}
+    Data:
+      type: array
+      items:
+        type: object
+        properties:
+          data: {type: string}
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "type Tree []Tree")
+	assert.Contains(t, code, "type NodeList []NodeList")
+	assert.Contains(t, code, "type Forest = []Tree", "an array of another type stays an alias")
+	assert.Contains(t, code, "type Data = []struct {", "a field merely named like the type is not a self-reference")
+}
+
+func TestMentionsTypeName(t *testing.T) {
+	for _, tc := range []struct {
+		decl string
+		want bool
+	}{
+		{"[]Node", true},
+		{"map[string]Node", true},
+		{"*Node", true},
+		{"Node", true},
+		{"[]NodeList", false},
+		{"[]MyNode", false},
+		{"[]externalRef0.Node", false},
+		{"[]Node_Item", false},
+		// A field named like the type is not a reference to it; a field of
+		// that type is.
+		{"[]struct {\n    Node *string `json:\"node,omitempty\"`\n}", false},
+		{"[]struct {\n    Next *Node `json:\"next,omitempty\"`\n}", true},
+		{"map[string]struct {\n    // Node is documented.\n    Node int `json:\"node\"`\n}", false},
+		{"not a type (", false},
+	} {
+		assert.Equal(t, tc.want, mentionsTypeName(tc.decl, "Node"), tc.decl)
+	}
+}
+
+// TestScalarUnionTextComment: the UnmarshalText doc comment reads correctly
+// for a union with only string branches.
+func TestScalarUnionTextComment(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Color:
+      anyOf:
+        - type: string
+          enum: [red]
+        - type: string
+    Amount:
+      oneOf:
+        - type: number
+        - type: string
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "// parameter, which carries no JSON type.\n// The text is taken as a string.\nfunc (t *Color) UnmarshalText(")
+	assert.Contains(t, code, "// Text that is exactly a JSON number, with nothing around it, is taken as one; anything else is a string.\nfunc (t *Amount) UnmarshalText(")
+	assert.NotContains(t, code, "a JSON ,")
+}
+
+// TestUnionOfScalarUnionsBindsText: a union whose branch is itself a union of
+// scalars, here through a $ref, can still be bound from parameter text. A
+// union that contains itself cannot, and working that out must terminate.
+func TestUnionOfScalarUnionsBindsText(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    IntOrString:
+      oneOf:
+        - type: integer
+        - type: string
+    Flag:
+      oneOf:
+        - $ref: '#/components/schemas/IntOrString'
+        - type: boolean
+    WithArray:
+      oneOf:
+        - $ref: '#/components/schemas/IntOrString'
+        - type: array
+          items: {type: string}
+    Loop:
+      oneOf:
+        - $ref: '#/components/schemas/Loop'
+        - type: string
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "func (t *Flag) UnmarshalText(text []byte) error {")
+	assert.Contains(t, code, "// Text that is exactly a JSON boolean or integer, with nothing around it, is taken as one; anything else is a string.\nfunc (t *Flag) UnmarshalText(")
+	assert.NotContains(t, code, "func (t *WithArray) UnmarshalText(", "an array branch can't be bound from text")
+	assert.NotContains(t, code, "func (t *Loop) UnmarshalText(", "a union that contains itself can't be bound from text")
 }

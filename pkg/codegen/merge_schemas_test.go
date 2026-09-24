@@ -770,3 +770,305 @@ func TestMergeSchemasRemoteRecursiveSchemaFlattenedTwice(t *testing.T) {
 	assert.Contains(t, code, "type A struct {")
 	assert.Contains(t, code, "type B struct {")
 }
+
+// TestMergeOpenapiSchemas_Annotations covers keywords that don't shape the Go
+// type. Merging them must never fail: the allOf decorator idiom sets them on
+// one member only, and kin-openapi can't tell an unset flag from false.
+func TestMergeOpenapiSchemas_Annotations(t *testing.T) {
+	merge := func(t *testing.T, s1, s2 openapi3.Schema) openapi3.Schema {
+		t.Helper()
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
+		require.NoError(t, err)
+		return result
+	}
+
+	t.Run("default on one member is kept (issue #1379)", func(t *testing.T) {
+		assert.Equal(t, "asc", merge(t, openapi3.Schema{Default: "asc"}, openapi3.Schema{}).Default)
+		assert.Equal(t, "asc", merge(t, openapi3.Schema{}, openapi3.Schema{Default: "asc"}).Default)
+	})
+
+	t.Run("defaults on both members keep the later one", func(t *testing.T) {
+		assert.Equal(t, "desc", merge(t, openapi3.Schema{Default: "asc"}, openapi3.Schema{Default: "desc"}).Default)
+	})
+
+	t.Run("flags set on either member are set on the result", func(t *testing.T) {
+		set := openapi3.Schema{UniqueItems: true, ReadOnly: true, WriteOnly: true, AllowEmptyValue: true}
+		for name, pair := range map[string][2]openapi3.Schema{
+			"s1": {set, {}},
+			"s2": {{}, set},
+		} {
+			t.Run(name, func(t *testing.T) {
+				result := merge(t, pair[0], pair[1])
+				assert.True(t, result.UniqueItems, "uniqueItems")
+				assert.True(t, result.ReadOnly, "readOnly")
+				assert.True(t, result.WriteOnly, "writeOnly")
+				assert.True(t, result.AllowEmptyValue, "allowEmptyValue")
+			})
+		}
+	})
+
+	t.Run("an exclusive bound on one member carries over", func(t *testing.T) {
+		bound := openapi3.ExclusiveBound{Value: new(float64)}
+		assert.Equal(t, bound, merge(t, openapi3.Schema{ExclusiveMin: bound}, openapi3.Schema{}).ExclusiveMin)
+		assert.Equal(t, bound, merge(t, openapi3.Schema{}, openapi3.Schema{ExclusiveMax: bound}).ExclusiveMax)
+	})
+}
+
+// TestMergeOpenapiSchemas_NullInTypeArray covers OpenAPI 3.1 type arrays,
+// where "null" spells nullability. It is unioned like 3.0's `nullable`
+// instead of taking part in the type comparison.
+func TestMergeOpenapiSchemas_NullInTypeArray(t *testing.T) {
+	object := &openapi3.Types{"object"}
+	nullableObject := &openapi3.Types{"object", "null"}
+
+	merge := func(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
+		return mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
+	}
+
+	t.Run("a nullable member makes the result nullable", func(t *testing.T) {
+		for name, pair := range map[string][2]*openapi3.Types{
+			"s1 nullable": {nullableObject, object},
+			"s2 nullable": {object, nullableObject},
+		} {
+			t.Run(name, func(t *testing.T) {
+				result, err := merge(openapi3.Schema{Type: pair[0]}, openapi3.Schema{Type: pair[1]})
+				require.NoError(t, err)
+				assert.ElementsMatch(t, []string{"object", "null"}, result.Type.Slice())
+			})
+		}
+	})
+
+	t.Run("types that already agree are passed through unchanged", func(t *testing.T) {
+		result, err := merge(openapi3.Schema{Type: object}, openapi3.Schema{Type: &openapi3.Types{"object"}})
+		require.NoError(t, err)
+		assert.Same(t, object, result.Type)
+	})
+
+	t.Run("type arrays compare as sets", func(t *testing.T) {
+		_, err := merge(openapi3.Schema{Type: &openapi3.Types{"string", "integer"}},
+			openapi3.Schema{Type: &openapi3.Types{"integer", "string"}})
+		assert.NoError(t, err)
+	})
+
+	t.Run("different non-null types still conflict", func(t *testing.T) {
+		_, err := merge(openapi3.Schema{Type: &openapi3.Types{"string"}},
+			openapi3.Schema{Type: &openapi3.Types{"integer", "null"}})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "incompatible types")
+	})
+}
+
+// TestMergeOpenapiSchemas_AdditionalProperties covers two members that both
+// declare an additionalProperties schema.
+func TestMergeOpenapiSchemas_AdditionalProperties(t *testing.T) {
+	withAP := func(ap *openapi3.SchemaRef) openapi3.Schema {
+		return openapi3.Schema{AdditionalProperties: openapi3.AdditionalProperties{Schema: ap}}
+	}
+	merge := func(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
+		return mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
+	}
+
+	t.Run("identical inline schemas merge", func(t *testing.T) {
+		result, err := merge(
+			withAP(openapi3.NewSchemaRef("", openapi3.NewStringSchema())),
+			withAP(openapi3.NewSchemaRef("", openapi3.NewStringSchema())))
+		require.NoError(t, err)
+		assert.True(t, result.AdditionalProperties.Schema.Value.Type.Is("string"))
+	})
+
+	t.Run("the same $ref merges", func(t *testing.T) {
+		result, err := merge(
+			withAP(openapi3.NewSchemaRef("#/components/schemas/X", openapi3.NewStringSchema())),
+			withAP(openapi3.NewSchemaRef("#/components/schemas/X", openapi3.NewStringSchema())))
+		require.NoError(t, err)
+		assert.Equal(t, "#/components/schemas/X", result.AdditionalProperties.Schema.Ref)
+	})
+
+	t.Run("different schemas still error", func(t *testing.T) {
+		_, err := merge(
+			withAP(openapi3.NewSchemaRef("", openapi3.NewStringSchema())),
+			withAP(openapi3.NewSchemaRef("", openapi3.NewIntegerSchema())))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "additional properties")
+	})
+}
+
+// TestMergeOpenapiSchemas_Items covers array items, which used to be dropped
+// by every allOf merge.
+func TestMergeOpenapiSchemas_Items(t *testing.T) {
+	merge := func(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
+		return mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
+	}
+	itemRef := openapi3.NewSchemaRef("#/components/schemas/Item", openapi3.NewObjectSchema())
+
+	t.Run("items on one member carry over", func(t *testing.T) {
+		for name, pair := range map[string][2]openapi3.Schema{
+			"s1": {{Items: itemRef}, {}},
+			"s2": {{}, {Items: itemRef}},
+		} {
+			t.Run(name, func(t *testing.T) {
+				result, err := merge(pair[0], pair[1])
+				require.NoError(t, err)
+				assert.Same(t, itemRef, result.Items)
+			})
+		}
+	})
+
+	t.Run("the same $ref is kept", func(t *testing.T) {
+		result, err := merge(openapi3.Schema{Items: itemRef},
+			openapi3.Schema{Items: openapi3.NewSchemaRef("#/components/schemas/Item", openapi3.NewObjectSchema())})
+		require.NoError(t, err)
+		assert.Same(t, itemRef, result.Items)
+	})
+
+	t.Run("different item schemas merge", func(t *testing.T) {
+		a := openapi3.NewObjectSchema().WithProperty("a", openapi3.NewStringSchema())
+		b := openapi3.NewObjectSchema().WithProperty("b", openapi3.NewStringSchema())
+		result, err := merge(openapi3.Schema{Items: openapi3.NewSchemaRef("", a)},
+			openapi3.Schema{Items: openapi3.NewSchemaRef("", b)})
+		require.NoError(t, err)
+		require.NotNil(t, result.Items)
+		assert.Contains(t, result.Items.Value.Properties, "a")
+		assert.Contains(t, result.Items.Value.Properties, "b")
+	})
+
+	t.Run("conflicting item types error", func(t *testing.T) {
+		_, err := merge(openapi3.Schema{Items: openapi3.NewSchemaRef("", openapi3.NewStringSchema())},
+			openapi3.Schema{Items: openapi3.NewSchemaRef("", openapi3.NewIntegerSchema())})
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "array items")
+	})
+}
+
+// TestMergeSchemasAllOfOverArrayKeepsItems is the end-to-end case: an allOf over
+// an array schema generates a typed slice, not []any.
+func TestMergeSchemasAllOfOverArrayKeepsItems(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Item:
+      type: object
+      properties:
+        n:
+          type: integer
+    Items:
+      type: array
+      items:
+        $ref: '#/components/schemas/Item'
+    Wrapped:
+      allOf:
+        - $ref: '#/components/schemas/Items'
+        - minItems: 1
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "type Wrapped = []Item")
+}
+
+// TestAllOfWithOneOfSibling covers a oneOf next to allOf on the same schema,
+// which used to be dropped.
+func TestAllOfWithOneOfSibling(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Base:
+      type: object
+      properties:
+        id:
+          type: string
+    Cat:
+      type: object
+      properties:
+        meow:
+          type: string
+    Dog:
+      type: object
+      properties:
+        bark:
+          type: string
+    Contact:
+      type: object
+      properties:
+        email:
+          type: string
+        phone:
+          type: string
+    Pet:
+      allOf:
+        - $ref: '#/components/schemas/Base'
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    OneWayToReach:
+      allOf:
+        - $ref: '#/components/schemas/Contact'
+      oneOf:
+        - required: [email]
+        - required: [phone]
+    NeedEmail:
+      required: [email]
+    NeedPhone:
+      required: [phone]
+    OneWayByRef:
+      allOf:
+        - $ref: '#/components/schemas/Contact'
+      oneOf:
+        - $ref: '#/components/schemas/NeedEmail'
+        - $ref: '#/components/schemas/NeedPhone'
+`
+	code := generateSpec(t, spec)
+
+	assert.Contains(t, code, "type Pet struct {")
+	assert.Contains(t, code, "func (t Pet) AsCat() (Cat, error)")
+	assert.Contains(t, code, "func (t Pet) AsDog() (Dog, error)")
+
+	// Branches that only add constraints are not types to choose between;
+	// the schema stays what it was, an alias of its allOf member. That holds
+	// when the branches are $refs to such schemas, too.
+	assert.Contains(t, code, "type OneWayToReach = Contact")
+	assert.Contains(t, code, "type OneWayByRef = Contact")
+}
+
+// TestAnyOfAndOneOfOnOneSchema is issue #839: inline members of an anyOf and
+// a oneOf on the same schema used to get the same names.
+func TestAnyOfAndOneOfOnOneSchema(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Orange:
+      type: object
+      anyOf:
+        - required: [a]
+          properties:
+            a:
+              type: string
+        - required: [b]
+          properties:
+            b:
+              type: string
+      oneOf:
+        - required: [c]
+          properties:
+            c:
+              type: string
+    Lemon:
+      type: object
+      oneOf:
+        - required: [c]
+          properties:
+            c:
+              type: string
+`
+	code := generateSpec(t, spec)
+	for _, name := range []string{"OrangeAnyOf0", "OrangeAnyOf1", "OrangeOneOf0"} {
+		assert.Contains(t, code, "type "+name+" struct {")
+		assert.Contains(t, code, "func (t Orange) As"+name+"() ("+name+", error)")
+	}
+	// A schema with only one of the keywords keeps its names.
+	assert.Contains(t, code, "type Lemon0 struct {")
+}

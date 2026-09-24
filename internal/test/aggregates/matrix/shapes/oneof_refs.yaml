@@ -1,0 +1,19 @@
+description: oneOf over two $ref object variants, without a discriminator.
+subject:
+  oneOf:
+    - $ref: '#/components/schemas/Cat'
+    - $ref: '#/components/schemas/Dog'
+components:
+  Cat:
+    type: object
+    required: [meow]
+    properties:
+      meow: {type: string}
+  Dog:
+    type: object
+    required: [bark]
+    properties:
+      bark: {type: string}
+samples:
+  - '{"meow": "purr"}'
+  - '{"bark": "woof"}'

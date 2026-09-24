@@ -2,6 +2,50 @@
     {{$typeName := .TypeName -}}
     {{$discriminator := .Schema.Discriminator}}
     {{$schema := .Schema -}}
+    {{$adopts := or (ne 0 (len .Schema.AdoptedProperties)) .Schema.HasAdditionalProperties -}}
+    {{if $adopts}}
+        // adoptUnion reconciles {{$typeName}}'s own fields with the union data b that From*
+        // or Merge* just put in place of previous.
+        {{- if .Schema.AdoptedProperties}}
+        // A property that MarshalJSON always writes, and that is unset or still holds the
+        // value previous had for it, takes b's value; one the caller has set to something else
+        // keeps it. Otherwise a zero value, or an earlier variant's value, would overwrite b's
+        // when marshaling.
+        {{- end}}
+        {{- if .Schema.HasAdditionalProperties}}
+        // Additional properties with a key that b or any variant defines are dropped:
+        // UnmarshalJSON copies the union's keys there too, and an older copy must not shadow
+        // the new union data.
+        {{- end}}
+        func (t *{{$typeName}}) adoptUnion(previous, b json.RawMessage) {
+            object := make(map[string]json.RawMessage)
+            if json.Unmarshal(b, &object) != nil {
+                return
+            }
+            {{if .Schema.AdoptedProperties -}}
+            held := make(map[string]json.RawMessage)
+            _ = json.Unmarshal(previous, &held)
+            {{end -}}
+            {{range .Schema.AdoptedProperties -}}
+                if raw, found := object["{{.JsonFieldName}}"]; found {
+                    var old, next {{.GoTypeDef}}
+                    unchanged := json.Unmarshal(held["{{.JsonFieldName}}"], &old) == nil && reflect.DeepEqual(old, t.{{.GoFieldName}})
+                    current := reflect.ValueOf(t.{{.GoFieldName}})
+                    if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+                        t.{{.GoFieldName}} = next
+                    }
+                }
+            {{end -}}
+            {{if .Schema.HasAdditionalProperties -}}
+                for fieldName := range object {
+                    delete(t.AdditionalProperties, fieldName)
+                }
+                {{range .Schema.UnionVariantProperties -}}
+                    delete(t.AdditionalProperties, {{printf "%q" .}})
+                {{end -}}
+            {{end -}}
+        }
+    {{end}}
     {{range .Schema.UnionElements}}
         {{$stamp := $schema.DiscriminatorStampFor . -}}
         // As{{ .Method }} returns the union data inside the {{$typeName}} as a {{.}}
@@ -15,10 +59,10 @@
         func (t *{{$typeName}}) From{{ .Method }} (v {{.}}) error {
             {{if and $stamp $stamp.Property -}}
                 {{if $stamp.Property.IsPointer -}}
-                    var discriminator {{$stamp.Property.Schema.TypeDecl}} = "{{$stamp.Value}}"
+                    var discriminator {{$stamp.Property.Schema.TypeDecl}} = {{$stamp.Literal}}
                     t.{{$stamp.Property.GoFieldName}} = &discriminator
                 {{else -}}
-                    t.{{$stamp.Property.GoFieldName}} = "{{$stamp.Value}}"
+                    t.{{$stamp.Property.GoFieldName}} = {{$stamp.Literal}}
                 {{end -}}
             {{end -}}
             b, err := json.Marshal(v)
@@ -28,7 +72,15 @@
                 }
                 b, err = runtime.JSONMerge(b, []byte(`{{$stamp.JSONPatch}}`))
             {{end -}}
+            {{if $adopts -}}
+                previous := t.union
+            {{end -}}
             t.union = b
+            {{if $adopts -}}
+                if err == nil {
+                    t.adoptUnion(previous, b)
+                }
+            {{end -}}
             return err
         }
 
@@ -36,10 +88,10 @@
         func (t *{{$typeName}}) Merge{{ .Method }} (v {{.}}) error {
             {{if and $stamp $stamp.Property -}}
                 {{if $stamp.Property.IsPointer -}}
-                    var discriminator {{$stamp.Property.Schema.TypeDecl}} = "{{$stamp.Value}}"
+                    var discriminator {{$stamp.Property.Schema.TypeDecl}} = {{$stamp.Literal}}
                     t.{{$stamp.Property.GoFieldName}} = &discriminator
                 {{else -}}
-                    t.{{$stamp.Property.GoFieldName}} = "{{$stamp.Value}}"
+                    t.{{$stamp.Property.GoFieldName}} = {{$stamp.Literal}}
                 {{end -}}
             {{end -}}
             b, err := json.Marshal(v)
@@ -52,13 +104,22 @@
                     return err
                 }
             {{end}}
+            {{if $adopts -}}
+                previous := t.union
+            {{end -}}
             merged, err := runtime.JSONMerge(t.union, b)
             t.union = merged
+            {{if $adopts -}}
+                if err == nil {
+                    t.adoptUnion(previous, b)
+                }
+            {{end -}}
             return err
         }
     {{end}}
 
     {{if $discriminator}}
+        {{if $discriminator.IsString -}}
         func (t {{.TypeName}}) Discriminator() (string, error) {
             var discriminator struct {
                 Discriminator string {{$discriminator.JSONTag}}
@@ -66,6 +127,28 @@
             err := json.Unmarshal(t.union, &discriminator)
             return discriminator.Discriminator, err
         }
+        {{- else -}}
+        // Discriminator returns the {{$discriminator.ValueType}} discriminator as the text of its JSON value,
+        // which is how the discriminator mapping spells it.
+        func (t {{.TypeName}}) Discriminator() (string, error) {
+            var discriminator struct {
+                Discriminator json.RawMessage {{$discriminator.JSONTag}}
+            }
+            if err := json.Unmarshal(t.union, &discriminator); err != nil {
+                return "", err
+            }
+            raw := discriminator.Discriminator
+            switch {
+            case len(raw) == 0 || string(raw) == "null":
+                return "", nil
+            case raw[0] == '"':
+                var s string
+                err := json.Unmarshal(raw, &s)
+                return s, err
+            }
+            return string(raw), nil
+        }
+        {{- end}}
 
         {{$cases := $schema.DiscriminatorCases -}}
         {{if $cases}}
@@ -84,6 +167,60 @@
                 }
             }
         {{end}}
+    {{end}}
+
+    {{if .Schema.UnionTextKinds}}
+        // UnmarshalText sets the union from the text of a path, query, header or cookie
+        // parameter, which carries no JSON type.
+        {{- if or (.Schema.UnionTextAccepts "boolean") (.Schema.UnionTextAccepts "integer") (.Schema.UnionTextAccepts "number")}}
+        // Text that is exactly a JSON {{.Schema.UnionTextNonStringKinds}}, with nothing around it, is taken as one;
+        {{- if .Schema.UnionTextAccepts "string"}} anything else is a string.{{else}} anything else is an error.{{end}}
+        {{- else}}
+        // The text is taken as a string.
+        {{- end}}
+        func (t *{{.TypeName}}) UnmarshalText(text []byte) error {
+            {{if or (.Schema.UnionTextAccepts "boolean") (.Schema.UnionTextAccepts "integer") (.Schema.UnionTextAccepts "number") -}}
+            var value any
+            decoder := json.NewDecoder(bytes.NewReader(text))
+            decoder.UseNumber()
+            if len(bytes.TrimSpace(text)) == len(text) && json.Valid(text) && decoder.Decode(&value) == nil {
+                {{- if .Schema.UnionTextAccepts "boolean"}}
+                if _, ok := value.(bool); ok {
+                    t.union = append(json.RawMessage(nil), text...)
+                    return nil
+                }
+                {{- end}}
+                {{- if or (.Schema.UnionTextAccepts "integer") (.Schema.UnionTextAccepts "number")}}
+                if number, ok := value.(json.Number); ok {
+                    {{- if .Schema.UnionTextAccepts "number"}}
+                    t.union = json.RawMessage(number.String())
+                    return nil
+                    {{- else}}
+                    if _, err := number.Int64(); err == nil {
+                        t.union = json.RawMessage(number.String())
+                        return nil
+                    }
+                    {{- end}}
+                }
+                {{- end}}
+            }
+            {{end -}}
+            {{if .Schema.UnionTextAccepts "string" -}}
+            b, err := json.Marshal(string(text))
+            if err != nil {
+                return err
+            }
+            t.union = b
+            return nil
+            {{- else -}}
+            return fmt.Errorf("%q is not a valid {{.TypeName}}", text)
+            {{- end}}
+        }
+
+        // Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+        func (t *{{.TypeName}}) Bind(src string) error {
+            return t.UnmarshalText([]byte(src))
+        }
     {{end}}
 
     {{if not .Schema.HasAdditionalProperties}}

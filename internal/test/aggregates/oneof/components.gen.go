@@ -4,9 +4,11 @@
 package aggregatesoneof
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 
 	"github.com/oapi-codegen/runtime"
 )
@@ -545,6 +547,36 @@ func (t *OneOfObject11_AdditionalProperties) MergeOneOfObject112(v OneOfObject11
 	return err
 }
 
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON boolean or number, with nothing around it, is taken as one; anything else is a string.
+func (t *OneOfObject11_AdditionalProperties) UnmarshalText(text []byte) error {
+	var value any
+	decoder := json.NewDecoder(bytes.NewReader(text))
+	decoder.UseNumber()
+	if len(bytes.TrimSpace(text)) == len(text) && json.Valid(text) && decoder.Decode(&value) == nil {
+		if _, ok := value.(bool); ok {
+			t.union = append(json.RawMessage(nil), text...)
+			return nil
+		}
+		if number, ok := value.(json.Number); ok {
+			t.union = json.RawMessage(number.String())
+			return nil
+		}
+	}
+	b, err := json.Marshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *OneOfObject11_AdditionalProperties) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
+}
+
 func (t OneOfObject11_AdditionalProperties) MarshalJSON() ([]byte, error) {
 	b, err := t.union.MarshalJSON()
 	return b, err
@@ -669,6 +701,37 @@ func (t *OneOfObject12) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// adoptUnion reconciles OneOfObject13's own fields with the union data b that From*
+// or Merge* just put in place of previous.
+// A property that MarshalJSON always writes, and that is unset or still holds the
+// value previous had for it, takes b's value; one the caller has set to something else
+// keeps it. Otherwise a zero value, or an earlier variant's value, would overwrite b's
+// when marshaling.
+// Additional properties with a key that b or any variant defines are dropped:
+// UnmarshalJSON copies the union's keys there too, and an older copy must not shadow
+// the new union data.
+func (t *OneOfObject13) adoptUnion(previous, b json.RawMessage) {
+	object := make(map[string]json.RawMessage)
+	if json.Unmarshal(b, &object) != nil {
+		return
+	}
+	held := make(map[string]json.RawMessage)
+	_ = json.Unmarshal(previous, &held)
+	if raw, found := object["type"]; found {
+		var old, next string
+		unchanged := json.Unmarshal(held["type"], &old) == nil && reflect.DeepEqual(old, t.Type)
+		current := reflect.ValueOf(t.Type)
+		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+			t.Type = next
+		}
+	}
+	for fieldName := range object {
+		delete(t.AdditionalProperties, fieldName)
+	}
+	delete(t.AdditionalProperties, "name")
+	delete(t.AdditionalProperties, "values")
+}
+
 // AsOneOfVariant1 returns the union data inside the OneOfObject13 as a OneOfVariant1
 func (t OneOfObject13) AsOneOfVariant1() (OneOfVariant1, error) {
 	var body OneOfVariant1
@@ -684,7 +747,11 @@ func (t *OneOfObject13) FromOneOfVariant1(v OneOfVariant1) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"type":"v1"}`))
+	previous := t.union
 	t.union = b
+	if err == nil {
+		t.adoptUnion(previous, b)
+	}
 	return err
 }
 
@@ -700,8 +767,12 @@ func (t *OneOfObject13) MergeOneOfVariant1(v OneOfVariant1) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
+	if err == nil {
+		t.adoptUnion(previous, b)
+	}
 	return err
 }
 
@@ -720,7 +791,11 @@ func (t *OneOfObject13) FromOneOfVariant6(v OneOfVariant6) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"type":"v6"}`))
+	previous := t.union
 	t.union = b
+	if err == nil {
+		t.adoptUnion(previous, b)
+	}
 	return err
 }
 
@@ -736,8 +811,12 @@ func (t *OneOfObject13) MergeOneOfVariant6(v OneOfVariant6) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
+	if err == nil {
+		t.adoptUnion(previous, b)
+	}
 	return err
 }
 
@@ -1624,6 +1703,29 @@ func (t *OneOfObject8) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// adoptUnion reconciles OneOfObject9's own fields with the union data b that From*
+// or Merge* just put in place of previous.
+// A property that MarshalJSON always writes, and that is unset or still holds the
+// value previous had for it, takes b's value; one the caller has set to something else
+// keeps it. Otherwise a zero value, or an earlier variant's value, would overwrite b's
+// when marshaling.
+func (t *OneOfObject9) adoptUnion(previous, b json.RawMessage) {
+	object := make(map[string]json.RawMessage)
+	if json.Unmarshal(b, &object) != nil {
+		return
+	}
+	held := make(map[string]json.RawMessage)
+	_ = json.Unmarshal(previous, &held)
+	if raw, found := object["type"]; found {
+		var old, next string
+		unchanged := json.Unmarshal(held["type"], &old) == nil && reflect.DeepEqual(old, t.Type)
+		current := reflect.ValueOf(t.Type)
+		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+			t.Type = next
+		}
+	}
+}
+
 // AsOneOfVariant1 returns the union data inside the OneOfObject9 as a OneOfVariant1
 func (t OneOfObject9) AsOneOfVariant1() (OneOfVariant1, error) {
 	var body OneOfVariant1
@@ -1639,7 +1741,11 @@ func (t *OneOfObject9) FromOneOfVariant1(v OneOfVariant1) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"type":"v1"}`))
+	previous := t.union
 	t.union = b
+	if err == nil {
+		t.adoptUnion(previous, b)
+	}
 	return err
 }
 
@@ -1655,8 +1761,12 @@ func (t *OneOfObject9) MergeOneOfVariant1(v OneOfVariant1) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
+	if err == nil {
+		t.adoptUnion(previous, b)
+	}
 	return err
 }
 
@@ -1675,7 +1785,11 @@ func (t *OneOfObject9) FromOneOfVariant6(v OneOfVariant6) error {
 		return err
 	}
 	b, err = runtime.JSONMerge(b, []byte(`{"type":"v6"}`))
+	previous := t.union
 	t.union = b
+	if err == nil {
+		t.adoptUnion(previous, b)
+	}
 	return err
 }
 
@@ -1691,8 +1805,12 @@ func (t *OneOfObject9) MergeOneOfVariant6(v OneOfVariant6) error {
 		return err
 	}
 
+	previous := t.union
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
+	if err == nil {
+		t.adoptUnion(previous, b)
+	}
 	return err
 }
 

@@ -1,0 +1,11 @@
+description: oneOf over a string, an integer and an array of strings.
+subject:
+  oneOf:
+    - type: string
+    - type: integer
+    - type: array
+      items: {type: string}
+samples:
+  - '"text"'
+  - '42'
+  - '["a", "b"]'

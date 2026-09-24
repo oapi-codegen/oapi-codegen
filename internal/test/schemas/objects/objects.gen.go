@@ -87,7 +87,7 @@ type SchemaObjectNullable struct {
 	WriteOnlyRequiredProp *int    `json:"writeOnlyRequiredProp,omitempty"`
 }
 
-// Test200JSONResponseBody_Item defines parameters for Test.
+// Test200JSONResponseBody_Item defines model for Test200JSONResponseBody.Item.
 type Test200JSONResponseBody_Item struct {
 	Field1               *string        `json:"field1,omitempty"`
 	Field2               *string        `json:"field2,omitempty"`
