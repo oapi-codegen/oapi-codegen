@@ -7,3 +7,8 @@ import-mapping:
 output: gen/api/api.gen.go
 output-options:
   skip-prune: true
+compatibility:
+  # PRFile (issue #2470) merges a schema from another document with a local
+  # one. Later schema-merging-behavior versions reject that; this tests v2's
+  # output.
+  schema-merging-behavior: v2

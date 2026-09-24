@@ -7,6 +7,10 @@ generate:
 # generated from specs $ref'ing this one can alias it.
 compatibility:
   enable-auth-scopes-on-context: true
+  # EnrichedUser and StatusPostPayload (issue #2288) merge a schema from
+  # another document with properties of their own. Later
+  # schema-merging-behavior versions reject that; this tests v2's output.
+  schema-merging-behavior: v2
 output-options:
   skip-prune: true
 import-mapping:
