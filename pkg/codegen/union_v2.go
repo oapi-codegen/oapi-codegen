@@ -103,6 +103,8 @@ func generateUnionV2(ctx genContext, outSchema *Schema, elements openapi3.Schema
 		outSchema.AdditionalPropertiesType = elementSchema.AdditionalPropertiesType
 		outSchema.ArrayType = elementSchema.ArrayType
 		outSchema.SkipOptionalPointer = elementSchema.SkipOptionalPointer
+		outSchema.UnionElements = elementSchema.UnionElements
+		outSchema.Discriminator = elementSchema.Discriminator
 		outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
 		return nil
 	}
