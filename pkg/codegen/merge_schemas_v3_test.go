@@ -2235,3 +2235,147 @@ func TestNumericMappingKeyErrorsV3(t *testing.T) {
 `, withV3)
 	assert.ErrorContains(t, err, "discriminator: the version values -0 and 0 are the same number, but lead to Other and One")
 }
+
+// TestClosedUnionVariantsV3: As* of a variant with additionalProperties: false
+// allows the keys the variant and the rest of the object declare (issue
+// #668), unless they can't all be known, and v1/v2 and
+// lenient-union-accessors leave As* as it was.
+func TestClosedUnionVariantsV3(t *testing.T) {
+	spec := opaqueSpecHeader + `
+    Renamed:
+      type: object
+      additionalProperties: false
+      properties:
+        card:
+          type: string
+          x-oapi-codegen-extra-tags:
+            json: card_number,omitempty
+        note:
+          type: string
+          x-go-json-ignore: true
+    Open:
+      type: object
+      properties:
+        iban: {type: string}
+    Typed:
+      type: object
+      additionalProperties: false
+      x-go-type: string
+      properties:
+        a: {type: string}
+    Nesting:
+      type: object
+      additionalProperties: false
+      properties:
+        a: {type: string}
+      oneOf:
+        - $ref: '#/components/schemas/Open'
+        - $ref: '#/components/schemas/Renamed'
+    Constrained:
+      type: object
+      additionalProperties: false
+      properties:
+        a: {type: string}
+        b: {type: string}
+      oneOf:
+        - required: [a]
+        - required: [b]
+    Deep:
+      allOf:
+        - $ref: '#/components/schemas/DeepBase'
+        - type: object
+          properties:
+            c: {type: string}
+    DeepBase:
+      allOf:
+        - type: object
+          additionalProperties: false
+          properties:
+            d: {type: string}
+    Restated:
+      type: object
+      additionalProperties: false
+      properties:
+        a: {type: string}
+      allOf:
+        - oneOf:
+            - type: object
+              required: [a]
+            - type: object
+    Empty:
+      type: object
+      additionalProperties: false
+    Pet:
+      oneOf:
+        - $ref: '#/components/schemas/Renamed'
+        - $ref: '#/components/schemas/Open'
+        - $ref: '#/components/schemas/Typed'
+        - $ref: '#/components/schemas/Nesting'
+        - $ref: '#/components/schemas/Constrained'
+        - $ref: '#/components/schemas/Deep'
+        - $ref: '#/components/schemas/Empty'
+        - $ref: '#/components/schemas/Restated'
+    WithTyped:
+      allOf:
+        - oneOf:
+            - $ref: '#/components/schemas/Renamed'
+            - $ref: '#/components/schemas/Open'
+        - oneOf:
+            - $ref: '#/components/schemas/Typed'
+            - $ref: '#/components/schemas/Deep'
+`
+	code := generateSpec(t, spec, withV3)
+	assert.Contains(t, methodBody(t, code, "func (t Pet) AsRenamed("), `case "card", "card_number", "note":`,
+		"a renamed key under both names, an ignored one under its own")
+	assert.Contains(t, methodBody(t, code, "func (t Pet) AsConstrained("), `case "a", "b":`,
+		"a oneOf of constraints declares nothing")
+	assert.Contains(t, methodBody(t, code, "func (t Pet) AsDeep("), `case "c", "d":`,
+		"a member however deep closes the variant")
+	assert.Contains(t, methodBody(t, code, "func (t Pet) AsRestated("), `case "a":`,
+		"a typeless member's oneOf that restates the variant's type only constrains it")
+	empty := methodBody(t, code, "func (t Pet) AsEmpty(")
+	assert.Contains(t, empty, `Empty doesn't allow the property %q`)
+	assert.NotContains(t, empty, "switch key")
+	for _, lenient := range []string{"AsOpen", "AsTyped", "AsNesting"} {
+		assert.NotContains(t, methodBody(t, code, "func (t Pet) "+lenient+"("), "doesn't allow", lenient)
+	}
+
+	assert.NotContains(t, methodBody(t, code, "func (t WithTyped) AsRenamed("), "doesn't allow",
+		"the other union has a variant whose keys can't be known")
+	assert.Contains(t, methodBody(t, code, "func (t WithTyped) AsDeep("), `case "c", "card", "card_number", "d", "iban", "note":`)
+
+	for name, opts := range map[string][]func(*Configuration){
+		"v2":      nil,
+		"lenient": {withV3, func(c *Configuration) { c.OutputOptions.LenientUnionAccessors = true }},
+	} {
+		code := generateSpec(t, spec, opts...)
+		assert.NotContains(t, code, "doesn't allow", name)
+	}
+}
+
+// TestPlacedDiscriminator: As* of a union that is a $ref leaves out a
+// discriminator the merge gave it only when neither the union type nor any of
+// its variants may declare it.
+func TestPlacedDiscriminator(t *testing.T) {
+	object := func(property string) *openapi3.SchemaRef {
+		return &openapi3.SchemaRef{Value: &openapi3.Schema{Properties: openapi3.Schemas{property: {Value: &openapi3.Schema{}}}}}
+	}
+	opaque := &openapi3.SchemaRef{Value: &openapi3.Schema{Extensions: map[string]any{extPropGoType: "string"}}}
+	union := func(d *openapi3.Discriminator) *openapi3.SchemaRef {
+		return &openapi3.SchemaRef{Ref: "#/components/schemas/Payment", Value: &openapi3.Schema{Discriminator: d}}
+	}
+	method := &openapi3.Discriminator{PropertyName: "method"}
+	for name, test := range map[string]struct {
+		c    unionComponent
+		want bool
+	}{
+		"placed":             {unionComponent{branches: openapi3.SchemaRefs{object("card")}, discriminator: method, ref: union(nil)}, true},
+		"no discriminator":   {unionComponent{branches: openapi3.SchemaRefs{object("card")}, ref: union(nil)}, false},
+		"inline union":       {unionComponent{branches: openapi3.SchemaRefs{object("card")}, discriminator: method}, false},
+		"the union's own":    {unionComponent{branches: openapi3.SchemaRefs{object("card")}, discriminator: method, ref: union(method)}, false},
+		"a variant declares": {unionComponent{branches: openapi3.SchemaRefs{object("card"), object("method")}, discriminator: method, ref: union(nil)}, false},
+		"an opaque variant":  {unionComponent{branches: openapi3.SchemaRefs{object("card"), opaque}, discriminator: method, ref: union(nil)}, false},
+	} {
+		assert.Equal(t, test.want, placedDiscriminator(test.c), name)
+	}
+}

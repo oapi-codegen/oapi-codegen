@@ -56,6 +56,12 @@ type Schema struct {
 	// to a union type, which get As* and From* of their own.
 	UnionRefComponents []UnionRefComponent
 
+	// UnionAllowedKeys maps each variant with `additionalProperties: false`
+	// to the JSON keys its As* allows: the variant's own, and those anything
+	// else in the union's object declares (schema-merging-behavior v3, see
+	// closeUnionVariants). As* returns an error for any other key.
+	UnionAllowedKeys map[UnionElement][]string
+
 	Discriminator *Discriminator // Describes which value is stored in a union
 
 	// If this is set, the schema will declare a type via alias, eg,
@@ -724,8 +730,9 @@ type UnionRefComponent struct {
 	Type UnionElement
 	// OwnedKeys are the JSON keys only this union's variants declare.
 	OwnedKeys []string
-	// OtherKeys are the JSON keys only the other unions' variants declare,
-	// which As* leaves out of this union.
+	// OtherKeys are the JSON keys only the rest of the object declares, the
+	// other unions' variants and the object's own properties, which As*
+	// leaves out of this union.
 	OtherKeys []string
 }
 
@@ -740,6 +747,19 @@ func (s Schema) InUnionComponent(e UnionElement) bool {
 // UnionOwnedKeys).
 func (s Schema) UnionOwnedKeysFor(e UnionElement) []string {
 	return s.UnionOwnedKeys[e]
+}
+
+// ClosedUnionVariant reports whether a variant's As* allows only some keys
+// (see UnionAllowedKeys).
+func (s Schema) ClosedUnionVariant(e UnionElement) bool {
+	_, ok := s.UnionAllowedKeys[e]
+	return ok
+}
+
+// UnionAllowedKeysFor returns the JSON keys a variant's As* allows (see
+// UnionAllowedKeys).
+func (s Schema) UnionAllowedKeysFor(e UnionElement) []string {
+	return s.UnionAllowedKeys[e]
 }
 
 // String returns externalRef\d+ and real ref name from external schema, like externalRef0.SomeType.

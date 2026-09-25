@@ -80,8 +80,38 @@ the union data doesn't change then. */ -}}
     {{range .Schema.UnionElements}}
         {{$stamp := $schema.DiscriminatorStampFor . -}}
         // As{{ .Method }} returns the union data inside the {{$typeName}} as a {{.}}
+        {{- if $schema.ClosedUnionVariant .}}. {{.}} allows no
+        // additional properties: a property that neither it nor the rest of {{$typeName}}
+        // declares is an error.
+        {{- end}}
         func (t {{$typeName}}) As{{ .Method }}() ({{.}}, error) {
             var body {{.}}
+            {{if $schema.ClosedUnionVariant . -}}
+                {{$keys := $schema.UnionAllowedKeysFor . -}}
+                var object map[string]json.RawMessage
+                if json.Unmarshal(t.union, &object) == nil {
+                    // The first unknown key in sorted order, so the error is always the same.
+                    unknown, found := "", false
+                    for key := range object {
+                        {{if $keys -}}
+                            switch key {
+                            case {{range $i, $key := $keys}}{{if $i}}, {{end}}{{printf "%q" $key}}{{end}}:
+                            default:
+                                if !found || key < unknown {
+                                    unknown, found = key, true
+                                }
+                            }
+                        {{- else -}}
+                            if !found || key < unknown {
+                                unknown, found = key, true
+                            }
+                        {{- end}}
+                    }
+                    if found {
+                        return body, fmt.Errorf("{{.}} doesn't allow the property %q", unknown)
+                    }
+                }
+            {{end -}}
             err := json.Unmarshal(t.union, &body)
             return body, err
         }
@@ -164,7 +194,8 @@ the union data doesn't change then. */ -}}
     {{end}}
     {{- range .Schema.UnionRefComponents}}
         // As{{ .Type.Method }} returns the {{.Type}} union inside the {{$typeName}}: the union data
-        // without the keys only the other unions' variants declare.
+        // without the keys only the rest of {{$typeName}} declares, in its other unions' variants
+        // or its own properties.
         func (t {{$typeName}}) As{{ .Type.Method }}() ({{.Type}}, error) {
             var body {{.Type}}
             data := t.union
