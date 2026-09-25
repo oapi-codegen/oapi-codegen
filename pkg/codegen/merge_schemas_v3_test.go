@@ -1671,3 +1671,96 @@ func TestDeclaredTypes(t *testing.T) {
 		})
 	}
 }
+
+// TestUnionComponentsVariantKeysV3: a variant's keys are the names its fields
+// marshal as, from allOf members however deep; a variant of two unions
+// replaces what each of them owns.
+func TestUnionComponentsVariantKeysV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+`
+    Card:
+      type: object
+      properties:
+        card:
+          type: string
+          x-oapi-codegen-extra-tags:
+            json: card_number,omitempty
+        note:
+          type: string
+          x-go-json-ignore: true
+    Transfer:
+      type: object
+      properties:
+        iban: {type: string}
+    Courier:
+      type: object
+      properties:
+        address: {type: string}
+    Shared:
+      allOf:
+        - oneOf:
+            - $ref: '#/components/schemas/Card'
+            - $ref: '#/components/schemas/Transfer'
+        - oneOf:
+            - $ref: '#/components/schemas/Card'
+            - $ref: '#/components/schemas/Courier'
+    Renamed:
+      allOf:
+        - oneOf:
+            - $ref: '#/components/schemas/Card'
+            - $ref: '#/components/schemas/Transfer'
+        - oneOf:
+            - $ref: '#/components/schemas/Courier'
+    Nested:
+      allOf:
+        - oneOf:
+            - $ref: '#/components/schemas/Deep0'
+            - $ref: '#/components/schemas/Transfer'
+        - oneOf:
+            - $ref: '#/components/schemas/Courier'
+    Deep0:
+      allOf:
+        - $ref: '#/components/schemas/Deep1'
+    Deep1:
+      allOf:
+        - $ref: '#/components/schemas/Deep2'
+    Deep2:
+      allOf:
+        - $ref: '#/components/schemas/Deep3'
+    Deep3:
+      allOf:
+        - $ref: '#/components/schemas/Deep4'
+    Deep4:
+      allOf:
+        - $ref: '#/components/schemas/Deep5'
+    Deep5:
+      allOf:
+        - $ref: '#/components/schemas/Deep6'
+    Deep6:
+      allOf:
+        - $ref: '#/components/schemas/Deep7'
+    Deep7:
+      allOf:
+        - $ref: '#/components/schemas/Deep8'
+    Deep8:
+      allOf:
+        - $ref: '#/components/schemas/Deep9'
+    Deep9:
+      allOf:
+        - $ref: '#/components/schemas/Deep10'
+    Deep10:
+      type: object
+      properties:
+        deep: {type: string}
+`, withV3)
+	fromCard := methodBody(t, code, "func (t *Shared) FromCard(")
+	assert.Contains(t, fromCard, `delete(kept, "iban")`, "Card is the first union's")
+	assert.Contains(t, fromCard, `delete(kept, "address")`, "and the second's")
+	assert.NotContains(t, methodBody(t, code, "func (t *Shared) FromTransfer("), `delete(kept, "card`, "Card's keys are shared")
+
+	fromTransfer := methodBody(t, code, "func (t *Renamed) FromTransfer(")
+	assert.Contains(t, fromTransfer, `delete(kept, "card_number")`)
+	assert.NotContains(t, fromTransfer, `delete(kept, "card")`)
+	assert.NotContains(t, fromTransfer, `delete(kept, "note")`, "an ignored field isn't on the wire")
+
+	assert.Contains(t, methodBody(t, code, "func (t *Nested) FromTransfer("), `delete(kept, "deep")`)
+}

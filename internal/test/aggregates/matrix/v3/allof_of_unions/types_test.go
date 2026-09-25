@@ -72,6 +72,15 @@ func TestUnionMemberAccessorsKeepToThemselves(t *testing.T) {
 	assert.JSONEq(t, `{"store": "Downtown"}`, marshal(t, s))
 }
 
+// A value that can't be marshaled leaves the union data as it was.
+func TestFromFailsWithoutChange(t *testing.T) {
+	var s Subject
+	require.NoError(t, s.FromCard(Card{Card: "4111"}))
+	require.NoError(t, s.FromCourier(Courier{Address: "1 Main St"}))
+	assert.Error(t, s.FromPayment(Payment{union: json.RawMessage(`{"card": `)}))
+	assert.JSONEq(t, `{"card": "4111", "address": "1 Main St"}`, marshal(t, s))
+}
+
 func marshal(t *testing.T, v any) string {
 	t.Helper()
 	b, err := json.Marshal(v)

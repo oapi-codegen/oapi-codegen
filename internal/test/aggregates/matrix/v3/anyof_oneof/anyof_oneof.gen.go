@@ -334,23 +334,26 @@ func (t InlineHolder_List_Item) AsInlineHolderListAnyOf0() (InlineHolderListAnyO
 // the data of InlineHolderListAnyOf0's own union and keeps the other unions' data.
 func (t *InlineHolder_List_Item) FromInlineHolderListAnyOf0(v InlineHolderListAnyOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -381,23 +384,26 @@ func (t InlineHolder_List_Item) AsInlineHolderListAnyOf1() (InlineHolderListAnyO
 // the data of InlineHolderListAnyOf1's own union and keeps the other unions' data.
 func (t *InlineHolder_List_Item) FromInlineHolderListAnyOf1(v InlineHolderListAnyOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -428,23 +434,26 @@ func (t InlineHolder_List_Item) AsInlineHolderListOneOf0() (InlineHolderListOneO
 // the data of InlineHolderListOneOf0's own union and keeps the other unions' data.
 func (t *InlineHolder_List_Item) FromInlineHolderListOneOf0(v InlineHolderListOneOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -475,23 +484,26 @@ func (t InlineHolder_List_Item) AsInlineHolderListOneOf1() (InlineHolderListOneO
 // the data of InlineHolderListOneOf1's own union and keeps the other unions' data.
 func (t *InlineHolder_List_Item) FromInlineHolderListOneOf1(v InlineHolderListOneOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -532,23 +544,26 @@ func (t InlineHolder_Map_AdditionalProperties) AsInlineHolderMapAnyOf0() (Inline
 // the data of InlineHolderMapAnyOf0's own union and keeps the other unions' data.
 func (t *InlineHolder_Map_AdditionalProperties) FromInlineHolderMapAnyOf0(v InlineHolderMapAnyOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -579,23 +594,26 @@ func (t InlineHolder_Map_AdditionalProperties) AsInlineHolderMapAnyOf1() (Inline
 // the data of InlineHolderMapAnyOf1's own union and keeps the other unions' data.
 func (t *InlineHolder_Map_AdditionalProperties) FromInlineHolderMapAnyOf1(v InlineHolderMapAnyOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -626,23 +644,26 @@ func (t InlineHolder_Map_AdditionalProperties) AsInlineHolderMapOneOf0() (Inline
 // the data of InlineHolderMapOneOf0's own union and keeps the other unions' data.
 func (t *InlineHolder_Map_AdditionalProperties) FromInlineHolderMapOneOf0(v InlineHolderMapOneOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -673,23 +694,26 @@ func (t InlineHolder_Map_AdditionalProperties) AsInlineHolderMapOneOf1() (Inline
 // the data of InlineHolderMapOneOf1's own union and keeps the other unions' data.
 func (t *InlineHolder_Map_AdditionalProperties) FromInlineHolderMapOneOf1(v InlineHolderMapOneOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -730,23 +754,26 @@ func (t InlineHolder_One) AsInlineHolderOneAnyOf0() (InlineHolderOneAnyOf0, erro
 // the data of InlineHolderOneAnyOf0's own union and keeps the other unions' data.
 func (t *InlineHolder_One) FromInlineHolderOneAnyOf0(v InlineHolderOneAnyOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -777,23 +804,26 @@ func (t InlineHolder_One) AsInlineHolderOneAnyOf1() (InlineHolderOneAnyOf1, erro
 // the data of InlineHolderOneAnyOf1's own union and keeps the other unions' data.
 func (t *InlineHolder_One) FromInlineHolderOneAnyOf1(v InlineHolderOneAnyOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -824,23 +854,26 @@ func (t InlineHolder_One) AsInlineHolderOneOneOf0() (InlineHolderOneOneOf0, erro
 // the data of InlineHolderOneOneOf0's own union and keeps the other unions' data.
 func (t *InlineHolder_One) FromInlineHolderOneOneOf0(v InlineHolderOneOneOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -871,23 +904,26 @@ func (t InlineHolder_One) AsInlineHolderOneOneOf1() (InlineHolderOneOneOf1, erro
 // the data of InlineHolderOneOneOf1's own union and keeps the other unions' data.
 func (t *InlineHolder_One) FromInlineHolderOneOneOf1(v InlineHolderOneOneOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -928,23 +964,26 @@ func (t Subject) AsSubjectAnyOf0() (SubjectAnyOf0, error) {
 // the data of SubjectAnyOf0's own union and keeps the other unions' data.
 func (t *Subject) FromSubjectAnyOf0(v SubjectAnyOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -975,23 +1014,26 @@ func (t Subject) AsSubjectAnyOf1() (SubjectAnyOf1, error) {
 // the data of SubjectAnyOf1's own union and keeps the other unions' data.
 func (t *Subject) FromSubjectAnyOf1(v SubjectAnyOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1022,23 +1064,26 @@ func (t Subject) AsSubjectOneOf0() (SubjectOneOf0, error) {
 // the data of SubjectOneOf0's own union and keeps the other unions' data.
 func (t *Subject) FromSubjectOneOf0(v SubjectOneOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1069,23 +1114,26 @@ func (t Subject) AsSubjectOneOf1() (SubjectOneOf1, error) {
 // the data of SubjectOneOf1's own union and keeps the other unions' data.
 func (t *Subject) FromSubjectOneOf1(v SubjectOneOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1126,23 +1174,26 @@ func (t InlineSubjectResponse) AsInlineSubjectResponseAnyOf0() (InlineSubjectRes
 // the data of InlineSubjectResponseAnyOf0's own union and keeps the other unions' data.
 func (t *InlineSubjectResponse) FromInlineSubjectResponseAnyOf0(v InlineSubjectResponseAnyOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1173,23 +1224,26 @@ func (t InlineSubjectResponse) AsInlineSubjectResponseAnyOf1() (InlineSubjectRes
 // the data of InlineSubjectResponseAnyOf1's own union and keeps the other unions' data.
 func (t *InlineSubjectResponse) FromInlineSubjectResponseAnyOf1(v InlineSubjectResponseAnyOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1220,23 +1274,26 @@ func (t InlineSubjectResponse) AsInlineSubjectResponseOneOf0() (InlineSubjectRes
 // the data of InlineSubjectResponseOneOf0's own union and keeps the other unions' data.
 func (t *InlineSubjectResponse) FromInlineSubjectResponseOneOf0(v InlineSubjectResponseOneOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1267,23 +1324,26 @@ func (t InlineSubjectResponse) AsInlineSubjectResponseOneOf1() (InlineSubjectRes
 // the data of InlineSubjectResponseOneOf1's own union and keeps the other unions' data.
 func (t *InlineSubjectResponse) FromInlineSubjectResponseOneOf1(v InlineSubjectResponseOneOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1324,23 +1384,26 @@ func (t InlineSubjectBody) AsInlineSubjectBodyAnyOf0() (InlineSubjectBodyAnyOf0,
 // the data of InlineSubjectBodyAnyOf0's own union and keeps the other unions' data.
 func (t *InlineSubjectBody) FromInlineSubjectBodyAnyOf0(v InlineSubjectBodyAnyOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1371,23 +1434,26 @@ func (t InlineSubjectBody) AsInlineSubjectBodyAnyOf1() (InlineSubjectBodyAnyOf1,
 // the data of InlineSubjectBodyAnyOf1's own union and keeps the other unions' data.
 func (t *InlineSubjectBody) FromInlineSubjectBodyAnyOf1(v InlineSubjectBodyAnyOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1418,23 +1484,26 @@ func (t InlineSubjectBody) AsInlineSubjectBodyOneOf0() (InlineSubjectBodyOneOf0,
 // the data of InlineSubjectBodyOneOf0's own union and keeps the other unions' data.
 func (t *InlineSubjectBody) FromInlineSubjectBodyOneOf0(v InlineSubjectBodyOneOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1465,23 +1534,26 @@ func (t InlineSubjectBody) AsInlineSubjectBodyOneOf1() (InlineSubjectBodyOneOf1,
 // the data of InlineSubjectBodyOneOf1's own union and keeps the other unions' data.
 func (t *InlineSubjectBody) FromInlineSubjectBodyOneOf1(v InlineSubjectBodyOneOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1522,23 +1594,26 @@ func (t BodyComponentInlineJSONBody) AsBodyComponentInlineJSONBodyAnyOf0() (Body
 // the data of BodyComponentInlineJSONBodyAnyOf0's own union and keeps the other unions' data.
 func (t *BodyComponentInlineJSONBody) FromBodyComponentInlineJSONBodyAnyOf0(v BodyComponentInlineJSONBodyAnyOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1569,23 +1644,26 @@ func (t BodyComponentInlineJSONBody) AsBodyComponentInlineJSONBodyAnyOf1() (Body
 // the data of BodyComponentInlineJSONBodyAnyOf1's own union and keeps the other unions' data.
 func (t *BodyComponentInlineJSONBody) FromBodyComponentInlineJSONBodyAnyOf1(v BodyComponentInlineJSONBodyAnyOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1616,23 +1694,26 @@ func (t BodyComponentInlineJSONBody) AsBodyComponentInlineJSONBodyOneOf0() (Body
 // the data of BodyComponentInlineJSONBodyOneOf0's own union and keeps the other unions' data.
 func (t *BodyComponentInlineJSONBody) FromBodyComponentInlineJSONBodyOneOf0(v BodyComponentInlineJSONBodyOneOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1663,23 +1744,26 @@ func (t BodyComponentInlineJSONBody) AsBodyComponentInlineJSONBodyOneOf1() (Body
 // the data of BodyComponentInlineJSONBodyOneOf1's own union and keeps the other unions' data.
 func (t *BodyComponentInlineJSONBody) FromBodyComponentInlineJSONBodyOneOf1(v BodyComponentInlineJSONBodyOneOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1720,23 +1804,26 @@ func (t BodyInlineJSONBody) AsBodyInlineJSONBodyAnyOf0() (BodyInlineJSONBodyAnyO
 // the data of BodyInlineJSONBodyAnyOf0's own union and keeps the other unions' data.
 func (t *BodyInlineJSONBody) FromBodyInlineJSONBodyAnyOf0(v BodyInlineJSONBodyAnyOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1767,23 +1854,26 @@ func (t BodyInlineJSONBody) AsBodyInlineJSONBodyAnyOf1() (BodyInlineJSONBodyAnyO
 // the data of BodyInlineJSONBodyAnyOf1's own union and keeps the other unions' data.
 func (t *BodyInlineJSONBody) FromBodyInlineJSONBodyAnyOf1(v BodyInlineJSONBodyAnyOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1814,23 +1904,26 @@ func (t BodyInlineJSONBody) AsBodyInlineJSONBodyOneOf0() (BodyInlineJSONBodyOneO
 // the data of BodyInlineJSONBodyOneOf0's own union and keeps the other unions' data.
 func (t *BodyInlineJSONBody) FromBodyInlineJSONBodyOneOf0(v BodyInlineJSONBodyOneOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1861,23 +1954,26 @@ func (t BodyInlineJSONBody) AsBodyInlineJSONBodyOneOf1() (BodyInlineJSONBodyOneO
 // the data of BodyInlineJSONBodyOneOf1's own union and keeps the other unions' data.
 func (t *BodyInlineJSONBody) FromBodyInlineJSONBodyOneOf1(v BodyInlineJSONBodyOneOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1918,23 +2014,26 @@ func (t BodyInline200JSONResponseBody) AsBodyInline200JSONResponseBodyAnyOf0() (
 // the data of BodyInline200JSONResponseBodyAnyOf0's own union and keeps the other unions' data.
 func (t *BodyInline200JSONResponseBody) FromBodyInline200JSONResponseBodyAnyOf0(v BodyInline200JSONResponseBodyAnyOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -1965,23 +2064,26 @@ func (t BodyInline200JSONResponseBody) AsBodyInline200JSONResponseBodyAnyOf1() (
 // the data of BodyInline200JSONResponseBodyAnyOf1's own union and keeps the other unions' data.
 func (t *BodyInline200JSONResponseBody) FromBodyInline200JSONResponseBodyAnyOf1(v BodyInline200JSONResponseBodyAnyOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "a")
-			delete(kept, "b")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "a")
+		delete(kept, "b")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -2012,23 +2114,26 @@ func (t BodyInline200JSONResponseBody) AsBodyInline200JSONResponseBodyOneOf0() (
 // the data of BodyInline200JSONResponseBodyOneOf0's own union and keeps the other unions' data.
 func (t *BodyInline200JSONResponseBody) FromBodyInline200JSONResponseBodyOneOf0(v BodyInline200JSONResponseBodyOneOf0) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}
@@ -2059,23 +2164,26 @@ func (t BodyInline200JSONResponseBody) AsBodyInline200JSONResponseBodyOneOf1() (
 // the data of BodyInline200JSONResponseBodyOneOf1's own union and keeps the other unions' data.
 func (t *BodyInline200JSONResponseBody) FromBodyInline200JSONResponseBodyOneOf1(v BodyInline200JSONResponseBodyOneOf1) error {
 	b, err := json.Marshal(v)
-	if err == nil {
-		var object, kept map[string]json.RawMessage
-		if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
-			delete(kept, "c")
-			delete(kept, "d")
-			added := object == nil
-			if added {
-				object = make(map[string]json.RawMessage)
+	if err != nil {
+		return err
+	}
+	var object, kept map[string]json.RawMessage
+	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+		delete(kept, "c")
+		delete(kept, "d")
+		added := object == nil
+		if added {
+			object = make(map[string]json.RawMessage)
+		}
+		for key, value := range kept {
+			if _, found := object[key]; !found {
+				object[key] = value
+				added = true
 			}
-			for key, value := range kept {
-				if _, found := object[key]; !found {
-					object[key] = value
-					added = true
-				}
-			}
-			if added {
-				b, err = json.Marshal(object)
+		}
+		if added {
+			if b, err = json.Marshal(object); err != nil {
+				return err
 			}
 		}
 	}

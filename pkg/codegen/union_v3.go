@@ -34,15 +34,15 @@ func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema
 	case len(components) > 1:
 		return generateUnionComponentsV3(ctx, outSchema, components, path)
 	case len(components) == 1:
-		if err := generateUnionV3(ctx, outSchema, components[0].branches, components[0].discriminator, path, true); err != nil {
+		if _, err := generateUnionV3(ctx, outSchema, components[0].branches, components[0].discriminator, path, true); err != nil {
 			return fmt.Errorf("error generating type for oneOf: %w", err)
 		}
 	case schema.AnyOf != nil:
-		if err := generateUnionV3(ctx, outSchema, schema.AnyOf, schema.Discriminator, path, true); err != nil {
+		if _, err := generateUnionV3(ctx, outSchema, schema.AnyOf, schema.Discriminator, path, true); err != nil {
 			return fmt.Errorf("error generating type for anyOf: %w", err)
 		}
 	case schema.OneOf != nil:
-		if err := generateUnionV3(ctx, outSchema, schema.OneOf, schema.Discriminator, path, true); err != nil {
+		if _, err := generateUnionV3(ctx, outSchema, schema.OneOf, schema.Discriminator, path, true); err != nil {
 			return fmt.Errorf("error generating type for oneOf: %w", err)
 		}
 	}
@@ -68,7 +68,7 @@ func generateUnionComponentsV3(ctx genContext, outSchema *Schema, components []u
 	for k, c := range components {
 		for _, b := range c.branches {
 			if b != nil && b.Value != nil && !isOpaqueSchema(b) {
-				declared[k] = append(declared[k], propertyNames(b.Value, 0)...)
+				declared[k] = append(declared[k], variantKeys(b.Value)...)
 			}
 		}
 		if c.discriminator != nil {
@@ -113,12 +113,16 @@ func generateUnionComponentsV3(ctx genContext, outSchema *Schema, components []u
 		if outSchema.Discriminator != nil {
 			discriminator = nil
 		}
-		before := len(outSchema.UnionElements)
-		if err := generateUnionV3(ctx, outSchema, c.branches, discriminator, append(slices.Clone(path), kind), false); err != nil {
+		members, err := generateUnionV3(ctx, outSchema, c.branches, discriminator, append(slices.Clone(path), kind), false)
+		if err != nil {
 			return fmt.Errorf("error generating type for %s: %w", strings.ToLower(kind[:1])+kind[1:], err)
 		}
-		for _, e := range outSchema.UnionElements[before:] {
-			outSchema.UnionOwnedKeys[e] = owned[k]
+		// A variant of several of the unions, such as the same $ref in two,
+		// is each one's: setting it replaces what each of them owns.
+		for _, e := range members {
+			keys := append(slices.Clone(outSchema.UnionOwnedKeys[e]), owned[k]...)
+			slices.Sort(keys)
+			outSchema.UnionOwnedKeys[e] = slices.Compact(keys)
 		}
 		if c.ref != nil {
 			union, err := generateGoSchema(ctx.at(path), c.ref, path)
@@ -144,11 +148,12 @@ func generateUnionComponentsV3(ctx genContext, outSchema *Schema, components []u
 	return nil
 }
 
-// generateUnionV3 generates one oneOf or anyOf into outSchema's union members.
-// alone is false when the union is one of several (see
+// generateUnionV3 generates one oneOf or anyOf into outSchema's union members,
+// and returns this union's members, some of which another union may have
+// added already. alone is false when the union is one of several (see
 // generateUnionComponentsV3), which then isn't collapsed into its only
 // non-null branch.
-func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string, alone bool) error {
+func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string, alone bool) ([]UnionElement, error) {
 	if discriminator != nil {
 		outSchema.Discriminator = &Discriminator{
 			Property:  discriminator.PropertyName,
@@ -195,7 +200,7 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 	if alone && effectiveCount == 1 && hadNullBranch && discriminator == nil {
 		elementSchema, err := generateGoSchema(ctx.at(path), soleEffective, path)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		// Inherit the single branch's underlying representation. The
 		// caller will apply nullability (schemaIsNullable returns true
@@ -209,10 +214,11 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 		outSchema.ArrayType = elementSchema.ArrayType
 		outSchema.SkipOptionalPointer = elementSchema.SkipOptionalPointer
 		outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
-		return nil
+		return nil, nil
 	}
 
 	refToGoTypeMap := make(map[string]string)
+	var members []UnionElement
 	for i, element := range elements {
 		// Skip null-only branches: nullability marker, not a real
 		// union variant. See the collapse comment above for context.
@@ -222,7 +228,7 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 		elementPath := append(path, fmt.Sprint(i))
 		elementSchema, err := generateGoSchema(ctx.at(elementPath), element, elementPath)
 		if err != nil {
-			return err
+			return nil, err
 		}
 
 		if element.Ref == "" {
@@ -241,7 +247,7 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 
 		if discriminator != nil {
 			if len(discriminator.Mapping) != 0 && element.Ref == "" {
-				return errors.New("ambiguous discriminator.mapping: please replace inlined object with $ref")
+				return nil, errors.New("ambiguous discriminator.mapping: please replace inlined object with $ref")
 			}
 
 			// Explicit mapping.
@@ -257,6 +263,7 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 				outSchema.Discriminator.Mapping[RefPathToObjName(element.Ref)] = elementSchema.GoType
 			}
 		}
+		members = append(members, UnionElement(elementSchema.GoType))
 		// The same type can appear twice, e.g. as a member of both an anyOf
 		// and a oneOf; its accessors are generated once.
 		if !slices.Contains(outSchema.UnionElements, UnionElement(elementSchema.GoType)) {
@@ -281,8 +288,61 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 	// incomplete -- the null branch is a nullability marker, not a real
 	// variant that needs a mapping.
 	if discriminator != nil && len(outSchema.Discriminator.Mapping) < effectiveCount {
-		return errors.New("discriminator: not all schemas were mapped")
+		return nil, errors.New("discriminator: not all schemas were mapped")
 	}
 
-	return nil
+	return members, nil
+}
+
+// variantKeys returns the JSON keys a union variant's values can have: the
+// properties it declares, with those of its allOf members however deep, under
+// the names their Go fields marshal as. x-go-json-ignore leaves a property off
+// the wire, and a json tag in x-oapi-codegen-extra-tags renames it.
+func variantKeys(s *openapi3.Schema) []string {
+	var keys []string
+	seen := make(map[*openapi3.Schema]bool)
+	var walk func(s *openapi3.Schema)
+	walk = func(s *openapi3.Schema) {
+		if s == nil || seen[s] {
+			return
+		}
+		seen[s] = true
+		for name, p := range s.Properties {
+			if key, ok := propertyKey(name, combinedSchemaExtensions(p)); ok {
+				keys = append(keys, key)
+			}
+		}
+		for _, m := range s.AllOf {
+			if m != nil {
+				walk(m.Value)
+			}
+		}
+	}
+	walk(s)
+	return keys
+}
+
+// propertyKey returns the JSON key a property's Go field marshals as, the way
+// the struct tags are generated (see GenFieldsFromProperties), and false when
+// the field isn't marshaled.
+func propertyKey(name string, extensions map[string]any) (string, bool) {
+	key := name
+	if raw, ok := extensions[extPropGoJsonIgnore]; ok {
+		if ignore, err := extParseGoJsonIgnore(raw); err == nil && ignore {
+			key = "-"
+		}
+	}
+	if raw, ok := extensions[extPropExtraTags]; ok {
+		if tags, err := extExtraTags(raw); err == nil {
+			if tag, ok := tags["json"]; ok {
+				key, _, _ = strings.Cut(tag, ",")
+				if key == "" {
+					// encoding/json uses the Go field's name; keep the
+					// property's, the nearest we can tell.
+					key = name
+				}
+			}
+		}
+	}
+	return key, key != "-"
 }
