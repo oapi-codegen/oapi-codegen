@@ -1440,16 +1440,26 @@ func TestInlineDiscriminatorValue(t *testing.T) {
 		"in the property's allOf": {variant(&openapi3.Schema{AllOf: openapi3.SchemaRefs{
 			openapi3.NewStringSchema().NewRef(), {Value: &openapi3.Schema{Enum: []any{"cat"}}},
 		}}), "cat", true},
-		"nullable enum": {variant(&openapi3.Schema{Enum: []any{"cat", nil}}), "cat", true},
-		"large number":  {variant(&openapi3.Schema{Const: 1e21}), "1e+21", true},
-		"fractional":    {variant(&openapi3.Schema{Const: 2.5}), "2.5", true},
+		"nullable enum":  {variant(&openapi3.Schema{Enum: []any{"cat", nil}}), "cat", true},
+		"small fraction": {variant(&openapi3.Schema{Const: 1.5e-7}), "1.5e-7", true},
+		"fractional":     {variant(&openapi3.Schema{Const: 2.5}), "2.5", true},
 	} {
 		t.Run(name, func(t *testing.T) {
-			got, ok := inlineDiscriminatorValue(tc.schema, "kind")
+			got, ok, err := inlineDiscriminatorValue(tc.schema, "kind")
+			require.NoError(t, err)
 			assert.Equal(t, tc.ok, ok)
 			assert.Equal(t, tc.want, got)
 		})
 	}
+
+	// kin-openapi reads numbers as float64, so an integer from 2^53 up may
+	// already be rounded: 9007199254740993 arrives as 9007199254740992.
+	for _, v := range []float64{9007199254740993, -(1 << 53), 1e21} {
+		_, _, err := inlineDiscriminatorValue(variant(&openapi3.Schema{Const: v}), "kind")
+		assert.ErrorContains(t, err, "can't be read exactly", "%v", v)
+	}
+	_, _, err := inlineDiscriminatorValue(variant(&openapi3.Schema{Const: float64(1<<53 - 1)}), "kind")
+	assert.NoError(t, err)
 }
 
 // TestInlineDiscriminatedVariantsV3: inline variants of a discriminated union
@@ -1521,6 +1531,9 @@ func TestInlineDiscriminatedVariantsV3(t *testing.T) {
 	assert.Contains(t, mapped, `case "cat":`+"\n\t\treturn t.AsMapped0()")
 	assert.Contains(t, mapped, `case "dog":`+"\n\t\treturn t.AsDog()")
 	assert.Contains(t, methodBody(t, code, "func (t *Versioned) FromVersioned1("), "`{\"version\":2}`")
+	assert.Contains(t, methodBody(t, code, "func (t Versioned) ValueByDiscriminator("), "strconv.ParseFloat(discriminator, 64)",
+		"a number is compared as encoding/json writes it")
+	assert.NotContains(t, methodBody(t, code, "func (t Implicit) ValueByDiscriminator("), "ParseFloat")
 	extended := methodBody(t, code, "func (t Extended) ValueByDiscriminator(")
 	assert.Contains(t, extended, `case "cat":`+"\n\t\treturn t.AsExtended0()", "a later allOf member pins the value")
 
@@ -1621,6 +1634,27 @@ func TestInlineDiscriminatedVariantErrorsV3(t *testing.T) {
       discriminator:
         propertyName: petType
 `, `the inline schema Pet.1 takes the petType value "Dog", which another schema is mapped to`},
+		"pins of different types": {`
+    Flag:
+      oneOf:
+        - type: object
+          properties:
+            k: {const: true}
+        - type: object
+          properties:
+            k: {const: 1}
+      discriminator:
+        propertyName: k
+`, "discriminator: the variants pin k values of different JSON types, boolean and number"},
+		"a large integer": {`
+    Big:
+      oneOf:
+        - type: object
+          properties:
+            id: {const: 9007199254740993}
+      discriminator:
+        propertyName: id
+`, "discriminator: the id value of the inline schema Big.0 can't be read exactly"},
 		"a backtick": {"\n    Pet:\n      oneOf:\n        - type: object\n          properties:\n            petType: {const: 'a`b'}\n      discriminator:\n        propertyName: petType\n",
 			`the petType value "a` + "`" + `b" of the inline schema Pet.0 may not contain a backtick`},
 		"a quote": {"\n    Pet:\n      oneOf:\n        - type: object\n          properties:\n            petType: {enum: ['a\"b']}\n      discriminator:\n        propertyName: petType\n",
@@ -2037,4 +2071,41 @@ func TestUnionComponentsVariantKeysV3(t *testing.T) {
 	assert.NotContains(t, fromTransfer, `delete(kept, "note")`, "an ignored field isn't on the wire")
 
 	assert.Contains(t, methodBody(t, code, "func (t *Nested) FromTransfer("), `delete(kept, "deep")`)
+}
+
+// TestDiscriminatorStampsPerVariantV3: v3 stamps each variant that exactly one
+// discriminator value leads to, so aliases for one variant don't take the
+// stamps of the others away, as v2's all-or-nothing rule does (#2071).
+func TestDiscriminatorStampsPerVariantV3(t *testing.T) {
+	spec := opaqueSpecHeader + `
+    Dog:
+      type: object
+      properties:
+        petType: {type: string}
+    Cat:
+      type: object
+      properties:
+        petType: {type: string}
+    Pet:
+      oneOf:
+        - type: object
+          properties:
+            petType: {const: bird}
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+      discriminator:
+        propertyName: petType
+        mapping:
+          dog: '#/components/schemas/Dog'
+          canine: '#/components/schemas/Dog'
+          cat: '#/components/schemas/Cat'
+`
+	code := generateSpec(t, spec, withV3)
+	assert.Contains(t, methodBody(t, code, "func (t *Pet) FromPet0("), "`{\"petType\":\"bird\"}`")
+	assert.Contains(t, methodBody(t, code, "func (t *Pet) FromCat("), "`{\"petType\":\"cat\"}`")
+	assert.NotContains(t, methodBody(t, code, "func (t *Pet) FromDog("), "JSONMerge", "dog or canine would be arbitrary")
+	valueBy := methodBody(t, code, "func (t Pet) ValueByDiscriminator(")
+	for _, value := range []string{"bird", "canine", "cat", "dog"} {
+		assert.Contains(t, valueBy, `case "`+value+`":`)
+	}
 }

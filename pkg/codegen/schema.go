@@ -536,6 +536,31 @@ type Discriminator struct {
 	// inline variant that pins no value has none. v1 and v2 leave it nil for
 	// all of the union's members.
 	variants []UnionElement
+
+	// normalizesNumbers is set by v3 for an integer or number discriminator,
+	// whose value can be written several ways, such as 1, 1.0 and 1e0:
+	// ValueByDiscriminator compares it as encoding/json writes the number.
+	normalizesNumbers bool
+}
+
+// NormalizesNumbers reports whether ValueByDiscriminator compares the
+// discriminator's value as encoding/json writes the number.
+func (d *Discriminator) NormalizesNumbers() bool {
+	return d.normalizesNumbers
+}
+
+// canonicalNumber spells a JSON number as encoding/json writes a float64, and
+// returns text that isn't one as it is.
+func canonicalNumber(text string) string {
+	number, err := strconv.ParseFloat(text, 64)
+	if err != nil {
+		return text
+	}
+	b, err := json.Marshal(number)
+	if err != nil {
+		return text
+	}
+	return string(b)
 }
 
 // IsString reports whether the discriminator's values are JSON strings.
@@ -611,22 +636,23 @@ func (s Schema) DiscriminatorStampFor(element UnionElement) *DiscriminatorStamp 
 	if d == nil {
 		return nil
 	}
-	variants := len(s.UnionElements)
-	if d.variants != nil {
-		variants = len(d.variants)
-	}
-	if len(d.Mapping) != variants {
-		return nil
-	}
 	stamp := DiscriminatorStamp{}
-	found := false
+	values := 0
 	for _, value := range SortedMapKeys(d.Mapping) {
 		if d.Mapping[value] == element.String() {
 			stamp.Value = value
-			found = true
+			values++
 		}
 	}
-	if !found {
+	switch {
+	case values == 0:
+		return nil
+	case d.variants != nil && values > 1:
+		// v3 stamps each variant exactly one value leads to: which of
+		// several to write would be arbitrary (#2071).
+		return nil
+	case d.variants == nil && len(d.Mapping) != len(s.UnionElements):
+		// v1 and v2 stamp only when every member has exactly one value.
 		return nil
 	}
 	stamp.Literal = d.literal(stamp.Value)
@@ -668,9 +694,19 @@ func (s Schema) DiscriminatorCases() []DiscriminatorCase {
 	}
 	cases := make([]DiscriminatorCase, 0, len(s.Discriminator.Mapping))
 	for _, value := range SortedMapKeys(s.Discriminator.Mapping) {
-		if el, ok := known[s.Discriminator.Mapping[value]]; ok {
-			cases = append(cases, DiscriminatorCase{Value: value, Method: el.Method()})
+		el, ok := known[s.Discriminator.Mapping[value]]
+		if !ok {
+			continue
 		}
+		if s.Discriminator.normalizesNumbers {
+			// Values spelled differently for one variant, like 2 and 2.0,
+			// are one case.
+			value = canonicalNumber(value)
+			if slices.Contains(cases, DiscriminatorCase{Value: value, Method: el.Method()}) {
+				continue
+			}
+		}
+		cases = append(cases, DiscriminatorCase{Value: value, Method: el.Method()})
 	}
 	return cases
 }

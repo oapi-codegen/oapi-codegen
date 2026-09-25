@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"slices"
 	"strconv"
 	"strings"
@@ -160,12 +161,16 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 	if discriminator != nil {
 		valueType := discriminatorValueType(outSchema, elements, discriminator.PropertyName)
 		if !discriminatorPropertyTyped(outSchema, elements, discriminator.PropertyName) {
-			valueType = pinnedValueType(elements, discriminator.PropertyName)
+			var err error
+			if valueType, err = pinnedValueType(elements, discriminator.PropertyName); err != nil {
+				return nil, err
+			}
 		}
 		outSchema.Discriminator = &Discriminator{
-			Property:  discriminator.PropertyName,
-			Mapping:   make(map[string]string),
-			ValueType: valueType,
+			Property:          discriminator.PropertyName,
+			Mapping:           make(map[string]string),
+			ValueType:         valueType,
+			normalizesNumbers: valueType == openapi3.TypeInteger || valueType == openapi3.TypeNumber,
 		}
 	}
 
@@ -265,7 +270,10 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 		var key string
 		var keyed bool
 		if discriminator != nil && element.Ref == "" {
-			key, keyed = inlineDiscriminatorValue(element.Value, discriminator.PropertyName)
+			var err error
+			if key, keyed, err = inlineDiscriminatorValue(element.Value, discriminator.PropertyName); err != nil {
+				return nil, fmt.Errorf("discriminator: the %s value of the inline schema %s %w", discriminator.PropertyName, strings.Join(elementPath, "."), err)
+			}
 		}
 		discriminated := keyed || (discriminator != nil && element.Ref != "")
 		switch {
@@ -388,18 +396,23 @@ func propertyKey(name string, extensions map[string]any) (string, bool) {
 // inlineDiscriminatorValue returns the value an inline union variant pins for
 // the discriminator property (see pinnedDiscriminatorValue), as the
 // discriminator mapping spells it: a string as it is, a number or a boolean as
-// encoding/json writes it.
-func inlineDiscriminatorValue(s *openapi3.Schema, property string) (string, bool) {
+// encoding/json writes it. An integer of magnitude 2^53 or more is an error:
+// kin-openapi reads numbers as float64, so it may already have been rounded,
+// and the value written would differ from the spec's.
+func inlineDiscriminatorValue(s *openapi3.Schema, property string) (string, bool, error) {
 	switch v := pinnedDiscriminatorValue(s, property).(type) {
 	case string:
-		return v, true
+		return v, true, nil
 	case bool:
-		return strconv.FormatBool(v), true
+		return strconv.FormatBool(v), true, nil
 	case float64:
+		if v == math.Trunc(v) && math.Abs(v) >= 1<<53 {
+			return "", false, errors.New("can't be read exactly: numbers are read as float64, which holds integers only up to 2^53; map a $ref variant to it with an explicit mapping key instead")
+		}
 		b, err := json.Marshal(v)
-		return string(b), err == nil
+		return string(b), err == nil, nil
 	}
-	return "", false
+	return "", false, nil
 }
 
 // pinnedDiscriminatorValue returns the value a union variant pins for the
@@ -479,8 +492,9 @@ func discriminatorPropertyTyped(outSchema *Schema, elements openapi3.SchemaRefs,
 // pinnedValueType returns the JSON type the union's variants' pinned
 // discriminator values have (see pinnedDiscriminatorValue), for a
 // discriminator property that declares no type, like 3.1's `const: true`:
-// "boolean" or "number" when they are all of that type, and "" otherwise.
-func pinnedValueType(elements openapi3.SchemaRefs, property string) string {
+// "boolean" or "number", or "" for strings or when nothing is pinned. Values
+// of different types are an error: no one discriminator reads them all.
+func pinnedValueType(elements openapi3.SchemaRefs, property string) (string, error) {
 	found := ""
 	for _, e := range elements {
 		if e == nil || e.Value == nil || isNullTypeSchema(e.Value) {
@@ -488,19 +502,22 @@ func pinnedValueType(elements openapi3.SchemaRefs, property string) string {
 		}
 		var typ string
 		switch pinnedDiscriminatorValue(e.Value, property).(type) {
-		case nil:
-			continue
 		case bool:
 			typ = openapi3.TypeBoolean
 		case float64:
 			typ = openapi3.TypeNumber
+		case string:
+			typ = openapi3.TypeString
 		default:
-			return ""
+			continue
 		}
 		if found != "" && typ != found {
-			return ""
+			return "", fmt.Errorf("discriminator: the variants pin %s values of different JSON types, %s and %s", property, found, typ)
 		}
 		found = typ
 	}
-	return found
+	if found == openapi3.TypeString {
+		return "", nil
+	}
+	return found, nil
 }

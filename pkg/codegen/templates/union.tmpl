@@ -245,6 +245,15 @@ the union data doesn't change then. */ -}}
                 if err != nil {
                     return nil, err
                 }
+                {{if $discriminator.NormalizesNumbers -}}
+                // A number can be written several ways, such as 1, 1.0 and 1e0; compare it as
+                // encoding/json writes it.
+                if number, err := strconv.ParseFloat(discriminator, 64); err == nil {
+                    if text, err := json.Marshal(number); err == nil {
+                        discriminator = string(text)
+                    }
+                }
+                {{end -}}
                 switch discriminator{
                     {{range $cases -}}
                         case "{{.Value}}":
