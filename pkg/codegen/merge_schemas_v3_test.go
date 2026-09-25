@@ -962,6 +962,7 @@ func TestConstraintOnlyUnionV3(t *testing.T) {
 		"closed":                       {openapi3.SchemaRefs{openapi3.NewSchemaRef("", &openapi3.Schema{Required: []string{"a"}, AdditionalProperties: openapi3.AdditionalProperties{Has: &closed}})}, true},
 		"additionalProperties schema":  {openapi3.SchemaRefs{openapi3.NewSchemaRef("", &openapi3.Schema{AdditionalProperties: openapi3.AdditionalProperties{Schema: openapi3.NewStringSchema().NewRef()}})}, false},
 		"x-go-type":                    {openapi3.SchemaRefs{openapi3.NewSchemaRef("", &openapi3.Schema{Required: []string{"a"}, Extensions: map[string]any{extPropGoType: "T"}})}, false},
+		"x-go-type-name":               {openapi3.SchemaRefs{openapi3.NewSchemaRef("", &openapi3.Schema{Required: []string{"a"}, Extensions: map[string]any{extGoTypeName: "NeedsA"}})}, false},
 		"empty":                        {nil, false},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -1053,4 +1054,48 @@ func TestConstraintOnlyUnionRestatedTypeV3(t *testing.T) {
 	assert.NotContains(t, code, "union json.RawMessage")
 	assert.Contains(t, code, "type InMember = Contact")
 	assert.Contains(t, code, "type Beside = Contact")
+}
+
+// TestConstraintOnlyUnionMemberV3: a member's list whose branches restate the
+// type another member declares only adds constraints, also when another
+// member brings a real union; and a branch that names its Go type is a type.
+func TestConstraintOnlyUnionMemberV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+`
+    Card:
+      type: object
+      properties:
+        card: {type: string}
+    Cash:
+      type: object
+      properties:
+        amount: {type: number}
+    Mixed:
+      allOf:
+        - type: object
+          properties:
+            email: {type: string}
+            phone: {type: string}
+        - oneOf:
+            - type: object
+              required: [email]
+            - type: object
+              required: [phone]
+        - oneOf:
+            - $ref: '#/components/schemas/Card'
+            - $ref: '#/components/schemas/Cash'
+    Named:
+      type: object
+      properties:
+        email: {type: string}
+        phone: {type: string}
+      oneOf:
+        - required: [email]
+          x-go-type-name: EmailContact
+        - required: [phone]
+          x-go-type-name: PhoneContact
+`, withV3)
+	assert.Contains(t, code, "func (t Mixed) AsCard() (Card, error)")
+	assert.NotContains(t, code, "Mixed0", "the constraint branches are no variants")
+	assert.Contains(t, code, "type EmailContact = any")
+	assert.Contains(t, code, "func (t Named) AsNamed0() (Named0, error)")
 }

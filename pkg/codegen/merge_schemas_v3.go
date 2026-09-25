@@ -53,6 +53,7 @@ func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 	}
 
 	merged := newAllOfMerge(ctx)
+	merged.composition = &openapi3.Schema{AllOf: allOf}
 	// The $refs of the members merged so far, so that a nested allOf that
 	// refers back to one is not flattened into itself.
 	seenTopLevel := make(map[string]bool)
@@ -679,6 +680,9 @@ type allOfMerge struct {
 	// madeUp is set when the composition is one the merge made for a
 	// position several members declare, rather than one in the spec.
 	madeUp bool
+	// composition is the allOf being merged. A member's oneOf or anyOf may
+	// restate the type another member declares (see isConstraintOnlyUnionV3).
+	composition *openapi3.Schema
 }
 
 // labeledSchema is a member's schema for a position, with its label.
@@ -717,6 +721,7 @@ func (m *allOfMerge) add(v openapi3.Schema, label string, seen map[string]bool) 
 		if union != m.unionEnums {
 			own := newAllOfMerge(m.ctx)
 			own.unionEnums = union
+			own.composition = m.composition
 			if err := own.add(v, label, seen); err != nil {
 				return err
 			}
@@ -756,11 +761,18 @@ func (m *allOfMerge) add(v openapi3.Schema, label string, seen map[string]bool) 
 			m.schema.Extensions[k] = ext
 		}
 	}
-	// A oneOf or anyOf that only adds constraints makes no union.
-	if !isConstraintOnlyUnionV3(v.OneOf, &v) {
+	// A oneOf or anyOf that only adds constraints makes no union. It
+	// constrains the member, or, when the member declares no type, the
+	// composition, whose other members may declare the type its branches
+	// restate.
+	owner := &v
+	if len(declaredTypes(owner)) == 0 && m.composition != nil {
+		owner = m.composition
+	}
+	if !isConstraintOnlyUnionV3(v.OneOf, owner) {
 		m.schema.OneOf = append(m.schema.OneOf, v.OneOf...)
 	}
-	if !isConstraintOnlyUnionV3(v.AnyOf, &v) {
+	if !isConstraintOnlyUnionV3(v.AnyOf, owner) {
 		m.schema.AnyOf = append(m.schema.AnyOf, v.AnyOf...)
 	}
 
@@ -1195,9 +1207,11 @@ func hasStructuralSiblingsV3(s *openapi3.Schema) bool {
 // harder to use, not more correct.
 //
 // A local $ref branch is judged by the schema it refers to. A $ref into
-// another document is a type. A 3.1 `{type: "null"}` branch says the schema
-// is nullable, which is read from the schema where its type is used, so it is
-// passed over; a list of nothing else isn't one of constraints.
+// another document is a type, and so is a branch with x-go-type or
+// x-go-type-name, which asks for a Go type. A 3.1 `{type: "null"}` branch
+// says the schema is nullable, which is read from the schema where its type
+// is used, so it is passed over; a list of nothing else isn't one of
+// constraints.
 func isConstraintOnlyUnionV3(branches openapi3.SchemaRefs, owner *openapi3.Schema) bool {
 	constraints := 0
 	for _, b := range branches {
@@ -1207,7 +1221,13 @@ func isConstraintOnlyUnionV3(branches openapi3.SchemaRefs, owner *openapi3.Schem
 		if isNullTypeSchema(b.Value) {
 			continue
 		}
-		if _, ok := combinedSchemaExtensions(b)[extPropGoType]; ok {
+		// A branch that asks for a Go type, or names the one it gets, is a
+		// type.
+		extensions := combinedSchemaExtensions(b)
+		if _, ok := extensions[extPropGoType]; ok {
+			return false
+		}
+		if _, ok := extensions[extGoTypeName]; ok {
 			return false
 		}
 		for _, keyword := range shallowTypeKeywords(*b.Value) {
