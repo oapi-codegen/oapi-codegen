@@ -336,6 +336,21 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 	if discriminator != nil && len(outSchema.Discriminator.Mapping) < mappedCount {
 		return nil, errors.New("discriminator: not all schemas were mapped")
 	}
+	// A number's spellings, like 1 and 1.0, are one value (see
+	// Discriminator.normalizesNumbers), which can't lead to two variants.
+	if discriminator != nil && outSchema.Discriminator.normalizesNumbers {
+		type lead struct{ key, goType string }
+		leads := make(map[string]lead)
+		for _, key := range SortedMapKeys(outSchema.Discriminator.Mapping) {
+			goType := outSchema.Discriminator.Mapping[key]
+			number := canonicalNumber(key)
+			if other, ok := leads[number]; ok && other.goType != goType {
+				return nil, fmt.Errorf("discriminator: the %s values %s and %s are the same number, but lead to %s and %s",
+					discriminator.PropertyName, other.key, key, other.goType, goType)
+			}
+			leads[number] = lead{key, goType}
+		}
+	}
 
 	return members, nil
 }

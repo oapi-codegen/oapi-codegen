@@ -1533,6 +1533,7 @@ func TestInlineDiscriminatedVariantsV3(t *testing.T) {
 	assert.Contains(t, methodBody(t, code, "func (t *Versioned) FromVersioned1("), "`{\"version\":2}`")
 	assert.Contains(t, methodBody(t, code, "func (t Versioned) ValueByDiscriminator("), "strconv.ParseFloat(discriminator, 64)",
 		"a number is compared as encoding/json writes it")
+
 	assert.NotContains(t, methodBody(t, code, "func (t Implicit) ValueByDiscriminator("), "ParseFloat")
 	extended := methodBody(t, code, "func (t Extended) ValueByDiscriminator(")
 	assert.Contains(t, extended, `case "cat":`+"\n\t\treturn t.AsExtended0()", "a later allOf member pins the value")
@@ -1572,6 +1573,31 @@ func TestInlineDiscriminatedVariantsV3(t *testing.T) {
         propertyName: enabled
 `, withV3)
 	assert.Contains(t, methodBody(t, code, "func (t *Flag) FromFlag0("), "`{\"enabled\":\"true\"}`")
+
+	// Spellings of one number for one variant are one case.
+	code = generateSpec(t, opaqueSpecHeader+`
+    One:
+      type: object
+      properties:
+        version: {type: number}
+    Other:
+      type: object
+      properties:
+        version: {type: number}
+    Aliased:
+      oneOf:
+        - $ref: '#/components/schemas/One'
+        - $ref: '#/components/schemas/Other'
+      discriminator:
+        propertyName: version
+        mapping:
+          '1': '#/components/schemas/One'
+          '1.0': '#/components/schemas/One'
+          '2': '#/components/schemas/Other'
+`, withV3)
+	aliased := methodBody(t, code, "func (t Aliased) ValueByDiscriminator(")
+	assert.Equal(t, 1, strings.Count(aliased, `case "1":`))
+	assert.NotContains(t, aliased, `case "1.0":`)
 }
 
 // TestInlineDiscriminatedVariantErrorsV3: two variants can't take one
@@ -1655,6 +1681,25 @@ func TestInlineDiscriminatedVariantErrorsV3(t *testing.T) {
       discriminator:
         propertyName: id
 `, "discriminator: the id value of the inline schema Big.0 can't be read exactly"},
+		"one number for two variants": {`
+    One:
+      type: object
+      properties:
+        version: {type: number}
+    Other:
+      type: object
+      properties:
+        version: {type: number}
+    Versioned:
+      oneOf:
+        - $ref: '#/components/schemas/One'
+        - $ref: '#/components/schemas/Other'
+      discriminator:
+        propertyName: version
+        mapping:
+          '1': '#/components/schemas/One'
+          '1.0': '#/components/schemas/Other'
+`, "discriminator: the version values 1 and 1.0 are the same number, but lead to One and Other"},
 		"a backtick": {"\n    Pet:\n      oneOf:\n        - type: object\n          properties:\n            petType: {const: 'a`b'}\n      discriminator:\n        propertyName: petType\n",
 			`the petType value "a` + "`" + `b" of the inline schema Pet.0 may not contain a backtick`},
 		"a quote": {"\n    Pet:\n      oneOf:\n        - type: object\n          properties:\n            petType: {enum: ['a\"b']}\n      discriminator:\n        propertyName: petType\n",
