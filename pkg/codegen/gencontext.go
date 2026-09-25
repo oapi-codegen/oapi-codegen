@@ -63,6 +63,10 @@ type genContext struct {
 	// (see madeUp).
 	mergingMadeUp bool
 
+	// composing is the schema whose allOf v3 is merging. generateAllOfV3 sets
+	// it for each composition it hands to the merge (see listsFlattened).
+	composing *openapi3.Schema
+
 	// madeUp records the allOfs v3's merge makes for positions several
 	// members declare, which the spec doesn't spell out.
 	madeUp map[*openapi3.Schema]bool
