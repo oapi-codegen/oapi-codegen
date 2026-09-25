@@ -537,30 +537,24 @@ type Discriminator struct {
 	// all of the union's members.
 	variants []UnionElement
 
-	// normalizesNumbers is set by v3 for an integer or number discriminator,
-	// whose value can be written several ways, such as 1, 1.0 and 1e0:
-	// ValueByDiscriminator compares it as encoding/json writes the number.
-	normalizesNumbers bool
+	// literals is set by v3 for an integer or number discriminator: each
+	// mapping value as a Go literal of the type ValueByDiscriminator decodes
+	// the discriminator into (see SwitchType). The values are compared as
+	// numbers, so 1 and 1.0 of a number discriminator are one value.
+	literals map[string]string
 }
 
-// NormalizesNumbers reports whether ValueByDiscriminator compares the
-// discriminator's value as encoding/json writes the number.
-func (d *Discriminator) NormalizesNumbers() bool {
-	return d.normalizesNumbers
-}
-
-// canonicalNumber spells a JSON number as encoding/json writes a float64, and
-// returns text that isn't one as it is.
-func canonicalNumber(text string) string {
-	number, err := strconv.ParseFloat(text, 64)
-	if err != nil {
-		return text
+// SwitchType returns the Go type ValueByDiscriminator decodes the
+// discriminator into and switches on: int64 or float64 for a v3 integer or
+// number discriminator, and "" when it compares the value's JSON text.
+func (d *Discriminator) SwitchType() string {
+	switch {
+	case d.literals == nil:
+		return ""
+	case d.ValueType == openapi3.TypeInteger:
+		return "int64"
 	}
-	b, err := json.Marshal(number)
-	if err != nil {
-		return text
-	}
-	return string(b)
+	return "float64"
 }
 
 // IsString reports whether the discriminator's values are JSON strings.
@@ -637,14 +631,15 @@ func (s Schema) DiscriminatorStampFor(element UnionElement) *DiscriminatorStamp 
 		return nil
 	}
 	// The values that lead to the element. A number's spellings, like 1 and
-	// 1.0, are one value when the discriminator compares numbers.
+	// 1.0, are one value when the discriminator compares numbers (see
+	// SwitchType).
 	var values []string
 	for _, value := range SortedMapKeys(d.Mapping) {
 		if d.Mapping[value] != element.String() {
 			continue
 		}
-		if d.normalizesNumbers {
-			value = canonicalNumber(value)
+		if literal, ok := d.literals[value]; ok {
+			value = literal
 		}
 		if !slices.Contains(values, value) {
 			values = append(values, value)
@@ -706,10 +701,10 @@ func (s Schema) DiscriminatorCases() []DiscriminatorCase {
 		if !ok {
 			continue
 		}
-		if s.Discriminator.normalizesNumbers {
-			// Values spelled differently for one variant, like 2 and 2.0,
-			// are one case.
-			value = canonicalNumber(value)
+		if literal, ok := s.Discriminator.literals[value]; ok {
+			// A number, compared as one (see SwitchType): values spelled
+			// differently for one variant, like 2 and 2.0, are one case.
+			value = literal
 			if slices.Contains(cases, DiscriminatorCase{Value: value, Method: el.Method()}) {
 				continue
 			}

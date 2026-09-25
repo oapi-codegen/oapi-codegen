@@ -1531,10 +1531,11 @@ func TestInlineDiscriminatedVariantsV3(t *testing.T) {
 	assert.Contains(t, mapped, `case "cat":`+"\n\t\treturn t.AsMapped0()")
 	assert.Contains(t, mapped, `case "dog":`+"\n\t\treturn t.AsDog()")
 	assert.Contains(t, methodBody(t, code, "func (t *Versioned) FromVersioned1("), "`{\"version\":2}`")
-	assert.Contains(t, methodBody(t, code, "func (t Versioned) ValueByDiscriminator("), "strconv.ParseFloat(discriminator, 64)",
-		"a number is compared as encoding/json writes it")
-
-	assert.NotContains(t, methodBody(t, code, "func (t Implicit) ValueByDiscriminator("), "ParseFloat")
+	versioned := methodBody(t, code, "func (t Versioned) ValueByDiscriminator(")
+	assert.Contains(t, versioned, "Value *int64 `json:\"version\"`", "an integer is read as one")
+	assert.Contains(t, versioned, "case 1:")
+	assert.Contains(t, versioned, "case 2:")
+	assert.Contains(t, methodBody(t, code, "func (t Implicit) ValueByDiscriminator("), `case "cat":`)
 	extended := methodBody(t, code, "func (t Extended) ValueByDiscriminator(")
 	assert.Contains(t, extended, `case "cat":`+"\n\t\treturn t.AsExtended0()", "a later allOf member pins the value")
 
@@ -1596,8 +1597,9 @@ func TestInlineDiscriminatedVariantsV3(t *testing.T) {
           '2': '#/components/schemas/Other'
 `, withV3)
 	aliased := methodBody(t, code, "func (t Aliased) ValueByDiscriminator(")
-	assert.Equal(t, 1, strings.Count(aliased, `case "1":`))
-	assert.NotContains(t, aliased, `case "1.0":`)
+	assert.Contains(t, aliased, "Value *float64")
+	assert.Equal(t, 1, strings.Count(aliased, "case 1:"))
+	assert.Contains(t, aliased, "case 2:")
 	assert.Contains(t, methodBody(t, code, "func (t *Aliased) FromOne("), "`{\"version\":1}`",
 		"one value, however it is spelled, is stamped")
 }
@@ -2155,4 +2157,58 @@ func TestDiscriminatorStampsPerVariantV3(t *testing.T) {
 	for _, value := range []string{"bird", "canine", "cat", "dog"} {
 		assert.Contains(t, valueBy, `case "`+value+`":`)
 	}
+}
+
+// TestNumberLiteral: a value of an integer or number discriminator becomes a
+// Go literal of the type it is read as, int64 or float64: the value itself,
+// exactly, whatever its spelling.
+func TestNumberLiteral(t *testing.T) {
+	for _, tc := range []struct{ text, valueType, want, err string }{
+		{"1", "integer", "1", ""},
+		{"-0", "integer", "0", ""},
+		{"9007199254740993", "integer", "9007199254740993", ""},
+		{"9223372036854775807", "integer", "9223372036854775807", ""},
+		{"1.0", "integer", "1", ""},
+		{"1e3", "integer", "1000", ""},
+		{"2.5", "integer", "", "isn't an integer"},
+		{"9223372036854775808", "integer", "", "doesn't fit in an int64"},
+		{"9007199254740993.0", "integer", "", "can't be read exactly"},
+		{"1", "number", "1", ""},
+		{"1.0", "number", "1", ""},
+		{"2.50", "number", "2.5", ""},
+		{"25e-1", "number", "2.5", ""},
+		{"1e21", "number", "1e+21", ""},
+		{"1e400", "number", "", "doesn't fit in a float64"},
+		{"007", "integer", "", "isn't a JSON number"},
+		{"0x10", "integer", "", "isn't a JSON number"},
+		{" 1", "number", "", "isn't a JSON number"},
+		{"one", "number", "", "isn't a JSON number"},
+	} {
+		got, err := numberLiteral(tc.text, tc.valueType)
+		if tc.err != "" {
+			assert.ErrorContains(t, err, tc.err, "%s %s", tc.valueType, tc.text)
+			continue
+		}
+		require.NoError(t, err, "%s %s", tc.valueType, tc.text)
+		assert.Equal(t, tc.want, got, "%s %s", tc.valueType, tc.text)
+	}
+}
+
+// TestNumericMappingKeyErrorsV3: a mapping key of an integer or number
+// discriminator must be a number of that kind.
+func TestNumericMappingKeyErrorsV3(t *testing.T) {
+	_, err := generateSpecErr(opaqueSpecHeader+`
+    One:
+      type: object
+      properties:
+        version: {type: integer}
+    Versioned:
+      oneOf:
+        - $ref: '#/components/schemas/One'
+      discriminator:
+        propertyName: version
+        mapping:
+          '2.5': '#/components/schemas/One'
+`, withV3)
+	assert.ErrorContains(t, err, "discriminator: the version value 2.5 isn't an integer")
 }

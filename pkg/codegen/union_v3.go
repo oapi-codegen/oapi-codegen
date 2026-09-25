@@ -167,10 +167,9 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 			}
 		}
 		outSchema.Discriminator = &Discriminator{
-			Property:          discriminator.PropertyName,
-			Mapping:           make(map[string]string),
-			ValueType:         valueType,
-			normalizesNumbers: valueType == openapi3.TypeInteger || valueType == openapi3.TypeNumber,
+			Property:  discriminator.PropertyName,
+			Mapping:   make(map[string]string),
+			ValueType: valueType,
 		}
 	}
 
@@ -336,19 +335,25 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 	if discriminator != nil && len(outSchema.Discriminator.Mapping) < mappedCount {
 		return nil, errors.New("discriminator: not all schemas were mapped")
 	}
-	// A number's spellings, like 1 and 1.0, are one value (see
-	// Discriminator.normalizesNumbers), which can't lead to two variants.
-	if discriminator != nil && outSchema.Discriminator.normalizesNumbers {
+	// An integer or number discriminator is compared as a number (see
+	// Discriminator.SwitchType): each value is written as a literal of that
+	// type, and one value can't lead to two variants.
+	if d := outSchema.Discriminator; discriminator != nil && (d.ValueType == openapi3.TypeInteger || d.ValueType == openapi3.TypeNumber) {
 		type lead struct{ key, goType string }
 		leads := make(map[string]lead)
-		for _, key := range SortedMapKeys(outSchema.Discriminator.Mapping) {
-			goType := outSchema.Discriminator.Mapping[key]
-			number := canonicalNumber(key)
-			if other, ok := leads[number]; ok && other.goType != goType {
+		d.literals = make(map[string]string, len(d.Mapping))
+		for _, key := range SortedMapKeys(d.Mapping) {
+			literal, err := numberLiteral(key, d.ValueType)
+			if err != nil {
+				return nil, fmt.Errorf("discriminator: the %s value %s %w", discriminator.PropertyName, key, err)
+			}
+			goType := d.Mapping[key]
+			if other, ok := leads[literal]; ok && other.goType != goType {
 				return nil, fmt.Errorf("discriminator: the %s values %s and %s are the same number, but lead to %s and %s",
 					discriminator.PropertyName, other.key, key, other.goType, goType)
 			}
-			leads[number] = lead{key, goType}
+			leads[literal] = lead{key, goType}
+			d.literals[key] = literal
 		}
 	}
 
@@ -535,4 +540,40 @@ func pinnedValueType(elements openapi3.SchemaRefs, property string) (string, err
 		return "", nil
 	}
 	return found, nil
+}
+
+// numberLiteral writes a value of an integer or number discriminator as a Go
+// literal of the type ValueByDiscriminator decodes it into, int64 or float64
+// (see Discriminator.SwitchType): the value itself, whatever its spelling, so
+// 1.0 of an integer discriminator is 1.
+func numberLiteral(text, valueType string) (string, error) {
+	if text == "" || strings.TrimSpace(text) != text || !json.Valid([]byte(text)) ||
+		(text[0] != '-' && (text[0] < '0' || text[0] > '9')) {
+		return "", errors.New("isn't a JSON number")
+	}
+	if valueType == openapi3.TypeInteger {
+		i, err := strconv.ParseInt(text, 10, 64)
+		if err == nil {
+			return strconv.FormatInt(i, 10), nil
+		}
+		if errors.Is(err, strconv.ErrRange) {
+			return "", errors.New("doesn't fit in an int64")
+		}
+		// Not written as an integer, like 1.0 or 1e3: read as a float64,
+		// which holds integers exactly only up to 2^53.
+		f, err := strconv.ParseFloat(text, 64)
+		switch {
+		case err != nil || f != math.Trunc(f):
+			return "", errors.New("isn't an integer")
+		case math.Abs(f) >= 1<<53:
+			return "", errors.New("can't be read exactly written this way; write it as an integer")
+		}
+		return strconv.FormatInt(int64(f), 10), nil
+	}
+	f, err := strconv.ParseFloat(text, 64)
+	if err != nil {
+		return "", errors.New("doesn't fit in a float64")
+	}
+	b, err := json.Marshal(f)
+	return string(b), err
 }
