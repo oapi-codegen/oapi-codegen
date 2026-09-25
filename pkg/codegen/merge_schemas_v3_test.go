@@ -2178,6 +2178,8 @@ func TestNumberLiteral(t *testing.T) {
 		{"2.50", "number", "2.5", ""},
 		{"25e-1", "number", "2.5", ""},
 		{"1e21", "number", "1e+21", ""},
+		{"-0", "number", "0", ""},
+		{"-0.0e5", "number", "0", ""},
 		{"1e400", "number", "", "doesn't fit in a float64"},
 		{"007", "integer", "", "isn't a JSON number"},
 		{"0x10", "integer", "", "isn't a JSON number"},
@@ -2211,4 +2213,25 @@ func TestNumericMappingKeyErrorsV3(t *testing.T) {
           '2.5': '#/components/schemas/One'
 `, withV3)
 	assert.ErrorContains(t, err, "discriminator: the version value 2.5 isn't an integer")
+
+	_, err = generateSpecErr(opaqueSpecHeader+`
+    One:
+      type: object
+      properties:
+        version: {type: number}
+    Other:
+      type: object
+      properties:
+        version: {type: number}
+    Versioned:
+      oneOf:
+        - $ref: '#/components/schemas/One'
+        - $ref: '#/components/schemas/Other'
+      discriminator:
+        propertyName: version
+        mapping:
+          '0': '#/components/schemas/One'
+          '-0': '#/components/schemas/Other'
+`, withV3)
+	assert.ErrorContains(t, err, "discriminator: the version values -0 and 0 are the same number, but lead to Other and One")
 }

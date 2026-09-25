@@ -574,6 +574,10 @@ func numberLiteral(text, valueType string) (string, error) {
 	if err != nil {
 		return "", errors.New("doesn't fit in a float64")
 	}
+	if f == 0 {
+		// -0 is 0, as a Go constant and when compared.
+		return "0", nil
+	}
 	b, err := json.Marshal(f)
 	return string(b), err
 }
