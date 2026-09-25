@@ -5,10 +5,14 @@ package codegen
 // started as a copy of v2's (union_v2.go).
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"slices"
+	"strconv"
 	"strings"
+	"unicode"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -155,10 +159,17 @@ func generateUnionComponentsV3(ctx genContext, outSchema *Schema, components []u
 // non-null branch.
 func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string, alone bool) ([]UnionElement, error) {
 	if discriminator != nil {
+		valueType := discriminatorValueType(outSchema, elements, discriminator.PropertyName)
+		if !discriminatorPropertyTyped(outSchema, elements, discriminator.PropertyName) {
+			var err error
+			if valueType, err = pinnedValueType(elements, discriminator.PropertyName); err != nil {
+				return nil, err
+			}
+		}
 		outSchema.Discriminator = &Discriminator{
 			Property:  discriminator.PropertyName,
 			Mapping:   make(map[string]string),
-			ValueType: discriminatorValueType(outSchema, elements, discriminator.PropertyName),
+			ValueType: valueType,
 		}
 	}
 
@@ -219,6 +230,11 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 
 	refToGoTypeMap := make(map[string]string)
 	var members []UnionElement
+	// inlineKeys are the discriminator values inline variants declare (see
+	// inlineDiscriminatorValue), which no other variant may also map to.
+	inlineKeys := make(map[string]bool)
+	// mappedCount counts the variants the discriminator leads to.
+	mappedCount := 0
 	for i, element := range elements {
 		// Skip null-only branches: nullability marker, not a real
 		// union variant. See the collapse comment above for context.
@@ -245,11 +261,36 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 			refToGoTypeMap[element.Ref] = elementSchema.GoType
 		}
 
-		if discriminator != nil {
-			if len(discriminator.Mapping) != 0 && element.Ref == "" {
-				return nil, errors.New("ambiguous discriminator.mapping: please replace inlined object with $ref")
+		// An inline variant has no name for the mapping to use. It can still
+		// say which value it takes, with a single-value enum or a const on the
+		// discriminator property. One that doesn't has no value: the
+		// discriminator doesn't lead to it, and From* stamps none, but its As*
+		// and From* work as for any variant.
+		var key string
+		var keyed bool
+		if discriminator != nil && element.Ref == "" {
+			var err error
+			if key, keyed, err = inlineDiscriminatorValue(element.Value, discriminator.PropertyName); err != nil {
+				return nil, fmt.Errorf("discriminator: the %s value of the inline schema %s %w", discriminator.PropertyName, strings.Join(elementPath, "."), err)
 			}
-
+		}
+		discriminated := keyed || (discriminator != nil && element.Ref != "")
+		switch {
+		case keyed:
+			// The value is written into Go and JSON string literals.
+			for _, r := range key {
+				if r == '"' || r == '`' || r == '\\' || unicode.IsControl(r) {
+					return nil, fmt.Errorf("discriminator: the %s value %q of the inline schema %s may not contain %s", discriminator.PropertyName, key, strings.Join(elementPath, "."), describeRune(r))
+				}
+			}
+			_, mapped := discriminator.Mapping[key]
+			_, taken := outSchema.Discriminator.Mapping[key]
+			if mapped || taken {
+				return nil, fmt.Errorf("discriminator: the inline schema %s takes the %s value %q, which another schema is mapped to", strings.Join(elementPath, "."), discriminator.PropertyName, key)
+			}
+			inlineKeys[key] = true
+			outSchema.Discriminator.Mapping[key] = elementSchema.GoType
+		case discriminated:
 			// Explicit mapping.
 			var mapped bool
 			for k, v := range discriminator.Mapping {
@@ -260,7 +301,11 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 			}
 			// Implicit mapping.
 			if !mapped {
-				outSchema.Discriminator.Mapping[RefPathToObjName(element.Ref)] = elementSchema.GoType
+				key := RefPathToObjName(element.Ref)
+				if inlineKeys[key] {
+					return nil, fmt.Errorf("discriminator: %s takes the %s value %q, which an inline schema also takes", element.Ref, discriminator.PropertyName, key)
+				}
+				outSchema.Discriminator.Mapping[key] = elementSchema.GoType
 			}
 		}
 		members = append(members, UnionElement(elementSchema.GoType))
@@ -269,8 +314,11 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 		if !slices.Contains(outSchema.UnionElements, UnionElement(elementSchema.GoType)) {
 			outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
 		}
-		if discriminator != nil && !alone && !slices.Contains(outSchema.Discriminator.variants, UnionElement(elementSchema.GoType)) {
-			outSchema.Discriminator.variants = append(outSchema.Discriminator.variants, UnionElement(elementSchema.GoType))
+		if discriminated {
+			mappedCount++
+			if !slices.Contains(outSchema.Discriminator.variants, UnionElement(elementSchema.GoType)) {
+				outSchema.Discriminator.variants = append(outSchema.Discriminator.variants, UnionElement(elementSchema.GoType))
+			}
 		}
 		for _, name := range propertyNames(element.Value, 0) {
 			if !slices.Contains(outSchema.UnionVariantProperties, name) {
@@ -280,15 +328,33 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 	}
 	slices.Sort(outSchema.UnionVariantProperties)
 
-	// Compare against effectiveCount (non-null branches actually
-	// processed) rather than len(elements). For a nullable
-	// discriminated union (`oneOf: [Cat, Dog, {type: "null"}]`), the
-	// null-branch skip above leaves the discriminator with one fewer
-	// mapping than the raw element count, and we must not flag that as
-	// incomplete -- the null branch is a nullability marker, not a real
-	// variant that needs a mapping.
-	if discriminator != nil && len(outSchema.Discriminator.Mapping) < effectiveCount {
+	// Compare against the variants the discriminator leads to rather than
+	// len(elements): a null branch is a nullability marker, not a variant
+	// that needs a mapping, and an inline variant that pins no value has
+	// none.
+	if discriminator != nil && len(outSchema.Discriminator.Mapping) < mappedCount {
 		return nil, errors.New("discriminator: not all schemas were mapped")
+	}
+	// An integer or number discriminator is compared as a number (see
+	// Discriminator.SwitchType): each value is written as a literal of that
+	// type, and one value can't lead to two variants.
+	if d := outSchema.Discriminator; discriminator != nil && (d.ValueType == openapi3.TypeInteger || d.ValueType == openapi3.TypeNumber) {
+		type lead struct{ key, goType string }
+		leads := make(map[string]lead)
+		d.literals = make(map[string]string, len(d.Mapping))
+		for _, key := range SortedMapKeys(d.Mapping) {
+			literal, err := numberLiteral(key, d.ValueType)
+			if err != nil {
+				return nil, fmt.Errorf("discriminator: the %s value %s %w", discriminator.PropertyName, key, err)
+			}
+			goType := d.Mapping[key]
+			if other, ok := leads[literal]; ok && other.goType != goType {
+				return nil, fmt.Errorf("discriminator: the %s values %s and %s are the same number, but lead to %s and %s",
+					discriminator.PropertyName, other.key, key, other.goType, goType)
+			}
+			leads[literal] = lead{key, goType}
+			d.literals[key] = literal
+		}
 	}
 
 	return members, nil
@@ -345,4 +411,173 @@ func propertyKey(name string, extensions map[string]any) (string, bool) {
 		}
 	}
 	return key, key != "-"
+}
+
+// inlineDiscriminatorValue returns the value an inline union variant pins for
+// the discriminator property (see pinnedDiscriminatorValue), as the
+// discriminator mapping spells it: a string as it is, a number or a boolean as
+// encoding/json writes it. An integer of magnitude 2^53 or more is an error:
+// kin-openapi reads numbers as float64, so it may already have been rounded,
+// and the value written would differ from the spec's.
+func inlineDiscriminatorValue(s *openapi3.Schema, property string) (string, bool, error) {
+	switch v := pinnedDiscriminatorValue(s, property).(type) {
+	case string:
+		return v, true, nil
+	case bool:
+		return strconv.FormatBool(v), true, nil
+	case float64:
+		if v == math.Trunc(v) && math.Abs(v) >= 1<<53 {
+			return "", false, errors.New("can't be read exactly: numbers are read as float64, which holds integers only up to 2^53; map a $ref variant to it with an explicit mapping key instead")
+		}
+		b, err := json.Marshal(v)
+		return string(b), err == nil, nil
+	}
+	return "", false, nil
+}
+
+// pinnedDiscriminatorValue returns the value a union variant pins for the
+// discriminator property, with a const or an enum of one value besides null.
+// That is on any declaration of the property, in the variant or its allOf
+// members, or in an allOf member of the property's own schema. It returns nil
+// when there is none.
+func pinnedDiscriminatorValue(s *openapi3.Schema, property string) any {
+	seen := make(map[*openapi3.Schema]bool)
+	var pinned, declared func(s *openapi3.Schema) any
+	pinned = func(p *openapi3.Schema) any {
+		if p == nil || seen[p] {
+			return nil
+		}
+		seen[p] = true
+		if p.Const != nil {
+			return p.Const
+		}
+		if values := slices.DeleteFunc(slices.Clone(p.Enum), func(v any) bool { return v == nil }); len(values) == 1 {
+			return values[0]
+		}
+		for _, m := range p.AllOf {
+			if m != nil {
+				if v := pinned(m.Value); v != nil {
+					return v
+				}
+			}
+		}
+		return nil
+	}
+	declared = func(s *openapi3.Schema) any {
+		if s == nil || seen[s] {
+			return nil
+		}
+		seen[s] = true
+		if p := s.Properties[property]; p != nil {
+			if v := pinned(p.Value); v != nil {
+				return v
+			}
+		}
+		for _, m := range s.AllOf {
+			if m != nil {
+				if v := declared(m.Value); v != nil {
+					return v
+				}
+			}
+		}
+		return nil
+	}
+	return declared(s)
+}
+
+// discriminatorPropertyTyped reports whether the union itself, or any
+// declaration of the property in its variants or their allOf members, gives
+// the discriminator property a type.
+func discriminatorPropertyTyped(outSchema *Schema, elements openapi3.SchemaRefs, property string) bool {
+	for _, p := range outSchema.Properties {
+		if p.JsonFieldName == property && p.Schema.OAPISchema != nil && len(nonNullTypes(p.Schema.OAPISchema.Type)) > 0 {
+			return true
+		}
+	}
+	seen := make(map[*openapi3.Schema]bool)
+	var typed func(s *openapi3.Schema) bool
+	typed = func(s *openapi3.Schema) bool {
+		if s == nil || seen[s] {
+			return false
+		}
+		seen[s] = true
+		if p := s.Properties[property]; p != nil && p.Value != nil && len(nonNullTypes(p.Value.Type)) > 0 {
+			return true
+		}
+		return slices.ContainsFunc(s.AllOf, func(m *openapi3.SchemaRef) bool { return m != nil && typed(m.Value) })
+	}
+	return slices.ContainsFunc(elements, func(e *openapi3.SchemaRef) bool { return e != nil && typed(e.Value) })
+}
+
+// pinnedValueType returns the JSON type the union's variants' pinned
+// discriminator values have (see pinnedDiscriminatorValue), for a
+// discriminator property that declares no type, like 3.1's `const: true`:
+// "boolean" or "number", or "" for strings or when nothing is pinned. Values
+// of different types are an error: no one discriminator reads them all.
+func pinnedValueType(elements openapi3.SchemaRefs, property string) (string, error) {
+	found := ""
+	for _, e := range elements {
+		if e == nil || e.Value == nil || isNullTypeSchema(e.Value) {
+			continue
+		}
+		var typ string
+		switch pinnedDiscriminatorValue(e.Value, property).(type) {
+		case bool:
+			typ = openapi3.TypeBoolean
+		case float64:
+			typ = openapi3.TypeNumber
+		case string:
+			typ = openapi3.TypeString
+		default:
+			continue
+		}
+		if found != "" && typ != found {
+			return "", fmt.Errorf("discriminator: the variants pin %s values of different JSON types, %s and %s", property, found, typ)
+		}
+		found = typ
+	}
+	if found == openapi3.TypeString {
+		return "", nil
+	}
+	return found, nil
+}
+
+// numberLiteral writes a value of an integer or number discriminator as a Go
+// literal of the type ValueByDiscriminator decodes it into, int64 or float64
+// (see Discriminator.SwitchType): the value itself, whatever its spelling, so
+// 1.0 of an integer discriminator is 1.
+func numberLiteral(text, valueType string) (string, error) {
+	if text == "" || strings.TrimSpace(text) != text || !json.Valid([]byte(text)) ||
+		(text[0] != '-' && (text[0] < '0' || text[0] > '9')) {
+		return "", errors.New("isn't a JSON number")
+	}
+	if valueType == openapi3.TypeInteger {
+		i, err := strconv.ParseInt(text, 10, 64)
+		if err == nil {
+			return strconv.FormatInt(i, 10), nil
+		}
+		if errors.Is(err, strconv.ErrRange) {
+			return "", errors.New("doesn't fit in an int64")
+		}
+		// Not written as an integer, like 1.0 or 1e3: read as a float64,
+		// which holds integers exactly only up to 2^53.
+		f, err := strconv.ParseFloat(text, 64)
+		switch {
+		case err != nil || f != math.Trunc(f):
+			return "", errors.New("isn't an integer")
+		case math.Abs(f) >= 1<<53:
+			return "", errors.New("can't be read exactly written this way; write it as an integer")
+		}
+		return strconv.FormatInt(int64(f), 10), nil
+	}
+	f, err := strconv.ParseFloat(text, 64)
+	if err != nil {
+		return "", errors.New("doesn't fit in a float64")
+	}
+	if f == 0 {
+		// -0 is 0, as a Go constant and when compared.
+		return "0", nil
+	}
+	b, err := json.Marshal(f)
+	return string(b), err
 }

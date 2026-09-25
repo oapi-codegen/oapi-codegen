@@ -1,0 +1,25 @@
+versions: [v1, v2, v3]
+description: >-
+  A discriminated oneOf with a number discriminator whose inline variants pin
+  their values. JSON can write one number several ways, such as 1, 1.0 and
+  1e0; dispatch compares them as numbers.
+subject:
+  oneOf:
+    - type: object
+      required: [version, name]
+      properties:
+        version: {type: number, enum: [1]}
+        name: {type: string}
+    - type: object
+      required: [version, fullName]
+      properties:
+        version: {type: number, enum: [2.5]}
+        fullName: {type: string}
+  discriminator:
+    propertyName: version
+samples:
+  - '{"version": 1, "name": "a"}'
+  - '{"version": 2.5, "fullName": "a b"}'
+rejects:
+  v1: "discriminator: not all schemas were mapped"
+  v2: "discriminator: not all schemas were mapped"

@@ -240,6 +240,29 @@ the union data doesn't change then. */ -}}
 
         {{$cases := $schema.DiscriminatorCases -}}
         {{if $cases}}
+            {{- if $discriminator.SwitchType}}
+            // ValueByDiscriminator reads the discriminator as a {{$discriminator.SwitchType}}, so a
+            // number written as, say, 1, 1.0 or 1e0 is one value, and returns the variant it leads to.
+            func (t {{.TypeName}}) ValueByDiscriminator() (any, error) {
+                var discriminator struct {
+                    Value *{{$discriminator.SwitchType}} {{$discriminator.JSONTag}}
+                }
+                if err := json.Unmarshal(t.union, &discriminator); err != nil {
+                    return nil, err
+                }
+                if discriminator.Value == nil {
+                    return nil, errors.New("missing discriminator value")
+                }
+                switch *discriminator.Value {
+                    {{range $cases -}}
+                        case {{.Value}}:
+                            return t.As{{.Method}}()
+                    {{end -}}
+                    default:
+                        return nil, fmt.Errorf("unknown discriminator value: %v", *discriminator.Value)
+                }
+            }
+            {{- else}}
             func (t {{.TypeName}}) ValueByDiscriminator() (any, error) {
                 discriminator, err := t.Discriminator()
                 if err != nil {
@@ -254,6 +277,7 @@ the union data doesn't change then. */ -}}
                         return nil, errors.New("unknown discriminator value: "+discriminator)
                 }
             }
+            {{- end}}
         {{end}}
     {{end}}
 

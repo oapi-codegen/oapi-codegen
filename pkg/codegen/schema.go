@@ -530,10 +530,31 @@ type Discriminator struct {
 	// for the usual string discriminator.
 	ValueType string
 
-	// variants are the union members the discriminator tells apart, when
-	// they are only some of the union's: a union that combines several
-	// (see Schema.UnionOwnedKeys) has the discriminator of one of them.
+	// variants are the union members the discriminator tells apart, which can
+	// be only some of the union's: a union that combines several (see
+	// Schema.UnionOwnedKeys) has the discriminator of one of them, and an
+	// inline variant that pins no value has none. v1 and v2 leave it nil for
+	// all of the union's members.
 	variants []UnionElement
+
+	// literals is set by v3 for an integer or number discriminator: each
+	// mapping value as a Go literal of the type ValueByDiscriminator decodes
+	// the discriminator into (see SwitchType). The values are compared as
+	// numbers, so 1 and 1.0 of a number discriminator are one value.
+	literals map[string]string
+}
+
+// SwitchType returns the Go type ValueByDiscriminator decodes the
+// discriminator into and switches on: int64 or float64 for a v3 integer or
+// number discriminator, and "" when it compares the value's JSON text.
+func (d *Discriminator) SwitchType() string {
+	switch {
+	case d.literals == nil:
+		return ""
+	case d.ValueType == openapi3.TypeInteger:
+		return "int64"
+	}
+	return "float64"
 }
 
 // IsString reports whether the discriminator's values are JSON strings.
@@ -609,24 +630,34 @@ func (s Schema) DiscriminatorStampFor(element UnionElement) *DiscriminatorStamp 
 	if d == nil {
 		return nil
 	}
-	variants := len(s.UnionElements)
-	if d.variants != nil {
-		variants = len(d.variants)
-	}
-	if len(d.Mapping) != variants {
-		return nil
-	}
-	stamp := DiscriminatorStamp{}
-	found := false
+	// The values that lead to the element. A number's spellings, like 1 and
+	// 1.0, are one value when the discriminator compares numbers (see
+	// SwitchType).
+	var values []string
 	for _, value := range SortedMapKeys(d.Mapping) {
-		if d.Mapping[value] == element.String() {
-			stamp.Value = value
-			found = true
+		if d.Mapping[value] != element.String() {
+			continue
+		}
+		if literal, ok := d.literals[value]; ok {
+			value = literal
+		}
+		if !slices.Contains(values, value) {
+			values = append(values, value)
 		}
 	}
-	if !found {
+	stamp := DiscriminatorStamp{}
+	switch {
+	case len(values) == 0:
+		return nil
+	case d.variants != nil && len(values) > 1:
+		// v3 stamps each variant exactly one value leads to: which of
+		// several to write would be arbitrary (#2071).
+		return nil
+	case d.variants == nil && len(d.Mapping) != len(s.UnionElements):
+		// v1 and v2 stamp only when every member has exactly one value.
 		return nil
 	}
+	stamp.Value = values[len(values)-1]
 	stamp.Literal = d.literal(stamp.Value)
 	stamp.JSONPatch = fmt.Sprintf(`{"%s":%s}`, d.Property, stamp.Literal)
 	// Match by JSON property name: the discriminator is a JSON-level
@@ -666,9 +697,19 @@ func (s Schema) DiscriminatorCases() []DiscriminatorCase {
 	}
 	cases := make([]DiscriminatorCase, 0, len(s.Discriminator.Mapping))
 	for _, value := range SortedMapKeys(s.Discriminator.Mapping) {
-		if el, ok := known[s.Discriminator.Mapping[value]]; ok {
-			cases = append(cases, DiscriminatorCase{Value: value, Method: el.Method()})
+		el, ok := known[s.Discriminator.Mapping[value]]
+		if !ok {
+			continue
 		}
+		if literal, ok := s.Discriminator.literals[value]; ok {
+			// A number, compared as one (see SwitchType): values spelled
+			// differently for one variant, like 2 and 2.0, are one case.
+			value = literal
+			if slices.Contains(cases, DiscriminatorCase{Value: value, Method: el.Method()}) {
+				continue
+			}
+		}
+		cases = append(cases, DiscriminatorCase{Value: value, Method: el.Method()})
 	}
 	return cases
 }
