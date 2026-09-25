@@ -1598,6 +1598,8 @@ func TestInlineDiscriminatedVariantsV3(t *testing.T) {
 	aliased := methodBody(t, code, "func (t Aliased) ValueByDiscriminator(")
 	assert.Equal(t, 1, strings.Count(aliased, `case "1":`))
 	assert.NotContains(t, aliased, `case "1.0":`)
+	assert.Contains(t, methodBody(t, code, "func (t *Aliased) FromOne("), "`{\"version\":1}`",
+		"one value, however it is spelled, is stamped")
 }
 
 // TestInlineDiscriminatedVariantErrorsV3: two variants can't take one

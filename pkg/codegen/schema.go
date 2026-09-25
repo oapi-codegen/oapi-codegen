@@ -636,18 +636,25 @@ func (s Schema) DiscriminatorStampFor(element UnionElement) *DiscriminatorStamp 
 	if d == nil {
 		return nil
 	}
-	stamp := DiscriminatorStamp{}
-	values := 0
+	// The values that lead to the element. A number's spellings, like 1 and
+	// 1.0, are one value when the discriminator compares numbers.
+	var values []string
 	for _, value := range SortedMapKeys(d.Mapping) {
-		if d.Mapping[value] == element.String() {
-			stamp.Value = value
-			values++
+		if d.Mapping[value] != element.String() {
+			continue
+		}
+		if d.normalizesNumbers {
+			value = canonicalNumber(value)
+		}
+		if !slices.Contains(values, value) {
+			values = append(values, value)
 		}
 	}
+	stamp := DiscriminatorStamp{}
 	switch {
-	case values == 0:
+	case len(values) == 0:
 		return nil
-	case d.variants != nil && values > 1:
+	case d.variants != nil && len(values) > 1:
 		// v3 stamps each variant exactly one value leads to: which of
 		// several to write would be arbitrary (#2071).
 		return nil
@@ -655,6 +662,7 @@ func (s Schema) DiscriminatorStampFor(element UnionElement) *DiscriminatorStamp 
 		// v1 and v2 stamp only when every member has exactly one value.
 		return nil
 	}
+	stamp.Value = values[len(values)-1]
 	stamp.Literal = d.literal(stamp.Value)
 	stamp.JSONPatch = fmt.Sprintf(`{"%s":%s}`, d.Property, stamp.Literal)
 	// Match by JSON property name: the discriminator is a JSON-level
