@@ -1155,6 +1155,289 @@ func TestParentListsChildOnlyV3(t *testing.T) {
 	assert.Contains(t, code, "func (t Bird_Best) AsCat() (Cat, error)", "best is a Pet, one of its branches")
 }
 
+// TestUnionComponentsV3: an allOf of several unions is one union type whose
+// variants' From* replace only the keys their own union's variants declare
+// and keep the rest, the other unions' data. A key several unions' variants
+// declare is kept.
+func TestUnionComponentsV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+`
+    Card:
+      type: object
+      properties:
+        kind: {type: string}
+        card: {type: string}
+        id: {type: string}
+    Transfer:
+      type: object
+      properties:
+        kind: {type: string}
+        iban: {type: string}
+    Courier:
+      type: object
+      properties:
+        address: {type: string}
+        id: {type: string}
+    Pickup:
+      type: object
+      properties:
+        store: {type: string}
+    Locker:
+      type: object
+      properties:
+        locker: {type: string}
+    Payment:
+      oneOf:
+        - $ref: '#/components/schemas/Card'
+        - $ref: '#/components/schemas/Transfer'
+      discriminator:
+        propertyName: kind
+    Delivery:
+      anyOf:
+        - $ref: '#/components/schemas/Courier'
+        - $ref: '#/components/schemas/Pickup'
+        - $ref: '#/components/schemas/Locker'
+    Order:
+      allOf:
+        - $ref: '#/components/schemas/Payment'
+        - $ref: '#/components/schemas/Delivery'
+    Inline:
+      allOf:
+        - oneOf:
+            - $ref: '#/components/schemas/Card'
+            - $ref: '#/components/schemas/Transfer'
+        - oneOf:
+            - $ref: '#/components/schemas/Courier'
+            - $ref: '#/components/schemas/Pickup'
+    Custom:
+      type: object
+      x-go-type: map[string]any
+      properties:
+        secret: {type: string}
+    Opaque:
+      allOf:
+        - oneOf:
+            - $ref: '#/components/schemas/Card'
+            - $ref: '#/components/schemas/Custom'
+        - $ref: '#/components/schemas/Delivery'
+`, withV3)
+	fromCard := methodBody(t, code, "func (t *Order) FromCard(")
+	assert.Contains(t, fromCard, `delete(kept, "card")`)
+	assert.Contains(t, fromCard, `delete(kept, "iban")`)
+	assert.Contains(t, fromCard, `delete(kept, "kind")`)
+	assert.NotContains(t, fromCard, `delete(kept, "id")`, "Courier declares id too")
+	assert.Contains(t, fromCard, "{\"kind\":\"Card\"}", "Payment's discriminator is stamped")
+	fromPickup := methodBody(t, code, "func (t *Order) FromPickup(")
+	assert.Contains(t, fromPickup, `delete(kept, "address")`)
+	assert.Contains(t, fromPickup, `delete(kept, "store")`)
+	assert.NotContains(t, fromPickup, `delete(kept, "id")`)
+	assert.Contains(t, code, "func (t Order) AsPayment() (Payment, error)")
+	assert.Contains(t, methodBody(t, code, "func (t *Order) FromDelivery("), `delete(kept, "store")`)
+	assert.Contains(t, code, "func (t Order) Discriminator() (string, error)")
+	assert.NotContains(t, methodBody(t, code, "func (t *Order) FromCourier("), `{"kind":`)
+	valueBy := methodBody(t, code, "func (t Order) ValueByDiscriminator(")
+	assert.Contains(t, valueBy, `case "Card":`)
+	assert.NotContains(t, valueBy, "Courier")
+
+	assert.Contains(t, code, "func (t *Inline) FromCourier(")
+	assert.NotContains(t, code, "func (t Inline) AsStruct", "an inline union has no type to get")
+
+	fromCustom := methodBody(t, code, "func (t *Opaque) FromCustom(")
+	assert.Contains(t, fromCustom, `delete(kept, "card")`)
+	assert.NotContains(t, fromCustom, `delete(kept, "secret")`, "an x-go-type declares no keys")
+}
+
+// TestUnionComponentsCollapseV3: an allOf that brings one union, however many
+// times, is generated as that union: From* replaces all of the union data.
+func TestUnionComponentsCollapseV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+`
+    Contact:
+      type: object
+      properties:
+        email: {type: string}
+        phone: {type: string}
+    Card:
+      type: object
+      properties:
+        card: {type: string}
+    Transfer:
+      type: object
+      properties:
+        iban: {type: string}
+    Constrained:
+      allOf:
+        - $ref: '#/components/schemas/Contact'
+        - oneOf:
+            - type: object
+              required: [email]
+            - type: object
+              required: [phone]
+        - oneOf:
+            - $ref: '#/components/schemas/Card'
+            - $ref: '#/components/schemas/Transfer'
+    Twice:
+      allOf:
+        - anyOf:
+            - $ref: '#/components/schemas/Card'
+            - $ref: '#/components/schemas/Transfer'
+        - oneOf:
+            - $ref: '#/components/schemas/Card'
+            - $ref: '#/components/schemas/Transfer'
+`, withV3)
+	assert.NotContains(t, code, "delete(kept")
+	assert.Contains(t, code, "func (t *Constrained) FromCard(")
+	assert.NotContains(t, code, "ConstrainedOneOf")
+	assert.Contains(t, code, "func (t *Twice) FromCard(")
+	assert.Equal(t, 1, strings.Count(code, "func (t *Twice) FromCard("))
+}
+
+// methodBody returns the code of the function that starts with signature.
+func methodBody(t *testing.T, code, signature string) string {
+	t.Helper()
+	start := strings.Index(code, signature)
+	require.GreaterOrEqual(t, start, 0, "no %s", signature)
+	end := strings.Index(code[start:], "\n}\n")
+	require.GreaterOrEqual(t, end, 0)
+	return code[start : start+end]
+}
+
+// unionComponentsSchemas are components for tests of allOfs of unions.
+const unionComponentsSchemas = `
+    Card:
+      type: object
+      properties:
+        kind: {type: string}
+        card: {type: string}
+    Transfer:
+      type: object
+      properties:
+        kind: {type: string}
+        iban: {type: string}
+    Courier:
+      type: object
+      properties:
+        address: {type: string}
+    Pickup:
+      type: object
+      properties:
+        store: {type: string}
+    Payment:
+      required: [kind]
+      oneOf:
+        - $ref: '#/components/schemas/Card'
+        - $ref: '#/components/schemas/Transfer'
+    Delivery:
+      oneOf:
+        - $ref: '#/components/schemas/Courier'
+        - $ref: '#/components/schemas/Pickup'
+`
+
+// TestUnionComponentsDiscriminatorV3: a discriminator declared next to an
+// allOf of several unions, or in a member of its own, belongs to the union it
+// can tell apart; it is an error for it to fit several or none, or to be
+// declared for two.
+func TestUnionComponentsDiscriminatorV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+unionComponentsSchemas+`
+    Beside:
+      discriminator:
+        propertyName: kind
+      allOf:
+        - $ref: '#/components/schemas/Payment'
+        - $ref: '#/components/schemas/Delivery'
+    Mapped:
+      allOf:
+        - $ref: '#/components/schemas/Delivery'
+        - $ref: '#/components/schemas/Payment'
+        - discriminator:
+            propertyName: kind
+            mapping:
+              card: '#/components/schemas/Card'
+              transfer: '#/components/schemas/Transfer'
+    Shipment:
+      anyOf:
+        - $ref: '#/components/schemas/Courier'
+        - $ref: '#/components/schemas/Pickup'
+      discriminator:
+        propertyName: method
+    AnyOf:
+      allOf:
+        - $ref: '#/components/schemas/Shipment'
+        - $ref: '#/components/schemas/Payment'
+`, withV3)
+	assert.Contains(t, methodBody(t, code, "func (t *Beside) FromCard("), "`{\"kind\":\"Card\"}`")
+	assert.NotContains(t, methodBody(t, code, "func (t *Beside) FromCourier("), `"kind"`)
+	assert.Contains(t, methodBody(t, code, "func (t *Mapped) FromTransfer("), "`{\"kind\":\"transfer\"}`")
+	assert.Contains(t, methodBody(t, code, "func (t Mapped) ValueByDiscriminator("), `case "card":`)
+	assert.Contains(t, methodBody(t, code, "func (t *AnyOf) FromPickup("), "`{\"method\":\"Pickup\"}`",
+		"an anyOf keeps its discriminator")
+	assert.Contains(t, code, "func (t Beside) AsPayment() (Payment, error)", "a required list doesn't stop a $ref union's accessors")
+
+	for name, tc := range map[string]struct{ spec, want string }{
+		"fits several": {`
+    Kinds:
+      discriminator:
+        propertyName: kind
+      allOf:
+        - $ref: '#/components/schemas/Payment'
+        - oneOf:
+            - $ref: '#/components/schemas/Transfer'
+            - $ref: '#/components/schemas/Card'
+`, "allOf can't tell which of its unions (#/components/schemas/Payment, allOf/1) the discriminator kind is for"},
+		"fits none": {`
+    Kinds:
+      discriminator:
+        propertyName: method
+      allOf:
+        - $ref: '#/components/schemas/Payment'
+        - $ref: '#/components/schemas/Delivery'
+`, "the discriminator method is for"},
+		"declared for two": {`
+    Kinds:
+      allOf:
+        - oneOf:
+            - $ref: '#/components/schemas/Card'
+            - $ref: '#/components/schemas/Transfer'
+          discriminator:
+            propertyName: kind
+        - oneOf:
+            - $ref: '#/components/schemas/Courier'
+            - $ref: '#/components/schemas/Pickup'
+          discriminator:
+            propertyName: kind
+`, "allOf can't use the discriminator kind for both allOf/0 and allOf/1"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			_, err := generateSpecErr(opaqueSpecHeader+unionComponentsSchemas+tc.spec, withV3)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), tc.want)
+		})
+	}
+}
+
+// TestUnionComponentsDedupeV3: a union an allOf brings twice is one, with the
+// $ref accessors either copy has; a union of only 3.1 null branches says
+// nullable, and isn't one of the unions.
+func TestUnionComponentsDedupeV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader31+unionComponentsSchemas+`
+    Twice:
+      allOf:
+        - oneOf:
+            - $ref: '#/components/schemas/Card'
+            - $ref: '#/components/schemas/Transfer'
+        - $ref: '#/components/schemas/Payment'
+        - $ref: '#/components/schemas/Delivery'
+    Nullable:
+      allOf:
+        - oneOf:
+            - type: 'null'
+        - anyOf:
+            - $ref: '#/components/schemas/Card'
+            - type: 'null'
+`, withV3)
+	assert.Contains(t, code, "func (t Twice) AsPayment() (Payment, error)")
+	assert.Equal(t, 1, strings.Count(code, "func (t *Twice) FromCard("))
+	assert.Contains(t, code, "type Nullable = Card")
+}
+
 // TestParentListsMemberV3: a union that lists another member of the same
 // allOf, or a schema inside one, is left out whatever the members' order, and
 // its discriminator goes with it.
@@ -1244,6 +1527,42 @@ func TestParentListsMemberV3(t *testing.T) {
 	require.GreaterOrEqual(t, start, 0)
 	fromIndoor := code[start : start+strings.Index(code[start:], "\n}\n")]
 	assert.NotContains(t, fromIndoor, `"Indoor"`, "nothing stamps petType")
+}
+
+// TestUnionComponentsDiscriminatorKeyV3: the discriminator's property belongs
+// to its union even when the variants leave it to the stamp, so setting the
+// other union keeps it and setting its own union replaces it.
+func TestUnionComponentsDiscriminatorKeyV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+`
+    Card:
+      type: object
+      properties:
+        card: {type: string}
+    Transfer:
+      type: object
+      properties:
+        iban: {type: string}
+    Courier:
+      type: object
+      properties:
+        address: {type: string}
+    Payment:
+      oneOf:
+        - $ref: '#/components/schemas/Card'
+        - $ref: '#/components/schemas/Transfer'
+      discriminator:
+        propertyName: kind
+    Delivery:
+      oneOf:
+        - $ref: '#/components/schemas/Courier'
+    Order:
+      allOf:
+        - $ref: '#/components/schemas/Payment'
+        - $ref: '#/components/schemas/Delivery'
+`, withV3)
+	assert.Contains(t, methodBody(t, code, "func (t *Order) FromCard("), `delete(kept, "kind")`)
+	assert.Contains(t, methodBody(t, code, "func (t *Order) FromPayment("), `delete(kept, "kind")`)
+	assert.NotContains(t, methodBody(t, code, "func (t *Order) FromCourier("), `delete(kept, "kind")`)
 }
 
 // TestConstraintOnlyUnionMemberV3: a member's list whose branches restate the
@@ -1351,4 +1670,97 @@ func TestDeclaredTypes(t *testing.T) {
 			assert.Equal(t, tc.want, got)
 		})
 	}
+}
+
+// TestUnionComponentsVariantKeysV3: a variant's keys are the names its fields
+// marshal as, from allOf members however deep; a variant of two unions
+// replaces what each of them owns.
+func TestUnionComponentsVariantKeysV3(t *testing.T) {
+	code := generateSpec(t, opaqueSpecHeader+`
+    Card:
+      type: object
+      properties:
+        card:
+          type: string
+          x-oapi-codegen-extra-tags:
+            json: card_number,omitempty
+        note:
+          type: string
+          x-go-json-ignore: true
+    Transfer:
+      type: object
+      properties:
+        iban: {type: string}
+    Courier:
+      type: object
+      properties:
+        address: {type: string}
+    Shared:
+      allOf:
+        - oneOf:
+            - $ref: '#/components/schemas/Card'
+            - $ref: '#/components/schemas/Transfer'
+        - oneOf:
+            - $ref: '#/components/schemas/Card'
+            - $ref: '#/components/schemas/Courier'
+    Renamed:
+      allOf:
+        - oneOf:
+            - $ref: '#/components/schemas/Card'
+            - $ref: '#/components/schemas/Transfer'
+        - oneOf:
+            - $ref: '#/components/schemas/Courier'
+    Nested:
+      allOf:
+        - oneOf:
+            - $ref: '#/components/schemas/Deep0'
+            - $ref: '#/components/schemas/Transfer'
+        - oneOf:
+            - $ref: '#/components/schemas/Courier'
+    Deep0:
+      allOf:
+        - $ref: '#/components/schemas/Deep1'
+    Deep1:
+      allOf:
+        - $ref: '#/components/schemas/Deep2'
+    Deep2:
+      allOf:
+        - $ref: '#/components/schemas/Deep3'
+    Deep3:
+      allOf:
+        - $ref: '#/components/schemas/Deep4'
+    Deep4:
+      allOf:
+        - $ref: '#/components/schemas/Deep5'
+    Deep5:
+      allOf:
+        - $ref: '#/components/schemas/Deep6'
+    Deep6:
+      allOf:
+        - $ref: '#/components/schemas/Deep7'
+    Deep7:
+      allOf:
+        - $ref: '#/components/schemas/Deep8'
+    Deep8:
+      allOf:
+        - $ref: '#/components/schemas/Deep9'
+    Deep9:
+      allOf:
+        - $ref: '#/components/schemas/Deep10'
+    Deep10:
+      type: object
+      properties:
+        deep: {type: string}
+`, withV3)
+	fromCard := methodBody(t, code, "func (t *Shared) FromCard(")
+	assert.Contains(t, fromCard, `delete(kept, "iban")`, "Card is the first union's")
+	assert.Contains(t, fromCard, `delete(kept, "address")`, "and the second's")
+	assert.NotContains(t, methodBody(t, code, "func (t *Shared) FromTransfer("), `delete(kept, "card`, "Card's keys are shared")
+
+	fromTransfer := methodBody(t, code, "func (t *Renamed) FromTransfer(")
+	assert.Contains(t, fromTransfer, `delete(kept, "card_number")`)
+	assert.NotContains(t, fromTransfer, `delete(kept, "card")`)
+	assert.NotContains(t, fromTransfer, `delete(kept, "note")`, "an ignored field isn't on the wire")
+
+	assert.Contains(t, methodBody(t, code, "func (t *Nested) FromTransfer("), `delete(kept, "deep")`)
 }

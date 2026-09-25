@@ -1,3 +1,34 @@
+{{/* union.keepOtherUnions adds to the JSON object b, which a value of one of
+the unions a type combines marshaled to, the keys of the union data t.union
+that b's union doesn't own (the keys passed): the other unions' data (see
+Schema.UnionOwnedKeys). A key b has keeps b's value. A null b leaves only the
+other unions' data. When b or t.union is anything else that isn't an object,
+b replaces the union data whole. The caller returns before it on an error, so
+the union data doesn't change then. */ -}}
+{{define "union.keepOtherUnions" -}}
+    var object, kept map[string]json.RawMessage
+    if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+        {{range . -}}
+            delete(kept, {{printf "%q" .}})
+        {{end -}}
+        added := object == nil
+        if added {
+            object = make(map[string]json.RawMessage)
+        }
+        for key, value := range kept {
+            if _, found := object[key]; !found {
+                object[key] = value
+                added = true
+            }
+        }
+        if added {
+            if b, err = json.Marshal(object); err != nil {
+                return err
+            }
+        }
+    }
+{{- end}}
+{{- /* The union's own template output starts here. */ -}}
 {{range .Types}}
     {{$typeName := .TypeName -}}
     {{$discriminator := .Schema.Discriminator}}
@@ -55,7 +86,12 @@
             return body, err
         }
 
+        {{if $schema.InUnionComponent . -}}
+        // From{{ .Method }} sets the union data inside the {{$typeName}} to the provided {{.}}. It replaces
+        // the data of {{.}}'s own union and keeps the other unions' data.
+        {{- else -}}
         // From{{ .Method }} overwrites any union data inside the {{$typeName}} as the provided {{.}}
+        {{- end}}
         func (t *{{$typeName}}) From{{ .Method }} (v {{.}}) error {
             {{if and $stamp $stamp.Property -}}
                 {{if $stamp.Property.IsPointer -}}
@@ -72,13 +108,22 @@
                 }
                 b, err = runtime.JSONMerge(b, []byte(`{{$stamp.JSONPatch}}`))
             {{end -}}
+            {{if $schema.InUnionComponent . -}}
+                if err != nil {
+                    return err
+                }
+                {{if $adopts -}}
+                    variant := b
+                {{end -}}
+                {{template "union.keepOtherUnions" ($schema.UnionOwnedKeysFor .)}}
+            {{end -}}
             {{if $adopts -}}
                 previous := t.union
             {{end -}}
             t.union = b
             {{if $adopts -}}
                 if err == nil {
-                    t.adoptUnion(previous, b)
+                    t.adoptUnion(previous, {{if $schema.InUnionComponent .}}variant{{else}}b{{end}})
                 }
             {{end -}}
             return err
@@ -115,6 +160,49 @@
                 }
             {{end -}}
             return err
+        }
+    {{end}}
+    {{- range .Schema.UnionRefComponents}}
+        // As{{ .Type.Method }} returns the {{.Type}} union inside the {{$typeName}}: the union data
+        // without the keys only the other unions' variants declare.
+        func (t {{$typeName}}) As{{ .Type.Method }}() ({{.Type}}, error) {
+            var body {{.Type}}
+            data := t.union
+            {{if .OtherKeys -}}
+                var object map[string]json.RawMessage
+                if json.Unmarshal(data, &object) == nil && object != nil {
+                    {{range .OtherKeys -}}
+                        delete(object, {{printf "%q" .}})
+                    {{end -}}
+                    if own, err := json.Marshal(object); err == nil {
+                        data = own
+                    }
+                }
+            {{end -}}
+            err := json.Unmarshal(data, &body)
+            return body, err
+        }
+
+        // From{{ .Type.Method }} sets the {{.Type}} union inside the {{$typeName}} to the provided {{.Type}}. It
+        // replaces that union's data and keeps the other unions' data; a zero {{.Type}} clears that
+        // union's data.
+        func (t *{{$typeName}}) From{{ .Type.Method }} (v {{.Type}}) error {
+            b, err := json.Marshal(v)
+            if err != nil {
+                return err
+            }
+            {{if $adopts -}}
+                variant := b
+            {{end -}}
+            {{template "union.keepOtherUnions" .OwnedKeys}}
+            {{if $adopts -}}
+                previous := t.union
+            {{end -}}
+            t.union = b
+            {{if $adopts -}}
+                t.adoptUnion(previous, variant)
+            {{end -}}
+            return nil
         }
     {{end}}
 

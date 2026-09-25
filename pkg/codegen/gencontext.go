@@ -71,6 +71,10 @@ type genContext struct {
 	// members declare, which the spec doesn't spell out.
 	madeUp map[*openapi3.Schema]bool
 
+	// unionComponents holds, for a schema v3's merge made from an allOf with
+	// several oneOfs or anyOfs, those unions (see unionComponent).
+	unionComponents map[*openapi3.Schema][]unionComponent
+
 	// subschemas holds the allOfs v3's merge makes of the schemas several
 	// members declare for one position, by those schemas, so the same ones
 	// always make the same allOf (see allOfMerge.subschema).
@@ -93,11 +97,12 @@ type mergeFrame struct {
 // newGenContext returns a context rooted at a top-level schema position.
 func newGenContext(nameHint []string) genContext {
 	return genContext{
-		inProgress:   make(map[*openapi3.Schema]*mergeFrame),
-		nameHint:     slices.Clone(nameHint),
-		memberLabels: make(map[*openapi3.SchemaRef]string),
-		subschemas:   make(map[string]*openapi3.SchemaRef),
-		madeUp:       make(map[*openapi3.Schema]bool),
+		inProgress:      make(map[*openapi3.Schema]*mergeFrame),
+		nameHint:        slices.Clone(nameHint),
+		memberLabels:    make(map[*openapi3.SchemaRef]string),
+		subschemas:      make(map[string]*openapi3.SchemaRef),
+		madeUp:          make(map[*openapi3.Schema]bool),
+		unionComponents: make(map[*openapi3.Schema][]unionComponent),
 	}
 }
 
