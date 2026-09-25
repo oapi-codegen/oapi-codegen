@@ -1098,4 +1098,67 @@ func TestConstraintOnlyUnionMemberV3(t *testing.T) {
 	assert.NotContains(t, code, "Mixed0", "the constraint branches are no variants")
 	assert.Contains(t, code, "type EmailContact = any")
 	assert.Contains(t, code, "func (t Named) AsNamed0() (Named0, error)")
+
+	// The type the branches restate is the one the members narrow to.
+	code = generateSpec(t, opaqueSpecHeader31+`
+    Card:
+      type: object
+      properties:
+        card: {type: string}
+    Cash:
+      type: object
+      properties:
+        amount: {type: number}
+    Narrowed:
+      allOf:
+        - type: [object, string]
+        - type: object
+          properties:
+            email: {type: string}
+            phone: {type: string}
+        - oneOf:
+            - type: object
+              required: [email]
+            - type: object
+              required: [phone]
+        - oneOf:
+            - $ref: '#/components/schemas/Card'
+            - $ref: '#/components/schemas/Cash'
+`, withV3)
+	assert.Contains(t, code, "func (t Narrowed) AsCard() (Card, error)")
+	assert.NotContains(t, code, "Narrowed0", "the constraint branches are no variants")
+}
+
+// TestDeclaredTypes: a schema's declared types are its own, narrowed by what
+// its allOf members declare, as the merge intersects them.
+func TestDeclaredTypes(t *testing.T) {
+	types := func(ts ...string) *openapi3.Schema { return &openapi3.Schema{Type: (*openapi3.Types)(&ts)} }
+	allOf := func(own *openapi3.Schema, members ...*openapi3.Schema) *openapi3.Schema {
+		for _, m := range members {
+			own.AllOf = append(own.AllOf, m.NewRef())
+		}
+		return own
+	}
+	for name, tc := range map[string]struct {
+		schema *openapi3.Schema
+		want   []string
+	}{
+		"own type":                 {types("object", "null"), []string{"object"}},
+		"properties":               {openapi3.NewObjectSchema().WithProperty("a", openapi3.NewStringSchema()), []string{"object"}},
+		"nothing":                  {&openapi3.Schema{}, nil},
+		"a later member narrows":   {allOf(&openapi3.Schema{}, types("object", "string"), &openapi3.Schema{}, types("object")), []string{"object"}},
+		"a member narrows its own": {allOf(types("object", "string"), types("string")), []string{"string"}},
+		"integer under number":     {allOf(&openapi3.Schema{}, types("number"), types("integer")), []string{"integer"}},
+		"nested":                   {allOf(&openapi3.Schema{}, allOf(&openapi3.Schema{}, types("object", "array")), types("array")), []string{"array"}},
+		"no value":                 {allOf(&openapi3.Schema{}, types("object"), types("string")), nil},
+	} {
+		t.Run(name, func(t *testing.T) {
+			got := declaredTypes(tc.schema)
+			if len(tc.want) == 0 {
+				assert.Empty(t, got)
+				return
+			}
+			assert.Equal(t, tc.want, got)
+		})
+	}
 }

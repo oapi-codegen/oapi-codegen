@@ -308,9 +308,9 @@ func restatesType(member, target *openapi3.SchemaRef) bool {
 }
 
 // declaredTypes returns the JSON types a schema says its values have: its
-// type; or object, when it has properties or additionalProperties; or, for an
-// allOf, the types the first member that says declares. It returns nil when
-// the schema doesn't say.
+// type, or object when it has properties or additionalProperties, narrowed by
+// the types its allOf members declare, the way the merge intersects them. It
+// returns nil when the schema doesn't say, or says no value is allowed.
 func declaredTypes(s *openapi3.Schema) []string {
 	seen := make(map[*openapi3.Schema]bool)
 	var declared func(s *openapi3.Schema) []string
@@ -319,20 +319,23 @@ func declaredTypes(s *openapi3.Schema) []string {
 			return nil
 		}
 		seen[s] = true
-		if types := nonNullTypes(s.Type); len(types) > 0 {
-			return types
-		}
-		if len(s.Properties) > 0 || s.AdditionalProperties.Schema != nil || s.AdditionalProperties.Has != nil {
-			return []string{openapi3.TypeObject}
+		types := nonNullTypes(s.Type)
+		if len(types) == 0 && (len(s.Properties) > 0 || s.AdditionalProperties.Schema != nil || s.AdditionalProperties.Has != nil) {
+			types = []string{openapi3.TypeObject}
 		}
 		for _, m := range s.AllOf {
-			if m != nil {
-				if types := declared(m.Value); len(types) > 0 {
-					return types
-				}
+			if m == nil {
+				continue
+			}
+			switch member := declared(m.Value); {
+			case len(member) == 0:
+			case len(types) == 0:
+				types = member
+			default:
+				types = intersectTypes(types, member)
 			}
 		}
-		return nil
+		return types
 	}
 	return declared(s)
 }
