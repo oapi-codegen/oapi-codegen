@@ -7,7 +7,8 @@ import (
 )
 
 // genContext carries the state that has to survive the mutual recursion
-// between generateGoSchema and the allOf code in merge_schemas_v2.go.
+// between generateGoSchema and the allOf code of every schema-merging-behavior
+// version (merge_schemas.go, merge_schemas_v2.go, merge_schemas_v3.go).
 //
 // The rest of V2 keeps generator state in globalState, but this state is
 // positional rather than per-run: it describes where inside one schema's
@@ -18,15 +19,16 @@ import (
 // so descending can deepen them without the caller having to restore them.
 type genContext struct {
 	// inProgress maps a schema node that owns an allOf to the type being
-	// generated for that allOf's merged result. generateAllOfV2 registers an
-	// entry before generating the merged body and removes it afterwards, so
-	// a member that refers back into a body an enclosing frame is still
-	// generating resolves to that type's name instead of being inlined
-	// again, which is what used to recurse forever (issue #2542).
+	// generated for that allOf's merged result. generateAllOfV2 and
+	// generateAllOfV3 register an entry before generating the merged body and
+	// remove it afterwards, so a member that refers back into a body an
+	// enclosing frame is still generating resolves to that type's name (see
+	// inProgressAllOf) instead of being inlined again, which is what used to
+	// recurse forever (issue #2542).
 	//
 	// The key is the schema node that owns the allOf, not the allOf slice:
-	// the sibling-injection path in generateAllOfV2 rebuilds that slice on
-	// every call, so only the owner is stable across re-entry.
+	// both versions rebuild that slice on every call, to merge the schema's
+	// own keywords as a member, so only the owner is stable across re-entry.
 	inProgress map[*openapi3.Schema]*mergeFrame
 
 	// nameHint is the path a type generated at this position would be named
@@ -39,12 +41,12 @@ type genContext struct {
 	// rootPosition marks the top of a components/schemas entry, where
 	// GenerateTypesForSchemas defines the type under a name renameSchema
 	// chooses rather than one derived from the path. A composition there
-	// cannot name itself, so generateAllOfV2 reports the shape instead of
-	// guessing. No spec is known to reach it — a $ref returns before the
+	// cannot name itself, so finishAllOf reports the shape instead of
+	// guessing. No spec is known to reach that: a $ref returns before the
 	// allOf block, and the only other way back to a component's own allOf
-	// node is valueWithPropagatedRef's copy, which mergeAllOf flattens
-	// rather than handing to generateGoSchema — so this is a diagnostic for
-	// a case believed impossible, not a supported path.
+	// node is a copy of it that the merges flatten rather than hand to
+	// generateGoSchema. v3 also reads it to keep a component from being
+	// defined as an alias of itself (see annotatedRefMember).
 	rootPosition bool
 
 	// memberLabels names the allOf members the generator makes up rather
@@ -93,7 +95,7 @@ type mergeFrame struct {
 	typeName string
 	// consulted records whether anything below actually referred back to
 	// this merge. When nothing did, the composition is not recursive and
-	// generateAllOfV2 returns the inline anonymous struct it always has, so
+	// finishAllOf returns the inline anonymous struct it always has, so
 	// non-recursive output stays byte-identical.
 	consulted bool
 }
@@ -135,7 +137,7 @@ func (ctx genContext) at(nameHint []string) genContext {
 // name wins, otherwise the property, items and additionalProperties naming
 // blocks name it after this position. The anonymous-schema rule also depends
 // on the generated result, so the prediction is deliberately loose and
-// generateAllOfV2 re-checks it against whatever actually got defined.
+// finishAllOf re-checks it against whatever actually got defined.
 //
 // PathToTypeName rewrites the slice it is handed, so it gets a copy.
 func (ctx genContext) typeName(path []string) string {

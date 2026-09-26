@@ -87,7 +87,6 @@ func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 		// (user-defined x-* metadata, etc.) are preserved — we only
 		// have concrete evidence that the identity-bound ones cause
 		// incorrect aliasing across composition.
-		//
 		ext := maps.Clone(schema.Extensions)
 		delete(ext, extGoTypeName)
 		delete(ext, extPropGoImport)

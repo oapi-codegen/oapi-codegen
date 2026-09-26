@@ -78,7 +78,7 @@ type Schema struct {
 	// aliasOf is the OpenAPI schema of the type this schema is an alias of,
 	// when an allOf generated as another type, such as the $ref in
 	// `allOf: [$ref X, {description: ...}]`. OAPISchema is the allOf itself.
-	// generateAllOfV2 and generateAllOfV3 set it; generatesMarshalJSON follows
+	// finishAllOf and generateAnnotated set it; generatesMarshalJSON follows
 	// it.
 	aliasOf *openapi3.Schema
 }
@@ -704,8 +704,8 @@ type DiscriminatorCase struct {
 
 // DiscriminatorCases returns the ValueByDiscriminator() switch arms for the
 // union, sorted by discriminator value for deterministic output. Each mapping
-// value is the Go type of a union element (generateUnionV2 writes both from the
-// same elementSchema.GoType), so it resolves to that element's Method(). A
+// value is the Go type of a union element (the union generators write both from
+// the same elementSchema.GoType), so it resolves to that element's Method(). A
 // mapping value not found among the union elements is skipped: it has no As*
 // helper to dispatch to, so no case is emitted and it falls through to the
 // switch default.
@@ -874,8 +874,8 @@ func schemaIsNullableRec(s *openapi3.Schema, seen map[*openapi3.Schema]bool) boo
 // `{"type": "null"}` -- i.e. a schema whose only type is "null" and
 // which is otherwise empty of constraints. Used to detect the
 // nullability-via-anyOf idiom in `schemaIsNullable` and to filter such
-// branches out of `generateUnionV2` (they're nullability markers, not
-// union variants for which we need a Go type).
+// branches out of the union generators (see effectiveBranches: they're
+// nullability markers, not union variants for which we need a Go type).
 func isNullTypeSchema(s *openapi3.Schema) bool {
 	if s == nil || s.Type == nil {
 		return false
@@ -1566,7 +1566,7 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 			}
 
 			// Only generate a struct literal if the schema actually has
-			// struct content. When `generateUnionV2` collapses a one-
+			// struct content. When collapseNullableUnion collapses a one-
 			// element nullable union (`anyOf: [{type: X}, {type: "null"}]`)
 			// down to the bare X branch, it sets outSchema.GoType to the
 			// primitive's Go type and clears the struct-shaped fields;
