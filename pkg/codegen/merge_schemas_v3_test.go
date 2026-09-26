@@ -18,7 +18,7 @@ import (
 // mergeTwoV3 merges two allOf members, allOf/0 and allOf/1, with
 // schema-merging-behavior v3's rules.
 func mergeTwoV3(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
-	m := newAllOfMerge(newGenContext(nil))
+	m := newAllOfMerge(newGenContext(nil), allOfOptions{})
 	if err := m.add(nil, s1, "allOf/0", map[string]bool{}); err != nil {
 		return openapi3.Schema{}, err
 	}
@@ -493,7 +493,7 @@ func TestMergeOpenapiSchemas_EnumV3(t *testing.T) {
 	})
 
 	t.Run("x-oapi-codegen-enum-merge: union takes the values of either", func(t *testing.T) {
-		m := newAllOfMerge(newGenContext(nil))
+		m := newAllOfMerge(newGenContext(nil), allOfOptions{})
 		m.unionEnums = true
 		require.NoError(t, m.add(nil, named([]any{"a", "b"}, "A", "B"), "allOf/0", map[string]bool{}))
 		require.NoError(t, m.add(nil, named([]any{"b", "c"}), "allOf/1", map[string]bool{}))

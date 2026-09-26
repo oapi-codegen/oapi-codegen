@@ -1373,7 +1373,7 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 	// schema-merging-behavior v3 generates no union for a oneOf or anyOf
 	// whose branches only add constraints, such as
 	// `oneOf: [{required: [email]}, {required: [phone]}]`.
-	if schemaMergingInEffect() == SchemaMergingV3 {
+	if ctx.run.merging == SchemaMergingV3 {
 		schema = withoutConstraintOnlyUnions(schema, nil)
 	}
 
