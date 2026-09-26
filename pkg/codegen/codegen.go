@@ -110,7 +110,9 @@ type importMap map[string]goImport
 // We use `-` to indicate that this is a bit of a special case
 const importMappingCurrentPackage = "-"
 
-// GoImports returns a slice of go import statements
+// GoImports returns a slice of go import statements, sorted so that the
+// generated output is deterministic even when it is not passed through gofmt
+// (output-options.skip-fmt), which would otherwise sort the import block.
 func (im importMap) GoImports() []string {
 	goImports := make([]string, 0, len(im))
 	for _, v := range im {
@@ -119,6 +121,7 @@ func (im importMap) GoImports() []string {
 		}
 		goImports = append(goImports, v.String())
 	}
+	slices.Sort(goImports)
 	return goImports
 }
 
