@@ -18,162 +18,18 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// Defines values for InlineHolderList.
-const (
-	InlineHolderListAsc  InlineHolderList = "asc"
-	InlineHolderListDesc InlineHolderList = "desc"
-)
-
-// Valid indicates whether the value is a known member of the InlineHolderList enum.
-func (e InlineHolderList) Valid() bool {
-	switch e {
-	case InlineHolderListAsc:
-		return true
-	case InlineHolderListDesc:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for InlineHolderMap.
-const (
-	InlineHolderMapAsc  InlineHolderMap = "asc"
-	InlineHolderMapDesc InlineHolderMap = "desc"
-)
-
-// Valid indicates whether the value is a known member of the InlineHolderMap enum.
-func (e InlineHolderMap) Valid() bool {
-	switch e {
-	case InlineHolderMapAsc:
-		return true
-	case InlineHolderMapDesc:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for InlineHolderOne.
-const (
-	InlineHolderOneAsc  InlineHolderOne = "asc"
-	InlineHolderOneDesc InlineHolderOne = "desc"
-)
-
-// Valid indicates whether the value is a known member of the InlineHolderOne enum.
-func (e InlineHolderOne) Valid() bool {
-	switch e {
-	case InlineHolderOneAsc:
-		return true
-	case InlineHolderOneDesc:
-		return true
-	default:
-		return false
-	}
-}
-
 // Defines values for Sort.
 const (
-	SortAsc  Sort = "asc"
-	SortDesc Sort = "desc"
+	Asc  Sort = "asc"
+	Desc Sort = "desc"
 )
 
 // Valid indicates whether the value is a known member of the Sort enum.
 func (e Sort) Valid() bool {
 	switch e {
-	case SortAsc:
+	case Asc:
 		return true
-	case SortDesc:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for Subject.
-const (
-	SubjectAsc  Subject = "asc"
-	SubjectDesc Subject = "desc"
-)
-
-// Valid indicates whether the value is a known member of the Subject enum.
-func (e Subject) Valid() bool {
-	switch e {
-	case SubjectAsc:
-		return true
-	case SubjectDesc:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for InlineSubjectResponse.
-const (
-	InlineSubjectResponseAsc  InlineSubjectResponse = "asc"
-	InlineSubjectResponseDesc InlineSubjectResponse = "desc"
-)
-
-// Valid indicates whether the value is a known member of the InlineSubjectResponse enum.
-func (e InlineSubjectResponse) Valid() bool {
-	switch e {
-	case InlineSubjectResponseAsc:
-		return true
-	case InlineSubjectResponseDesc:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for InlineSubjectBody.
-const (
-	InlineSubjectBodyAsc  InlineSubjectBody = "asc"
-	InlineSubjectBodyDesc InlineSubjectBody = "desc"
-)
-
-// Valid indicates whether the value is a known member of the InlineSubjectBody enum.
-func (e InlineSubjectBody) Valid() bool {
-	switch e {
-	case InlineSubjectBodyAsc:
-		return true
-	case InlineSubjectBodyDesc:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for BodyComponentInlineJSONBody.
-const (
-	BodyComponentInlineJSONBodyAsc  BodyComponentInlineJSONBody = "asc"
-	BodyComponentInlineJSONBodyDesc BodyComponentInlineJSONBody = "desc"
-)
-
-// Valid indicates whether the value is a known member of the BodyComponentInlineJSONBody enum.
-func (e BodyComponentInlineJSONBody) Valid() bool {
-	switch e {
-	case BodyComponentInlineJSONBodyAsc:
-		return true
-	case BodyComponentInlineJSONBodyDesc:
-		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for BodyInlineJSONBody.
-const (
-	BodyInlineJSONBodyAsc  BodyInlineJSONBody = "asc"
-	BodyInlineJSONBodyDesc BodyInlineJSONBody = "desc"
-)
-
-// Valid indicates whether the value is a known member of the BodyInlineJSONBody enum.
-func (e BodyInlineJSONBody) Valid() bool {
-	switch e {
-	case BodyInlineJSONBodyAsc:
-		return true
-	case BodyInlineJSONBodyDesc:
+	case Desc:
 		return true
 	default:
 		return false
@@ -189,49 +45,40 @@ type Holder struct {
 
 // InlineHolder defines model for InlineHolder.
 type InlineHolder struct {
-	List *[]InlineHolderList         `json:"list,omitempty"`
-	Map  *map[string]InlineHolderMap `json:"map,omitempty"`
-	One  *InlineHolderOne            `json:"one,omitempty"`
+	List *[]Sort          `json:"list,omitempty"`
+	Map  *map[string]Sort `json:"map,omitempty"`
+	One  *Sort            `json:"one,omitempty"`
 }
-
-// InlineHolderList defines model for InlineHolder.List.
-type InlineHolderList string
-
-// InlineHolderMap defines model for InlineHolder.Map.
-type InlineHolderMap string
-
-// InlineHolderOne defines model for InlineHolder.One.
-type InlineHolderOne string
 
 // Sort defines model for Sort.
 type Sort string
 
-// Subject defines model for Subject.
-type Subject string
+// Subject The sort order.
+type Subject = Sort
 
-// InlineSubjectResponse defines model for InlineSubjectResponse.
-type InlineSubjectResponse string
+// InlineSubjectResponse The sort order.
+type InlineSubjectResponse = Sort
 
 // SubjectResponse defines model for SubjectResponse.
 type SubjectResponse = Subject
 
-// InlineSubjectBody defines model for InlineSubjectBody.
-type InlineSubjectBody string
+// InlineSubjectBody The sort order.
+type InlineSubjectBody = Sort
 
 // SubjectBody defines model for SubjectBody.
 type SubjectBody = Subject
 
 // BodyComponentInlineJSONBody defines body for BodyComponentInline for application/json ContentType.
-type BodyComponentInlineJSONBody string
+type BodyComponentInlineJSONBody = Sort
 
 // BodyInlineJSONBody defines body for BodyInline for application/json ContentType.
-type BodyInlineJSONBody string
+type BodyInlineJSONBody = Sort
 
 // BodyComponentJSONRequestBody defines body for BodyComponent for application/json ContentType.
 type BodyComponentJSONRequestBody = Subject
 
 // BodyComponentInlineJSONRequestBody defines body for BodyComponentInline for application/json ContentType.
-type BodyComponentInlineJSONRequestBody BodyComponentInlineJSONBody
+type BodyComponentInlineJSONRequestBody = BodyComponentInlineJSONBody
 
 // BodyDefaultJSONRequestBody defines body for BodyDefault for application/json ContentType.
 type BodyDefaultJSONRequestBody = Subject
@@ -240,7 +87,7 @@ type BodyDefaultJSONRequestBody = Subject
 type BodyHeadersJSONRequestBody = Subject
 
 // BodyInlineJSONRequestBody defines body for BodyInline for application/json ContentType.
-type BodyInlineJSONRequestBody BodyInlineJSONBody
+type BodyInlineJSONRequestBody = BodyInlineJSONBody
 
 // BodyRefJSONRequestBody defines body for BodyRef for application/json ContentType.
 type BodyRefJSONRequestBody = Subject
@@ -1234,11 +1081,11 @@ type BodyInlineResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *string
+	JSON200 *Sort
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r BodyInlineResponse) GetJSON200() *string {
+func (r BodyInlineResponse) GetJSON200() *Sort {
 	return r.JSON200
 }
 
@@ -1702,7 +1549,7 @@ func ParseBodyInlineResponse(rsp *http.Response) (*BodyInlineResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest string
+		var dest Sort
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -2072,7 +1919,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	return m
 }
 
-type InlineSubjectResponseJSONResponse string
+type InlineSubjectResponseJSONResponse Sort
 
 type SubjectResponseJSONResponse Subject
 
@@ -2191,7 +2038,7 @@ type BodyInlineResponseObject interface {
 	VisitBodyInlineResponse(w http.ResponseWriter) error
 }
 
-type BodyInline200JSONResponse string
+type BodyInline200JSONResponse Sort
 
 func (response BodyInline200JSONResponse) VisitBodyInlineResponse(w http.ResponseWriter) error {
 

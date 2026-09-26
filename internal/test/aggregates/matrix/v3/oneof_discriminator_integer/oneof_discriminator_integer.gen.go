@@ -278,18 +278,25 @@ func (t InlineHolder_List_Item) Discriminator() (string, error) {
 	return string(raw), nil
 }
 
+// ValueByDiscriminator reads the discriminator as a int64, so a
+// number written as, say, 1, 1.0 or 1e0 is one value, and returns the variant it leads to.
 func (t InlineHolder_List_Item) ValueByDiscriminator() (any, error) {
-	discriminator, err := t.Discriminator()
-	if err != nil {
+	var discriminator struct {
+		Value *int64 `json:"version"`
+	}
+	if err := json.Unmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
-	switch discriminator {
-	case "1":
+	if discriminator.Value == nil {
+		return nil, errors.New("missing discriminator value")
+	}
+	switch *discriminator.Value {
+	case 1:
 		return t.AsV1()
-	case "2":
+	case 2:
 		return t.AsV2()
 	default:
-		return nil, errors.New("unknown discriminator value: " + discriminator)
+		return nil, fmt.Errorf("unknown discriminator value: %v", *discriminator.Value)
 	}
 }
 
@@ -468,18 +475,25 @@ func (t InlineHolder_Map_AdditionalProperties) Discriminator() (string, error) {
 	return string(raw), nil
 }
 
+// ValueByDiscriminator reads the discriminator as a int64, so a
+// number written as, say, 1, 1.0 or 1e0 is one value, and returns the variant it leads to.
 func (t InlineHolder_Map_AdditionalProperties) ValueByDiscriminator() (any, error) {
-	discriminator, err := t.Discriminator()
-	if err != nil {
+	var discriminator struct {
+		Value *int64 `json:"version"`
+	}
+	if err := json.Unmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
-	switch discriminator {
-	case "1":
+	if discriminator.Value == nil {
+		return nil, errors.New("missing discriminator value")
+	}
+	switch *discriminator.Value {
+	case 1:
 		return t.AsV1()
-	case "2":
+	case 2:
 		return t.AsV2()
 	default:
-		return nil, errors.New("unknown discriminator value: " + discriminator)
+		return nil, fmt.Errorf("unknown discriminator value: %v", *discriminator.Value)
 	}
 }
 
@@ -658,18 +672,25 @@ func (t InlineHolder_One) Discriminator() (string, error) {
 	return string(raw), nil
 }
 
+// ValueByDiscriminator reads the discriminator as a int64, so a
+// number written as, say, 1, 1.0 or 1e0 is one value, and returns the variant it leads to.
 func (t InlineHolder_One) ValueByDiscriminator() (any, error) {
-	discriminator, err := t.Discriminator()
-	if err != nil {
+	var discriminator struct {
+		Value *int64 `json:"version"`
+	}
+	if err := json.Unmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
-	switch discriminator {
-	case "1":
+	if discriminator.Value == nil {
+		return nil, errors.New("missing discriminator value")
+	}
+	switch *discriminator.Value {
+	case 1:
 		return t.AsV1()
-	case "2":
+	case 2:
 		return t.AsV2()
 	default:
-		return nil, errors.New("unknown discriminator value: " + discriminator)
+		return nil, fmt.Errorf("unknown discriminator value: %v", *discriminator.Value)
 	}
 }
 
@@ -848,18 +869,25 @@ func (t Subject) Discriminator() (string, error) {
 	return string(raw), nil
 }
 
+// ValueByDiscriminator reads the discriminator as a int64, so a
+// number written as, say, 1, 1.0 or 1e0 is one value, and returns the variant it leads to.
 func (t Subject) ValueByDiscriminator() (any, error) {
-	discriminator, err := t.Discriminator()
-	if err != nil {
+	var discriminator struct {
+		Value *int64 `json:"version"`
+	}
+	if err := json.Unmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
-	switch discriminator {
-	case "1":
+	if discriminator.Value == nil {
+		return nil, errors.New("missing discriminator value")
+	}
+	switch *discriminator.Value {
+	case 1:
 		return t.AsV1()
-	case "2":
+	case 2:
 		return t.AsV2()
 	default:
-		return nil, errors.New("unknown discriminator value: " + discriminator)
+		return nil, fmt.Errorf("unknown discriminator value: %v", *discriminator.Value)
 	}
 }
 
@@ -1038,18 +1066,25 @@ func (t InlineSubjectResponse) Discriminator() (string, error) {
 	return string(raw), nil
 }
 
+// ValueByDiscriminator reads the discriminator as a int64, so a
+// number written as, say, 1, 1.0 or 1e0 is one value, and returns the variant it leads to.
 func (t InlineSubjectResponse) ValueByDiscriminator() (any, error) {
-	discriminator, err := t.Discriminator()
-	if err != nil {
+	var discriminator struct {
+		Value *int64 `json:"version"`
+	}
+	if err := json.Unmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
-	switch discriminator {
-	case "1":
+	if discriminator.Value == nil {
+		return nil, errors.New("missing discriminator value")
+	}
+	switch *discriminator.Value {
+	case 1:
 		return t.AsV1()
-	case "2":
+	case 2:
 		return t.AsV2()
 	default:
-		return nil, errors.New("unknown discriminator value: " + discriminator)
+		return nil, fmt.Errorf("unknown discriminator value: %v", *discriminator.Value)
 	}
 }
 
@@ -1228,18 +1263,25 @@ func (t InlineSubjectBody) Discriminator() (string, error) {
 	return string(raw), nil
 }
 
+// ValueByDiscriminator reads the discriminator as a int64, so a
+// number written as, say, 1, 1.0 or 1e0 is one value, and returns the variant it leads to.
 func (t InlineSubjectBody) ValueByDiscriminator() (any, error) {
-	discriminator, err := t.Discriminator()
-	if err != nil {
+	var discriminator struct {
+		Value *int64 `json:"version"`
+	}
+	if err := json.Unmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
-	switch discriminator {
-	case "1":
+	if discriminator.Value == nil {
+		return nil, errors.New("missing discriminator value")
+	}
+	switch *discriminator.Value {
+	case 1:
 		return t.AsV1()
-	case "2":
+	case 2:
 		return t.AsV2()
 	default:
-		return nil, errors.New("unknown discriminator value: " + discriminator)
+		return nil, fmt.Errorf("unknown discriminator value: %v", *discriminator.Value)
 	}
 }
 
@@ -1418,18 +1460,25 @@ func (t BodyComponentInlineJSONBody) Discriminator() (string, error) {
 	return string(raw), nil
 }
 
+// ValueByDiscriminator reads the discriminator as a int64, so a
+// number written as, say, 1, 1.0 or 1e0 is one value, and returns the variant it leads to.
 func (t BodyComponentInlineJSONBody) ValueByDiscriminator() (any, error) {
-	discriminator, err := t.Discriminator()
-	if err != nil {
+	var discriminator struct {
+		Value *int64 `json:"version"`
+	}
+	if err := json.Unmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
-	switch discriminator {
-	case "1":
+	if discriminator.Value == nil {
+		return nil, errors.New("missing discriminator value")
+	}
+	switch *discriminator.Value {
+	case 1:
 		return t.AsV1()
-	case "2":
+	case 2:
 		return t.AsV2()
 	default:
-		return nil, errors.New("unknown discriminator value: " + discriminator)
+		return nil, fmt.Errorf("unknown discriminator value: %v", *discriminator.Value)
 	}
 }
 
@@ -1608,18 +1657,25 @@ func (t BodyInlineJSONBody) Discriminator() (string, error) {
 	return string(raw), nil
 }
 
+// ValueByDiscriminator reads the discriminator as a int64, so a
+// number written as, say, 1, 1.0 or 1e0 is one value, and returns the variant it leads to.
 func (t BodyInlineJSONBody) ValueByDiscriminator() (any, error) {
-	discriminator, err := t.Discriminator()
-	if err != nil {
+	var discriminator struct {
+		Value *int64 `json:"version"`
+	}
+	if err := json.Unmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
-	switch discriminator {
-	case "1":
+	if discriminator.Value == nil {
+		return nil, errors.New("missing discriminator value")
+	}
+	switch *discriminator.Value {
+	case 1:
 		return t.AsV1()
-	case "2":
+	case 2:
 		return t.AsV2()
 	default:
-		return nil, errors.New("unknown discriminator value: " + discriminator)
+		return nil, fmt.Errorf("unknown discriminator value: %v", *discriminator.Value)
 	}
 }
 
@@ -1798,18 +1854,25 @@ func (t BodyInline200JSONResponseBody) Discriminator() (string, error) {
 	return string(raw), nil
 }
 
+// ValueByDiscriminator reads the discriminator as a int64, so a
+// number written as, say, 1, 1.0 or 1e0 is one value, and returns the variant it leads to.
 func (t BodyInline200JSONResponseBody) ValueByDiscriminator() (any, error) {
-	discriminator, err := t.Discriminator()
-	if err != nil {
+	var discriminator struct {
+		Value *int64 `json:"version"`
+	}
+	if err := json.Unmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
-	switch discriminator {
-	case "1":
+	if discriminator.Value == nil {
+		return nil, errors.New("missing discriminator value")
+	}
+	switch *discriminator.Value {
+	case 1:
 		return t.AsV1()
-	case "2":
+	case 2:
 		return t.AsV2()
 	default:
-		return nil, errors.New("unknown discriminator value: " + discriminator)
+		return nil, fmt.Errorf("unknown discriminator value: %v", *discriminator.Value)
 	}
 }
 

@@ -1,0 +1,16 @@
+# A schema document, not an OpenAPI document: a tree whose array items
+# compose the document itself, by a $ref to the whole file, with an extra
+# field. spec.yaml refers to it from components/schemas/Tree.
+type: object
+properties:
+  name:
+    type: string
+  children:
+    type: array
+    items:
+      allOf:
+        - $ref: './tree.yaml'
+        - type: object
+          properties:
+            extra:
+              type: string

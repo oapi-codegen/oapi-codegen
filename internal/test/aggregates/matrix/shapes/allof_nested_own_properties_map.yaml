@@ -1,0 +1,18 @@
+versions: [v2, v3]
+description: >-
+  allOf over a $ref to a schema that declares a property next to an allOf
+  with typed additionalProperties. v2 generates a map, and keeps it one
+  rather than add the property (#2571); v3 keeps both.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Mid'
+    - description: A map with a property.
+components:
+  Mid:
+    type: object
+    properties:
+      b: {type: string}
+    allOf:
+      - additionalProperties: {type: string}
+samples:
+  - '{"b": "x", "k": "v"}'

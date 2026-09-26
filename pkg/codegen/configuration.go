@@ -290,8 +290,16 @@ type CompatibilityOptions struct {
 	//   - "v2": allOf members are merged keyword by keyword into one Go type,
 	//     and anyOf and oneOf become a union type with As*, From* and Merge*
 	//     methods. The default since v1.11.0.
+	//   - "v3": allOf members are merged by what allOf means, a value that
+	//     matches every member, and members no value can match are an error.
+	//     Unions model more of the spec: an allOf of several unions keeps each,
+	//     a oneOf or anyOf that only adds constraints makes no union, and the
+	//     As* of a variant with additionalProperties: false rejects keys no
+	//     part of the object declares. Added in v2.9.0 as an option; it becomes
+	//     the default after at least one release as an option.
 	//
-	// Leaving it unset means "v2".
+	// Leaving it unset means "v2". The versions are compared in
+	// https://github.com/oapi-codegen/oapi-codegen/blob/main/docs/schema-merging.md
 	SchemaMergingBehavior string `yaml:"schema-merging-behavior,omitempty"`
 	// In the past, when a schema combined `allOf` with sibling fields at the
 	// same level (`properties`, `required`, `additionalProperties`,
@@ -424,11 +432,8 @@ type CompatibilityOptions struct {
 const (
 	SchemaMergingV1 = "v1"
 	SchemaMergingV2 = "v2"
+	SchemaMergingV3 = "v3"
 )
-
-// schemaMergingV3 is the version under development. It is accepted, but not
-// documented or exported until it is ready.
-const schemaMergingV3 = "v3"
 
 // schemaMergingVersion returns the schema-merging-behavior these options
 // select: the configured version, v1 for the deprecated OldMergeSchemas, and
@@ -449,7 +454,7 @@ func (co CompatibilityOptions) schemaMergingVersion() (string, error) {
 				SchemaMergingV1, co.SchemaMergingBehavior)
 		}
 		return SchemaMergingV2, nil
-	case schemaMergingV3:
+	case SchemaMergingV3:
 		if co.OldMergeSchemas {
 			return "", fmt.Errorf("`old-merge-schemas: true` is an alias for `schema-merging-behavior: %s`, which conflicts with `schema-merging-behavior: %s`",
 				SchemaMergingV1, co.SchemaMergingBehavior)
@@ -458,10 +463,10 @@ func (co CompatibilityOptions) schemaMergingVersion() (string, error) {
 			return "", fmt.Errorf("`old-allof-sibling-merging` applies only to `schema-merging-behavior` %s and %s",
 				SchemaMergingV1, SchemaMergingV2)
 		}
-		return schemaMergingV3, nil
+		return SchemaMergingV3, nil
 	default:
-		return "", fmt.Errorf("unknown `schema-merging-behavior` %q; valid values are %q and %q",
-			co.SchemaMergingBehavior, SchemaMergingV1, SchemaMergingV2)
+		return "", fmt.Errorf("unknown `schema-merging-behavior` %q; valid values are %q, %q and %q",
+			co.SchemaMergingBehavior, SchemaMergingV1, SchemaMergingV2, SchemaMergingV3)
 	}
 }
 
@@ -490,6 +495,14 @@ type OutputOptions struct {
 	// named constants. Set this to true to fall through to the standard union
 	// generator instead.
 	SkipEnumViaOneOf bool `yaml:"skip-enum-via-oneof,omitempty"`
+	// LenientUnionAccessors makes a union's As* methods ignore the properties
+	// a variant with `additionalProperties: false` doesn't declare, as they
+	// do for any other variant. By default, with schema-merging-behavior v3,
+	// such a variant's As* returns an error for a property that neither the
+	// variant nor anything else in the union's object declares, so that data
+	// of another variant isn't taken for it. The older values ignore this
+	// option: their As* always ignore such properties.
+	LenientUnionAccessors bool `yaml:"lenient-union-accessors,omitempty"`
 	// Only include operations that have one of these tags. Ignored when empty.
 	IncludeTags []string `yaml:"include-tags,omitempty"`
 	// Exclude operations that have one of these tags. Ignored when empty.

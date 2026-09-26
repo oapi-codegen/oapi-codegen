@@ -19,7 +19,15 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-func mergeSchemasV1(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+// mergeSchemasV1 generates the members with the context of the allOf they
+// belong to, as mergeSchemasV2 does, so that a member which leads back into a
+// composition an enclosing frame is still generating resolves to that
+// composition's type (see genContext.inProgress) instead of being generated
+// again without end. A member that is a $ref to a Go type never gets that
+// far, since generateGoSchema returns the referenced type before descending,
+// which is why v1 only ever recursed through a whole-document $ref
+// (`$ref: ./node.yaml`), whose value is generated inline.
+func mergeSchemasV1(ctx genContext, allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	var outSchema Schema
 	for _, schemaOrRef := range allOf {
 		ref := schemaOrRef.Ref
@@ -33,7 +41,7 @@ func mergeSchemasV1(allOf []*openapi3.SchemaRef, path []string) (Schema, error) 
 			}
 		}
 
-		schema, err := GenerateGoSchema(schemaOrRef, path)
+		schema, err := generateGoSchema(ctx, schemaOrRef, path)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error generating Go schema in allOf: %w", err)
 		}
@@ -64,7 +72,7 @@ func mergeSchemasV1(allOf []*openapi3.SchemaRef, path []string) (Schema, error) 
 
 	// Now, we generate the struct which merges together all the fields.
 	var err error
-	outSchema.GoType, err = GenStructFromAllOf(allOf, path)
+	outSchema.GoType, err = genStructFromAllOf(ctx, allOf, path)
 	if err != nil {
 		return Schema{}, fmt.Errorf("unable to generate aggregate type for AllOf: %w", err)
 	}
@@ -74,7 +82,14 @@ func mergeSchemasV1(allOf []*openapi3.SchemaRef, path []string) (Schema, error) 
 // GenStructFromAllOf generates an object that is the union of the objects in the
 // input array. In the case of Ref objects, we use an embedded struct, otherwise,
 // we inline the fields.
+//
+// It starts a fresh generation context; within the package, mergeSchemasV1
+// hands genStructFromAllOf the context of the allOf being merged.
 func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, error) {
+	return genStructFromAllOf(newGenContext(path), allOf, path)
+}
+
+func genStructFromAllOf(ctx genContext, allOf []*openapi3.SchemaRef, path []string) (string, error) {
 	// Start out with struct {
 	objectParts := []string{"struct {"}
 	for _, schemaOrRef := range allOf {
@@ -97,7 +112,7 @@ func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, err
 		} else {
 			// Inline all the fields from the schema into the output struct,
 			// just like in the simple case of generating an object.
-			goSchema, err := GenerateGoSchema(schemaOrRef, path)
+			goSchema, err := generateGoSchema(ctx, schemaOrRef, path)
 			if err != nil {
 				return "", err
 			}

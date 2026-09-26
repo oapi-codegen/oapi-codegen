@@ -83,8 +83,8 @@
         },
         "schema-merging-behavior": {
           "type": "string",
-          "enum": ["v1", "v2"],
-          "description": "Selects how schemas composed with `allOf` are merged into Go types, and how `anyOf` and `oneOf` are turned into Go unions. `v1`: `allOf` members that are `$ref`s are embedded in the Go struct and the fields of inline members are inlined, while `anyOf`/`oneOf` are handled as in `v2`; the only behavior before v1.11.0, and what `old-merge-schemas: true` is an alias for. `v2`: `allOf` members are merged keyword by keyword into one Go type, and `anyOf`/`oneOf` become a union type with `As*`, `From*` and `Merge*` methods; the default since v1.11.0. Leaving it unset means `v2`."
+          "enum": ["v1", "v2", "v3"],
+          "description": "Selects how schemas composed with `allOf` are merged into Go types, and how `anyOf` and `oneOf` are turned into Go unions. `v1`: `allOf` members that are `$ref`s are embedded in the Go struct and the fields of inline members are inlined, while `anyOf`/`oneOf` are handled as in `v2`; the only behavior before v1.11.0, and what `old-merge-schemas: true` is an alias for. `v2`: `allOf` members are merged keyword by keyword into one Go type, and `anyOf`/`oneOf` become a union type with `As*`, `From*` and `Merge*` methods; the default since v1.11.0. `v3`: `allOf` members are merged by what `allOf` means, and members no value can match are an error; unions model more of the spec. Added in v2.9.0 as an option; it becomes the default after at least one release as an option. Leaving it unset means `v2`. See https://github.com/oapi-codegen/oapi-codegen/blob/main/docs/schema-merging.md"
         },
         "old-allof-sibling-merging": {
           "type": "boolean",
@@ -168,6 +168,11 @@
         "skip-enum-via-oneof": {
           "type": "boolean",
           "description": "Disables detection of the OpenAPI 3.1 enum-via-oneOf idiom: a schema with `type: string|integer` and `oneOf:` members that each carry `const` + `title` will normally be emitted as a Go enum with named constants. Set this to true to fall through to the standard union generator instead."
+        },
+        "lenient-union-accessors": {
+          "type": "boolean",
+          "description": "Makes a union's As* methods ignore the properties a variant with `additionalProperties: false` doesn't declare, as they do for any other variant. By default, with `compatibility.schema-merging-behavior: v3`, such a variant's As* returns an error for a property that neither the variant nor anything else in the union's object declares, so that data of another variant isn't taken for it. The older values ignore this option: their As* always ignore such properties.",
+          "default": false
         },
         "include-tags": {
           "type": "array",

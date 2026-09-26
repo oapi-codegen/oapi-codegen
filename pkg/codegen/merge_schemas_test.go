@@ -427,7 +427,9 @@ func assertDefinesWhatItReferences(t *testing.T, code string) {
 
 // TestMergeSchemasRecursionUnderOldMergeSchemas pins that the legacy merge
 // path is unaffected. It embeds $ref members instead of inlining them, so it
-// never recursed, and it bypasses the state this fix threads.
+// never recursed on this shape. (It once bypassed the state this fix threads;
+// it now shares it, see merge_schemas_v1_test.go, which changes nothing
+// here.)
 //
 // This test records how schema-merging-behavior v1 behaves. A bug fix may
 // change it, but it must not be changed to accept a regression, and a commit

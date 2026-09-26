@@ -12,6 +12,10 @@
 // server and checks that it comes back unchanged, both on the wire and after
 // parsing.
 //
+// A version can reject a shape instead (the shape's rejects key). Its package
+// then holds no generated code, and its test checks that generation fails with
+// the expected error.
+//
 // Shape-specific checks (Go types, From/As behavior, discriminators) live in
 // hand-written test files next to the harness.
 //

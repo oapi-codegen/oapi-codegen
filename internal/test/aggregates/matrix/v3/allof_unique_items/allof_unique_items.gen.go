@@ -27,34 +27,34 @@ type Holder struct {
 
 // InlineHolder defines model for InlineHolder.
 type InlineHolder struct {
-	List *[][]string          `json:"list,omitempty"`
-	Map  *map[string][]string `json:"map,omitempty"`
-	One  *[]string            `json:"one,omitempty"`
+	List *[]Tags          `json:"list,omitempty"`
+	Map  *map[string]Tags `json:"map,omitempty"`
+	One  *Tags            `json:"one,omitempty"`
 }
 
-// Subject defines model for Subject.
-type Subject = []string
+// Subject Some tags.
+type Subject = Tags
 
 // Tags defines model for Tags.
 type Tags = []string
 
-// InlineSubjectResponse defines model for InlineSubjectResponse.
-type InlineSubjectResponse = []string
+// InlineSubjectResponse Some tags.
+type InlineSubjectResponse = Tags
 
 // SubjectResponse defines model for SubjectResponse.
 type SubjectResponse = Subject
 
-// InlineSubjectBody defines model for InlineSubjectBody.
-type InlineSubjectBody = []string
+// InlineSubjectBody Some tags.
+type InlineSubjectBody = Tags
 
 // SubjectBody defines model for SubjectBody.
 type SubjectBody = Subject
 
 // BodyComponentInlineJSONBody defines body for BodyComponentInline for application/json ContentType.
-type BodyComponentInlineJSONBody = []string
+type BodyComponentInlineJSONBody = Tags
 
 // BodyInlineJSONBody defines body for BodyInline for application/json ContentType.
-type BodyInlineJSONBody = []string
+type BodyInlineJSONBody = Tags
 
 // BodyComponentJSONRequestBody defines body for BodyComponent for application/json ContentType.
 type BodyComponentJSONRequestBody = Subject
@@ -1063,11 +1063,11 @@ type BodyInlineResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *[]string
+	JSON200 *Tags
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r BodyInlineResponse) GetJSON200() *[]string {
+func (r BodyInlineResponse) GetJSON200() *Tags {
 	return r.JSON200
 }
 
@@ -1531,7 +1531,7 @@ func ParseBodyInlineResponse(rsp *http.Response) (*BodyInlineResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []string
+		var dest Tags
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1901,7 +1901,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	return m
 }
 
-type InlineSubjectResponseJSONResponse []string
+type InlineSubjectResponseJSONResponse Tags
 
 type SubjectResponseJSONResponse Subject
 
@@ -2020,7 +2020,7 @@ type BodyInlineResponseObject interface {
 	VisitBodyInlineResponse(w http.ResponseWriter) error
 }
 
-type BodyInline200JSONResponse []string
+type BodyInline200JSONResponse Tags
 
 func (response BodyInline200JSONResponse) VisitBodyInlineResponse(w http.ResponseWriter) error {
 

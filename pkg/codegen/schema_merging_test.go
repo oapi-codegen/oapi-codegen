@@ -48,12 +48,13 @@ func TestConfigurationValidateReportsSchemaMerging(t *testing.T) {
 	assert.Contains(t, err.Error(), "schema-merging-behavior")
 }
 
-// TestSchemaMergerFor: every version maps to its own allOf merge.
+// TestSchemaMergerFor: v1 and v2 each map to their own allOf merge, which
+// generateAllOfV2 runs. v3 merges through generateAllOfV3 instead.
 func TestSchemaMergerFor(t *testing.T) {
 	pointer := func(f any) uintptr { return reflect.ValueOf(f).Pointer() }
 	assert.Equal(t, pointer(mergeSchemasV2), pointer(schemaMergerFor(SchemaMergingV2)))
-	assert.Equal(t, pointer(mergeSchemasV3), pointer(schemaMergerFor(schemaMergingV3)))
 	assert.NotEqual(t, pointer(mergeSchemasV2), pointer(schemaMergerFor(SchemaMergingV1)), "v1 has a merge of its own")
+	assert.Panics(t, func() { schemaMergerFor(SchemaMergingV3) })
 	assert.Panics(t, func() { schemaMergerFor("v4") })
 }
 
@@ -66,7 +67,7 @@ func TestSchemaMergingVersion(t *testing.T) {
 		{CompatibilityOptions{OldMergeSchemas: true}, SchemaMergingV1},
 		{CompatibilityOptions{SchemaMergingBehavior: "v1"}, SchemaMergingV1},
 		{CompatibilityOptions{SchemaMergingBehavior: "v2"}, SchemaMergingV2},
-		{CompatibilityOptions{SchemaMergingBehavior: "v3"}, schemaMergingV3},
+		{CompatibilityOptions{SchemaMergingBehavior: "v3"}, SchemaMergingV3},
 	} {
 		got, err := tc.compat.schemaMergingVersion()
 		require.NoError(t, err)

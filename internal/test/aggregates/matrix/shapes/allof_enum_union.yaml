@@ -1,0 +1,17 @@
+versions: [v2, v3]
+description: >-
+  allOf that adds a value to an enum, asking with x-oapi-codegen-enum-merge:
+  union for the values of either enum rather than those of both. v2 always
+  merges enums into their union.
+subject:
+  x-oapi-codegen-enum-merge: union
+  allOf:
+    - $ref: '#/components/schemas/BaseStatus'
+    - enum: [archived]
+components:
+  BaseStatus:
+    type: string
+    enum: [active, inactive]
+samples:
+  - '"active"'
+  - '"archived"'

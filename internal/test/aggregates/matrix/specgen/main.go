@@ -5,6 +5,10 @@
 // oapi-codegen config pinned to that version, a doc.go with the go:generate
 // directive, and a round-trip test harness.
 //
+// A version can also reject a shape: then its package holds the spec and the
+// config, but no generated code, and its test checks that generation fails
+// with the expected error.
+//
 // Run it through `go generate` in the matrix directory. A new shape needs a
 // second `go generate` pass, because go generate lists packages before specgen
 // creates the new one.
@@ -71,10 +75,14 @@ type shape struct {
 	// Skip maps a position to the reason it is left out of this shape.
 	Skip map[string]string `yaml:"skip"`
 	// Broken maps a version older than the newest to the reason its
-	// generated code can't round-trip the samples. The code is still
-	// generated and compiled, so its output stays pinned, but the round
-	// trips are skipped.
-	Broken map[string]string `yaml:"broken"`
+	// generated code can't round-trip the samples, at every position or at
+	// the ones it lists (see brokenVersion). The code is still generated and
+	// compiled, so its output stays pinned, but those round trips are
+	// skipped.
+	Broken map[string]brokenVersion `yaml:"broken"`
+	// Rejects maps a version that refuses to generate code for the shape to
+	// text its error must contain.
+	Rejects map[string]string `yaml:"rejects"`
 }
 
 func (s shape) Has(position string) bool {
@@ -116,10 +124,53 @@ func (s shape) GuardsRegressions() bool {
 	return s.Version != newestVersion
 }
 
+// brokenVersion is why a version can't round-trip a shape's samples. In YAML
+// it is either the reason, which applies at every position, or a mapping from
+// the positions where it can't to the reason at each.
+type brokenVersion struct {
+	everywhere string
+	positions  map[string]string
+}
+
+func (b *brokenVersion) UnmarshalYAML(n *yaml.Node) error {
+	if n.Kind == yaml.ScalarNode {
+		return n.Decode(&b.everywhere)
+	}
+	return n.Decode(&b.positions)
+}
+
 // BrokenReason returns why the version being written can't round-trip the
-// samples, or "".
+// samples at any position, or "".
 func (s shape) BrokenReason() string {
-	return s.Broken[s.Version]
+	return s.Broken[s.Version].everywhere
+}
+
+// BrokenAt returns why the version being written can't round-trip the samples
+// at a position, or "".
+func (s shape) BrokenAt(position string) string {
+	b := s.Broken[s.Version]
+	if b.everywhere != "" {
+		return b.everywhere
+	}
+	return b.positions[position]
+}
+
+// BrokenPositions lists the positions where the version being written can't
+// round-trip the samples, when it can at others, with the reason at each.
+func (s shape) BrokenPositions() []string {
+	var out []string
+	for _, p := range allPositions {
+		if reason, ok := s.Broken[s.Version].positions[p]; ok {
+			out = append(out, fmt.Sprintf("%s: %s", p, reason))
+		}
+	}
+	return out
+}
+
+// Rejection returns the text of the error the version being written fails
+// with, or "" when it generates code.
+func (s shape) Rejection() string {
+	return s.Rejects[s.Version]
 }
 
 func (s shape) Skips() []string {
@@ -206,9 +257,25 @@ func loadShape(path string) (shape, error) {
 			return s, fmt.Errorf("versions: unknown version %q", v)
 		}
 	}
-	for v := range s.Broken {
+	for v, b := range s.Broken {
 		if !slices.Contains(s.Versions, v) || v == newestVersion {
 			return s, fmt.Errorf("broken: %q must be a version this shape runs under, other than the newest", v)
+		}
+		if b.everywhere == "" && len(b.positions) == 0 {
+			return s, fmt.Errorf("broken: %q needs a reason, or positions with a reason each", v)
+		}
+		for p, reason := range b.positions {
+			if !slices.Contains(allPositions, p) || reason == "" {
+				return s, fmt.Errorf("broken: %q: %q must be a position, with a reason", v, p)
+			}
+		}
+	}
+	for v, want := range s.Rejects {
+		if !slices.Contains(s.Versions, v) || want == "" {
+			return s, fmt.Errorf("rejects: %q must be a version this shape runs under, with the text of its error", v)
+		}
+		if _, broken := s.Broken[v]; broken {
+			return s, fmt.Errorf("rejects: %q can't be both broken and rejecting", v)
 		}
 	}
 	for p := range s.Skip {
@@ -232,7 +299,15 @@ func writeShape(s shape) error {
 	if err != nil {
 		return err
 	}
-	harness, err := render(harnessTemplate, s, true)
+	harnessTmpl := harnessTemplate
+	if s.Rejection() != "" {
+		harnessTmpl = rejectionTemplate
+		// Code generated before the version rejected the shape.
+		if err := os.Remove(filepath.Join(dir, s.Name+".gen.go")); err != nil && !os.IsNotExist(err) {
+			return err
+		}
+	}
+	harness, err := render(harnessTmpl, s, true)
 	if err != nil {
 		return fmt.Errorf("harness: %w", err)
 	}
@@ -516,6 +591,18 @@ var docTemplate = template.Must(template.New("doc").Funcs(funcs).Parse(`// Code 
 //
 // The round trips are skipped: {{.BrokenReason}}
 {{- end}}
+{{- if .BrokenPositions}}
+//
+// The round trips are skipped at these positions:
+{{- range .BrokenPositions}}
+//   - {{.}}
+{{- end}}
+{{- end}}
+{{- if .Rejection}}
+//
+// {{.Version}} rejects this shape, so there is no generated code: the test
+// checks that generation fails with the expected error.
+{{- end}}
 {{- if .Skips}}
 //
 // Positions left out:
@@ -524,8 +611,50 @@ var docTemplate = template.Must(template.New("doc").Funcs(funcs).Parse(`// Code 
 {{- end}}
 {{- end}}
 package {{.Package}}
+{{- if not .Rejection}}
 
 {{"//go:generate"}} go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml spec.yaml
+{{- end}}
+`))
+
+// rejectionTemplate is the test of a version that rejects the shape.
+var rejectionTemplate = template.Must(template.New("rejection").Funcs(funcs).Parse(`// Code generated by specgen from ../../shapes/{{.Name}}.yaml. DO NOT EDIT.
+
+package {{.Package}}
+{{if .GuardsRegressions}}
+// This test records how schema-merging-behavior {{.Version}} handles this
+// shape. Don't change it, or the shape it is generated from, to accept a
+// regression; a commit that changes it must say why.
+{{end}}
+import (
+	"os"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
+
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
+	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
+)
+
+// TestRejected generates code from spec.yaml with config.yaml, the way the
+// command would, and expects the error. Generation stops at the first position
+// that fails, so this checks one position, not all of them.
+func TestRejected(t *testing.T) {
+	raw, err := os.ReadFile("config.yaml")
+	require.NoError(t, err)
+	var cfg codegen.Configuration
+	require.NoError(t, yaml.Unmarshal(raw, &cfg))
+	cfg = cfg.UpdateDefaults()
+	require.NoError(t, cfg.Validate())
+
+	spec, err := util.LoadSwagger("spec.yaml")
+	require.NoError(t, err)
+	_, err = codegen.Generate(spec, cfg)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), {{quote .Rejection}})
+}
 `))
 
 var harnessTemplate = template.Must(template.New("harness").Funcs(funcs).Parse(`// Code generated by specgen from ../../shapes/{{.Name}}.yaml. DO NOT EDIT.
@@ -670,7 +799,7 @@ func sampleName(i int, s string) string {
 
 {{if .Has "subject" -}}
 func TestMatrixSubject(t *testing.T) {
-	{{if $.BrokenReason}}t.Skip({{quote $.BrokenReason}}){{end}}
+	{{with $.BrokenAt "subject"}}t.Skip({{quote .}}){{end}}
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
 			var v Subject
@@ -685,7 +814,7 @@ func TestMatrixSubject(t *testing.T) {
 
 {{if .Has "holder" -}}
 func TestMatrixHolder(t *testing.T) {
-	{{if $.BrokenReason}}t.Skip({{quote $.BrokenReason}}){{end}}
+	{{with $.BrokenAt "holder"}}t.Skip({{quote .}}){{end}}
 	sample := holderSample(t)
 	var v Holder
 	require.NoError(t, json.Unmarshal([]byte(sample), &v))
@@ -701,7 +830,7 @@ func TestMatrixHolder(t *testing.T) {
 
 {{if .Has "holder-inline" -}}
 func TestMatrixHolderInline(t *testing.T) {
-	{{if $.BrokenReason}}t.Skip({{quote $.BrokenReason}}){{end}}
+	{{with $.BrokenAt "holder-inline"}}t.Skip({{quote .}}){{end}}
 	sample := holderSample(t)
 	var v InlineHolder
 	require.NoError(t, json.Unmarshal([]byte(sample), &v))
@@ -717,7 +846,7 @@ func TestMatrixHolderInline(t *testing.T) {
 
 {{if .Has "body-ref" -}}
 func TestMatrixBodyRef(t *testing.T) {
-	{{if $.BrokenReason}}t.Skip({{quote $.BrokenReason}}){{end}}
+	{{with $.BrokenAt "body-ref"}}t.Skip({{quote .}}){{end}}
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
@@ -733,7 +862,7 @@ func TestMatrixBodyRef(t *testing.T) {
 
 {{if .Has "body-inline" -}}
 func TestMatrixBodyInline(t *testing.T) {
-	{{if $.BrokenReason}}t.Skip({{quote $.BrokenReason}}){{end}}
+	{{with $.BrokenAt "body-inline"}}t.Skip({{quote .}}){{end}}
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
@@ -749,7 +878,7 @@ func TestMatrixBodyInline(t *testing.T) {
 
 {{if .Has "body-component" -}}
 func TestMatrixBodyComponent(t *testing.T) {
-	{{if $.BrokenReason}}t.Skip({{quote $.BrokenReason}}){{end}}
+	{{with $.BrokenAt "body-component"}}t.Skip({{quote .}}){{end}}
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
@@ -765,7 +894,7 @@ func TestMatrixBodyComponent(t *testing.T) {
 
 {{if .Has "body-component-inline" -}}
 func TestMatrixBodyComponentInline(t *testing.T) {
-	{{if $.BrokenReason}}t.Skip({{quote $.BrokenReason}}){{end}}
+	{{with $.BrokenAt "body-component-inline"}}t.Skip({{quote .}}){{end}}
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
@@ -781,7 +910,7 @@ func TestMatrixBodyComponentInline(t *testing.T) {
 
 {{if .Has "body-default" -}}
 func TestMatrixBodyDefault(t *testing.T) {
-	{{if $.BrokenReason}}t.Skip({{quote $.BrokenReason}}){{end}}
+	{{with $.BrokenAt "body-default"}}t.Skip({{quote .}}){{end}}
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
@@ -797,7 +926,7 @@ func TestMatrixBodyDefault(t *testing.T) {
 
 {{if .Has "body-headers" -}}
 func TestMatrixBodyHeaders(t *testing.T) {
-	{{if $.BrokenReason}}t.Skip({{quote $.BrokenReason}}){{end}}
+	{{with $.BrokenAt "body-headers"}}t.Skip({{quote .}}){{end}}
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {

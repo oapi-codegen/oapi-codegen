@@ -10,8 +10,6 @@ package codegen
 // generating it. New behavior goes into a new version, in files of its own.
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
@@ -52,13 +50,13 @@ func mergeSchemasV2(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 	// composition.
 	decoratorIdiom := false
 	for _, m := range allOf {
-		if m.Ref == "" && isExtensionOnlySchemaV2(m.Value) {
+		if m.Ref == "" && isExtensionOnlySchema(m.Value) {
 			decoratorIdiom = true
 			break
 		}
 	}
 
-	schema, err := valueWithPropagatedRefV2(allOf[0])
+	schema, err := valueWithPropagatedRef(allOf[0])
 	if err != nil {
 		return Schema{}, err
 	}
@@ -71,7 +69,7 @@ func mergeSchemasV2(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 	}
 
 	for i := 1; i < n; i++ {
-		oneOfSchema, err := valueWithPropagatedRefV2(allOf[i])
+		oneOfSchema, err := valueWithPropagatedRef(allOf[i])
 		if err != nil {
 			return Schema{}, err
 		}
@@ -84,10 +82,13 @@ func mergeSchemasV2(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 			seenSchemaRef[allOf[i].Ref] = true
 			seenTopLevel[allOf[i].Ref] = true
 		}
-		schema, err = mergeOpenapiSchemasV2(schema, oneOfSchema, true, seenSchemaRef)
+		schema, err = mergeOpenapiSchemas(schema, oneOfSchema, true, seenSchemaRef)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
+	}
+	if err := addNestedOwnProperties(&schema, allOf); err != nil {
+		return Schema{}, err
 	}
 
 	if !decoratorIdiom {
@@ -97,7 +98,7 @@ func mergeSchemasV2(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 		// incorrect aliasing across composition.
 		//
 		// Clone before mutating: the current merge path always
-		// reallocates schema.Extensions in mergeOpenapiSchemasV2 before
+		// reallocates schema.Extensions in mergeOpenapiSchemas before
 		// we reach here, so the delete is safe today — but the
 		// defensive copy keeps this correct if that invariant changes
 		// (e.g. an allocation-skipping optimization). Cost is a small
@@ -112,7 +113,7 @@ func mergeSchemasV2(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 	return generateGoSchema(ctx, openapi3.NewSchemaRef("", &schema), path)
 }
 
-// isExtensionOnlySchemaV2 reports whether a schema carries only extensions,
+// isExtensionOnlySchema reports whether a schema carries only extensions,
 // with no structural or constraint-bearing content. Used to detect the
 // "$ref + sibling extension" idiom: allOf wrappers whose purpose is
 // attaching extensions to a $ref (since OpenAPI 3.0 disallows sibling
@@ -124,7 +125,7 @@ func mergeSchemasV2(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 // being treated as a pure decorator. This formulation defaults to safe
 // behavior if kin-openapi gains new structural fields: they'd be non-zero
 // by default and correctly disqualify.
-func isExtensionOnlySchemaV2(s *openapi3.Schema) bool {
+func isExtensionOnlySchema(s *openapi3.Schema) bool {
 	if s == nil || len(s.Extensions) == 0 {
 		return false
 	}
@@ -149,12 +150,12 @@ func isExtensionOnlySchemaV2(s *openapi3.Schema) bool {
 	return reflect.DeepEqual(tmp, openapi3.Schema{})
 }
 
-// valueWithPropagatedRefV2 returns a copy of ref's schema with its Properties
+// valueWithPropagatedRef returns a copy of ref's schema with its Properties
 // refs rewritten when ref itself is external, and with extensions placed
 // next to the $ref folded in (ref-side wins over value-side). This is what
 // allows allOf members to carry per-use sibling directives without
 // mutating the referenced schema.
-func valueWithPropagatedRefV2(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
+func valueWithPropagatedRef(ref *openapi3.SchemaRef) (openapi3.Schema, error) {
 	schema := *ref.Value
 	schema.Extensions = combinedSchemaExtensions(ref)
 
@@ -168,31 +169,31 @@ func valueWithPropagatedRefV2(ref *openapi3.SchemaRef) (openapi3.Schema, error) 
 	}
 	remoteComponent := pathParts[0]
 
-	propagateRemoteRefsV2(remoteComponent, &schema)
+	propagateRemoteRefs(remoteComponent, &schema)
 
 	return schema, nil
 }
 
-// propagateRemoteRefsV2 rewrites local "#/..." refs within a schema to be
+// propagateRemoteRefs rewrites local "#/..." refs within a schema to be
 // qualified with the remote component path. This is needed so that when an
 // external schema is flattened via allOf, nested type references (array items,
 // additionalProperties, sub-object properties) retain their external
 // qualification. See https://github.com/oapi-codegen/oapi-codegen/issues/2288
-func propagateRemoteRefsV2(remoteComponent string, schema *openapi3.Schema) {
+func propagateRemoteRefs(remoteComponent string, schema *openapi3.Schema) {
 	for _, value := range schema.Properties {
-		qualifyRemoteRefV2(remoteComponent, value)
+		qualifyRemoteRef(remoteComponent, value)
 	}
-	qualifyRemoteRefV2(remoteComponent, schema.Items)
-	qualifyRemoteRefV2(remoteComponent, schema.AdditionalProperties.Schema)
+	qualifyRemoteRef(remoteComponent, schema.Items)
+	qualifyRemoteRef(remoteComponent, schema.AdditionalProperties.Schema)
 	for _, list := range [][]*openapi3.SchemaRef{schema.AllOf, schema.AnyOf, schema.OneOf} {
 		for _, ref := range list {
-			qualifyRemoteRefV2(remoteComponent, ref)
+			qualifyRemoteRef(remoteComponent, ref)
 		}
 	}
-	qualifyRemoteRefV2(remoteComponent, schema.Not)
+	qualifyRemoteRef(remoteComponent, schema.Not)
 }
 
-// qualifyRemoteRefV2 qualifies one position inside a schema being flattened out
+// qualifyRemoteRef qualifies one position inside a schema being flattened out
 // of a remote document: a local "#/..." ref is rewritten to point at that
 // document, and an inline schema is walked for positions of its own.
 //
@@ -205,7 +206,7 @@ func propagateRemoteRefsV2(remoteComponent string, schema *openapi3.Schema) {
 // self-recursive remote schema was flattened, because the first pass had
 // rewritten the very refs whose "#" prefix stopped the walk
 // (https://github.com/oapi-codegen/oapi-codegen/issues/2557).
-func qualifyRemoteRefV2(remoteComponent string, ref *openapi3.SchemaRef) {
+func qualifyRemoteRef(remoteComponent string, ref *openapi3.SchemaRef) {
 	if ref == nil {
 		return
 	}
@@ -216,11 +217,11 @@ func qualifyRemoteRefV2(remoteComponent string, ref *openapi3.SchemaRef) {
 		return
 	}
 	if ref.Value != nil {
-		propagateRemoteRefsV2(remoteComponent, ref.Value)
+		propagateRemoteRefs(remoteComponent, ref.Value)
 	}
 }
 
-func mergeAllOfV2(allOf []*openapi3.SchemaRef, seenSchemaRef map[string]bool) (openapi3.Schema, error) {
+func mergeAllOf(allOf []*openapi3.SchemaRef, seenSchemaRef map[string]bool) (openapi3.Schema, error) {
 	var schema openapi3.Schema
 	for _, schemaRef := range allOf {
 		if schemaRef.Ref != "" && seenSchemaRef[schemaRef.Ref] {
@@ -229,14 +230,14 @@ func mergeAllOfV2(allOf []*openapi3.SchemaRef, seenSchemaRef map[string]bool) (o
 		if schemaRef.Ref != "" {
 			seenSchemaRef[schemaRef.Ref] = true
 		}
-		// Use valueWithPropagatedRefV2 so sibling extensions on a $ref
+		// Use valueWithPropagatedRef so sibling extensions on a $ref
 		// member of a transitively-flattened allOf reach the merged
 		// schema, matching mergeSchemasV2' top-level handling.
-		member, err := valueWithPropagatedRefV2(schemaRef)
+		member, err := valueWithPropagatedRef(schemaRef)
 		if err != nil {
 			return openapi3.Schema{}, err
 		}
-		schema, err = mergeOpenapiSchemasV2(schema, member, true, seenSchemaRef)
+		schema, err = mergeOpenapiSchemas(schema, member, true, seenSchemaRef)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error merging schemas for AllOf: %w", err)
 		}
@@ -244,9 +245,9 @@ func mergeAllOfV2(allOf []*openapi3.SchemaRef, seenSchemaRef map[string]bool) (o
 	return schema, nil
 }
 
-// mergeOpenapiSchemasV2 merges two openAPI schemas and returns the schema
+// mergeOpenapiSchemas merges two openAPI schemas and returns the schema
 // all of whose fields are composed.
-func mergeOpenapiSchemasV2(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[string]bool) (openapi3.Schema, error) {
+func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[string]bool) (openapi3.Schema, error) {
 	var result openapi3.Schema
 
 	result.Extensions = make(map[string]any, len(s1.Extensions)+len(s2.Extensions))
@@ -265,7 +266,7 @@ func mergeOpenapiSchemasV2(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map
 	var err error
 	if s1.AllOf != nil {
 		var merged openapi3.Schema
-		merged, err = mergeAllOfV2(s1.AllOf, seenSchemaRef)
+		merged, err = mergeAllOf(s1.AllOf, seenSchemaRef)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 1")
 		}
@@ -275,7 +276,7 @@ func mergeOpenapiSchemasV2(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map
 	}
 	if s2.AllOf != nil {
 		var merged openapi3.Schema
-		merged, err = mergeAllOfV2(s2.AllOf, seenSchemaRef)
+		merged, err = mergeAllOf(s2.AllOf, seenSchemaRef)
 		if err != nil {
 			return openapi3.Schema{}, fmt.Errorf("error transitive merging AllOf on schema 2")
 		}
@@ -308,10 +309,10 @@ func mergeOpenapiSchemasV2(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map
 	// `allOf: [$ref X, {nullable: true}]` (issue #1898). Both spec versions
 	// give it that meaning.
 	t1, t2 := nonNullTypes(s1.Type), nonNullTypes(s2.Type)
-	if len(t1) > 0 && len(t2) > 0 && !sameTypeSetV2(t1, t2) {
+	if len(t1) > 0 && len(t2) > 0 && !sameTypeSet(t1, t2) {
 		return openapi3.Schema{}, fmt.Errorf("can not merge incompatible types: %v, %v", s1.Type.Slice(), s2.Type.Slice())
 	}
-	result.Type = mergeTypesV2(s1.Type, s2.Type)
+	result.Type = mergeTypes(s1.Type, s2.Type)
 
 	// Format follows the same rule: error only when both members declare
 	// a format and they differ. Erroring on the set-vs-unset case made the
@@ -365,7 +366,7 @@ func mergeOpenapiSchemasV2(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map
 	// regardless of spec version: in 3.0 it reads s.Nullable, in 3.1 it
 	// reads "null" from the type array. Type merging itself is NOT version
 	// branched -- the type check at result.Type assignment above ignores
-	// "null" and mergeTypesV2 adds it back when either member has it:
+	// "null" and mergeTypes adds it back when either member has it:
 	//
 	//   3.0: ["string"] vs ["string"]                 -> ["string"]
 	//   3.1: ["string","null"] vs ["string","null"]   -> ["string","null"]
@@ -407,7 +408,7 @@ func mergeOpenapiSchemasV2(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map
 
 	// Items used to be dropped, so an allOf over an array schema, such as
 	// `allOf: [$ref ArrayOfX, {minItems: 1}]`, generated []any.
-	result.Items, err = mergeItemsV2(s1.Items, s2.Items, seenSchemaRef)
+	result.Items, err = mergeItems(s1.Items, s2.Items, seenSchemaRef)
 	if err != nil {
 		return openapi3.Schema{}, err
 	}
@@ -423,7 +424,7 @@ func mergeOpenapiSchemasV2(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map
 	} else if s1.AdditionalProperties.Schema != nil {
 		// Two additionalProperties schemas merge only when they are the same
 		// schema, e.g. two members that each allow extra string values.
-		if s2.AdditionalProperties.Schema != nil && !sameSchemaV2(s1.AdditionalProperties.Schema, s2.AdditionalProperties.Schema) {
+		if s2.AdditionalProperties.Schema != nil && !sameSchema(s1.AdditionalProperties.Schema, s2.AdditionalProperties.Schema) {
 			return openapi3.Schema{}, errors.New("merging two schemas with different additional properties, this is unhandled")
 		}
 		result.AdditionalProperties.Schema = s1.AdditionalProperties.Schema
@@ -456,9 +457,9 @@ func mergeOpenapiSchemasV2(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map
 	return result, nil
 }
 
-// sameTypeSetV2 reports whether two type lists name the same types, in any
+// sameTypeSet reports whether two type lists name the same types, in any
 // order.
-func sameTypeSetV2(t1, t2 []string) bool {
+func sameTypeSet(t1, t2 []string) bool {
 	if len(t1) != len(t2) {
 		return false
 	}
@@ -470,12 +471,12 @@ func sameTypeSetV2(t1, t2 []string) bool {
 	return true
 }
 
-// mergeTypesV2 returns the type of an allOf merge whose members' non-null types
+// mergeTypes returns the type of an allOf merge whose members' non-null types
 // are already known to agree: whichever member declares types, plus "null"
 // when either member's type array has it. The member's own Types value is
 // returned whenever it already says that, so merges that worked before
 // produce identical output.
-func mergeTypesV2(t1, t2 *openapi3.Types) *openapi3.Types {
+func mergeTypes(t1, t2 *openapi3.Types) *openapi3.Types {
 	base := t1
 	if len(nonNullTypes(t1)) == 0 && t2.Slice() != nil {
 		base = t2
@@ -491,29 +492,16 @@ func mergeTypesV2(t1, t2 *openapi3.Types) *openapi3.Types {
 	return &merged
 }
 
-// sameSchemaV2 reports whether two schema positions describe the same schema:
-// the same $ref, or inline schemas with the same content. kin-openapi's
-// source-location metadata is not part of the JSON encoding, so two identical
-// schemas declared in different places compare equal.
-func sameSchemaV2(r1, r2 *openapi3.SchemaRef) bool {
-	if r1.Ref != "" || r2.Ref != "" {
-		return r1.Ref == r2.Ref
-	}
-	b1, err1 := json.Marshal(r1.Value)
-	b2, err2 := json.Marshal(r2.Value)
-	return err1 == nil && err2 == nil && bytes.Equal(b1, b2)
-}
-
-// mergeItemsV2 merges the array items of two allOf members. A one-sided items
+// mergeItems merges the array items of two allOf members. A one-sided items
 // carries over, and two different item schemas are merged with the same rules
 // as their parents.
-func mergeItemsV2(i1, i2 *openapi3.SchemaRef, seenSchemaRef map[string]bool) (*openapi3.SchemaRef, error) {
+func mergeItems(i1, i2 *openapi3.SchemaRef, seenSchemaRef map[string]bool) (*openapi3.SchemaRef, error) {
 	switch {
 	case i1 == nil:
 		return i2, nil
 	case i2 == nil:
 		return i1, nil
-	case sameSchemaV2(i1, i2):
+	case sameSchema(i1, i2):
 		return i1, nil
 	case (i1.Ref != "" && seenSchemaRef[i1.Ref]) || (i2.Ref != "" && seenSchemaRef[i2.Ref]):
 		// Merging these items would re-enter a schema this merge is already
@@ -527,19 +515,99 @@ func mergeItemsV2(i1, i2 *openapi3.SchemaRef, seenSchemaRef map[string]bool) (*o
 			seen[r.Ref] = true
 		}
 	}
-	v1, err := valueWithPropagatedRefV2(i1)
+	v1, err := valueWithPropagatedRef(i1)
 	if err != nil {
 		return nil, err
 	}
-	v2, err := valueWithPropagatedRefV2(i2)
+	v2, err := valueWithPropagatedRef(i2)
 	if err != nil {
 		return nil, err
 	}
-	merged, err := mergeOpenapiSchemasV2(v1, v2, true, seen)
+	merged, err := mergeOpenapiSchemas(v1, v2, true, seen)
 	if err != nil {
 		return nil, fmt.Errorf("error merging array items: %w", err)
 	}
+	if err := addNestedOwnProperties(&merged, []*openapi3.SchemaRef{i1, i2}); err != nil {
+		return nil, err
+	}
 	return openapi3.NewSchemaRef("", &merged), nil
+}
+
+// addNestedOwnProperties adds to schema, the merge of allOf, the properties
+// that a member declares next to an allOf of its own, at any depth.
+// mergeOpenapiSchemas replaces such a member with the merge of its allOf,
+// which loses them: allOf over a $ref to `{properties: {b}, allOf: [$ref
+// Named]}` generated a struct without b.
+//
+// The fix only adds fields to a struct that already has some:
+//   - Only properties that schema doesn't have are added. Where another member
+//     declares the same property, its schema won before and still does.
+//   - Where several of the dropped declarations name the same property, the
+//     later one wins, as in the merge. A member's own properties come after
+//     its allOf's, the way the schema's own properties are merged last.
+//   - An added property is required when any of the dropped declarations
+//     requires it. Their required lists don't touch properties that were
+//     already there, which would turn optional fields into required ones.
+//   - Nothing is added to a schema without properties: v2 generates that as a
+//     map, from additionalProperties, or as a union, and adding a property
+//     would turn it into a struct, breaking code that uses the map. Such a
+//     schema keeps losing the properties, deliberately: v2 must not change
+//     types that existing code relies on. schema-merging-behavior v3 keeps
+//     them.
+//   - Nothing is added under old-allof-sibling-merging, which keeps the output
+//     that discards a schema's own properties next to its allOf.
+func addNestedOwnProperties(schema *openapi3.Schema, allOf []*openapi3.SchemaRef) error {
+	if globalState.options.Compatibility.OldAllOfSiblingMerging || len(schema.Properties) == 0 {
+		return nil
+	}
+	added := make(map[string]*openapi3.SchemaRef)
+	required := make(map[string]bool)
+	seen := make(map[string]bool)
+	var visit func(ref *openapi3.SchemaRef) error
+	visit = func(ref *openapi3.SchemaRef) error {
+		if ref == nil || ref.Value == nil {
+			return nil
+		}
+		if ref.Ref != "" {
+			if seen[ref.Ref] {
+				return nil
+			}
+			seen[ref.Ref] = true
+		}
+		v, err := valueWithPropagatedRef(ref)
+		if err != nil {
+			return err
+		}
+		if len(v.AllOf) == 0 {
+			return nil
+		}
+		for _, m := range v.AllOf {
+			if err := visit(m); err != nil {
+				return err
+			}
+		}
+		for name, p := range v.Properties {
+			if _, ok := schema.Properties[name]; !ok {
+				added[name] = p
+			}
+		}
+		for _, name := range v.Required {
+			required[name] = true
+		}
+		return nil
+	}
+	for _, m := range allOf {
+		if err := visit(m); err != nil {
+			return err
+		}
+	}
+	for _, name := range SortedMapKeys(added) {
+		schema.Properties[name] = added[name]
+		if required[name] && !slices.Contains(schema.Required, name) {
+			schema.Required = append(slices.Clone(schema.Required), name)
+		}
+	}
+	return nil
 }
 
 // hasStructuralSiblingsV2 reports whether a schema with allOf also carries
@@ -592,18 +660,8 @@ func isConstraintOnlyUnionV2(branches openapi3.SchemaRefs) bool {
 // composition merged into one Go type by merge, with the parent's structural
 // siblings merged in, its description kept, and a recursive composition named.
 func generateAllOfV2(ctx genContext, schema *openapi3.Schema, path []string, extensions map[string]any, skipOptionalPointer bool, merge schemaMerger) (Schema, error) {
-	// An enclosing frame is already generating this composition. Refer to
-	// the type it is building instead of inlining the body a second time,
-	// which is what used to recurse until the stack ran out (issue #2542).
-	if frame, ok := ctx.inProgress[schema]; ok {
-		frame.consulted = true
-		return Schema{
-			GoType:              frame.typeName,
-			RefType:             frame.typeName,
-			DefineViaAlias:      true,
-			SkipOptionalPointer: skipOptionalPointer,
-			OAPISchema:          schema,
-		}, nil
+	if alias, ok := ctx.inProgressAllOf(schema, skipOptionalPointer); ok {
+		return alias, nil
 	}
 	var err error
 	frame := &mergeFrame{typeName: ctx.typeName(path)}
@@ -644,57 +702,11 @@ func generateAllOfV2(ctx genContext, schema *openapi3.Schema, path []string, ext
 	if err != nil {
 		return Schema{}, fmt.Errorf("error merging schemas: %w", err)
 	}
-	mergedSchema.OAPISchema = schema
-	// Description is metadata, not a structural constraint, so it
-	// doesn't go through the merge. Copy it from the parent when set.
-	// Issue #1960. Gated on the same compatibility flag as the
-	// sibling-merge above.
-	if mergeSiblings && schema.Description != "" {
-		mergedSchema.Description = schema.Description
+	// The parent's description is kept under the same compatibility flag as
+	// its siblings.
+	description := ""
+	if mergeSiblings {
+		description = schema.Description
 	}
-	// x-go-type on the parent is handled by the early return above
-	// (combined extensions). For x-go-type-skip-optional-pointer, only
-	// override the merged value when the parent sets it explicitly —
-	// otherwise we would clobber the value MergeSchemas computed from
-	// the decorator idiom (an inline allOf member that carries the
-	// extension; see mergeSchemasV2 and issue #1957).
-	if _, ok := extensions[extPropGoTypeSkipOptionalPointer]; ok {
-		mergedSchema.SkipOptionalPointer = skipOptionalPointer
-	}
-	// Something underneath referred back to this composition, so it has
-	// to resolve to a named type. When nothing did — the overwhelmingly
-	// common case — fall through with the anonymous struct this has
-	// always produced, byte for byte.
-	if frame.consulted {
-		switch {
-		case mergedSchema.RefType == frame.typeName:
-			// Already defined under the promised name: generating the
-			// merged body hoisted it (generate-types-for-anonymous-schemas).
-		case mergedSchema.RefType != "":
-			// The name handed to the recursive members is not the one the
-			// type ended up with, so those references would dangle. Fail
-			// loudly rather than emit code that does not compile.
-			return Schema{}, fmt.Errorf(
-				"recursive allOf composition at %s was generated as %q but its self-references were resolved to %q",
-				strings.Join(ctx.nameHint, "."), mergedSchema.RefType, frame.typeName)
-		case ctx.rootPosition:
-			// GenerateTypesForSchemas names this one, from renameSchema
-			// rather than from the path, so the name handed to the
-			// members above is not the one it will be defined under.
-			// Believed unreachable (see genContext.rootPosition); say so
-			// rather than emit code that will not compile.
-			return Schema{}, fmt.Errorf(
-				"recursive allOf composition at the root of %s is not supported: give the composition its own schema",
-				strings.Join(ctx.nameHint, "."))
-		default:
-			typeDef := TypeDefinition{
-				TypeName: frame.typeName,
-				JsonName: strings.Join(ctx.nameHint, "."),
-				Schema:   mergedSchema,
-			}
-			mergedSchema.AdditionalTypes = append(mergedSchema.AdditionalTypes, typeDef)
-			mergedSchema.RefType = frame.typeName
-		}
-	}
-	return mergedSchema, nil
+	return finishAllOf(ctx, frame, schema, mergedSchema, description, extensions, skipOptionalPointer)
 }
