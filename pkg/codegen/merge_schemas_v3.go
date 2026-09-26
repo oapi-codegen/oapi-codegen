@@ -16,13 +16,27 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 )
 
-func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
+// allOfOptions are what the merge of one allOf needs to know about it, which
+// generateAllOfV3 passes to mergeSchemasV3 rather than leaving on the context,
+// where they would reach the generation of the merged result too.
+type allOfOptions struct {
+	// owner is the schema whose allOf is merged (see listsFlattened).
+	owner *openapi3.Schema
+	// madeUp is set for an allOf the merge made for a position several
+	// members declare, rather than one in the spec (see genContext.madeUp).
+	madeUp bool
+	// unionEnums merges the members' enums into their union rather than
+	// their intersection (x-oapi-codegen-enum-merge: union).
+	unionEnums bool
+}
+
+func mergeSchemasV3(ctx genContext, opts allOfOptions, allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
 	n := len(allOf)
 
 	// A child that is only an allOf of the parent that lists it is not the
 	// parent's union: it is merged, which leaves the list out (see
 	// listsFlattened).
-	if n == 1 && !listsComposition(ctx, refSchemaFor(allOf[0])) {
+	if n == 1 && !listsComposition(opts.owner, refSchemaFor(allOf[0])) {
 		return generateGoSchema(ctx, allOf[0], path)
 	}
 
@@ -39,7 +53,7 @@ func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 	// Likewise a $ref that the other members only annotate, the way OpenAPI
 	// 3.0 puts anything next to a $ref: `allOf: [$ref A, {nullable: true}]`
 	// is A, not a copy of A.
-	if member := annotatedRefMember(ctx, allOf); member != nil {
+	if member := annotatedRefMember(ctx, opts.owner, allOf); member != nil {
 		return generateAnnotated(ctx, member, allOf, path)
 	}
 
@@ -55,7 +69,7 @@ func mergeSchemasV3(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 		}
 	}
 
-	merged := newAllOfMerge(ctx)
+	merged := newAllOfMerge(ctx, opts)
 	merged.composition = &openapi3.Schema{AllOf: allOf}
 	// The $refs of the members merged so far, so that a nested allOf that
 	// refers back to one is not flattened into itself.
@@ -238,7 +252,7 @@ func compositionMembers(s *openapi3.Schema) []*openapi3.SchemaRef {
 // an alias of the $ref. When the $ref leads back to the component, through
 // compositions that are aliases in turn, that alias would be an alias of
 // itself, which Go rejects, so such a composition is merged instead.
-func annotatedRefMember(ctx genContext, allOf []*openapi3.SchemaRef) *openapi3.SchemaRef {
+func annotatedRefMember(ctx genContext, owner *openapi3.Schema, allOf []*openapi3.SchemaRef) *openapi3.SchemaRef {
 	for _, m := range allOf {
 		target := refSchemaFor(m)
 		if target == nil {
@@ -249,7 +263,7 @@ func annotatedRefMember(ctx genContext, allOf []*openapi3.SchemaRef) *openapi3.S
 				return nil
 			}
 		}
-		if (ctx.rootPosition && aliasesBack(ctx, target)) || listsComposition(ctx, target) {
+		if (ctx.rootPosition && aliasesBack(ctx, target)) || listsComposition(owner, target) {
 			return nil
 		}
 		return m
@@ -260,12 +274,12 @@ func annotatedRefMember(ctx genContext, allOf []*openapi3.SchemaRef) *openapi3.S
 // listsComposition reports whether target's oneOf or anyOf lists the
 // composition being merged: target is the parent of a child that is an allOf
 // of it (see listsFlattened), so the child isn't target's type.
-func listsComposition(ctx genContext, target *openapi3.SchemaRef) bool {
-	if target == nil || target.Value == nil || ctx.composing == nil {
+func listsComposition(owner *openapi3.Schema, target *openapi3.SchemaRef) bool {
+	if target == nil || target.Value == nil || owner == nil {
 		return false
 	}
 	for _, b := range slices.Concat(target.Value.OneOf, target.Value.AnyOf) {
-		if b != nil && b.Value == ctx.composing {
+		if b != nil && b.Value == owner {
 			return true
 		}
 	}
@@ -722,6 +736,8 @@ type allOfMerge struct {
 	// madeUp is set when the composition is one the merge made for a
 	// position several members declare, rather than one in the spec.
 	madeUp bool
+	// owner is the schema whose allOf is merged (see listsFlattened).
+	owner *openapi3.Schema
 	// composition is the allOf being merged. A member's oneOf or anyOf may
 	// restate the type another member declares (see isConstraintOnlyUnionV3).
 	composition *openapi3.Schema
@@ -873,7 +889,7 @@ func (m *allOfMerge) listsFlattened(branches openapi3.SchemaRefs) bool {
 		if b == nil || b.Value == nil {
 			continue
 		}
-		if b.Value == m.ctx.composing || m.flattening[b.Value] {
+		if b.Value == m.owner || m.flattening[b.Value] {
 			return true
 		}
 	}
@@ -886,11 +902,12 @@ type labeledSchema struct {
 	label string
 }
 
-func newAllOfMerge(ctx genContext) *allOfMerge {
+func newAllOfMerge(ctx genContext, opts allOfOptions) *allOfMerge {
 	return &allOfMerge{
 		ctx:        ctx,
-		unionEnums: ctx.unionEnums,
-		madeUp:     ctx.mergingMadeUp,
+		owner:      opts.owner,
+		unionEnums: opts.unionEnums,
+		madeUp:     opts.madeUp,
 		schema:     openapi3.Schema{Extensions: map[string]any{}},
 		from:       map[string]string{},
 		properties: map[string][]labeledSchema{},
@@ -917,8 +934,7 @@ func (m *allOfMerge) add(member *openapi3.SchemaRef, v openapi3.Schema, label st
 			}
 		}
 		if union != m.unionEnums {
-			own := newAllOfMerge(m.ctx)
-			own.unionEnums = union
+			own := newAllOfMerge(m.ctx, allOfOptions{owner: m.owner, madeUp: m.madeUp, unionEnums: union})
 			own.composition = m.composition
 			own.flattening = m.flattening
 			if err := own.add(member, v, label, seen); err != nil {
@@ -1496,11 +1512,9 @@ func generateAllOfV3(ctx genContext, schema *openapi3.Schema, path []string, ext
 		return alias, nil
 	}
 	var err error
-	ctx.mergingMadeUp = ctx.madeUp[schema]
-	ctx.composing = schema
-	ctx.unionEnums = false
+	opts := allOfOptions{owner: schema, madeUp: ctx.madeUp[schema]}
 	if raw, ok := extensions[extOapiCodegenEnumMerge]; ok {
-		if ctx.unionEnums, err = extParseEnumMerge(raw); err != nil {
+		if opts.unionEnums, err = extParseEnumMerge(raw); err != nil {
 			return Schema{}, fmt.Errorf("invalid value for %q: %w", extOapiCodegenEnumMerge, err)
 		}
 	}
@@ -1529,7 +1543,7 @@ func generateAllOfV3(ctx genContext, schema *openapi3.Schema, path []string, ext
 		}
 	}
 	// A single member, such as `allOf: [$ref X]`, is that member's type.
-	mergedSchema, err := mergeSchemasV3(ctx, members, path)
+	mergedSchema, err := mergeSchemasV3(ctx, opts, members, path)
 	if err != nil {
 		return Schema{}, fmt.Errorf("error merging schemas: %w", err)
 	}

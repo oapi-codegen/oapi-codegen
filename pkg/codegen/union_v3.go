@@ -61,7 +61,7 @@ func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema
 		}
 		members = [][]UnionElement{m}
 	}
-	if !globalState.options.OutputOptions.LenientUnionAccessors {
+	if !ctx.run.lenientUnionAccessors {
 		return closeUnionVariants(ctx, outSchema, components, members)
 	}
 	return nil
@@ -522,6 +522,7 @@ func (ctx genContext) variantKeys(b *openapi3.SchemaRef) ([]string, error) {
 	ctx.variantKeyCache[b.Value] = nil
 	generate := func(s *openapi3.Schema) (Schema, error) {
 		fresh := newGenContext(ctx.nameHint)
+		fresh.run = ctx.run
 		fresh.variantKeyCache = ctx.variantKeyCache
 		return generateGoSchema(fresh, &openapi3.SchemaRef{Value: s}, ctx.nameHint)
 	}

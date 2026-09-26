@@ -69,7 +69,7 @@ func collapseNullableUnion(ctx genContext, outSchema *Schema, sole *openapi3.Sch
 // outSchema's union members, the way the schema-merging-behavior in effect
 // does. v1 and v2 share v2's code.
 func generateUnions(ctx genContext, outSchema *Schema, schema *openapi3.Schema, path []string) error {
-	if schemaMergingInEffect() == SchemaMergingV3 {
+	if ctx.run.merging == SchemaMergingV3 {
 		return generateUnionsV3(ctx, outSchema, schema, path)
 	}
 	return generateUnionsV2(ctx, outSchema, schema, path)
