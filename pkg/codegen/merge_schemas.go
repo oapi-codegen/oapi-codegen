@@ -101,16 +101,6 @@ func finishAllOf(ctx genContext, frame *mergeFrame, schema *openapi3.Schema, mer
 	return merged, nil
 }
 
-// MergeSchemas merges all the fields in the schemas supplied into one giant
-// schema. The idea is that we merge all fields together into one schema.
-//
-// It starts a fresh generation context; within the package, the allOf code
-// is handed its schemaMerger by generateAllOf instead.
-func MergeSchemas(allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
-	merge := schemaMergerFor(schemaMergingInEffect())
-	return merge(newGenContext(path), allOf, path)
-}
-
 // schemaMergingInEffect returns the schema-merging-behavior of the current
 // run. Generate has already rejected options that don't select one; v2 stands
 // in for them here.
@@ -126,7 +116,8 @@ func schemaMergingInEffect() string {
 type schemaMerger func(ctx genContext, allOf []*openapi3.SchemaRef, path []string) (Schema, error)
 
 // schemaMergerFor returns the allOf merge of a schema-merging-behavior
-// version.
+// version. generateAllOf hands v1's and v2's to generateAllOfV2, which they
+// share; generateAllOfV3 calls v3's directly.
 func schemaMergerFor(version string) schemaMerger {
 	switch version {
 	case SchemaMergingV1:
@@ -149,11 +140,10 @@ func schemaMergerFor(version string) schemaMerger {
 // handed the version's own merge of the members.
 func generateAllOf(ctx genContext, schema *openapi3.Schema, path []string, extensions map[string]any, skipOptionalPointer bool) (Schema, error) {
 	version := schemaMergingInEffect()
-	merge := schemaMergerFor(version)
 	if version == SchemaMergingV3 {
-		return generateAllOfV3(ctx, schema, path, extensions, skipOptionalPointer, merge)
+		return generateAllOfV3(ctx, schema, path, extensions, skipOptionalPointer)
 	}
-	return generateAllOfV2(ctx, schema, path, extensions, skipOptionalPointer, merge)
+	return generateAllOfV2(ctx, schema, path, extensions, skipOptionalPointer, schemaMergerFor(version))
 }
 
 // nonNullTypes returns a type array's entries other than "null".

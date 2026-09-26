@@ -593,10 +593,6 @@ func (d *Discriminator) JSONTag() string {
 	return fmt.Sprintf("`json:\"%s\"`", d.Property)
 }
 
-func (d *Discriminator) PropertyName() string {
-	return SchemaNameToTypeName(d.Property)
-}
-
 // DiscriminatorStamp describes how the generated From*/Merge* union helpers
 // record the discriminator value for one union element.
 //

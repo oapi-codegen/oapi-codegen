@@ -63,7 +63,6 @@ func generateUnionV2(ctx genContext, outSchema *Schema, elements openapi3.Schema
 		return collapseNullableUnion(ctx, outSchema, soleEffective, path)
 	}
 
-	refToGoTypeMap := make(map[string]string)
 	for i, element := range elements {
 		// Skip null-only branches: nullability marker, not a real
 		// union variant. See the collapse comment above for context.
@@ -86,8 +85,6 @@ func generateUnionV2(ctx genContext, outSchema *Schema, elements openapi3.Schema
 				elementSchema.GoType = td.TypeName
 			}
 			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
-		} else {
-			refToGoTypeMap[element.Ref] = elementSchema.GoType
 		}
 
 		if discriminator != nil {

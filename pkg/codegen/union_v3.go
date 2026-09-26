@@ -233,7 +233,6 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 		return nil, collapseNullableUnion(ctx, outSchema, soleEffective, path)
 	}
 
-	refToGoTypeMap := make(map[string]string)
 	var members []UnionElement
 	// inlineKeys are the discriminator values inline variants declare (see
 	// inlineDiscriminatorValue), which no other variant may also map to.
@@ -262,8 +261,6 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 				elementSchema.GoType = td.TypeName
 			}
 			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
-		} else {
-			refToGoTypeMap[element.Ref] = elementSchema.GoType
 		}
 
 		// An inline variant has no name for the mapping to use. It can still
