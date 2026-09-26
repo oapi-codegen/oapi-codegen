@@ -40,7 +40,7 @@ func schemaMergerFor(version string) schemaMerger {
 		}
 	case SchemaMergingV2:
 		return mergeSchemasV2
-	case schemaMergingV3:
+	case SchemaMergingV3:
 		return mergeSchemasV3
 	default:
 		// schemaMergingVersion only returns the versions above; a new one
@@ -55,7 +55,7 @@ func schemaMergerFor(version string) schemaMerger {
 func generateAllOf(ctx genContext, schema *openapi3.Schema, path []string, extensions map[string]any, skipOptionalPointer bool) (Schema, error) {
 	version := schemaMergingInEffect()
 	merge := schemaMergerFor(version)
-	if version == schemaMergingV3 {
+	if version == SchemaMergingV3 {
 		return generateAllOfV3(ctx, schema, path, extensions, skipOptionalPointer, merge)
 	}
 	return generateAllOfV2(ctx, schema, path, extensions, skipOptionalPointer, merge)
