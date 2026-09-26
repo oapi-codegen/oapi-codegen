@@ -35,9 +35,7 @@ type schemaMerger func(ctx genContext, allOf []*openapi3.SchemaRef, path []strin
 func schemaMergerFor(version string) schemaMerger {
 	switch version {
 	case SchemaMergingV1:
-		return func(_ genContext, allOf []*openapi3.SchemaRef, path []string) (Schema, error) {
-			return mergeSchemasV1(allOf, path)
-		}
+		return mergeSchemasV1
 	case SchemaMergingV2:
 		return mergeSchemasV2
 	case SchemaMergingV3:
