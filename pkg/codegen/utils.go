@@ -27,6 +27,7 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -1023,11 +1024,8 @@ func PathToTypeName(path []string) string {
 	// same prefix) are unaffected, and callers that use this result
 	// as-is (the various anonymous-schema hoist paths) now also get a
 	// valid identifier.
-	for _, r := range name {
-		if unicode.IsDigit(r) {
-			name = "N" + name
-		}
-		break
+	if r, _ := utf8.DecodeRuneInString(name); unicode.IsDigit(r) {
+		name = "N" + name
 	}
 
 	return name

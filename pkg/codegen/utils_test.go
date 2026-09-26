@@ -986,7 +986,6 @@ func Test_replaceInitialism(t *testing.T) {
 	}
 }
 
-
 func TestValidateStdHTTPPath(t *testing.T) {
 	tests := []struct {
 		path    string
