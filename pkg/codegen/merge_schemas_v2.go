@@ -660,18 +660,8 @@ func isConstraintOnlyUnionV2(branches openapi3.SchemaRefs) bool {
 // composition merged into one Go type by merge, with the parent's structural
 // siblings merged in, its description kept, and a recursive composition named.
 func generateAllOfV2(ctx genContext, schema *openapi3.Schema, path []string, extensions map[string]any, skipOptionalPointer bool, merge schemaMerger) (Schema, error) {
-	// An enclosing frame is already generating this composition. Refer to
-	// the type it is building instead of inlining the body a second time,
-	// which is what used to recurse until the stack ran out (issue #2542).
-	if frame, ok := ctx.inProgress[schema]; ok {
-		frame.consulted = true
-		return Schema{
-			GoType:              frame.typeName,
-			RefType:             frame.typeName,
-			DefineViaAlias:      true,
-			SkipOptionalPointer: skipOptionalPointer,
-			OAPISchema:          schema,
-		}, nil
+	if alias, ok := ctx.inProgressAllOf(schema, skipOptionalPointer); ok {
+		return alias, nil
 	}
 	var err error
 	frame := &mergeFrame{typeName: ctx.typeName(path)}
@@ -712,65 +702,11 @@ func generateAllOfV2(ctx genContext, schema *openapi3.Schema, path []string, ext
 	if err != nil {
 		return Schema{}, fmt.Errorf("error merging schemas: %w", err)
 	}
-	// The composition generated as an alias of another type, such as the
-	// $ref of `allOf: [$ref X]`: remember that type's schema, which
-	// OAPISchema no longer points to, so generatesMarshalJSON can tell that X
-	// has a generated MarshalJSON, which a strict-server envelope has to
-	// delegate to.
-	if mergedSchema.DefineViaAlias && mergedSchema.OAPISchema != nil && mergedSchema.OAPISchema != schema {
-		mergedSchema.aliasOf = mergedSchema.OAPISchema
+	// The parent's description is kept under the same compatibility flag as
+	// its siblings.
+	description := ""
+	if mergeSiblings {
+		description = schema.Description
 	}
-	mergedSchema.OAPISchema = schema
-	// Description is metadata, not a structural constraint, so it
-	// doesn't go through the merge. Copy it from the parent when set.
-	// Issue #1960. Gated on the same compatibility flag as the
-	// sibling-merge above.
-	if mergeSiblings && schema.Description != "" {
-		mergedSchema.Description = schema.Description
-	}
-	// x-go-type on the parent is handled by the early return above
-	// (combined extensions). For x-go-type-skip-optional-pointer, only
-	// override the merged value when the parent sets it explicitly —
-	// otherwise we would clobber the value MergeSchemas computed from
-	// the decorator idiom (an inline allOf member that carries the
-	// extension; see mergeSchemasV2 and issue #1957).
-	if _, ok := extensions[extPropGoTypeSkipOptionalPointer]; ok {
-		mergedSchema.SkipOptionalPointer = skipOptionalPointer
-	}
-	// Something underneath referred back to this composition, so it has
-	// to resolve to a named type. When nothing did — the overwhelmingly
-	// common case — fall through with the anonymous struct this has
-	// always produced, byte for byte.
-	if frame.consulted {
-		switch {
-		case mergedSchema.RefType == frame.typeName:
-			// Already defined under the promised name: generating the
-			// merged body hoisted it (generate-types-for-anonymous-schemas).
-		case mergedSchema.RefType != "":
-			// The name handed to the recursive members is not the one the
-			// type ended up with, so those references would dangle. Fail
-			// loudly rather than emit code that does not compile.
-			return Schema{}, fmt.Errorf(
-				"recursive allOf composition at %s was generated as %q but its self-references were resolved to %q",
-				strings.Join(ctx.nameHint, "."), mergedSchema.RefType, frame.typeName)
-		case ctx.rootPosition:
-			// GenerateTypesForSchemas names this one, from renameSchema
-			// rather than from the path, so the name handed to the
-			// members above is not the one it will be defined under.
-			// Believed unreachable (see genContext.rootPosition); say so
-			// rather than emit code that will not compile.
-			return Schema{}, fmt.Errorf(
-				"recursive allOf composition at the root of %s is not supported: give the composition its own schema",
-				strings.Join(ctx.nameHint, "."))
-		default:
-			typeDef := TypeDefinition{
-				TypeName: frame.typeName,
-				JsonName: strings.Join(ctx.nameHint, "."),
-				Schema:   mergedSchema,
-			}
-			mergedSchema.AdditionalTypes = append(mergedSchema.AdditionalTypes, typeDef)
-			mergedSchema.RefType = frame.typeName
-		}
-	}
-	return mergedSchema, nil
+	return finishAllOf(ctx, frame, schema, mergedSchema, description, extensions, skipOptionalPointer)
 }
