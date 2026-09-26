@@ -224,59 +224,13 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 		}
 	}
 
-	// First pass: count effective (non-null) branches. In OpenAPI 3.1, a
-	// bare `{"type": "null"}` branch in anyOf/oneOf is a nullability
-	// marker, not a real union variant -- there's no Go type that
-	// corresponds to "only the JSON value null". The parent schema's
-	// nullability is captured by schemaIsNullable, which inspects
-	// anyOf/oneOf for the same idiom and wraps the result in a pointer
-	// at the call site.
-	effectiveCount := 0
-	hadNullBranch := false
-	var soleEffective *openapi3.SchemaRef
-	for _, e := range elements {
-		if e != nil && isNullTypeSchema(e.Value) {
-			hadNullBranch = true
-			continue
-		}
-		effectiveCount++
-		if soleEffective == nil {
-			soleEffective = e
-		}
-	}
-
-	// Collapse: if filtering out null branches leaves exactly one
-	// effective branch and there is no discriminator, the schema is
-	// semantically equivalent to that single branch (made nullable by
-	// the original null branch). Produce the same Go shape the
-	// type-array idiom would: `anyOf: [{type: string}, {type: "null"}]`
-	// must generate the same `*string` field as `type: ["string",
-	// "null"]`. Without this, the single remaining branch would be
-	// wrapped in a one-variant union type, exposing a needless
-	// `FromX`/`AsX` accessor API.
-	//
-	// We do not collapse when there was no null branch (`anyOf: [{type:
-	// X}]` alone) to avoid changing behavior for existing single-branch
-	// union specs that may rely on the wrapper shape. The narrow
-	// condition keeps this change scoped to the bug fix.
+	// Collapse a union whose only effective branch is made nullable by a
+	// null branch into that branch (see collapseNullableUnion), unless the
+	// union is one of several the schema combines. A union without a null
+	// branch (`anyOf: [{type: X}]` alone) keeps its wrapper shape, as in v2.
+	effectiveCount, hadNullBranch, soleEffective := effectiveBranches(elements)
 	if alone && effectiveCount == 1 && hadNullBranch && discriminator == nil {
-		elementSchema, err := generateGoSchema(ctx.at(path), soleEffective, path)
-		if err != nil {
-			return nil, err
-		}
-		// Inherit the single branch's underlying representation. The
-		// caller will apply nullability (schemaIsNullable returns true
-		// because the original anyOf/oneOf contained a null branch).
-		outSchema.GoType = elementSchema.GoType
-		outSchema.RefType = elementSchema.RefType
-		outSchema.DefineViaAlias = elementSchema.DefineViaAlias
-		outSchema.Properties = elementSchema.Properties
-		outSchema.HasAdditionalProperties = elementSchema.HasAdditionalProperties
-		outSchema.AdditionalPropertiesType = elementSchema.AdditionalPropertiesType
-		outSchema.ArrayType = elementSchema.ArrayType
-		outSchema.SkipOptionalPointer = elementSchema.SkipOptionalPointer
-		outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
-		return nil, nil
+		return nil, collapseNullableUnion(ctx, outSchema, soleEffective, path)
 	}
 
 	refToGoTypeMap := make(map[string]string)
