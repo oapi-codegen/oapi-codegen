@@ -1,7 +1,12 @@
 package responsecast_test
 
 import (
+	"context"
+	"encoding/json"
 	"mime/multipart"
+	"net/http"
+	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -129,5 +134,94 @@ func TestResponseCastAcrossPackages(t *testing.T) {
 		_ = other.GetOtherExample400JSONResponse(v)
 	default:
 		t.Fatalf("unexpected type %T", a)
+	}
+}
+
+type fixedResponseStrictServer struct {
+	response other.GetOtherExampleResponseObject
+}
+
+func (s fixedResponseStrictServer) GetOtherExample(context.Context, other.GetOtherExampleRequestObject) (other.GetOtherExampleResponseObject, error) {
+	return s.response, nil
+}
+
+func (fixedResponseStrictServer) ExternalMultipartResponse(context.Context, other.ExternalMultipartResponseRequestObject) (other.ExternalMultipartResponseResponseObject, error) {
+	return nil, nil
+}
+
+func TestStrictResponseCastJSONWire(t *testing.T) {
+	value := "pointer body"
+	tests := []struct {
+		name      string
+		response  other.GetOtherExampleResponseObject
+		status    int
+		body      any
+		requestID string
+	}{
+		{
+			name:     "object",
+			response: other.GetOtherExample401JSONResponse(base.GetExample401JSONResponse{N401JSONResponse: base.N401JSONResponse{Body: map[string]any{"message": "object"}}}),
+			status:   http.StatusUnauthorized,
+			body:     map[string]any{"message": "object"},
+		},
+		{
+			name:     "array",
+			response: other.GetOtherExample401JSONResponse(base.GetExample401JSONResponse{N401JSONResponse: base.N401JSONResponse{Body: []any{"first", "second"}}}),
+			status:   http.StatusUnauthorized,
+			body:     []any{"first", "second"},
+		},
+		{
+			name:     "scalar",
+			response: other.GetOtherExample401JSONResponse(base.GetExample401JSONResponse{N401JSONResponse: base.N401JSONResponse{Body: "scalar"}}),
+			status:   http.StatusUnauthorized,
+			body:     "scalar",
+		},
+		{
+			name:     "null",
+			response: other.GetOtherExample401JSONResponse(base.GetExample401JSONResponse{N401JSONResponse: base.N401JSONResponse{Body: nil}}),
+			status:   http.StatusUnauthorized,
+			body:     nil,
+		},
+		{
+			name:     "pointer",
+			response: other.GetOtherExample402JSONResponse(base.GetExample402JSONResponse{N402JSONResponse: base.N402JSONResponse{Body: &value}}),
+			status:   http.StatusPaymentRequired,
+			body:     value,
+		},
+		{
+			name: "response header",
+			response: other.GetOtherExample403JSONResponse(base.GetExample403JSONResponse{N403JSONResponse: base.N403JSONResponse{
+				Body:    map[string]any{"message": "with header"},
+				Headers: base.N403ResponseHeaders{XRequestID: "request-id"},
+			}}),
+			status:    http.StatusForbidden,
+			body:      map[string]any{"message": "with header"},
+			requestID: "request-id",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			handler := other.Handler(other.NewStrictHandler(fixedResponseStrictServer{response: tt.response}, nil))
+			w := httptest.NewRecorder()
+			handler.ServeHTTP(w, httptest.NewRequest(http.MethodGet, "/example", nil))
+
+			if w.Code != tt.status {
+				t.Errorf("status = %d, want %d", w.Code, tt.status)
+			}
+			if got := w.Header().Get("Content-Type"); got != "application/json" {
+				t.Errorf("Content-Type = %q, want application/json", got)
+			}
+			if got := w.Header().Get("X-Request-ID"); got != tt.requestID {
+				t.Errorf("X-Request-ID = %q, want %q", got, tt.requestID)
+			}
+			var body any
+			if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
+				t.Fatalf("decode JSON response: %v", err)
+			}
+			if !reflect.DeepEqual(body, tt.body) {
+				t.Errorf("JSON body = %#v, want %#v", body, tt.body)
+			}
+		})
 	}
 }
