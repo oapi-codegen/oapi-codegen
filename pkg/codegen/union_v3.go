@@ -108,8 +108,8 @@ func generateUnionComponents(ctx genContext, outSchema *Schema, components []uni
 			for j := range components {
 				shared = shared || (j != k && slices.Contains(declared[j], key))
 			}
-			if !shared && !slices.Contains(owned[k], key) {
-				owned[k] = append(owned[k], key)
+			if !shared {
+				owned[k] = appendUnique(owned[k], key)
 			}
 		}
 		slices.Sort(owned[k])
@@ -313,19 +313,13 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 		members = append(members, UnionElement(elementSchema.GoType))
 		// The same type can appear twice, e.g. as a member of both an anyOf
 		// and a oneOf; its accessors are generated once.
-		if !slices.Contains(outSchema.UnionElements, UnionElement(elementSchema.GoType)) {
-			outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
-		}
+		outSchema.UnionElements = appendUnique(outSchema.UnionElements, UnionElement(elementSchema.GoType))
 		if discriminated {
 			mappedCount++
-			if !slices.Contains(outSchema.Discriminator.variants, UnionElement(elementSchema.GoType)) {
-				outSchema.Discriminator.variants = append(outSchema.Discriminator.variants, UnionElement(elementSchema.GoType))
-			}
+			outSchema.Discriminator.variants = appendUnique(outSchema.Discriminator.variants, UnionElement(elementSchema.GoType))
 		}
 		for _, name := range propertyNames(element.Value, 0) {
-			if !slices.Contains(outSchema.UnionVariantProperties, name) {
-				outSchema.UnionVariantProperties = append(outSchema.UnionVariantProperties, name)
-			}
+			outSchema.UnionVariantProperties = appendUnique(outSchema.UnionVariantProperties, name)
 		}
 	}
 	slices.Sort(outSchema.UnionVariantProperties)

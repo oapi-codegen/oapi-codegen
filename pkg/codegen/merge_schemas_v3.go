@@ -1034,9 +1034,7 @@ func (m *allOfMerge) add(member *openapi3.SchemaRef, v openapi3.Schema, label st
 	m.schema.AllowEmptyValue = m.schema.AllowEmptyValue || v.AllowEmptyValue
 
 	for _, name := range v.Required {
-		if !slices.Contains(m.schema.Required, name) {
-			m.schema.Required = append(m.schema.Required, name)
-		}
+		m.schema.Required = appendUnique(m.schema.Required, name)
 	}
 
 	for name, p := range v.Properties {
@@ -1183,9 +1181,7 @@ func intersectTypes(a, b []string) []string {
 		default:
 			continue
 		}
-		if !slices.Contains(both, t) {
-			both = append(both, t)
-		}
+		both = appendUnique(both, t)
 	}
 	return both
 }

@@ -1279,3 +1279,11 @@ func normalizeWhitespace(s string) string {
 	s = strings.ReplaceAll(s, "\r", "\n")
 	return strings.TrimRight(s, "\n\r")
 }
+
+// appendUnique appends v to s unless s already has it.
+func appendUnique[S ~[]E, E comparable](s S, v E) S {
+	if slices.Contains(s, v) {
+		return s
+	}
+	return append(s, v)
+}

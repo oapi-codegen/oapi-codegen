@@ -88,11 +88,6 @@ func unionTextKindsAt(branches openapi3.SchemaRefs, depth int) []string {
 		return nil
 	}
 	var kinds []string
-	add := func(kind string) {
-		if !slices.Contains(kinds, kind) {
-			kinds = append(kinds, kind)
-		}
-	}
 	for _, b := range branches {
 		if b == nil || b.Value == nil {
 			return nil
@@ -113,7 +108,7 @@ func unionTextKindsAt(branches openapi3.SchemaRefs, depth int) []string {
 				return nil
 			}
 			for _, kind := range nested {
-				add(kind)
+				kinds = appendUnique(kinds, kind)
 			}
 			continue
 		}
@@ -123,7 +118,7 @@ func unionTextKindsAt(branches openapi3.SchemaRefs, depth int) []string {
 		}
 		switch types[0] {
 		case openapi3.TypeBoolean, openapi3.TypeInteger, openapi3.TypeNumber, openapi3.TypeString:
-			add(types[0])
+			kinds = appendUnique(kinds, types[0])
 		default:
 			return nil
 		}

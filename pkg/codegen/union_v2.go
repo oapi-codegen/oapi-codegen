@@ -107,13 +107,9 @@ func generateUnionV2(ctx genContext, outSchema *Schema, elements openapi3.Schema
 		}
 		// The same type can appear twice, e.g. as a member of both an anyOf
 		// and a oneOf; its accessors are generated once.
-		if !slices.Contains(outSchema.UnionElements, UnionElement(elementSchema.GoType)) {
-			outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
-		}
+		outSchema.UnionElements = appendUnique(outSchema.UnionElements, UnionElement(elementSchema.GoType))
 		for _, name := range propertyNames(element.Value, 0) {
-			if !slices.Contains(outSchema.UnionVariantProperties, name) {
-				outSchema.UnionVariantProperties = append(outSchema.UnionVariantProperties, name)
-			}
+			outSchema.UnionVariantProperties = appendUnique(outSchema.UnionVariantProperties, name)
 		}
 	}
 	slices.Sort(outSchema.UnionVariantProperties)
