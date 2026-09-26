@@ -161,3 +161,23 @@ func TestOutputOptionsValidateStructTags(t *testing.T) {
 	require.Contains(t, problems, "struct-tags")
 	assert.Contains(t, problems["struct-tags"], "invalid struct tag template")
 }
+
+// TestStructTagGeneratorJSONKeys: the keys a json tag template may give a
+// field, over every combination of its flags.
+func TestStructTagGeneratorJSONKeys(t *testing.T) {
+	for name, test := range map[string]struct {
+		template string
+		want     []string
+	}{
+		"default":        {defaultJSONTagTemplate, []string{"card"}},
+		"renamed":        {`{{.FieldName}}_wire{{if .OmitEmpty}},omitempty{{end}}`, []string{"card_wire"}},
+		"by flag":        {`{{if .IsOptional}}opt_{{end}}{{.FieldName}}`, []string{"card", "opt_card"}},
+		"no name":        {`{{if .OmitEmpty}},omitempty{{end}}`, []string{"Card"}},
+		"left off":       {`-`, nil},
+		"a dash for key": {`-,`, []string{"-"}},
+	} {
+		g, err := newStructTagGenerator(StructTagsConfig{Tags: []StructTagTemplate{{Name: "json", Template: test.template}}})
+		require.NoError(t, err, name)
+		assert.Equal(t, test.want, g.jsonKeys("card", "Card"), name)
+	}
+}

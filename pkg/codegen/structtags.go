@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"slices"
+	"strings"
 	"text/template"
 )
 
@@ -113,18 +115,7 @@ func newStructTagGenerator(config StructTagsConfig) (*structTagGenerator, error)
 	g := &structTagGenerator{
 		templates: make([]tagTemplate, 0, len(config.Tags)),
 	}
-	// Keep numFlags in sync with the boolean fields of StructTagInfo.
-	const numFlags = 4
-	probes := make([]StructTagInfo, 0, 1<<numFlags)
-	for mask := 0; mask < 1<<numFlags; mask++ {
-		probes = append(probes, StructTagInfo{
-			FieldName:    "probe",
-			IsOptional:   mask&1 != 0,
-			OmitEmpty:    mask&2 != 0,
-			OmitZero:     mask&4 != 0,
-			NeedsFormTag: mask&8 != 0,
-		})
-	}
+	probes := structTagInfos("probe")
 	for _, tag := range config.Tags {
 		tmpl, err := template.New(tag.Name).Parse(tag.Template)
 		if err != nil {
@@ -139,6 +130,61 @@ func newStructTagGenerator(config StructTagsConfig) (*structTagGenerator, error)
 		g.templates = append(g.templates, tagTemplate{name: tag.Name, tmpl: tmpl})
 	}
 	return g, nil
+}
+
+// structTagInfos returns a StructTagInfo for fieldName with each combination
+// of its boolean fields.
+func structTagInfos(fieldName string) []StructTagInfo {
+	// Keep numFlags in sync with the boolean fields of StructTagInfo.
+	const numFlags = 4
+	infos := make([]StructTagInfo, 0, 1<<numFlags)
+	for mask := 0; mask < 1<<numFlags; mask++ {
+		infos = append(infos, StructTagInfo{
+			FieldName:    fieldName,
+			IsOptional:   mask&1 != 0,
+			OmitEmpty:    mask&2 != 0,
+			OmitZero:     mask&4 != 0,
+			NeedsFormTag: mask&8 != 0,
+		})
+	}
+	return infos
+}
+
+// jsonKeys returns the JSON keys the json tag template may give a field for
+// the property fieldName: the name part of the tag, rendered with every
+// combination of StructTagInfo's boolean fields, since the template may
+// depend on them. A tag without a name leaves encoding/json to use the Go
+// field's name, goFieldName, and a "-" tag leaves the field off the wire.
+func (g *structTagGenerator) jsonKeys(fieldName, goFieldName string) []string {
+	var keys []string
+	for _, t := range g.templates {
+		if t.name != "json" {
+			continue
+		}
+		for _, info := range structTagInfos(fieldName) {
+			var buf bytes.Buffer
+			if t.tmpl.Execute(&buf, info) == nil {
+				if key, ok := jsonTagKey(buf.String(), goFieldName); ok {
+					keys = append(keys, key)
+				}
+			}
+		}
+	}
+	slices.Sort(keys)
+	return slices.Compact(keys)
+}
+
+// jsonTagKey returns the JSON key a json tag gives a field, as encoding/json
+// reads it, and false when the tag leaves the field off the wire.
+func jsonTagKey(tag, goFieldName string) (string, bool) {
+	if tag == "-" {
+		return "", false
+	}
+	key, _, _ := strings.Cut(tag, ",")
+	if key == "" {
+		return goFieldName, true
+	}
+	return key, true
 }
 
 // generateTagsMap renders every configured template for the given field

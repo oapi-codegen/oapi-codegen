@@ -2379,3 +2379,24 @@ func TestPlacedDiscriminator(t *testing.T) {
 		assert.Equal(t, test.want, placedDiscriminator(test.c), name)
 	}
 }
+
+// TestPropertyKeys: the keys a property's field marshals as, from
+// x-oapi-codegen-extra-tags, x-go-json-ignore or the json tag template.
+func TestPropertyKeys(t *testing.T) {
+	options, generator := globalState.options, globalState.schemaFieldTagGenerator
+	t.Cleanup(func() { globalState.options, globalState.schemaFieldTagGenerator = options, generator })
+	globalState.options, globalState.schemaFieldTagGenerator = Configuration{}, nil
+	for name, test := range map[string]struct {
+		extensions map[string]any
+		want       []string
+	}{
+		"template":                {nil, []string{"card_number"}},
+		"extra tag":               {map[string]any{extPropExtraTags: map[string]any{"json": "number,omitempty"}}, []string{"number"}},
+		"extra tag, no name":      {map[string]any{extPropExtraTags: map[string]any{"json": ",omitempty"}}, []string{"CardNumber"}},
+		"extra tag, left off":     {map[string]any{extPropExtraTags: map[string]any{"json": "-"}}, nil},
+		"ignored":                 {map[string]any{extPropGoJsonIgnore: true}, nil},
+		"ignored, extra tag wins": {map[string]any{extPropGoJsonIgnore: true, extPropExtraTags: map[string]any{"json": "number"}}, []string{"number"}},
+	} {
+		assert.Equal(t, test.want, propertyKeys("card_number", test.extensions), name)
+	}
+}

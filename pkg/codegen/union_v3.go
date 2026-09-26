@@ -492,8 +492,8 @@ func closeUnionVariants(outSchema *Schema, components []unionComponent, members 
 // and whether it has `additionalProperties: false`: in the variant itself or
 // in an allOf member however deep, which closes the variant as a whole (see
 // allOfMerge). The keys are the properties of the variant and its allOf
-// members, under both their names and the json tag x-oapi-codegen-extra-tags
-// gives them, and their discriminators' properties.
+// members, under both their names and the keys their fields' json tags give
+// them (see propertyKeys), and their discriminators' properties.
 //
 // ok is false when the keys can't all be known: the variant is opaque (see
 // isOpaqueSchema), or has an opaque allOf member, or it or a member has a
@@ -536,9 +536,7 @@ func declaredVariantKeys(ref *openapi3.SchemaRef) (keys []string, closed, ok boo
 		}
 		for name, p := range n.Properties {
 			keys = append(keys, name)
-			if key, ok := propertyKey(name, combinedSchemaExtensions(p)); ok {
-				keys = append(keys, key)
-			}
+			keys = append(keys, propertyKeys(name, combinedSchemaExtensions(p))...)
 		}
 		if n.Discriminator != nil {
 			keys = append(keys, n.Discriminator.PropertyName)
@@ -551,8 +549,7 @@ func declaredVariantKeys(ref *openapi3.SchemaRef) (keys []string, closed, ok boo
 
 // variantKeys returns the JSON keys a union variant's values can have: the
 // properties it declares, with those of its allOf members however deep, under
-// the names their Go fields marshal as. x-go-json-ignore leaves a property off
-// the wire, and a json tag in x-oapi-codegen-extra-tags renames it.
+// the keys their Go fields marshal as (see propertyKeys).
 func variantKeys(s *openapi3.Schema) []string {
 	var keys []string
 	seen := make(map[*openapi3.Schema]bool)
@@ -563,9 +560,7 @@ func variantKeys(s *openapi3.Schema) []string {
 		}
 		seen[s] = true
 		for name, p := range s.Properties {
-			if key, ok := propertyKey(name, combinedSchemaExtensions(p)); ok {
-				keys = append(keys, key)
-			}
+			keys = append(keys, propertyKeys(name, combinedSchemaExtensions(p))...)
 		}
 		for _, m := range s.AllOf {
 			if m != nil {
@@ -577,29 +572,28 @@ func variantKeys(s *openapi3.Schema) []string {
 	return keys
 }
 
-// propertyKey returns the JSON key a property's Go field marshals as, the way
-// the struct tags are generated (see GenFieldsFromProperties), and false when
-// the field isn't marshaled.
-func propertyKey(name string, extensions map[string]any) (string, bool) {
-	key := name
-	if raw, ok := extensions[extPropGoJsonIgnore]; ok {
-		if ignore, err := extParseGoJsonIgnore(raw); err == nil && ignore {
-			key = "-"
-		}
-	}
+// propertyKeys returns the JSON keys a property's Go field may marshal as,
+// the way GenFieldsFromProperties writes its json tag: a json tag in
+// x-oapi-codegen-extra-tags, else none for x-go-json-ignore, else those of
+// the json tag template (see structTagGenerator.jsonKeys).
+func propertyKeys(name string, extensions map[string]any) []string {
+	goFieldName := Property{JsonFieldName: name, Extensions: extensions}.GoFieldName()
 	if raw, ok := extensions[extPropExtraTags]; ok {
 		if tags, err := extExtraTags(raw); err == nil {
 			if tag, ok := tags["json"]; ok {
-				key, _, _ = strings.Cut(tag, ",")
-				if key == "" {
-					// encoding/json uses the Go field's name; keep the
-					// property's, the nearest we can tell.
-					key = name
+				if key, ok := jsonTagKey(tag, goFieldName); ok {
+					return []string{key}
 				}
+				return nil
 			}
 		}
 	}
-	return key, key != "-"
+	if raw, ok := extensions[extPropGoJsonIgnore]; ok {
+		if ignore, err := extParseGoJsonIgnore(raw); err == nil && ignore {
+			return nil
+		}
+	}
+	return schemaFieldTagGenerator().jsonKeys(name, goFieldName)
 }
 
 // inlineDiscriminatorValue returns the value an inline union variant pins for
