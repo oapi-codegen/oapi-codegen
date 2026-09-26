@@ -27,6 +27,7 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -1010,7 +1011,24 @@ func PathToTypeName(path []string) string {
 	for i, p := range path {
 		path[i] = nameNormalizer(p)
 	}
-	return strings.Join(path, "_")
+	name := strings.Join(path, "_")
+
+	// A path can start with a bare numeric segment, e.g. a numeric HTTP
+	// response status code ("400") being hoisted as part of a longer path
+	// such as ["400", "Errors"]. nameNormalizer does not itself guard
+	// against a leading digit (unlike typeNamePrefix, used by
+	// SchemaNameToTypeName for a plain, unqualified name), so do the same
+	// "prepend N" fix up here, directly on the assembled name, without
+	// otherwise changing its casing or separators — callers already
+	// wrapping this in SchemaNameToTypeName (which would itself add the
+	// same prefix) are unaffected, and callers that use this result
+	// as-is (the various anonymous-schema hoist paths) now also get a
+	// valid identifier.
+	if r, _ := utf8.DecodeRuneInString(name); unicode.IsDigit(r) {
+		name = "N" + name
+	}
+
+	return name
 }
 
 // StringToGoString takes an arbitrary string and converts it to a valid Go string literal,
