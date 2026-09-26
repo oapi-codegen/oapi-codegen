@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -26,6 +27,7 @@ func (s *captureServer) UpdateThing(w http.ResponseWriter, r *http.Request, id a
 	s.body = nil
 	_ = json.NewDecoder(r.Body).Decode(&s.body)
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Echo", fmt.Sprint(id))
 	_ = json.NewEncoder(w).Encode(map[string]any{"id": id})
 }
 
@@ -101,4 +103,28 @@ func TestUnionParamClientRoundTrip(t *testing.T) {
 	var echoed map[string]any
 	require.NoError(t, json.NewDecoder(resp.Body).Decode(&echoed))
 	assert.Equal(t, float64(42), echoed["id"], "response body is plain JSON, so the id comes back as a JSON number")
+}
+
+// The generated ClientWithResponses binds declared response headers through
+// the styled binder with Types, so a union-typed header comes back as the
+// first member that parses.
+func TestUnionResponseHeaderClientBinding(t *testing.T) {
+	capture := &captureServer{}
+	srv := httptest.NewServer(Handler(capture))
+	defer srv.Close()
+
+	client, err := NewClientWithResponses(srv.URL)
+	require.NoError(t, err)
+
+	resp, err := client.UpdateThingWithResponse(context.Background(), 42, nil,
+		UpdateThingJSONRequestBody("x"))
+	require.NoError(t, err)
+	require.NotNil(t, resp.Headers200)
+	assert.Equal(t, int64(42), resp.Headers200.XEcho, "header [integer, string]: integer member wins for a numeric token")
+
+	resp, err = client.UpdateThingWithResponse(context.Background(), "abc", nil,
+		UpdateThingJSONRequestBody("x"))
+	require.NoError(t, err)
+	require.NotNil(t, resp.Headers200)
+	assert.Equal(t, "abc", resp.Headers200.XEcho, "non-numeric token falls to the string member")
 }
