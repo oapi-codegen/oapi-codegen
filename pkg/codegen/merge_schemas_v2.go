@@ -10,8 +10,6 @@ package codegen
 // generating it. New behavior goes into a new version, in files of its own.
 
 import (
-	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"maps"
@@ -426,7 +424,7 @@ func mergeOpenapiSchemasV2(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map
 	} else if s1.AdditionalProperties.Schema != nil {
 		// Two additionalProperties schemas merge only when they are the same
 		// schema, e.g. two members that each allow extra string values.
-		if s2.AdditionalProperties.Schema != nil && !sameSchemaV2(s1.AdditionalProperties.Schema, s2.AdditionalProperties.Schema) {
+		if s2.AdditionalProperties.Schema != nil && !sameSchema(s1.AdditionalProperties.Schema, s2.AdditionalProperties.Schema) {
 			return openapi3.Schema{}, errors.New("merging two schemas with different additional properties, this is unhandled")
 		}
 		result.AdditionalProperties.Schema = s1.AdditionalProperties.Schema
@@ -494,19 +492,6 @@ func mergeTypesV2(t1, t2 *openapi3.Types) *openapi3.Types {
 	return &merged
 }
 
-// sameSchemaV2 reports whether two schema positions describe the same schema:
-// the same $ref, or inline schemas with the same content. kin-openapi's
-// source-location metadata is not part of the JSON encoding, so two identical
-// schemas declared in different places compare equal.
-func sameSchemaV2(r1, r2 *openapi3.SchemaRef) bool {
-	if r1.Ref != "" || r2.Ref != "" {
-		return r1.Ref == r2.Ref
-	}
-	b1, err1 := json.Marshal(r1.Value)
-	b2, err2 := json.Marshal(r2.Value)
-	return err1 == nil && err2 == nil && bytes.Equal(b1, b2)
-}
-
 // mergeItemsV2 merges the array items of two allOf members. A one-sided items
 // carries over, and two different item schemas are merged with the same rules
 // as their parents.
@@ -516,7 +501,7 @@ func mergeItemsV2(i1, i2 *openapi3.SchemaRef, seenSchemaRef map[string]bool) (*o
 		return i2, nil
 	case i2 == nil:
 		return i1, nil
-	case sameSchemaV2(i1, i2):
+	case sameSchema(i1, i2):
 		return i1, nil
 	case (i1.Ref != "" && seenSchemaRef[i1.Ref]) || (i2.Ref != "" && seenSchemaRef[i2.Ref]):
 		// Merging these items would re-enter a schema this merge is already

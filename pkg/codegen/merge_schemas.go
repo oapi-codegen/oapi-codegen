@@ -1,6 +1,8 @@
 package codegen
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -70,4 +72,17 @@ func nonNullTypes(t *openapi3.Types) []string {
 		}
 	}
 	return out
+}
+
+// sameSchema reports whether two schema positions describe the same schema:
+// the same $ref, or inline schemas with the same content. kin-openapi's
+// source-location metadata is not part of the JSON encoding, so two identical
+// schemas declared in different places compare equal.
+func sameSchema(r1, r2 *openapi3.SchemaRef) bool {
+	if r1.Ref != "" || r2.Ref != "" {
+		return r1.Ref == r2.Ref
+	}
+	b1, err1 := json.Marshal(r1.Value)
+	b2, err2 := json.Marshal(r2.Value)
+	return err1 == nil && err2 == nil && bytes.Equal(b1, b2)
 }

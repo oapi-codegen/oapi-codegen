@@ -5,9 +5,7 @@ package codegen
 // copy of v2's (merge_schemas_v2.go).
 
 import (
-	"bytes"
 	"cmp"
-	"encoding/json"
 	"fmt"
 	"maps"
 	"reflect"
@@ -820,7 +818,7 @@ func unionFits(branches openapi3.SchemaRefs, d *openapi3.Discriminator) bool {
 // sameBranches reports whether two lists of union branches are the same.
 func sameBranches(a, b openapi3.SchemaRefs) bool {
 	return slices.EqualFunc(a, b, func(x, y *openapi3.SchemaRef) bool {
-		return x == y || (x != nil && y != nil && sameSchemaV3(x, y))
+		return x == y || (x != nil && y != nil && sameSchema(x, y))
 	})
 }
 
@@ -1086,7 +1084,7 @@ func (m *allOfMerge) subschema(schemas []labeledSchema) *openapi3.SchemaRef {
 
 	var distinct []labeledSchema
 	for _, s := range schemas {
-		i := slices.IndexFunc(distinct, func(d labeledSchema) bool { return d.ref == s.ref || sameSchemaV3(d.ref, s.ref) })
+		i := slices.IndexFunc(distinct, func(d labeledSchema) bool { return d.ref == s.ref || sameSchema(d.ref, s.ref) })
 		switch {
 		case i < 0:
 			distinct = append(distinct, s)
@@ -1401,19 +1399,6 @@ func displayLabel(label string) string {
 // mergeConflict reports two members that no value can satisfy together.
 func mergeConflict(labelA, a, labelB, b, why string) error {
 	return fmt.Errorf("allOf can't merge %s (%s) with %s (%s): %s", displayLabel(labelA), a, displayLabel(labelB), b, why)
-}
-
-// sameSchemaV3 reports whether two schema positions describe the same schema:
-// the same $ref, or inline schemas with the same content. kin-openapi's
-// source-location metadata is not part of the JSON encoding, so two identical
-// schemas declared in different places compare equal.
-func sameSchemaV3(r1, r2 *openapi3.SchemaRef) bool {
-	if r1.Ref != "" || r2.Ref != "" {
-		return r1.Ref == r2.Ref
-	}
-	b1, err1 := json.Marshal(r1.Value)
-	b2, err2 := json.Marshal(r2.Value)
-	return err1 == nil && err2 == nil && bytes.Equal(b1, b2)
 }
 
 // hasStructuralSiblingsV3 reports whether a schema with allOf also has
