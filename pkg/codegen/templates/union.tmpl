@@ -28,6 +28,19 @@ the union data doesn't change then. */ -}}
         }
     }
 {{- end}}
+{{- /* union.stamp assigns the discriminator value a From* or Merge* stamps (a
+DiscriminatorStamp, or nil) to the union struct's own discriminator field, when
+it declares one. */ -}}
+{{define "union.stamp" -}}
+            {{if and . .Property -}}
+                {{if .Property.IsPointer -}}
+                    var discriminator {{.Property.Schema.TypeDecl}} = {{.Literal}}
+                    t.{{.Property.GoFieldName}} = &discriminator
+                {{else -}}
+                    t.{{.Property.GoFieldName}} = {{.Literal}}
+                {{end -}}
+            {{end -}}
+{{- end}}
 {{- /* The union's own template output starts here. */ -}}
 {{range .Types}}
     {{$typeName := .TypeName -}}
@@ -123,14 +136,7 @@ the union data doesn't change then. */ -}}
         // From{{ .Method }} overwrites any union data inside the {{$typeName}} as the provided {{.}}
         {{- end}}
         func (t *{{$typeName}}) From{{ .Method }} (v {{.}}) error {
-            {{if and $stamp $stamp.Property -}}
-                {{if $stamp.Property.IsPointer -}}
-                    var discriminator {{$stamp.Property.Schema.TypeDecl}} = {{$stamp.Literal}}
-                    t.{{$stamp.Property.GoFieldName}} = &discriminator
-                {{else -}}
-                    t.{{$stamp.Property.GoFieldName}} = {{$stamp.Literal}}
-                {{end -}}
-            {{end -}}
+            {{template "union.stamp" $stamp -}}
             b, err := json.Marshal(v)
             {{if $stamp -}}
                 if err != nil {
@@ -161,14 +167,7 @@ the union data doesn't change then. */ -}}
 
         // Merge{{ .Method }} performs a merge with any union data inside the {{$typeName}}, using the provided {{.}}
         func (t *{{$typeName}}) Merge{{ .Method }} (v {{.}}) error {
-            {{if and $stamp $stamp.Property -}}
-                {{if $stamp.Property.IsPointer -}}
-                    var discriminator {{$stamp.Property.Schema.TypeDecl}} = {{$stamp.Literal}}
-                    t.{{$stamp.Property.GoFieldName}} = &discriminator
-                {{else -}}
-                    t.{{$stamp.Property.GoFieldName}} = {{$stamp.Literal}}
-                {{end -}}
-            {{end -}}
+            {{template "union.stamp" $stamp -}}
             b, err := json.Marshal(v)
             if err != nil {
               return err
