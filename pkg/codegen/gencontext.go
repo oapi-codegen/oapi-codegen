@@ -42,7 +42,7 @@ type genContext struct {
 	// cannot name itself, so generateAllOfV2 reports the shape instead of
 	// guessing. No spec is known to reach it — a $ref returns before the
 	// allOf block, and the only other way back to a component's own allOf
-	// node is valueWithPropagatedRefV2's copy, which mergeAllOfV2 flattens
+	// node is valueWithPropagatedRef's copy, which mergeAllOf flattens
 	// rather than handing to generateGoSchema — so this is a diagnostic for
 	// a case believed impossible, not a supported path.
 	rootPosition bool

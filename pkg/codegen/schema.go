@@ -797,7 +797,7 @@ func schemaIsNullable(s *openapi3.Schema) bool {
 // schemaIsNullableRec is schemaIsNullable's implementation, carrying a
 // `seen` set of already-visited schema values so that a cyclic allOf (a
 // $ref member resolving back to an ancestor — the same cycles
-// mergeOpenapiSchemasV2 guards against) cannot cause unbounded recursion.
+// mergeOpenapiSchemas guards against) cannot cause unbounded recursion.
 // The set is allocated lazily: the common case (no allOf) never touches it.
 func schemaIsNullableRec(s *openapi3.Schema, seen map[*openapi3.Schema]bool) bool {
 	if s == nil {
@@ -809,9 +809,9 @@ func schemaIsNullableRec(s *openapi3.Schema, seen map[*openapi3.Schema]bool) boo
 	// way to decorate a referenced schema as nullable (issue #1898). This
 	// is where the flag lives — the outer schema's own Nullable is unset —
 	// so descend into the members. Descent is transitive to match the
-	// transitive allOf flattening in mergeOpenapiSchemasV2, and equally valid
+	// transitive allOf flattening in mergeOpenapiSchemas, and equally valid
 	// under 3.1's type-array idiom, hence checked before the version
-	// branch. mergeOpenapiSchemasV2 unions nullability into the merged type;
+	// branch. mergeOpenapiSchemas unions nullability into the merged type;
 	// this surfaces it at the use site so the field is wrapped in a pointer
 	// / nullable.Nullable[T].
 	for _, member := range s.AllOf {
@@ -1354,7 +1354,7 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 	// whose branches only add constraints, such as
 	// `oneOf: [{required: [email]}, {required: [phone]}]`.
 	if schemaMergingInEffect() == SchemaMergingV3 {
-		schema = withoutConstraintOnlyUnionsV3(schema, nil)
+		schema = withoutConstraintOnlyUnions(schema, nil)
 	}
 
 	// OpenAPI 3.1 enum-via-oneOf: a scalar schema whose oneOf branches

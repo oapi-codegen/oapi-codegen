@@ -22,7 +22,7 @@ import (
 //
 // A schema that combines several unions, an anyOf and a oneOf or an allOf's
 // merge of several, is a value that is one of each union's variants at once
-// (see unionComponent), and generates as generateUnionComponentsV3 describes.
+// (see unionComponent), and generates as generateUnionComponents describes.
 func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema, path []string) error {
 	components := ctx.unionComponents[schema]
 	if components == nil && schema.AnyOf != nil && schema.OneOf != nil {
@@ -47,7 +47,7 @@ func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema
 	var members [][]UnionElement
 	if len(components) > 1 {
 		var err error
-		if members, err = generateUnionComponentsV3(ctx, outSchema, components, path); err != nil {
+		if members, err = generateUnionComponents(ctx, outSchema, components, path); err != nil {
 			return err
 		}
 	} else {
@@ -67,7 +67,7 @@ func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema
 	return nil
 }
 
-// generateUnionComponentsV3 generates a union that combines several (see
+// generateUnionComponents generates a union that combines several (see
 // unionComponent): the variants of each, and for each variant the JSON keys
 // its own union owns, those only its union's variants declare, which From*
 // replaces while keeping the other unions' data (see
@@ -78,7 +78,7 @@ func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema
 // Inline variants are named <path><union><index>, where <union> is OneOf or
 // AnyOf, numbered when there are several of a kind. It returns each union's
 // members, as generateUnionV3 does.
-func generateUnionComponentsV3(ctx genContext, outSchema *Schema, components []unionComponent, path []string) ([][]UnionElement, error) {
+func generateUnionComponents(ctx genContext, outSchema *Schema, components []unionComponent, path []string) ([][]UnionElement, error) {
 	// An opaque variant, from another document or an x-go-type, declares no
 	// keys: its fields aren't ours to read (see isOpaqueSchema).
 	// The discriminator's property is its union's too, even when the variants
@@ -206,7 +206,7 @@ func placedDiscriminator(c unionComponent, variantKeys []string, opaque bool) bo
 // generateUnionV3 generates one oneOf or anyOf into outSchema's union members,
 // and returns this union's members, some of which another union may have
 // added already. alone is false when the union is one of several (see
-// generateUnionComponentsV3), which then isn't collapsed into its only
+// generateUnionComponents), which then isn't collapsed into its only
 // non-null branch.
 func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string, alone bool) ([]UnionElement, error) {
 	if discriminator != nil {

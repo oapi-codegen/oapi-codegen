@@ -280,7 +280,7 @@ func annotates(member, target *openapi3.SchemaRef) bool {
 	// such as `oneOf: [{type: object, required: [email]}, ...]` next to an
 	// object; the member's own lack of a type doesn't make them types.
 	if member != nil && member.Ref == "" && member.Value != nil && target.Value != nil {
-		if v := withoutConstraintOnlyUnionsV3(member.Value, target.Value); v != member.Value {
+		if v := withoutConstraintOnlyUnions(member.Value, target.Value); v != member.Value {
 			member = &openapi3.SchemaRef{Value: v}
 		}
 	}
@@ -535,7 +535,7 @@ func annotatesOnly(ref *openapi3.SchemaRef) bool {
 // JSON names (see shallowTypeKeywords), leaving out a oneOf or anyOf whose
 // branches only add constraints (see isConstraintOnlyUnionV3).
 func typeKeywords(s openapi3.Schema) []string {
-	return shallowTypeKeywords(*withoutConstraintOnlyUnionsV3(&s, nil))
+	return shallowTypeKeywords(*withoutConstraintOnlyUnions(&s, nil))
 }
 
 // shallowTypeKeywords lists the keywords of a schema that shape a Go type, by
@@ -1401,7 +1401,7 @@ func hasStructuralSiblingsV3(s *openapi3.Schema) bool {
 	}
 	// The schema's own oneOf or anyOf may only add constraints to what its
 	// allOf members declare, so judge them against the whole schema.
-	own := *withoutConstraintOnlyUnionsV3(s, s)
+	own := *withoutConstraintOnlyUnions(s, s)
 	own.AllOf = nil
 	return len(shallowTypeKeywords(own)) > 0
 }
@@ -1459,10 +1459,10 @@ func isConstraintOnlyUnionV3(branches openapi3.SchemaRefs, owner *openapi3.Schem
 	return constraints > 0
 }
 
-// withoutConstraintOnlyUnionsV3 returns s without a oneOf or anyOf that only
+// withoutConstraintOnlyUnions returns s without a oneOf or anyOf that only
 // adds constraints to owner, which is s when nil (see
 // isConstraintOnlyUnionV3). v3 generates no union for such a list.
-func withoutConstraintOnlyUnionsV3(s, owner *openapi3.Schema) *openapi3.Schema {
+func withoutConstraintOnlyUnions(s, owner *openapi3.Schema) *openapi3.Schema {
 	if owner == nil {
 		owner = s
 	}
