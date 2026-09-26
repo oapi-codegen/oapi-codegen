@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+# From issue-2539
+package: responsescomponentinlineunion
+output: component_inline_union.gen.go
+generate:
+  models: true
+  client: true
+  std-http-server: true
+  strict-server: true

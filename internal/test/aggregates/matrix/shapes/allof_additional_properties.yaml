@@ -1,0 +1,26 @@
+versions: [v1, v2, v3]
+broken:
+  v1: "v1 drops the members' additionalProperties."
+description: >-
+  allOf over two $refs that each allow the same additionalProperties. Failed
+  with "merging two schemas with additional properties, this is unhandled".
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Named'
+    - $ref: '#/components/schemas/Aged'
+components:
+  Named:
+    type: object
+    required: [name]
+    properties:
+      name: {type: string}
+    additionalProperties: {type: string}
+  Aged:
+    type: object
+    required: [age]
+    properties:
+      age: {type: string}
+    additionalProperties: {type: string}
+samples:
+  - '{"name": "rex", "age": "3"}'
+  - '{"name": "rex", "age": "3", "color": "brown"}'

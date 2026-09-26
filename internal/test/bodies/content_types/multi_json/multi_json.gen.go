@@ -629,7 +629,7 @@ type Test201ApplicationBarPlusJSONResponse struct {
 func (response Test201ApplicationBarPlusJSONResponse) VisitTestResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.BazApplicationBarPlusJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/bar+json")
@@ -645,7 +645,7 @@ type Test201ApplicationFooPlusJSONResponse struct {
 func (response Test201ApplicationFooPlusJSONResponse) VisitTestResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.BazApplicationFooPlusJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/foo+json")
@@ -788,8 +788,7 @@ var swaggerSpec = []string{
 	"ThQZy2bpvnXpKApG0dClNITOSaDYLF1+2DBF/c/dGrdOo/uMHizcNb+4Tc2yVsA4mgsUTzQRxRPBqJ85",
 	"FpReX3feh69n6ve6S5kSZglVhw849HONZJ8QLLDkEFcwmppaXEmNBjJ+7kLGHuz7CeJc8GFOBbTcYCeK",
 	"pfKuc18lUHaiCd1WzSF6Aht3w2CAEkaXAlh4nLWzFgwkJ+uC0nAZiIYrLN4pR5n5Sw/2OK83ZIGqFFlO",
-	"07thuCDLRK/+uFK7v7hfi/ZJlx65yyEpB1hYEfXHw4XxpoJz7xeI7T++sQYW7fzW4bOORp9dMXv8CQAA",
-	"//8=",
+	"07thuCDLRK/+uFK7v7hfi/ZJlx65yyEpB1hYEfXHw4XxpoJz7xeI7T++sQYW7fzW4bOORp9dMXv8GQA=",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

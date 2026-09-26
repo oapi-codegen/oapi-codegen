@@ -838,3 +838,66 @@ paths:
 
 //go:embed test_spec.yaml
 var testOpenAPIDefinition string
+
+// TestDedupeImportLines covers the import block of the rendered imports
+// template: a repeated import line is dropped, anything else is untouched.
+func TestDedupeImportLines(t *testing.T) {
+	src := "package p\n\nimport (\n\t\"time\"\n\n\t\"time\"\n\tfoo \"example.com/foo\"\n\t\"example.com/foo\"\n)\n\n// \"time\"\n// \"time\"\n"
+	want := "package p\n\nimport (\n\t\"time\"\n\n\tfoo \"example.com/foo\"\n\t\"example.com/foo\"\n)\n\n// \"time\"\n// \"time\"\n"
+	assert.Equal(t, want, dedupeImportLines(src))
+}
+
+// TestImportMapGoImportsSorted: GoImports ranges over a map, so without an
+// explicit sort the order of the import lines varied from run to run. gofmt
+// hides that by sorting the import block, but with output-options.skip-fmt the
+// generated file differed between runs of the same binary.
+func TestImportMapGoImportsSorted(t *testing.T) {
+	im := importMap{
+		"h.yaml":       {Name: "externalRef7", Path: "example.com/h"},
+		"a.yaml":       {Name: "externalRef0", Path: "example.com/a"},
+		"current.yaml": {Path: importMappingCurrentPackage},
+		"f.yaml":       {Name: "externalRef5", Path: "example.com/f"},
+		"c.yaml":       {Name: "externalRef2", Path: "example.com/c"},
+		"g.yaml":       {Name: "externalRef6", Path: "example.com/g"},
+		"b.yaml":       {Name: "externalRef1", Path: "example.com/b"},
+		"e.yaml":       {Name: "externalRef4", Path: "example.com/e"},
+		"d.yaml":       {Name: "externalRef3", Path: "example.com/d"},
+		"noalias.yaml": {Path: "example.com/noalias"},
+	}
+	want := []string{
+		`"example.com/noalias"`,
+		`externalRef0 "example.com/a"`,
+		`externalRef1 "example.com/b"`,
+		`externalRef2 "example.com/c"`,
+		`externalRef3 "example.com/d"`,
+		`externalRef4 "example.com/e"`,
+		`externalRef5 "example.com/f"`,
+		`externalRef6 "example.com/g"`,
+		`externalRef7 "example.com/h"`,
+	}
+	// Map iteration order is randomised per range loop, so repeat to make an
+	// accidental sorted order vanishingly unlikely.
+	for range 20 {
+		assert.Equal(t, want, im.GoImports())
+	}
+}
+
+// TestXGoTypeImportOfTemplatePackage: an x-go-type-import of a package
+// the imports template already imports, such as time, was emitted twice and
+// did not compile.
+func TestXGoTypeImportOfTemplatePackage(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    When:
+      type: string
+      format: date-time
+      x-go-type: time.Time
+      x-go-type-import:
+        path: time
+`
+	code := generateSpec(t, spec)
+	assert.Equal(t, 1, strings.Count(code, `"time"`), code)
+}

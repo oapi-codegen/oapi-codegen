@@ -5,3 +5,8 @@ generate:
   models: true
 output-options:
   skip-prune: true
+compatibility:
+  # EnumUnion and EnumUnion2 combine enums with allOf, which v2 merges into
+  # their union. Later schema-merging-behavior versions take the values both
+  # allow, and reject EnumUnion2, where there are none; this tests v2's output.
+  schema-merging-behavior: v2

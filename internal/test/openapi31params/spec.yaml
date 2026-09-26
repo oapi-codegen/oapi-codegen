@@ -1,0 +1,63 @@
+# ==========================================================================
+# Category: openapi31params
+# Tests:    OpenAPI 3.1 multi-type union parameters BINDING end-to-end — the
+#           generator emitting the runtime's Types option so union-typed
+#           (`any`) parameters bind instead of failing every request.
+#
+# Companion to openapi31/, which covers the models-only lowering of unions
+# to `any`. This suite needs paths and a server, so it lives separately:
+# openapi31/ is deliberately models-only.
+# ==========================================================================
+openapi: 3.1.0
+info:
+  title: openapi31params (3.1 multi-type union parameter binding)
+  version: "1.0.0"
+  description: |
+    Exercises multi-type unions in every parameter position the runtime
+    binds: path, query, and header, plus a union request/response body.
+    Each union parameter lowers to `any`, and the generated bind calls
+    carry Types so runtime >= v1.7.0 picks the first member that parses
+    (boolean, integer, number, string).
+paths:
+  /things/{id}:
+    post:
+      operationId: updateThing
+      parameters:
+        # Path params are always required. A string-or-integer ID is the
+        # motivating real-world shape.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: [string, integer]
+        # Optional query union; adds boolean to cover the full scalar walk.
+        - name: filter
+          in: query
+          schema:
+            type: [string, number, boolean]
+        # Nullable union: the "null" entry is the 3.1 nullability marker,
+        # not a member, and must be stripped from the emitted Types list.
+        - name: limit
+          in: query
+          schema:
+            type: [integer, string, "null"]
+        # Header position binds through the styled binder too.
+        - name: X-Trace
+          in: header
+          schema:
+            type: [integer, string]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: [string, number]
+      responses:
+        "200":
+          description: echo of what was bound
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: [string, integer]

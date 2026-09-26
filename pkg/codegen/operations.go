@@ -75,6 +75,14 @@ func (pd ParameterDefinition) ZeroValueIsNil() bool {
 		return true
 	}
 
+	// `any` parameters (typeless schemas, bare `type: "null"`, and OpenAPI
+	// 3.1 multi-type unions) have nil as their zero value. Without the nil
+	// check the generated client would pass a nil interface to
+	// StyleParamWithOptions, which panics reflecting on it.
+	if pd.Schema.GoType == "any" {
+		return true
+	}
+
 	return strings.HasPrefix(pd.Schema.GoType, "map[")
 }
 
@@ -180,15 +188,31 @@ func (pd *ParameterDefinition) Explode() bool {
 	return *pd.Spec.Explode
 }
 
-// SchemaType returns the first OpenAPI type string for this parameter's schema (e.g. "string", "integer"),
-// or empty string if unavailable.
+// SchemaType returns the single OpenAPI type of this parameter's schema
+// (e.g. "string", "integer") with the OpenAPI 3.1 "null" nullability marker
+// stripped, or empty string when the schema declares no type or a
+// multi-type union (unions are carried by SchemaTypes instead).
 func (pd *ParameterDefinition) SchemaType() string {
 	if pd.Spec.Schema != nil && pd.Spec.Schema.Value != nil && pd.Spec.Schema.Value.Type != nil {
-		if s := pd.Spec.Schema.Value.Type.Slice(); len(s) > 0 {
+		t := schemaPrimaryType(pd.Spec.Schema.Value.Type)
+		if s := t.Slice(); len(s) == 1 {
 			return s[0]
 		}
 	}
 	return ""
+}
+
+// SchemaTypes returns the members of this parameter's OpenAPI 3.1
+// multi-type union (e.g. ["string", "integer"]) with the "null" nullability
+// marker stripped, or nil when the schema declares at most one non-null
+// type. Non-nil only for genuine unions, where the generated bind call
+// passes the list to the runtime (Types option, runtime v1.7.0+) so the
+// value can bind into the parameter's `any` destination.
+func (pd *ParameterDefinition) SchemaTypes() []string {
+	if pd.Spec.Schema == nil || pd.Spec.Schema.Value == nil {
+		return nil
+	}
+	return schemaUnionTypes(pd.Spec.Schema.Value.Type)
 }
 
 // SchemaFormat returns the OpenAPI format string for this parameter's schema (e.g. "byte", "date-time"),
@@ -255,14 +279,43 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 // descriptors into a flat list. This makes it a lot easier to traverse the
 // data in the template engine.
 func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterDefinition, error) {
+	return describeParameters(params, path, false)
+}
+
+// describeParameters is DescribeParameters for operation parameters (shared
+// false) and for parameters shared by a whole path item (shared true), whose
+// path carries no operation name.
+func describeParameters(params openapi3.Parameters, path []string, shared bool) ([]ParameterDefinition, error) {
 	outParams := make([]ParameterDefinition, 0, len(params))
 	for _, paramOrRef := range params {
 		param := paramOrRef.Value
 
-		goType, err := paramToGoType(param, append(path, param.Name))
+		paramPath := append(slices.Clone(path), param.Name)
+		goType, err := paramToGoType(param, paramPath)
 		if err != nil {
 			return nil, fmt.Errorf("error generating type for param (%s): %s",
 				param.Name, err)
+		}
+
+		// An inline oneOf/anyOf parameter is a union struct whose only field
+		// is unexported, so left anonymous it could be neither named nor
+		// built outside the generated package (issue #2560). Name it the way
+		// its members already are, <Op>Params<Name> next to
+		// <Op>Params<Name>0, so it gets the union's methods. A parameter
+		// shared by a path item has no operation name to start from, so its
+		// members are just <Name>0; the union is <Name>Param, since a bare
+		// <Name> such as Id is likely to be a schema's name too.
+		if len(goType.UnionElements) > 0 && goType.RefType == "" && !IsGoTypeReference(paramOrRef.Ref) {
+			typeName := SchemaNameToTypeName(PathToTypeName(slices.Clone(paramPath)))
+			if shared {
+				typeName += "Param"
+			}
+			goType.AdditionalTypes = append(goType.AdditionalTypes, TypeDefinition{
+				TypeName: typeName,
+				JsonName: strings.Join(paramPath, "."),
+				Schema:   goType,
+			})
+			goType.RefType = typeName
 		}
 
 		pd := ParameterDefinition{
@@ -508,7 +561,7 @@ func describeSharedParameters(params openapi3.Parameters, source, token string, 
 		if collides {
 			path = []string{token}
 		}
-		described, err := DescribeParameters(openapi3.Parameters{paramRef}, path)
+		described, err := describeParameters(openapi3.Parameters{paramRef}, path, true)
 		if err != nil {
 			return nil, err
 		}
@@ -1500,15 +1553,28 @@ func (h ResponseHeaderDefinition) IsNullable() bool {
 	return globalState.options.OutputOptions.NullableType && h.Nullable
 }
 
-// SchemaType returns the first OpenAPI type string for this header's schema
-// (e.g. "string", "integer"), or empty string if unavailable.
+// SchemaType returns the single OpenAPI type of this header's schema
+// (e.g. "string", "integer") with the OpenAPI 3.1 "null" nullability marker
+// stripped, or empty string when the schema declares no type or a
+// multi-type union (unions are carried by SchemaTypes instead).
 func (h ResponseHeaderDefinition) SchemaType() string {
 	if h.Schema.OAPISchema != nil && h.Schema.OAPISchema.Type != nil {
-		if s := h.Schema.OAPISchema.Type.Slice(); len(s) > 0 {
+		t := schemaPrimaryType(h.Schema.OAPISchema.Type)
+		if s := t.Slice(); len(s) == 1 {
 			return s[0]
 		}
 	}
 	return ""
+}
+
+// SchemaTypes returns the members of this header's OpenAPI 3.1 multi-type
+// union with the "null" nullability marker stripped, or nil when the schema
+// declares at most one non-null type. See ParameterDefinition.SchemaTypes.
+func (h ResponseHeaderDefinition) SchemaTypes() []string {
+	if h.Schema.OAPISchema == nil {
+		return nil
+	}
+	return schemaUnionTypes(h.Schema.OAPISchema.Type)
 }
 
 // SchemaFormat returns the OpenAPI format string for this header's schema
@@ -2126,6 +2192,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 				td := TypeDefinition{
 					TypeName: bodyTypeName,
 					Schema:   bodySchema,
+					Comment:  fmt.Sprintf("// %s defines body for %s for %s ContentType.", bodyTypeName, operationID, contentType),
 				}
 				typeDefinitions = append(typeDefinitions, td)
 				// The body schema now is a reference to a type
@@ -2222,16 +2289,48 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			// When the operation came from an externally-ref'd path item,
 			// the imported package generated the same hoisted name, so we
 			// reference it instead of redeclaring locally.
-			if !IsGoTypeReference(responseOrRef.Ref) && contentSchema.RefType == "" &&
+			//
+			// A response that lives in components/responses is named once,
+			// by the model pass (GenerateTypesForResponses), and everything
+			// else must point at that name rather than hoist a second copy
+			// (issue #2539). That applies both when we are generating the
+			// component envelopes themselves (operationID is empty and
+			// statusCode is the component name) and when an operation
+			// reaches the response through `$ref`. The model pass only
+			// declares JSON content, so only JSON media types can be
+			// redirected this way.
+			componentTypeName := ""
+			if externalPkg == "" && util.IsMediaTypeJson(contentType) {
+				switch {
+				case responseOrRef.Ref != "":
+					// An operation (or another component) reaching a
+					// components/responses entry through `$ref`. Resolve the
+					// entry so we pick up exactly the name the model pass
+					// gave it (x-go-name, resolve-type-name-collisions, ...).
+					componentTypeName, err = componentResponseRefTypeName(responseOrRef.Ref, contentType)
+				case operationID == "":
+					// Generating the component's own envelope.
+					componentTypeName, err = componentResponseTypeName(statusCode, responseOrRef, contentType)
+				}
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if contentSchema.RefType == "" && (componentTypeName != "" || !IsGoTypeReference(responseOrRef.Ref)) &&
 				(len(contentSchema.UnionElements) != 0 || contentSchema.HasAdditionalProperties ||
 					(globalState.options.OutputOptions.GenerateTypesForAnonymousSchemas && len(contentSchema.Properties) > 0)) {
-				if externalPkg != "" {
+				switch {
+				case externalPkg != "":
 					contentSchema.RefType = fmt.Sprintf("%s.%s", externalPkg, responseBodyTypeName)
-				} else {
+				case componentTypeName != "":
+					contentSchema.RefType = componentTypeName
+				default:
 					contentSchema.AdditionalTypes = append(contentSchema.AdditionalTypes, TypeDefinition{
 						TypeName: responseBodyTypeName,
 						JsonName: responseBodyTypeName,
 						Schema:   contentSchema,
+						Comment:  fmt.Sprintf("// %s defines the %s response body for %s for %s ContentType.", responseBodyTypeName, statusCode, operationID, contentType),
 					})
 					contentSchema.RefType = responseBodyTypeName
 				}
@@ -2377,16 +2476,32 @@ func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 		typeDefs = append(typeDefs, param.Schema.AdditionalTypes...)
 	}
 
+	// Types hoisted out of bodies (inline union members, nested objects, ...)
+	// are rendered by the same template as the parameter types, whose default
+	// comment says "defines parameters for"; describe them as models instead.
 	for _, body := range op.Bodies {
-		typeDefs = append(typeDefs, body.Schema.AdditionalTypes...)
+		typeDefs = append(typeDefs, withModelComments(body.Schema.AdditionalTypes)...)
 	}
 
 	for _, resp := range op.Responses {
 		for _, content := range resp.Contents {
-			typeDefs = append(typeDefs, content.Schema.AdditionalTypes...)
+			typeDefs = append(typeDefs, withModelComments(content.Schema.AdditionalTypes)...)
 		}
 	}
 	return typeDefs
+}
+
+// withModelComments returns copies of typeDefs in which every type without a
+// Comment gets the doc comment component schemas get, "X defines model for Y.".
+func withModelComments(typeDefs []TypeDefinition) []TypeDefinition {
+	out := make([]TypeDefinition, len(typeDefs))
+	for i, td := range typeDefs {
+		if td.Comment == "" {
+			td.Comment = fmt.Sprintf("// %s defines model for %s.", td.TypeName, td.JsonName)
+		}
+		out[i] = td
+	}
+	return out
 }
 
 // GenerateParamsTypes defines the schema for a parameters definition object

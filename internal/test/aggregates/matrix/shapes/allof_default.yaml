@@ -1,0 +1,19 @@
+versions: [v1, v2, v3]
+broken:
+  v1: "v1 generates a struct for an allOf over a string schema."
+description: >-
+  allOf decorating a $ref to an enum that has a default. Failed with "merging
+  two sets of defaults is undefined" whenever either member had a default
+  (#1379).
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Sort'
+    - description: The sort order.
+components:
+  Sort:
+    type: string
+    enum: [asc, desc]
+    default: asc
+samples:
+  - '"asc"'
+  - '"desc"'

@@ -1358,6 +1358,7 @@ The following extensions are supported:
 | `x-deprecated-reason` | Add a GoDoc deprecation warning to a type | [(docs)](docs/extensions.md#x-deprecated-reason)                      |
 | `x-order` | Explicitly order struct fields | [(docs)](docs/extensions.md#x-order)                                  |
 | `x-oapi-codegen-only-honour-go-name` | Only honour the `x-go-name` when generating field names | [(docs)](docs/extensions.md#x-oapi-codegen-only-honour-go-name)       |
+| `x-oapi-codegen-enum-merge` | Keep all the values of an `allOf`'s enums, with `schema-merging-behavior: v3` | [(docs)](docs/extensions.md#x-oapi-codegen-enum-merge)                |
 
 ## Request/response validation middleware
 
@@ -2321,11 +2322,21 @@ Got one to add? Please raise a PR!
 
 Yes. Initial OpenAPI 3.1 support landed with [#2336](https://github.com/oapi-codegen/oapi-codegen/pull/2336), including [webhooks](https://spec.openapis.org/oas/v3.1.0#oasWebhooks) and version-aware handling of 3.1 idioms such as `type: [T, "null"]` nullability and enums declared via `oneOf` + `const`.
 
+A 3.1 schema may also declare a multi-type union, such as `type: [string, number, boolean]`. Go has no type expressing that constraint, so these generate `any`.
+
 If you're on an older release that predates this, you can [use OpenAPI Overlay](#modifying-the-input-openapi-specification-with-openapi-overlay) to "downgrade" an OpenAPI 3.1 spec to OpenAPI 3.0, following [steps from this blog post](https://www.jvt.me/posts/2025/05/04/oapi-codegen-trick-openapi-3-1/).
 
 ### How does `oapi-codegen` handle `anyOf`, `allOf` and `oneOf`?
 
 `oapi-codegen` supports `anyOf`, `allOf` and `oneOf` for generated code.
+
+There are three ways of turning them into Go types, which the `compatibility.schema-merging-behavior` setting chooses between:
+
+- `v1` is the original behavior. It embeds the types of an `allOf`'s members in a struct, and is very limited.
+- `v2` merges an `allOf`'s members into one type. It is the current default.
+- `v3` merges them by what `allOf` means, reports conflicting members as errors, and models more of what `anyOf` and `oneOf` say. It is an option for now, and will become the default once it has been available as an option for at least one release.
+
+[How `allOf`, `anyOf` and `oneOf` become Go types](docs/schema-merging.md) describes how `v1` differs from the others, and compares `v2` and `v3` side by side. The example below generates the same code under `v2` and `v3`.
 
 For instance, through the following OpenAPI spec:
 
@@ -2353,7 +2364,7 @@ components:
         issuer:
           type: string
 
-    # allOf performs a union of all types defined
+    # allOf merges the schemas it lists into one type
     ClientWithId:
       allOf:
         - $ref: '#/components/schemas/Client'
@@ -2363,25 +2374,17 @@ components:
           required:
             - id
 
-    # allOf performs a union of all types defined, but if there's a duplicate field defined, it'll be overwritten by the last schema
-    # https://github.com/oapi-codegen/oapi-codegen/issues/1569
+    # a property several schemas declare is merged: here, the second schema
+    # adds a description and a length limit to Identity's `issuer`. Their
+    # types have to agree; `v3` reports an error when they can't
     IdentityWithDuplicateField:
       allOf:
-        # `issuer` will be ignored
         - $ref: '#/components/schemas/Identity'
-        # `issuer` will be ignored
         - properties:
             issuer:
-              type: integer
-        # `issuer` will take precedence
-        - properties:
-            issuer:
-              type: object
-              properties:
-                name:
-                  type: string
-              required:
-                - name
+              type: string
+              description: The URL of the issuer.
+              maxLength: 255
 
     # anyOf results in a type that has an `AsClient`/`MergeClient`/`FromClient` and an `AsIdentity`/`MergeIdentity`/`FromIdentity` method so you can choose which of them you want to retrieve
     ClientAndMaybeIdentity:
@@ -2429,9 +2432,8 @@ type ClientWithId struct {
 
 // IdentityWithDuplicateField defines model for IdentityWithDuplicateField.
 type IdentityWithDuplicateField struct {
-	Issuer struct {
-		Name string `json:"name"`
-	} `json:"issuer"`
+	// Issuer The URL of the issuer.
+	Issuer string `json:"issuer"`
 }
 ```
 
@@ -2665,6 +2667,16 @@ We are also generously sponsored by the following folks, each of whom provide sp
 <p align="center">
 	<a href="https://cybozu.co.jp/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
 		<img alt="Cybozu logo" src=".github/sponsors/cybozu.svg" height="100px">
+	</a>
+</p>
+
+<p align="center">
+	<a href="https://elastic.co?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+		<picture>
+		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/elastic-light.svg">
+		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/elastic-dark.svg">
+		  <img alt="Elastic logo" src=".github/sponsors/elastic-dark.svg" height="100px">
+		</picture>
 	</a>
 </p>
 

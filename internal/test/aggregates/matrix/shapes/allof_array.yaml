@@ -1,0 +1,21 @@
+versions: [v1, v2, v3]
+broken:
+  v1: "v1 generates a struct for an allOf over an array schema."
+description: >-
+  allOf over a $ref to an array of objects plus a constraint. Used to drop the
+  items and generate []any.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Items'
+    - minItems: 1
+components:
+  Item:
+    type: object
+    required: [n]
+    properties:
+      n: {type: integer}
+  Items:
+    type: array
+    items: {$ref: '#/components/schemas/Item'}
+samples:
+  - '[{"n": 1}, {"n": 2}]'

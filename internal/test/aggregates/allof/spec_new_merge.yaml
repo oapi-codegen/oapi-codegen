@@ -78,3 +78,56 @@ components:
       required: [ additionalProperty ]
       allOf:
         - $ref: "#/components/schemas/NewMergePerson"
+    # issue #2524: a type declared by only one allOf member must propagate to
+    # the merged schema regardless of member order. Previously the merge kept
+    # the first member's (absent) type, so the pairs below generated different
+    # Go shapes depending on ordering.
+    NewMergeTypeFromSecondMember:
+      description: |
+        The type constraint comes from the second member; the first only
+        contributes properties (which don't constrain non-object instances).
+        Must generate a string, not a struct.
+      allOf:
+        - properties:
+            name:
+              type: string
+        - type: string
+    NewMergeTypeFromFirstMember:
+      description: Member order reversed; must generate the same shape.
+      allOf:
+        - type: string
+        - properties:
+            name:
+              type: string
+    NewMergeUnionTypeFromSecondMember:
+      description: |
+        A 3.1 multi-type union declared by the second member. Unions lower to
+        `any`; the point is that both orderings agree instead of one silently
+        generating a struct.
+      allOf:
+        - properties:
+            name:
+              type: string
+        - type: [ string, number ]
+    NewMergeUnionTypeFromFirstMember:
+      description: Member order reversed; must generate the same shape.
+      allOf:
+        - type: [ string, number ]
+        - properties:
+            name:
+              type: string
+    # issue #2524 (format half): a format declared by only one member must
+    # propagate rather than error, which is what the allOf decorator idiom
+    # produces over a $ref to a format-carrying scalar.
+    NewMergeFormatFromRef:
+      allOf:
+        - $ref: "#/components/schemas/NewMergeUuid"
+        - description: decorator member with no format of its own
+    NewMergeFormatFromRefReversed:
+      description: Decorator first; type and format both come from the second member.
+      allOf:
+        - description: decorator member with no format of its own
+        - $ref: "#/components/schemas/NewMergeUuid"
+    NewMergeUuid:
+      type: string
+      format: uuid

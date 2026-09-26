@@ -79,10 +79,10 @@ type User struct {
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"hFFNS8NAFPwvo8eF4HWPgueCopfSw5q82JX9cvetUMr+d3lrsLG1eMqEmcmbmRwxRp9ioMAF+ogy7smb",
-	"Djev7zTyvcCUY6LMljoRjCd58iERNApnG97QWlN4jK5TFKqH3sJM3gYo1EIZO3VuUXhiw7U8dPnKNrL9",
-	"JCjYsMDr3pc7cRrnNjP09jxr6RpBt5lmaNwMp8LD0nZYpZAWmT6qzTRJlOUDp/uxz4K2awrPUutiHzv9",
-	"sY5Cjm7hmfy/kfqS7eeqydkc5F2WvPYDfie3E1byywKit2GO0KE6pxATBZMsNKCQDO/LN9O+AgAA//8=",
+	"hFFPSzsxFPwu8/sdA4vXHAXPBUUvpYe4+9ZG8s+XF6GUfHdJuti1tXjagZnZNzM5Yow+xUBBMvQRedyT",
+	"Nx1uXt9plPsGE8dELJY6EYyn9pVDImhkYRveUGtVeIyuUxSKh97CTN4GKJRMjJ26tCg8iZGSH7p8ZRvF",
+	"fhIUbFjgbe/LXXMa5zYz9PYya+6ahv4zzdD4N5wLD0vbYZWitWD6KJZpalGWH5zvxz4L6q4qPLdaV/vY",
+	"6Zd1FDi6hRfyf0bqS9bvq4bZHFBPS956gJ/J7YSV/LpA09swR+hQnFOIiYJJFhpQSEb2+cTUrwEA",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

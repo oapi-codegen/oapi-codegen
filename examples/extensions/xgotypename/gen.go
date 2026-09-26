@@ -18,7 +18,7 @@ type ClientRenamedByExtension struct {
 	Name string   `json:"name"`
 }
 
-// ResponseRenamed defines parameters for ExampleGet.
+// ResponseRenamed defines model for ExampleGet200JSONResponseBody.
 type ResponseRenamed struct {
 	Name *string `json:"name,omitempty"`
 }

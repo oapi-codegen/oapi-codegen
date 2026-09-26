@@ -96,7 +96,7 @@ func (response GetOtherExample400JSONResponse) VisitGetOtherExampleResponse(ctx 
 	ctx.ResponseWriter().Header().Set("Content-Type", "application/json")
 	ctx.StatusCode(400)
 
-	return ctx.JSON(&response)
+	return ctx.JSON(&response.N400JSONResponse)
 }
 
 type GetOtherExample401JSONResponse struct{ externalRef0.N401JSONResponse }
