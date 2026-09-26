@@ -22,7 +22,7 @@ import (
 //
 // A schema that combines several unions, an anyOf and a oneOf or an allOf's
 // merge of several, is a value that is one of each union's variants at once
-// (see unionComponent), and generates as generateUnionComponentsV3 describes.
+// (see unionComponent), and generates as generateUnionComponents describes.
 func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema, path []string) error {
 	components := ctx.unionComponents[schema]
 	if components == nil && schema.AnyOf != nil && schema.OneOf != nil {
@@ -47,7 +47,7 @@ func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema
 	var members [][]UnionElement
 	if len(components) > 1 {
 		var err error
-		if members, err = generateUnionComponentsV3(ctx, outSchema, components, path); err != nil {
+		if members, err = generateUnionComponents(ctx, outSchema, components, path); err != nil {
 			return err
 		}
 	} else {
@@ -67,7 +67,7 @@ func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema
 	return nil
 }
 
-// generateUnionComponentsV3 generates a union that combines several (see
+// generateUnionComponents generates a union that combines several (see
 // unionComponent): the variants of each, and for each variant the JSON keys
 // its own union owns, those only its union's variants declare, which From*
 // replaces while keeping the other unions' data (see
@@ -78,7 +78,7 @@ func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema
 // Inline variants are named <path><union><index>, where <union> is OneOf or
 // AnyOf, numbered when there are several of a kind. It returns each union's
 // members, as generateUnionV3 does.
-func generateUnionComponentsV3(ctx genContext, outSchema *Schema, components []unionComponent, path []string) ([][]UnionElement, error) {
+func generateUnionComponents(ctx genContext, outSchema *Schema, components []unionComponent, path []string) ([][]UnionElement, error) {
 	// An opaque variant, from another document or an x-go-type, declares no
 	// keys: its fields aren't ours to read (see isOpaqueSchema).
 	// The discriminator's property is its union's too, even when the variants
@@ -108,8 +108,8 @@ func generateUnionComponentsV3(ctx genContext, outSchema *Schema, components []u
 			for j := range components {
 				shared = shared || (j != k && slices.Contains(declared[j], key))
 			}
-			if !shared && !slices.Contains(owned[k], key) {
-				owned[k] = append(owned[k], key)
+			if !shared {
+				owned[k] = appendUnique(owned[k], key)
 			}
 		}
 		slices.Sort(owned[k])
@@ -206,7 +206,7 @@ func placedDiscriminator(c unionComponent, variantKeys []string, opaque bool) bo
 // generateUnionV3 generates one oneOf or anyOf into outSchema's union members,
 // and returns this union's members, some of which another union may have
 // added already. alone is false when the union is one of several (see
-// generateUnionComponentsV3), which then isn't collapsed into its only
+// generateUnionComponents), which then isn't collapsed into its only
 // non-null branch.
 func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string, alone bool) ([]UnionElement, error) {
 	if discriminator != nil {
@@ -224,62 +224,15 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 		}
 	}
 
-	// First pass: count effective (non-null) branches. In OpenAPI 3.1, a
-	// bare `{"type": "null"}` branch in anyOf/oneOf is a nullability
-	// marker, not a real union variant -- there's no Go type that
-	// corresponds to "only the JSON value null". The parent schema's
-	// nullability is captured by schemaIsNullable, which inspects
-	// anyOf/oneOf for the same idiom and wraps the result in a pointer
-	// at the call site.
-	effectiveCount := 0
-	hadNullBranch := false
-	var soleEffective *openapi3.SchemaRef
-	for _, e := range elements {
-		if e != nil && isNullTypeSchema(e.Value) {
-			hadNullBranch = true
-			continue
-		}
-		effectiveCount++
-		if soleEffective == nil {
-			soleEffective = e
-		}
-	}
-
-	// Collapse: if filtering out null branches leaves exactly one
-	// effective branch and there is no discriminator, the schema is
-	// semantically equivalent to that single branch (made nullable by
-	// the original null branch). Produce the same Go shape the
-	// type-array idiom would: `anyOf: [{type: string}, {type: "null"}]`
-	// must generate the same `*string` field as `type: ["string",
-	// "null"]`. Without this, the single remaining branch would be
-	// wrapped in a one-variant union type, exposing a needless
-	// `FromX`/`AsX` accessor API.
-	//
-	// We do not collapse when there was no null branch (`anyOf: [{type:
-	// X}]` alone) to avoid changing behavior for existing single-branch
-	// union specs that may rely on the wrapper shape. The narrow
-	// condition keeps this change scoped to the bug fix.
+	// Collapse a union whose only effective branch is made nullable by a
+	// null branch into that branch (see collapseNullableUnion), unless the
+	// union is one of several the schema combines. A union without a null
+	// branch (`anyOf: [{type: X}]` alone) keeps its wrapper shape, as in v2.
+	effectiveCount, hadNullBranch, soleEffective := effectiveBranches(elements)
 	if alone && effectiveCount == 1 && hadNullBranch && discriminator == nil {
-		elementSchema, err := generateGoSchema(ctx.at(path), soleEffective, path)
-		if err != nil {
-			return nil, err
-		}
-		// Inherit the single branch's underlying representation. The
-		// caller will apply nullability (schemaIsNullable returns true
-		// because the original anyOf/oneOf contained a null branch).
-		outSchema.GoType = elementSchema.GoType
-		outSchema.RefType = elementSchema.RefType
-		outSchema.DefineViaAlias = elementSchema.DefineViaAlias
-		outSchema.Properties = elementSchema.Properties
-		outSchema.HasAdditionalProperties = elementSchema.HasAdditionalProperties
-		outSchema.AdditionalPropertiesType = elementSchema.AdditionalPropertiesType
-		outSchema.ArrayType = elementSchema.ArrayType
-		outSchema.SkipOptionalPointer = elementSchema.SkipOptionalPointer
-		outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
-		return nil, nil
+		return nil, collapseNullableUnion(ctx, outSchema, soleEffective, path)
 	}
 
-	refToGoTypeMap := make(map[string]string)
 	var members []UnionElement
 	// inlineKeys are the discriminator values inline variants declare (see
 	// inlineDiscriminatorValue), which no other variant may also map to.
@@ -308,8 +261,6 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 				elementSchema.GoType = td.TypeName
 			}
 			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
-		} else {
-			refToGoTypeMap[element.Ref] = elementSchema.GoType
 		}
 
 		// An inline variant has no name for the mapping to use. It can still
@@ -362,19 +313,13 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 		members = append(members, UnionElement(elementSchema.GoType))
 		// The same type can appear twice, e.g. as a member of both an anyOf
 		// and a oneOf; its accessors are generated once.
-		if !slices.Contains(outSchema.UnionElements, UnionElement(elementSchema.GoType)) {
-			outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
-		}
+		outSchema.UnionElements = appendUnique(outSchema.UnionElements, UnionElement(elementSchema.GoType))
 		if discriminated {
 			mappedCount++
-			if !slices.Contains(outSchema.Discriminator.variants, UnionElement(elementSchema.GoType)) {
-				outSchema.Discriminator.variants = append(outSchema.Discriminator.variants, UnionElement(elementSchema.GoType))
-			}
+			outSchema.Discriminator.variants = appendUnique(outSchema.Discriminator.variants, UnionElement(elementSchema.GoType))
 		}
 		for _, name := range propertyNames(element.Value, 0) {
-			if !slices.Contains(outSchema.UnionVariantProperties, name) {
-				outSchema.UnionVariantProperties = append(outSchema.UnionVariantProperties, name)
-			}
+			outSchema.UnionVariantProperties = appendUnique(outSchema.UnionVariantProperties, name)
 		}
 	}
 	slices.Sort(outSchema.UnionVariantProperties)
@@ -515,24 +460,14 @@ func closeUnionVariants(ctx genContext, outSchema *Schema, components []unionCom
 // lists the variant or a member (see allOfMerge.listsFlattened).
 func declaredVariantKeys(ctx genContext, ref *openapi3.SchemaRef) (keys []string, closed, ok bool, err error) {
 	nodes := make(map[*openapi3.Schema]bool)
-	var collect func(r *openapi3.SchemaRef) bool
-	collect = func(r *openapi3.SchemaRef) bool {
-		if r == nil || r.Value == nil || nodes[r.Value] {
-			return true
+	for r := range allOfTree(ref) {
+		if nodes[r.Value] {
+			continue
 		}
 		if isOpaqueSchema(r) {
-			return false
+			return nil, false, false, nil
 		}
 		nodes[r.Value] = true
-		for _, m := range r.Value.AllOf {
-			if !collect(m) {
-				return false
-			}
-		}
-		return true
-	}
-	if !collect(ref) {
-		return nil, false, false, nil
 	}
 	lists := func(b *openapi3.SchemaRef) bool { return b != nil && nodes[b.Value] }
 	for n := range nodes {
@@ -567,12 +502,11 @@ func declaredVariantKeys(ctx genContext, ref *openapi3.SchemaRef) (keys []string
 // variantKeys returns the JSON keys a union variant's values can have: those
 // the fields of the Go type it generates as marshal as. It generates the
 // variant's schema for them, following the aliases an allOf or x-go-type-name
-// leaves, as aliasGeneratesMarshalJSON does, so the fields and their tags are
-// the type's own. A struct field marshals as its json tag says (see
-// fieldKey); a type with a MarshalJSON of its own, a union or one with
-// additional properties, writes each property under its name. An opaque
-// variant, from another document or an x-go-type, declares no keys: its
-// fields aren't ours to read.
+// leaves (see aliasChain), so the fields and their tags are the type's own. A
+// struct field marshals as its json tag says (see fieldKey); a type with a
+// MarshalJSON of its own, a union or one with additional properties, writes
+// each property under its name. An opaque variant, from another document or
+// an x-go-type, declares no keys: its fields aren't ours to read.
 func (ctx genContext) variantKeys(b *openapi3.SchemaRef) ([]string, error) {
 	if b == nil || b.Value == nil || isOpaqueSchema(b) {
 		return nil, nil
@@ -592,14 +526,15 @@ func (ctx genContext) variantKeys(b *openapi3.SchemaRef) ([]string, error) {
 		return generateGoSchema(fresh, &openapi3.SchemaRef{Value: s}, ctx.nameHint)
 	}
 	s, err := generate(b.Value)
-	for i := 0; err == nil && i < 100; i++ {
-		if wrapped, ok := s.goTypeNameWrapper(); ok {
-			s = wrapped
+	if err == nil {
+		// The keys are those of the last type on the chain.
+		for level, e := range s.aliasChain(generate) {
+			if e != nil {
+				err = e
+				break
+			}
+			s = level
 		}
-		if s.aliasOf == nil {
-			break
-		}
-		s, err = generate(s.aliasOf)
 	}
 	if err != nil {
 		delete(ctx.variantKeyCache, b.Value)
@@ -659,48 +594,21 @@ func inlineDiscriminatorValue(s *openapi3.Schema, property string) (string, bool
 // members, or in an allOf member of the property's own schema. It returns nil
 // when there is none.
 func pinnedDiscriminatorValue(s *openapi3.Schema, property string) any {
-	seen := make(map[*openapi3.Schema]bool)
-	var pinned, declared func(s *openapi3.Schema) any
-	pinned = func(p *openapi3.Schema) any {
-		if p == nil || seen[p] {
-			return nil
+	for n := range allOfTree(&openapi3.SchemaRef{Value: s}) {
+		p := n.Value.Properties[property]
+		if p == nil {
+			continue
 		}
-		seen[p] = true
-		if p.Const != nil {
-			return p.Const
-		}
-		if values := slices.DeleteFunc(slices.Clone(p.Enum), func(v any) bool { return v == nil }); len(values) == 1 {
-			return values[0]
-		}
-		for _, m := range p.AllOf {
-			if m != nil {
-				if v := pinned(m.Value); v != nil {
-					return v
-				}
+		for declaration := range allOfTree(p) {
+			if declaration.Value.Const != nil {
+				return declaration.Value.Const
+			}
+			if values := slices.DeleteFunc(slices.Clone(declaration.Value.Enum), func(v any) bool { return v == nil }); len(values) == 1 {
+				return values[0]
 			}
 		}
-		return nil
 	}
-	declared = func(s *openapi3.Schema) any {
-		if s == nil || seen[s] {
-			return nil
-		}
-		seen[s] = true
-		if p := s.Properties[property]; p != nil {
-			if v := pinned(p.Value); v != nil {
-				return v
-			}
-		}
-		for _, m := range s.AllOf {
-			if m != nil {
-				if v := declared(m.Value); v != nil {
-					return v
-				}
-			}
-		}
-		return nil
-	}
-	return declared(s)
+	return nil
 }
 
 // discriminatorPropertyTyped reports whether the union itself, or any
@@ -712,19 +620,14 @@ func discriminatorPropertyTyped(outSchema *Schema, elements openapi3.SchemaRefs,
 			return true
 		}
 	}
-	seen := make(map[*openapi3.Schema]bool)
-	var typed func(s *openapi3.Schema) bool
-	typed = func(s *openapi3.Schema) bool {
-		if s == nil || seen[s] {
-			return false
+	for _, e := range elements {
+		for n := range allOfTree(e) {
+			if p := n.Value.Properties[property]; p != nil && p.Value != nil && len(nonNullTypes(p.Value.Type)) > 0 {
+				return true
+			}
 		}
-		seen[s] = true
-		if p := s.Properties[property]; p != nil && p.Value != nil && len(nonNullTypes(p.Value.Type)) > 0 {
-			return true
-		}
-		return slices.ContainsFunc(s.AllOf, func(m *openapi3.SchemaRef) bool { return m != nil && typed(m.Value) })
 	}
-	return slices.ContainsFunc(elements, func(e *openapi3.SchemaRef) bool { return e != nil && typed(e.Value) })
+	return false
 }
 
 // pinnedValueType returns the JSON type the union's variants' pinned

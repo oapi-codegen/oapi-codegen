@@ -23,7 +23,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Discriminator: disc}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, disc, result.Discriminator)
 	})
@@ -32,7 +32,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Discriminator: disc}
 
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, disc, result.Discriminator)
 	})
@@ -42,7 +42,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Discriminator: disc}
 		s2 := openapi3.Schema{Discriminator: disc2}
 
-		_, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		_, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "discriminators")
 	})
@@ -51,7 +51,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Nil(t, result.Discriminator)
 	})
@@ -60,7 +60,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Discriminator: disc}
 		s2 := openapi3.Schema{}
 
-		_, err := mergeOpenapiSchemasV2(s1, s2, false, make(map[string]bool))
+		_, err := mergeOpenapiSchemas(s1, s2, false, make(map[string]bool))
 		require.Error(t, err)
 	})
 
@@ -68,7 +68,7 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagation(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Discriminator: disc}
 
-		_, err := mergeOpenapiSchemasV2(s1, s2, false, make(map[string]bool))
+		_, err := mergeOpenapiSchemas(s1, s2, false, make(map[string]bool))
 		require.Error(t, err)
 	})
 }
@@ -86,7 +86,7 @@ func TestMergeOpenapiSchemas_TypePropagation(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Type: stringType}
 
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, stringType, result.Type)
 	})
@@ -95,7 +95,7 @@ func TestMergeOpenapiSchemas_TypePropagation(t *testing.T) {
 		s1 := openapi3.Schema{Type: stringType}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, stringType, result.Type)
 	})
@@ -108,7 +108,7 @@ func TestMergeOpenapiSchemas_TypePropagation(t *testing.T) {
 		}
 		s2 := openapi3.Schema{Type: unionType}
 
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, unionType, result.Type)
 	})
@@ -117,7 +117,7 @@ func TestMergeOpenapiSchemas_TypePropagation(t *testing.T) {
 		s1 := openapi3.Schema{Type: stringType}
 		s2 := openapi3.Schema{Type: stringType}
 
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, stringType, result.Type)
 	})
@@ -126,7 +126,7 @@ func TestMergeOpenapiSchemas_TypePropagation(t *testing.T) {
 		s1 := openapi3.Schema{Type: stringType}
 		s2 := openapi3.Schema{Type: numberType}
 
-		_, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		_, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "incompatible types")
 	})
@@ -135,7 +135,7 @@ func TestMergeOpenapiSchemas_TypePropagation(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Nil(t, result.Type.Slice())
 	})
@@ -150,7 +150,7 @@ func TestMergeOpenapiSchemas_FormatPropagation(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Format: "uuid"}
 
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, "uuid", result.Format)
 	})
@@ -159,7 +159,7 @@ func TestMergeOpenapiSchemas_FormatPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Format: "uuid"}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, "uuid", result.Format)
 	})
@@ -168,7 +168,7 @@ func TestMergeOpenapiSchemas_FormatPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Format: "uuid"}
 		s2 := openapi3.Schema{Format: "uuid"}
 
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, "uuid", result.Format)
 	})
@@ -177,7 +177,7 @@ func TestMergeOpenapiSchemas_FormatPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Format: "uuid"}
 		s2 := openapi3.Schema{Format: "date-time"}
 
-		_, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		_, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "incompatible formats")
 	})
@@ -186,7 +186,7 @@ func TestMergeOpenapiSchemas_FormatPropagation(t *testing.T) {
 		s1 := openapi3.Schema{Type: &openapi3.Types{"string"}, Format: "uuid"}
 		s2 := openapi3.Schema{Nullable: true}
 
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.Equal(t, "uuid", result.Format)
 		assert.True(t, result.Nullable)
@@ -201,7 +201,7 @@ func TestMergeOpenapiSchemas_NullableUnion(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Nullable: true}
 
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.True(t, result.Nullable)
 	})
@@ -210,7 +210,7 @@ func TestMergeOpenapiSchemas_NullableUnion(t *testing.T) {
 		s1 := openapi3.Schema{Nullable: true}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.True(t, result.Nullable)
 	})
@@ -219,7 +219,7 @@ func TestMergeOpenapiSchemas_NullableUnion(t *testing.T) {
 		s1 := openapi3.Schema{Nullable: true}
 		s2 := openapi3.Schema{Nullable: true}
 
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.True(t, result.Nullable)
 	})
@@ -228,7 +228,7 @@ func TestMergeOpenapiSchemas_NullableUnion(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{}
 
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		assert.False(t, result.Nullable)
 	})
@@ -240,7 +240,7 @@ func TestMergeOpenapiSchemas_NullableUnion(t *testing.T) {
 func TestMergeOpenapiSchemas_Annotations(t *testing.T) {
 	merge := func(t *testing.T, s1, s2 openapi3.Schema) openapi3.Schema {
 		t.Helper()
-		result, err := mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		result, err := mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 		require.NoError(t, err)
 		return result
 	}
@@ -285,7 +285,7 @@ func TestMergeOpenapiSchemas_NullInTypeArray(t *testing.T) {
 	nullableObject := &openapi3.Types{"object", "null"}
 
 	merge := func(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
-		return mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		return mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 	}
 
 	t.Run("a nullable member makes the result nullable", func(t *testing.T) {
@@ -328,7 +328,7 @@ func TestMergeOpenapiSchemas_AdditionalProperties(t *testing.T) {
 		return openapi3.Schema{AdditionalProperties: openapi3.AdditionalProperties{Schema: ap}}
 	}
 	merge := func(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
-		return mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		return mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 	}
 
 	t.Run("identical inline schemas merge", func(t *testing.T) {
@@ -360,7 +360,7 @@ func TestMergeOpenapiSchemas_AdditionalProperties(t *testing.T) {
 // by every allOf merge.
 func TestMergeOpenapiSchemas_Items(t *testing.T) {
 	merge := func(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
-		return mergeOpenapiSchemasV2(s1, s2, true, make(map[string]bool))
+		return mergeOpenapiSchemas(s1, s2, true, make(map[string]bool))
 	}
 	itemRef := openapi3.NewSchemaRef("#/components/schemas/Item", openapi3.NewObjectSchema())
 
@@ -421,10 +421,10 @@ func TestPropagateRemoteRefsIsIdempotent(t *testing.T) {
 
 	const qualified = "./common.yaml#/components/schemas/Tree"
 
-	propagateRemoteRefsV2("./common.yaml", tree)
+	propagateRemoteRefs("./common.yaml", tree)
 	assert.Equal(t, qualified, selfRef.Ref, "a local ref must be qualified with the remote document")
 
-	propagateRemoteRefsV2("./common.yaml", tree)
+	propagateRemoteRefs("./common.yaml", tree)
 	assert.Equal(t, qualified, selfRef.Ref, "an already-qualified ref must be left alone")
 }
 
@@ -445,7 +445,7 @@ func TestPropagateRemoteRefsLeavesForeignRefsAlone(t *testing.T) {
 		Properties: openapi3.Schemas{"f": foreign},
 	}
 
-	propagateRemoteRefsV2("./common.yaml", schema)
+	propagateRemoteRefs("./common.yaml", schema)
 
 	assert.Equal(t, "./other.yaml#/components/schemas/Foreign", foreign.Ref)
 	assert.Equal(t, "#/components/schemas/Inner", foreignBody.Properties["inner"].Ref,
