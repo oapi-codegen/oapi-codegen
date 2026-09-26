@@ -13,3 +13,54 @@ paths:
           description: OK
         '400':
           $ref: "./spec-base.yaml#/components/responses/400"
+        '401':
+          $ref: "./spec-base.yaml#/components/responses/401"
+        '402':
+          $ref: "./spec-base.yaml#/components/responses/402"
+        '403':
+          $ref: "./spec-base.yaml#/components/responses/403"
+        '404':
+          description: Resolved external empty response
+          content:
+            application/json:
+              schema:
+                $ref: "./spec-base.yaml#/components/schemas/EmptyPayload"
+        '405':
+          description: Resolved external interface response
+          content:
+            application/json:
+              schema:
+                $ref: "./spec-base.yaml#/components/schemas/InterfacePayload"
+        '406':
+          description: Resolved external pointer response
+          content:
+            application/json:
+              schema:
+                $ref: "./spec-base.yaml#/components/schemas/PointerPayload"
+        '407':
+          description: Opaque external concrete response
+          content:
+            application/json:
+              schema:
+                x-go-type: uuid.UUID
+                x-go-type-import:
+                  name: uuid
+                  path: github.com/google/uuid
+        '408':
+          description: Opaque external generic response
+          content:
+            application/json:
+              schema:
+                x-go-type: support.GenericResponse[string]
+                x-go-type-import:
+                  name: support
+                  path: github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/response_cast/support
+        '409':
+          description: Unsupported response
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+  /multipart:
+    $ref: "./spec-base.yaml#/paths/~1multipart"

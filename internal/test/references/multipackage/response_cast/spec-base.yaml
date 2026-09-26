@@ -13,7 +13,42 @@ paths:
           description: OK
         '400':
           $ref: "#/components/responses/400"
+        '401':
+          $ref: "#/components/responses/401"
+        '402':
+          $ref: "#/components/responses/402"
+        '403':
+          $ref: "#/components/responses/403"
+        '404':
+          description: Opaque local response
+          content:
+            application/json:
+              schema:
+                x-go-type: N400
+  /multipart:
+    get:
+      operationId: externalMultipartResponse
+      responses:
+        '200':
+          description: Multipart response
+          content:
+            multipart/form-data:
+              schema:
+                $ref: "#/components/schemas/MultipartPayload"
 components:
+  schemas:
+    EmptyPayload: {}
+    InterfacePayload:
+      x-go-type: "interface{ Value() string }"
+    MultipartPayload:
+      type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+    PointerPayload:
+      x-go-type: "*string"
   responses:
     "400":
       description: Bad Request
@@ -26,3 +61,24 @@ components:
             properties:
               message:
                 type: string
+    "401":
+      description: Untyped response
+      content:
+        application/json:
+          schema: {}
+    "402":
+      description: Pointer response
+      content:
+        application/json:
+          schema:
+            x-go-type: "*string"
+    "403":
+      description: Untyped response with headers
+      headers:
+        X-Request-ID:
+          required: true
+          schema:
+            type: string
+      content:
+        application/json:
+          schema: {}

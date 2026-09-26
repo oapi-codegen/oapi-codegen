@@ -8,10 +8,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	uuid "github.com/google/uuid"
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/response_cast/gen/spec_base"
+	support "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/response_cast/support"
+	"github.com/oapi-codegen/runtime"
 )
 
 // ServerInterface represents all server handlers.
@@ -19,6 +24,9 @@ type ServerInterface interface {
 
 	// (GET /example)
 	GetOtherExample(w http.ResponseWriter, r *http.Request)
+
+	// (GET /multipart)
+	ExternalMultipartResponse(w http.ResponseWriter, r *http.Request)
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
@@ -27,6 +35,11 @@ type Unimplemented struct{}
 
 // (GET /example)
 func (_ Unimplemented) GetOtherExample(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNotImplemented)
+}
+
+// (GET /multipart)
+func (_ Unimplemented) ExternalMultipartResponse(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -44,6 +57,20 @@ func (siw *ServerInterfaceWrapper) GetOtherExample(w http.ResponseWriter, r *htt
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetOtherExample(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ExternalMultipartResponse operation middleware
+func (siw *ServerInterfaceWrapper) ExternalMultipartResponse(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ExternalMultipartResponse(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -168,6 +195,9 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 	}
 
 	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/multipart", wrapper.ExternalMultipartResponse)
+	})
+	r.Group(func(r chi.Router) {
 		r.Get(options.BaseURL+"/example", wrapper.GetOtherExample)
 	})
 
@@ -203,11 +233,178 @@ func (response GetOtherExample400JSONResponse) VisitGetOtherExampleResponse(w ht
 	return err
 }
 
+type GetOtherExample401JSONResponse struct{ externalRef0.N401JSONResponse }
+
+func (response GetOtherExample401JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOtherExample402JSONResponse struct{ externalRef0.N402JSONResponse }
+
+func (response GetOtherExample402JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(402)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOtherExample403JSONResponse struct{ externalRef0.N403JSONResponse }
+
+func (response GetOtherExample403JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	{
+		v, err := runtime.StyleParamWithOptions("simple", false, "X-Request-ID", response.Headers.XRequestID, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationHeader, Type: "string", Format: ""})
+		if err != nil {
+			return fmt.Errorf("error styling response header X-Request-ID: %w", err)
+		}
+		w.Header().Set("X-Request-ID", v)
+	}
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOtherExample404JSONResponse struct {
+	Body externalRef0.EmptyPayload
+}
+
+func (response GetOtherExample404JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOtherExample405JSONResponse struct {
+	Body externalRef0.InterfacePayload
+}
+
+func (response GetOtherExample405JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(405)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOtherExample406JSONResponse struct {
+	Body externalRef0.PointerPayload
+}
+
+func (response GetOtherExample406JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(406)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOtherExample407JSONResponse uuid.UUID
+
+func (response GetOtherExample407JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(407)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOtherExample408JSONResponse support.GenericResponse[string]
+
+func (response GetOtherExample408JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(408)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOtherExample409ApplicationoctetStreamResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response GetOtherExample409ApplicationoctetStreamResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(409)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ExternalMultipartResponseRequestObject struct {
+}
+
+type ExternalMultipartResponseResponseObject interface {
+	VisitExternalMultipartResponseResponse(w http.ResponseWriter) error
+}
+
+type ExternalMultipartResponse200MultipartResponse func(writer *multipart.Writer) error
+
+func (response ExternalMultipartResponse200MultipartResponse) VisitExternalMultipartResponseResponse(w http.ResponseWriter) error {
+	writer := multipart.NewWriter(w)
+
+	w.Header().Set("Content-Type", writer.FormDataContentType())
+	w.WriteHeader(200)
+
+	defer writer.Close()
+	return response(writer)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
 	// (GET /example)
 	GetOtherExample(ctx context.Context, request GetOtherExampleRequestObject) (GetOtherExampleResponseObject, error)
+
+	// (GET /multipart)
+	ExternalMultipartResponse(ctx context.Context, request ExternalMultipartResponseRequestObject) (ExternalMultipartResponseResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -266,6 +463,30 @@ func (sh *strictHandler) GetOtherExample(w http.ResponseWriter, r *http.Request)
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetOtherExampleResponseObject); ok {
 		if err := validResponse.VisitGetOtherExampleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ExternalMultipartResponse operation middleware
+func (sh *strictHandler) ExternalMultipartResponse(w http.ResponseWriter, r *http.Request) {
+	var request ExternalMultipartResponseRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.ExternalMultipartResponse(ctx, request.(ExternalMultipartResponseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ExternalMultipartResponse")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ExternalMultipartResponseResponseObject); ok {
+		if err := validResponse.VisitExternalMultipartResponseResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

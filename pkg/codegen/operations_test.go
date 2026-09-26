@@ -16,6 +16,7 @@ package codegen
 import (
 	"go/format"
 	"net/http"
+	"net/url"
 	"strings"
 	"testing"
 	"text/template"
@@ -975,6 +976,340 @@ func TestGenerateStrictServerInterfaceDedup(t *testing.T) {
 	} {
 		_, err = GenerateStrictServer(base, clones, ops, Configuration{Generate: generate})
 		require.ErrorContains(t, err, "only one server type", name)
+	}
+}
+
+func TestStrictServerResponseReceiverCompatibility(t *testing.T) {
+	const spec = `
+openapi: "3.0.3"
+info: {title: t, version: "1"}
+paths:
+  /any:
+    get:
+      operationId: AnyResponse
+      responses:
+        "200":
+          description: Any response
+          content:
+            application/json:
+              schema: {}
+  /any-ref:
+    get:
+      operationId: AnyRefResponse
+      responses:
+        "200":
+          description: Referenced any response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnyPayload"
+  /interface:
+    get:
+      operationId: InterfaceResponse
+      responses:
+        "200":
+          description: Interface response
+          content:
+            application/json:
+              schema:
+                x-go-type: "interface{ Value() string }"
+  /pointer:
+    get:
+      operationId: PointerResponse
+      responses:
+        "200":
+          description: Pointer response
+          content:
+            application/json:
+              schema:
+                x-go-type: "*string"
+  /external:
+    get:
+      operationId: ExternalResponse
+      responses:
+        "200":
+          description: External named response
+          content:
+            application/json:
+              schema:
+                x-go-type: external.Response
+                x-go-type-import:
+                  name: external
+                  path: example.com/external
+  /external-generic:
+    get:
+      operationId: ExternalGenericResponse
+      responses:
+        "200":
+          description: External generic response
+          content:
+            application/json:
+              schema:
+                x-go-type: external.Response[string]
+                x-go-type-import:
+                  name: external
+                  path: example.com/external
+  /local:
+    get:
+      operationId: LocalResponse
+      responses:
+        "200":
+          description: Local named response
+          content:
+            application/json:
+              schema:
+                x-go-type: UserResponse
+  /local-ref:
+    get:
+      operationId: LocalRefResponse
+      responses:
+        "200":
+          description: Referenced local named response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocalUserPayload"
+  /multipart:
+    get:
+      operationId: MultipartResponse
+      responses:
+        "200":
+          description: Multipart response
+          content:
+            multipart/form-data:
+              schema: {}
+components:
+  schemas:
+    AnyPayload: {}
+    LocalUserPayload:
+      x-go-type: UserResponse
+`
+
+	servers := []struct {
+		name     string
+		generate GenerateOptions
+	}{
+		{name: "standard", generate: GenerateOptions{ChiServer: true}},
+		{name: "fiber", generate: GenerateOptions{FiberServer: true}},
+		{name: "iris", generate: GenerateOptions{IrisServer: true}},
+	}
+
+	for _, server := range servers {
+		t.Run(server.name, func(t *testing.T) {
+			swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+			require.NoError(t, err)
+
+			server.generate.Models = true
+			server.generate.Strict = true
+			code, err := Generate(swagger, Configuration{
+				PackageName: "api",
+				Generate:    server.generate,
+			})
+			require.NoError(t, err)
+			assert.Contains(t, code, "type AnyResponse200JSONResponse struct {\n\tBody any\n}")
+			assert.Contains(t, code, "type AnyRefResponse200JSONResponse struct {\n\tBody AnyPayload\n}")
+			assert.Contains(t, code, "type InterfaceResponse200JSONResponse struct {\n\tBody interface{ Value() string }\n}")
+			assert.Contains(t, code, "type PointerResponse200JSONResponse struct {\n\tBody *string\n}")
+			assert.Contains(t, code, "type ExternalResponse200JSONResponse external.Response")
+			assert.NotContains(t, code, "type ExternalResponse200JSONResponse struct {")
+			assert.Contains(t, code, "type ExternalGenericResponse200JSONResponse external.Response[string]")
+			assert.NotContains(t, code, "type ExternalGenericResponse200JSONResponse struct {")
+			assert.Contains(t, code, "type LocalResponse200JSONResponse UserResponse")
+			assert.NotContains(t, code, "type LocalResponse200JSONResponse struct {")
+			assert.Contains(t, code, "type LocalRefResponse200JSONResponse LocalUserPayload")
+			assert.NotContains(t, code, "type LocalRefResponse200JSONResponse struct {")
+			assert.Contains(t, code, "type MultipartResponse200MultipartResponse func(writer *multipart.Writer) error")
+			assert.NotContains(t, code, "type MultipartResponse200MultipartResponse struct {")
+		})
+	}
+}
+
+func TestStrictServerResolvedExternalResponseReceiverCompatibility(t *testing.T) {
+	const spec = `
+openapi: "3.0.3"
+info: {title: t, version: "1"}
+paths:
+  /empty:
+    get:
+      operationId: ExternalEmptyResponse
+      responses:
+        "200":
+          description: External empty response
+          content:
+            application/json:
+              schema:
+                $ref: "./external.yaml#/components/schemas/EmptyPayload"
+  /interface:
+    get:
+      operationId: ExternalInterfaceResponse
+      responses:
+        "200":
+          description: External interface response
+          content:
+            application/json:
+              schema:
+                $ref: "./external.yaml#/components/schemas/InterfacePayload"
+  /pointer:
+    get:
+      operationId: ExternalPointerResponse
+      responses:
+        "200":
+          description: External pointer response
+          content:
+            application/json:
+              schema:
+                $ref: "./external.yaml#/components/schemas/PointerPayload"
+  /concrete:
+    get:
+      operationId: ExternalConcreteResponse
+      responses:
+        "200":
+          description: External concrete response
+          content:
+            application/json:
+              schema:
+                $ref: "./external.yaml#/components/schemas/ConcretePayload"
+`
+	const externalSpec = `
+openapi: "3.0.3"
+info: {title: external, version: "1"}
+paths: {}
+components:
+  schemas:
+    EmptyPayload: {}
+    InterfacePayload:
+      x-go-type: "interface{ Value() string }"
+    PointerPayload:
+      x-go-type: "*string"
+    ConcretePayload:
+      type: object
+      properties:
+        value: {type: string}
+`
+
+	servers := []struct {
+		name     string
+		generate GenerateOptions
+	}{
+		{name: "standard", generate: GenerateOptions{ChiServer: true}},
+		{name: "fiber", generate: GenerateOptions{FiberServer: true}},
+		{name: "iris", generate: GenerateOptions{IrisServer: true}},
+	}
+
+	for _, server := range servers {
+		t.Run(server.name, func(t *testing.T) {
+			loader := openapi3.NewLoader()
+			loader.IsExternalRefsAllowed = true
+			loader.ReadFromURIFunc = func(_ *openapi3.Loader, _ *url.URL) ([]byte, error) {
+				return []byte(externalSpec), nil
+			}
+			swagger, err := loader.LoadFromDataWithPath([]byte(spec), &url.URL{Path: "root.yaml"})
+			require.NoError(t, err)
+
+			server.generate.Models = true
+			server.generate.Strict = true
+			code, err := Generate(swagger, Configuration{
+				PackageName: "api",
+				Generate:    server.generate,
+				ImportMapping: map[string]string{
+					"./external.yaml": "example.com/external",
+				},
+			})
+			require.NoError(t, err)
+			assert.Contains(t, code, "type ExternalEmptyResponse200JSONResponse struct {\n\tBody externalRef0.EmptyPayload\n}")
+			assert.Contains(t, code, "type ExternalInterfaceResponse200JSONResponse struct {\n\tBody externalRef0.InterfacePayload\n}")
+			assert.Contains(t, code, "type ExternalPointerResponse200JSONResponse struct {\n\tBody externalRef0.PointerPayload\n}")
+			assert.Contains(t, code, "type ExternalConcreteResponse200JSONResponse externalRef0.ConcretePayload")
+			assert.NotContains(t, code, "type ExternalConcreteResponse200JSONResponse struct {")
+		})
+	}
+}
+
+func TestGoTypeNeedsBodyWrapper(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		goType   string
+		expected bool
+	}{
+		{name: "any", goType: "any", expected: true},
+		{name: "error", goType: "error", expected: true},
+		{name: "interface", goType: "interface{ Value() string }", expected: true},
+		{name: "pointer", goType: "*string", expected: true},
+		{name: "external named", goType: "external.Response", expected: false},
+		{name: "external generic", goType: "external.Response[string]", expected: false},
+		{name: "local named", goType: "UserResponse", expected: false},
+		{name: "local generic", goType: "Response[string]", expected: false},
+		{name: "builtin", goType: "string", expected: false},
+		{name: "slice", goType: "[]string", expected: false},
+		{name: "map", goType: "map[string]any", expected: false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, goTypeNeedsBodyWrapper(tt.goType))
+		})
+	}
+}
+
+func TestResponseContentUsesSchemaReceiver(t *testing.T) {
+	for _, tt := range []struct {
+		contentType string
+		expected    bool
+	}{
+		{contentType: "application/json", expected: true},
+		{contentType: "application/x-www-form-urlencoded", expected: false},
+		{contentType: "text/plain", expected: false},
+		{contentType: "multipart/form-data", expected: false},
+		{contentType: "application/octet-stream", expected: false},
+	} {
+		t.Run(tt.contentType, func(t *testing.T) {
+			content := ResponseContentDefinition{ContentType: tt.contentType}
+			assert.Equal(t, tt.expected, content.usesSchemaReceiver())
+		})
+	}
+}
+
+func TestResponseDefinitionNeedsLocalResponseHeaders(t *testing.T) {
+	for _, response := range []ResponseDefinition{
+		{},
+		{Ref: "ReusableResponse"},
+		{Ref: "externalRef0.ReusableResponse"},
+	} {
+		assert.Equal(t, !response.IsRef(), response.NeedsLocalResponseHeaders())
+	}
+}
+
+func TestResponseContentCanUseDirectResponseType(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		content  ResponseContentDefinition
+		expected bool
+	}{
+		{
+			name:     "supported schema receiver",
+			content:  ResponseContentDefinition{ContentType: "application/json"},
+			expected: true,
+		},
+		{
+			name: "wrapped schema receiver",
+			content: ResponseContentDefinition{
+				ContentType:      "application/json",
+				NeedsBodyWrapper: true,
+			},
+			expected: false,
+		},
+		{
+			name:     "multipart callback",
+			content:  ResponseContentDefinition{ContentType: "multipart/form-data"},
+			expected: true,
+		},
+		{
+			name:     "unsupported reader",
+			content:  ResponseContentDefinition{ContentType: "application/octet-stream"},
+			expected: false,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.content.CanUseDirectResponseType())
+		})
 	}
 }
 
