@@ -633,7 +633,8 @@ func (t *InlineHolder_List_Item) MergePickup(v Pickup) error {
 }
 
 // AsPayment returns the Payment union inside the InlineHolder_List_Item: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of InlineHolder_List_Item declares, in its other unions' variants
+// or its own properties.
 func (t InlineHolder_List_Item) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
@@ -685,7 +686,8 @@ func (t *InlineHolder_List_Item) FromPayment(v Payment) error {
 }
 
 // AsDelivery returns the Delivery union inside the InlineHolder_List_Item: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of InlineHolder_List_Item declares, in its other unions' variants
+// or its own properties.
 func (t InlineHolder_List_Item) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
@@ -992,7 +994,8 @@ func (t *InlineHolder_Map_AdditionalProperties) MergePickup(v Pickup) error {
 }
 
 // AsPayment returns the Payment union inside the InlineHolder_Map_AdditionalProperties: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of InlineHolder_Map_AdditionalProperties declares, in its other unions' variants
+// or its own properties.
 func (t InlineHolder_Map_AdditionalProperties) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
@@ -1044,7 +1047,8 @@ func (t *InlineHolder_Map_AdditionalProperties) FromPayment(v Payment) error {
 }
 
 // AsDelivery returns the Delivery union inside the InlineHolder_Map_AdditionalProperties: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of InlineHolder_Map_AdditionalProperties declares, in its other unions' variants
+// or its own properties.
 func (t InlineHolder_Map_AdditionalProperties) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
@@ -1351,7 +1355,8 @@ func (t *InlineHolder_One) MergePickup(v Pickup) error {
 }
 
 // AsPayment returns the Payment union inside the InlineHolder_One: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of InlineHolder_One declares, in its other unions' variants
+// or its own properties.
 func (t InlineHolder_One) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
@@ -1403,7 +1408,8 @@ func (t *InlineHolder_One) FromPayment(v Payment) error {
 }
 
 // AsDelivery returns the Delivery union inside the InlineHolder_One: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of InlineHolder_One declares, in its other unions' variants
+// or its own properties.
 func (t InlineHolder_One) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
@@ -1772,7 +1778,8 @@ func (t *Subject) MergePickup(v Pickup) error {
 }
 
 // AsPayment returns the Payment union inside the Subject: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of Subject declares, in its other unions' variants
+// or its own properties.
 func (t Subject) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
@@ -1824,7 +1831,8 @@ func (t *Subject) FromPayment(v Payment) error {
 }
 
 // AsDelivery returns the Delivery union inside the Subject: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of Subject declares, in its other unions' variants
+// or its own properties.
 func (t Subject) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
@@ -2131,7 +2139,8 @@ func (t *InlineSubjectResponse) MergePickup(v Pickup) error {
 }
 
 // AsPayment returns the Payment union inside the InlineSubjectResponse: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of InlineSubjectResponse declares, in its other unions' variants
+// or its own properties.
 func (t InlineSubjectResponse) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
@@ -2183,7 +2192,8 @@ func (t *InlineSubjectResponse) FromPayment(v Payment) error {
 }
 
 // AsDelivery returns the Delivery union inside the InlineSubjectResponse: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of InlineSubjectResponse declares, in its other unions' variants
+// or its own properties.
 func (t InlineSubjectResponse) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
@@ -2490,7 +2500,8 @@ func (t *InlineSubjectBody) MergePickup(v Pickup) error {
 }
 
 // AsPayment returns the Payment union inside the InlineSubjectBody: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of InlineSubjectBody declares, in its other unions' variants
+// or its own properties.
 func (t InlineSubjectBody) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
@@ -2542,7 +2553,8 @@ func (t *InlineSubjectBody) FromPayment(v Payment) error {
 }
 
 // AsDelivery returns the Delivery union inside the InlineSubjectBody: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of InlineSubjectBody declares, in its other unions' variants
+// or its own properties.
 func (t InlineSubjectBody) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
@@ -2849,7 +2861,8 @@ func (t *BodyComponentInlineJSONBody) MergePickup(v Pickup) error {
 }
 
 // AsPayment returns the Payment union inside the BodyComponentInlineJSONBody: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of BodyComponentInlineJSONBody declares, in its other unions' variants
+// or its own properties.
 func (t BodyComponentInlineJSONBody) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
@@ -2901,7 +2914,8 @@ func (t *BodyComponentInlineJSONBody) FromPayment(v Payment) error {
 }
 
 // AsDelivery returns the Delivery union inside the BodyComponentInlineJSONBody: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of BodyComponentInlineJSONBody declares, in its other unions' variants
+// or its own properties.
 func (t BodyComponentInlineJSONBody) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
@@ -3208,7 +3222,8 @@ func (t *BodyInlineJSONBody) MergePickup(v Pickup) error {
 }
 
 // AsPayment returns the Payment union inside the BodyInlineJSONBody: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of BodyInlineJSONBody declares, in its other unions' variants
+// or its own properties.
 func (t BodyInlineJSONBody) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
@@ -3260,7 +3275,8 @@ func (t *BodyInlineJSONBody) FromPayment(v Payment) error {
 }
 
 // AsDelivery returns the Delivery union inside the BodyInlineJSONBody: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of BodyInlineJSONBody declares, in its other unions' variants
+// or its own properties.
 func (t BodyInlineJSONBody) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
@@ -3567,7 +3583,8 @@ func (t *BodyInline200JSONResponseBody) MergePickup(v Pickup) error {
 }
 
 // AsPayment returns the Payment union inside the BodyInline200JSONResponseBody: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of BodyInline200JSONResponseBody declares, in its other unions' variants
+// or its own properties.
 func (t BodyInline200JSONResponseBody) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
@@ -3619,7 +3636,8 @@ func (t *BodyInline200JSONResponseBody) FromPayment(v Payment) error {
 }
 
 // AsDelivery returns the Delivery union inside the BodyInline200JSONResponseBody: the union data
-// without the keys only the other unions' variants declare.
+// without the keys only the rest of BodyInline200JSONResponseBody declares, in its other unions' variants
+// or its own properties.
 func (t BodyInline200JSONResponseBody) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union

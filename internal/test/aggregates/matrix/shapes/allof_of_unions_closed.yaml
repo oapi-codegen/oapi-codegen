@@ -1,0 +1,49 @@
+versions: [v2, v3]
+description: >-
+  allOf over two $refs to unions whose variants have additionalProperties:
+  false, and a member with a property of its own. In v3, As* of a variant
+  allows the keys the other union's variants and the object declare, and
+  rejects those of its own union's other variants.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Payment'
+    - $ref: '#/components/schemas/Delivery'
+    - type: object
+      properties:
+        orderId: {type: string}
+components:
+  Payment:
+    oneOf:
+      - $ref: '#/components/schemas/Card'
+      - $ref: '#/components/schemas/Transfer'
+  Delivery:
+    oneOf:
+      - $ref: '#/components/schemas/Courier'
+      - $ref: '#/components/schemas/Pickup'
+  Card:
+    type: object
+    additionalProperties: false
+    required: [card]
+    properties:
+      card: {type: string}
+  Transfer:
+    type: object
+    additionalProperties: false
+    required: [iban]
+    properties:
+      iban: {type: string}
+  Courier:
+    type: object
+    additionalProperties: false
+    required: [address]
+    properties:
+      address: {type: string}
+  Pickup:
+    type: object
+    additionalProperties: false
+    required: [store]
+    properties:
+      store: {type: string}
+samples:
+  - '{"card": "4111", "address": "1 Main St", "orderId": "o1"}'
+  - '{"iban": "DE00", "store": "Downtown"}'

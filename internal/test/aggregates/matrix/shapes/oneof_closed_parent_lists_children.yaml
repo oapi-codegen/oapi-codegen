@@ -1,0 +1,34 @@
+versions: [v2, v3]
+description: >-
+  oneof_parent_lists_children with each child closed by
+  additionalProperties: false in its own allOf member, which closes the
+  child as a whole. The parent's oneOf, which lists the child, declares no
+  keys for it: the other children's keys are still rejected.
+subject:
+  type: object
+  required: [petType]
+  properties:
+    petType: {type: string}
+  discriminator:
+    propertyName: petType
+  oneOf:
+    - $ref: '#/components/schemas/Cat'
+    - $ref: '#/components/schemas/Dog'
+components:
+  Cat:
+    allOf:
+      - $ref: '#/components/schemas/Subject'
+      - type: object
+        additionalProperties: false
+        properties:
+          meow: {type: string}
+  Dog:
+    allOf:
+      - $ref: '#/components/schemas/Subject'
+      - type: object
+        additionalProperties: false
+        properties:
+          bark: {type: string}
+samples:
+  - '{"petType": "Cat", "meow": "m"}'
+  - '{"petType": "Dog", "bark": "b"}'

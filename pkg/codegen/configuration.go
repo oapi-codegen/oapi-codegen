@@ -490,6 +490,14 @@ type OutputOptions struct {
 	// named constants. Set this to true to fall through to the standard union
 	// generator instead.
 	SkipEnumViaOneOf bool `yaml:"skip-enum-via-oneof,omitempty"`
+	// LenientUnionAccessors makes a union's As* methods ignore the properties
+	// a variant with `additionalProperties: false` doesn't declare, as they
+	// do for any other variant. By default, with schema-merging-behavior v3,
+	// such a variant's As* returns an error for a property that neither the
+	// variant nor anything else in the union's object declares, so that data
+	// of another variant isn't taken for it. The older values ignore this
+	// option: their As* always ignore such properties.
+	LenientUnionAccessors bool `yaml:"lenient-union-accessors,omitempty"`
 	// Only include operations that have one of these tags. Ignored when empty.
 	IncludeTags []string `yaml:"include-tags,omitempty"`
 	// Exclude operations that have one of these tags. Ignored when empty.
