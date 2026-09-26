@@ -1357,7 +1357,7 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 	// schema-merging-behavior v3 generates no union for a oneOf or anyOf
 	// whose branches only add constraints, such as
 	// `oneOf: [{required: [email]}, {required: [phone]}]`.
-	if schemaMergingInEffect() == schemaMergingV3 {
+	if schemaMergingInEffect() == SchemaMergingV3 {
 		schema = withoutConstraintOnlyUnionsV3(schema, nil)
 	}
 
@@ -2073,7 +2073,7 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 // outSchema's union members, the way the schema-merging-behavior in effect
 // does. v1 and v2 share v2's code.
 func generateUnions(ctx genContext, outSchema *Schema, schema *openapi3.Schema, path []string) error {
-	if schemaMergingInEffect() == schemaMergingV3 {
+	if schemaMergingInEffect() == SchemaMergingV3 {
 		return generateUnionsV3(ctx, outSchema, schema, path)
 	}
 	return generateUnionsV2(ctx, outSchema, schema, path)

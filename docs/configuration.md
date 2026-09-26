@@ -47,7 +47,7 @@ generate:
 # behavior when a bug fix or improvement changes generated output.
 # See <a href="https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen#CompatibilityOptions">CompatibilityOptions</a>
 compatibility:
-  schema-merging-behavior: v2   # v1 or v2: how allOf, anyOf and oneOf become Go types
+  schema-merging-behavior: v2   # v1, v2 or v3: how allOf, anyOf and oneOf become Go types; see <a href="schema-merging.md">schema-merging.md</a>
   old-merge-schemas: false      # deprecated: an alias for schema-merging-behavior: v1
   old-allof-sibling-merging: false
   old-enum-conflicts: false
@@ -88,6 +88,7 @@ output-options:
   prefer-skip-optional-pointer-on-container-types: false
   skip-enum-validate: false
   skip-enum-via-oneof: false
+  lenient-union-accessors: false   # schema-merging-behavior v3 only: see <a href="schema-merging.md#variants-with-additionalproperties-false">schema-merging.md</a>
   generate-types-for-anonymous-schemas: false
   # How OpenAPI type/format combinations map to Go types; user-specified
   # mappings are merged on top of these defaults.

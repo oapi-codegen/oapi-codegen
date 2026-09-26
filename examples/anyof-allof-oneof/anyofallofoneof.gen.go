@@ -37,9 +37,8 @@ type Identity struct {
 
 // IdentityWithDuplicateField defines model for IdentityWithDuplicateField.
 type IdentityWithDuplicateField struct {
-	Issuer struct {
-		Name string `json:"name"`
-	} `json:"issuer"`
+	// Issuer The URL of the issuer.
+	Issuer string `json:"issuer"`
 }
 
 // AsClient returns the union data inside the ClientAndMaybeIdentity as a Client

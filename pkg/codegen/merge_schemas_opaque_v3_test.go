@@ -52,7 +52,7 @@ func generateWithCommonV3(t *testing.T, spec string, opts ...func(*Configuration
 		Generate:      GenerateOptions{Models: true},
 		OutputOptions: OutputOptions{SkipPrune: true},
 		ImportMapping: map[string]string{"./common.yaml": "example.com/common"},
-		Compatibility: CompatibilityOptions{SchemaMergingBehavior: schemaMergingV3},
+		Compatibility: CompatibilityOptions{SchemaMergingBehavior: SchemaMergingV3},
 	}
 	for _, opt := range opts {
 		opt(&cfg)
@@ -61,7 +61,7 @@ func generateWithCommonV3(t *testing.T, spec string, opts ...func(*Configuration
 }
 
 // withV3 selects schema-merging-behavior v3 for generateSpec.
-func withV3(c *Configuration) { c.Compatibility.SchemaMergingBehavior = schemaMergingV3 }
+func withV3(c *Configuration) { c.Compatibility.SchemaMergingBehavior = SchemaMergingV3 }
 
 const opaqueSpecHeader = `openapi: 3.0.3
 info: {title: api, version: "1.0.0"}
