@@ -7,6 +7,7 @@ package codegen
 import (
 	"cmp"
 	"fmt"
+	"iter"
 	"maps"
 	"reflect"
 	"slices"
@@ -404,27 +405,43 @@ func aliasesBack(ctx genContext, target *openapi3.SchemaRef) bool {
 	return true
 }
 
+// allOfTree yields ref, then the members of its allOf, all the way down, in
+// the order the merge flattens them: each before the members of its own allOf.
+// A schema reached again is yielded again but not descended into again, so a
+// cycle ends. A ref with no schema is skipped. Break to stop early.
+func allOfTree(ref *openapi3.SchemaRef) iter.Seq[*openapi3.SchemaRef] {
+	return func(yield func(*openapi3.SchemaRef) bool) {
+		seen := make(map[*openapi3.Schema]bool)
+		var walk func(r *openapi3.SchemaRef) bool
+		walk = func(r *openapi3.SchemaRef) bool {
+			if r == nil || r.Value == nil {
+				return true
+			}
+			if !yield(r) {
+				return false
+			}
+			if seen[r.Value] {
+				return true
+			}
+			seen[r.Value] = true
+			for _, m := range r.Value.AllOf {
+				if !walk(m) {
+					return false
+				}
+			}
+			return true
+		}
+		walk(ref)
+	}
+}
+
 // opaqueSchemaWithin returns an opaque schema (see isOpaqueSchema) that
 // merging ref would have to read, or nil: ref itself, or an opaque member of
 // an allOf that the merge flattens out of ref, however deep.
-func opaqueSchemaWithin(ref *openapi3.SchemaRef, seen map[*openapi3.Schema]bool) *openapi3.SchemaRef {
-	if ref == nil {
-		return nil
-	}
-	if isOpaqueSchema(ref) {
-		return ref
-	}
-	s := ref.Value
-	if s == nil || seen[s] {
-		return nil
-	}
-	if seen == nil {
-		seen = make(map[*openapi3.Schema]bool)
-	}
-	seen[s] = true
-	for _, m := range s.AllOf {
-		if target := opaqueSchemaWithin(m, seen); target != nil {
-			return target
+func opaqueSchemaWithin(ref *openapi3.SchemaRef) *openapi3.SchemaRef {
+	for r := range allOfTree(ref) {
+		if isOpaqueSchema(r) {
+			return r
 		}
 	}
 	return nil
@@ -450,7 +467,7 @@ func opaqueMember(allOf []*openapi3.SchemaRef) (*openapi3.SchemaRef, error) {
 		return m, nil
 	}
 	for i, m := range allOf {
-		if target := opaqueSchemaWithin(m, nil); target != nil {
+		if target := opaqueSchemaWithin(m); target != nil {
 			other := allOf[0]
 			if i == 0 {
 				other = allOf[1]
@@ -840,12 +857,8 @@ func isUnionOnly(v openapi3.Schema) bool {
 // down, as schemas the merge flattens (see listsFlattened), before any is
 // merged, so which unions are left out doesn't depend on the members' order.
 func (m *allOfMerge) markFlattening(member *openapi3.SchemaRef) {
-	if member == nil || member.Value == nil || m.flattening[member.Value] {
-		return
-	}
-	m.flattening[member.Value] = true
-	for _, inner := range member.Value.AllOf {
-		m.markFlattening(inner)
+	for r := range allOfTree(member) {
+		m.flattening[r.Value] = true
 	}
 }
 
@@ -1512,7 +1525,7 @@ func generateAllOfV3(ctx genContext, schema *openapi3.Schema, path []string, ext
 		// either, unless they only annotate it. Say so here, where they can
 		// be named as the schema's own.
 		for _, m := range schema.AllOf {
-			target := opaqueSchemaWithin(m, nil)
+			target := opaqueSchemaWithin(m)
 			if target == nil || (opaqueSchemaFor(m) == target && annotates(own, target)) {
 				continue
 			}

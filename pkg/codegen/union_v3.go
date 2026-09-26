@@ -466,24 +466,14 @@ func closeUnionVariants(ctx genContext, outSchema *Schema, components []unionCom
 // lists the variant or a member (see allOfMerge.listsFlattened).
 func declaredVariantKeys(ctx genContext, ref *openapi3.SchemaRef) (keys []string, closed, ok bool, err error) {
 	nodes := make(map[*openapi3.Schema]bool)
-	var collect func(r *openapi3.SchemaRef) bool
-	collect = func(r *openapi3.SchemaRef) bool {
-		if r == nil || r.Value == nil || nodes[r.Value] {
-			return true
+	for r := range allOfTree(ref) {
+		if nodes[r.Value] {
+			continue
 		}
 		if isOpaqueSchema(r) {
-			return false
+			return nil, false, false, nil
 		}
 		nodes[r.Value] = true
-		for _, m := range r.Value.AllOf {
-			if !collect(m) {
-				return false
-			}
-		}
-		return true
-	}
-	if !collect(ref) {
-		return nil, false, false, nil
 	}
 	lists := func(b *openapi3.SchemaRef) bool { return b != nil && nodes[b.Value] }
 	for n := range nodes {
@@ -518,12 +508,11 @@ func declaredVariantKeys(ctx genContext, ref *openapi3.SchemaRef) (keys []string
 // variantKeys returns the JSON keys a union variant's values can have: those
 // the fields of the Go type it generates as marshal as. It generates the
 // variant's schema for them, following the aliases an allOf or x-go-type-name
-// leaves, as aliasGeneratesMarshalJSON does, so the fields and their tags are
-// the type's own. A struct field marshals as its json tag says (see
-// fieldKey); a type with a MarshalJSON of its own, a union or one with
-// additional properties, writes each property under its name. An opaque
-// variant, from another document or an x-go-type, declares no keys: its
-// fields aren't ours to read.
+// leaves (see aliasChain), so the fields and their tags are the type's own. A
+// struct field marshals as its json tag says (see fieldKey); a type with a
+// MarshalJSON of its own, a union or one with additional properties, writes
+// each property under its name. An opaque variant, from another document or
+// an x-go-type, declares no keys: its fields aren't ours to read.
 func (ctx genContext) variantKeys(b *openapi3.SchemaRef) ([]string, error) {
 	if b == nil || b.Value == nil || isOpaqueSchema(b) {
 		return nil, nil
@@ -543,14 +532,15 @@ func (ctx genContext) variantKeys(b *openapi3.SchemaRef) ([]string, error) {
 		return generateGoSchema(fresh, &openapi3.SchemaRef{Value: s}, ctx.nameHint)
 	}
 	s, err := generate(b.Value)
-	for i := 0; err == nil && i < 100; i++ {
-		if wrapped, ok := s.goTypeNameWrapper(); ok {
-			s = wrapped
+	if err == nil {
+		// The keys are those of the last type on the chain.
+		for level, e := range s.aliasChain(generate) {
+			if e != nil {
+				err = e
+				break
+			}
+			s = level
 		}
-		if s.aliasOf == nil {
-			break
-		}
-		s, err = generate(s.aliasOf)
 	}
 	if err != nil {
 		delete(ctx.variantKeyCache, b.Value)
@@ -610,48 +600,21 @@ func inlineDiscriminatorValue(s *openapi3.Schema, property string) (string, bool
 // members, or in an allOf member of the property's own schema. It returns nil
 // when there is none.
 func pinnedDiscriminatorValue(s *openapi3.Schema, property string) any {
-	seen := make(map[*openapi3.Schema]bool)
-	var pinned, declared func(s *openapi3.Schema) any
-	pinned = func(p *openapi3.Schema) any {
-		if p == nil || seen[p] {
-			return nil
+	for n := range allOfTree(&openapi3.SchemaRef{Value: s}) {
+		p := n.Value.Properties[property]
+		if p == nil {
+			continue
 		}
-		seen[p] = true
-		if p.Const != nil {
-			return p.Const
-		}
-		if values := slices.DeleteFunc(slices.Clone(p.Enum), func(v any) bool { return v == nil }); len(values) == 1 {
-			return values[0]
-		}
-		for _, m := range p.AllOf {
-			if m != nil {
-				if v := pinned(m.Value); v != nil {
-					return v
-				}
+		for declaration := range allOfTree(p) {
+			if declaration.Value.Const != nil {
+				return declaration.Value.Const
+			}
+			if values := slices.DeleteFunc(slices.Clone(declaration.Value.Enum), func(v any) bool { return v == nil }); len(values) == 1 {
+				return values[0]
 			}
 		}
-		return nil
 	}
-	declared = func(s *openapi3.Schema) any {
-		if s == nil || seen[s] {
-			return nil
-		}
-		seen[s] = true
-		if p := s.Properties[property]; p != nil {
-			if v := pinned(p.Value); v != nil {
-				return v
-			}
-		}
-		for _, m := range s.AllOf {
-			if m != nil {
-				if v := declared(m.Value); v != nil {
-					return v
-				}
-			}
-		}
-		return nil
-	}
-	return declared(s)
+	return nil
 }
 
 // discriminatorPropertyTyped reports whether the union itself, or any
@@ -663,19 +626,14 @@ func discriminatorPropertyTyped(outSchema *Schema, elements openapi3.SchemaRefs,
 			return true
 		}
 	}
-	seen := make(map[*openapi3.Schema]bool)
-	var typed func(s *openapi3.Schema) bool
-	typed = func(s *openapi3.Schema) bool {
-		if s == nil || seen[s] {
-			return false
+	for _, e := range elements {
+		for n := range allOfTree(e) {
+			if p := n.Value.Properties[property]; p != nil && p.Value != nil && len(nonNullTypes(p.Value.Type)) > 0 {
+				return true
+			}
 		}
-		seen[s] = true
-		if p := s.Properties[property]; p != nil && p.Value != nil && len(nonNullTypes(p.Value.Type)) > 0 {
-			return true
-		}
-		return slices.ContainsFunc(s.AllOf, func(m *openapi3.SchemaRef) bool { return m != nil && typed(m.Value) })
 	}
-	return slices.ContainsFunc(elements, func(e *openapi3.SchemaRef) bool { return e != nil && typed(e.Value) })
+	return false
 }
 
 // pinnedValueType returns the JSON type the union's variants' pinned
