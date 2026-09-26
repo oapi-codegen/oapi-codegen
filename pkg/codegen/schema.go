@@ -1913,76 +1913,11 @@ func GenFieldsFromProperties(props []Property) []string {
 			field += fmt.Sprintf("%s\n", DeprecationComment(deprecationReason))
 		}
 
-		// Check x-go-type-skip-optional-pointer, which will override if the type
-		// should be a pointer or not when the field is optional.
-		if extension, ok := p.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
-			if skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension); err == nil {
-				p.Schema.SkipOptionalPointer = skipOptionalPointer
-			}
-		}
+		p = p.withSkipOptionalPointerExtension()
 
 		field += fmt.Sprintf("    %s %s", goFieldName, p.GoTypeDef())
 
-		shouldOmitEmpty := (!p.Required || p.ReadOnly || p.WriteOnly) &&
-			(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
-
-		// Nullable fields don't get omitempty: `null` is a meaningful wire
-		// value distinct from key absence, and a nil pointer under omitempty
-		// could never produce it. Required+nullable fields must always
-		// serialize their key per JSON Schema `required` semantics. The
-		// nullable-type option is the exception — nullable.Nullable[T]
-		// distinguishes absent from null itself and relies on omitempty for
-		// the absent case. Issue #2503.
-		omitEmpty := !p.Nullable && shouldOmitEmpty
-
-		if p.Nullable && globalState.options.OutputOptions.NullableType {
-			omitEmpty = shouldOmitEmpty
-		}
-
-		omitZero := false
-
-		// default, but allow turning of
-		if shouldOmitEmpty && p.Schema.SkipOptionalPointer && globalState.options.OutputOptions.PreferSkipOptionalPointerWithOmitzero {
-			omitZero = true
-		}
-
-		// Support x-omitempty and x-omitzero
-		if extOmitEmptyValue, ok := p.Extensions[extPropOmitEmpty]; ok {
-			if xValue, err := extParseOmitEmpty(extOmitEmptyValue); err == nil {
-				omitEmpty = xValue
-			}
-		}
-
-		if extOmitEmptyValue, ok := p.Extensions[extPropOmitZero]; ok {
-			if xValue, err := extParseOmitZero(extOmitEmptyValue); err == nil {
-				omitZero = xValue
-			}
-		}
-
-		fieldTags := schemaFieldTagGenerator().generateTagsMap(StructTagInfo{
-			FieldName:    p.JsonFieldName,
-			IsOptional:   !p.Required,
-			OmitEmpty:    omitEmpty,
-			OmitZero:     omitZero,
-			NeedsFormTag: p.NeedsFormTag,
-		})
-
-		// Support x-go-json-ignore
-		if extension, ok := p.Extensions[extPropGoJsonIgnore]; ok {
-			if goJsonIgnore, err := extParseGoJsonIgnore(extension); err == nil && goJsonIgnore {
-				fieldTags["json"] = "-"
-			}
-		}
-
-		// Support x-oapi-codegen-extra-tags
-		if extension, ok := p.Extensions[extPropExtraTags]; ok {
-			if tags, err := extExtraTags(extension); err == nil {
-				keys := SortedMapKeys(tags)
-				for _, k := range keys {
-					fieldTags[k] = tags[k]
-				}
-			}
-		}
+		fieldTags := structFieldTags(p)
 		// Convert the fieldTags map into Go field annotations.
 		keys := SortedMapKeys(fieldTags)
 		tags := make([]string, len(keys))
@@ -1993,6 +1928,80 @@ func GenFieldsFromProperties(props []Property) []string {
 		fields = append(fields, field)
 	}
 	return fields
+}
+
+// withSkipOptionalPointerExtension returns p with x-go-type-skip-optional-pointer
+// applied, which overrides whether its type is a pointer when it's optional.
+func (p Property) withSkipOptionalPointerExtension() Property {
+	if extension, ok := p.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+		if skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension); err == nil {
+			p.Schema.SkipOptionalPointer = skipOptionalPointer
+		}
+	}
+	return p
+}
+
+// structFieldTags returns the struct tags GenFieldsFromProperties gives p's
+// field, by tag name.
+func structFieldTags(p Property) map[string]string {
+	p = p.withSkipOptionalPointerExtension()
+	shouldOmitEmpty := (!p.Required || p.ReadOnly || p.WriteOnly) &&
+		(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
+
+	// Nullable fields don't get omitempty: `null` is a meaningful wire
+	// value distinct from key absence, and a nil pointer under omitempty
+	// could never produce it. Required+nullable fields must always
+	// serialize their key per JSON Schema `required` semantics. The
+	// nullable-type option is the exception — nullable.Nullable[T]
+	// distinguishes absent from null itself and relies on omitempty for
+	// the absent case. Issue #2503.
+	omitEmpty := !p.Nullable && shouldOmitEmpty
+
+	if p.Nullable && globalState.options.OutputOptions.NullableType {
+		omitEmpty = shouldOmitEmpty
+	}
+
+	// default, but allow turning of
+	omitZero := shouldOmitEmpty && p.Schema.SkipOptionalPointer && globalState.options.OutputOptions.PreferSkipOptionalPointerWithOmitzero
+
+	// Support x-omitempty and x-omitzero
+	if extOmitEmptyValue, ok := p.Extensions[extPropOmitEmpty]; ok {
+		if xValue, err := extParseOmitEmpty(extOmitEmptyValue); err == nil {
+			omitEmpty = xValue
+		}
+	}
+
+	if extOmitEmptyValue, ok := p.Extensions[extPropOmitZero]; ok {
+		if xValue, err := extParseOmitZero(extOmitEmptyValue); err == nil {
+			omitZero = xValue
+		}
+	}
+
+	fieldTags := schemaFieldTagGenerator().generateTagsMap(StructTagInfo{
+		FieldName:    p.JsonFieldName,
+		IsOptional:   !p.Required,
+		OmitEmpty:    omitEmpty,
+		OmitZero:     omitZero,
+		NeedsFormTag: p.NeedsFormTag,
+	})
+
+	// Support x-go-json-ignore
+	if extension, ok := p.Extensions[extPropGoJsonIgnore]; ok {
+		if goJsonIgnore, err := extParseGoJsonIgnore(extension); err == nil && goJsonIgnore {
+			fieldTags["json"] = "-"
+		}
+	}
+
+	// Support x-oapi-codegen-extra-tags
+	if extension, ok := p.Extensions[extPropExtraTags]; ok {
+		if tags, err := extExtraTags(extension); err == nil {
+			keys := SortedMapKeys(tags)
+			for _, k := range keys {
+				fieldTags[k] = tags[k]
+			}
+		}
+	}
+	return fieldTags
 }
 
 func additionalPropertiesType(schema Schema) string {

@@ -2,7 +2,9 @@
 # Category: options/struct_tags_unions
 # Tests:    struct-tags json template with v3 unions.
 #           - As* of a closed variant allows the keys the template gives
-#           - From* of a union in an allOf of unions replaces them
+#           - From* of a union in an allOf of unions replaces them, also
+#             when another union's variant has a property of the same name
+#             that the template gives a different key
 # ==========================================================================
 openapi: "3.0.1"
 info:
@@ -27,9 +29,10 @@ components:
     Courier:
       type: object
       additionalProperties: false
-      required: [address]
+      required: [address, holder]
       properties:
         address: {type: string}
+        holder: {type: string}
     Payment:
       oneOf:
         - $ref: '#/components/schemas/Card'

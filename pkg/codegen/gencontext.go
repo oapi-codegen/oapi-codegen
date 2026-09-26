@@ -79,6 +79,10 @@ type genContext struct {
 	// members declare for one position, by those schemas, so the same ones
 	// always make the same allOf (see allOfMerge.subschema).
 	subschemas map[string]*openapi3.SchemaRef
+
+	// variantKeyCache holds the JSON keys of the union variants v3 has read
+	// them for, by schema (see genContext.variantKeys).
+	variantKeyCache map[*openapi3.Schema][]string
 }
 
 // mergeFrame describes an allOf merge that an enclosing frame is part-way
@@ -103,6 +107,7 @@ func newGenContext(nameHint []string) genContext {
 		subschemas:      make(map[string]*openapi3.SchemaRef),
 		madeUp:          make(map[*openapi3.Schema]bool),
 		unionComponents: make(map[*openapi3.Schema][]unionComponent),
+		variantKeyCache: make(map[*openapi3.Schema][]string),
 	}
 }
 

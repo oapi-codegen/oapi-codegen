@@ -2357,46 +2357,52 @@ func TestClosedUnionVariantsV3(t *testing.T) {
 // discriminator the merge gave it only when neither the union type nor any of
 // its variants may declare it.
 func TestPlacedDiscriminator(t *testing.T) {
-	object := func(property string) *openapi3.SchemaRef {
-		return &openapi3.SchemaRef{Value: &openapi3.Schema{Properties: openapi3.Schemas{property: {Value: &openapi3.Schema{}}}}}
-	}
-	opaque := &openapi3.SchemaRef{Value: &openapi3.Schema{Extensions: map[string]any{extPropGoType: "string"}}}
 	union := func(d *openapi3.Discriminator) *openapi3.SchemaRef {
 		return &openapi3.SchemaRef{Ref: "#/components/schemas/Payment", Value: &openapi3.Schema{Discriminator: d}}
 	}
 	method := &openapi3.Discriminator{PropertyName: "method"}
 	for name, test := range map[string]struct {
-		c    unionComponent
-		want bool
+		c      unionComponent
+		keys   []string
+		opaque bool
+		want   bool
 	}{
-		"placed":             {unionComponent{branches: openapi3.SchemaRefs{object("card")}, discriminator: method, ref: union(nil)}, true},
-		"no discriminator":   {unionComponent{branches: openapi3.SchemaRefs{object("card")}, ref: union(nil)}, false},
-		"inline union":       {unionComponent{branches: openapi3.SchemaRefs{object("card")}, discriminator: method}, false},
-		"the union's own":    {unionComponent{branches: openapi3.SchemaRefs{object("card")}, discriminator: method, ref: union(method)}, false},
-		"a variant declares": {unionComponent{branches: openapi3.SchemaRefs{object("card"), object("method")}, discriminator: method, ref: union(nil)}, false},
-		"an opaque variant":  {unionComponent{branches: openapi3.SchemaRefs{object("card"), opaque}, discriminator: method, ref: union(nil)}, false},
+		"placed":             {unionComponent{discriminator: method, ref: union(nil)}, []string{"card"}, false, true},
+		"no discriminator":   {unionComponent{ref: union(nil)}, []string{"card"}, false, false},
+		"inline union":       {unionComponent{discriminator: method}, []string{"card"}, false, false},
+		"the union's own":    {unionComponent{discriminator: method, ref: union(method)}, []string{"card"}, false, false},
+		"a variant declares": {unionComponent{discriminator: method, ref: union(nil)}, []string{"card", "method"}, false, false},
+		"an opaque variant":  {unionComponent{discriminator: method, ref: union(nil)}, []string{"card"}, true, false},
 	} {
-		assert.Equal(t, test.want, placedDiscriminator(test.c), name)
+		assert.Equal(t, test.want, placedDiscriminator(test.c, test.keys, test.opaque), name)
 	}
 }
 
-// TestPropertyKeys: the keys a property's field marshals as, from
-// x-oapi-codegen-extra-tags, x-go-json-ignore or the json tag template.
-func TestPropertyKeys(t *testing.T) {
+// TestFieldKey: the key a struct field marshals as, from its json tag as
+// GenFieldsFromProperties writes it: the template with the field's own flags,
+// x-go-json-ignore, or x-oapi-codegen-extra-tags.
+func TestFieldKey(t *testing.T) {
 	options, generator := globalState.options, globalState.schemaFieldTagGenerator
 	t.Cleanup(func() { globalState.options, globalState.schemaFieldTagGenerator = options, generator })
-	globalState.options, globalState.schemaFieldTagGenerator = Configuration{}, nil
+	globalState.options = Configuration{}
+	var err error
+	globalState.schemaFieldTagGenerator, err = newStructTagGenerator(StructTagsConfig{Tags: []StructTagTemplate{
+		{Name: "json", Template: `{{if .IsOptional}}opt_{{end}}{{.FieldName}}{{if .OmitEmpty}},omitempty{{end}}`},
+	}})
+	require.NoError(t, err)
 	for name, test := range map[string]struct {
-		extensions map[string]any
-		want       []string
+		p    Property
+		want string
 	}{
-		"template":                {nil, []string{"card_number"}},
-		"extra tag":               {map[string]any{extPropExtraTags: map[string]any{"json": "number,omitempty"}}, []string{"number"}},
-		"extra tag, no name":      {map[string]any{extPropExtraTags: map[string]any{"json": ",omitempty"}}, []string{"CardNumber"}},
-		"extra tag, left off":     {map[string]any{extPropExtraTags: map[string]any{"json": "-"}}, nil},
-		"ignored":                 {map[string]any{extPropGoJsonIgnore: true}, nil},
-		"ignored, extra tag wins": {map[string]any{extPropGoJsonIgnore: true, extPropExtraTags: map[string]any{"json": "number"}}, []string{"number"}},
+		"required":            {Property{JsonFieldName: "card_number", Required: true}, "card_number"},
+		"optional":            {Property{JsonFieldName: "card_number"}, "opt_card_number"},
+		"extra tag":           {Property{JsonFieldName: "card_number", Extensions: map[string]any{extPropExtraTags: map[string]any{"json": "number,omitempty"}}}, "number"},
+		"extra tag, no name":  {Property{JsonFieldName: "card_number", Extensions: map[string]any{extPropExtraTags: map[string]any{"json": ",omitempty"}}}, "CardNumber"},
+		"extra tag, left off": {Property{JsonFieldName: "card_number", Extensions: map[string]any{extPropExtraTags: map[string]any{"json": "-"}}}, ""},
+		"ignored":             {Property{JsonFieldName: "card_number", Extensions: map[string]any{extPropGoJsonIgnore: true}}, ""},
 	} {
-		assert.Equal(t, test.want, propertyKeys("card_number", test.extensions), name)
+		key, ok := fieldKey(test.p)
+		assert.Equal(t, test.want, key, name)
+		assert.Equal(t, test.want != "", ok, name)
 	}
 }

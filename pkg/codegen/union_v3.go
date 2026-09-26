@@ -62,7 +62,7 @@ func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema
 		members = [][]UnionElement{m}
 	}
 	if !globalState.options.OutputOptions.LenientUnionAccessors {
-		closeUnionVariants(outSchema, components, members)
+		return closeUnionVariants(ctx, outSchema, components, members)
 	}
 	return nil
 }
@@ -84,12 +84,18 @@ func generateUnionComponentsV3(ctx genContext, outSchema *Schema, components []u
 	// The discriminator's property is its union's too, even when the variants
 	// leave it to the stamp.
 	declared := make([][]string, len(components))
+	placed := make([]bool, len(components))
 	for k, c := range components {
+		opaque := false
 		for _, b := range c.branches {
-			if b != nil && b.Value != nil && !isOpaqueSchema(b) {
-				declared[k] = append(declared[k], variantKeys(b.Value)...)
+			keys, err := ctx.variantKeys(b)
+			if err != nil {
+				return nil, err
 			}
+			declared[k] = append(declared[k], keys...)
+			opaque = opaque || isOpaqueSchema(b)
 		}
+		placed[k] = placedDiscriminator(c, declared[k], opaque)
 		if c.discriminator != nil {
 			declared[k] = append(declared[k], c.discriminator.PropertyName)
 		}
@@ -164,7 +170,7 @@ func generateUnionComponentsV3(ctx genContext, outSchema *Schema, components []u
 					others = append(others, p.JsonFieldName)
 				}
 			}
-			if placedDiscriminator(c) {
+			if placed[k] {
 				others = append(others, c.discriminator.PropertyName)
 			}
 			slices.Sort(others)
@@ -182,20 +188,19 @@ func generateUnionComponentsV3(ctx genContext, outSchema *Schema, components []u
 
 // placedDiscriminator reports whether a union that is a $ref to a union type
 // has a discriminator the merge gave it (see allOfMerge.placeDiscriminator),
-// which neither that type nor any of its variants declares: the type's own
-// variants then don't allow the key, so its As* leaves it out. When a variant
-// is opaque, it may declare the key, which is then kept.
-func placedDiscriminator(c unionComponent) bool {
-	if c.discriminator == nil || c.ref == nil || c.ref.Value == nil {
+// which neither that type nor any of its variants declares, given the keys the
+// variants declare and whether one is opaque: the type's own variants then
+// don't allow the key, so its As* leaves it out. An opaque variant may declare
+// the key, which is then kept.
+func placedDiscriminator(c unionComponent, variantKeys []string, opaque bool) bool {
+	if c.discriminator == nil || c.ref == nil || c.ref.Value == nil || opaque {
 		return false
 	}
 	property := c.discriminator.PropertyName
 	if d := c.ref.Value.Discriminator; d != nil && d.PropertyName == property {
 		return false
 	}
-	return !slices.ContainsFunc(c.branches, func(b *openapi3.SchemaRef) bool {
-		return b != nil && b.Value != nil && (isOpaqueSchema(b) || slices.Contains(variantKeys(b.Value), property))
-	})
+	return !slices.Contains(variantKeys, property)
 }
 
 // generateUnionV3 generates one oneOf or anyOf into outSchema's union members,
@@ -424,7 +429,7 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 // A variant whose keys can't all be known stays lenient (see
 // declaredVariantKeys), and so does every variant of a union combined with
 // another whose keys can't.
-func closeUnionVariants(outSchema *Schema, components []unionComponent, members [][]UnionElement) {
+func closeUnionVariants(ctx genContext, outSchema *Schema, components []unionComponent, members [][]UnionElement) error {
 	var own []string
 	for _, p := range outSchema.Properties {
 		own = append(own, p.JsonFieldName)
@@ -438,7 +443,11 @@ func closeUnionVariants(outSchema *Schema, components []unionComponent, members 
 		}
 	}
 	// The branches each member is for: generateUnionV3 passes over null ones.
-	branches := make([]openapi3.SchemaRefs, len(components))
+	type variant struct {
+		keys       []string
+		closed, ok bool
+	}
+	variants := make([][]variant, len(components))
 	keys := make([][]string, len(components))
 	known := make([]bool, len(components))
 	for k, c := range components {
@@ -447,8 +456,11 @@ func closeUnionVariants(outSchema *Schema, components []unionComponent, members 
 			if b == nil || isNullTypeSchema(b.Value) {
 				continue
 			}
-			branches[k] = append(branches[k], b)
-			declared, _, ok := declaredVariantKeys(b)
+			declared, closed, ok, err := declaredVariantKeys(ctx, b)
+			if err != nil {
+				return err
+			}
+			variants[k] = append(variants[k], variant{declared, closed, ok})
 			keys[k] = append(keys[k], declared...)
 			known[k] = known[k] && ok
 		}
@@ -468,12 +480,12 @@ func closeUnionVariants(outSchema *Schema, components []unionComponent, members 
 		// It is also another union's variant for its siblings in each, so
 		// they allow its keys.
 		for i, e := range members[k] {
-			declared, closed, ok := declaredVariantKeys(branches[k][i])
-			if !closed || !ok || open {
+			v := variants[k][i]
+			if !v.closed || !v.ok || open {
 				lenient[e] = true
 				continue
 			}
-			allowed[e] = slices.Concat(allowed[e], declared, rest)
+			allowed[e] = slices.Concat(allowed[e], v.keys, rest)
 		}
 	}
 	for e, list := range allowed {
@@ -486,6 +498,7 @@ func closeUnionVariants(outSchema *Schema, components []unionComponent, members 
 		slices.Sort(list)
 		outSchema.UnionAllowedKeys[e] = slices.Compact(list)
 	}
+	return nil
 }
 
 // declaredVariantKeys returns the JSON keys a union variant declares, sorted,
@@ -500,7 +513,7 @@ func closeUnionVariants(outSchema *Schema, components []unionComponent, members 
 // oneOf or anyOf of its own. A oneOf or anyOf that only adds constraints (see
 // isConstraintOnlyUnionV3) declares nothing, and neither does a parent's that
 // lists the variant or a member (see allOfMerge.listsFlattened).
-func declaredVariantKeys(ref *openapi3.SchemaRef) (keys []string, closed, ok bool) {
+func declaredVariantKeys(ctx genContext, ref *openapi3.SchemaRef) (keys []string, closed, ok bool, err error) {
 	nodes := make(map[*openapi3.Schema]bool)
 	var collect func(r *openapi3.SchemaRef) bool
 	collect = func(r *openapi3.SchemaRef) bool {
@@ -519,7 +532,7 @@ func declaredVariantKeys(ref *openapi3.SchemaRef) (keys []string, closed, ok boo
 		return true
 	}
 	if !collect(ref) {
-		return nil, false, false
+		return nil, false, false, nil
 	}
 	lists := func(b *openapi3.SchemaRef) bool { return b != nil && nodes[b.Value] }
 	for n := range nodes {
@@ -531,69 +544,91 @@ func declaredVariantKeys(ref *openapi3.SchemaRef) (keys []string, closed, ok boo
 		}
 		for _, union := range []openapi3.SchemaRefs{n.OneOf, n.AnyOf} {
 			if len(union) > 0 && !isConstraintOnlyUnionV3(union, owner) && !slices.ContainsFunc(union, lists) {
-				return nil, false, false
+				return nil, false, false, nil
 			}
 		}
-		for name, p := range n.Properties {
+		for name := range n.Properties {
 			keys = append(keys, name)
-			keys = append(keys, propertyKeys(name, combinedSchemaExtensions(p))...)
 		}
 		if n.Discriminator != nil {
 			keys = append(keys, n.Discriminator.PropertyName)
 		}
 		closed = closed || isAdditionalPropertiesExplicitFalse(n)
 	}
+	wire, err := ctx.variantKeys(ref)
+	if err != nil {
+		return nil, false, false, err
+	}
+	keys = append(keys, wire...)
 	slices.Sort(keys)
-	return slices.Compact(keys), closed, true
+	return slices.Compact(keys), closed, true, nil
 }
 
-// variantKeys returns the JSON keys a union variant's values can have: the
-// properties it declares, with those of its allOf members however deep, under
-// the keys their Go fields marshal as (see propertyKeys).
-func variantKeys(s *openapi3.Schema) []string {
-	var keys []string
-	seen := make(map[*openapi3.Schema]bool)
-	var walk func(s *openapi3.Schema)
-	walk = func(s *openapi3.Schema) {
-		if s == nil || seen[s] {
-			return
+// variantKeys returns the JSON keys a union variant's values can have: those
+// the fields of the Go type it generates as marshal as. It generates the
+// variant's schema for them, following the aliases an allOf or x-go-type-name
+// leaves, as aliasGeneratesMarshalJSON does, so the fields and their tags are
+// the type's own. A struct field marshals as its json tag says (see
+// fieldKey); a type with a MarshalJSON of its own, a union or one with
+// additional properties, writes each property under its name. An opaque
+// variant, from another document or an x-go-type, declares no keys: its
+// fields aren't ours to read.
+func (ctx genContext) variantKeys(b *openapi3.SchemaRef) ([]string, error) {
+	if b == nil || b.Value == nil || isOpaqueSchema(b) {
+		return nil, nil
+	}
+	if keys, ok := ctx.variantKeyCache[b.Value]; ok {
+		return keys, nil
+	}
+	// The variant is generated afresh, as its own type is, but sharing the
+	// keys read so far. A variant whose type has a union that leads back to
+	// it finds no keys while its own are being read: they only feed the
+	// unions of this throwaway generation, and a variant's keys come from
+	// its own fields, which don't depend on them.
+	ctx.variantKeyCache[b.Value] = nil
+	generate := func(s *openapi3.Schema) (Schema, error) {
+		fresh := newGenContext(ctx.nameHint)
+		fresh.variantKeyCache = ctx.variantKeyCache
+		return generateGoSchema(fresh, &openapi3.SchemaRef{Value: s}, ctx.nameHint)
+	}
+	s, err := generate(b.Value)
+	for i := 0; err == nil && i < 100; i++ {
+		if wrapped, ok := s.goTypeNameWrapper(); ok {
+			s = wrapped
 		}
-		seen[s] = true
-		for name, p := range s.Properties {
-			keys = append(keys, propertyKeys(name, combinedSchemaExtensions(p))...)
+		if s.aliasOf == nil {
+			break
 		}
-		for _, m := range s.AllOf {
-			if m != nil {
-				walk(m.Value)
+		s, err = generate(s.aliasOf)
+	}
+	if err != nil {
+		delete(ctx.variantKeyCache, b.Value)
+		return nil, err
+	}
+	keys := []string{}
+	for _, p := range s.Properties {
+		switch {
+		case len(s.UnionElements) > 0 || s.HasAdditionalProperties:
+			keys = append(keys, p.JsonFieldName)
+		default:
+			if key, ok := fieldKey(p); ok {
+				keys = append(keys, key)
 			}
 		}
 	}
-	walk(s)
-	return keys
+	ctx.variantKeyCache[b.Value] = keys
+	return keys, nil
 }
 
-// propertyKeys returns the JSON keys a property's Go field may marshal as,
-// the way GenFieldsFromProperties writes its json tag: a json tag in
-// x-oapi-codegen-extra-tags, else none for x-go-json-ignore, else those of
-// the json tag template (see structTagGenerator.jsonKeys).
-func propertyKeys(name string, extensions map[string]any) []string {
-	goFieldName := Property{JsonFieldName: name, Extensions: extensions}.GoFieldName()
-	if raw, ok := extensions[extPropExtraTags]; ok {
-		if tags, err := extExtraTags(raw); err == nil {
-			if tag, ok := tags["json"]; ok {
-				if key, ok := jsonTagKey(tag, goFieldName); ok {
-					return []string{key}
-				}
-				return nil
-			}
-		}
+// fieldKey returns the JSON key a struct field for p marshals as, from the
+// json tag GenFieldsFromProperties gives it (see structFieldTags), as
+// encoding/json reads it, and false when the field isn't marshaled.
+func fieldKey(p Property) (string, bool) {
+	tag, ok := structFieldTags(p)["json"]
+	if !ok {
+		return p.GoFieldName(), true
 	}
-	if raw, ok := extensions[extPropGoJsonIgnore]; ok {
-		if ignore, err := extParseGoJsonIgnore(raw); err == nil && ignore {
-			return nil
-		}
-	}
-	return schemaFieldTagGenerator().jsonKeys(name, goFieldName)
+	return jsonTagKey(tag, p.GoFieldName())
 }
 
 // inlineDiscriminatorValue returns the value an inline union variant pins for

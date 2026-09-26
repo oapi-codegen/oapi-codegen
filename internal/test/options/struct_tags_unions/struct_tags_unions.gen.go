@@ -19,6 +19,7 @@ type Card struct {
 // Courier defines model for Courier.
 type Courier struct {
 	Address string `json:"address_wire"`
+	Holder  string `json:"holder_wire"`
 }
 
 // Delivery defines model for Delivery.
@@ -52,7 +53,7 @@ func (t Delivery) AsCourier() (Courier, error) {
 		unknown, found := "", false
 		for key := range object {
 			switch key {
-			case "address", "address_wire", "opt_address_wire":
+			case "address", "address_wire", "holder", "holder_wire":
 			default:
 				if !found || key < unknown {
 					unknown, found = key, true
@@ -107,7 +108,7 @@ func (t Order) AsCard() (Card, error) {
 		unknown, found := "", false
 		for key := range object {
 			switch key {
-			case "address", "address_wire", "card", "card_wire", "holder", "holder_wire", "opt_address_wire", "opt_card_wire", "opt_holder_wire":
+			case "address", "address_wire", "card", "card_wire", "holder", "holder_wire", "opt_holder_wire":
 			default:
 				if !found || key < unknown {
 					unknown, found = key, true
@@ -132,11 +133,8 @@ func (t *Order) FromCard(v Card) error {
 	var object, kept map[string]json.RawMessage
 	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card_wire")
-		delete(kept, "holder_wire")
 		delete(kept, "iban_wire")
-		delete(kept, "opt_card_wire")
 		delete(kept, "opt_holder_wire")
-		delete(kept, "opt_iban_wire")
 		added := object == nil
 		if added {
 			object = make(map[string]json.RawMessage)
@@ -180,7 +178,7 @@ func (t Order) AsTransfer() (Transfer, error) {
 		unknown, found := "", false
 		for key := range object {
 			switch key {
-			case "address", "address_wire", "iban", "iban_wire", "opt_address_wire", "opt_iban_wire":
+			case "address", "address_wire", "holder", "holder_wire", "iban", "iban_wire":
 			default:
 				if !found || key < unknown {
 					unknown, found = key, true
@@ -205,11 +203,8 @@ func (t *Order) FromTransfer(v Transfer) error {
 	var object, kept map[string]json.RawMessage
 	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card_wire")
-		delete(kept, "holder_wire")
 		delete(kept, "iban_wire")
-		delete(kept, "opt_card_wire")
 		delete(kept, "opt_holder_wire")
-		delete(kept, "opt_iban_wire")
 		added := object == nil
 		if added {
 			object = make(map[string]json.RawMessage)
@@ -253,7 +248,7 @@ func (t Order) AsCourier() (Courier, error) {
 		unknown, found := "", false
 		for key := range object {
 			switch key {
-			case "address", "address_wire", "card", "card_wire", "holder", "holder_wire", "iban", "iban_wire", "opt_address_wire", "opt_card_wire", "opt_holder_wire", "opt_iban_wire":
+			case "address", "address_wire", "card", "card_wire", "holder", "holder_wire", "iban", "iban_wire", "opt_holder_wire":
 			default:
 				if !found || key < unknown {
 					unknown, found = key, true
@@ -278,7 +273,7 @@ func (t *Order) FromCourier(v Courier) error {
 	var object, kept map[string]json.RawMessage
 	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address_wire")
-		delete(kept, "opt_address_wire")
+		delete(kept, "holder_wire")
 		added := object == nil
 		if added {
 			object = make(map[string]json.RawMessage)
@@ -320,7 +315,7 @@ func (t Order) AsPayment() (Payment, error) {
 	var object map[string]json.RawMessage
 	if json.Unmarshal(data, &object) == nil && object != nil {
 		delete(object, "address_wire")
-		delete(object, "opt_address_wire")
+		delete(object, "holder_wire")
 		if own, err := json.Marshal(object); err == nil {
 			data = own
 		}
@@ -340,11 +335,8 @@ func (t *Order) FromPayment(v Payment) error {
 	var object, kept map[string]json.RawMessage
 	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card_wire")
-		delete(kept, "holder_wire")
 		delete(kept, "iban_wire")
-		delete(kept, "opt_card_wire")
 		delete(kept, "opt_holder_wire")
-		delete(kept, "opt_iban_wire")
 		added := object == nil
 		if added {
 			object = make(map[string]json.RawMessage)
@@ -374,11 +366,8 @@ func (t Order) AsDelivery() (Delivery, error) {
 	var object map[string]json.RawMessage
 	if json.Unmarshal(data, &object) == nil && object != nil {
 		delete(object, "card_wire")
-		delete(object, "holder_wire")
 		delete(object, "iban_wire")
-		delete(object, "opt_card_wire")
 		delete(object, "opt_holder_wire")
-		delete(object, "opt_iban_wire")
 		if own, err := json.Marshal(object); err == nil {
 			data = own
 		}
@@ -398,7 +387,7 @@ func (t *Order) FromDelivery(v Delivery) error {
 	var object, kept map[string]json.RawMessage
 	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address_wire")
-		delete(kept, "opt_address_wire")
+		delete(kept, "holder_wire")
 		added := object == nil
 		if added {
 			object = make(map[string]json.RawMessage)
@@ -440,7 +429,7 @@ func (t Payment) AsCard() (Card, error) {
 		unknown, found := "", false
 		for key := range object {
 			switch key {
-			case "card", "card_wire", "holder", "holder_wire", "opt_card_wire", "opt_holder_wire":
+			case "card", "card_wire", "holder", "opt_holder_wire":
 			default:
 				if !found || key < unknown {
 					unknown, found = key, true
@@ -485,7 +474,7 @@ func (t Payment) AsTransfer() (Transfer, error) {
 		unknown, found := "", false
 		for key := range object {
 			switch key {
-			case "iban", "iban_wire", "opt_iban_wire":
+			case "iban", "iban_wire":
 			default:
 				if !found || key < unknown {
 					unknown, found = key, true
