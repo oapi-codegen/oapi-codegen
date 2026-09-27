@@ -1462,8 +1462,8 @@ func TestResponseContentUsesSchemaReceiver(t *testing.T) {
 		expected    bool
 	}{
 		{contentType: "application/json", expected: true},
-		{contentType: "application/x-www-form-urlencoded", expected: false},
-		{contentType: "text/plain", expected: false},
+		{contentType: "application/x-www-form-urlencoded", expected: true},
+		{contentType: "text/plain", expected: true},
 		{contentType: "multipart/form-data", expected: false},
 		{contentType: "application/octet-stream", expected: false},
 	} {
@@ -1472,6 +1472,132 @@ func TestResponseContentUsesSchemaReceiver(t *testing.T) {
 			assert.Equal(t, tt.expected, content.usesSchemaReceiver())
 		})
 	}
+}
+
+// Text and form bodies are written from the response value just as JSON
+// bodies are, so an untyped one needs a Body field too. A reusable text
+// envelope is redeclared as the receiver of each operation that reaches it
+// through $ref, while a form envelope is embedded like a JSON one.
+func TestStrictServerTextAndFormResponseReceiverCompatibility(t *testing.T) {
+	const spec = `
+openapi: "3.0.3"
+info: {title: t, version: "1"}
+paths:
+  /text-untyped:
+    get:
+      operationId: TextUntypedOp
+      responses:
+        "200":
+          description: ok
+          content:
+            text/plain:
+              schema: {}
+  /text-no-schema:
+    get:
+      operationId: TextNoSchemaOp
+      responses:
+        "200":
+          description: ok
+          content:
+            text/plain: {}
+  /text-string:
+    get:
+      operationId: TextStringOp
+      responses:
+        "200":
+          description: ok
+          content:
+            text/plain:
+              schema: {type: string}
+  /text-ref:
+    get:
+      operationId: TextRefOp
+      responses:
+        "200": {$ref: "#/components/responses/UntypedText"}
+  /form-untyped:
+    get:
+      operationId: FormUntypedOp
+      responses:
+        "200":
+          description: ok
+          content:
+            application/x-www-form-urlencoded:
+              schema: {}
+  /form-object:
+    get:
+      operationId: FormObjectOp
+      responses:
+        "200":
+          description: ok
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                type: object
+                properties:
+                  name: {type: string}
+  /form-ref:
+    get:
+      operationId: FormRefOp
+      responses:
+        "200": {$ref: "#/components/responses/UntypedForm"}
+components:
+  responses:
+    UntypedText:
+      description: Untyped text
+      content:
+        text/plain:
+          schema: {}
+    UntypedForm:
+      description: Untyped form
+      content:
+        application/x-www-form-urlencoded:
+          schema: {}
+`
+
+	servers := []struct {
+		name     string
+		generate GenerateOptions
+	}{
+		{name: "standard", generate: GenerateOptions{ChiServer: true}},
+		{name: "fiber", generate: GenerateOptions{FiberServer: true}},
+		{name: "iris", generate: GenerateOptions{IrisServer: true}},
+	}
+
+	for _, server := range servers {
+		t.Run(server.name, func(t *testing.T) {
+			code := generateSpec(t, spec, func(c *Configuration) {
+				c.Generate = server.generate
+				c.Generate.Models = true
+				c.Generate.Strict = true
+			})
+			assert.Contains(t, code, "type TextUntypedOp200TextResponse struct {\n\tBody any\n}")
+			assert.Contains(t, code, "type TextNoSchemaOp200TextResponse struct {\n\tBody any\n}")
+			assert.Contains(t, code, "type TextStringOp200TextResponse string\n")
+			assert.Contains(t, code, "type UntypedTextTextResponse struct {\n\tBody any\n}")
+			assert.Contains(t, code, "type TextRefOp200TextResponse UntypedTextTextResponse\n")
+			assert.Contains(t, visitorOf(t, code, "TextUntypedOp200TextResponse"), "fmt.Sprint(response.Body)")
+			assert.Contains(t, visitorOf(t, code, "TextRefOp200TextResponse"), "fmt.Sprint(response.Body)")
+
+			assert.Contains(t, code, "type FormUntypedOp200FormdataResponse struct {\n\tBody any\n}")
+			assert.Contains(t, code, "type FormObjectOp200FormdataResponse struct {\n\tName *string")
+			assert.Contains(t, visitorOf(t, code, "FormUntypedOp200FormdataResponse"), "runtime.MarshalForm(response.Body, nil)")
+			// Only the shape of an embedded form envelope is pinned here, not
+			// how its visitor marshals it.
+			assert.Contains(t, code, "type UntypedFormFormdataResponse any\n")
+			assert.Contains(t, code, "type FormRefOp200FormdataResponse struct{ UntypedFormFormdataResponse }")
+		})
+	}
+}
+
+// visitorOf returns the source of the strict response visitor declared on
+// receiver.
+func visitorOf(t *testing.T, code, receiver string) string {
+	t.Helper()
+	start := strings.Index(code, "func (response "+receiver+") Visit")
+	require.GreaterOrEqual(t, start, 0, "no visitor for %s", receiver)
+	end := strings.Index(code[start:], "\n}\n")
+	require.GreaterOrEqual(t, end, 0, "unterminated visitor for %s", receiver)
+	return code[start : start+end]
 }
 
 func TestResponseDefinitionNeedsLocalResponseHeaders(t *testing.T) {

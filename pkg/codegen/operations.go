@@ -1464,7 +1464,7 @@ func (r ResponseContentDefinition) IsSupported() bool {
 // usesSchemaReceiver reports whether a strict response derives its receiver
 // from the response schema rather than a fixed callback or reader type.
 func (r ResponseContentDefinition) usesSchemaReceiver() bool {
-	return r.IsJSON()
+	return r.IsJSON() || r.IsText() || r.IsFormdata()
 }
 
 // CanUseDirectResponseType reports whether the strict response can use its
@@ -2371,8 +2371,9 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			if rcd.usesSchemaReceiver() {
 				// A components/responses envelope is embedded in the response
 				// struct of each operation that reaches it through $ref, so it
-				// is never a method receiver itself.
-				embedded := operationID == "" || responseOrRef.Ref != ""
+				// is never a method receiver itself. A text envelope is the
+				// exception: the operation redeclares it as its receiver type.
+				embedded := (operationID == "" || responseOrRef.Ref != "") && !rcd.IsText()
 				rcd.NeedsBodyWrapper, err = responseSchemaNeedsBodyWrapper(content.Schema, contentSchema, []string{responseBodyTypeName}, embedded)
 				if err != nil {
 					return nil, fmt.Errorf("determining response body representation: %w", err)

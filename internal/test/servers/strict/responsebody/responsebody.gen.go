@@ -11,6 +11,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/oapi-codegen/runtime"
 )
 
 // Untyped defines model for Untyped.
@@ -19,11 +21,20 @@ type Untyped = any
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
+	// (GET /form)
+	GetForm(w http.ResponseWriter, r *http.Request)
+
 	// (GET /null)
 	GetNull(w http.ResponseWriter, r *http.Request)
 
 	// (GET /nullable-ref)
 	GetNullableRef(w http.ResponseWriter, r *http.Request)
+
+	// (GET /text)
+	GetText(w http.ResponseWriter, r *http.Request)
+
+	// (GET /text-ref)
+	GetTextRef(w http.ResponseWriter, r *http.Request)
 
 	// (GET /union)
 	GetUnion(w http.ResponseWriter, r *http.Request)
@@ -37,6 +48,20 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// GetForm operation middleware
+func (siw *ServerInterfaceWrapper) GetForm(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetForm(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // GetNull operation middleware
 func (siw *ServerInterfaceWrapper) GetNull(w http.ResponseWriter, r *http.Request) {
@@ -57,6 +82,34 @@ func (siw *ServerInterfaceWrapper) GetNullableRef(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetNullableRef(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetText operation middleware
+func (siw *ServerInterfaceWrapper) GetText(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetText(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTextRef operation middleware
+func (siw *ServerInterfaceWrapper) GetTextRef(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTextRef(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -203,8 +256,38 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/union", wrapper.GetUnion)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/null", wrapper.GetNull)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/nullable-ref", wrapper.GetNullableRef)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/text", wrapper.GetText)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/text-ref", wrapper.GetTextRef)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/form", wrapper.GetForm)
 
 	return m
+}
+
+type UntypedTextTextResponse struct {
+	Body any
+}
+
+type GetFormRequestObject struct {
+}
+
+type GetFormResponseObject interface {
+	VisitGetFormResponse(w http.ResponseWriter) error
+}
+
+type GetForm200FormdataResponse struct {
+	Body any
+}
+
+func (response GetForm200FormdataResponse) VisitGetFormResponse(w http.ResponseWriter) error {
+
+	form, err := runtime.MarshalForm(response.Body, nil)
+	if err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	w.WriteHeader(200)
+	_, err = w.Write([]byte(form.Encode()))
+	return err
 }
 
 type GetNullRequestObject struct {
@@ -253,6 +336,44 @@ func (response GetNullableRef200JSONResponse) VisitGetNullableRefResponse(w http
 	return err
 }
 
+type GetTextRequestObject struct {
+}
+
+type GetTextResponseObject interface {
+	VisitGetTextResponse(w http.ResponseWriter) error
+}
+
+type GetText200TextResponse struct {
+	Body any
+}
+
+func (response GetText200TextResponse) VisitGetTextResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(200)
+
+	_, err := w.Write([]byte(fmt.Sprint(response.Body)))
+	return err
+}
+
+type GetTextRefRequestObject struct {
+}
+
+type GetTextRefResponseObject interface {
+	VisitGetTextRefResponse(w http.ResponseWriter) error
+}
+
+type GetTextRef200TextResponse UntypedTextTextResponse
+
+func (response GetTextRef200TextResponse) VisitGetTextRefResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "text/plain")
+	w.WriteHeader(200)
+
+	_, err := w.Write([]byte(fmt.Sprint(response.Body)))
+	return err
+}
+
 type GetUnionRequestObject struct {
 }
 
@@ -279,11 +400,20 @@ func (response GetUnion200JSONResponse) VisitGetUnionResponse(w http.ResponseWri
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 
+	// (GET /form)
+	GetForm(ctx context.Context, request GetFormRequestObject) (GetFormResponseObject, error)
+
 	// (GET /null)
 	GetNull(ctx context.Context, request GetNullRequestObject) (GetNullResponseObject, error)
 
 	// (GET /nullable-ref)
 	GetNullableRef(ctx context.Context, request GetNullableRefRequestObject) (GetNullableRefResponseObject, error)
+
+	// (GET /text)
+	GetText(ctx context.Context, request GetTextRequestObject) (GetTextResponseObject, error)
+
+	// (GET /text-ref)
+	GetTextRef(ctx context.Context, request GetTextRefRequestObject) (GetTextRefResponseObject, error)
 
 	// (GET /union)
 	GetUnion(ctx context.Context, request GetUnionRequestObject) (GetUnionResponseObject, error)
@@ -328,6 +458,30 @@ type strictHandler struct {
 	options     StrictHTTPServerOptions
 }
 
+// GetForm operation middleware
+func (sh *strictHandler) GetForm(w http.ResponseWriter, r *http.Request) {
+	var request GetFormRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetForm(ctx, request.(GetFormRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetForm")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetFormResponseObject); ok {
+		if err := validResponse.VisitGetFormResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetNull operation middleware
 func (sh *strictHandler) GetNull(w http.ResponseWriter, r *http.Request) {
 	var request GetNullRequestObject
@@ -369,6 +523,54 @@ func (sh *strictHandler) GetNullableRef(w http.ResponseWriter, r *http.Request) 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetNullableRefResponseObject); ok {
 		if err := validResponse.VisitGetNullableRefResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetText operation middleware
+func (sh *strictHandler) GetText(w http.ResponseWriter, r *http.Request) {
+	var request GetTextRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetText(ctx, request.(GetTextRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetText")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetTextResponseObject); ok {
+		if err := validResponse.VisitGetTextResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetTextRef operation middleware
+func (sh *strictHandler) GetTextRef(w http.ResponseWriter, r *http.Request) {
+	var request GetTextRefRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.GetTextRef(ctx, request.(GetTextRefRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetTextRef")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetTextRefResponseObject); ok {
+		if err := validResponse.VisitGetTextRefResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

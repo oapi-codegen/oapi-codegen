@@ -35,6 +35,35 @@ paths:
                 oneOf:
                   - $ref: "#/components/schemas/Untyped"
                   - type: "null"
+  /text:
+    get:
+      operationId: GetText
+      responses:
+        "200":
+          description: A text response without a schema
+          content:
+            text/plain: {}
+  /text-ref:
+    get:
+      operationId: GetTextRef
+      responses:
+        "200":
+          $ref: "#/components/responses/UntypedText"
+  /form:
+    get:
+      operationId: GetForm
+      responses:
+        "200":
+          description: An untyped form response
+          content:
+            application/x-www-form-urlencoded:
+              schema: {}
 components:
   schemas:
     Untyped: {}
+  responses:
+    UntypedText:
+      description: A reusable untyped text response
+      content:
+        text/plain:
+          schema: {}
