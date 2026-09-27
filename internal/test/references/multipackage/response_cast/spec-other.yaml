@@ -1,4 +1,5 @@
-# From issue-2010: spec referencing the base spec's 400 response via an external $ref.
+# Spec referencing the base spec's reusable responses, schemas and a path item
+# via external $refs (issues #2010, #1328, #2525).
 openapi: 3.0.1
 info:
   description: Another example schema

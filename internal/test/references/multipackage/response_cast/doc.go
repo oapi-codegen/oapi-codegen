@@ -1,6 +1,7 @@
 // Regression fixture for:
 //   - https://github.com/oapi-codegen/oapi-codegen/issues/1328
 //   - https://github.com/oapi-codegen/oapi-codegen/issues/2010
+//   - https://github.com/oapi-codegen/oapi-codegen/issues/2525
 //
 // The base spec defines reusable responses with concrete, untyped, pointer,
 // and header-bearing JSON bodies. The "other" specs reference those responses
