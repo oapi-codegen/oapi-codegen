@@ -1394,6 +1394,18 @@ paths:
                 oneOf:
                   - $ref: "#/components/schemas/Untyped"
                   - type: "null"
+  /nullable-anyof:
+    get:
+      operationId: NullableAnyOfOp
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/Untyped"
+                  - type: "null"
   /named:
     get:
       operationId: NamedOp
@@ -1429,15 +1441,15 @@ components:
 				"AllOfSiblingOp": v1Embedded,
 				"WrappedOp":      "Wrapped\n",
 			},
-			wrapped: []string{"NullableOp", "NamedOp"},
+			wrapped: []string{"NullableOp", "NullableAnyOfOp", "NamedOp"},
 		},
 		{
 			behavior: SchemaMergingV2,
-			wrapped:  []string{"AllOfOp", "AllOfSiblingOp", "WrappedOp", "NullableOp", "NamedOp"},
+			wrapped:  []string{"AllOfOp", "AllOfSiblingOp", "WrappedOp", "NullableOp", "NullableAnyOfOp", "NamedOp"},
 		},
 		{
 			behavior: SchemaMergingV3,
-			wrapped:  []string{"AllOfOp", "AllOfSiblingOp", "WrappedOp", "NullableOp", "NamedOp"},
+			wrapped:  []string{"AllOfOp", "AllOfSiblingOp", "WrappedOp", "NullableOp", "NullableAnyOfOp", "NamedOp"},
 		},
 	} {
 		t.Run(tt.behavior, func(t *testing.T) {

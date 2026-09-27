@@ -46,13 +46,17 @@ func serve(t *testing.T, body any, path string) *httptest.ResponseRecorder {
 	return w
 }
 
+// v1 embeds the untyped member in a struct, and encoding/json encodes an
+// embedded interface as a field named after its type, so these responses have
+// always put their value under "Untyped". This records that encoding; it is
+// not what the spec describes.
 func TestDirectResponsesServeJSON(t *testing.T) {
 	for _, path := range []string{"/allof", "/allof-sibling", "/wrapped"} {
 		t.Run(path, func(t *testing.T) {
 			w := serve(t, "value", path)
 			assert.Equal(t, http.StatusOK, w.Code)
 			assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
-			assert.True(t, json.Valid(w.Body.Bytes()), "body %q is not JSON", w.Body.String())
+			assert.JSONEq(t, `{"Untyped":"value"}`, w.Body.String())
 		})
 	}
 }

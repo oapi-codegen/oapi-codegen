@@ -32,7 +32,7 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
+                anyOf:
                   - $ref: "#/components/schemas/Untyped"
                   - type: "null"
   /text:
