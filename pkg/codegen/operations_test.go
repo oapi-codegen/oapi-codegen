@@ -1600,16 +1600,6 @@ func visitorOf(t *testing.T, code, receiver string) string {
 	return code[start : start+end]
 }
 
-func TestResponseDefinitionNeedsLocalResponseHeaders(t *testing.T) {
-	for _, response := range []ResponseDefinition{
-		{},
-		{Ref: "ReusableResponse"},
-		{Ref: "externalRef0.ReusableResponse"},
-	} {
-		assert.Equal(t, !response.IsRef(), response.NeedsLocalResponseHeaders())
-	}
-}
-
 func TestResponseContentCanUseDirectResponseType(t *testing.T) {
 	for _, tt := range []struct {
 		name     string

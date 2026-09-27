@@ -1325,12 +1325,6 @@ func (r ResponseDefinition) IsExternalRef() bool {
 	return strings.Contains(r.Ref, ".")
 }
 
-// NeedsLocalResponseHeaders reports whether the response must declare its own
-// header type. Response references reuse the type declared with the response.
-func (r ResponseDefinition) NeedsLocalResponseHeaders() bool {
-	return !r.IsRef()
-}
-
 type ResponseContentDefinition struct {
 	// This is the schema describing this content
 	Schema Schema

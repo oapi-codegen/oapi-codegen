@@ -26,11 +26,10 @@
         {{$fixedStatusCode := .HasFixedStatusCode -}}
         {{$isRef := .IsRef -}}
         {{$isExternalRef := .IsExternalRef -}}
-        {{$useLocalHeaders := .NeedsLocalResponseHeaders -}}
         {{$ref := .Ref  | ucFirstWithPkgName -}}
         {{$headers := .Headers -}}
 
-        {{if (and $hasHeaders $useLocalHeaders) -}}
+        {{if (and $hasHeaders (not $isRef)) -}}
             type {{$opid}}{{$statusCode}}ResponseHeaders struct {
                 {{range .Headers -}}
                     {{with .DeprecationComment}}{{.}}
@@ -63,7 +62,7 @@
                 type {{$receiverTypeName}} struct {
                     Body {{if .IsMultipart}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
                     {{if $hasHeaders -}}
-                        Headers {{if $useLocalHeaders}}{{$opid}}{{$statusCode}}{{else}}{{$ref}}{{end}}ResponseHeaders
+                        Headers {{if $isRef}}{{$ref}}{{else}}{{$opid}}{{$statusCode}}{{end}}ResponseHeaders
                     {{end -}}
 
                     {{if not $fixedStatusCode -}}
