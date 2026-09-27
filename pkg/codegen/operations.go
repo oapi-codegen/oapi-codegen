@@ -1058,6 +1058,12 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 							responseSchema.RefType = responseBodyTypeName
 						}
 					}
+					// An inline response of an externally-ref'd path item was
+					// generated in the external document's context, so the
+					// types it names live in the imported package.
+					if !IsGoTypeReference(responseRef.Ref) {
+						ensureExternalRefsInSchema(&responseSchema, o.PathItemRef)
+					}
 
 					td := ResponseTypeDefinition{
 						TypeDefinition: TypeDefinition{
