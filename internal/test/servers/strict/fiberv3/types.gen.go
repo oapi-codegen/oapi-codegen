@@ -75,6 +75,9 @@ type RequiredTextBodyTextRequestBody = RequiredTextBodyTextBody
 // ReusableResponsesJSONRequestBody defines body for ReusableResponses for application/json ContentType.
 type ReusableResponsesJSONRequestBody = Example
 
+// ReusableURLEncodedResponseFormdataRequestBody defines body for ReusableURLEncodedResponse for application/x-www-form-urlencoded ContentType.
+type ReusableURLEncodedResponseFormdataRequestBody = Example
+
 // SameNameParamAndBodyPropertyJSONRequestBody defines body for SameNameParamAndBodyProperty for application/json ContentType.
 type SameNameParamAndBodyPropertyJSONRequestBody = SameName
 
