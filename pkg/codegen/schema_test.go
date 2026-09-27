@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"math"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -1335,6 +1336,108 @@ components:
 	// The aliases must not redeclare the model's marshallers.
 	assert.NotContains(t, out, "func (t BadRequestJSONResponse) MarshalJSON()")
 	assert.NotContains(t, out, "func (t ConflictJSONResponse) MarshalJSON()")
+}
+
+// A form response reached through $ref embeds the reusable envelope, and
+// runtime.MarshalForm would encode that untagged embedded field under an
+// empty name ("[value]=..."), so the visitor marshals the envelope itself.
+func TestStrictReusableFormResponseMarshalsEnvelope(t *testing.T) {
+	const spec = `
+openapi: "3.0.3"
+info: {title: t, version: "1"}
+paths:
+  /local:
+    get:
+      operationId: localRef
+      responses:
+        "200": {$ref: "#/components/responses/Form"}
+  /external:
+    get:
+      operationId: externalRef
+      responses:
+        "200": {$ref: "./external.yaml#/components/responses/ExternalForm"}
+  /inline:
+    get:
+      operationId: inline
+      responses:
+        "200":
+          description: inline
+          content:
+            application/x-www-form-urlencoded:
+              schema: {$ref: "#/components/schemas/Example"}
+components:
+  schemas:
+    Example:
+      type: object
+      properties:
+        value: {type: string}
+  responses:
+    Form:
+      description: reusable
+      content:
+        application/x-www-form-urlencoded:
+          schema: {$ref: "#/components/schemas/Example"}
+`
+	const externalSpec = `
+openapi: "3.0.3"
+info: {title: external, version: "1"}
+paths: {}
+components:
+  schemas:
+    Example:
+      type: object
+      properties:
+        value: {type: string}
+  responses:
+    ExternalForm:
+      description: reusable
+      content:
+        application/x-www-form-urlencoded:
+          schema: {$ref: "#/components/schemas/Example"}
+`
+
+	visitor := func(t *testing.T, code, receiver string) string {
+		t.Helper()
+		start := strings.Index(code, "func (response "+receiver+") Visit")
+		require.NotEqual(t, -1, start, "no visitor for %s", receiver)
+		end := strings.Index(code[start:], "\n}\n")
+		require.NotEqual(t, -1, end)
+		return code[start : start+end]
+	}
+
+	for _, server := range []struct {
+		name     string
+		generate GenerateOptions
+	}{
+		{name: "standard", generate: GenerateOptions{StdHTTPServer: true}},
+		{name: "fiber", generate: GenerateOptions{FiberServer: true}},
+		{name: "iris", generate: GenerateOptions{IrisServer: true}},
+	} {
+		t.Run(server.name, func(t *testing.T) {
+			loader := openapi3.NewLoader()
+			loader.IsExternalRefsAllowed = true
+			loader.ReadFromURIFunc = func(_ *openapi3.Loader, _ *url.URL) ([]byte, error) {
+				return []byte(externalSpec), nil
+			}
+			swagger, err := loader.LoadFromDataWithPath([]byte(spec), &url.URL{Path: "root.yaml"})
+			require.NoError(t, err)
+
+			server.generate.Models = true
+			server.generate.Strict = true
+			code, err := Generate(swagger, Configuration{
+				PackageName:   "api",
+				Generate:      server.generate,
+				ImportMapping: map[string]string{"./external.yaml": "example.com/external"},
+			})
+			require.NoError(t, err)
+
+			assert.Contains(t, code, "type LocalRef200FormdataResponse struct{ FormFormdataResponse }")
+			assert.Contains(t, visitor(t, code, "LocalRef200FormdataResponse"), "runtime.MarshalForm(response.FormFormdataResponse, nil)")
+			assert.Contains(t, code, "type ExternalRef200FormdataResponse struct {\n\texternalRef0.ExternalFormFormdataResponse\n}")
+			assert.Contains(t, visitor(t, code, "ExternalRef200FormdataResponse"), "runtime.MarshalForm(response.ExternalFormFormdataResponse, nil)")
+			assert.Contains(t, visitor(t, code, "Inline200FormdataResponse"), "runtime.MarshalForm(response, nil)")
+		})
+	}
 }
 
 // TestUnionAdoptUnion pins what a union's From*/Merge* reconcile with its own

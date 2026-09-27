@@ -98,7 +98,9 @@
                     _, err := buf.WriteTo(w)
                     return err
                 {{else if .IsFormdata -}}
-                    form, err := runtime.MarshalForm({{if $hasBodyVar}}response.Body{{else}}response{{end}}, nil)
+                    {{/* As for JSON, marshal a $ref response's embedded envelope itself: MarshalForm would
+                    encode it as an untagged field of the wrapper, under an empty name. */ -}}
+                    form, err := runtime.MarshalForm({{if $hasBodyVar}}response.Body{{else if $isRef}}response.{{$ref | withoutPkgName}}{{.NameTagOrContentType}}Response{{else}}response{{end}}, nil)
                     if err != nil {
                         return err
                     }
