@@ -1,0 +1,25 @@
+openapi: 3.1.0
+info:
+  title: Strict response bodies lowered to any
+  version: "1.0.0"
+paths:
+  /union:
+    get:
+      operationId: GetUnion
+      responses:
+        "200":
+          description: A multi-type response
+          content:
+            application/json:
+              schema:
+                type: [string, number, boolean]
+  /null:
+    get:
+      operationId: GetNull
+      responses:
+        "200":
+          description: A null response
+          content:
+            application/json:
+              schema:
+                type: "null"
