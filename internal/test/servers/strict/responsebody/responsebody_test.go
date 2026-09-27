@@ -21,6 +21,10 @@ func (s responseBodyStrictServer) GetNull(context.Context, GetNullRequestObject)
 	return GetNull200JSONResponse{Body: s.body}, nil
 }
 
+func (s responseBodyStrictServer) GetNullableRef(context.Context, GetNullableRefRequestObject) (GetNullableRefResponseObject, error) {
+	return GetNullableRef200JSONResponse{Body: s.body}, nil
+}
+
 func TestOpenAPI31StrictResponseBody(t *testing.T) {
 	tests := []struct {
 		name string
@@ -31,6 +35,8 @@ func TestOpenAPI31StrictResponseBody(t *testing.T) {
 		{name: "union number", path: "/union", body: 1.5},
 		{name: "union boolean", path: "/union", body: true},
 		{name: "null", path: "/null", body: nil},
+		{name: "nullable ref object", path: "/nullable-ref", body: map[string]any{"value": "object"}},
+		{name: "nullable ref null", path: "/nullable-ref", body: nil},
 	}
 
 	for _, tt := range tests {

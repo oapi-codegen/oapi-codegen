@@ -238,7 +238,7 @@ type GetOtherExample401JSONResponse struct{ externalRef0.N401JSONResponse }
 func (response GetOtherExample401JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.N401JSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

@@ -1,0 +1,56 @@
+openapi: 3.1.0
+info:
+  title: Strict response bodies composed from an untyped schema
+  version: "1.0.0"
+paths:
+  /allof:
+    get:
+      operationId: GetAllOf
+      responses:
+        "200":
+          description: An allOf of an untyped component
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Untyped"
+  /allof-sibling:
+    get:
+      operationId: GetAllOfSibling
+      responses:
+        "200":
+          description: An allOf of an untyped component and a sibling keyword
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Untyped"
+                  - description: More
+  /wrapped:
+    get:
+      operationId: GetWrapped
+      responses:
+        "200":
+          description: A component that is an allOf of an untyped component
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wrapped"
+  /nullable:
+    get:
+      operationId: GetNullable
+      responses:
+        "200":
+          description: A nullable union collapsed to an untyped component
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Untyped"
+                  - type: "null"
+components:
+  schemas:
+    Untyped: {}
+    Wrapped:
+      allOf:
+        - $ref: "#/components/schemas/Untyped"

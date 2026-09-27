@@ -23,3 +23,18 @@ paths:
             application/json:
               schema:
                 type: "null"
+  /nullable-ref:
+    get:
+      operationId: GetNullableRef
+      responses:
+        "200":
+          description: A nullable union collapsed to an untyped component
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Untyped"
+                  - type: "null"
+components:
+  schemas:
+    Untyped: {}

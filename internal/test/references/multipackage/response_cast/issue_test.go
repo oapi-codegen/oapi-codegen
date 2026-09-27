@@ -65,8 +65,12 @@ var (
 	}
 )
 
+// A reusable envelope is embedded in each operation's response struct, so an
+// untyped envelope keeps its direct type. A pointer cannot be embedded, and a
+// header-bearing envelope already has a Body field.
 var (
-	_ = base.N401JSONResponse{Body: map[string]any{"source": "base"}}
+	_ = base.N401JSONResponse(map[string]any{"source": "base"})
+	_ = base.GetExample401JSONResponse{N401JSONResponse: map[string]any{"source": "base"}}
 	_ = base.N402JSONResponse{Body: new(string)}
 	_ = base.N403JSONResponse{
 		Body:    map[string]any{"source": "base"},
@@ -160,25 +164,25 @@ func TestStrictResponseCastJSONWire(t *testing.T) {
 	}{
 		{
 			name:     "object",
-			response: other.GetOtherExample401JSONResponse(base.GetExample401JSONResponse{N401JSONResponse: base.N401JSONResponse{Body: map[string]any{"message": "object"}}}),
+			response: other.GetOtherExample401JSONResponse(base.GetExample401JSONResponse{N401JSONResponse: map[string]any{"message": "object"}}),
 			status:   http.StatusUnauthorized,
 			body:     map[string]any{"message": "object"},
 		},
 		{
 			name:     "array",
-			response: other.GetOtherExample401JSONResponse(base.GetExample401JSONResponse{N401JSONResponse: base.N401JSONResponse{Body: []any{"first", "second"}}}),
+			response: other.GetOtherExample401JSONResponse(base.GetExample401JSONResponse{N401JSONResponse: []any{"first", "second"}}),
 			status:   http.StatusUnauthorized,
 			body:     []any{"first", "second"},
 		},
 		{
 			name:     "scalar",
-			response: other.GetOtherExample401JSONResponse(base.GetExample401JSONResponse{N401JSONResponse: base.N401JSONResponse{Body: "scalar"}}),
+			response: other.GetOtherExample401JSONResponse(base.GetExample401JSONResponse{N401JSONResponse: "scalar"}),
 			status:   http.StatusUnauthorized,
 			body:     "scalar",
 		},
 		{
 			name:     "null",
-			response: other.GetOtherExample401JSONResponse(base.GetExample401JSONResponse{N401JSONResponse: base.N401JSONResponse{Body: nil}}),
+			response: other.GetOtherExample401JSONResponse(base.GetExample401JSONResponse{N401JSONResponse: nil}),
 			status:   http.StatusUnauthorized,
 			body:     nil,
 		},
