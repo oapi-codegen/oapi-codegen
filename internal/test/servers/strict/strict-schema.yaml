@@ -247,6 +247,22 @@ paths:
           $ref: "#/components/responses/badrequest"
         default:
           description: Unknown error
+  /reusable-urlencoded-response:
+    post:
+      operationId: ReusableURLEncodedResponse
+      description: A form response can be a ref to components/responses too
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/example"
+      responses:
+        200:
+          $ref: "#/components/responses/reusableurlencodedresponse"
+        400:
+          $ref: "#/components/responses/badrequest"
+        default:
+          description: Unknown error
   /unspecified-content-type:
     post:
       operationId: UnspecifiedContentType
@@ -407,6 +423,12 @@ components:
             type: integer
       content:
         application/json:
+          schema:
+            $ref: "#/components/schemas/example"
+    reusableurlencodedresponse:
+      description: OK
+      content:
+        application/x-www-form-urlencoded:
           schema:
             $ref: "#/components/schemas/example"
   schemas:

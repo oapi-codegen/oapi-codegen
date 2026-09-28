@@ -1058,6 +1058,12 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 							responseSchema.RefType = responseBodyTypeName
 						}
 					}
+					// An inline response of an externally-ref'd path item was
+					// generated in the external document's context, so the
+					// types it names live in the imported package.
+					if !IsGoTypeReference(responseRef.Ref) {
+						ensureExternalRefsInSchema(&responseSchema, o.PathItemRef)
+					}
 
 					td := ResponseTypeDefinition{
 						TypeDefinition: TypeDefinition{
@@ -1325,12 +1331,6 @@ func (r ResponseDefinition) IsExternalRef() bool {
 	return strings.Contains(r.Ref, ".")
 }
 
-// NeedsLocalResponseHeaders reports whether the response must declare its own
-// header type. Response references reuse the type declared with the response.
-func (r ResponseDefinition) NeedsLocalResponseHeaders() bool {
-	return !r.IsRef()
-}
-
 type ResponseContentDefinition struct {
 	// This is the schema describing this content
 	Schema Schema
@@ -1343,17 +1343,28 @@ type ResponseContentDefinition struct {
 	NameTag string
 
 	// NeedsBodyWrapper is true when a schema-backed strict response cannot use
-	// its generated Go type as a method receiver.
+	// its generated Go type directly: as a method receiver, or, for a reusable
+	// response envelope, as an embedded field.
 	NeedsBodyWrapper bool
 }
 
-func responseSchemaNeedsBodyWrapper(sref *openapi3.SchemaRef, schema Schema, path []string) (bool, error) {
-	return responseSchemaNeedsBodyWrapperSeen(sref, schema, path, map[string]struct{}{})
+// responseSchemaNeedsBodyWrapper reports whether the strict response for a
+// schema must carry its body in a Body field. embedded is true when the
+// generated type is a reusable response envelope that operations embed in a
+// struct, rather than a type that operations use as a method receiver.
+func responseSchemaNeedsBodyWrapper(sref *openapi3.SchemaRef, schema Schema, path []string, embedded bool) (bool, error) {
+	return responseSchemaNeedsBodyWrapperSeen(sref, schema, path, embedded, map[string]struct{}{})
 }
 
-func responseSchemaNeedsBodyWrapperSeen(sref *openapi3.SchemaRef, schema Schema, path []string, seenRefs map[string]struct{}) (bool, error) {
-	if goTypeNeedsBodyWrapper(schema.TypeDecl()) {
+func responseSchemaNeedsBodyWrapperSeen(sref *openapi3.SchemaRef, schema Schema, path []string, embedded bool, seenRefs map[string]struct{}) (bool, error) {
+	if goTypeNeedsBodyWrapper(schema.TypeDecl(), embedded) {
 		return true, nil
+	}
+	// x-go-type-name uses a named type that is declared alongside the schema.
+	for _, td := range schema.AdditionalTypes {
+		if td.TypeName == schema.TypeDecl() && goTypeNeedsBodyWrapper(td.Schema.TypeDecl(), embedded) {
+			return true, nil
+		}
 	}
 	if sref == nil || sref.Value == nil {
 		return false, nil
@@ -1372,7 +1383,7 @@ func responseSchemaNeedsBodyWrapperSeen(sref *openapi3.SchemaRef, schema Schema,
 		if err != nil {
 			return false, fmt.Errorf("generating referenced response schema: %w", err)
 		}
-		return responseSchemaNeedsBodyWrapperSeen(resolvedRef, resolvedSchema, path, seenRefs)
+		return responseSchemaNeedsBodyWrapperSeen(resolvedRef, resolvedSchema, path, embedded, seenRefs)
 	}
 
 	// An explicit named x-go-type may be declared by user code in the current
@@ -1382,20 +1393,34 @@ func responseSchemaNeedsBodyWrapperSeen(sref *openapi3.SchemaRef, schema Schema,
 		return false, nil
 	}
 
-	// A single-element allOf preserves the referenced type identity.
-	if len(sref.Value.AllOf) == 1 {
-		innerRef := sref.Value.AllOf[0]
-		innerSchema, err := GenerateGoSchema(innerRef, path)
-		if err != nil {
-			return false, fmt.Errorf("generating allOf response schema: %w", err)
+	// A composition that the generator lowered to a referenced member's type,
+	// such as a single-member allOf or a nullable union collapsed to its
+	// non-null member, is classified by that member. Whether it is lowered that
+	// way depends on the schema-merging behavior, so compare the generated
+	// types rather than the shape of the schema: a composition that became a
+	// struct or union type of its own never matches a member.
+	for _, members := range []openapi3.SchemaRefs{sref.Value.AllOf, sref.Value.AnyOf, sref.Value.OneOf} {
+		for _, member := range members {
+			if member == nil || !IsGoTypeReference(member.Ref) {
+				continue
+			}
+			memberSchema, err := GenerateGoSchema(member, path)
+			if err != nil {
+				return false, fmt.Errorf("generating composed response schema: %w", err)
+			}
+			if memberSchema.TypeDecl() == schema.TypeDecl() {
+				return responseSchemaNeedsBodyWrapperSeen(member, memberSchema, path, embedded, seenRefs)
+			}
 		}
-		return responseSchemaNeedsBodyWrapperSeen(innerRef, innerSchema, path, seenRefs)
 	}
 
 	return false, nil
 }
 
-func goTypeNeedsBodyWrapper(typeDecl string) bool {
+// goTypeNeedsBodyWrapper reports whether typeDecl cannot carry a strict
+// response directly. A method receiver cannot be a pointer or an interface
+// type. An embedded field can be an interface, but not a pointer.
+func goTypeNeedsBodyWrapper(typeDecl string, embedded bool) bool {
 	expr, err := parser.ParseExpr(typeDecl)
 	if err != nil {
 		return false
@@ -1409,10 +1434,12 @@ func goTypeNeedsBodyWrapper(typeDecl string) bool {
 	}
 
 	switch expr := expr.(type) {
-	case *ast.InterfaceType, *ast.StarExpr:
+	case *ast.StarExpr:
 		return true
+	case *ast.InterfaceType:
+		return !embedded
 	case *ast.Ident:
-		return expr.Name == "any" || expr.Name == "error"
+		return !embedded && (expr.Name == "any" || expr.Name == "error")
 	default:
 		return false
 	}
@@ -1437,7 +1464,7 @@ func (r ResponseContentDefinition) IsSupported() bool {
 // usesSchemaReceiver reports whether a strict response derives its receiver
 // from the response schema rather than a fixed callback or reader type.
 func (r ResponseContentDefinition) usesSchemaReceiver() bool {
-	return r.IsJSON()
+	return r.IsJSON() || r.IsText() || r.IsFormdata()
 }
 
 // CanUseDirectResponseType reports whether the strict response can use its
@@ -2342,7 +2369,12 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 				Schema:      contentSchema,
 			}
 			if rcd.usesSchemaReceiver() {
-				rcd.NeedsBodyWrapper, err = responseSchemaNeedsBodyWrapper(content.Schema, contentSchema, []string{responseBodyTypeName})
+				// A components/responses envelope is embedded in the response
+				// struct of each operation that reaches it through $ref, so it
+				// is never a method receiver itself. A text envelope is the
+				// exception: the operation redeclares it as its receiver type.
+				embedded := (operationID == "" || responseOrRef.Ref != "") && !rcd.IsText()
+				rcd.NeedsBodyWrapper, err = responseSchemaNeedsBodyWrapper(content.Schema, contentSchema, []string{responseBodyTypeName}, embedded)
 				if err != nil {
 					return nil, fmt.Errorf("determining response body representation: %w", err)
 				}

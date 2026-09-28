@@ -232,9 +232,7 @@ type N400JSONResponse struct {
 	Message string `json:"message"`
 }
 
-type N401JSONResponse struct {
-	Body any
-}
+type N401JSONResponse any
 
 type N402JSONResponse struct {
 	Body *string
@@ -283,7 +281,7 @@ type GetExample401JSONResponse struct{ N401JSONResponse }
 func (response GetExample401JSONResponse) VisitGetExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.N401JSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

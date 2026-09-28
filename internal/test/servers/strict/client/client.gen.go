@@ -82,6 +82,9 @@ type RequiredTextBodyTextRequestBody = RequiredTextBodyTextBody
 // ReusableResponsesJSONRequestBody defines body for ReusableResponses for application/json ContentType.
 type ReusableResponsesJSONRequestBody = Example
 
+// ReusableURLEncodedResponseFormdataRequestBody defines body for ReusableURLEncodedResponse for application/x-www-form-urlencoded ContentType.
+type ReusableURLEncodedResponseFormdataRequestBody = Example
+
 // SameNameParamAndBodyPropertyJSONRequestBody defines body for SameNameParamAndBodyProperty for application/json ContentType.
 type SameNameParamAndBodyPropertyJSONRequestBody = SameName
 
@@ -322,6 +325,18 @@ type ClientInterface interface {
 	//
 	// Responses can be refs to components/responses.
 	ReusableResponses(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ReusableURLEncodedResponseWithBody performs a POST /reusable-urlencoded-response (the `ReusableURLEncodedResponse` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// A form response can be a ref to components/responses too.
+	ReusableURLEncodedResponseWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ReusableURLEncodedResponseWithFormdataBody performs a POST /reusable-urlencoded-response (the `ReusableURLEncodedResponse` operationId) request.
+	// Takes a body of the `application/x-www-form-urlencoded` content type.
+	//
+	// A form response can be a ref to components/responses too.
+	ReusableURLEncodedResponseWithFormdataBody(ctx context.Context, body ReusableURLEncodedResponseFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// SameNameParamAndBodyPropertyWithBody performs a POST /same-name-param-and-body-property/{name} (the `SameNameParamAndBodyProperty` operationId) request,
 	// with any type of body and a specified content type.
@@ -628,6 +643,38 @@ func (c *Client) ReusableResponsesWithBody(ctx context.Context, contentType stri
 // Responses can be refs to components/responses.
 func (c *Client) ReusableResponses(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewReusableResponsesRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ReusableURLEncodedResponseWithBody performs a POST /reusable-urlencoded-response (the `ReusableURLEncodedResponse` operationId) request,
+// with any type of body and a specified content type.
+//
+// A form response can be a ref to components/responses too.
+func (c *Client) ReusableURLEncodedResponseWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReusableURLEncodedResponseRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ReusableURLEncodedResponseWithFormdataBody performs a POST /reusable-urlencoded-response (the `ReusableURLEncodedResponse` operationId) request.
+// Takes a body of the `application/x-www-form-urlencoded` content type.
+//
+// A form response can be a ref to components/responses too.
+func (c *Client) ReusableURLEncodedResponseWithFormdataBody(ctx context.Context, body ReusableURLEncodedResponseFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReusableURLEncodedResponseRequestWithFormdataBody(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -1163,6 +1210,46 @@ func NewReusableResponsesRequestWithBody(server string, contentType string, body
 	return req, nil
 }
 
+// NewReusableURLEncodedResponseRequestWithFormdataBody calls the generic ReusableURLEncodedResponse builder with application/x-www-form-urlencoded body
+func NewReusableURLEncodedResponseRequestWithFormdataBody(server string, body ReusableURLEncodedResponseFormdataRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	bodyStr, err := runtime.MarshalForm(body, nil)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = strings.NewReader(bodyStr.Encode())
+	return NewReusableURLEncodedResponseRequestWithBody(server, "application/x-www-form-urlencoded", bodyReader)
+}
+
+// NewReusableURLEncodedResponseRequestWithBody constructs an http.Request for the ReusableURLEncodedResponse method, with any body, and a specified content type
+func NewReusableURLEncodedResponseRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := "/reusable-urlencoded-response"
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewSameNameParamAndBodyPropertyRequest calls the generic SameNameParamAndBodyProperty builder with application/json body
 func NewSameNameParamAndBodyPropertyRequest(server string, name string, body SameNameParamAndBodyPropertyJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -1604,6 +1691,20 @@ type ClientWithResponsesInterface interface {
 	// Responses can be refs to components/responses.
 	ReusableResponsesWithResponse(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*ReusableResponsesResponse, error)
 
+	// ReusableURLEncodedResponseWithBodyWithResponse performs a POST /reusable-urlencoded-response (the `ReusableURLEncodedResponse` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// A form response can be a ref to components/responses too.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ReusableURLEncodedResponseWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReusableURLEncodedResponseResponse, error)
+
+	// ReusableURLEncodedResponseWithFormdataBodyWithResponse performs a POST /reusable-urlencoded-response (the `ReusableURLEncodedResponse` operationId) request.
+	// Takes a body of the `application/x-www-form-urlencoded` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// A form response can be a ref to components/responses too.
+	ReusableURLEncodedResponseWithFormdataBodyWithResponse(ctx context.Context, body ReusableURLEncodedResponseFormdataRequestBody, reqEditors ...RequestEditorFn) (*ReusableURLEncodedResponseResponse, error)
+
 	// SameNameParamAndBodyPropertyWithBodyWithResponse performs a POST /same-name-param-and-body-property/{name} (the `SameNameParamAndBodyProperty` operationId) request,
 	// with any type of body and a specified content type.
 	//
@@ -2027,6 +2128,40 @@ func (r ReusableResponsesResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r ReusableResponsesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ReusableURLEncodedResponseResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes
+func (r ReusableURLEncodedResponseResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ReusableURLEncodedResponseResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ReusableURLEncodedResponseResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ReusableURLEncodedResponseResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -2521,6 +2656,32 @@ func (c *ClientWithResponses) ReusableResponsesWithResponse(ctx context.Context,
 	return ParseReusableResponsesResponse(rsp)
 }
 
+// ReusableURLEncodedResponseWithBodyWithResponse performs a POST /reusable-urlencoded-response (the `ReusableURLEncodedResponse` operationId) request,
+// with any type of body and a specified content type.
+//
+// A form response can be a ref to components/responses too.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ReusableURLEncodedResponseWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReusableURLEncodedResponseResponse, error) {
+	rsp, err := c.ReusableURLEncodedResponseWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReusableURLEncodedResponseResponse(rsp)
+}
+
+// ReusableURLEncodedResponseWithFormdataBodyWithResponse performs a POST /reusable-urlencoded-response (the `ReusableURLEncodedResponse` operationId) request.
+// Takes a body of the `application/x-www-form-urlencoded` content type, and returns a wrapper object for the known response body format(s).
+//
+// A form response can be a ref to components/responses too.
+func (c *ClientWithResponses) ReusableURLEncodedResponseWithFormdataBodyWithResponse(ctx context.Context, body ReusableURLEncodedResponseFormdataRequestBody, reqEditors ...RequestEditorFn) (*ReusableURLEncodedResponseResponse, error) {
+	rsp, err := c.ReusableURLEncodedResponseWithFormdataBody(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReusableURLEncodedResponseResponse(rsp)
+}
+
 // SameNameParamAndBodyPropertyWithBodyWithResponse performs a POST /same-name-param-and-body-property/{name} (the `SameNameParamAndBodyProperty` operationId) request,
 // with any type of body and a specified content type.
 //
@@ -2905,6 +3066,22 @@ func ParseReusableResponsesResponse(rsp *http.Response) (*ReusableResponsesRespo
 			headers.Header2 = value
 		}
 		response.Headers200 = &headers
+	}
+
+	return response, nil
+}
+
+// ParseReusableURLEncodedResponseResponse parses an HTTP response from a ReusableURLEncodedResponseWithResponse call
+func ParseReusableURLEncodedResponseResponse(rsp *http.Response) (*ReusableURLEncodedResponseResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ReusableURLEncodedResponseResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
 	}
 
 	return response, nil

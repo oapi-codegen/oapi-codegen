@@ -1,4 +1,6 @@
-# From issue-2010: base spec whose 400 response is $ref'd cross-package; embedded field names must agree.
+# Base spec whose reusable responses are $ref'd cross-package: embedded field
+# names must agree (issue #2010), and untyped, pointer and header-bearing
+# bodies must keep a compatible envelope (issues #1328, #2525).
 openapi: 3.0.1
 info:
   description: An example schema
