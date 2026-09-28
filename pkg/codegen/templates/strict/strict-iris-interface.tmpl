@@ -46,7 +46,7 @@
                 {{else -}}
                 type {{$receiverTypeName}} struct{ {{$ref}}{{.NameTagOrContentType}}Response }
                 {{end}}
-            {{else if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
+            {{else if and (not $hasHeaders) ($fixedStatusCode) (.CanUseDirectResponseType) -}}
                 type {{$receiverTypeName}} {{if .IsMultipart}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if and .Schema.IsRef (not .Schema.IsExternalRef)}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
                 {{- if and .IsJSON .Schema.HasCustomMarshalJSON}}
 
@@ -91,7 +91,7 @@
                     }
                 {{end -}}
                 ctx.StatusCode({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
-                {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
+                {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .CanUseDirectResponseType)}}
                 {{if .IsJSON -}}
                     {{/* See strict-interface.tmpl: encode a $ref response's embedded envelope, not the wrapper. */ -}}
                     return ctx.JSON(&{{if $hasBodyVar}}response.Body{{else if $isRef}}response.{{$ref | withoutPkgName}}{{.NameTagOrContentType}}Response{{else}}response{{end}})

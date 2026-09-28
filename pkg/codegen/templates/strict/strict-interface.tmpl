@@ -46,7 +46,7 @@
                 {{else -}}
                 type {{$receiverTypeName}} struct{ {{$ref}}{{.NameTagOrContentType}}Response }
                 {{end}}
-            {{else if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
+            {{else if and (not $hasHeaders) ($fixedStatusCode) (.CanUseDirectResponseType) -}}
                 type {{$receiverTypeName}} {{if .IsMultipart}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if and .Schema.IsRef (not .Schema.IsExternalRef)}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
                 {{- if and .IsJSON .Schema.HasCustomMarshalJSON}}
 
@@ -83,7 +83,7 @@
                 {{if .IsMultipart -}}
                     writer := multipart.NewWriter(w)
                 {{end -}}
-                {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
+                {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .CanUseDirectResponseType)}}
                 {{if .IsJSON -}}
                     var buf bytes.Buffer
                     {{/* A $ref response without headers embeds the component's envelope, and a

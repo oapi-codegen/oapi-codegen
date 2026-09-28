@@ -227,7 +227,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	return m
 }
 
-type PointerJSONResponse *string
+type PointerJSONResponse struct {
+	Body *string
+}
 
 type ThingsJSONResponse []Thing
 

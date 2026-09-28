@@ -11,7 +11,7 @@
     {{end -}}
 
     {{range .Contents -}}
-        {{if and (not $hasHeaders) (.IsSupported) -}}
+        {{if and (not $hasHeaders) (.CanUseDirectResponseType) -}}
             type {{$name}}{{.NameTagOrContentType}}Response {{if .IsMultipart}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if .Schema.IsRef}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
             {{- if and .IsJSON .Schema.HasCustomMarshalJSON}}
 
