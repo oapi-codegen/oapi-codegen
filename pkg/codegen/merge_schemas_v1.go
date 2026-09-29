@@ -14,7 +14,6 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
-	"go/parser"
 	"slices"
 	"strings"
 
@@ -97,31 +96,9 @@ func mergeSchemasV1(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 	return outSchema, nil
 }
 
-// GenStructFromAllOf generates an object that is the union of the objects in the
-// input array. In the case of Ref objects, we use an embedded struct, otherwise,
-// we inline the fields.
-//
-// It starts a fresh generation context; within the package, mergeSchemasV1
-// hands genStructFromAllOf the context of the allOf being merged.
-func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, error) {
-	ctx := newGenContext(path)
-	kinds := make([]v1MemberKind, len(allOf))
-	for i, schemaOrRef := range allOf {
-		if IsGoTypeReference(schemaOrRef.Ref) {
-			kinds[i] = v1RefMemberKind(ctx, schemaOrRef, map[string]bool{})
-			continue
-		}
-		schema, err := generateGoSchema(ctx, schemaOrRef, path)
-		if err != nil {
-			return "", err
-		}
-		kinds[i] = v1InlineMemberKind(schema)
-	}
-	return genStructFromAllOf(ctx, allOf, kinds, path)
-}
-
-// genStructFromAllOf generates the struct for allOf, whose members kinds
-// classifies (see v1MemberKind).
+// genStructFromAllOf generates the struct that is the union of the members
+// of allOf, which kinds classifies (see v1MemberKind): a $ref member is
+// embedded, and the fields of an inline member are inlined.
 func genStructFromAllOf(ctx genContext, allOf []*openapi3.SchemaRef, kinds []v1MemberKind, path []string) (string, error) {
 	// An untyped member places no constraint of its own and carries no value
 	// apart from the one the other members describe, so when one of them
@@ -241,7 +218,8 @@ func v1ClassifyRefMember(ctx genContext, member *openapi3.SchemaRef, seen map[st
 	// Generate the referenced schema as its component is generated, under
 	// its own name, in a context of its own (see genContext.isolated).
 	path := []string{typeName}
-	schema, err := generateGoSchema(ctx.isolated(path), &openapi3.SchemaRef{Value: member.Value}, path)
+	isolated := ctx.isolated(path)
+	schema, err := generateGoSchema(isolated, &openapi3.SchemaRef{Value: member.Value}, path)
 	if err != nil {
 		return v1Opaque
 	}
@@ -251,21 +229,18 @@ func v1ClassifyRefMember(ctx genContext, member *openapi3.SchemaRef, seen map[st
 	}
 	// A composition lowered to the type of one of its $ref members, such as
 	// an allOf of a single $ref, is that member's type.
-	for _, members := range []openapi3.SchemaRefs{member.Value.AllOf, member.Value.AnyOf, member.Value.OneOf} {
-		for _, m := range members {
-			if m == nil || !IsGoTypeReference(m.Ref) {
-				continue
-			}
-			if name, err := RefPathToGoType(m.Ref); err == nil && name == decl {
-				return v1RefMemberKind(ctx, m, seen)
-			}
-		}
+	lowered, _, err := loweredToMember(member.Value, decl, func(m *openapi3.SchemaRef) (Schema, error) {
+		return generateGoSchema(isolated, m, path)
+	})
+	if err != nil {
+		return v1Opaque
+	}
+	if lowered != nil {
+		return v1RefMemberKind(ctx, lowered, seen)
 	}
 	// x-go-type-name declares the real type alongside the schema.
-	for _, td := range schema.AdditionalTypes {
-		if td.TypeName == decl {
-			return v1GoTypeKind(td.Schema.TypeDecl())
-		}
+	if td, ok := schema.namedTypeDef(); ok {
+		return v1GoTypeKind(td.Schema.TypeDecl())
 	}
 	return v1Opaque
 }
@@ -275,11 +250,11 @@ func v1ClassifyRefMember(ctx genContext, member *openapi3.SchemaRef, seen map[st
 // a named type, even a local one, may have JSON methods the embedding struct
 // inherits.
 func v1GoTypeKind(decl string) v1MemberKind {
-	expr, err := parser.ParseExpr(decl)
-	if err != nil {
+	expr, _, ok := parseGoType(decl)
+	if !ok {
 		return v1Opaque
 	}
-	switch expr := expr.(type) {
+	switch expr := unparen(expr).(type) {
 	case *ast.StructType:
 		return v1Fields
 	case *ast.InterfaceType:
@@ -358,7 +333,7 @@ func v1AliasRefersBack(ctx genContext, member *openapi3.SchemaRef) bool {
 		if schemaPrimaryType(schema.Type).Is("array") && refersBack(schema.Items) {
 			return true
 		}
-		for _, members := range []openapi3.SchemaRefs{schema.AllOf, schema.AnyOf, schema.OneOf} {
+		for _, members := range subschemaLists(schema) {
 			for _, m := range members {
 				if refersBack(m) {
 					return true

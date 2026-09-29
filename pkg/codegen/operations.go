@@ -19,7 +19,6 @@ import (
 	"cmp"
 	"fmt"
 	"go/ast"
-	"go/parser"
 	"hash/fnv"
 	"maps"
 	"slices"
@@ -1361,10 +1360,8 @@ func responseSchemaNeedsBodyWrapperSeen(sref *openapi3.SchemaRef, schema Schema,
 		return true, nil
 	}
 	// x-go-type-name uses a named type that is declared alongside the schema.
-	for _, td := range schema.AdditionalTypes {
-		if td.TypeName == schema.TypeDecl() && goTypeNeedsBodyWrapper(td.Schema.TypeDecl(), embedded) {
-			return true, nil
-		}
+	if td, ok := schema.namedTypeDef(); ok && goTypeNeedsBodyWrapper(td.Schema.TypeDecl(), embedded) {
+		return true, nil
 	}
 	if sref == nil || sref.Value == nil {
 		return false, nil
@@ -1393,25 +1390,16 @@ func responseSchemaNeedsBodyWrapperSeen(sref *openapi3.SchemaRef, schema Schema,
 		return false, nil
 	}
 
-	// A composition that the generator lowered to a referenced member's type,
-	// such as a single-member allOf or a nullable union collapsed to its
-	// non-null member, is classified by that member. Whether it is lowered that
-	// way depends on the schema-merging behavior, so compare the generated
-	// types rather than the shape of the schema: a composition that became a
-	// struct or union type of its own never matches a member.
-	for _, members := range []openapi3.SchemaRefs{sref.Value.AllOf, sref.Value.AnyOf, sref.Value.OneOf} {
-		for _, member := range members {
-			if member == nil || !IsGoTypeReference(member.Ref) {
-				continue
-			}
-			memberSchema, err := GenerateGoSchema(member, path)
-			if err != nil {
-				return false, fmt.Errorf("generating composed response schema: %w", err)
-			}
-			if memberSchema.TypeDecl() == schema.TypeDecl() {
-				return responseSchemaNeedsBodyWrapperSeen(member, memberSchema, path, embedded, seenRefs)
-			}
-		}
+	// A composition lowered to a referenced member's type is classified by
+	// that member.
+	member, memberSchema, err := loweredToMember(sref.Value, schema.TypeDecl(), func(member *openapi3.SchemaRef) (Schema, error) {
+		return GenerateGoSchema(member, path)
+	})
+	if err != nil {
+		return false, fmt.Errorf("generating composed response schema: %w", err)
+	}
+	if member != nil {
+		return responseSchemaNeedsBodyWrapperSeen(member, memberSchema, path, embedded, seenRefs)
 	}
 
 	return false, nil
@@ -1421,19 +1409,11 @@ func responseSchemaNeedsBodyWrapperSeen(sref *openapi3.SchemaRef, schema Schema,
 // response directly. A method receiver cannot be a pointer or an interface
 // type. An embedded field can be an interface, but not a pointer.
 func goTypeNeedsBodyWrapper(typeDecl string, embedded bool) bool {
-	expr, err := parser.ParseExpr(typeDecl)
-	if err != nil {
+	expr, _, ok := parseGoType(typeDecl)
+	if !ok {
 		return false
 	}
-	for {
-		paren, ok := expr.(*ast.ParenExpr)
-		if !ok {
-			break
-		}
-		expr = paren.X
-	}
-
-	switch expr := expr.(type) {
+	switch expr := unparen(expr).(type) {
 	case *ast.StarExpr:
 		return true
 	case *ast.InterfaceType:

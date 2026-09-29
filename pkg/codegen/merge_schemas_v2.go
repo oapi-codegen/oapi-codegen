@@ -95,14 +95,8 @@ func mergeSchemasV2(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 		// Drop only the type-identity directives. Other extensions
 		// (user-defined x-* metadata, etc.) are preserved — we only
 		// have concrete evidence that the identity-bound ones cause
-		// incorrect aliasing across composition.
-		//
-		// Clone before mutating: the current merge path always
-		// reallocates schema.Extensions in mergeOpenapiSchemas before
-		// we reach here, so the delete is safe today — but the
-		// defensive copy keeps this correct if that invariant changes
-		// (e.g. an allocation-skipping optimization). Cost is a small
-		// map copy on a single code path.
+		// incorrect aliasing across composition. The clone leaves the
+		// members' own extension maps as they were.
 		ext := maps.Clone(schema.Extensions)
 		delete(ext, extPropGoType)
 		delete(ext, extGoTypeName)
@@ -185,7 +179,7 @@ func propagateRemoteRefs(remoteComponent string, schema *openapi3.Schema) {
 	}
 	qualifyRemoteRef(remoteComponent, schema.Items)
 	qualifyRemoteRef(remoteComponent, schema.AdditionalProperties.Schema)
-	for _, list := range [][]*openapi3.SchemaRef{schema.AllOf, schema.AnyOf, schema.OneOf} {
+	for _, list := range subschemaLists(schema) {
 		for _, ref := range list {
 			qualifyRemoteRef(remoteComponent, ref)
 		}
@@ -296,18 +290,11 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	// to silently drop s2's type, making the generated shape depend on
 	// allOf member order (issue #2524).
 	//
-	// "null" is left out of the comparison. In 3.1 it is how a type array
-	// spells nullability, which is unioned below rather than required to
-	// match, the same as 3.0's `nullable`; so `[object]` and
-	// `[object, "null"]` merge into a nullable object instead of failing.
-	// The remaining types compare as sets, so their order doesn't matter.
-	//
-	// The union is deliberate, not an oversight of allOf's intersection
-	// semantics. Read as an intersection, "null" in one member would mean
-	// nothing unless every member declared it, yet a member only says it to
-	// make the composed type nullable, as in the 3.0 idiom
-	// `allOf: [$ref X, {nullable: true}]` (issue #1898). Both spec versions
-	// give it that meaning.
+	// "null" is left out of the comparison: in 3.1 it is how a type array
+	// spells nullability, which is unioned rather than required to match
+	// (see the nullability merge below), so `[object]` and `[object, "null"]`
+	// merge into a nullable object instead of failing. The remaining types
+	// compare as sets, so their order doesn't matter.
 	t1, t2 := nonNullTypes(s1.Type), nonNullTypes(s2.Type)
 	if len(t1) > 0 && len(t2) > 0 && !sameTypeSet(t1, t2) {
 		return openapi3.Schema{}, fmt.Errorf("can not merge incompatible types: %v, %v", s1.Type.Slice(), s2.Type.Slice())
@@ -379,8 +366,12 @@ func mergeOpenapiSchemas(s1, s2 openapi3.Schema, allOf bool, seenSchemaRef map[s
 	// for 3.0 correctness, where Nullable is the only nullability carrier.
 	//
 	// Nullability is UNIONed rather than required to match: if any member
-	// is nullable, the merged schema is nullable. This supports the common
-	// OpenAPI 3.0 idiom of decorating a $ref with nullability, which is only
+	// is nullable, the merged schema is nullable. That is deliberate, not an
+	// oversight of allOf's intersection semantics: read as an intersection,
+	// "null" in one member would mean nothing unless every member declared
+	// it, yet a member only says it to make the composed type nullable. Both
+	// spec versions give it that meaning, and it is the common OpenAPI 3.0
+	// idiom for decorating a $ref with nullability, which is only
 	// expressible through allOf because 3.0 forbids siblings next to $ref
 	// (issue #1898):
 	//
@@ -696,7 +687,8 @@ func generateAllOfV2(ctx genContext, schema *openapi3.Schema, path []string, ext
 		// a pure wrapper with no structural siblings. In the wrapper
 		// case under v2, mergeSchemasV2's single-element fast path
 		// returns the referenced type unchanged, preserving named-type
-		// identity; v1's merge has no such path.
+		// identity. v1's merge does so only for a member that isn't an
+		// object (see mergeSchemasV1); an object member is embedded.
 		mergedSchema, err = merge(ctx, schema.AllOf, path)
 	}
 	if err != nil {
