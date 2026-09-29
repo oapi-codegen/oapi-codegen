@@ -36,6 +36,17 @@ func mergeSchemasV3(ctx genContext, opts allOfOptions, allOf []*openapi3.SchemaR
 		return generateGoSchema(ctx, allOf[0], path)
 	}
 
+	// A member left on its own is merged rather than aliased because the
+	// composition is one of its variants (see listsComposition). When its
+	// allOf includes a schema the merge can't read, there is no other member
+	// for opaqueMember to name (issue #2593), so the error names the
+	// composition instead.
+	if n == 1 && opaqueSchemaFor(allOf[0]) == nil {
+		if target := opaqueSchemaWithin(allOf[0]); target != nil {
+			return Schema{}, opaqueMergeError(allOf[0], target, "the composition it lists as a variant")
+		}
+	}
+
 	// A member whose schema the merge can't read can only be annotated by the
 	// others, and then the composition is that member's type.
 	opaque, err := opaqueMember(allOf)
