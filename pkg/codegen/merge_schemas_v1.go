@@ -240,7 +240,8 @@ func v1ClassifyRefMember(ctx genContext, member *openapi3.SchemaRef, seen map[st
 	// Generate the referenced schema as its component is generated, under
 	// its own name, in a context of its own (see genContext.isolated).
 	path := []string{typeName}
-	schema, err := generateGoSchema(ctx.isolated(path), &openapi3.SchemaRef{Value: member.Value}, path)
+	isolated := ctx.isolated(path)
+	schema, err := generateGoSchema(isolated, &openapi3.SchemaRef{Value: member.Value}, path)
 	if err != nil {
 		return v1Opaque
 	}
@@ -250,21 +251,18 @@ func v1ClassifyRefMember(ctx genContext, member *openapi3.SchemaRef, seen map[st
 	}
 	// A composition lowered to the type of one of its $ref members, such as
 	// an allOf of a single $ref, is that member's type.
-	for _, members := range []openapi3.SchemaRefs{member.Value.AllOf, member.Value.AnyOf, member.Value.OneOf} {
-		for _, m := range members {
-			if m == nil || !IsGoTypeReference(m.Ref) {
-				continue
-			}
-			if name, err := RefPathToGoType(m.Ref); err == nil && name == decl {
-				return v1RefMemberKind(ctx, m, seen)
-			}
-		}
+	lowered, _, err := loweredToMember(member.Value, decl, func(m *openapi3.SchemaRef) (Schema, error) {
+		return generateGoSchema(isolated, m, path)
+	})
+	if err != nil {
+		return v1Opaque
+	}
+	if lowered != nil {
+		return v1RefMemberKind(ctx, lowered, seen)
 	}
 	// x-go-type-name declares the real type alongside the schema.
-	for _, td := range schema.AdditionalTypes {
-		if td.TypeName == decl {
-			return v1GoTypeKind(td.Schema.TypeDecl())
-		}
+	if td, ok := schema.namedTypeDef(); ok {
+		return v1GoTypeKind(td.Schema.TypeDecl())
 	}
 	return v1Opaque
 }
@@ -357,7 +355,7 @@ func v1AliasRefersBack(ctx genContext, member *openapi3.SchemaRef) bool {
 		if schemaPrimaryType(schema.Type).Is("array") && refersBack(schema.Items) {
 			return true
 		}
-		for _, members := range []openapi3.SchemaRefs{schema.AllOf, schema.AnyOf, schema.OneOf} {
+		for _, members := range subschemaLists(schema) {
 			for _, m := range members {
 				if refersBack(m) {
 					return true

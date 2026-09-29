@@ -185,7 +185,7 @@ func propagateRemoteRefs(remoteComponent string, schema *openapi3.Schema) {
 	}
 	qualifyRemoteRef(remoteComponent, schema.Items)
 	qualifyRemoteRef(remoteComponent, schema.AdditionalProperties.Schema)
-	for _, list := range [][]*openapi3.SchemaRef{schema.AllOf, schema.AnyOf, schema.OneOf} {
+	for _, list := range subschemaLists(schema) {
 		for _, ref := range list {
 			qualifyRemoteRef(remoteComponent, ref)
 		}
