@@ -1,8 +1,7 @@
 package codegen
 
 // This file holds the allOf half of schema-merging-behavior v3, the version
-// under development. Its anyOf/oneOf half is in union_v3.go. It started as a
-// copy of v2's (merge_schemas_v2.go).
+// under development. Its anyOf/oneOf half is in union_v3.go.
 
 import (
 	"cmp"
@@ -94,10 +93,8 @@ func mergeSchemasV3(ctx genContext, opts allOfOptions, allOf []*openapi3.SchemaR
 	}
 
 	if !decoratorIdiom {
-		// Drop only the type-identity directives. Other extensions
-		// (user-defined x-* metadata, etc.) are preserved — we only
-		// have concrete evidence that the identity-bound ones cause
-		// incorrect aliasing across composition.
+		// A member's x-go-type-name or x-go-import names that member's type,
+		// not this one (see decoratorIdiom above).
 		ext := maps.Clone(schema.Extensions)
 		delete(ext, extGoTypeName)
 		delete(ext, extPropGoImport)
@@ -967,12 +964,10 @@ func (m *allOfMerge) add(member *openapi3.SchemaRef, v openapi3.Schema, label st
 	// only adds constraints makes no union, and nor does one that lists a
 	// schema this merge is part of (see listsFlattened). A list constrains the
 	// member, or, when the member declares no type, the composition, whose
-	// other members may declare the type its branches restate. A discriminator
-	// goes with the list it tells apart, the oneOf when there are both: a
-	// parent's discriminator says which child a value is, not which branch of
-	// a union the child has of its own.
-	if member == nil || member.Ref == "" || !isUnionOnly(v) {
-		member = nil
+	// other members may declare the type its branches restate.
+	var unionRef *openapi3.SchemaRef
+	if member != nil && member.Ref != "" && isUnionOnly(v) {
+		unionRef = member
 	}
 	owner := &v
 	if len(declaredTypes(owner)) == 0 && m.composition != nil {
@@ -980,6 +975,9 @@ func (m *allOfMerge) add(member *openapi3.SchemaRef, v openapi3.Schema, label st
 	}
 	oneOf := len(v.OneOf) > 0 && !isConstraintOnlyUnionV3(v.OneOf, owner) && !m.listsFlattened(v.OneOf)
 	anyOf := len(v.AnyOf) > 0 && !isConstraintOnlyUnionV3(v.AnyOf, owner) && !m.listsFlattened(v.AnyOf)
+	// A discriminator stays only with a list that makes a union, the oneOf
+	// when there are both: a parent's discriminator says which child a value
+	// is, not which branch of a union the child has of its own.
 	if (len(v.OneOf) > 0 && !oneOf) || (len(v.OneOf) == 0 && len(v.AnyOf) > 0 && !anyOf) {
 		v.Discriminator = nil
 	}
@@ -988,10 +986,10 @@ func (m *allOfMerge) add(member *openapi3.SchemaRef, v openapi3.Schema, label st
 		anyOfDiscriminator = nil
 	}
 	if anyOf {
-		m.addComponent(unionComponent{branches: v.AnyOf, anyOf: true, discriminator: anyOfDiscriminator, ref: member, label: label})
+		m.addComponent(unionComponent{branches: v.AnyOf, anyOf: true, discriminator: anyOfDiscriminator, ref: unionRef, label: label})
 	}
 	if oneOf {
-		m.addComponent(unionComponent{branches: v.OneOf, discriminator: v.Discriminator, ref: member, label: label})
+		m.addComponent(unionComponent{branches: v.OneOf, discriminator: v.Discriminator, ref: unionRef, label: label})
 	}
 
 	if err := m.addType(v, label); err != nil {
@@ -1497,8 +1495,7 @@ func generateAllOfV3(ctx genContext, schema *openapi3.Schema, path []string, ext
 	defer delete(ctx.inProgress, schema)
 
 	// The schema's own keywords next to allOf are merged as one more member
-	// (see compositionMembers). v3 rejects old-allof-sibling-merging, which
-	// discarded them. Issues #697, #931, #1710, #2102.
+	// (see compositionMembers).
 	members := compositionMembers(schema)
 	if len(members) > len(schema.AllOf) {
 		own := members[len(members)-1]

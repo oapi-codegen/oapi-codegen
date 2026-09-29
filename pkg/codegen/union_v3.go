@@ -1,8 +1,7 @@
 package codegen
 
 // This file holds the anyOf/oneOf half of schema-merging-behavior v3, the
-// version under development. Its allOf half is in merge_schemas_v3.go. It
-// started as a copy of v2's (union_v2.go).
+// version under development. Its allOf half is in merge_schemas_v3.go.
 
 import (
 	"encoding/json"
@@ -18,11 +17,9 @@ import (
 )
 
 // generateUnionsV3 generates the anyOf and oneOf of an object schema into
-// outSchema's union members.
-//
-// A schema that combines several unions, an anyOf and a oneOf or an allOf's
-// merge of several, is a value that is one of each union's variants at once
-// (see unionComponent), and generates as generateUnionComponents describes.
+// outSchema's union members. A schema that combines several unions, an anyOf
+// and a oneOf or an allOf's merge of several (see unionComponent), generates
+// as generateUnionComponents describes.
 func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema, path []string) error {
 	components := ctx.v3.unionComponents[schema]
 	if components == nil && schema.AnyOf != nil && schema.OneOf != nil {
@@ -68,12 +65,10 @@ func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema
 }
 
 // generateUnionComponents generates a union that combines several (see
-// unionComponent): the variants of each, and for each variant the JSON keys
-// its own union owns, those only its union's variants declare, which From*
-// replaces while keeping the other unions' data (see
-// Schema.UnionOwnedKeys). A key several unions declare, such as a shared id,
-// belongs to all of them and is never removed. A union that is a $ref to a
-// union type also gets As* and From* for that type.
+// unionComponent): each union's variants, with the JSON keys its union owns
+// (see Schema.UnionOwnedKeys), those only its variants declare, so that a key
+// several unions declare, such as a shared id, belongs to all of them; and As*
+// and From* for a union that is a $ref to a union type.
 //
 // Inline variants are named <path><union><index>, where <union> is OneOf or
 // AnyOf, numbered when there are several of a kind. It returns each union's
@@ -240,8 +235,7 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 	// mappedCount counts the variants the discriminator leads to.
 	mappedCount := 0
 	for i, element := range elements {
-		// Skip null-only branches: nullability marker, not a real
-		// union variant. See the collapse comment above for context.
+		// A null-only branch is a nullability marker, not a variant.
 		if element != nil && isNullTypeSchema(element.Value) {
 			continue
 		}
