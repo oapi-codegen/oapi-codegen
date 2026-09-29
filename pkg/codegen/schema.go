@@ -46,10 +46,9 @@ type Schema struct {
 	UnionVariantProperties []string
 
 	// UnionOwnedKeys is set for a union that combines several oneOfs or
-	// anyOfs, such as an allOf of unions (schema-merging-behavior v3). It
-	// maps each variant to the JSON keys only the variants of its own union
-	// declare: From* replaces those and keeps the other unions' data, where
-	// for a single union it replaces all of it.
+	// anyOfs (schema-merging-behavior v3, see unionComponent): the JSON keys
+	// each variant's own union owns, which From* replaces, keeping the other
+	// unions' data, where for a single union it replaces all of it.
 	UnionOwnedKeys map[UnionElement][]string
 
 	// UnionRefComponents lists, for such a union, the unions that are a $ref

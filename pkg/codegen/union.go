@@ -75,6 +75,55 @@ func generateUnions(ctx genContext, outSchema *Schema, schema *openapi3.Schema, 
 	return generateUnionsV2(ctx, outSchema, schema, path)
 }
 
+// generateUnionElement generates one branch of a oneOf or anyOf, at
+// elementPath, and returns its schema with GoType set to the type the union's
+// accessors use. An inline branch is named after its path, and defined under
+// that name in outSchema's additional types unless it generated as that named
+// type already, along with the types it brings.
+func generateUnionElement(ctx genContext, outSchema *Schema, element *openapi3.SchemaRef, elementPath []string) (Schema, error) {
+	elementSchema, err := generateGoSchema(ctx.at(elementPath), element, elementPath)
+	if err != nil {
+		return Schema{}, err
+	}
+	if element.Ref == "" {
+		elementName := SchemaNameToTypeName(PathToTypeName(elementPath))
+		if elementSchema.TypeDecl() == elementName {
+			elementSchema.GoType = elementName
+		} else {
+			td := TypeDefinition{Schema: elementSchema, TypeName: elementName, JsonName: strings.Join(elementPath, ".")}
+			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
+			elementSchema.GoType = td.TypeName
+		}
+		outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
+	}
+	return elementSchema, nil
+}
+
+// mapExplicitly maps goType, the type of the $ref variant ref, under every key
+// the discriminator's mapping gives that $ref, and reports whether it gives it
+// any.
+func mapExplicitly(into map[string]string, mapping map[string]openapi3.MappingRef, ref, goType string) bool {
+	mapped := false
+	for k, v := range mapping {
+		if v.Ref == ref {
+			into[k] = goType
+			mapped = true
+		}
+	}
+	return mapped
+}
+
+// addUnionElement adds a variant's type to outSchema's union members, and the
+// JSON property names the variant declares to the union's.
+func addUnionElement(outSchema *Schema, element *openapi3.SchemaRef, goType string) {
+	// The same type can appear twice, e.g. as a member of both an anyOf
+	// and a oneOf; its accessors are generated once.
+	outSchema.UnionElements = appendUnique(outSchema.UnionElements, UnionElement(goType))
+	for _, name := range propertyNames(element.Value, 0) {
+		outSchema.UnionVariantProperties = appendUnique(outSchema.UnionVariantProperties, name)
+	}
+}
+
 // unionTextKinds returns the sorted JSON types of a union's branches when
 // every branch (other than a 3.1 null branch) is a single scalar type, or is
 // itself a union of scalar types, such as a `$ref` to one; and nil otherwise.
