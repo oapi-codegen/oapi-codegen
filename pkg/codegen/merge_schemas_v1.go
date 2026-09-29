@@ -96,31 +96,9 @@ func mergeSchemasV1(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 	return outSchema, nil
 }
 
-// GenStructFromAllOf generates an object that is the union of the objects in the
-// input array. In the case of Ref objects, we use an embedded struct, otherwise,
-// we inline the fields.
-//
-// It starts a fresh generation context; within the package, mergeSchemasV1
-// hands genStructFromAllOf the context of the allOf being merged.
-func GenStructFromAllOf(allOf []*openapi3.SchemaRef, path []string) (string, error) {
-	ctx := newGenContext(path)
-	kinds := make([]v1MemberKind, len(allOf))
-	for i, schemaOrRef := range allOf {
-		if IsGoTypeReference(schemaOrRef.Ref) {
-			kinds[i] = v1RefMemberKind(ctx, schemaOrRef, map[string]bool{})
-			continue
-		}
-		schema, err := generateGoSchema(ctx, schemaOrRef, path)
-		if err != nil {
-			return "", err
-		}
-		kinds[i] = v1InlineMemberKind(schema)
-	}
-	return genStructFromAllOf(ctx, allOf, kinds, path)
-}
-
-// genStructFromAllOf generates the struct for allOf, whose members kinds
-// classifies (see v1MemberKind).
+// genStructFromAllOf generates the struct that is the union of the members
+// of allOf, which kinds classifies (see v1MemberKind): a $ref member is
+// embedded, and the fields of an inline member are inlined.
 func genStructFromAllOf(ctx genContext, allOf []*openapi3.SchemaRef, kinds []v1MemberKind, path []string) (string, error) {
 	// An untyped member places no constraint of its own and carries no value
 	// apart from the one the other members describe, so when one of them
