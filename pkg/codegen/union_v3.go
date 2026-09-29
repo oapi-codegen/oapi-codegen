@@ -246,21 +246,9 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 			continue
 		}
 		elementPath := append(path, fmt.Sprint(i))
-		elementSchema, err := generateGoSchema(ctx.at(elementPath), element, elementPath)
+		elementSchema, err := generateUnionElement(ctx, outSchema, element, elementPath)
 		if err != nil {
 			return nil, err
-		}
-
-		if element.Ref == "" {
-			elementName := SchemaNameToTypeName(PathToTypeName(elementPath))
-			if elementSchema.TypeDecl() == elementName {
-				elementSchema.GoType = elementName
-			} else {
-				td := TypeDefinition{Schema: elementSchema, TypeName: elementName, JsonName: strings.Join(elementPath, ".")}
-				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
-				elementSchema.GoType = td.TypeName
-			}
-			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
 		}
 
 		// An inline variant has no name for the mapping to use. It can still
@@ -293,16 +281,8 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 			inlineKeys[key] = true
 			outSchema.Discriminator.Mapping[key] = elementSchema.GoType
 		case discriminated:
-			// Explicit mapping.
-			var mapped bool
-			for k, v := range discriminator.Mapping {
-				if v.Ref == element.Ref {
-					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
-					mapped = true
-				}
-			}
-			// Implicit mapping.
-			if !mapped {
+			// Implicit mapping, unless the mapping names the $ref.
+			if !mapExplicitly(outSchema.Discriminator.Mapping, discriminator.Mapping, element.Ref, elementSchema.GoType) {
 				key := RefPathToObjName(element.Ref)
 				if inlineKeys[key] {
 					return nil, fmt.Errorf("discriminator: %s takes the %s value %q, which an inline schema also takes", element.Ref, discriminator.PropertyName, key)
@@ -311,15 +291,10 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 			}
 		}
 		members = append(members, UnionElement(elementSchema.GoType))
-		// The same type can appear twice, e.g. as a member of both an anyOf
-		// and a oneOf; its accessors are generated once.
-		outSchema.UnionElements = appendUnique(outSchema.UnionElements, UnionElement(elementSchema.GoType))
+		addUnionElement(outSchema, element, elementSchema.GoType)
 		if discriminated {
 			mappedCount++
 			outSchema.Discriminator.variants = appendUnique(outSchema.Discriminator.variants, UnionElement(elementSchema.GoType))
-		}
-		for _, name := range propertyNames(element.Value, 0) {
-			outSchema.UnionVariantProperties = appendUnique(outSchema.UnionVariantProperties, name)
 		}
 	}
 	slices.Sort(outSchema.UnionVariantProperties)
