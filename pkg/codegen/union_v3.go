@@ -24,7 +24,7 @@ import (
 // merge of several, is a value that is one of each union's variants at once
 // (see unionComponent), and generates as generateUnionComponents describes.
 func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema, path []string) error {
-	components := ctx.unionComponents[schema]
+	components := ctx.v3.unionComponents[schema]
 	if components == nil && schema.AnyOf != nil && schema.OneOf != nil {
 		components = []unionComponent{
 			{branches: schema.AnyOf, anyOf: true},
@@ -486,7 +486,7 @@ func (ctx genContext) variantKeys(b *openapi3.SchemaRef) ([]string, error) {
 	if b == nil || b.Value == nil || isOpaqueSchema(b) {
 		return nil, nil
 	}
-	if keys, ok := ctx.variantKeyCache[b.Value]; ok {
+	if keys, ok := ctx.v3.variantKeyCache[b.Value]; ok {
 		return keys, nil
 	}
 	// The variant is generated afresh, as its own type is, but sharing the
@@ -494,11 +494,11 @@ func (ctx genContext) variantKeys(b *openapi3.SchemaRef) ([]string, error) {
 	// it finds no keys while its own are being read: they only feed the
 	// unions of this throwaway generation, and a variant's keys come from
 	// its own fields, which don't depend on them.
-	ctx.variantKeyCache[b.Value] = nil
+	ctx.v3.variantKeyCache[b.Value] = nil
 	generate := func(s *openapi3.Schema) (Schema, error) {
 		fresh := newGenContext(ctx.nameHint)
 		fresh.run = ctx.run
-		fresh.variantKeyCache = ctx.variantKeyCache
+		fresh.v3.variantKeyCache = ctx.v3.variantKeyCache
 		return generateGoSchema(fresh, &openapi3.SchemaRef{Value: s}, ctx.nameHint)
 	}
 	s, err := generate(b.Value)
@@ -513,7 +513,7 @@ func (ctx genContext) variantKeys(b *openapi3.SchemaRef) ([]string, error) {
 		}
 	}
 	if err != nil {
-		delete(ctx.variantKeyCache, b.Value)
+		delete(ctx.v3.variantKeyCache, b.Value)
 		return nil, err
 	}
 	keys := []string{}
@@ -527,7 +527,7 @@ func (ctx genContext) variantKeys(b *openapi3.SchemaRef) ([]string, error) {
 			}
 		}
 	}
-	ctx.variantKeyCache[b.Value] = keys
+	ctx.v3.variantKeyCache[b.Value] = keys
 	return keys, nil
 }
 

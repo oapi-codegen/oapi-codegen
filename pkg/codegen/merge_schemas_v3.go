@@ -105,7 +105,7 @@ func mergeSchemasV3(ctx genContext, opts allOfOptions, allOf []*openapi3.SchemaR
 	}
 
 	if components := merged.components; len(components) > 1 {
-		ctx.unionComponents[&schema] = components
+		ctx.v3.unionComponents[&schema] = components
 	}
 	return generateGoSchema(ctx, openapi3.NewSchemaRef("", &schema), path)
 }
@@ -671,7 +671,7 @@ func describeAllOfMember(ref *openapi3.SchemaRef) string {
 // generator gave a member it made up, the member's $ref, or its place in the
 // allOf of the member labeled parent ("" for the composition itself).
 func allOfMemberLabel(ctx genContext, parent string, member *openapi3.SchemaRef, i int) string {
-	if label, ok := ctx.memberLabels[member]; ok {
+	if label, ok := ctx.v3.memberLabels[member]; ok {
 		return label
 	}
 	if member.Ref != "" {
@@ -1082,7 +1082,7 @@ func (m *allOfMerge) subschema(schemas []labeledSchema) *openapi3.SchemaRef {
 		keys[i] = fmt.Sprintf("%p", s.ref)
 	}
 	key := strings.Join(keys, " ")
-	if merged, ok := m.ctx.subschemas[key]; ok {
+	if merged, ok := m.ctx.v3.subschemas[key]; ok {
 		return merged
 	}
 
@@ -1105,7 +1105,7 @@ func (m *allOfMerge) subschema(schemas []labeledSchema) *openapi3.SchemaRef {
 		}
 	}
 	if len(distinct) == 1 {
-		m.ctx.subschemas[key] = distinct[0].ref
+		m.ctx.v3.subschemas[key] = distinct[0].ref
 		return distinct[0].ref
 	}
 
@@ -1113,7 +1113,7 @@ func (m *allOfMerge) subschema(schemas []labeledSchema) *openapi3.SchemaRef {
 	for _, d := range distinct {
 		// A copy of the member, so that its label belongs to this allOf.
 		member := &openapi3.SchemaRef{Ref: d.ref.Ref, Value: d.ref.Value, Extensions: d.ref.Extensions}
-		m.ctx.memberLabels[member] = d.label
+		m.ctx.v3.memberLabels[member] = d.label
 		merged.AllOf = append(merged.AllOf, member)
 
 		// What the generator reads from a property's own schema rather than
@@ -1144,8 +1144,8 @@ func (m *allOfMerge) subschema(schemas []labeledSchema) *openapi3.SchemaRef {
 		}
 	}
 	ref := &openapi3.SchemaRef{Value: merged}
-	m.ctx.subschemas[key] = ref
-	m.ctx.madeUp[merged] = true
+	m.ctx.v3.subschemas[key] = ref
+	m.ctx.v3.madeUp[merged] = true
 	return ref
 }
 
@@ -1265,10 +1265,10 @@ func (m *allOfMerge) addEnum(v openapi3.Schema, label string) error {
 	if len(enum) == 0 {
 		// The extension applies to the schema it is on. A property that
 		// members declare separately is merged by an allOf the spec doesn't
-		// spell out (see genContext.madeUp), so there it goes on the member's
+		// spell out (see v3State.madeUp), so there it goes on the member's
 		// property.
 		where := "the schema with this allOf"
-		if m.ctx.madeUp[m.owner] {
+		if m.ctx.v3.madeUp[m.owner] {
 			where = displayLabel(label)
 		}
 		return mergeConflict(m.from["enum"], fmt.Sprintf("enum %v", m.schema.Enum), label,
@@ -1502,8 +1502,8 @@ func generateAllOfV3(ctx genContext, schema *openapi3.Schema, path []string, ext
 	members := compositionMembers(schema)
 	if len(members) > len(schema.AllOf) {
 		own := members[len(members)-1]
-		ctx.memberLabels[own] = ""
-		defer delete(ctx.memberLabels, own)
+		ctx.v3.memberLabels[own] = ""
+		defer delete(ctx.v3.memberLabels, own)
 		// An opaque member can't be merged with the schema's own keywords
 		// either, unless they only annotate it. Say so here, where they can
 		// be named as the schema's own.
