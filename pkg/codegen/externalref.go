@@ -3,9 +3,6 @@ package codegen
 import (
 	"fmt"
 	"go/ast"
-	"go/parser"
-	"go/token"
-	"go/types"
 	"slices"
 	"strings"
 )
@@ -135,14 +132,16 @@ func ensureExternalRefsInSchema(schema *Schema, ref string) {
 }
 
 // isExternalTypeName reports whether goType is a single unqualified type name
-// that is not a Go builtin, such as the name of a generated model.
+// that is not a Go builtin, such as the name of a generated model. A name in
+// parentheses is not one: the caller spells the qualified name from goType as
+// written.
 func isExternalTypeName(goType string) bool {
-	expr, err := parser.ParseExpr(goType)
-	if err != nil {
+	expr, _, ok := parseGoType(goType)
+	if !ok {
 		return false
 	}
-	ident, ok := expr.(*ast.Ident)
-	return ok && !isPredeclaredType(ident.Name)
+	ident, isIdent := expr.(*ast.Ident)
+	return isIdent && !isPredeclaredType(ident.Name)
 }
 
 // qualifyExternalTypeNames qualifies with pkg every unqualified type name in
@@ -153,73 +152,21 @@ func isExternalTypeName(goType string) bool {
 // including field names, tags and comments, are left as they are. An
 // expression that does not parse is returned unchanged.
 func qualifyExternalTypeNames(typeExpr, pkg string) string {
-	fset := token.NewFileSet()
-	expr, err := parser.ParseExprFrom(fset, "", typeExpr, 0)
-	if err != nil {
+	expr, fset, ok := parseGoType(typeExpr)
+	if !ok {
 		return typeExpr
 	}
-
+	// Rewritten from the end, so an insertion doesn't move the ones before.
 	var offsets []int
-	var visit func(ast.Expr)
-	visitFields := func(fields *ast.FieldList) {
-		if fields == nil {
-			return
+	typeIdents(expr, func(id *ast.Ident) bool {
+		if !isPredeclaredType(id.Name) {
+			offsets = append(offsets, fset.Position(id.Pos()).Offset)
 		}
-		for _, field := range fields.List {
-			visit(field.Type)
-		}
-	}
-	visit = func(e ast.Expr) {
-		switch e := e.(type) {
-		case *ast.Ident:
-			if !isPredeclaredType(e.Name) {
-				offsets = append(offsets, fset.Position(e.Pos()).Offset)
-			}
-		case *ast.SelectorExpr:
-			// Already qualified with a package.
-		case *ast.StarExpr:
-			visit(e.X)
-		case *ast.ParenExpr:
-			visit(e.X)
-		case *ast.ArrayType:
-			visit(e.Elt)
-		case *ast.Ellipsis:
-			visit(e.Elt)
-		case *ast.MapType:
-			visit(e.Key)
-			visit(e.Value)
-		case *ast.ChanType:
-			visit(e.Value)
-		case *ast.IndexExpr:
-			visit(e.X)
-			visit(e.Index)
-		case *ast.IndexListExpr:
-			visit(e.X)
-			for _, index := range e.Indices {
-				visit(index)
-			}
-		case *ast.StructType:
-			visitFields(e.Fields)
-		case *ast.InterfaceType:
-			visitFields(e.Methods)
-		case *ast.FuncType:
-			visitFields(e.Params)
-			visitFields(e.Results)
-		}
-	}
-	visit(expr)
-	slices.Sort(offsets)
-
+		return true
+	})
 	qualified := typeExpr
 	for _, offset := range slices.Backward(offsets) {
 		qualified = qualified[:offset] + pkg + "." + qualified[offset:]
 	}
 	return qualified
-}
-
-// isPredeclaredType reports whether name is one of Go's predeclared types,
-// such as "string", "any" or "error".
-func isPredeclaredType(name string) bool {
-	_, ok := types.Universe.Lookup(name).(*types.TypeName)
-	return ok
 }

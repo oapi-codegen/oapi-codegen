@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"go/ast"
-	"go/parser"
 	"iter"
 	"maps"
 	"math"
@@ -518,29 +517,15 @@ func (t *TypeDefinition) IsAlias() bool {
 // positions count: in `[]struct{ Node *string }` the field is merely named
 // Node. A decl that does not parse is treated as not referring to it.
 func mentionsTypeName(decl, name string) bool {
-	expr, err := parser.ParseExpr(decl)
-	if err != nil {
+	expr, _, ok := parseGoType(decl)
+	if !ok {
 		return false
 	}
 	found := false
-	var visit func(ast.Node) bool
-	visit = func(n ast.Node) bool {
-		switch n := n.(type) {
-		case *ast.Field:
-			// Field and method names, and struct tags, are not types.
-			ast.Inspect(n.Type, visit)
-			return false
-		case *ast.SelectorExpr:
-			// pkg.Name is another package's type.
-			return false
-		case *ast.Ident:
-			if n.Name == name {
-				found = true
-			}
-		}
+	typeIdents(expr, func(id *ast.Ident) bool {
+		found = id.Name == name
 		return !found
-	}
-	ast.Inspect(expr, visit)
+	})
 	return found
 }
 

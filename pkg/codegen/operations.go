@@ -19,7 +19,6 @@ import (
 	"cmp"
 	"fmt"
 	"go/ast"
-	"go/parser"
 	"hash/fnv"
 	"maps"
 	"slices"
@@ -1421,19 +1420,11 @@ func responseSchemaNeedsBodyWrapperSeen(sref *openapi3.SchemaRef, schema Schema,
 // response directly. A method receiver cannot be a pointer or an interface
 // type. An embedded field can be an interface, but not a pointer.
 func goTypeNeedsBodyWrapper(typeDecl string, embedded bool) bool {
-	expr, err := parser.ParseExpr(typeDecl)
-	if err != nil {
+	expr, _, ok := parseGoType(typeDecl)
+	if !ok {
 		return false
 	}
-	for {
-		paren, ok := expr.(*ast.ParenExpr)
-		if !ok {
-			break
-		}
-		expr = paren.X
-	}
-
-	switch expr := expr.(type) {
+	switch expr := unparen(expr).(type) {
 	case *ast.StarExpr:
 		return true
 	case *ast.InterfaceType:

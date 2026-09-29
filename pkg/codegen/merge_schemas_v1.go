@@ -14,7 +14,6 @@ import (
 	"errors"
 	"fmt"
 	"go/ast"
-	"go/parser"
 	"slices"
 	"strings"
 
@@ -275,11 +274,11 @@ func v1ClassifyRefMember(ctx genContext, member *openapi3.SchemaRef, seen map[st
 // a named type, even a local one, may have JSON methods the embedding struct
 // inherits.
 func v1GoTypeKind(decl string) v1MemberKind {
-	expr, err := parser.ParseExpr(decl)
-	if err != nil {
+	expr, _, ok := parseGoType(decl)
+	if !ok {
 		return v1Opaque
 	}
-	switch expr := expr.(type) {
+	switch expr := unparen(expr).(type) {
 	case *ast.StructType:
 		return v1Fields
 	case *ast.InterfaceType:
