@@ -27,21 +27,9 @@ type Holder struct {
 
 // InlineHolder defines model for InlineHolder.
 type InlineHolder struct {
-	List *[]struct {
-		// Embedded struct due to allOf(#/components/schemas/Items)
-		Items `yaml:",inline"`
-		// Embedded fields due to inline allOf schema
-	} `json:"list,omitempty"`
-	Map *map[string]struct {
-		// Embedded struct due to allOf(#/components/schemas/Items)
-		Items `yaml:",inline"`
-		// Embedded fields due to inline allOf schema
-	} `json:"map,omitempty"`
-	One *struct {
-		// Embedded struct due to allOf(#/components/schemas/Items)
-		Items `yaml:",inline"`
-		// Embedded fields due to inline allOf schema
-	} `json:"one,omitempty"`
+	List *[]Items          `json:"list,omitempty"`
+	Map  *map[string]Items `json:"map,omitempty"`
+	One  *Items            `json:"one,omitempty"`
 }
 
 // Item defines model for Item.
@@ -53,51 +41,31 @@ type Item struct {
 type Items = []Item
 
 // Subject defines model for Subject.
-type Subject struct {
-	// Embedded struct due to allOf(#/components/schemas/Items)
-	Items `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-}
+type Subject = Items
 
 // InlineSubjectResponse defines model for InlineSubjectResponse.
-type InlineSubjectResponse struct {
-	// Embedded struct due to allOf(#/components/schemas/Items)
-	Items `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-}
+type InlineSubjectResponse = Items
 
 // SubjectResponse defines model for SubjectResponse.
 type SubjectResponse = Subject
 
 // InlineSubjectBody defines model for InlineSubjectBody.
-type InlineSubjectBody struct {
-	// Embedded struct due to allOf(#/components/schemas/Items)
-	Items `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-}
+type InlineSubjectBody = Items
 
 // SubjectBody defines model for SubjectBody.
 type SubjectBody = Subject
 
 // BodyComponentInlineJSONBody defines body for BodyComponentInline for application/json ContentType.
-type BodyComponentInlineJSONBody struct {
-	// Embedded struct due to allOf(#/components/schemas/Items)
-	Items `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-}
+type BodyComponentInlineJSONBody = Items
 
 // BodyInlineJSONBody defines body for BodyInline for application/json ContentType.
-type BodyInlineJSONBody struct {
-	// Embedded struct due to allOf(#/components/schemas/Items)
-	Items `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-}
+type BodyInlineJSONBody = Items
 
 // BodyComponentJSONRequestBody defines body for BodyComponent for application/json ContentType.
 type BodyComponentJSONRequestBody = Subject
 
 // BodyComponentInlineJSONRequestBody defines body for BodyComponentInline for application/json ContentType.
-type BodyComponentInlineJSONRequestBody BodyComponentInlineJSONBody
+type BodyComponentInlineJSONRequestBody = BodyComponentInlineJSONBody
 
 // BodyDefaultJSONRequestBody defines body for BodyDefault for application/json ContentType.
 type BodyDefaultJSONRequestBody = Subject
@@ -106,7 +74,7 @@ type BodyDefaultJSONRequestBody = Subject
 type BodyHeadersJSONRequestBody = Subject
 
 // BodyInlineJSONRequestBody defines body for BodyInline for application/json ContentType.
-type BodyInlineJSONRequestBody BodyInlineJSONBody
+type BodyInlineJSONRequestBody = BodyInlineJSONBody
 
 // BodyRefJSONRequestBody defines body for BodyRef for application/json ContentType.
 type BodyRefJSONRequestBody = Subject
@@ -1100,19 +1068,11 @@ type BodyInlineResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *struct {
-		// Embedded struct due to allOf(#/components/schemas/Items)
-		Items `yaml:",inline"`
-		// Embedded fields due to inline allOf schema
-	}
+	JSON200 *Items
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r BodyInlineResponse) GetJSON200() *struct {
-	// Embedded struct due to allOf(#/components/schemas/Items)
-	Items `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-} {
+func (r BodyInlineResponse) GetJSON200() *Items {
 	return r.JSON200
 }
 
@@ -1576,11 +1536,7 @@ func ParseBodyInlineResponse(rsp *http.Response) (*BodyInlineResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			// Embedded struct due to allOf(#/components/schemas/Items)
-			Items `yaml:",inline"`
-			// Embedded fields due to inline allOf schema
-		}
+		var dest Items
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -1950,11 +1906,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	return m
 }
 
-type InlineSubjectResponseJSONResponse struct {
-	// Embedded struct due to allOf(#/components/schemas/Items)
-	Items `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-}
+type InlineSubjectResponseJSONResponse Items
 
 type SubjectResponseJSONResponse Subject
 
@@ -2073,11 +2025,7 @@ type BodyInlineResponseObject interface {
 	VisitBodyInlineResponse(w http.ResponseWriter) error
 }
 
-type BodyInline200JSONResponse struct {
-	// Embedded struct due to allOf(#/components/schemas/Items)
-	Items `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-}
+type BodyInline200JSONResponse Items
 
 func (response BodyInline200JSONResponse) VisitBodyInlineResponse(w http.ResponseWriter) error {
 

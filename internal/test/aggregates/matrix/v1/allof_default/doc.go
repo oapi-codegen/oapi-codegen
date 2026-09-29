@@ -9,8 +9,6 @@
 // the generated code and the tests, but the tests must not be changed to accept
 // a regression: code that generated and worked before must keep doing so. A
 // commit that changes them must say why.
-//
-// The round trips are skipped: v1 generates a struct for an allOf over a string schema.
 package matrixv1allofdefault
 
 //go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml spec.yaml

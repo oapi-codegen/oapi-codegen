@@ -1340,10 +1340,10 @@ components:
 	}
 }
 
-// Whether a composition is lowered to a referenced member's type depends on
-// the schema-merging behavior. Only a composition that was lowered to an
-// untyped member's type is wrapped; v1 embeds an allOf member in a struct,
-// which is a valid receiver, so those responses keep their direct type.
+// A composition lowered to an untyped member's type is wrapped. How a
+// composition is lowered depends on the schema-merging behavior, so the
+// member is identified by the type the generator emitted; every behavior
+// lowers these to the member's type, v1 since #2590.
 func TestStrictServerComposedResponseReceiverCompatibility(t *testing.T) {
 	const spec = `
 openapi: "3.1.0"
@@ -1426,42 +1426,15 @@ components:
       x-go-type-name: NamedType
 `
 
-	const v1Embedded = "struct {\n\t// Embedded struct due to allOf(#/components/schemas/Untyped)\n\tUntyped `yaml:\",inline\"`\n"
-	for _, tt := range []struct {
-		behavior string
-		// direct maps an operation to the start of its receiver type's
-		// declaration when the response keeps its direct type.
-		direct  map[string]string
-		wrapped []string
-	}{
-		{
-			behavior: SchemaMergingV1,
-			direct: map[string]string{
-				"AllOfOp":        v1Embedded + "}",
-				"AllOfSiblingOp": v1Embedded,
-				"WrappedOp":      "Wrapped\n",
-			},
-			wrapped: []string{"NullableOp", "NullableAnyOfOp", "NamedOp"},
-		},
-		{
-			behavior: SchemaMergingV2,
-			wrapped:  []string{"AllOfOp", "AllOfSiblingOp", "WrappedOp", "NullableOp", "NullableAnyOfOp", "NamedOp"},
-		},
-		{
-			behavior: SchemaMergingV3,
-			wrapped:  []string{"AllOfOp", "AllOfSiblingOp", "WrappedOp", "NullableOp", "NullableAnyOfOp", "NamedOp"},
-		},
-	} {
-		t.Run(tt.behavior, func(t *testing.T) {
+	wrapped := []string{"AllOfOp", "AllOfSiblingOp", "WrappedOp", "NullableOp", "NullableAnyOfOp", "NamedOp"}
+	for _, behavior := range []string{SchemaMergingV1, SchemaMergingV2, SchemaMergingV3} {
+		t.Run(behavior, func(t *testing.T) {
 			code := generateSpec(t, spec, func(c *Configuration) {
-				c.Compatibility.SchemaMergingBehavior = tt.behavior
+				c.Compatibility.SchemaMergingBehavior = behavior
 				c.Generate.StdHTTPServer = true
 				c.Generate.Strict = true
 			})
-			for op, decl := range tt.direct {
-				assert.Contains(t, code, "type "+op+"200JSONResponse "+decl, op)
-			}
-			for _, op := range tt.wrapped {
+			for _, op := range wrapped {
 				assert.Contains(t, code, "type "+op+"200JSONResponse struct {\n\tBody ", op)
 			}
 		})
