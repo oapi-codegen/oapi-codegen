@@ -212,20 +212,32 @@ func standsFor(ref *openapi3.SchemaRef, seen map[*openapi3.Schema]bool, is func(
 		seen = make(map[*openapi3.Schema]bool)
 	}
 	seen[s] = true
-	members := compositionMembers(s)
+	m, target, offender := annotatedMember(compositionMembers(s), func(m *openapi3.SchemaRef) *openapi3.SchemaRef {
+		return standsFor(m, seen, is)
+	})
+	if m == nil || offender != nil {
+		return nil
+	}
+	return target
+}
+
+// annotatedMember returns the first of members that target maps to a schema,
+// that schema, and the first other member that doesn't only annotate it (see
+// annotates), or nil when they all do. m is nil when target maps no member.
+func annotatedMember(members []*openapi3.SchemaRef, target func(*openapi3.SchemaRef) *openapi3.SchemaRef) (m, t, offender *openapi3.SchemaRef) {
 	for _, m := range members {
-		target := standsFor(m, seen, is)
-		if target == nil {
+		t := target(m)
+		if t == nil {
 			continue
 		}
 		for _, other := range members {
-			if other != m && !annotates(other, target) {
-				return nil
+			if other != m && !annotates(other, t) {
+				return m, t, other
 			}
 		}
-		return target
+		return m, t, nil
 	}
-	return nil
+	return nil, nil, nil
 }
 
 // compositionMembers returns what a schema with allOf merges: the allOf's
@@ -253,22 +265,11 @@ func compositionMembers(s *openapi3.Schema) []*openapi3.SchemaRef {
 // compositions that are aliases in turn, that alias would be an alias of
 // itself, which Go rejects, so such a composition is merged instead.
 func annotatedRefMember(ctx genContext, owner *openapi3.Schema, allOf []*openapi3.SchemaRef) *openapi3.SchemaRef {
-	for _, m := range allOf {
-		target := refSchemaFor(m)
-		if target == nil {
-			continue
-		}
-		for _, other := range allOf {
-			if other != m && !annotates(other, target) {
-				return nil
-			}
-		}
-		if (ctx.rootPosition && aliasesBack(ctx, target)) || listsComposition(owner, target) {
-			return nil
-		}
-		return m
+	m, target, offender := annotatedMember(allOf, refSchemaFor)
+	if m == nil || offender != nil || (ctx.rootPosition && aliasesBack(ctx, target)) || listsComposition(owner, target) {
+		return nil
 	}
-	return nil
+	return m
 }
 
 // listsComposition reports whether target's oneOf or anyOf lists the
@@ -467,16 +468,11 @@ func opaqueSchemaWithin(ref *openapi3.SchemaRef) *openapi3.SchemaRef {
 // read, so it is an error, as is a member whose own allOf includes an opaque
 // schema that merging it would flatten.
 func opaqueMember(allOf []*openapi3.SchemaRef) (*openapi3.SchemaRef, error) {
-	for _, m := range allOf {
-		target := opaqueSchemaFor(m)
-		if target == nil {
-			continue
-		}
-		for _, other := range allOf {
-			if other != m && !annotates(other, target) {
-				return nil, opaqueMergeError(m, target, describeAllOfMember(other))
-			}
-		}
+	m, target, offender := annotatedMember(allOf, opaqueSchemaFor)
+	if offender != nil {
+		return nil, opaqueMergeError(m, target, describeAllOfMember(offender))
+	}
+	if m != nil {
 		return m, nil
 	}
 	for i, m := range allOf {
