@@ -688,3 +688,35 @@ func TestExternalAllOfMemberRestatedType(t *testing.T) {
 		})
 	}
 }
+
+// TestOpaqueV3FlattenedVariantMember covers a composition that is one of its
+// only member's variants. The member is merged rather than aliased (see
+// listsComposition), and its allOf includes an opaque schema, so the merge is
+// an error. It used to be an index out of range, from naming the other member
+// of a one-member allOf (issue #2593).
+func TestOpaqueV3FlattenedVariantMember(t *testing.T) {
+	_, err := generateSpecErr(`openapi: 3.0.3
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Cat:
+      allOf:
+        - $ref: '#/components/schemas/Pet'
+    Pet:
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+      allOf:
+        - $ref: '#/components/schemas/Ext'
+        - type: object
+          properties:
+            x: {type: string}
+    Ext:
+      x-go-type: ext.Type
+      x-go-type-import: {path: example.com/ext}
+`, withV3)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "allOf can't merge #/components/schemas/Pet "+
+		"(whose allOf includes #/components/schemas/Ext) with the composition it lists as a variant: "+
+		"x-go-type replaces #/components/schemas/Ext with ext.Type")
+}
