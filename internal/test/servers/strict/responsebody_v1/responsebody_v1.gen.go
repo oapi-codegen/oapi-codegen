@@ -17,10 +17,7 @@ import (
 type Untyped = any
 
 // Wrapped defines model for Wrapped.
-type Wrapped struct {
-	// Embedded struct due to allOf(#/components/schemas/Untyped)
-	Untyped `yaml:",inline"`
-}
+type Wrapped = Untyped
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
@@ -239,14 +236,13 @@ type GetAllOfResponseObject interface {
 }
 
 type GetAllOf200JSONResponse struct {
-	// Embedded struct due to allOf(#/components/schemas/Untyped)
-	Untyped `yaml:",inline"`
+	Body Untyped
 }
 
 func (response GetAllOf200JSONResponse) VisitGetAllOfResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -263,15 +259,13 @@ type GetAllOfSiblingResponseObject interface {
 }
 
 type GetAllOfSibling200JSONResponse struct {
-	// Embedded struct due to allOf(#/components/schemas/Untyped)
-	Untyped `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
+	Body Untyped
 }
 
 func (response GetAllOfSibling200JSONResponse) VisitGetAllOfSiblingResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -310,12 +304,14 @@ type GetWrappedResponseObject interface {
 	VisitGetWrappedResponse(w http.ResponseWriter) error
 }
 
-type GetWrapped200JSONResponse Wrapped
+type GetWrapped200JSONResponse struct {
+	Body Wrapped
+}
 
 func (response GetWrapped200JSONResponse) VisitGetWrappedResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -45,15 +46,34 @@ func holderSample(t *testing.T) string {
 }
 
 // echo re-types v through its JSON encoding, the way a handler that receives
-// one generated type and must return another would.
+// one generated type and must return another would. A strict-server response
+// that carries its body in a Body field, as one whose body is an interface
+// type does, gets v in that field.
 func echo[T any](v any) (T, error) {
 	var out T
 	b, err := json.Marshal(v)
 	if err != nil {
 		return out, err
 	}
-	err = json.Unmarshal(b, &out)
+	dst := any(&out)
+	if body, ok := bodyField(reflect.ValueOf(&out).Elem()); ok {
+		dst = body.Addr().Interface()
+	}
+	err = json.Unmarshal(b, dst)
 	return out, err
+}
+
+// bodyField returns the Body field of a strict-server response envelope: a
+// struct whose only field is an untagged Body. The field of a property named
+// body has a json tag, so it is never taken for one.
+func bodyField(v reflect.Value) (reflect.Value, bool) {
+	if v.Kind() != reflect.Struct || v.NumField() != 1 {
+		return reflect.Value{}, false
+	}
+	if f := v.Type().Field(0); f.Name != "Body" || f.Tag != "" {
+		return reflect.Value{}, false
+	}
+	return v.Field(0), true
 }
 
 type server struct{}
@@ -116,7 +136,7 @@ func sampleName(i int, s string) string {
 }
 
 func TestMatrixSubject(t *testing.T) {
-	t.Skip("v1 generates a struct for an allOf over a string schema.")
+
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
 			var v Subject
@@ -128,7 +148,7 @@ func TestMatrixSubject(t *testing.T) {
 	}
 }
 func TestMatrixHolder(t *testing.T) {
-	t.Skip("v1 generates a struct for an allOf over a string schema.")
+
 	sample := holderSample(t)
 	var v Holder
 	require.NoError(t, json.Unmarshal([]byte(sample), &v))
@@ -141,7 +161,7 @@ func TestMatrixHolder(t *testing.T) {
 	check(t, sample, resp.StatusCode(), resp.Body, resp.JSON200)
 }
 func TestMatrixHolderInline(t *testing.T) {
-	t.Skip("v1 generates a struct for an allOf over a string schema.")
+
 	sample := holderSample(t)
 	var v InlineHolder
 	require.NoError(t, json.Unmarshal([]byte(sample), &v))
@@ -154,7 +174,7 @@ func TestMatrixHolderInline(t *testing.T) {
 	check(t, sample, resp.StatusCode(), resp.Body, resp.JSON200)
 }
 func TestMatrixBodyRef(t *testing.T) {
-	t.Skip("v1 generates a struct for an allOf over a string schema.")
+
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
@@ -167,7 +187,7 @@ func TestMatrixBodyRef(t *testing.T) {
 	}
 }
 func TestMatrixBodyInline(t *testing.T) {
-	t.Skip("v1 generates a struct for an allOf over a string schema.")
+
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
@@ -180,7 +200,7 @@ func TestMatrixBodyInline(t *testing.T) {
 	}
 }
 func TestMatrixBodyComponent(t *testing.T) {
-	t.Skip("v1 generates a struct for an allOf over a string schema.")
+
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
@@ -193,7 +213,7 @@ func TestMatrixBodyComponent(t *testing.T) {
 	}
 }
 func TestMatrixBodyComponentInline(t *testing.T) {
-	t.Skip("v1 generates a struct for an allOf over a string schema.")
+
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
@@ -206,7 +226,7 @@ func TestMatrixBodyComponentInline(t *testing.T) {
 	}
 }
 func TestMatrixBodyDefault(t *testing.T) {
-	t.Skip("v1 generates a struct for an allOf over a string schema.")
+
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {
@@ -219,7 +239,7 @@ func TestMatrixBodyDefault(t *testing.T) {
 	}
 }
 func TestMatrixBodyHeaders(t *testing.T) {
-	t.Skip("v1 generates a struct for an allOf over a string schema.")
+
 	c := newClient(t)
 	for i, sample := range samples {
 		t.Run(sampleName(i, sample), func(t *testing.T) {

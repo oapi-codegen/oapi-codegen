@@ -31,6 +31,15 @@ type genContext struct {
 	// own keywords as a member, so only the owner is stable across re-entry.
 	inProgress map[*openapi3.Schema]*mergeFrame
 
+	// v1MemberKinds remembers what schema-merging-behavior v1 made of the
+	// schemas it classified as allOf members, by the schema (see
+	// v1RefMemberKind). It classifies a member by generating the schema it
+	// refers to, and a composition lowered to a member's type by classifying
+	// that member in turn, so without this a chain of compositions, each an
+	// allOf of the one before, is generated twice per link and takes time
+	// exponential in its length.
+	v1MemberKinds map[*openapi3.Schema]v1MemberKind
+
 	// nameHint is the path a type generated at this position would be named
 	// from — the argument the calling frame would hand to PathToTypeName.
 	// It is deliberately not `path`: items and additionalProperties reuse
@@ -123,6 +132,7 @@ func newGenContext(nameHint []string) genContext {
 	return genContext{
 		run:             currentRunSettings(),
 		inProgress:      make(map[*openapi3.Schema]*mergeFrame),
+		v1MemberKinds:   make(map[*openapi3.Schema]v1MemberKind),
 		nameHint:        slices.Clone(nameHint),
 		memberLabels:    make(map[*openapi3.SchemaRef]string),
 		subschemas:      make(map[string]*openapi3.SchemaRef),
@@ -144,6 +154,21 @@ func newRootGenContext(nameHint []string) genContext {
 func (ctx genContext) at(nameHint []string) genContext {
 	ctx.nameHint = slices.Clone(nameHint)
 	ctx.rootPosition = false
+	return ctx
+}
+
+// isolated returns a copy of ctx positioned at nameHint, for generating a
+// schema only to look at the result. Its merge frames are copies, so a
+// composition the generation refers back to still resolves to the type its
+// enclosing frame is building, but that frame is not told something
+// consulted it, which would name the composition (see mergeFrame.consulted).
+func (ctx genContext) isolated(nameHint []string) genContext {
+	ctx = ctx.at(nameHint)
+	frames := make(map[*openapi3.Schema]*mergeFrame, len(ctx.inProgress))
+	for schema, frame := range ctx.inProgress {
+		frames[schema] = &mergeFrame{typeName: frame.typeName}
+	}
+	ctx.inProgress = frames
 	return ctx
 }
 

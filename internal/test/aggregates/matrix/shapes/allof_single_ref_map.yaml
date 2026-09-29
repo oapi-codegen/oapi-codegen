@@ -1,0 +1,16 @@
+versions: [v1, v2, v3]
+description: >-
+  allOf over a single $ref to a map (an object with only additionalProperties).
+  The composition is the map's type. v1 used to embed the map in a struct,
+  which encoding/json encodes as a field named after the type
+  ({"Labels": {...}}), and decoding the map itself left it empty (#2590).
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Labels'
+components:
+  Labels:
+    type: object
+    additionalProperties: {type: string}
+samples:
+  - '{"k": "v", "l": "w"}'
+  - '{}'
