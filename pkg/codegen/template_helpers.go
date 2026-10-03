@@ -278,6 +278,13 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 
 		fmt.Fprintf(buffer, "%s\n", unhandledCaseClauses[caseClauseKey])
 	}
+	if globalState.options.OutputOptions.DefaultResponseError {
+		// Opt-in: make an unmatched response an explicit error instead of
+		// silently returning the wrapper at its zero value. A spec-declared
+		// "default" response still wins, because its case clause is emitted
+		// above as "case ... && true:" and is evaluated first.
+		fmt.Fprintf(buffer, "default:\nreturn nil, fmt.Errorf(\"unexpected response status: %%d\", rsp.StatusCode)\n")
+	}
 	fmt.Fprintf(buffer, "}\n")
 
 	return buffer.String()

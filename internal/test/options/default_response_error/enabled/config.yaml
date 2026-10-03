@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: optionsdefaultresponseerrorenabled
+output: default_response_error.gen.go
+generate:
+  client: true
+  models: true
+output-options:
+  # outputoptions/default-response-error/enabled: an unmatched response is an error.
+  default-response-error: true
