@@ -247,3 +247,22 @@ components:
       enum:
         - 1
         - two
+
+    # Union in array-items position: the element type carries the permissive
+    # mapping, so the component lowers to `[]any`.
+    ReadingList:
+      type: array
+      items:
+        type: [string, number]
+
+    # A union as a oneOf branch. The outer schema keeps the standard oneOf
+    # union machinery. The union branch's accessor is typed `any`, so its
+    # As... conversion never fails, the same as a typeless branch.
+    FlexibleId:
+      oneOf:
+        - type: object
+          required: [id]
+          properties:
+            id:
+              type: string
+        - type: [string, integer]
