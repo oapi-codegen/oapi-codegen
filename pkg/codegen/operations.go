@@ -860,6 +860,7 @@ func prepareDescriptionLines(summary, description string) []string {
 // - if not present, an indication of the HTTP call this corresponds with
 // - the Description, if present
 // - whether this function takes a body and a content type
+// - the operation's x-stability-level, when set
 //
 // Takes originalFunctionName (the OperationId or the function name being generated for this Operation), a suffix (if necessary) and whether this is being generated for ClientInterface or ClientWithResponsesInterface
 func (o OperationDefinition) GenerateFunctionComment(originalFunctionName string, functionSuffix string, isFunctionWithResponses bool) string {
@@ -909,6 +910,9 @@ func (o OperationDefinition) GenerateFunctionComment(originalFunctionName string
 			parts = append(parts, "// Returns a wrapper object for the known response body format(s).")
 		}
 	}
+	if stability := o.StabilityComment(); stability != "" {
+		parts = append(parts, "//", stability)
+	}
 
 	// make sure that each line is sanitised
 	for i, part := range parts {
@@ -916,6 +920,26 @@ func (o OperationDefinition) GenerateFunctionComment(originalFunctionName string
 	}
 
 	return strings.Join(parts, "\n")
+}
+
+// StabilityComment returns a Go comment for the operation's x-stability-level, or an empty string when it is unset.
+func (o OperationDefinition) StabilityComment() string {
+	if o.Spec == nil {
+		return ""
+	}
+	extension, ok := o.Spec.Extensions[extStabilityLevel]
+	if !ok {
+		return ""
+	}
+	level, err := extString(extension)
+	if err != nil {
+		return ""
+	}
+	level = strings.TrimSpace(level)
+	if level == "" {
+		return ""
+	}
+	return fmt.Sprintf("// This operation has been marked with the `%s` stability level upstream (via `%s`).", level, extStabilityLevel)
 }
 
 // DeprecationComment returns a Go-style deprecation comment if the operation is deprecated, otherwise returns an empty string.
@@ -1174,6 +1198,7 @@ type RequestBodyDefinition struct {
 // - the Summary, if present, as the first line of the comment
 // - if not present, an indication of the HTTP call this corresponds with
 // - whether this function takes a body and a content type
+// - the operation's x-stability-level, when set
 //
 // Takes originalFunctionName (the OperationId or the function name being generated for this Operation), a suffix (if necessary) and whether this is being generated for ClientInterface or ClientWithResponsesInterface
 func (r RequestBodyDefinition) GenerateFunctionComment(originalFunctionName string, parent OperationDefinition, functionSuffix string, isFunctionWithResponses bool) string {
@@ -1210,6 +1235,9 @@ func (r RequestBodyDefinition) GenerateFunctionComment(originalFunctionName stri
 				parts = append(parts, "// "+line)
 			}
 		}
+	}
+	if stability := parent.StabilityComment(); stability != "" {
+		parts = append(parts, "//", stability)
 	}
 
 	// make sure that each line is sanitised
