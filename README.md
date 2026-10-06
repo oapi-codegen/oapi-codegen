@@ -1356,6 +1356,7 @@ The following extensions are supported:
 | `x-oapi-codegen-extra-tags` | Generate arbitrary struct tags to fields | [(docs)](docs/extensions.md#x-oapi-codegen-extra-tags)                |
 | `x-enum-varnames` / `x-enumNames` | Override generated variable names for enum constants | [(docs)](docs/extensions.md#x-enum-varnames--x-enumnames)             |
 | `x-deprecated-reason` | Add a GoDoc deprecation warning to a type | [(docs)](docs/extensions.md#x-deprecated-reason)                      |
+| `x-stability-level` | Note an operation's stability level in the generated client GoDoc | [(docs)](docs/extensions.md#x-stability-level)                        |
 | `x-order` | Explicitly order struct fields | [(docs)](docs/extensions.md#x-order)                                  |
 | `x-oapi-codegen-only-honour-go-name` | Only honour the `x-go-name` when generating field names | [(docs)](docs/extensions.md#x-oapi-codegen-only-honour-go-name)       |
 | `x-oapi-codegen-enum-merge` | Keep all the values of an `allOf`'s enums, with `schema-merging-behavior: v3` | [(docs)](docs/extensions.md#x-oapi-codegen-enum-merge)                |
