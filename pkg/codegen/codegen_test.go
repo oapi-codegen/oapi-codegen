@@ -337,6 +337,66 @@ paths:
 	assert.Contains(t, code, "roleName string")
 }
 
+func TestIdenticalXGoTypeNameSchemasWithOrigin(t *testing.T) {
+	// Regression test for https://github.com/oapi-codegen/oapi-codegen/issues/2599
+	// Two identical inline schemas with the same x-go-type-name must produce
+	// one type, even though IncludeOrigin records different source lines.
+	spec := `
+openapi: 3.0.3
+info:
+  title: repro
+  version: 1.0.0
+paths:
+  /clients:
+    post:
+      operationId: createClient
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClientRequest'
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+components:
+  schemas:
+    Client:
+      type: object
+      properties:
+        product:
+          type: string
+          enum: [MANAGE, API]
+          x-go-type-name: Product
+    CreateClientRequest:
+      type: object
+      properties:
+        product:
+          type: string
+          enum: [MANAGE, API]
+          x-go-type-name: Product
+`
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	opts := Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			Client: true,
+			Models: true,
+		},
+	}
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+	assert.Equal(t, 1, strings.Count(code, "type Product string"), code)
+}
+
 // TestEnumConflictDetectionOrderIndependent checks that conflict detection
 // doesn't miss overlaps because an enum was already marked for prefixing.
 func TestEnumConflictDetectionOrderIndependent(t *testing.T) {
