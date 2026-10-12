@@ -458,6 +458,16 @@ func dict(values ...any) (map[string]any, error) {
 	return m, nil
 }
 
+// withoutPkgName strips a package qualifier from a Go type name, which gives
+// the field name Go uses when that type is embedded in a struct:
+// externalRef0.FooResponse is embedded as the field FooResponse.
+func withoutPkgName(typeName string) string {
+	if i := strings.LastIndex(typeName, "."); i >= 0 {
+		return typeName[i+1:]
+	}
+	return typeName
+}
+
 // TemplateFunctions is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
@@ -492,6 +502,7 @@ var TemplateFunctions = template.FuncMap{
 	"toGoString":                 StringToGoString,
 	"toGoComment":                StringWithTypeNameToGoComment,
 	"unionTypes":                 unionTypesFragment,
+	"withoutPkgName":             withoutPkgName,
 
 	"genServerURLWithVariablesFunctionParams": genServerURLWithVariablesFunctionParams,
 	"httpMethodConstant":                      httpMethodConstant,

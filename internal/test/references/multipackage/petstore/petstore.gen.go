@@ -238,7 +238,7 @@ type UploadFileParams struct {
 	AdditionalMetadata *string `form:"additionalMetadata,omitempty" json:"additionalMetadata,omitempty"`
 }
 
-// CreateUsersWithListInputJSONBody defines parameters for CreateUsersWithListInput.
+// CreateUsersWithListInputJSONBody defines body for CreateUsersWithListInput for application/json ContentType.
 type CreateUsersWithListInputJSONBody = []User
 
 // LoginUserParams defines parameters for LoginUser.

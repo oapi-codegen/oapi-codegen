@@ -208,7 +208,7 @@ type ResourceMVORequestBodyJSON2 = JsonPatch
 // ResourceMVORequestBodyJSON3 defines model for Resource_MVO.
 type ResourceMVORequestBodyJSON3 = ResourceMVO
 
-// PostFooJSONBody defines parameters for PostFoo.
+// PostFooJSONBody defines body for PostFoo for application/json ContentType.
 type PostFooJSONBody struct {
 	Value *int `json:"value,omitempty"`
 }
@@ -218,55 +218,55 @@ type PostFooParams struct {
 	Bar *BarParameter `form:"bar,omitempty" json:"bar,omitempty"`
 }
 
-// CreateItemJSONBody defines parameters for CreateItem.
+// CreateItemJSONBody defines body for CreateItem for application/json ContentType.
 type CreateItemJSONBody struct {
 	Name *string `json:"name,omitempty"`
 }
 
-// CreateOrderJSONBody defines parameters for CreateOrder.
+// CreateOrderJSONBody defines body for CreateOrder for application/json ContentType.
 type CreateOrderJSONBody struct {
 	Id      *string `json:"id,omitempty"`
 	Product *string `json:"product,omitempty"`
 }
 
-// CreateOrderApplicationJSONPatchPlusJSONBody defines parameters for CreateOrder.
+// CreateOrderApplicationJSONPatchPlusJSONBody defines body for CreateOrder for application/json-patch+json ContentType.
 type CreateOrderApplicationJSONPatchPlusJSONBody = []struct {
 	Op    *string `json:"op,omitempty"`
 	Path  *string `json:"path,omitempty"`
 	Value *string `json:"value,omitempty"`
 }
 
-// CreateOrderApplicationMergePatchPlusJSONBody defines parameters for CreateOrder.
+// CreateOrderApplicationMergePatchPlusJSONBody defines body for CreateOrder for application/merge-patch+json ContentType.
 type CreateOrderApplicationMergePatchPlusJSONBody struct {
 	Product *string `json:"product,omitempty"`
 }
 
-// SendPayloadJSONBody defines parameters for SendPayload.
+// SendPayloadJSONBody defines body for SendPayload for application/json ContentType.
 type SendPayloadJSONBody struct {
 	Data *string `json:"data,omitempty"`
 }
 
-// CreatePetJSONBody defines parameters for CreatePet.
+// CreatePetJSONBody defines body for CreatePet for application/json ContentType.
 type CreatePetJSONBody struct {
 	Name    *string `json:"name,omitempty"`
 	Species *string `json:"species,omitempty"`
 }
 
-// QueryJSONBody defines parameters for Query.
+// QueryJSONBody defines body for Query for application/json ContentType.
 type QueryJSONBody struct {
 	Q *string `json:"q,omitempty"`
 }
 
-// PatchResource200ApplicationJSONPatchPlusJSONResponseBody1 defines parameters for PatchResource.
+// PatchResource200ApplicationJSONPatchPlusJSONResponseBody1 defines model for PatchResource200ApplicationJSONPatchPlusJSONResponseBody.1.
 type PatchResource200ApplicationJSONPatchPlusJSONResponseBody1 = []Resource
 
-// PatchResource200ApplicationJSONPatchPlusJSONResponseBody2 defines parameters for PatchResource.
+// PatchResource200ApplicationJSONPatchPlusJSONResponseBody2 defines model for PatchResource200ApplicationJSONPatchPlusJSONResponseBody.2.
 type PatchResource200ApplicationJSONPatchPlusJSONResponseBody2 = string
 
-// PatchResource200ApplicationJSONPatchQueryPlusJSONResponseBody1 defines parameters for PatchResource.
+// PatchResource200ApplicationJSONPatchQueryPlusJSONResponseBody1 defines model for PatchResource200ApplicationJSONPatchQueryPlusJSONResponseBody.1.
 type PatchResource200ApplicationJSONPatchQueryPlusJSONResponseBody1 = []Resource
 
-// PatchResource200ApplicationJSONPatchQueryPlusJSONResponseBody2 defines parameters for PatchResource.
+// PatchResource200ApplicationJSONPatchQueryPlusJSONResponseBody2 defines model for PatchResource200ApplicationJSONPatchQueryPlusJSONResponseBody.2.
 type PatchResource200ApplicationJSONPatchQueryPlusJSONResponseBody2 = string
 
 // PostFooJSONRequestBody defines body for PostFoo for application/json ContentType.

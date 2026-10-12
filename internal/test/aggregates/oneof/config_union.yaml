@@ -2,6 +2,7 @@
 package: aggregatesoneof
 output: union.gen.go
 # issue #970: union (oneOf) response marshaling under a strict server.
+# issue #2549: allOf-composed union and additionalProperties response marshaling.
 generate:
   std-http-server: true
   strict-server: true

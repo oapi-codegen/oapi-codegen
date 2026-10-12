@@ -1,0 +1,111 @@
+openapi: 3.0.3
+info:
+  title: Component response with inline union
+  version: 1.0.0
+paths:
+  /things:
+    get:
+      operationId: listThings
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Thing'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/ServiceError'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        default:
+          $ref: '#/components/responses/BadRequest'
+components:
+  responses:
+    # A shared (components/responses) response whose inline schema is a oneOf.
+    # Issue #2539: referenced from an operation via $ref, the strict-server
+    # envelope aliased an undeclared <Name>JSONResponseBody type and the
+    # Visit method dereferenced response.union on it.
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Error'
+              - $ref: '#/components/schemas/ValidationError'
+    # Same shape but with response headers, so the strict envelope is a struct
+    # with a Body field rather than an alias.
+    ServiceError:
+      description: Service error
+      headers:
+        X-Request-Id:
+          required: true
+          schema:
+            type: string
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Error'
+              - $ref: '#/components/schemas/ValidationError'
+    # The intersection of issues #2539 and #2549: an allOf-merged union declared
+    # inline in a component response and reached from an operation via $ref.
+    # The envelope has to reference the component's model type (#2539) *and*
+    # be serialized through that model's MarshalJSON, or the properties merged
+    # in by the allOf are dropped (#2549).
+    Conflict:
+      description: Conflicting request
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Problem'
+              - oneOf:
+                  - $ref: '#/components/schemas/Error'
+                  - $ref: '#/components/schemas/ValidationError'
+    # Control: a plain $ref schema, which has always generated fine.
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  schemas:
+    Thing:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+    Problem:
+      type: object
+      required: [traceId]
+      properties:
+        traceId:
+          type: string
+    Error:
+      type: object
+      required: [error, message]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+    ValidationError:
+      type: object
+      required: [error, message, fields]
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        fields:
+          type: array
+          items:
+            type: string

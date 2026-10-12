@@ -588,7 +588,7 @@ type GetV1Outcome200JSONResponse struct {
 func (response GetV1Outcome200JSONResponse) VisitGetV1OutcomeResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.OutcomeJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -611,7 +611,7 @@ type GetV1Version200JSONResponse struct {
 func (response GetV1Version200JSONResponse) VisitGetV1VersionResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.VersionGetResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

@@ -29,7 +29,7 @@ type Bionicle struct {
 // BionicleName defines model for bionicleName.
 type BionicleName = string
 
-// GetBionicleName400JSONResponseBody defines parameters for GetBionicleName.
+// GetBionicleName400JSONResponseBody defines the 400 response body for GetBionicleName for application/json ContentType.
 type GetBionicleName400JSONResponseBody struct {
 	union json.RawMessage
 }
@@ -258,7 +258,7 @@ type GetBionicleName400JSONResponse = GetBionicleName400JSONResponseBody
 func (response GetBionicleName400JSONResponse) VisitGetBionicleNameResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.union); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

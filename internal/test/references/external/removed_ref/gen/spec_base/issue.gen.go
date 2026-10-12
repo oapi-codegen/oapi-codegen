@@ -223,7 +223,7 @@ type PostInvalidExtRefTrouble300JSONResponse struct {
 func (response PostInvalidExtRefTrouble300JSONResponse) VisitPostInvalidExtRefTroubleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.PascalJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

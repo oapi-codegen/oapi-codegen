@@ -21,7 +21,7 @@ type Pet struct {
 	Name string `json:"name"`
 }
 
-// UploadReportCSVBody defines parameters for UploadReport.
+// UploadReportCSVBody defines body for UploadReport for text/csv ContentType.
 type UploadReportCSVBody = string
 
 // AddPetV1RequestBody defines body for AddPet for application/vnd.mycompany.v1+json ContentType.

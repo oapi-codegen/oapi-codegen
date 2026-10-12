@@ -1,0 +1,33 @@
+versions: [v2, v3]
+description: >-
+  oneOf with an integer discriminator that the union declares itself, so the
+  From* helpers also assign the value to the union's own field.
+subject:
+  type: object
+  required: [version]
+  properties:
+    version: {type: integer}
+  oneOf:
+    - $ref: '#/components/schemas/V1'
+    - $ref: '#/components/schemas/V2'
+  discriminator:
+    propertyName: version
+    mapping:
+      '1': '#/components/schemas/V1'
+      '2': '#/components/schemas/V2'
+components:
+  V1:
+    type: object
+    required: [version, name]
+    properties:
+      version: {type: integer}
+      name: {type: string}
+  V2:
+    type: object
+    required: [version, fullName]
+    properties:
+      version: {type: integer}
+      fullName: {type: string}
+samples:
+  - '{"version": 1, "name": "a"}'
+  - '{"version": 2, "fullName": "a b"}'

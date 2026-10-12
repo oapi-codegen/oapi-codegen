@@ -21,11 +21,21 @@ type Hd147675Id0 = openapi_types.UUID
 // Hd147675Id1 is a helper type for the shared "id" parameter of "/gadget/{id}", prefixed with a per-path hash to disambiguate it from the same-named parameter on another path.
 type Hd147675Id1 = string
 
+// Hd147675IdParam is a helper type for the shared "id" parameter of "/gadget/{id}", prefixed with a per-path hash to disambiguate it from the same-named parameter on another path.
+type Hd147675IdParam struct {
+	union json.RawMessage
+}
+
 // Hdf81445Id0 is a helper type for the shared "id" parameter of "/gadget/{id}/part", prefixed with a per-path hash to disambiguate it from the same-named parameter on another path.
 type Hdf81445Id0 = openapi_types.UUID
 
 // Hdf81445Id1 is a helper type for the shared "id" parameter of "/gadget/{id}/part", prefixed with a per-path hash to disambiguate it from the same-named parameter on another path.
 type Hdf81445Id1 = string
+
+// Hdf81445IdParam is a helper type for the shared "id" parameter of "/gadget/{id}/part", prefixed with a per-path hash to disambiguate it from the same-named parameter on another path.
+type Hdf81445IdParam struct {
+	union json.RawMessage
+}
 
 // Ref0 defines parameters for GetSprocket.
 type Ref0 = openapi_types.UUID
@@ -33,17 +43,25 @@ type Ref0 = openapi_types.UUID
 // Ref1 defines parameters for GetSprocket.
 type Ref1 = string
 
+// RefParam defines parameters for GetSprocket.
+type RefParam struct {
+	union json.RawMessage
+}
+
 // Wid0 defines parameters for DeleteWidget.
 type Wid0 = openapi_types.UUID
 
 // Wid1 defines parameters for DeleteWidget.
 type Wid1 = string
 
+// WidParam defines parameters for DeleteWidget.
+type WidParam struct {
+	union json.RawMessage
+}
+
 // OnEventGetParams defines parameters for OnEventGet.
 type OnEventGetParams struct {
-	Whid *struct {
-		union json.RawMessage
-	} `form:"whid,omitempty" json:"whid,omitempty"`
+	Whid *WhidParam `form:"whid,omitempty" json:"whid,omitempty"`
 }
 
 // Whid0 defines parameters for OnEventGet.
@@ -52,18 +70,19 @@ type Whid0 = openapi_types.UUID
 // Whid1 defines parameters for OnEventGet.
 type Whid1 = string
 
+// WhidParam defines parameters for OnEventGet.
+type WhidParam struct {
+	union json.RawMessage
+}
+
 // OnEventPostParams defines parameters for OnEventPost.
 type OnEventPostParams struct {
-	Whid *struct {
-		union json.RawMessage
-	} `form:"whid,omitempty" json:"whid,omitempty"`
+	Whid *WhidParam `form:"whid,omitempty" json:"whid,omitempty"`
 }
 
 // OnDataGetParams defines parameters for OnDataGet.
 type OnDataGetParams struct {
-	Cbid *struct {
-		union json.RawMessage
-	} `form:"cbid,omitempty" json:"cbid,omitempty"`
+	Cbid *CbidParam `form:"cbid,omitempty" json:"cbid,omitempty"`
 }
 
 // Cbid0 defines parameters for OnDataGet.
@@ -72,11 +91,488 @@ type Cbid0 = openapi_types.UUID
 // Cbid1 defines parameters for OnDataGet.
 type Cbid1 = string
 
+// CbidParam defines parameters for OnDataGet.
+type CbidParam struct {
+	union json.RawMessage
+}
+
 // OnDataPostParams defines parameters for OnDataPost.
 type OnDataPostParams struct {
-	Cbid *struct {
-		union json.RawMessage
-	} `form:"cbid,omitempty" json:"cbid,omitempty"`
+	Cbid *CbidParam `form:"cbid,omitempty" json:"cbid,omitempty"`
+}
+
+// AsHd147675Id0 returns the union data inside the Hd147675IdParam as a Hd147675Id0
+func (t Hd147675IdParam) AsHd147675Id0() (Hd147675Id0, error) {
+	var body Hd147675Id0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromHd147675Id0 overwrites any union data inside the Hd147675IdParam as the provided Hd147675Id0
+func (t *Hd147675IdParam) FromHd147675Id0(v Hd147675Id0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeHd147675Id0 performs a merge with any union data inside the Hd147675IdParam, using the provided Hd147675Id0
+func (t *Hd147675IdParam) MergeHd147675Id0(v Hd147675Id0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsHd147675Id1 returns the union data inside the Hd147675IdParam as a Hd147675Id1
+func (t Hd147675IdParam) AsHd147675Id1() (Hd147675Id1, error) {
+	var body Hd147675Id1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromHd147675Id1 overwrites any union data inside the Hd147675IdParam as the provided Hd147675Id1
+func (t *Hd147675IdParam) FromHd147675Id1(v Hd147675Id1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeHd147675Id1 performs a merge with any union data inside the Hd147675IdParam, using the provided Hd147675Id1
+func (t *Hd147675IdParam) MergeHd147675Id1(v Hd147675Id1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// The text is taken as a string.
+func (t *Hd147675IdParam) UnmarshalText(text []byte) error {
+	b, err := json.Marshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *Hd147675IdParam) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
+}
+
+func (t Hd147675IdParam) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Hd147675IdParam) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsHdf81445Id0 returns the union data inside the Hdf81445IdParam as a Hdf81445Id0
+func (t Hdf81445IdParam) AsHdf81445Id0() (Hdf81445Id0, error) {
+	var body Hdf81445Id0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromHdf81445Id0 overwrites any union data inside the Hdf81445IdParam as the provided Hdf81445Id0
+func (t *Hdf81445IdParam) FromHdf81445Id0(v Hdf81445Id0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeHdf81445Id0 performs a merge with any union data inside the Hdf81445IdParam, using the provided Hdf81445Id0
+func (t *Hdf81445IdParam) MergeHdf81445Id0(v Hdf81445Id0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsHdf81445Id1 returns the union data inside the Hdf81445IdParam as a Hdf81445Id1
+func (t Hdf81445IdParam) AsHdf81445Id1() (Hdf81445Id1, error) {
+	var body Hdf81445Id1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromHdf81445Id1 overwrites any union data inside the Hdf81445IdParam as the provided Hdf81445Id1
+func (t *Hdf81445IdParam) FromHdf81445Id1(v Hdf81445Id1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeHdf81445Id1 performs a merge with any union data inside the Hdf81445IdParam, using the provided Hdf81445Id1
+func (t *Hdf81445IdParam) MergeHdf81445Id1(v Hdf81445Id1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// The text is taken as a string.
+func (t *Hdf81445IdParam) UnmarshalText(text []byte) error {
+	b, err := json.Marshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *Hdf81445IdParam) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
+}
+
+func (t Hdf81445IdParam) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Hdf81445IdParam) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsRef0 returns the union data inside the RefParam as a Ref0
+func (t RefParam) AsRef0() (Ref0, error) {
+	var body Ref0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRef0 overwrites any union data inside the RefParam as the provided Ref0
+func (t *RefParam) FromRef0(v Ref0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRef0 performs a merge with any union data inside the RefParam, using the provided Ref0
+func (t *RefParam) MergeRef0(v Ref0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRef1 returns the union data inside the RefParam as a Ref1
+func (t RefParam) AsRef1() (Ref1, error) {
+	var body Ref1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRef1 overwrites any union data inside the RefParam as the provided Ref1
+func (t *RefParam) FromRef1(v Ref1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRef1 performs a merge with any union data inside the RefParam, using the provided Ref1
+func (t *RefParam) MergeRef1(v Ref1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// The text is taken as a string.
+func (t *RefParam) UnmarshalText(text []byte) error {
+	b, err := json.Marshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *RefParam) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
+}
+
+func (t RefParam) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RefParam) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsWid0 returns the union data inside the WidParam as a Wid0
+func (t WidParam) AsWid0() (Wid0, error) {
+	var body Wid0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromWid0 overwrites any union data inside the WidParam as the provided Wid0
+func (t *WidParam) FromWid0(v Wid0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeWid0 performs a merge with any union data inside the WidParam, using the provided Wid0
+func (t *WidParam) MergeWid0(v Wid0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsWid1 returns the union data inside the WidParam as a Wid1
+func (t WidParam) AsWid1() (Wid1, error) {
+	var body Wid1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromWid1 overwrites any union data inside the WidParam as the provided Wid1
+func (t *WidParam) FromWid1(v Wid1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeWid1 performs a merge with any union data inside the WidParam, using the provided Wid1
+func (t *WidParam) MergeWid1(v Wid1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// The text is taken as a string.
+func (t *WidParam) UnmarshalText(text []byte) error {
+	b, err := json.Marshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *WidParam) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
+}
+
+func (t WidParam) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *WidParam) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsWhid0 returns the union data inside the WhidParam as a Whid0
+func (t WhidParam) AsWhid0() (Whid0, error) {
+	var body Whid0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromWhid0 overwrites any union data inside the WhidParam as the provided Whid0
+func (t *WhidParam) FromWhid0(v Whid0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeWhid0 performs a merge with any union data inside the WhidParam, using the provided Whid0
+func (t *WhidParam) MergeWhid0(v Whid0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsWhid1 returns the union data inside the WhidParam as a Whid1
+func (t WhidParam) AsWhid1() (Whid1, error) {
+	var body Whid1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromWhid1 overwrites any union data inside the WhidParam as the provided Whid1
+func (t *WhidParam) FromWhid1(v Whid1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeWhid1 performs a merge with any union data inside the WhidParam, using the provided Whid1
+func (t *WhidParam) MergeWhid1(v Whid1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// The text is taken as a string.
+func (t *WhidParam) UnmarshalText(text []byte) error {
+	b, err := json.Marshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *WhidParam) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
+}
+
+func (t WhidParam) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *WhidParam) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsCbid0 returns the union data inside the CbidParam as a Cbid0
+func (t CbidParam) AsCbid0() (Cbid0, error) {
+	var body Cbid0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCbid0 overwrites any union data inside the CbidParam as the provided Cbid0
+func (t *CbidParam) FromCbid0(v Cbid0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCbid0 performs a merge with any union data inside the CbidParam, using the provided Cbid0
+func (t *CbidParam) MergeCbid0(v Cbid0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsCbid1 returns the union data inside the CbidParam as a Cbid1
+func (t CbidParam) AsCbid1() (Cbid1, error) {
+	var body Cbid1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCbid1 overwrites any union data inside the CbidParam as the provided Cbid1
+func (t *CbidParam) FromCbid1(v Cbid1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCbid1 performs a merge with any union data inside the CbidParam, using the provided Cbid1
+func (t *CbidParam) MergeCbid1(v Cbid1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// The text is taken as a string.
+func (t *CbidParam) UnmarshalText(text []byte) error {
+	b, err := json.Marshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *CbidParam) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
+}
+
+func (t CbidParam) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *CbidParam) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
 }
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
@@ -154,38 +650,26 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 type ClientInterface interface {
 
 	// DeleteGadget performs a DELETE /gadget/{id} (the `DeleteGadget` operationId) request.
-	DeleteGadget(ctx context.Context, id struct {
-		union json.RawMessage
-	}, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteGadget(ctx context.Context, id Hd147675IdParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetGadgetPart performs a GET /gadget/{id}/part (the `GetGadgetPart` operationId) request.
-	GetGadgetPart(ctx context.Context, id struct {
-		union json.RawMessage
-	}, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetGadgetPart(ctx context.Context, id Hdf81445IdParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetSprocket performs a GET /sprocket/{ref} (the `GetSprocket` operationId) request.
-	GetSprocket(ctx context.Context, ref struct {
-		union json.RawMessage
-	}, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetSprocket(ctx context.Context, ref RefParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// Subscribe performs a POST /subscribe (the `Subscribe` operationId) request.
 	Subscribe(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// DeleteWidget performs a DELETE /widget/{wid} (the `DeleteWidget` operationId) request.
-	DeleteWidget(ctx context.Context, wid struct {
-		union json.RawMessage
-	}, reqEditors ...RequestEditorFn) (*http.Response, error)
+	DeleteWidget(ctx context.Context, wid WidParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetWidget performs a GET /widget/{wid} (the `GetWidget` operationId) request.
-	GetWidget(ctx context.Context, wid struct {
-		union json.RawMessage
-	}, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetWidget(ctx context.Context, wid WidParam, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 // DeleteGadget performs a DELETE /gadget/{id} (the `DeleteGadget` operationId) request.
-func (c *Client) DeleteGadget(ctx context.Context, id struct {
-	union json.RawMessage
-}, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) DeleteGadget(ctx context.Context, id Hd147675IdParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteGadgetRequest(c.Server, id)
 	if err != nil {
 		return nil, err
@@ -198,9 +682,7 @@ func (c *Client) DeleteGadget(ctx context.Context, id struct {
 }
 
 // GetGadgetPart performs a GET /gadget/{id}/part (the `GetGadgetPart` operationId) request.
-func (c *Client) GetGadgetPart(ctx context.Context, id struct {
-	union json.RawMessage
-}, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetGadgetPart(ctx context.Context, id Hdf81445IdParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetGadgetPartRequest(c.Server, id)
 	if err != nil {
 		return nil, err
@@ -213,9 +695,7 @@ func (c *Client) GetGadgetPart(ctx context.Context, id struct {
 }
 
 // GetSprocket performs a GET /sprocket/{ref} (the `GetSprocket` operationId) request.
-func (c *Client) GetSprocket(ctx context.Context, ref struct {
-	union json.RawMessage
-}, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetSprocket(ctx context.Context, ref RefParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetSprocketRequest(c.Server, ref)
 	if err != nil {
 		return nil, err
@@ -241,9 +721,7 @@ func (c *Client) Subscribe(ctx context.Context, reqEditors ...RequestEditorFn) (
 }
 
 // DeleteWidget performs a DELETE /widget/{wid} (the `DeleteWidget` operationId) request.
-func (c *Client) DeleteWidget(ctx context.Context, wid struct {
-	union json.RawMessage
-}, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) DeleteWidget(ctx context.Context, wid WidParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDeleteWidgetRequest(c.Server, wid)
 	if err != nil {
 		return nil, err
@@ -256,9 +734,7 @@ func (c *Client) DeleteWidget(ctx context.Context, wid struct {
 }
 
 // GetWidget performs a GET /widget/{wid} (the `GetWidget` operationId) request.
-func (c *Client) GetWidget(ctx context.Context, wid struct {
-	union json.RawMessage
-}, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetWidget(ctx context.Context, wid WidParam, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetWidgetRequest(c.Server, wid)
 	if err != nil {
 		return nil, err
@@ -271,9 +747,7 @@ func (c *Client) GetWidget(ctx context.Context, wid struct {
 }
 
 // NewDeleteGadgetRequest constructs an http.Request for the DeleteGadget method
-func NewDeleteGadgetRequest(server string, id struct {
-	union json.RawMessage
-}) (*http.Request, error) {
+func NewDeleteGadgetRequest(server string, id Hd147675IdParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -307,9 +781,7 @@ func NewDeleteGadgetRequest(server string, id struct {
 }
 
 // NewGetGadgetPartRequest constructs an http.Request for the GetGadgetPart method
-func NewGetGadgetPartRequest(server string, id struct {
-	union json.RawMessage
-}) (*http.Request, error) {
+func NewGetGadgetPartRequest(server string, id Hdf81445IdParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -343,9 +815,7 @@ func NewGetGadgetPartRequest(server string, id struct {
 }
 
 // NewGetSprocketRequest constructs an http.Request for the GetSprocket method
-func NewGetSprocketRequest(server string, ref struct {
-	union json.RawMessage
-}) (*http.Request, error) {
+func NewGetSprocketRequest(server string, ref RefParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -406,9 +876,7 @@ func NewSubscribeRequest(server string) (*http.Request, error) {
 }
 
 // NewDeleteWidgetRequest constructs an http.Request for the DeleteWidget method
-func NewDeleteWidgetRequest(server string, wid struct {
-	union json.RawMessage
-}) (*http.Request, error) {
+func NewDeleteWidgetRequest(server string, wid WidParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -442,9 +910,7 @@ func NewDeleteWidgetRequest(server string, wid struct {
 }
 
 // NewGetWidgetRequest constructs an http.Request for the GetWidget method
-func NewGetWidgetRequest(server string, wid struct {
-	union json.RawMessage
-}) (*http.Request, error) {
+func NewGetWidgetRequest(server string, wid WidParam) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -524,23 +990,17 @@ type ClientWithResponsesInterface interface {
 	// DeleteGadgetWithResponse performs a DELETE /gadget/{id} (the `DeleteGadget` operationId) request.
 	//
 	// Returns a wrapper object for the known response body format(s).
-	DeleteGadgetWithResponse(ctx context.Context, id struct {
-		union json.RawMessage
-	}, reqEditors ...RequestEditorFn) (*DeleteGadgetResponse, error)
+	DeleteGadgetWithResponse(ctx context.Context, id Hd147675IdParam, reqEditors ...RequestEditorFn) (*DeleteGadgetResponse, error)
 
 	// GetGadgetPartWithResponse performs a GET /gadget/{id}/part (the `GetGadgetPart` operationId) request.
 	//
 	// Returns a wrapper object for the known response body format(s).
-	GetGadgetPartWithResponse(ctx context.Context, id struct {
-		union json.RawMessage
-	}, reqEditors ...RequestEditorFn) (*GetGadgetPartResponse, error)
+	GetGadgetPartWithResponse(ctx context.Context, id Hdf81445IdParam, reqEditors ...RequestEditorFn) (*GetGadgetPartResponse, error)
 
 	// GetSprocketWithResponse performs a GET /sprocket/{ref} (the `GetSprocket` operationId) request.
 	//
 	// Returns a wrapper object for the known response body format(s).
-	GetSprocketWithResponse(ctx context.Context, ref struct {
-		union json.RawMessage
-	}, reqEditors ...RequestEditorFn) (*GetSprocketResponse, error)
+	GetSprocketWithResponse(ctx context.Context, ref RefParam, reqEditors ...RequestEditorFn) (*GetSprocketResponse, error)
 
 	// SubscribeWithResponse performs a POST /subscribe (the `Subscribe` operationId) request.
 	//
@@ -550,16 +1010,12 @@ type ClientWithResponsesInterface interface {
 	// DeleteWidgetWithResponse performs a DELETE /widget/{wid} (the `DeleteWidget` operationId) request.
 	//
 	// Returns a wrapper object for the known response body format(s).
-	DeleteWidgetWithResponse(ctx context.Context, wid struct {
-		union json.RawMessage
-	}, reqEditors ...RequestEditorFn) (*DeleteWidgetResponse, error)
+	DeleteWidgetWithResponse(ctx context.Context, wid WidParam, reqEditors ...RequestEditorFn) (*DeleteWidgetResponse, error)
 
 	// GetWidgetWithResponse performs a GET /widget/{wid} (the `GetWidget` operationId) request.
 	//
 	// Returns a wrapper object for the known response body format(s).
-	GetWidgetWithResponse(ctx context.Context, wid struct {
-		union json.RawMessage
-	}, reqEditors ...RequestEditorFn) (*GetWidgetResponse, error)
+	GetWidgetWithResponse(ctx context.Context, wid WidParam, reqEditors ...RequestEditorFn) (*GetWidgetResponse, error)
 }
 
 type DeleteGadgetResponse struct {
@@ -769,9 +1225,7 @@ func (r GetWidgetResponse) ContentType() string {
 // DeleteGadgetWithResponse performs a DELETE /gadget/{id} (the `DeleteGadget` operationId) request.
 //
 // Returns a wrapper object for the known response body format(s).
-func (c *ClientWithResponses) DeleteGadgetWithResponse(ctx context.Context, id struct {
-	union json.RawMessage
-}, reqEditors ...RequestEditorFn) (*DeleteGadgetResponse, error) {
+func (c *ClientWithResponses) DeleteGadgetWithResponse(ctx context.Context, id Hd147675IdParam, reqEditors ...RequestEditorFn) (*DeleteGadgetResponse, error) {
 	rsp, err := c.DeleteGadget(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -782,9 +1236,7 @@ func (c *ClientWithResponses) DeleteGadgetWithResponse(ctx context.Context, id s
 // GetGadgetPartWithResponse performs a GET /gadget/{id}/part (the `GetGadgetPart` operationId) request.
 //
 // Returns a wrapper object for the known response body format(s).
-func (c *ClientWithResponses) GetGadgetPartWithResponse(ctx context.Context, id struct {
-	union json.RawMessage
-}, reqEditors ...RequestEditorFn) (*GetGadgetPartResponse, error) {
+func (c *ClientWithResponses) GetGadgetPartWithResponse(ctx context.Context, id Hdf81445IdParam, reqEditors ...RequestEditorFn) (*GetGadgetPartResponse, error) {
 	rsp, err := c.GetGadgetPart(ctx, id, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -795,9 +1247,7 @@ func (c *ClientWithResponses) GetGadgetPartWithResponse(ctx context.Context, id 
 // GetSprocketWithResponse performs a GET /sprocket/{ref} (the `GetSprocket` operationId) request.
 //
 // Returns a wrapper object for the known response body format(s).
-func (c *ClientWithResponses) GetSprocketWithResponse(ctx context.Context, ref struct {
-	union json.RawMessage
-}, reqEditors ...RequestEditorFn) (*GetSprocketResponse, error) {
+func (c *ClientWithResponses) GetSprocketWithResponse(ctx context.Context, ref RefParam, reqEditors ...RequestEditorFn) (*GetSprocketResponse, error) {
 	rsp, err := c.GetSprocket(ctx, ref, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -819,9 +1269,7 @@ func (c *ClientWithResponses) SubscribeWithResponse(ctx context.Context, reqEdit
 // DeleteWidgetWithResponse performs a DELETE /widget/{wid} (the `DeleteWidget` operationId) request.
 //
 // Returns a wrapper object for the known response body format(s).
-func (c *ClientWithResponses) DeleteWidgetWithResponse(ctx context.Context, wid struct {
-	union json.RawMessage
-}, reqEditors ...RequestEditorFn) (*DeleteWidgetResponse, error) {
+func (c *ClientWithResponses) DeleteWidgetWithResponse(ctx context.Context, wid WidParam, reqEditors ...RequestEditorFn) (*DeleteWidgetResponse, error) {
 	rsp, err := c.DeleteWidget(ctx, wid, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -832,9 +1280,7 @@ func (c *ClientWithResponses) DeleteWidgetWithResponse(ctx context.Context, wid 
 // GetWidgetWithResponse performs a GET /widget/{wid} (the `GetWidget` operationId) request.
 //
 // Returns a wrapper object for the known response body format(s).
-func (c *ClientWithResponses) GetWidgetWithResponse(ctx context.Context, wid struct {
-	union json.RawMessage
-}, reqEditors ...RequestEditorFn) (*GetWidgetResponse, error) {
+func (c *ClientWithResponses) GetWidgetWithResponse(ctx context.Context, wid WidParam, reqEditors ...RequestEditorFn) (*GetWidgetResponse, error) {
 	rsp, err := c.GetWidget(ctx, wid, reqEditors...)
 	if err != nil {
 		return nil, err

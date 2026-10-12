@@ -1,0 +1,20 @@
+versions: [v1, v2, v3]
+description: >-
+  An OpenAPI 3.1 allOf whose inline member declares `type: [object, "null"]`.
+  Failed with "can not merge incompatible types: [object], [object null]".
+openapi: 3.1.0
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Cat'
+    - type: [object, 'null']
+      properties:
+        nickname: {type: string}
+components:
+  Cat:
+    type: object
+    required: [meow]
+    properties:
+      meow: {type: string}
+samples:
+  - '{"meow": "purr"}'
+  - '{"meow": "purr", "nickname": "tom"}'

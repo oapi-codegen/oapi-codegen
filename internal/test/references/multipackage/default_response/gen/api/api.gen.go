@@ -202,7 +202,7 @@ type ListThings400JSONResponse struct {
 func (response ListThings400JSONResponse) VisitListThingsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.StandardErrorJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

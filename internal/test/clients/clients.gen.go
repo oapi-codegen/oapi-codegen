@@ -19,7 +19,7 @@ type SchemaObject struct {
 	Role      string `json:"role"`
 }
 
-// PostVendorJsonApplicationVndAPIPlusJSONBody defines parameters for PostVendorJson.
+// PostVendorJsonApplicationVndAPIPlusJSONBody defines body for PostVendorJson for application/vnd.api+json ContentType.
 type PostVendorJsonApplicationVndAPIPlusJSONBody = map[string]any
 
 // PostBothJSONRequestBody defines body for PostBoth for application/json ContentType.

@@ -74,15 +74,15 @@ type Misc400Error = ProblemDetails
 // Misc404Error defines model for Misc404Error.
 type Misc404Error = ProblemDetails
 
-// CreateItem422ApplicationVndAPIPlusJSONResponseBody defines parameters for CreateItem.
+// CreateItem422ApplicationVndAPIPlusJSONResponseBody defines the 422 response body for CreateItem for application/vnd.api+json ContentType.
 type CreateItem422ApplicationVndAPIPlusJSONResponseBody struct {
 	union json.RawMessage
 }
 
-// PostPetTextBody defines parameters for PostPet.
+// PostPetTextBody defines body for PostPet for text/plain ContentType.
 type PostPetTextBody = openapi_types.UUID
 
-// PostPet1234TextBody defines parameters for PostPet1234.
+// PostPet1234TextBody defines body for PostPet1234 for text/plain ContentType.
 type PostPet1234TextBody = float32
 
 // PostPetTextRequestBody defines body for PostPet for text/plain ContentType.

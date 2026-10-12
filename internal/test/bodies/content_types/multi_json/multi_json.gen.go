@@ -629,7 +629,7 @@ type Test201ApplicationBarPlusJSONResponse struct {
 func (response Test201ApplicationBarPlusJSONResponse) VisitTestResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.BazApplicationBarPlusJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/bar+json")
@@ -645,7 +645,7 @@ type Test201ApplicationFooPlusJSONResponse struct {
 func (response Test201ApplicationFooPlusJSONResponse) VisitTestResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.BazApplicationFooPlusJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/foo+json")

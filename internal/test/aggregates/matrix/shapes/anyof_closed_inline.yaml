@@ -1,0 +1,19 @@
+versions: [v2, v3]
+description: >-
+  anyOf over inline variants with additionalProperties: false. In v3, As* of
+  a variant rejects the other variant's keys, as for a oneOf.
+subject:
+  anyOf:
+    - type: object
+      additionalProperties: false
+      required: [email]
+      properties:
+        email: {type: string}
+    - type: object
+      additionalProperties: false
+      required: [phone]
+      properties:
+        phone: {type: string}
+samples:
+  - '{"email": "a@example.com"}'
+  - '{"phone": "555-0100"}'

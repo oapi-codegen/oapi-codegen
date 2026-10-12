@@ -1,0 +1,48 @@
+versions: [v2, v3]
+description: >-
+  A discriminated oneOf over $ref variants, two with additionalProperties:
+  false and one without, next to the union's own properties. In v3, As* of a
+  closed variant rejects a key that neither it nor the rest of the object
+  declares (issue #668).
+subject:
+  type: object
+  required: [kind]
+  properties:
+    kind: {type: string}
+    note: {type: string}
+  discriminator:
+    propertyName: kind
+    mapping:
+      cat: '#/components/schemas/Cat'
+      dog: '#/components/schemas/Dog'
+      bird: '#/components/schemas/Bird'
+  oneOf:
+    - $ref: '#/components/schemas/Cat'
+    - $ref: '#/components/schemas/Dog'
+    - $ref: '#/components/schemas/Bird'
+components:
+  Cat:
+    type: object
+    additionalProperties: false
+    required: [meow]
+    properties:
+      meow: {type: string}
+      collar:
+        type: object
+        properties:
+          color: {type: string}
+  Dog:
+    type: object
+    additionalProperties: false
+    required: [bark]
+    properties:
+      bark: {type: string}
+  Bird:
+    type: object
+    required: [chirp]
+    properties:
+      chirp: {type: string}
+samples:
+  - '{"kind": "cat", "meow": "purr", "collar": {"color": "red"}}'
+  - '{"kind": "dog", "bark": "woof", "note": "good boy"}'
+  - '{"kind": "bird", "chirp": "tweet"}'

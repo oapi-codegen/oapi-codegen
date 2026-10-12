@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"cmp"
 	"fmt"
+	"go/ast"
 	"hash/fnv"
 	"maps"
 	"slices"
@@ -277,14 +278,43 @@ func (p ParameterDefinitions) FindByName(name string) *ParameterDefinition {
 // descriptors into a flat list. This makes it a lot easier to traverse the
 // data in the template engine.
 func DescribeParameters(params openapi3.Parameters, path []string) ([]ParameterDefinition, error) {
+	return describeParameters(params, path, false)
+}
+
+// describeParameters is DescribeParameters for operation parameters (shared
+// false) and for parameters shared by a whole path item (shared true), whose
+// path carries no operation name.
+func describeParameters(params openapi3.Parameters, path []string, shared bool) ([]ParameterDefinition, error) {
 	outParams := make([]ParameterDefinition, 0, len(params))
 	for _, paramOrRef := range params {
 		param := paramOrRef.Value
 
-		goType, err := paramToGoType(param, append(path, param.Name))
+		paramPath := append(slices.Clone(path), param.Name)
+		goType, err := paramToGoType(param, paramPath)
 		if err != nil {
 			return nil, fmt.Errorf("error generating type for param (%s): %s",
 				param.Name, err)
+		}
+
+		// An inline oneOf/anyOf parameter is a union struct whose only field
+		// is unexported, so left anonymous it could be neither named nor
+		// built outside the generated package (issue #2560). Name it the way
+		// its members already are, <Op>Params<Name> next to
+		// <Op>Params<Name>0, so it gets the union's methods. A parameter
+		// shared by a path item has no operation name to start from, so its
+		// members are just <Name>0; the union is <Name>Param, since a bare
+		// <Name> such as Id is likely to be a schema's name too.
+		if len(goType.UnionElements) > 0 && goType.RefType == "" && !IsGoTypeReference(paramOrRef.Ref) {
+			typeName := SchemaNameToTypeName(PathToTypeName(slices.Clone(paramPath)))
+			if shared {
+				typeName += "Param"
+			}
+			goType.AdditionalTypes = append(goType.AdditionalTypes, TypeDefinition{
+				TypeName: typeName,
+				JsonName: strings.Join(paramPath, "."),
+				Schema:   goType,
+			})
+			goType.RefType = typeName
 		}
 
 		pd := ParameterDefinition{
@@ -530,7 +560,7 @@ func describeSharedParameters(params openapi3.Parameters, source, token string, 
 		if collides {
 			path = []string{token}
 		}
-		described, err := DescribeParameters(openapi3.Parameters{paramRef}, path)
+		described, err := describeParameters(openapi3.Parameters{paramRef}, path, true)
 		if err != nil {
 			return nil, err
 		}
@@ -1027,6 +1057,12 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 							responseSchema.RefType = responseBodyTypeName
 						}
 					}
+					// An inline response of an externally-ref'd path item was
+					// generated in the external document's context, so the
+					// types it names live in the imported package.
+					if !IsGoTypeReference(responseRef.Ref) {
+						ensureExternalRefsInSchema(&responseSchema, o.PathItemRef)
+					}
 
 					td := ResponseTypeDefinition{
 						TypeDefinition: TypeDefinition{
@@ -1304,6 +1340,89 @@ type ResponseContentDefinition struct {
 	// When we generate type names, we need a Tag for it, such as JSON, in
 	// which case we will produce "Response200JSONContent".
 	NameTag string
+
+	// NeedsBodyWrapper is true when a schema-backed strict response cannot use
+	// its generated Go type directly: as a method receiver, or, for a reusable
+	// response envelope, as an embedded field.
+	NeedsBodyWrapper bool
+}
+
+// responseSchemaNeedsBodyWrapper reports whether the strict response for a
+// schema must carry its body in a Body field. embedded is true when the
+// generated type is a reusable response envelope that operations embed in a
+// struct, rather than a type that operations use as a method receiver.
+func responseSchemaNeedsBodyWrapper(sref *openapi3.SchemaRef, schema Schema, path []string, embedded bool) (bool, error) {
+	return responseSchemaNeedsBodyWrapperSeen(sref, schema, path, embedded, map[string]struct{}{})
+}
+
+func responseSchemaNeedsBodyWrapperSeen(sref *openapi3.SchemaRef, schema Schema, path []string, embedded bool, seenRefs map[string]struct{}) (bool, error) {
+	if goTypeNeedsBodyWrapper(schema.TypeDecl(), embedded) {
+		return true, nil
+	}
+	// x-go-type-name uses a named type that is declared alongside the schema.
+	if td, ok := schema.namedTypeDef(); ok && goTypeNeedsBodyWrapper(td.Schema.TypeDecl(), embedded) {
+		return true, nil
+	}
+	if sref == nil || sref.Value == nil {
+		return false, nil
+	}
+
+	if IsGoTypeReference(sref.Ref) {
+		if _, seen := seenRefs[sref.Ref]; seen {
+			return false, nil
+		}
+		seenRefs[sref.Ref] = struct{}{}
+
+		resolved := *sref.Value
+		resolved.Extensions = combinedSchemaExtensions(sref)
+		resolvedRef := openapi3.NewSchemaRef("", &resolved)
+		resolvedSchema, err := GenerateGoSchema(resolvedRef, path)
+		if err != nil {
+			return false, fmt.Errorf("generating referenced response schema: %w", err)
+		}
+		return responseSchemaNeedsBodyWrapperSeen(resolvedRef, resolvedSchema, path, embedded, seenRefs)
+	}
+
+	// An explicit named x-go-type may be declared by user code in the current
+	// package or an imported package. Its underlying type is unavailable here,
+	// so preserve the existing direct response API.
+	if _, ok := combinedSchemaExtensions(sref)[extPropGoType]; ok {
+		return false, nil
+	}
+
+	// A composition lowered to a referenced member's type is classified by
+	// that member.
+	member, memberSchema, err := loweredToMember(sref.Value, schema.TypeDecl(), func(member *openapi3.SchemaRef) (Schema, error) {
+		return GenerateGoSchema(member, path)
+	})
+	if err != nil {
+		return false, fmt.Errorf("generating composed response schema: %w", err)
+	}
+	if member != nil {
+		return responseSchemaNeedsBodyWrapperSeen(member, memberSchema, path, embedded, seenRefs)
+	}
+
+	return false, nil
+}
+
+// goTypeNeedsBodyWrapper reports whether typeDecl cannot carry a strict
+// response directly. A method receiver cannot be a pointer or an interface
+// type. An embedded field can be an interface, but not a pointer.
+func goTypeNeedsBodyWrapper(typeDecl string, embedded bool) bool {
+	expr, _, ok := parseGoType(typeDecl)
+	if !ok {
+		return false
+	}
+	switch expr := unparen(expr).(type) {
+	case *ast.StarExpr:
+		return true
+	case *ast.InterfaceType:
+		return !embedded
+	case *ast.Ident:
+		return !embedded && (expr.Name == "any" || expr.Name == "error")
+	default:
+		return false
+	}
 }
 
 // TypeDef returns the Go type definition for a request body
@@ -1320,6 +1439,18 @@ func (r ResponseContentDefinition) TypeDef(opID string, statusCode int) *TypeDef
 // (output-options.content-types) don't change how a response is written.
 func (r ResponseContentDefinition) IsSupported() bool {
 	return r.IsJSON() || r.IsFormdata() || r.IsMultipart() || r.IsText()
+}
+
+// usesSchemaReceiver reports whether a strict response derives its receiver
+// from the response schema rather than a fixed callback or reader type.
+func (r ResponseContentDefinition) usesSchemaReceiver() bool {
+	return r.IsJSON() || r.IsText() || r.IsFormdata()
+}
+
+// CanUseDirectResponseType reports whether the strict response can use its
+// wire type directly instead of exposing a Body field.
+func (r ResponseContentDefinition) CanUseDirectResponseType() bool {
+	return r.IsSupported() && !r.NeedsBodyWrapper
 }
 
 // HasFixedContentType returns true if content type has fixed content type, i.e. contains no "*" symbol
@@ -2068,6 +2199,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 				td := TypeDefinition{
 					TypeName: bodyTypeName,
 					Schema:   bodySchema,
+					Comment:  fmt.Sprintf("// %s defines body for %s for %s ContentType.", bodyTypeName, operationID, contentType),
 				}
 				typeDefinitions = append(typeDefinitions, td)
 				// The body schema now is a reference to a type
@@ -2164,16 +2296,48 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			// When the operation came from an externally-ref'd path item,
 			// the imported package generated the same hoisted name, so we
 			// reference it instead of redeclaring locally.
-			if !IsGoTypeReference(responseOrRef.Ref) && contentSchema.RefType == "" &&
+			//
+			// A response that lives in components/responses is named once,
+			// by the model pass (GenerateTypesForResponses), and everything
+			// else must point at that name rather than hoist a second copy
+			// (issue #2539). That applies both when we are generating the
+			// component envelopes themselves (operationID is empty and
+			// statusCode is the component name) and when an operation
+			// reaches the response through `$ref`. The model pass only
+			// declares JSON content, so only JSON media types can be
+			// redirected this way.
+			componentTypeName := ""
+			if externalPkg == "" && util.IsMediaTypeJson(contentType) {
+				switch {
+				case responseOrRef.Ref != "":
+					// An operation (or another component) reaching a
+					// components/responses entry through `$ref`. Resolve the
+					// entry so we pick up exactly the name the model pass
+					// gave it (x-go-name, resolve-type-name-collisions, ...).
+					componentTypeName, err = componentResponseRefTypeName(responseOrRef.Ref, contentType)
+				case operationID == "":
+					// Generating the component's own envelope.
+					componentTypeName, err = componentResponseTypeName(statusCode, responseOrRef, contentType)
+				}
+				if err != nil {
+					return nil, err
+				}
+			}
+
+			if contentSchema.RefType == "" && (componentTypeName != "" || !IsGoTypeReference(responseOrRef.Ref)) &&
 				(len(contentSchema.UnionElements) != 0 || contentSchema.HasAdditionalProperties ||
 					(globalState.options.OutputOptions.GenerateTypesForAnonymousSchemas && len(contentSchema.Properties) > 0)) {
-				if externalPkg != "" {
+				switch {
+				case externalPkg != "":
 					contentSchema.RefType = fmt.Sprintf("%s.%s", externalPkg, responseBodyTypeName)
-				} else {
+				case componentTypeName != "":
+					contentSchema.RefType = componentTypeName
+				default:
 					contentSchema.AdditionalTypes = append(contentSchema.AdditionalTypes, TypeDefinition{
 						TypeName: responseBodyTypeName,
 						JsonName: responseBodyTypeName,
 						Schema:   contentSchema,
+						Comment:  fmt.Sprintf("// %s defines the %s response body for %s for %s ContentType.", responseBodyTypeName, statusCode, operationID, contentType),
 					})
 					contentSchema.RefType = responseBodyTypeName
 				}
@@ -2183,6 +2347,17 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 				ContentType: contentType,
 				NameTag:     tag,
 				Schema:      contentSchema,
+			}
+			if rcd.usesSchemaReceiver() {
+				// A components/responses envelope is embedded in the response
+				// struct of each operation that reaches it through $ref, so it
+				// is never a method receiver itself. A text envelope is the
+				// exception: the operation redeclares it as its receiver type.
+				embedded := (operationID == "" || responseOrRef.Ref != "") && !rcd.IsText()
+				rcd.NeedsBodyWrapper, err = responseSchemaNeedsBodyWrapper(content.Schema, contentSchema, []string{responseBodyTypeName}, embedded)
+				if err != nil {
+					return nil, fmt.Errorf("determining response body representation: %w", err)
+				}
 			}
 
 			responseContentDefinitions = append(responseContentDefinitions, rcd)
@@ -2313,16 +2488,32 @@ func GenerateTypeDefsForOperation(op OperationDefinition) []TypeDefinition {
 		typeDefs = append(typeDefs, param.Schema.AdditionalTypes...)
 	}
 
+	// Types hoisted out of bodies (inline union members, nested objects, ...)
+	// are rendered by the same template as the parameter types, whose default
+	// comment says "defines parameters for"; describe them as models instead.
 	for _, body := range op.Bodies {
-		typeDefs = append(typeDefs, body.Schema.AdditionalTypes...)
+		typeDefs = append(typeDefs, withModelComments(body.Schema.AdditionalTypes)...)
 	}
 
 	for _, resp := range op.Responses {
 		for _, content := range resp.Contents {
-			typeDefs = append(typeDefs, content.Schema.AdditionalTypes...)
+			typeDefs = append(typeDefs, withModelComments(content.Schema.AdditionalTypes)...)
 		}
 	}
 	return typeDefs
+}
+
+// withModelComments returns copies of typeDefs in which every type without a
+// Comment gets the doc comment component schemas get, "X defines model for Y.".
+func withModelComments(typeDefs []TypeDefinition) []TypeDefinition {
+	out := make([]TypeDefinition, len(typeDefs))
+	for i, td := range typeDefs {
+		if td.Comment == "" {
+			td.Comment = fmt.Sprintf("// %s defines model for %s.", td.TypeName, td.JsonName)
+		}
+		out[i] = td
+	}
+	return out
 }
 
 // GenerateParamsTypes defines the schema for a parameters definition object

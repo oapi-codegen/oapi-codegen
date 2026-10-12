@@ -2,6 +2,8 @@ package codegen
 
 import (
 	"math"
+	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -535,7 +537,7 @@ func TestProperty_ZeroValueIsNil(t *testing.T) {
 func TestOapiSchemaToGoType_NullType(t *testing.T) {
 	schema := &openapi3.Schema{Type: &openapi3.Types{"null"}}
 	var out Schema
-	require.NoError(t, oapiSchemaToGoType(schema, []string{"Challenger"}, &out))
+	require.NoError(t, oapiSchemaToGoType(newGenContext(nil), schema, []string{"Challenger"}, &out))
 	assert.Equal(t, "any", out.GoType)
 	assert.True(t, out.SkipOptionalPointer)
 	assert.True(t, out.DefineViaAlias)
@@ -833,7 +835,7 @@ func TestOapiSchemaToGoType_MultiTypeUnion(t *testing.T) {
 			globalState.typeMapping = DefaultTypeMapping
 
 			var out Schema
-			err := oapiSchemaToGoType(&openapi3.Schema{Type: &tc.types}, []string{"Value"}, &out)
+			err := oapiSchemaToGoType(newGenContext(nil), &openapi3.Schema{Type: &tc.types}, []string{"Value"}, &out)
 			if tc.wantErr {
 				assert.ErrorContains(t, err, "unhandled Schema type")
 				return
@@ -996,7 +998,7 @@ func TestOapiSchemaToGoType_MultiTypeUnionRequires31(t *testing.T) {
 	globalState.typeMapping = DefaultTypeMapping
 
 	var out Schema
-	err := oapiSchemaToGoType(&openapi3.Schema{Type: &openapi3.Types{"string", "number"}}, []string{"Value"}, &out)
+	err := oapiSchemaToGoType(newGenContext(nil), &openapi3.Schema{Type: &openapi3.Types{"string", "number"}}, []string{"Value"}, &out)
 	assert.ErrorContains(t, err, "unhandled Schema type")
 }
 
@@ -1082,4 +1084,589 @@ func TestParameterDefinitionSchemaType(t *testing.T) {
 		"unions carry no single Type; SchemaTypes has the members")
 	assert.Equal(t, []string{"string", "integer"}, paramWithTypes(&openapi3.Types{"string", "integer", "null"}).SchemaTypes())
 	assert.Nil(t, paramWithTypes(&openapi3.Types{"string"}).SchemaTypes())
+}
+
+// TestStrictResponseDelegatesCustomMarshalJSON pins which strict-server
+// response envelopes get a delegating MarshalJSON/UnmarshalJSON pair.
+// See https://github.com/oapi-codegen/oapi-codegen/issues/2549.
+func TestStrictResponseDelegatesCustomMarshalJSON(t *testing.T) {
+	spec := `
+openapi: "3.1.0"
+info: {title: t, version: "1"}
+paths:
+  /thing:
+    get:
+      operationId: getThing
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Thing'}
+  /bag:
+    get:
+      operationId: getBag
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Bag'}
+  /event:
+    get:
+      operationId: getEvent
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Event'}
+  /maybe:
+    get:
+      operationId: getMaybe
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MaybeName'}
+  /renamed:
+    get:
+      operationId: getRenamed
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RenamedEvent'}
+  /plain:
+    get:
+      operationId: getPlain
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Base'}
+  /inline-thing:
+    get:
+      operationId: getInlineThing
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Base'
+                  - oneOf:
+                      - $ref: '#/components/schemas/Cat'
+                      - $ref: '#/components/schemas/Dog'
+  /inline-event:
+    get:
+      operationId: getInlineEvent
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Cat'
+                  - $ref: '#/components/schemas/Dog'
+components:
+  schemas:
+    Base:
+      type: object
+      required: [id]
+      properties:
+        id: {type: string}
+    Cat:
+      type: object
+      properties:
+        meow: {type: string}
+    Dog:
+      type: object
+      properties:
+        woof: {type: string}
+    # allOf-composed union: UnionElements come from the merge, not from a
+    # top-level oneOf.
+    Thing:
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - oneOf:
+            - $ref: '#/components/schemas/Cat'
+            - $ref: '#/components/schemas/Dog'
+    # fixed properties plus additionalProperties
+    Bag:
+      type: object
+      required: [kind]
+      properties:
+        kind: {type: string}
+      additionalProperties: true
+    # plain top-level oneOf (issue #970)
+    Event:
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    # x-go-type-name wraps the union in a renamed type and aliases it; the
+    # envelope is a defined type over the alias, so it still needs a delegator
+    RenamedEvent:
+      x-go-type-name: EventImpl
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    # looks like a union, but collapses to a plain string alias, so there is
+    # no MarshalJSON to delegate to
+    MaybeName:
+      anyOf:
+        - type: string
+        - type: "null"
+`
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	require.NoError(t, err)
+	out, err := Generate(swagger, Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{Models: true, StdHTTPServer: true, Strict: true},
+	})
+	require.NoError(t, err)
+
+	delegator := func(name string) string {
+		return "func (t " + name + "200JSONResponse) MarshalJSON() ([]byte, error) {\n\treturn "
+	}
+	for _, name := range []string{"GetThing", "GetBag", "GetEvent", "GetRenamed"} {
+		assert.Contains(t, out, delegator(name), "%s must delegate to the model's MarshalJSON", name)
+	}
+	for _, name := range []string{"GetMaybe", "GetPlain", "GetInlineThing", "GetInlineEvent"} {
+		assert.NotContains(t, out, delegator(name), "%s must not get a delegator", name)
+	}
+
+	// Hoisted inline bodies are aliased, so they inherit the methods and the
+	// visitor encodes the response value itself — never the raw union field,
+	// which would drop the properties merged in by an allOf.
+	assert.NotContains(t, out, ".union)", "visitors must not encode the raw union field")
+	for _, name := range []string{"GetInlineThing", "GetInlineEvent"} {
+		assert.Contains(t, out, "type "+name+"200JSONResponse = "+name+"200JSONResponseBody")
+	}
+}
+
+// TestStrictComponentResponseWithInlineUnion pins the strict envelopes
+// generated for components/responses entries whose inline schema needs
+// hoisting: they must reference the type the model pass declared for the
+// component, not a <Name>JSONResponseBody that nothing declares.
+// See https://github.com/oapi-codegen/oapi-codegen/issues/2539.
+func TestStrictComponentResponseWithInlineUnion(t *testing.T) {
+	spec := `
+openapi: "3.0.3"
+info: {title: t, version: "1"}
+paths:
+  /things:
+    get:
+      operationId: listThings
+      responses:
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ServiceError'}
+        default: {$ref: '#/components/responses/BadRequest'}
+components:
+  schemas:
+    Base:
+      type: object
+      required: [id]
+      properties:
+        id: {type: string}
+    Cat:
+      type: object
+      properties:
+        meow: {type: string}
+    Dog:
+      type: object
+      properties:
+        woof: {type: string}
+  responses:
+    BadRequest:
+      description: inline union
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Cat'
+              - $ref: '#/components/schemas/Dog'
+    Conflict:
+      description: inline allOf-merged union
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Base'
+              - oneOf:
+                  - $ref: '#/components/schemas/Cat'
+                  - $ref: '#/components/schemas/Dog'
+    ServiceError:
+      description: inline union behind response headers
+      headers:
+        X-Request-Id:
+          required: true
+          schema: {type: string}
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Cat'
+              - $ref: '#/components/schemas/Dog'
+`
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	require.NoError(t, err)
+	out, err := Generate(swagger, Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{Models: true, StdHTTPServer: true, Strict: true},
+	})
+	require.NoError(t, err)
+
+	// The envelopes alias the component models declared by the model pass.
+	assert.Contains(t, out, "type BadRequestJSONResponse = BadRequest\n")
+	assert.Contains(t, out, "type ConflictJSONResponse = Conflict\n")
+	// With headers the envelope is a struct whose Body is the component model.
+	assert.Contains(t, out, "type ServiceErrorJSONResponse struct {\n\tBody ServiceError\n")
+	// A non-fixed status code also wraps the component model, not an
+	// anonymous struct with an unexported union field.
+	assert.Contains(t, out, "type ListThingsdefaultJSONResponse struct {\n\tBody       BadRequest")
+	assert.NotContains(t, out, "JSONResponseBody", "no synthetic body type may be referenced for components/responses")
+	assert.NotContains(t, out, ".union)", "visitors must not encode the raw union field")
+	// The aliases must not redeclare the model's marshallers.
+	assert.NotContains(t, out, "func (t BadRequestJSONResponse) MarshalJSON()")
+	assert.NotContains(t, out, "func (t ConflictJSONResponse) MarshalJSON()")
+}
+
+// A form response reached through $ref embeds the reusable envelope, and
+// runtime.MarshalForm would encode that untagged embedded field under an
+// empty name ("[value]=..."), so the visitor marshals the envelope itself.
+func TestStrictReusableFormResponseMarshalsEnvelope(t *testing.T) {
+	const spec = `
+openapi: "3.0.3"
+info: {title: t, version: "1"}
+paths:
+  /local:
+    get:
+      operationId: localRef
+      responses:
+        "200": {$ref: "#/components/responses/Form"}
+  /external:
+    get:
+      operationId: externalRef
+      responses:
+        "200": {$ref: "./external.yaml#/components/responses/ExternalForm"}
+  /inline:
+    get:
+      operationId: inline
+      responses:
+        "200":
+          description: inline
+          content:
+            application/x-www-form-urlencoded:
+              schema: {$ref: "#/components/schemas/Example"}
+components:
+  schemas:
+    Example:
+      type: object
+      properties:
+        value: {type: string}
+  responses:
+    Form:
+      description: reusable
+      content:
+        application/x-www-form-urlencoded:
+          schema: {$ref: "#/components/schemas/Example"}
+`
+	const externalSpec = `
+openapi: "3.0.3"
+info: {title: external, version: "1"}
+paths: {}
+components:
+  schemas:
+    Example:
+      type: object
+      properties:
+        value: {type: string}
+  responses:
+    ExternalForm:
+      description: reusable
+      content:
+        application/x-www-form-urlencoded:
+          schema: {$ref: "#/components/schemas/Example"}
+`
+
+	visitor := func(t *testing.T, code, receiver string) string {
+		t.Helper()
+		start := strings.Index(code, "func (response "+receiver+") Visit")
+		require.NotEqual(t, -1, start, "no visitor for %s", receiver)
+		end := strings.Index(code[start:], "\n}\n")
+		require.NotEqual(t, -1, end)
+		return code[start : start+end]
+	}
+
+	for _, server := range []struct {
+		name     string
+		generate GenerateOptions
+	}{
+		{name: "standard", generate: GenerateOptions{StdHTTPServer: true}},
+		{name: "fiber", generate: GenerateOptions{FiberServer: true}},
+		{name: "iris", generate: GenerateOptions{IrisServer: true}},
+	} {
+		t.Run(server.name, func(t *testing.T) {
+			loader := openapi3.NewLoader()
+			loader.IsExternalRefsAllowed = true
+			loader.ReadFromURIFunc = func(_ *openapi3.Loader, _ *url.URL) ([]byte, error) {
+				return []byte(externalSpec), nil
+			}
+			swagger, err := loader.LoadFromDataWithPath([]byte(spec), &url.URL{Path: "root.yaml"})
+			require.NoError(t, err)
+
+			server.generate.Models = true
+			server.generate.Strict = true
+			code, err := Generate(swagger, Configuration{
+				PackageName:   "api",
+				Generate:      server.generate,
+				ImportMapping: map[string]string{"./external.yaml": "example.com/external"},
+			})
+			require.NoError(t, err)
+
+			assert.Contains(t, code, "type LocalRef200FormdataResponse struct{ FormFormdataResponse }")
+			assert.Contains(t, visitor(t, code, "LocalRef200FormdataResponse"), "runtime.MarshalForm(response.FormFormdataResponse, nil)")
+			assert.Contains(t, code, "type ExternalRef200FormdataResponse struct {\n\texternalRef0.ExternalFormFormdataResponse\n}")
+			assert.Contains(t, visitor(t, code, "ExternalRef200FormdataResponse"), "runtime.MarshalForm(response.ExternalFormFormdataResponse, nil)")
+			assert.Contains(t, visitor(t, code, "Inline200FormdataResponse"), "runtime.MarshalForm(response, nil)")
+		})
+	}
+}
+
+// TestUnionAdoptUnion pins what a union's From*/Merge* reconcile with its own
+// fields: only properties MarshalJSON always writes are filled from the
+// variant, an untyped (interface) property is checked without reflect
+// panicking on nil, and variant keys are dropped from additionalProperties.
+func TestUnionAdoptUnion(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Cat:
+      type: object
+      properties:
+        id: {type: string}
+        label: {type: string}
+        meta: {}
+        meow: {type: string}
+    Dog:
+      type: object
+      properties:
+        bark: {type: string}
+    Pet:
+      type: object
+      required: [id]
+      properties:
+        id: {type: string}
+        label: {type: string}
+        meta: {}
+      additionalProperties: true
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+`
+	code := generateSpec(t, spec)
+	start := strings.Index(code, "func (t *Pet) adoptUnion(previous, b json.RawMessage) {")
+	require.GreaterOrEqual(t, start, 0, "Pet must get adoptUnion")
+	body := code[start : start+strings.Index(code[start:], "\n}\n")]
+
+	assert.Contains(t, body, `object["id"]`, "a required property is always written, so it is adopted")
+	assert.Contains(t, body, `object["meta"]`, "an untyped property without a pointer is always written, so it is adopted")
+	assert.NotContains(t, body, `object["label"]`, "an optional pointer is written only when set, so it is left to the union data")
+	assert.Contains(t, body, "!current.IsValid() || current.IsZero()", "a nil interface has no reflect.Value to ask IsZero of")
+	for _, key := range []string{"bark", "id", "label", "meow", "meta"} {
+		assert.Contains(t, body, `delete(t.AdditionalProperties, "`+key+`")`, "variant key %q", key)
+	}
+}
+
+// TestUnionWithOnlyOptionalPropertiesDoesNotAdopt: with nothing to adopt and
+// no additionalProperties, From* needs no adoptUnion at all.
+func TestUnionWithOnlyOptionalPropertiesDoesNotAdopt(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Cat:
+      type: object
+      properties:
+        meow: {type: string}
+    Pet:
+      type: object
+      properties:
+        label: {type: string}
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+`
+	code := generateSpec(t, spec)
+	assert.NotContains(t, code, "adoptUnion")
+}
+
+// TestDuplicateUnionMembers: a type that is a member of both an anyOf and a
+// oneOf gets its accessors once, whether the two lists are on one schema or
+// the oneOf comes from an allOf member.
+func TestDuplicateUnionMembers(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Base:
+      type: object
+      properties:
+        id: {type: string}
+    Cat:
+      type: object
+      properties:
+        meow: {type: string}
+    Dog:
+      type: object
+      properties:
+        bark: {type: string}
+    Both:
+      anyOf:
+        - $ref: '#/components/schemas/Cat'
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    Nested:
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - oneOf:
+            - $ref: '#/components/schemas/Cat'
+            - $ref: '#/components/schemas/Dog'
+      anyOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+`
+	code := generateSpec(t, spec)
+	for _, union := range []string{"Both", "Nested"} {
+		for _, member := range []string{"Cat", "Dog"} {
+			assert.Equal(t, 1, strings.Count(code, "func (t "+union+") As"+member+"()"), "%s.As%s", union, member)
+		}
+	}
+}
+
+// TestSelfReferentialArrayIsDefinedType: an array schema whose items refer
+// back to it is declared as a defined type, since an alias cannot refer to
+// itself. That holds for the plain schema and for one merged from allOf.
+func TestSelfReferentialArrayIsDefinedType(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Tree:
+      type: array
+      items: {$ref: '#/components/schemas/Tree'}
+    NodeList:
+      allOf:
+        - type: array
+          items: {$ref: '#/components/schemas/NodeList'}
+        - description: A list of lists.
+    Forest:
+      type: array
+      items: {$ref: '#/components/schemas/Tree'}
+    Data:
+      type: array
+      items:
+        type: object
+        properties:
+          data: {type: string}
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "type Tree []Tree")
+	assert.Contains(t, code, "type NodeList []NodeList")
+	assert.Contains(t, code, "type Forest = []Tree", "an array of another type stays an alias")
+	assert.Contains(t, code, "type Data = []struct {", "a field merely named like the type is not a self-reference")
+}
+
+func TestMentionsTypeName(t *testing.T) {
+	for _, tc := range []struct {
+		decl string
+		want bool
+	}{
+		{"[]Node", true},
+		{"map[string]Node", true},
+		{"*Node", true},
+		{"Node", true},
+		{"[]NodeList", false},
+		{"[]MyNode", false},
+		{"[]externalRef0.Node", false},
+		{"[]Node_Item", false},
+		// A field named like the type is not a reference to it; a field of
+		// that type is.
+		{"[]struct {\n    Node *string `json:\"node,omitempty\"`\n}", false},
+		{"[]struct {\n    Next *Node `json:\"next,omitempty\"`\n}", true},
+		{"map[string]struct {\n    // Node is documented.\n    Node int `json:\"node\"`\n}", false},
+		{"not a type (", false},
+	} {
+		assert.Equal(t, tc.want, mentionsTypeName(tc.decl, "Node"), tc.decl)
+	}
+}
+
+// TestScalarUnionTextComment: the UnmarshalText doc comment reads correctly
+// for a union with only string branches.
+func TestScalarUnionTextComment(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Color:
+      anyOf:
+        - type: string
+          enum: [red]
+        - type: string
+    Amount:
+      oneOf:
+        - type: number
+        - type: string
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "// parameter, which carries no JSON type.\n// The text is taken as a string.\nfunc (t *Color) UnmarshalText(")
+	assert.Contains(t, code, "// Text that is exactly a JSON number, with nothing around it, is taken as one; anything else is a string.\nfunc (t *Amount) UnmarshalText(")
+	assert.NotContains(t, code, "a JSON ,")
+}
+
+// TestUnionOfScalarUnionsBindsText: a union whose branch is itself a union of
+// scalars, here through a $ref, can still be bound from parameter text. A
+// union that contains itself cannot, and working that out must terminate.
+func TestUnionOfScalarUnionsBindsText(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    IntOrString:
+      oneOf:
+        - type: integer
+        - type: string
+    Flag:
+      oneOf:
+        - $ref: '#/components/schemas/IntOrString'
+        - type: boolean
+    WithArray:
+      oneOf:
+        - $ref: '#/components/schemas/IntOrString'
+        - type: array
+          items: {type: string}
+    Loop:
+      oneOf:
+        - $ref: '#/components/schemas/Loop'
+        - type: string
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "func (t *Flag) UnmarshalText(text []byte) error {")
+	assert.Contains(t, code, "// Text that is exactly a JSON boolean or integer, with nothing around it, is taken as one; anything else is a string.\nfunc (t *Flag) UnmarshalText(")
+	assert.NotContains(t, code, "func (t *WithArray) UnmarshalText(", "an array branch can't be bound from text")
+	assert.NotContains(t, code, "func (t *Loop) UnmarshalText(", "a union that contains itself can't be bound from text")
 }

@@ -15,7 +15,7 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// Issue9JSONBody defines parameters for Issue9.
+// Issue9JSONBody defines body for Issue9 for application/json ContentType.
 type Issue9JSONBody = any
 
 // Issue9Params defines parameters for Issue9.

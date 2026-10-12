@@ -1,0 +1,28 @@
+versions: [v1, v2, v3]
+broken:
+  v1:
+    holder-inline: >-
+      v1 embeds Either in an unnamed struct. Before Go 1.27, encoding/json
+      doesn't call Either's UnmarshalJSON for list and map elements of such a
+      struct, so their union data is lost.
+description: >-
+  allOf over a single $ref to a oneOf. The composition is an alias of the
+  union type, and keeps its generated MarshalJSON: at a strict-server
+  response, the envelope has to delegate to it, or the union's data is lost.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Either'
+components:
+  Either:
+    oneOf:
+      - type: object
+        required: [x]
+        properties:
+          x: {type: string}
+      - type: object
+        required: [y]
+        properties:
+          y: {type: integer}
+samples:
+  - '{"x": "s"}'
+  - '{"y": 3}'

@@ -27,12 +27,12 @@ type Response struct {
 	Value *string `json:"value,omitempty"`
 }
 
-// MultipartEndpointMultipartBody defines parameters for MultipartEndpoint.
+// MultipartEndpointMultipartBody defines body for MultipartEndpoint for multipart/form-data ContentType.
 type MultipartEndpointMultipartBody struct {
 	Field *string `json:"field,omitempty"`
 }
 
-// TextEndpointTextBody defines parameters for TextEndpoint.
+// TextEndpointTextBody defines body for TextEndpoint for text/plain ContentType.
 type TextEndpointTextBody = string
 
 // FormdataEndpointFormdataRequestBody defines body for FormdataEndpoint for application/x-www-form-urlencoded ContentType.

@@ -1,0 +1,27 @@
+versions: [v2, v3]
+description: >-
+  The case of issue #668: a oneOf of a closed base and a schema that extends
+  it with allOf, which the base's additionalProperties: false closes too. In
+  v3, As* of the base rejects the extension's data.
+subject:
+  oneOf:
+    - $ref: '#/components/schemas/Base'
+    - $ref: '#/components/schemas/Extended'
+components:
+  Base:
+    type: object
+    additionalProperties: false
+    required: [id]
+    properties:
+      id: {type: string}
+      name: {type: string}
+  Extended:
+    allOf:
+      - $ref: '#/components/schemas/Base'
+      - type: object
+        required: [extra]
+        properties:
+          extra: {type: string}
+samples:
+  - '{"id": "1", "name": "base"}'
+  - '{"id": "2", "extra": "more"}'
