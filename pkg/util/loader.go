@@ -9,7 +9,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/speakeasy-api/openapi/overlay/loader"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 func LoadSwagger(filePath string) (swagger *openapi3.T, err error) {
