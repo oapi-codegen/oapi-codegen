@@ -99,7 +99,7 @@ go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 
 ### Installing
 
-`oapi-codegen` requires Go 1.25+ to build and install. Note that the *generated* code has its own, lower requirements — see [Supported Servers](#supported-servers).
+`oapi-codegen` requires Go 1.26+ to build and install. Note that the *generated* code has its own, lower requirements — see [Supported Servers](#supported-servers).
 
 It is recommended to use [`go tool` support](https://www.jvt.me/posts/2025/01/27/go-tools-124/) for managing the dependency of `oapi-codegen` alongside your core application.
 
