@@ -18,7 +18,7 @@ jobs:
       security-events: write
       contents: read
     steps:
-      - uses: golang/govulncheck-action@032d45514ae346b1db93c04b0c90b841c370344f # v1.1.0
+      - uses: golang/govulncheck-action@v1.1.0
         with:
           # to be explicit, we're only checking the top-level `oapi-codegen` package
           # we are intentionally NOT intending to keep on top of security updates in `internal/test` or `examples`, or any submodules thereof
@@ -29,7 +29,7 @@ jobs:
 
       # ... such as the Code Scanning tab (https://github.com/oapi-codegen/oapi-codegen/security/code-scanning?query=is%3Aopen+branch%3Amain+tool%3Agovulncheck)
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@cdf488f595d80d6e07e03d4674febd5ab45fa938 # v4.37.9
+        uses: github/codeql-action/upload-sarif@v4.37.9
         with:
           sarif_file: govulncheck.sarif
           category: govulncheck
