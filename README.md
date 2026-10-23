@@ -1497,7 +1497,7 @@ Any other server (which conforms to `net/http`)
 > [!TIP]
 > A validation middleware decodes the JSON request body to validate it, and the generated handler then decodes it again. Because `encoding/json` matches member names case-insensitively, a body such as `{"role":"user","ROLE":"admin"}` validates as `role: user` but is bound as `Role: "admin"`, bypassing the schema's constraints.
 >
-> [Strict](#strict-server) net/http, Chi and gorilla/mux servers avoid the second decode when the middleware keeps the value it validated. With `nethttp-middleware`, set kin-openapi's `KeepValidatedValue` option:
+> [Strict](#strict-server) net/http, Chi and gorilla/mux servers avoid the second decode when the middleware keeps the value it validated. `nethttp-middleware` v1.3.1 and later do this by default (opt out with `Options.DiscardValidatedValue`). With an older version, or with your own `openapi3filter` setup, set kin-openapi's `KeepValidatedValue` option:
 >
 > ```go
 > r.Use(middleware.OapiRequestValidatorWithOptions(spec, &middleware.Options{
@@ -1505,7 +1505,7 @@ Any other server (which conforms to `net/http`)
 > }))
 > ```
 >
-> The generated handler then binds the validated value (via `runtime.BindJSONBody`) with exact member-name matching, and only falls back to decoding the body when no validated value is present. This requires kin-openapi v0.151.0 or later. See [#2605](https://github.com/oapi-codegen/oapi-codegen/issues/2605).
+> The generated handler then binds the validated value (via `runtime.BindJSONBody`, runtime v1.8.0 or later) with exact member-name matching, and only falls back to decoding the body when no validated value is present. This requires kin-openapi v0.151.0 or later. See [#2605](https://github.com/oapi-codegen/oapi-codegen/issues/2605).
 
 ## Implementing security
 
