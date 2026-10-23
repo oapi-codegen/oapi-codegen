@@ -1012,13 +1012,12 @@ This is supported by `oapi-codegen`, through the ability to perform "Import Mapp
 <a name=remote-references></a>
 
 > [!IMPORTANT]
-> External references to local files are always followed. External references to URLs are **not** followed unless the host is listed in `allow-remote-refs-from`, because an untrusted spec could otherwise make `oapi-codegen` issue requests to any host reachable from the machine running it. List the hosts your spec references (a host name, optionally with a port), or `"*"` to allow any host:
+> External references to local files are always followed. External references to URLs are **not** followed unless the URL is listed in `allow-remote-refs-from`, because an untrusted spec could otherwise make `oapi-codegen` issue requests to any host reachable from the machine running it. List each referenced document's URL exactly as it appears in the `$ref`, without the `#...` fragment, or `"*"` to allow any URL:
 >
 >     allow-remote-refs-from:
->       - api.example.com
->       - localhost:8080
+>       - https://raw.githubusercontent.com/example/specs/main/common.yaml
 >
-> When the spec itself is given as a URL, references to that same host are followed without listing it.
+> There is no host or prefix matching: a reference to a different path, port or scheme on the same host is refused until it is listed too. A relative `$ref` inside a remote document resolves to an absolute URL, and that absolute URL is what has to be listed. A spec passed to `oapi-codegen` as a URL is fetched without listing it, but the documents it references still have to be.
 
 For instance, let's say that we have a large API, which has a user-facing API and an admin API, both of which use a common set of API models.
 

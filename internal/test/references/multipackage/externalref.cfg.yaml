@@ -7,9 +7,9 @@ import-mapping:
   ./packageA/spec.yaml: github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/packageA
   ./packageB/spec.yaml: package_b github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/packageB
   https://raw.githubusercontent.com/swagger-api/swagger-petstore/refs/heads/master/src/main/resources/openapi.yaml: github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/petstore
-# The petstore schema above is fetched from a remote host, which has to be allowed.
+# The petstore schema above is fetched from a remote document, which has to be allowed.
 allow-remote-refs-from:
-  - raw.githubusercontent.com
+  - https://raw.githubusercontent.com/swagger-api/swagger-petstore/refs/heads/master/src/main/resources/openapi.yaml
 output: externalref.gen.go
 output-options:
   skip-prune: true

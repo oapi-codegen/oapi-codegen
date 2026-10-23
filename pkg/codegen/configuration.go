@@ -3,6 +3,7 @@ package codegen
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"reflect"
 	"regexp"
 	"sort"
@@ -35,12 +36,12 @@ type Configuration struct {
 	OutputOptions OutputOptions `yaml:"output-options,omitempty"`
 	// ImportMapping specifies the golang package path for each external reference
 	ImportMapping map[string]string `yaml:"import-mapping,omitempty"`
-	// AllowRemoteRefsFrom lists the hosts that external $refs in the input
-	// specification may be fetched from while it is loaded, each a host name
-	// optionally followed by a port. "*" allows every host. When empty, which
-	// is the default, remote references are refused, and only references to
-	// local files (and to the host the specification itself was loaded from,
-	// when it was given as a URL) are followed.
+	// AllowRemoteRefsFrom lists the remote documents that external $refs in
+	// the input specification may be fetched from while it is loaded. Each
+	// entry is the URL of a referenced document exactly as it appears in the
+	// $ref, without the fragment, or "*" to allow every URL. When empty, which
+	// is the default, remote references are refused and only references to
+	// local files are followed.
 	AllowRemoteRefsFrom []string `yaml:"allow-remote-refs-from,omitempty"`
 	// AdditionalImports defines any additional Go imports to add to the generated code
 	AdditionalImports []AdditionalImport `yaml:"additional-imports,omitempty"`
@@ -55,10 +56,14 @@ func (o Configuration) Validate() error {
 		return errors.New("package name must be specified")
 	}
 
-	for _, host := range o.AllowRemoteRefsFrom {
-		host = strings.TrimSpace(host)
-		if host == "" || strings.Contains(host, "://") || strings.ContainsAny(host, "/?#") {
-			return fmt.Errorf("allow-remote-refs-from entries are host names, optionally with a port, or \"*\": got %q", host)
+	for _, entry := range o.AllowRemoteRefsFrom {
+		entry = strings.TrimSpace(entry)
+		if entry == "*" {
+			continue
+		}
+		u, err := url.Parse(entry)
+		if err != nil || u.Scheme == "" || u.Host == "" || u.Fragment != "" || u.RawFragment != "" {
+			return fmt.Errorf("allow-remote-refs-from entries are the URL of a referenced document without its fragment, or \"*\": got %q", entry)
 		}
 	}
 
