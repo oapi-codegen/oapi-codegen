@@ -1670,3 +1670,14 @@ components:
 	assert.NotContains(t, code, "func (t *WithArray) UnmarshalText(", "an array branch can't be bound from text")
 	assert.NotContains(t, code, "func (t *Loop) UnmarshalText(", "a union that contains itself can't be bound from text")
 }
+
+// TestDiscriminatorLiteralQuotesStrings checks that a string discriminator
+// value is emitted through strconv.Quote rather than wrapped in quotes by hand,
+// so a backslash in it cannot swallow the closing quote.
+func TestDiscriminatorLiteralQuotesStrings(t *testing.T) {
+	d := &Discriminator{ValueType: openapi3.TypeString}
+	assert.Equal(t, `"plain"`, d.literal("plain"))
+	assert.Equal(t, `"ends with \\"`, d.literal(`ends with \`))
+	n := &Discriminator{ValueType: openapi3.TypeInteger}
+	assert.Equal(t, `7`, n.literal("7"))
+}

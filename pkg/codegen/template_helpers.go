@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -357,12 +358,16 @@ func responsesWithHeaders(responses []ResponseDefinition) []ResponseDefinition {
 }
 
 // This outputs a string array
+// toStringArray renders a `[]string{...}` literal. Each element is quoted on
+// its own with strconv.Quote: joining raw values with `","` let a value ending
+// in a backslash escape the quote the joiner supplied, and whatever followed
+// became code.
 func toStringArray(sarr []string) string {
-	s := strings.Join(sarr, `","`)
-	if len(s) > 0 {
-		s = `"` + s + `"`
+	quoted := make([]string, len(sarr))
+	for i, s := range sarr {
+		quoted[i] = strconv.Quote(s)
 	}
-	return `[]string{` + s + `}`
+	return `[]string{` + strings.Join(quoted, ", ") + `}`
 }
 
 // stripNewLines removes newlines so untrusted spec text stays inside a single
