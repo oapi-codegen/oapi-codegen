@@ -1476,6 +1476,17 @@ Any other server (which conforms to `net/http`)
 > [!NOTE]
 > It is [not currently possible](https://github.com/oapi-codegen/oapi-codegen/issues/1038) to validate the HTTP response with a middleware.
 
+> [!TIP]
+> A validation middleware decodes the JSON request body to validate it, and the generated handler then decodes it again. Because `encoding/json` matches member names case-insensitively, a body such as `{"role":"user","ROLE":"admin"}` validates as `role: user` but is bound as `Role: "admin"`, bypassing the schema's constraints.
+>
+> [Strict](#strict-server) net/http, Chi, gorilla/mux, Echo, Gin, Iris and Fiber servers avoid the second decode when the middleware keeps the value it validated. `nethttp-middleware` v1.3.1, `echo-middleware` v1.2.1, `echo-v5-middleware` v0.2.1, `gin-middleware` v1.2.1, `iris-middleware` v1.2.1, `fiber-middleware` v1.3.0 and `fiber-v3-middleware` v0.3.0 and later do this by default (opt out with `Options.DiscardValidatedValue`). With an older version, or with your own `openapi3filter` setup, set kin-openapi's `KeepValidatedValue` option, shown here for `nethttp-middleware`:
+>
+>     r.Use(middleware.OapiRequestValidatorWithOptions(spec, &middleware.Options{
+>         Options: openapi3filter.Options{KeepValidatedValue: true},
+>     }))
+>
+> The generated handler then binds the validated value (via `runtime.BindJSONBody` or `runtime.BindJSONValue`, runtime v1.8.0 or later) with exact member-name matching, and only falls back to the framework's decoder when no validated value is present. This requires kin-openapi v0.151.0 or later. Fiber does not run on `net/http`, so the validated value cannot travel on the request body; `fiber-middleware` and `fiber-v3-middleware` store it in the Fiber context under `ValidatedBodyLocalsKey` (`x-oapi-codegen-validated-body`) and the generated strict Fiber handler reads it from there, which means the Fiber middleware versions above are required rather than the `KeepValidatedValue` option alone. See [#2605](https://github.com/oapi-codegen/oapi-codegen/issues/2605).
+
 ## Implementing security
 
 If you're using a specification with [Security Schemes](https://spec.openapis.org/oas/v3.0.3#security-scheme-object) and [Security Requirements](https://spec.openapis.org/oas/v3.0.3#security-requirement-object), you'll want to authenticate and authorize requests.

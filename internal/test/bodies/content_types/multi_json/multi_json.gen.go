@@ -19,6 +19,8 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/oapi-codegen/runtime"
 )
 
 // SuffixBody defines model for SuffixBody.
@@ -726,7 +728,18 @@ func (sh *strictHandler) SuffixTest(ctx *gin.Context) {
 	var request SuffixTestRequestObject
 
 	var body SuffixTestApplicationTestPlusJSONRequestBody
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	var err error
+	// A request validator built on kin-openapi's openapi3filter with
+	// KeepValidatedValue leaves the value it validated on the body. Bind
+	// that value, matching member names exactly, so the handler receives
+	// what was validated instead of a second, case-insensitive decode.
+	if vb, ok := ctx.Request.Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+		err = ctx.ShouldBindJSON(&body)
+	} else if binding.Validator != nil {
+		// ShouldBindJSON runs the struct validator after decoding; keep that.
+		err = binding.Validator.ValidateStruct(&body)
+	}
+	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			sh.options.RequestErrorHandlerFunc(ctx, err)
 			return
@@ -788,8 +801,7 @@ var swaggerSpec = []string{
 	"ThQZy2bpvnXpKApG0dClNITOSaDYLF1+2DBF/c/dGrdOo/uMHizcNb+4Tc2yVsA4mgsUTzQRxRPBqJ85",
 	"FpReX3feh69n6ve6S5kSZglVhw849HONZJ8QLLDkEFcwmppaXEmNBjJ+7kLGHuz7CeJc8GFOBbTcYCeK",
 	"pfKuc18lUHaiCd1WzSF6Aht3w2CAEkaXAlh4nLWzFgwkJ+uC0nAZiIYrLN4pR5n5Sw/2OK83ZIGqFFlO",
-	"07thuCDLRK/+uFK7v7hfi/ZJlx65yyEpB1hYEfXHw4XxpoJz7xeI7T++sQYW7fzW4bOORp9dMXv8CQAA",
-	"//8=",
+	"07thuCDLRK/+uFK7v7hfi/ZJlx65yyEpB1hYEfXHw4XxpoJz7xeI7T++sQYW7fzW4bOORp9dMXv8GQA=",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
