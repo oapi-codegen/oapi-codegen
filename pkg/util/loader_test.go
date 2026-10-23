@@ -25,16 +25,17 @@ components:
 `
 
 // fakeTransport serves remoteDoc for every request, or the document in docs
-// for a URL listed there, and records the URLs it was asked for, so the tests
-// need no listening socket.
+// for a URL listed there, and records the document URLs it was asked for (a
+// fragment never goes on the wire), so the tests need no listening socket.
 type fakeTransport struct {
 	docs      map[string]string
 	requested []string
 }
 
 func (f *fakeTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	f.requested = append(f.requested, req.URL.String())
-	doc, ok := f.docs[req.URL.String()]
+	key := remoteRefKey(req.URL)
+	f.requested = append(f.requested, key)
+	doc, ok := f.docs[key]
 	if !ok {
 		doc = remoteDoc
 	}
