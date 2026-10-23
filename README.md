@@ -1009,6 +1009,16 @@ This is supported by `oapi-codegen`, through the ability to perform "Import Mapp
 >
 > A key cannot be a JSON pointer such as `#/components/schemas`. References within a single document always resolve to the package being generated, so there's nothing to map — if you want your models in a different Go package to your server, split them into their own spec file and map that file, as shown below.
 
+<a name=remote-references></a>
+
+> [!IMPORTANT]
+> External references to local files are always followed. External references to URLs are **not** followed unless the URL is listed in `allow-remote-refs-from`, because an untrusted spec could otherwise make `oapi-codegen` issue requests to any host reachable from the machine running it. List each referenced document's URL exactly as it appears in the `$ref`, without the `#...` fragment, or `"*"` to allow any URL:
+>
+>     allow-remote-refs-from:
+>       - https://raw.githubusercontent.com/example/specs/main/common.yaml
+>
+> There is no host or prefix matching: a reference to a different path, port or scheme on the same host is refused until it is listed too. A relative `$ref` inside a remote document resolves to an absolute URL, and that absolute URL is what has to be listed. A spec passed to `oapi-codegen` as a URL is fetched without listing it, but the documents it references still have to be.
+
 For instance, let's say that we have a large API, which has a user-facing API and an admin API, both of which use a common set of API models.
 
 In this case, we may have an Admin API that looks like:
