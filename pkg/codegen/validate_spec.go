@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go/token"
+	"regexp"
 	"unicode"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -94,6 +95,20 @@ func (v *specValidator) checkGoType(value, what string) {
 			v.addf("%s must be a Go type expression and may not contain %s: %q", what, describeRune(r), value)
 			return
 		}
+	}
+}
+
+// responseKeyRE matches the response keys OpenAPI allows: a status code, a
+// range such as 2XX, or default.
+var responseKeyRE = regexp.MustCompile(`^(default|[1-5]XX|[1-9][0-9][0-9])$`)
+
+// checkResponseKey validates a key of an operation's responses map. The key is
+// copied into the generated code as part of type names and, for the client, as
+// the right-hand side of a status comparison (`rsp.StatusCode == 200`), so it
+// has to be one of the forms OpenAPI defines and nothing else.
+func (v *specValidator) checkResponseKey(key, what string) {
+	if !responseKeyRE.MatchString(key) {
+		v.addf("%s must be a three-digit status code, a range such as 2XX, or default: %q", what, key)
 	}
 }
 
@@ -205,24 +220,37 @@ func (v *specValidator) walkDocument(spec *openapi3.T) {
 	}
 }
 
+// walkComponents validates every component. Component names become Go
+// identifiers only after sanitization, but they are also copied verbatim into
+// single-line doc comments ("X defines model for <name>."), so a name may not
+// contain a control character; quotes are fine there.
 func (v *specValidator) walkComponents(c *openapi3.Components) {
 	for _, name := range SortedMapKeys(c.Schemas) {
+		v.checkNoControl(name, "schema name")
 		v.walkSchemaRef(c.Schemas[name], fmt.Sprintf("schema %q", name))
 	}
 	for _, name := range SortedMapKeys(c.Parameters) {
+		v.checkNoControl(name, "component parameter name")
 		v.walkParameterRef(c.Parameters[name], fmt.Sprintf("component parameter %q", name))
 	}
 	for _, name := range SortedMapKeys(c.RequestBodies) {
+		v.checkNoControl(name, "component request body name")
 		v.walkRequestBodyRef(c.RequestBodies[name], fmt.Sprintf("component request body %q", name))
 	}
 	for _, name := range SortedMapKeys(c.Responses) {
+		v.checkNoControl(name, "component response name")
 		v.walkResponseRef(c.Responses[name], fmt.Sprintf("component response %q", name))
 	}
 	for _, name := range SortedMapKeys(c.Headers) {
+		v.checkNoControl(name, "component header name")
 		v.walkHeaderRef(c.Headers[name], fmt.Sprintf("component header %q", name))
 	}
 	for _, name := range SortedMapKeys(c.Callbacks) {
+		v.checkNoControl(name, "component callback name")
 		v.walkCallbackRef(c.Callbacks[name], fmt.Sprintf("component callback %q", name))
+	}
+	for _, name := range SortedSecuritySchemeKeys(c.SecuritySchemes) {
+		v.checkNoControl(name, "security scheme name")
 	}
 }
 
@@ -243,6 +271,10 @@ func (v *specValidator) walkOperation(op *openapi3.Operation, where string) {
 		return
 	}
 	v.checkExtensions(op.Extensions, where)
+	// The operationId becomes a Go identifier only after normalization, but
+	// the Echo templates also copy it verbatim (quoted) as the per-operation
+	// middleware key, so it is checked like other quoted text.
+	v.checkNoControl(op.OperationID, "operationId in "+where)
 	if op.Security != nil {
 		v.checkSecurity(*op.Security, where)
 	}
@@ -253,6 +285,7 @@ func (v *specValidator) walkOperation(op *openapi3.Operation, where string) {
 	if op.Responses != nil {
 		responses := op.Responses.Map()
 		for _, name := range SortedMapKeys(responses) {
+			v.checkResponseKey(name, "response key in "+where)
 			v.walkResponseRef(responses[name], fmt.Sprintf("response %q in %s", name, where))
 		}
 	}
@@ -318,8 +351,53 @@ func (v *specValidator) walkHeaderRef(ref *openapi3.HeaderRef, where string) {
 		return
 	}
 	v.checkExtensions(ref.Value.Extensions, where)
+	v.checkText(ref.Value.Style, "style of header in "+where)
 	v.walkContent(ref.Value.Content, where)
 	v.walkSchemaRef(ref.Value.Schema, where)
+}
+
+// ValidateServerURLs checks the parts of the document's servers that the
+// `server-urls` generator copies into Go source as identifiers: the x-go-name
+// extension, the variable names (function parameters and type names), the
+// `{placeholder}` names a URL uses without declaring (also parameters), and
+// each variable's enum values, which are appended to the variable's type name
+// to form constant names. None of them is sanitized on the way, so names have
+// to be Go identifiers as written and enum values have to be made of
+// identifier characters. It is separate from ValidateSpec because it only
+// applies when server URLs are generated: specs with, say, a hyphenated
+// variable name are fine otherwise.
+func ValidateServerURLs(spec *openapi3.T) error {
+	if spec == nil {
+		return nil
+	}
+	v := &specValidator{}
+	for i, server := range spec.Servers {
+		if server == nil {
+			continue
+		}
+		where := fmt.Sprintf("server %d (%s)", i, server.URL)
+		v.checkExtensions(server.Extensions, where)
+		for _, name := range SortedMapKeys(server.Variables) {
+			v.checkIdentifier(name, "server variable name in "+where)
+			variable := server.Variables[name]
+			if variable == nil {
+				continue
+			}
+			for _, value := range variable.Enum {
+				// The constant is <TypeName><Value>, so the value may start
+				// with a digit but must otherwise be identifier characters.
+				if value == "" || !token.IsIdentifier("_"+value) {
+					v.addf("enum value of server variable %q in %s must consist of letters, digits and underscores: %q", name, where, value)
+				}
+			}
+		}
+		for name := range urlPlaceholders(server.URL) {
+			if _, declared := server.Variables[name]; !declared {
+				v.checkIdentifier(name, "undeclared URL placeholder in "+where)
+			}
+		}
+	}
+	return errors.Join(v.errs...)
 }
 
 func (v *specValidator) walkCallbackRef(ref *openapi3.CallbackRef, where string) {
