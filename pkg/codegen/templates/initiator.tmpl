@@ -140,7 +140,7 @@ func New{{$opid}}{{$.Prefix}}Request{{.Suffix}}(targetURL string{{if $hasParams}
         {{end -}}
         }
     {{end -}}
-    return New{{$opid}}{{$.Prefix}}RequestWithBody(targetURL{{if $hasParams}}, params{{end}}, "{{.ContentType}}", bodyReader)
+    return New{{$opid}}{{$.Prefix}}RequestWithBody(targetURL{{if $hasParams}}, params{{end}}, {{.ContentType | toGoString}}, bodyReader)
 }
 {{end -}}
 {{end}}
