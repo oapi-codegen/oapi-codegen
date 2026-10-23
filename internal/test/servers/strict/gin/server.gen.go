@@ -21,6 +21,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	"github.com/oapi-codegen/runtime"
 )
 
@@ -1357,7 +1358,18 @@ func (sh *strictHandler) JSONExample(ctx *gin.Context) {
 	var request JSONExampleRequestObject
 
 	var body JSONExampleJSONRequestBody
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	var err error
+	// A request validator built on kin-openapi's openapi3filter with
+	// KeepValidatedValue leaves the value it validated on the body. Bind
+	// that value, matching member names exactly, so the handler receives
+	// what was validated instead of a second, case-insensitive decode.
+	if vb, ok := ctx.Request.Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+		err = ctx.ShouldBindJSON(&body)
+	} else if binding.Validator != nil {
+		// ShouldBindJSON runs the struct validator after decoding; keep that.
+		err = binding.Validator.ValidateStruct(&body)
+	}
+	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			sh.options.RequestErrorHandlerFunc(ctx, err)
 			return
@@ -1458,7 +1470,18 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *gin.Context) {
 	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "application/json") {
 
 		var body MultipleRequestAndResponseTypesJSONRequestBody
-		if err := ctx.ShouldBindJSON(&body); err != nil {
+		var err error
+		// A request validator built on kin-openapi's openapi3filter with
+		// KeepValidatedValue leaves the value it validated on the body. Bind
+		// that value, matching member names exactly, so the handler receives
+		// what was validated instead of a second, case-insensitive decode.
+		if vb, ok := ctx.Request.Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+			err = ctx.ShouldBindJSON(&body)
+		} else if binding.Validator != nil {
+			// ShouldBindJSON runs the struct validator after decoding; keep that.
+			err = binding.Validator.ValidateStruct(&body)
+		}
+		if err != nil {
 			if !errors.Is(err, io.EOF) {
 				sh.options.RequestErrorHandlerFunc(ctx, err)
 				return
@@ -1551,7 +1574,18 @@ func (sh *strictHandler) RequiredJSONBody(ctx *gin.Context) {
 	var request RequiredJSONBodyRequestObject
 
 	var body RequiredJSONBodyJSONRequestBody
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	var err error
+	// A request validator built on kin-openapi's openapi3filter with
+	// KeepValidatedValue leaves the value it validated on the body. Bind
+	// that value, matching member names exactly, so the handler receives
+	// what was validated instead of a second, case-insensitive decode.
+	if vb, ok := ctx.Request.Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+		err = ctx.ShouldBindJSON(&body)
+	} else if binding.Validator != nil {
+		// ShouldBindJSON runs the struct validator after decoding; keep that.
+		err = binding.Validator.ValidateStruct(&body)
+	}
+	if err != nil {
 		sh.options.RequestErrorHandlerFunc(ctx, err)
 		return
 	}
@@ -1640,7 +1674,18 @@ func (sh *strictHandler) ReusableResponses(ctx *gin.Context) {
 	var request ReusableResponsesRequestObject
 
 	var body ReusableResponsesJSONRequestBody
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	var err error
+	// A request validator built on kin-openapi's openapi3filter with
+	// KeepValidatedValue leaves the value it validated on the body. Bind
+	// that value, matching member names exactly, so the handler receives
+	// what was validated instead of a second, case-insensitive decode.
+	if vb, ok := ctx.Request.Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+		err = ctx.ShouldBindJSON(&body)
+	} else if binding.Validator != nil {
+		// ShouldBindJSON runs the struct validator after decoding; keep that.
+		err = binding.Validator.ValidateStruct(&body)
+	}
+	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			sh.options.RequestErrorHandlerFunc(ctx, err)
 			return
@@ -1711,7 +1756,18 @@ func (sh *strictHandler) SameNameParamAndBodyProperty(ctx *gin.Context, name str
 	request.Name = name
 
 	var body SameNameParamAndBodyPropertyJSONRequestBody
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	var err error
+	// A request validator built on kin-openapi's openapi3filter with
+	// KeepValidatedValue leaves the value it validated on the body. Bind
+	// that value, matching member names exactly, so the handler receives
+	// what was validated instead of a second, case-insensitive decode.
+	if vb, ok := ctx.Request.Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+		err = ctx.ShouldBindJSON(&body)
+	} else if binding.Validator != nil {
+		// ShouldBindJSON runs the struct validator after decoding; keep that.
+		err = binding.Validator.ValidateStruct(&body)
+	}
+	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			sh.options.RequestErrorHandlerFunc(ctx, err)
 			return
@@ -1870,7 +1926,18 @@ func (sh *strictHandler) HeadersExample(ctx *gin.Context, params HeadersExampleP
 	request.Params = params
 
 	var body HeadersExampleJSONRequestBody
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	var err error
+	// A request validator built on kin-openapi's openapi3filter with
+	// KeepValidatedValue leaves the value it validated on the body. Bind
+	// that value, matching member names exactly, so the handler receives
+	// what was validated instead of a second, case-insensitive decode.
+	if vb, ok := ctx.Request.Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+		err = ctx.ShouldBindJSON(&body)
+	} else if binding.Validator != nil {
+		// ShouldBindJSON runs the struct validator after decoding; keep that.
+		err = binding.Validator.ValidateStruct(&body)
+	}
+	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			sh.options.RequestErrorHandlerFunc(ctx, err)
 			return
@@ -1904,7 +1971,18 @@ func (sh *strictHandler) UnionExample(ctx *gin.Context) {
 	var request UnionExampleRequestObject
 
 	var body UnionExampleJSONRequestBody
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	var err error
+	// A request validator built on kin-openapi's openapi3filter with
+	// KeepValidatedValue leaves the value it validated on the body. Bind
+	// that value, matching member names exactly, so the handler receives
+	// what was validated instead of a second, case-insensitive decode.
+	if vb, ok := ctx.Request.Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+		err = ctx.ShouldBindJSON(&body)
+	} else if binding.Validator != nil {
+		// ShouldBindJSON runs the struct validator after decoding; keep that.
+		err = binding.Validator.ValidateStruct(&body)
+	}
+	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			sh.options.RequestErrorHandlerFunc(ctx, err)
 			return
