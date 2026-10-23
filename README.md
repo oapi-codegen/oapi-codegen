@@ -1497,13 +1497,13 @@ Any other server (which conforms to `net/http`)
 > [!TIP]
 > A validation middleware decodes the JSON request body to validate it, and the generated handler then decodes it again. Because `encoding/json` matches member names case-insensitively, a body such as `{"role":"user","ROLE":"admin"}` validates as `role: user` but is bound as `Role: "admin"`, bypassing the schema's constraints.
 >
-> [Strict](#strict-server) net/http, Chi and gorilla/mux servers avoid the second decode when the middleware keeps the value it validated. `nethttp-middleware` v1.3.1 and later do this by default (opt out with `Options.DiscardValidatedValue`). With an older version, or with your own `openapi3filter` setup, set kin-openapi's `KeepValidatedValue` option:
+> [Strict](#strict-server) net/http, Chi, gorilla/mux, Echo, Gin and Iris servers avoid the second decode when the middleware keeps the value it validated. `nethttp-middleware` v1.3.1, `echo-middleware` v1.2.1, `echo-v5-middleware` v0.2.1, `gin-middleware` v1.2.1 and `iris-middleware` v1.2.1 and later do this by default (opt out with `Options.DiscardValidatedValue`). With an older version, or with your own `openapi3filter` setup, set kin-openapi's `KeepValidatedValue` option, shown here for `nethttp-middleware`:
 >
 >     r.Use(middleware.OapiRequestValidatorWithOptions(spec, &middleware.Options{
 >         Options: openapi3filter.Options{KeepValidatedValue: true},
 >     }))
 >
-> The generated handler then binds the validated value (via `runtime.BindJSONBody`, runtime v1.8.0 or later) with exact member-name matching, and only falls back to decoding the body when no validated value is present. This requires kin-openapi v0.151.0 or later. See [#2605](https://github.com/oapi-codegen/oapi-codegen/issues/2605).
+> The generated handler then binds the validated value (via `runtime.BindJSONBody` or `runtime.BindJSONValue`, runtime v1.8.0 or later) with exact member-name matching, and only falls back to the framework's decoder when no validated value is present. This requires kin-openapi v0.151.0 or later. Fiber strict servers are not covered yet, because `fiber-middleware` validates a converted copy of the request. See [#2605](https://github.com/oapi-codegen/oapi-codegen/issues/2605).
 
 ## Implementing security
 
