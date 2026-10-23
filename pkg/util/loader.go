@@ -45,7 +45,9 @@ func specURL(filePath string) *url.URL {
 // named it.
 func newLoader(filePath string, allowRemoteRefsFrom []string, client *http.Client) *openapi3.Loader {
 	if u := specURL(filePath); u != nil {
-		allowRemoteRefsFrom = append([]string{u.String()}, allowRemoteRefsFrom...)
+		// Listed like any other entry: the document URL without a fragment,
+		// which is what the reader compares against.
+		allowRemoteRefsFrom = append([]string{remoteRefKey(u)}, allowRemoteRefsFrom...)
 	}
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true

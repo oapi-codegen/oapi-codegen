@@ -147,6 +147,13 @@ components:
 		assert.Equal(t, []string{top}, transport.requested)
 	})
 
+	t.Run("a fragment on the document URL does not stop it loading", func(t *testing.T) {
+		transport := &fakeTransport{docs: map[string]string{top: remoteDoc}}
+		_, err := loadSwagger(top+"#overview", nil, &http.Client{Transport: transport})
+		require.NoError(t, err)
+		assert.Equal(t, []string{top}, transport.requested)
+	})
+
 	t.Run("a relative reference to the same host is refused until its absolute URL is listed", func(t *testing.T) {
 		transport := &fakeTransport{docs: map[string]string{top: topDoc("common.yaml#/components/schemas/Remote")}}
 		_, err := loadSwagger(top, nil, &http.Client{Transport: transport})
