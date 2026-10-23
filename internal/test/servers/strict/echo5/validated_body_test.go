@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 
@@ -74,4 +75,45 @@ func TestEcho5Server_BindsValidatedBody(t *testing.T) {
 		// "VALUE" member win; this is the pre-existing behaviour the fallback keeps.
 		assert.JSONEq(t, `{"value":"456"}`, rr.Body.String())
 	})
+}
+
+// rejectingValidator is an application validator that rejects every value, so
+// a 422 proves the custom binder below ran and called ctx.Validate.
+type rejectingValidator struct{}
+
+func (rejectingValidator) Validate(any) error {
+	return echo.NewHTTPError(http.StatusUnprocessableEntity, "rejected by application validator")
+}
+
+// customBinder decodes the body and then applies the application's validator,
+// the way applications commonly wire echo.Binder.
+type customBinder struct{ calls int }
+
+func (b *customBinder) Bind(c *echo.Context, target any) error {
+	b.calls++
+	if err := echo.BindBody(c, target); err != nil {
+		return err
+	}
+	return c.Validate(target)
+}
+
+// TestEcho5Server_CustomBinderStillRuns checks that an application's custom
+// Echo binder keeps running, with its own checks, when a validation middleware
+// kept the validated value. The validated value is only used in place of the
+// default binder's JSON decode.
+func TestEcho5Server_CustomBinderStillRuns(t *testing.T) {
+	for _, keep := range []bool{true, false} {
+		t.Run(fmt.Sprintf("KeepValidatedValue=%t", keep), func(t *testing.T) {
+			e := echo.New()
+			e.Validator = rejectingValidator{}
+			binder := &customBinder{}
+			e.Binder = binder
+			RegisterHandlers(e, NewStrictHandler(StrictServer{}, nil))
+
+			handler := validatingHandler(t, e, openapi3filter.Options{KeepValidatedValue: keep})
+			rr := testutil.NewRequest().Post("/json").WithContentType("application/json").WithBody([]byte(`{"value":"123"}`)).GoWithHTTPHandler(t, handler).Recorder
+			assert.Equal(t, http.StatusUnprocessableEntity, rr.Code, rr.Body.String())
+			assert.Equal(t, 1, binder.calls)
+		})
+	}
 }
