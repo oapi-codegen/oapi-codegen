@@ -232,7 +232,10 @@ func TestRemoteExternalReference(t *testing.T) {
 		},
 	}
 	spec := "test_specs/remote-external-reference.yaml"
-	swagger, err := util.LoadSwagger(spec)
+	// Remote references are refused unless their host is allowed.
+	swagger, err := util.LoadSwaggerWithOverlay(spec, util.LoadSwaggerWithOverlayOpts{
+		AllowRemoteRefsFrom: []string{"raw.githubusercontent.com"},
+	})
 	require.NoError(t, err)
 
 	// Run our code generation:

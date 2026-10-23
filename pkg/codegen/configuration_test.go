@@ -32,3 +32,24 @@ func TestConfigurationValidateImportMappingKeys(t *testing.T) {
 	}
 	require.NoError(t, cfg.Validate())
 }
+
+// TestConfigurationValidateAllowRemoteRefsFrom verifies that
+// allow-remote-refs-from entries are host names (optionally with a port) or
+// "*", not URLs or paths, so a misconfiguration fails loudly instead of
+// silently allowing nothing.
+func TestConfigurationValidateAllowRemoteRefsFrom(t *testing.T) {
+	cfg := Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{Models: true},
+	}
+	for _, good := range [][]string{nil, {}, {"*"}, {"api.example.com"}, {"localhost:8080", " api.example.com "}} {
+		cfg.AllowRemoteRefsFrom = good
+		assert.NoError(t, cfg.Validate(), "%q", good)
+	}
+	for _, bad := range []string{"", "https://api.example.com", "api.example.com/specs", "api.example.com?x", "api.example.com#x"} {
+		cfg.AllowRemoteRefsFrom = []string{bad}
+		err := cfg.Validate()
+		require.Error(t, err, "%q", bad)
+		assert.Contains(t, err.Error(), "allow-remote-refs-from")
+	}
+}

@@ -378,6 +378,13 @@
         "description": "ImportMapping specifies the golang package path for each external reference. A value of `-` will indicate that the current package will be used"
       }
     },
+    "allow-remote-refs-from": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "AllowRemoteRefsFrom lists the hosts that external $refs in the input specification may be fetched from while it is loaded, each a host name optionally followed by a port. \"*\" allows every host. When empty (the default), remote references are refused and only references to local files are followed."
+    },
     "additional-imports": {
       "type": "array",
       "items": {
