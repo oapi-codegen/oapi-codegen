@@ -3144,7 +3144,7 @@ func (sh *strictHandler) BodyComponent(w http.ResponseWriter, r *http.Request) {
 	var request BodyComponentRequestObject
 
 	var body BodyComponentJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -3175,7 +3175,7 @@ func (sh *strictHandler) BodyComponentInline(w http.ResponseWriter, r *http.Requ
 	var request BodyComponentInlineRequestObject
 
 	var body BodyComponentInlineJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -3206,7 +3206,7 @@ func (sh *strictHandler) BodyDefault(w http.ResponseWriter, r *http.Request) {
 	var request BodyDefaultRequestObject
 
 	var body BodyDefaultJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -3237,7 +3237,7 @@ func (sh *strictHandler) BodyHeaders(w http.ResponseWriter, r *http.Request) {
 	var request BodyHeadersRequestObject
 
 	var body BodyHeadersJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -3268,7 +3268,7 @@ func (sh *strictHandler) BodyInline(w http.ResponseWriter, r *http.Request) {
 	var request BodyInlineRequestObject
 
 	var body BodyInlineJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -3299,7 +3299,7 @@ func (sh *strictHandler) BodyRef(w http.ResponseWriter, r *http.Request) {
 	var request BodyRefRequestObject
 
 	var body BodyRefJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -3330,7 +3330,7 @@ func (sh *strictHandler) Holder(w http.ResponseWriter, r *http.Request) {
 	var request HolderRequestObject
 
 	var body HolderJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -3361,7 +3361,7 @@ func (sh *strictHandler) HolderInline(w http.ResponseWriter, r *http.Request) {
 	var request HolderInlineRequestObject
 
 	var body HolderInlineJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
