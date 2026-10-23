@@ -140,6 +140,13 @@ output-options:
 # <a href="../README.md#import-mapping">splitting specs across multiple packages</a>
 import-mapping: {}
 
+# Remote documents that external $refs may be fetched from while the spec is
+# loaded: each entry is a $ref URL without its fragment, or "*" for any URL.
+# Defaults to ["*"] when omitted; set to [] to refuse remote references so
+# that only local files are followed. See
+# <a href="../README.md#remote-references">remote references</a>
+allow-remote-refs-from: ["*"]
+
 # Additional Go imports to add to the generated code
 additional-imports: []
 </pre>
