@@ -342,6 +342,18 @@ func TestValidateServerURLs(t *testing.T) {
 		}
 	})
 
+	t.Run("variables the URL does not use produce no code and are not checked", func(t *testing.T) {
+		spec := serverSpec(&openapi3.Server{
+			URL: "https://{region}.example.com",
+			Variables: map[string]*openapi3.ServerVariable{
+				"region":      {Enum: []string{"eu"}, Default: "eu"},
+				"api-version": {Default: "1"},
+				"zone":        {Enum: []string{"us-east"}, Default: "us-east"},
+			},
+		})
+		require.NoError(t, ValidateServerURLs(spec))
+	})
+
 	t.Run("ValidateSpec itself does not impose the identifier rules", func(t *testing.T) {
 		// Hyphenated variable names are fine when server URLs are not generated.
 		spec := serverSpec(&openapi3.Server{

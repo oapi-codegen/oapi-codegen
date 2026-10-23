@@ -393,14 +393,16 @@ func (v *specValidator) walkHeaderRef(ref *openapi3.HeaderRef, where string) {
 
 // ValidateServerURLs checks the parts of the document's servers that the
 // `server-urls` generator copies into Go source as identifiers: the x-go-name
-// extension, the variable names (function parameters and type names), the
-// `{placeholder}` names a URL uses without declaring (also parameters), and
-// each variable's enum values, which are appended to the variable's type name
-// to form constant names. None of them is sanitized on the way, so names have
-// to be Go identifiers as written and enum values have to be made of
-// identifier characters. It is separate from ValidateSpec because it only
-// applies when server URLs are generated: specs with, say, a hyphenated
-// variable name are fine otherwise.
+// extension, the names of the variables the URL uses (function parameters and
+// type names), the `{placeholder}` names a URL uses without declaring (also
+// parameters), and the enum values of the used variables, which are appended
+// to the variable's type name to form constant names. None of them is
+// sanitized on the way, so names have to be Go identifiers as written and enum
+// values have to be made of identifier characters. A declared variable whose
+// placeholder does not appear in the URL produces no code and is not checked.
+// The function is separate from ValidateSpec because it only applies when
+// server URLs are generated: specs with, say, a hyphenated variable name are
+// fine otherwise.
 func ValidateServerURLs(spec *openapi3.T) error {
 	if spec == nil {
 		return nil
@@ -412,9 +414,10 @@ func ValidateServerURLs(spec *openapi3.T) error {
 		}
 		where := fmt.Sprintf("server %d (%s)", i, server.URL)
 		v.checkExtensions(server.Extensions, where)
-		for _, name := range SortedMapKeys(server.Variables) {
+		used := ServerObjectDefinition{OAPISchema: server}.UsedVariables()
+		for _, name := range SortedMapKeys(used) {
 			v.checkIdentifier(name, "server variable name in "+where)
-			variable := server.Variables[name]
+			variable := used[name]
 			if variable == nil {
 				continue
 			}
