@@ -339,7 +339,7 @@
       "items": {
         "type": "string"
       },
-      "description": "AllowRemoteRefsFrom lists the remote documents that external $refs in the input specification may be fetched from while it is loaded. Each entry is the URL of a referenced document exactly as it appears in the $ref, without the fragment, or \"*\" to allow every URL. When empty (the default), remote references are refused and only references to local files are followed."
+      "description": "AllowRemoteRefsFrom lists the remote documents that external $refs in the input specification may be fetched from while it is loaded. Each entry is the URL of a referenced document exactly as it appears in the $ref, without the fragment, or \"*\" to allow every URL. Defaults to [\"*\"] when omitted; set it to an empty list to refuse remote references so that only references to local files are followed."
     },
     "additional-imports": {
       "type": "array",

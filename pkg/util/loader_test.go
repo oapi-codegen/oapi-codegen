@@ -77,7 +77,7 @@ func TestLoadSwagger_RemoteRefs(t *testing.T) {
 		allowed []string
 		refused bool
 	}{
-		{name: "refused by default", allowed: nil, refused: true},
+		{name: "followed by default on the 2.8 release line", allowed: nil},
 		{name: "refused with empty list", allowed: []string{}, refused: true},
 		{name: "allowed by exact document URL", allowed: []string{doc}},
 		{name: "allowed with surrounding whitespace", allowed: []string{" " + doc + " "}},
@@ -109,17 +109,15 @@ func TestLoadSwagger_RemoteRefs(t *testing.T) {
 }
 
 func TestLoadSwagger_RemoteRefsRefusedThroughPublicAPI(t *testing.T) {
-	// LoadSwagger and LoadSwaggerWithOverlay use http.DefaultClient; the
-	// refusal happens before any request is built, so this needs no network.
+	// LoadSwaggerWithOverlay uses http.DefaultClient; the refusal happens
+	// before any request is built, so this needs no network. On the 2.8
+	// release line only an explicit empty list refuses.
 	dir := t.TempDir()
 	spec := writeSpec(t, dir, "spec.yaml", "http://169.254.169.254/latest/meta-data/#/x")
 
-	_, err := LoadSwagger(spec)
+	_, err := LoadSwaggerWithOverlay(spec, LoadSwaggerWithOverlayOpts{AllowRemoteRefsFrom: []string{}})
 	require.ErrorContains(t, err, `refusing to resolve remote reference "http://169.254.169.254/latest/meta-data/"`)
 	assert.ErrorContains(t, err, "is not listed in allow-remote-refs-from")
-
-	_, err = LoadSwaggerWithOverlay(spec, LoadSwaggerWithOverlayOpts{})
-	require.ErrorContains(t, err, "refusing to resolve remote reference")
 }
 
 func TestLoadSwagger_SpecFromURL(t *testing.T) {
@@ -157,7 +155,7 @@ components:
 
 	t.Run("a relative reference to the same host is refused until its absolute URL is listed", func(t *testing.T) {
 		transport := &fakeTransport{docs: map[string]string{top: topDoc("common.yaml#/components/schemas/Remote")}}
-		_, err := loadSwagger(top, nil, &http.Client{Transport: transport})
+		_, err := loadSwagger(top, []string{}, &http.Client{Transport: transport})
 		require.ErrorContains(t, err, `refusing to resolve remote reference "`+sibling+`"`)
 		assert.Equal(t, []string{top}, transport.requested)
 
@@ -201,7 +199,7 @@ actions:
 `), 0o600))
 
 	transport := &fakeTransport{docs: map[string]string{top: topDoc}}
-	_, err := loadSwaggerWithOverlay(top, LoadSwaggerWithOverlayOpts{Path: overlay, Strict: true}, &http.Client{Transport: transport})
+	_, err := loadSwaggerWithOverlay(top, LoadSwaggerWithOverlayOpts{Path: overlay, Strict: true, AllowRemoteRefsFrom: []string{}}, &http.Client{Transport: transport})
 	require.ErrorContains(t, err, `refusing to resolve remote reference "`+sibling+`"`)
 
 	transport = &fakeTransport{docs: map[string]string{top: topDoc}}

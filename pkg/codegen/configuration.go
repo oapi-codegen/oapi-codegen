@@ -38,9 +38,10 @@ type Configuration struct {
 	// AllowRemoteRefsFrom lists the remote documents that external $refs in
 	// the input specification may be fetched from while it is loaded. Each
 	// entry is the URL of a referenced document exactly as it appears in the
-	// $ref, without the fragment, or "*" to allow every URL. When empty, which
-	// is the default, remote references are refused and only references to
-	// local files are followed.
+	// $ref, without the fragment, or "*" to allow every URL. When the option
+	// is omitted it defaults to ["*"] on the 2.8 release line, which keeps the
+	// behaviour of earlier releases. Set it to an empty list to refuse every
+	// remote reference, so that only references to local files are followed.
 	AllowRemoteRefsFrom []string `yaml:"allow-remote-refs-from,omitempty"`
 	// AdditionalImports defines any additional Go imports to add to the generated code
 	AdditionalImports []AdditionalImport `yaml:"additional-imports,omitempty"`
@@ -172,6 +173,11 @@ func (o Configuration) UpdateDefaults() Configuration {
 			Models:       true,
 			EmbeddedSpec: true,
 		}
+	}
+	if o.AllowRemoteRefsFrom == nil {
+		// Earlier 2.8 releases followed every remote reference; keep that in
+		// this patch series. An explicit empty list in the config stays empty.
+		o.AllowRemoteRefsFrom = []string{"*"}
 	}
 	return o
 }

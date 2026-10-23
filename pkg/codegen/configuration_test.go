@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v3"
 )
 
 // TestConfigurationValidateImportMappingKeys verifies that import-mapping
@@ -59,4 +60,22 @@ func TestConfigurationValidateAllowRemoteRefsFrom(t *testing.T) {
 		require.Error(t, err, "%q", bad)
 		assert.Contains(t, err.Error(), "allow-remote-refs-from")
 	}
+}
+
+// TestConfigurationUpdateDefaultsAllowRemoteRefsFrom verifies the 2.8 release
+// line default: an omitted allow-remote-refs-from becomes ["*"], while an
+// explicit empty list in the YAML stays empty and refuses remote references.
+func TestConfigurationUpdateDefaultsAllowRemoteRefsFrom(t *testing.T) {
+	var omitted Configuration
+	require.NoError(t, yaml.Unmarshal([]byte("package: api\n"), &omitted))
+	assert.Equal(t, []string{"*"}, omitted.UpdateDefaults().AllowRemoteRefsFrom)
+
+	var empty Configuration
+	require.NoError(t, yaml.Unmarshal([]byte("package: api\nallow-remote-refs-from: []\n"), &empty))
+	require.NotNil(t, empty.AllowRemoteRefsFrom)
+	assert.Empty(t, empty.UpdateDefaults().AllowRemoteRefsFrom)
+
+	var listed Configuration
+	require.NoError(t, yaml.Unmarshal([]byte("package: api\nallow-remote-refs-from: [api.example.com]\n"), &listed))
+	assert.Equal(t, []string{"api.example.com"}, listed.UpdateDefaults().AllowRemoteRefsFrom)
 }

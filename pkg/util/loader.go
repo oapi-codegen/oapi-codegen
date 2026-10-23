@@ -14,14 +14,20 @@ import (
 )
 
 // LoadSwagger loads the OpenAPI document at filePath, which is a local path or
-// a URL, and resolves its external references. References to other local
-// files are followed; references to remote URLs are refused. Use
-// LoadSwaggerWithOverlay with AllowRemoteRefsFrom to follow remote references.
+// a URL, and resolves its external references, including references to remote
+// URLs. Use LoadSwaggerWithOverlay with AllowRemoteRefsFrom to restrict which
+// remote documents may be fetched.
 func LoadSwagger(filePath string) (swagger *openapi3.T, err error) {
 	return loadSwagger(filePath, nil, http.DefaultClient)
 }
 
 func loadSwagger(filePath string, allowRemoteRefsFrom []string, client *http.Client) (*openapi3.T, error) {
+	if allowRemoteRefsFrom == nil {
+		// On the 2.8 release line an unset list keeps the behaviour of earlier
+		// releases, which followed every remote reference. An explicit empty
+		// list refuses them all.
+		allowRemoteRefsFrom = []string{"*"}
+	}
 	if u := specURL(filePath); u != nil {
 		return newLoader(filePath, allowRemoteRefsFrom, client).LoadFromURI(u)
 	}
@@ -119,7 +125,8 @@ type LoadSwaggerWithOverlayOpts struct {
 	Path   string
 	Strict bool
 	// AllowRemoteRefsFrom lists the remote document URLs that external $refs
-	// may be fetched from, see RemoteRefAllowed. Empty refuses every remote
+	// may be fetched from, see RemoteRefAllowed. nil allows every URL, as
+	// earlier 2.8 releases did; an empty, non-nil list refuses every remote
 	// reference.
 	AllowRemoteRefsFrom []string
 }

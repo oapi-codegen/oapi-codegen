@@ -997,7 +997,7 @@ This is supported by `oapi-codegen`, through the ability to perform "Import Mapp
 <a name=remote-references></a>
 
 > [!IMPORTANT]
-> External references to local files are always followed. External references to URLs are **not** followed unless the URL is listed in `allow-remote-refs-from`, because an untrusted spec could otherwise make `oapi-codegen` issue requests to any host reachable from the machine running it. List each referenced document's URL exactly as it appears in the `$ref`, without the `#...` fragment, or `"*"` to allow any URL:
+> External references to local files are always followed. External references to URLs are only followed when the URL is listed in `allow-remote-refs-from`, because an untrusted spec could otherwise make `oapi-codegen` issue requests to any host reachable from the machine running it. On the 2.8 release line the option defaults to `"*"`, which allows any URL and keeps the behaviour of earlier releases; the next minor release defaults to refusing remote references. To restrict them now, list each referenced document's URL exactly as it appears in the `$ref`, without the `#...` fragment, or set an empty list to refuse them all:
 >
 >     allow-remote-refs-from:
 >       - https://raw.githubusercontent.com/example/specs/main/common.yaml
