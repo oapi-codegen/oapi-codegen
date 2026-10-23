@@ -207,6 +207,14 @@ actions:
 	require.NoError(t, err)
 	assert.Equal(t, "overlaid", swagger.Info.Description)
 	assert.Equal(t, []string{top, sibling, sibling}, transport.requested, "the overlaid document is loaded again and resolves the sibling again")
+
+	// On the 2.8 release line an unset list allows every remote reference,
+	// and that default must apply to the load after the overlay as well.
+	transport = &fakeTransport{docs: map[string]string{top: topDoc}}
+	swagger, err = loadSwaggerWithOverlay(top, LoadSwaggerWithOverlayOpts{Path: overlay, Strict: true}, &http.Client{Transport: transport})
+	require.NoError(t, err)
+	assert.Equal(t, "overlaid", swagger.Info.Description)
+	assert.Equal(t, []string{top, sibling, sibling}, transport.requested)
 }
 
 func TestLoadSwagger_LocalFileRefsStillFollowed(t *testing.T) {

@@ -22,12 +22,6 @@ func LoadSwagger(filePath string) (swagger *openapi3.T, err error) {
 }
 
 func loadSwagger(filePath string, allowRemoteRefsFrom []string, client *http.Client) (*openapi3.T, error) {
-	if allowRemoteRefsFrom == nil {
-		// On the 2.8 release line an unset list keeps the behaviour of earlier
-		// releases, which followed every remote reference. An explicit empty
-		// list refuses them all.
-		allowRemoteRefsFrom = []string{"*"}
-	}
 	if u := specURL(filePath); u != nil {
 		return newLoader(filePath, allowRemoteRefsFrom, client).LoadFromURI(u)
 	}
@@ -50,6 +44,13 @@ func specURL(filePath string) *url.URL {
 // through the same reader, so that one URL is allowed as well: the caller
 // named it.
 func newLoader(filePath string, allowRemoteRefsFrom []string, client *http.Client) *openapi3.Loader {
+	if allowRemoteRefsFrom == nil {
+		// On the 2.8 release line an unset list keeps the behaviour of earlier
+		// releases, which followed every remote reference. An explicit empty
+		// list refuses them all. This lives here, not in loadSwagger, so that
+		// the loader built after an overlay is applied gets the same default.
+		allowRemoteRefsFrom = []string{"*"}
+	}
 	if u := specURL(filePath); u != nil {
 		// Listed like any other entry: the document URL without a fragment,
 		// which is what the reader compares against.
