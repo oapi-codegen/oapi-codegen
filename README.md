@@ -1494,6 +1494,17 @@ Any other server (which conforms to `net/http`)
 > [!NOTE]
 > It is [not currently possible](https://github.com/oapi-codegen/oapi-codegen/issues/1038) to validate the HTTP response with a middleware.
 
+> [!TIP]
+> A validation middleware decodes the JSON request body to validate it, and the generated handler then decodes it again. Because `encoding/json` matches member names case-insensitively, a body such as `{"role":"user","ROLE":"admin"}` validates as `role: user` but is bound as `Role: "admin"`, bypassing the schema's constraints.
+>
+> [Strict](#strict-server) net/http, Chi and gorilla/mux servers avoid the second decode when the middleware keeps the value it validated. `nethttp-middleware` v1.3.1 and later do this by default (opt out with `Options.DiscardValidatedValue`). With an older version, or with your own `openapi3filter` setup, set kin-openapi's `KeepValidatedValue` option:
+>
+>     r.Use(middleware.OapiRequestValidatorWithOptions(spec, &middleware.Options{
+>         Options: openapi3filter.Options{KeepValidatedValue: true},
+>     }))
+>
+> The generated handler then binds the validated value (via `runtime.BindJSONBody`, runtime v1.8.0 or later) with exact member-name matching, and only falls back to decoding the body when no validated value is present. This requires kin-openapi v0.151.0 or later. See [#2605](https://github.com/oapi-codegen/oapi-codegen/issues/2605).
+
 ## Implementing security
 
 If you're using a specification with [Security Schemes](https://spec.openapis.org/oas/v3.0.3#security-scheme-object) and [Security Requirements](https://spec.openapis.org/oas/v3.0.3#security-requirement-object), you'll want to authenticate and authorize requests.

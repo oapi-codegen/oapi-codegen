@@ -14,6 +14,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/oapi-codegen/runtime"
 )
 
 // Pet defines model for Pet.
@@ -717,7 +719,7 @@ func (sh *strictHandler) AddPet(w http.ResponseWriter, r *http.Request) {
 	var request AddPetRequestObject
 
 	var body AddPetV1RequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
