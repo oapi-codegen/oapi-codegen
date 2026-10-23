@@ -203,6 +203,7 @@ func (g GenerateOptions) RouterImports() []AdditionalImport {
 		imports = append(imports, AdditionalImport{Package: "github.com/go-chi/chi/v5"})
 	case g.GinServer:
 		imports = append(imports, AdditionalImport{Package: "github.com/gin-gonic/gin"})
+		imports = append(imports, AdditionalImport{Package: "github.com/gin-gonic/gin/binding"})
 	case g.GorillaServer:
 		imports = append(imports, AdditionalImport{Package: "github.com/gorilla/mux"})
 	case g.FiberServer:

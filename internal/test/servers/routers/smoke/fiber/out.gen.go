@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/oapi-codegen/runtime"
 )
 
 // PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody defines parameters for PostPostMultibody.
@@ -247,6 +248,12 @@ type strictHandler struct {
 	middlewares []StrictMiddlewareFunc
 }
 
+// validatedBodyLocalsKey is the c.Locals key under which fiber-middleware and
+// fiber-v3-middleware store the decoded request body value that passed
+// validation. It is defined here as well so generated code does not import the
+// middleware; keep it in sync with fibermiddleware.ValidatedBodyLocalsKey.
+const validatedBodyLocalsKey = "x-oapi-codegen-validated-body"
+
 // GetGetMultibody operation middleware
 func (sh *strictHandler) GetGetMultibody(ctx *fiber.Ctx) error {
 	var request GetGetMultibodyRequestObject
@@ -304,7 +311,15 @@ func (sh *strictHandler) PostPostMultibody(ctx *fiber.Ctx) error {
 	if strings.HasPrefix(string(ctx.Request().Header.ContentType()), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"") {
 
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
-		if err := ctx.BodyParser(&body); err != nil {
+		var err error
+		// The validation middleware stores the value a kin-openapi validator
+		// validated in the Fiber context. Bind that value, matching member
+		// names exactly, so the handler receives what was validated instead
+		// of a second, case-insensitive decode.
+		if v := ctx.Locals(validatedBodyLocalsKey); v == nil || runtime.BindJSONValue(v, &body) != nil {
+			err = ctx.BodyParser(&body)
+		}
+		if err != nil {
 			if !errors.Is(err, io.EOF) {
 				return fiber.NewError(fiber.StatusBadRequest, err.Error())
 			}
@@ -315,7 +330,15 @@ func (sh *strictHandler) PostPostMultibody(ctx *fiber.Ctx) error {
 	if strings.HasPrefix(string(ctx.Request().Header.ContentType()), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"") {
 
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody
-		if err := ctx.BodyParser(&body); err != nil {
+		var err error
+		// The validation middleware stores the value a kin-openapi validator
+		// validated in the Fiber context. Bind that value, matching member
+		// names exactly, so the handler receives what was validated instead
+		// of a second, case-insensitive decode.
+		if v := ctx.Locals(validatedBodyLocalsKey); v == nil || runtime.BindJSONValue(v, &body) != nil {
+			err = ctx.BodyParser(&body)
+		}
+		if err != nil {
 			if !errors.Is(err, io.EOF) {
 				return fiber.NewError(fiber.StatusBadRequest, err.Error())
 			}
@@ -350,7 +373,15 @@ func (sh *strictHandler) PostPostObject(ctx *fiber.Ctx) error {
 	var request PostPostObjectRequestObject
 
 	var body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
-	if err := ctx.BodyParser(&body); err != nil {
+	var err error
+	// The validation middleware stores the value a kin-openapi validator
+	// validated in the Fiber context. Bind that value, matching member
+	// names exactly, so the handler receives what was validated instead
+	// of a second, case-insensitive decode.
+	if v := ctx.Locals(validatedBodyLocalsKey); v == nil || runtime.BindJSONValue(v, &body) != nil {
+		err = ctx.BodyParser(&body)
+	}
+	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}

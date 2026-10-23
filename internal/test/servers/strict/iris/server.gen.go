@@ -1028,7 +1028,18 @@ func (sh *strictHandler) JSONExample(ctx iris.Context) {
 	var request JSONExampleRequestObject
 
 	var body JSONExampleJSONRequestBody
-	if err := ctx.ReadJSON(&body); err != nil {
+	var err error
+	// A request validator built on kin-openapi's openapi3filter with
+	// KeepValidatedValue leaves the value it validated on the body. Bind
+	// that value, matching member names exactly, so the handler receives
+	// what was validated instead of a second, case-insensitive decode.
+	if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+		err = ctx.ReadJSON(&body)
+	} else {
+		// ReadJSON runs the application's validator after decoding; keep that.
+		err = ctx.Application().Validate(&body)
+	}
+	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			ctx.StopWithError(http.StatusBadRequest, err)
 			return
@@ -1138,7 +1149,18 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx iris.Context) {
 	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "application/json") {
 
 		var body MultipleRequestAndResponseTypesJSONRequestBody
-		if err := ctx.ReadJSON(&body); err != nil {
+		var err error
+		// A request validator built on kin-openapi's openapi3filter with
+		// KeepValidatedValue leaves the value it validated on the body. Bind
+		// that value, matching member names exactly, so the handler receives
+		// what was validated instead of a second, case-insensitive decode.
+		if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+			err = ctx.ReadJSON(&body)
+		} else {
+			// ReadJSON runs the application's validator after decoding; keep that.
+			err = ctx.Application().Validate(&body)
+		}
+		if err != nil {
 			if !errors.Is(err, io.EOF) {
 				ctx.StopWithError(http.StatusBadRequest, err)
 				return
@@ -1237,7 +1259,18 @@ func (sh *strictHandler) RequiredJSONBody(ctx iris.Context) {
 	var request RequiredJSONBodyRequestObject
 
 	var body RequiredJSONBodyJSONRequestBody
-	if err := ctx.ReadJSON(&body); err != nil {
+	var err error
+	// A request validator built on kin-openapi's openapi3filter with
+	// KeepValidatedValue leaves the value it validated on the body. Bind
+	// that value, matching member names exactly, so the handler receives
+	// what was validated instead of a second, case-insensitive decode.
+	if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+		err = ctx.ReadJSON(&body)
+	} else {
+		// ReadJSON runs the application's validator after decoding; keep that.
+		err = ctx.Application().Validate(&body)
+	}
+	if err != nil {
 		ctx.StopWithError(http.StatusBadRequest, err)
 		return
 	}
@@ -1335,7 +1368,18 @@ func (sh *strictHandler) ReusableResponses(ctx iris.Context) {
 	var request ReusableResponsesRequestObject
 
 	var body ReusableResponsesJSONRequestBody
-	if err := ctx.ReadJSON(&body); err != nil {
+	var err error
+	// A request validator built on kin-openapi's openapi3filter with
+	// KeepValidatedValue leaves the value it validated on the body. Bind
+	// that value, matching member names exactly, so the handler receives
+	// what was validated instead of a second, case-insensitive decode.
+	if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+		err = ctx.ReadJSON(&body)
+	} else {
+		// ReadJSON runs the application's validator after decoding; keep that.
+		err = ctx.Application().Validate(&body)
+	}
+	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			ctx.StopWithError(http.StatusBadRequest, err)
 			return
@@ -1374,7 +1418,18 @@ func (sh *strictHandler) SameNameParamAndBodyProperty(ctx iris.Context, name str
 	request.Name = name
 
 	var body SameNameParamAndBodyPropertyJSONRequestBody
-	if err := ctx.ReadJSON(&body); err != nil {
+	var err error
+	// A request validator built on kin-openapi's openapi3filter with
+	// KeepValidatedValue leaves the value it validated on the body. Bind
+	// that value, matching member names exactly, so the handler receives
+	// what was validated instead of a second, case-insensitive decode.
+	if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+		err = ctx.ReadJSON(&body)
+	} else {
+		// ReadJSON runs the application's validator after decoding; keep that.
+		err = ctx.Application().Validate(&body)
+	}
+	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			ctx.StopWithError(http.StatusBadRequest, err)
 			return
@@ -1548,7 +1603,18 @@ func (sh *strictHandler) HeadersExample(ctx iris.Context, params HeadersExampleP
 	request.Params = params
 
 	var body HeadersExampleJSONRequestBody
-	if err := ctx.ReadJSON(&body); err != nil {
+	var err error
+	// A request validator built on kin-openapi's openapi3filter with
+	// KeepValidatedValue leaves the value it validated on the body. Bind
+	// that value, matching member names exactly, so the handler receives
+	// what was validated instead of a second, case-insensitive decode.
+	if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+		err = ctx.ReadJSON(&body)
+	} else {
+		// ReadJSON runs the application's validator after decoding; keep that.
+		err = ctx.Application().Validate(&body)
+	}
+	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			ctx.StopWithError(http.StatusBadRequest, err)
 			return
@@ -1585,7 +1651,18 @@ func (sh *strictHandler) UnionExample(ctx iris.Context) {
 	var request UnionExampleRequestObject
 
 	var body UnionExampleJSONRequestBody
-	if err := ctx.ReadJSON(&body); err != nil {
+	var err error
+	// A request validator built on kin-openapi's openapi3filter with
+	// KeepValidatedValue leaves the value it validated on the body. Bind
+	// that value, matching member names exactly, so the handler receives
+	// what was validated instead of a second, case-insensitive decode.
+	if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+		err = ctx.ReadJSON(&body)
+	} else {
+		// ReadJSON runs the application's validator after decoding; keep that.
+		err = ctx.Application().Validate(&body)
+	}
+	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			ctx.StopWithError(http.StatusBadRequest, err)
 			return

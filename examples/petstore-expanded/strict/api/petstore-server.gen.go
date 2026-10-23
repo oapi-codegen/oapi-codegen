@@ -593,7 +593,7 @@ func (sh *strictHandler) AddPet(w http.ResponseWriter, r *http.Request) {
 	var request AddPetRequestObject
 
 	var body AddPetJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}

@@ -10,6 +10,12 @@ type strictHandler struct {
     middlewares []StrictMiddlewareFunc
 }
 
+// validatedBodyLocalsKey is the c.Locals key under which fiber-middleware and
+// fiber-v3-middleware store the decoded request body value that passed
+// validation. It is defined here as well so generated code does not import the
+// middleware; keep it in sync with fibermiddleware.ValidatedBodyLocalsKey.
+const validatedBodyLocalsKey = "x-oapi-codegen-validated-body"
+
 {{range .}}
     {{$opid := .OperationId}}
     {{if not .IsAlias}}
@@ -35,7 +41,15 @@ type strictHandler struct {
             {{if $multipleBodies}}if strings.HasPrefix(string(ctx.Request().Header.ContentType()), {{.ContentType | toGoString}}) { {{end}}
                 {{if .IsJSON }}
                     var body {{$opid}}{{.NameTag}}RequestBody
-                    if err := ctx.BodyParser(&body); err != nil {
+                    var err error
+                    // The validation middleware stores the value a kin-openapi validator
+                    // validated in the Fiber context. Bind that value, matching member
+                    // names exactly, so the handler receives what was validated instead
+                    // of a second, case-insensitive decode.
+                    if v := ctx.Locals(validatedBodyLocalsKey); v == nil || runtime.BindJSONValue(v, &body) != nil {
+                        err = ctx.BodyParser(&body)
+                    }
+                    if err != nil {
                         {{if not .Required -}}
                         if !errors.Is(err, io.EOF) {
                             return fiber.NewError(fiber.StatusBadRequest, err.Error())

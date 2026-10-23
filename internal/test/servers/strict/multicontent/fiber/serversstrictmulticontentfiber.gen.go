@@ -411,6 +411,12 @@ type strictHandler struct {
 	middlewares []StrictMiddlewareFunc
 }
 
+// validatedBodyLocalsKey is the c.Locals key under which fiber-middleware and
+// fiber-v3-middleware store the decoded request body value that passed
+// validation. It is defined here as well so generated code does not import the
+// middleware; keep it in sync with fibermiddleware.ValidatedBodyLocalsKey.
+const validatedBodyLocalsKey = "x-oapi-codegen-validated-body"
+
 // Test operation middleware
 func (sh *strictHandler) Test(ctx *fiber.Ctx) error {
 	var request TestRequestObject

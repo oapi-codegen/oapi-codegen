@@ -1111,12 +1111,19 @@ func (sh *strictHandler) JSONExample(ctx *echo.Context) error {
 	var body JSONExampleJSONRequestBody
 	var err error
 	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
-		// Bind only the request body, so that path and query parameters
-		// are not also bound into the body struct.
-		err = echo.BindBody(ctx, &body)
+		// A request validator built on kin-openapi's openapi3filter with
+		// KeepValidatedValue leaves the value it validated on the body. Bind
+		// that value, matching member names exactly, so the handler receives
+		// what was validated instead of a second, case-insensitive decode.
+		// Otherwise bind only the request body, so that path and query
+		// parameters are not also bound into the body struct.
+		if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+			err = echo.BindBody(ctx, &body)
+		}
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
-		// entirely, since echo.Binder does not expose body-only binding.
+		// entirely, since echo.Binder does not expose body-only binding and
+		// the binder may do more than decode (for example call ctx.Validate).
 		err = ctx.Bind(&body)
 	}
 	if err != nil {
@@ -1214,12 +1221,19 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *echo.Context) erro
 		var body MultipleRequestAndResponseTypesJSONRequestBody
 		var err error
 		if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
-			// Bind only the request body, so that path and query parameters
-			// are not also bound into the body struct.
-			err = echo.BindBody(ctx, &body)
+			// A request validator built on kin-openapi's openapi3filter with
+			// KeepValidatedValue leaves the value it validated on the body. Bind
+			// that value, matching member names exactly, so the handler receives
+			// what was validated instead of a second, case-insensitive decode.
+			// Otherwise bind only the request body, so that path and query
+			// parameters are not also bound into the body struct.
+			if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+				err = echo.BindBody(ctx, &body)
+			}
 		} else {
 			// A custom binder is installed on the Echo instance; defer to it
-			// entirely, since echo.Binder does not expose body-only binding.
+			// entirely, since echo.Binder does not expose body-only binding and
+			// the binder may do more than decode (for example call ctx.Validate).
 			err = ctx.Bind(&body)
 		}
 		if err != nil {
@@ -1309,12 +1323,19 @@ func (sh *strictHandler) RequiredJSONBody(ctx *echo.Context) error {
 	var body RequiredJSONBodyJSONRequestBody
 	var err error
 	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
-		// Bind only the request body, so that path and query parameters
-		// are not also bound into the body struct.
-		err = echo.BindBody(ctx, &body)
+		// A request validator built on kin-openapi's openapi3filter with
+		// KeepValidatedValue leaves the value it validated on the body. Bind
+		// that value, matching member names exactly, so the handler receives
+		// what was validated instead of a second, case-insensitive decode.
+		// Otherwise bind only the request body, so that path and query
+		// parameters are not also bound into the body struct.
+		if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+			err = echo.BindBody(ctx, &body)
+		}
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
-		// entirely, since echo.Binder does not expose body-only binding.
+		// entirely, since echo.Binder does not expose body-only binding and
+		// the binder may do more than decode (for example call ctx.Validate).
 		err = ctx.Bind(&body)
 	}
 	if err != nil {
@@ -1403,12 +1424,19 @@ func (sh *strictHandler) ReusableResponses(ctx *echo.Context) error {
 	var body ReusableResponsesJSONRequestBody
 	var err error
 	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
-		// Bind only the request body, so that path and query parameters
-		// are not also bound into the body struct.
-		err = echo.BindBody(ctx, &body)
+		// A request validator built on kin-openapi's openapi3filter with
+		// KeepValidatedValue leaves the value it validated on the body. Bind
+		// that value, matching member names exactly, so the handler receives
+		// what was validated instead of a second, case-insensitive decode.
+		// Otherwise bind only the request body, so that path and query
+		// parameters are not also bound into the body struct.
+		if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+			err = echo.BindBody(ctx, &body)
+		}
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
-		// entirely, since echo.Binder does not expose body-only binding.
+		// entirely, since echo.Binder does not expose body-only binding and
+		// the binder may do more than decode (for example call ctx.Validate).
 		err = ctx.Bind(&body)
 	}
 	if err != nil {
@@ -1447,12 +1475,19 @@ func (sh *strictHandler) SameNameParamAndBodyProperty(ctx *echo.Context, name st
 	var body SameNameParamAndBodyPropertyJSONRequestBody
 	var err error
 	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
-		// Bind only the request body, so that path and query parameters
-		// are not also bound into the body struct.
-		err = echo.BindBody(ctx, &body)
+		// A request validator built on kin-openapi's openapi3filter with
+		// KeepValidatedValue leaves the value it validated on the body. Bind
+		// that value, matching member names exactly, so the handler receives
+		// what was validated instead of a second, case-insensitive decode.
+		// Otherwise bind only the request body, so that path and query
+		// parameters are not also bound into the body struct.
+		if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+			err = echo.BindBody(ctx, &body)
+		}
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
-		// entirely, since echo.Binder does not expose body-only binding.
+		// entirely, since echo.Binder does not expose body-only binding and
+		// the binder may do more than decode (for example call ctx.Validate).
 		err = ctx.Bind(&body)
 	}
 	if err != nil {
@@ -1606,12 +1641,19 @@ func (sh *strictHandler) HeadersExample(ctx *echo.Context, params HeadersExample
 	var body HeadersExampleJSONRequestBody
 	var err error
 	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
-		// Bind only the request body, so that path and query parameters
-		// are not also bound into the body struct.
-		err = echo.BindBody(ctx, &body)
+		// A request validator built on kin-openapi's openapi3filter with
+		// KeepValidatedValue leaves the value it validated on the body. Bind
+		// that value, matching member names exactly, so the handler receives
+		// what was validated instead of a second, case-insensitive decode.
+		// Otherwise bind only the request body, so that path and query
+		// parameters are not also bound into the body struct.
+		if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+			err = echo.BindBody(ctx, &body)
+		}
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
-		// entirely, since echo.Binder does not expose body-only binding.
+		// entirely, since echo.Binder does not expose body-only binding and
+		// the binder may do more than decode (for example call ctx.Validate).
 		err = ctx.Bind(&body)
 	}
 	if err != nil {
@@ -1648,12 +1690,19 @@ func (sh *strictHandler) UnionExample(ctx *echo.Context) error {
 	var body UnionExampleJSONRequestBody
 	var err error
 	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
-		// Bind only the request body, so that path and query parameters
-		// are not also bound into the body struct.
-		err = echo.BindBody(ctx, &body)
+		// A request validator built on kin-openapi's openapi3filter with
+		// KeepValidatedValue leaves the value it validated on the body. Bind
+		// that value, matching member names exactly, so the handler receives
+		// what was validated instead of a second, case-insensitive decode.
+		// Otherwise bind only the request body, so that path and query
+		// parameters are not also bound into the body struct.
+		if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+			err = echo.BindBody(ctx, &body)
+		}
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
-		// entirely, since echo.Binder does not expose body-only binding.
+		// entirely, since echo.Binder does not expose body-only binding and
+		// the binder may do more than decode (for example call ctx.Validate).
 		err = ctx.Bind(&body)
 	}
 	if err != nil {
