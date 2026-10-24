@@ -14,6 +14,8 @@
 package codegen
 
 import (
+	"fmt"
+	"net/url"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -887,6 +889,174 @@ func TestTypeDefinitionsEquivalent(t *testing.T) {
 		OAPISchema: &openapi3.Schema{},
 	}}
 	assert.True(t, TypeDefinitionsEquivalent(def1, def2))
+}
+
+// TestTypeDefinitionsEquivalentIgnoresOrigin loads each spec with
+// IncludeOrigin, so the two compared schemas sit on different lines, and
+// compares the `product` properties of Client and CreateClientRequest.
+// See https://github.com/oapi-codegen/oapi-codegen/issues/2599
+func TestTypeDefinitionsEquivalentIgnoresOrigin(t *testing.T) {
+	tests := []struct {
+		name string
+		spec string
+		// files are served to the loader for external $refs, keyed by path.
+		files map[string]string
+		want  bool
+	}{
+		{
+			name: "inline enum",
+			spec: `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths: {}
+components:
+  schemas:
+    Client:
+      type: object
+      properties:
+        product: {type: string, enum: [MANAGE, API], x-go-type-name: Product}
+    CreateClientRequest:
+      type: object
+      properties:
+        product: {type: string, enum: [MANAGE, API], x-go-type-name: Product}
+`,
+			want: true,
+		},
+		{
+			name: "nested schema",
+			spec: `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths: {}
+components:
+  schemas:
+    Client:
+      type: object
+      properties:
+        product: {type: object, x-go-type-name: Product, properties: {city: {type: string}}}
+    CreateClientRequest:
+      type: object
+      properties:
+        product: {type: object, x-go-type-name: Product, properties: {city: {type: string}}}
+`,
+			want: true,
+		},
+		{
+			name: "recursive schema",
+			spec: `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths: {}
+components:
+  schemas:
+    Node: {type: object, properties: {child: {$ref: '#/components/schemas/Node'}}}
+    Client:
+      type: object
+      properties:
+        product: {type: object, x-go-type-name: Product, properties: {node: {$ref: '#/components/schemas/Node'}}}
+    CreateClientRequest:
+      type: object
+      properties:
+        product: {type: object, x-go-type-name: Product, properties: {node: {$ref: '#/components/schemas/Node'}}}
+`,
+			want: true,
+		},
+		{
+			name: "same relative $ref resolving to different files",
+			spec: `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths: {}
+components:
+  schemas:
+    Client: {$ref: './a/client.yaml#/Client'}
+    CreateClientRequest: {$ref: './b/request.yaml#/CreateClientRequest'}
+`,
+			files: map[string]string{
+				"a/client.yaml": `
+Client:
+  type: object
+  properties:
+    product: {type: object, x-go-type-name: Product, properties: {detail: {$ref: './common.yaml#/Detail'}}}
+`,
+				"a/common.yaml": `Detail: {type: string}`,
+				"b/request.yaml": `
+CreateClientRequest:
+  type: object
+  properties:
+    product: {type: object, x-go-type-name: Product, properties: {detail: {$ref: './common.yaml#/Detail'}}}
+`,
+				"b/common.yaml": `Detail: {type: integer}`,
+			},
+			want: false,
+		},
+		{
+			name: "3.1 $ref with a sibling keyword",
+			spec: `
+openapi: 3.1.0
+info: {title: t, version: "1"}
+paths: {}
+components:
+  schemas:
+    Base: {type: object, properties: {id: {type: string}}}
+    Client:
+      type: object
+      properties:
+        product: {type: object, x-go-type-name: Product, properties: {base: {$ref: '#/components/schemas/Base', type: [object, "null"]}}}
+    CreateClientRequest:
+      type: object
+      properties:
+        product: {type: object, x-go-type-name: Product, properties: {base: {$ref: '#/components/schemas/Base'}}}
+`,
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			loader := openapi3.NewLoader()
+			loader.IncludeOrigin = true
+			loader.ReadFromURIFunc = func(_ *openapi3.Loader, location *url.URL) ([]byte, error) {
+				data, ok := tt.files[location.Path]
+				if !ok {
+					return nil, fmt.Errorf("unexpected read of %q", location.Path)
+				}
+				return []byte(data), nil
+			}
+			swagger, err := loader.LoadFromDataWithPath([]byte(tt.spec), &url.URL{Path: "spec.yaml"})
+			require.NoError(t, err)
+
+			product := func(component string) TypeDefinition {
+				return TypeDefinition{TypeName: "Product", Schema: Schema{
+					OAPISchema: swagger.Components.Schemas[component].Value.Properties["product"].Value,
+				}}
+			}
+			assert.Equal(t, tt.want, TypeDefinitionsEquivalent(product("Client"), product("CreateClientRequest")))
+		})
+	}
+}
+
+// TestTypeDefinitionsEquivalentCycles compares two separately allocated
+// self-referencing schemas. A loaded spec shares one *Schema per $ref target,
+// so this builds the cycles by hand to exercise the cycle detection.
+func TestTypeDefinitionsEquivalentCycles(t *testing.T) {
+	node := func(line int, childType string) *openapi3.Schema {
+		s := &openapi3.Schema{
+			Type:   &openapi3.Types{"object"},
+			Origin: &openapi3.Origin{Key: &openapi3.Location{Line: line}},
+		}
+		s.Properties = openapi3.Schemas{
+			"self":  &openapi3.SchemaRef{Value: s},
+			"other": &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{childType}}},
+		}
+		return s
+	}
+	def := func(s *openapi3.Schema) TypeDefinition {
+		return TypeDefinition{TypeName: "Node", Schema: Schema{OAPISchema: s}}
+	}
+
+	assert.True(t, TypeDefinitionsEquivalent(def(node(1, "string")), def(node(2, "string"))))
+	assert.False(t, TypeDefinitionsEquivalent(def(node(1, "string")), def(node(2, "integer"))))
 }
 
 func TestRefPathToObjName(t *testing.T) {
