@@ -3,7 +3,7 @@ package server
 import (
 	"fmt"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	middleware "github.com/oapi-codegen/echo-middleware"
 	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/echo/api"
 )
