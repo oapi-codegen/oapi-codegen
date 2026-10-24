@@ -61,6 +61,8 @@ func collapseNullableUnion(ctx genContext, outSchema *Schema, sole *openapi3.Sch
 	outSchema.AdditionalPropertiesType = elementSchema.AdditionalPropertiesType
 	outSchema.ArrayType = elementSchema.ArrayType
 	outSchema.SkipOptionalPointer = elementSchema.SkipOptionalPointer
+	outSchema.UnionElements = elementSchema.UnionElements
+	outSchema.Discriminator = elementSchema.Discriminator
 	outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
 	return nil
 }
