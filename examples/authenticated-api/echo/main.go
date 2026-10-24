@@ -5,7 +5,7 @@ import (
 	"log"
 	"net"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/oapi-codegen/oapi-codegen/v2/examples/authenticated-api/echo/api"
 	"github.com/oapi-codegen/oapi-codegen/v2/examples/authenticated-api/echo/server"
 )

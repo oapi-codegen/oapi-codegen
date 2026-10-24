@@ -4,7 +4,7 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 
 	"github.com/oapi-codegen/oapi-codegen/v2/examples/petstore-expanded/echo/api"
 )
