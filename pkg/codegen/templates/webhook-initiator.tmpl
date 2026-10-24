@@ -147,7 +147,7 @@ func New{{$opid}}WebhookRequest{{.Suffix}}(targetURL string{{if $hasParams}}, pa
         {{end -}}
         }
     {{end -}}
-    return New{{$opid}}WebhookRequestWithBody(targetURL{{if $hasParams}}, params{{end}}, "{{.ContentType}}", bodyReader)
+    return New{{$opid}}WebhookRequestWithBody(targetURL{{if $hasParams}}, params{{end}}, {{.ContentType | toGoString}}, bodyReader)
 }
 {{end -}}
 {{end}}

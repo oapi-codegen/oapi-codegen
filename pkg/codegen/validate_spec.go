@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"go/token"
+	"regexp"
+	"strings"
 	"unicode"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -97,6 +99,20 @@ func (v *specValidator) checkGoType(value, what string) {
 	}
 }
 
+// responseKeyRE matches the response keys OpenAPI allows: a status code, a
+// range such as 2XX, or default.
+var responseKeyRE = regexp.MustCompile(`^(default|[1-5]XX|[1-9][0-9][0-9])$`)
+
+// checkResponseKey validates a key of an operation's responses map. The key is
+// copied into the generated code as part of type names and, for the client, as
+// the right-hand side of a status comparison (`rsp.StatusCode == 200`), so it
+// has to be one of the forms OpenAPI defines and nothing else.
+func (v *specValidator) checkResponseKey(key, what string) {
+	if !responseKeyRE.MatchString(key) {
+		v.addf("%s must be a three-digit status code, a range such as 2XX, or default: %q", what, key)
+	}
+}
+
 // checkTagKey validates the key of an `x-oapi-codegen-extra-tags` entry. Struct
 // tag keys are space-separated tokens terminated by ':', so they may not contain
 // spaces, colons, quotes, backticks or control characters, and may not be empty.
@@ -111,6 +127,26 @@ func (v *specValidator) checkTagKey(key, what string) {
 			return
 		}
 	}
+}
+
+// checkGoImportName validates the alias field of an `x-go-type-import` entry.
+// A Go import alias is either absent (empty), the blank identifier `_`, the
+// dot `.` (dot-import), or any valid Go identifier. It is emitted unquoted
+// (%s) into the import block, so a newline or other control character would
+// close the block and allow arbitrary code injection.
+func (v *specValidator) checkGoImportName(value, what string) {
+	if value == "" || value == "." {
+		return
+	}
+	v.checkIdentifier(value, what)
+}
+
+// checkGoImportPath validates the path field of an `x-go-type-import` entry.
+// The path is emitted with %q (strconv.Quote), so control characters and
+// quotes are escaped before they reach the output file. We still reject
+// control characters here to catch obviously malformed inputs early.
+func (v *specValidator) checkGoImportPath(value, what string) {
+	v.checkNoControl(value, what)
 }
 
 // checkSecurity validates the scopes named in security requirements. The
@@ -183,6 +219,20 @@ func (v *specValidator) checkExtensions(ext map[string]any, where string) {
 			}
 		}
 	}
+	if raw, ok := ext[extPropGoImport]; ok {
+		if importMap, ok := raw.(map[string]any); ok {
+			for k, val := range importMap {
+				if s, ok := val.(string); ok {
+					switch {
+					case strings.EqualFold(k, "name"):
+						v.checkGoImportName(s, "x-go-type-import name in "+where)
+					case strings.EqualFold(k, "path"):
+						v.checkGoImportPath(s, "x-go-type-import path in "+where)
+					}
+				}
+			}
+		}
+	}
 }
 
 func (v *specValidator) walkDocument(spec *openapi3.T) {
@@ -205,24 +255,37 @@ func (v *specValidator) walkDocument(spec *openapi3.T) {
 	}
 }
 
+// walkComponents validates every component. Component names become Go
+// identifiers only after sanitization, but they are also copied verbatim into
+// single-line doc comments ("X defines model for <name>."), so a name may not
+// contain a control character; quotes are fine there.
 func (v *specValidator) walkComponents(c *openapi3.Components) {
 	for _, name := range SortedMapKeys(c.Schemas) {
+		v.checkNoControl(name, "schema name")
 		v.walkSchemaRef(c.Schemas[name], fmt.Sprintf("schema %q", name))
 	}
 	for _, name := range SortedMapKeys(c.Parameters) {
+		v.checkNoControl(name, "component parameter name")
 		v.walkParameterRef(c.Parameters[name], fmt.Sprintf("component parameter %q", name))
 	}
 	for _, name := range SortedMapKeys(c.RequestBodies) {
+		v.checkNoControl(name, "component request body name")
 		v.walkRequestBodyRef(c.RequestBodies[name], fmt.Sprintf("component request body %q", name))
 	}
 	for _, name := range SortedMapKeys(c.Responses) {
+		v.checkNoControl(name, "component response name")
 		v.walkResponseRef(c.Responses[name], fmt.Sprintf("component response %q", name))
 	}
 	for _, name := range SortedMapKeys(c.Headers) {
+		v.checkNoControl(name, "component header name")
 		v.walkHeaderRef(c.Headers[name], fmt.Sprintf("component header %q", name))
 	}
 	for _, name := range SortedMapKeys(c.Callbacks) {
+		v.checkNoControl(name, "component callback name")
 		v.walkCallbackRef(c.Callbacks[name], fmt.Sprintf("component callback %q", name))
+	}
+	for _, name := range SortedSecuritySchemeKeys(c.SecuritySchemes) {
+		v.checkNoControl(name, "security scheme name")
 	}
 }
 
@@ -243,6 +306,10 @@ func (v *specValidator) walkOperation(op *openapi3.Operation, where string) {
 		return
 	}
 	v.checkExtensions(op.Extensions, where)
+	// The operationId becomes a Go identifier only after normalization, but
+	// the Echo templates also copy it verbatim (quoted) as the per-operation
+	// middleware key, so it is checked like other quoted text.
+	v.checkNoControl(op.OperationID, "operationId in "+where)
 	if op.Security != nil {
 		v.checkSecurity(*op.Security, where)
 	}
@@ -253,6 +320,7 @@ func (v *specValidator) walkOperation(op *openapi3.Operation, where string) {
 	if op.Responses != nil {
 		responses := op.Responses.Map()
 		for _, name := range SortedMapKeys(responses) {
+			v.checkResponseKey(name, "response key in "+where)
 			v.walkResponseRef(responses[name], fmt.Sprintf("response %q in %s", name, where))
 		}
 	}
@@ -318,8 +386,56 @@ func (v *specValidator) walkHeaderRef(ref *openapi3.HeaderRef, where string) {
 		return
 	}
 	v.checkExtensions(ref.Value.Extensions, where)
+	v.checkText(ref.Value.Style, "style of header in "+where)
 	v.walkContent(ref.Value.Content, where)
 	v.walkSchemaRef(ref.Value.Schema, where)
+}
+
+// ValidateServerURLs checks the parts of the document's servers that the
+// `server-urls` generator copies into Go source as identifiers: the x-go-name
+// extension, the names of the variables the URL uses (function parameters and
+// type names), the `{placeholder}` names a URL uses without declaring (also
+// parameters), and the enum values of the used variables, which are appended
+// to the variable's type name to form constant names. None of them is
+// sanitized on the way, so names have to be Go identifiers as written and enum
+// values have to be made of identifier characters. A declared variable whose
+// placeholder does not appear in the URL produces no code and is not checked.
+// The function is separate from ValidateSpec because it only applies when
+// server URLs are generated: specs with, say, a hyphenated variable name are
+// fine otherwise.
+func ValidateServerURLs(spec *openapi3.T) error {
+	if spec == nil {
+		return nil
+	}
+	v := &specValidator{}
+	for i, server := range spec.Servers {
+		if server == nil {
+			continue
+		}
+		where := fmt.Sprintf("server %d (%s)", i, server.URL)
+		v.checkExtensions(server.Extensions, where)
+		used := ServerObjectDefinition{OAPISchema: server}.UsedVariables()
+		for _, name := range SortedMapKeys(used) {
+			v.checkIdentifier(name, "server variable name in "+where)
+			variable := used[name]
+			if variable == nil {
+				continue
+			}
+			for _, value := range variable.Enum {
+				// The constant is <TypeName><Value>, so the value may start
+				// with a digit but must otherwise be identifier characters.
+				if value == "" || !token.IsIdentifier("_"+value) {
+					v.addf("enum value of server variable %q in %s must consist of letters, digits and underscores: %q", name, where, value)
+				}
+			}
+		}
+		for name := range urlPlaceholders(server.URL) {
+			if _, declared := server.Variables[name]; !declared {
+				v.checkIdentifier(name, "undeclared URL placeholder in "+where)
+			}
+		}
+	}
+	return errors.Join(v.errs...)
 }
 
 func (v *specValidator) walkCallbackRef(ref *openapi3.CallbackRef, where string) {

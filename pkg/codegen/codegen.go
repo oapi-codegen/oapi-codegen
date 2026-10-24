@@ -30,6 +30,7 @@ import (
 	"regexp"
 	"runtime/debug"
 	"slices"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -348,6 +349,9 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		// `const ( … )` block, and `Valid()` method. We do this here
 		// (rather than in collectComponentTypes) so the types are
 		// emitted even when `generate.models` is disabled.
+		if err := ValidateServerURLs(spec); err != nil {
+			return "", err
+		}
 		serverURLEnumTypes, err := BuildServerURLTypeDefinitions(spec)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go types for server URL variables: %w", err)
@@ -1533,12 +1537,35 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 		}
 	}
 
-	// Now see if enums conflict with any non-enum typenames
+	// A non-string enum is emitted without quotes, so each value is copied
+	// into the const block as Go source. Only a number or boolean literal is
+	// acceptable there; anything else would be an identifier or an expression
+	// the spec got to choose.
+	for _, e := range enums {
+		if e.ValueWrapper != "" {
+			continue
+		}
+		for _, value := range SortedMapKeys(e.Schema.EnumValues) {
+			if !isNumberOrBoolLiteral(e.Schema.EnumValues[value]) {
+				return "", fmt.Errorf("enum value %q of %s is not a number or boolean literal, which its Go type %s requires", e.Schema.EnumValues[value], e.TypeName, e.Schema.GoType)
+			}
+		}
+	}
 
 	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{
 		EnumDefinitions:  enums,
 		SkipEnumValidate: globalState.options.OutputOptions.SkipEnumValidate,
 	})
+}
+
+// isNumberOrBoolLiteral reports whether s is a Go number or boolean literal
+// that may be emitted unquoted as the value of a non-string enum constant.
+func isNumberOrBoolLiteral(s string) bool {
+	if s == "true" || s == "false" {
+		return true
+	}
+	_, err := strconv.ParseFloat(s, 64)
+	return err == nil
 }
 
 // enumsConflict reports whether two enums must be disambiguated by prefixing.

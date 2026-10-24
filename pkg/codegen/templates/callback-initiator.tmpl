@@ -148,7 +148,7 @@ func New{{$opid}}CallbackRequest{{.Suffix}}(targetURL string{{if $hasParams}}, p
         {{end -}}
         }
     {{end -}}
-    return New{{$opid}}CallbackRequestWithBody(targetURL{{if $hasParams}}, params{{end}}, "{{.ContentType}}", bodyReader)
+    return New{{$opid}}CallbackRequestWithBody(targetURL{{if $hasParams}}, params{{end}}, {{.ContentType | toGoString}}, bodyReader)
 }
 {{end -}}
 {{end}}

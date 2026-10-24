@@ -39,7 +39,7 @@ const validatedBodyLocalsKey = "x-oapi-codegen-validated-body"
 
         {{$multipleBodies := gt (len .Bodies) 1 -}}
         {{range .Bodies -}}
-            {{if $multipleBodies}}if strings.HasPrefix(string(ctx.Request().Header.ContentType()), "{{.ContentType}}") { {{end}}
+            {{if $multipleBodies}}if strings.HasPrefix(string(ctx.Request().Header.ContentType()), {{.ContentType | toGoString}}) { {{end}}
                 {{if .IsJSON }}
                     var body {{$opid}}{{.NameTag}}RequestBody
                     var err error
