@@ -5,16 +5,16 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 type stubServer struct{}
 
-func (stubServer) GetAlpha(ctx echo.Context) error      { return ctx.NoContent(http.StatusOK) }
-func (stubServer) GetBeta(ctx echo.Context) error       { return ctx.NoContent(http.StatusOK) }
-func (stubServer) GetGamma(ctx echo.Context) error      { return ctx.NoContent(http.StatusOK) }
+func (stubServer) GetAlpha(ctx echo.Context) error { return ctx.NoContent(http.StatusOK) }
+func (stubServer) GetBeta(ctx echo.Context) error  { return ctx.NoContent(http.StatusOK) }
+func (stubServer) GetGamma(ctx echo.Context) error { return ctx.NoContent(http.StatusOK) }
 
 // recordingMiddleware appends a tag to the slice it closes over each time it
 // runs. Lets the test assert which routes the middleware ran on.

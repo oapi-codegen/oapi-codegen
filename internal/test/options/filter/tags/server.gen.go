@@ -4,7 +4,7 @@
 package optionsfiltertags
 
 import (
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 )
 
 // ServerInterface represents all server handlers.

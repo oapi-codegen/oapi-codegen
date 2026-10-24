@@ -18,7 +18,7 @@ import (
 	fiberv3 "github.com/gofiber/fiber/v3"
 	fiberv3adaptor "github.com/gofiber/fiber/v3/middleware/adaptor"
 	"github.com/kataras/iris/v12"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	echov5 "github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/assert"
 

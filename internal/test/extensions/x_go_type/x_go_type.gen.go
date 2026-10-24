@@ -18,7 +18,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	googleuuid "github.com/google/uuid"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/oapi-codegen/runtime"
 	rate "golang.org/x/time/rate"
 )
