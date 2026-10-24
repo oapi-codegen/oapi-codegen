@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	fiberv2 "github.com/gofiber/fiber/v2"
 	fiberv3 "github.com/gofiber/fiber/v3"
-	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
