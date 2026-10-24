@@ -1,0 +1,65 @@
+# ==========================================================================
+# Category: options/default_response_error  (shared spec for the enabled/ + default/ sub-packages)
+# Tests:    the default-response-error output option.
+#
+# GET /things/{id} declares 200 and 404 responses only, so a response with any
+# other status code (e.g. 500) matches no case clause in the generated parser.
+# With default-response-error enabled the parser returns an error for it; with
+# the option left at its default it returns the response wrapper and no error.
+#
+# Both sub-packages generate client+models from THIS spec; only the
+# default-response-error flag differs. They live in separate Go packages because
+# each emits the same client infrastructure (Client, GetThingResponse, ...) and
+# would collide in one package.
+#
+# Note: the spec deliberately does NOT declare a "default" response. A spec-level
+# default response generates its own case clause, which is evaluated before the
+# generated `default:` case and therefore wins for matching content types.
+# ==========================================================================
+openapi: "3.0.0"
+info:
+  version: "1.0.0"
+  title: default_response_error
+  description: |
+    Example for the default-response-error output option: GET /things/{id}
+    declares only 200 and 404, so any other status code is unmatched.
+paths:
+  /things/{id}:
+    get:
+      summary: Get a thing by id
+      operationId: getThing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: a thing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Thing'
+        '404':
+          description: not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    Thing:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+    Error:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
