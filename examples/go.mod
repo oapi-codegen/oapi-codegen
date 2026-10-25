@@ -14,7 +14,7 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/kataras/iris/v12 v12.2.11
 	github.com/labstack/echo/v4 v4.15.3
-	github.com/labstack/echo/v5 v5.2.1
+	github.com/labstack/echo/v5 v5.4.1
 	github.com/lestrrat-go/jwx/v3 v3.1.0
 	github.com/oapi-codegen/echo-middleware v1.0.2
 	github.com/oapi-codegen/echo-v5-middleware v0.1.0
