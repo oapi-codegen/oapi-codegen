@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/speakeasy-api/openapi/json"
 	"github.com/speakeasy-api/openapi/overlay/loader"
 	"gopkg.in/yaml.v3"
 )
@@ -148,8 +149,7 @@ func loadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts, cl
 		return nil, fmt.Errorf("failed to marshal spec from %#v as YAML: %w", filePath, err)
 	}
 
-	var node yaml.Node
-	err = yaml.NewDecoder(buf).Decode(&node)
+	node, err := loader.LoadSpecificationFromReader(buf)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse spec from %#v: %w", filePath, err)
 	}
@@ -165,19 +165,19 @@ func loadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts, cl
 	}
 
 	if opts.Strict {
-		vs, err := overlay.ApplyToStrict(&node)
+		vs, err := overlay.ApplyToStrict(node)
 		if err != nil {
 			return nil, fmt.Errorf("failed to apply Overlay %#v to specification %#v: %v\nAdditionally, the following validation errors were found:\n- %s", opts.Path, filePath, err, strings.Join(vs, "\n- "))
 		}
 	} else {
-		err = overlay.ApplyTo(&node)
+		err = overlay.ApplyTo(node)
 		if err != nil {
 			return nil, fmt.Errorf("failed to apply Overlay %#v to specification %#v: %v", opts.Path, filePath, err)
 		}
 	}
 
-	b, err := yaml.Marshal(&node)
-	if err != nil {
+	var out bytes.Buffer
+	if err := json.YAMLToJSON(node, 2, &out); err != nil {
 		return nil, fmt.Errorf("failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
 	}
 
@@ -190,7 +190,7 @@ func loadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts, cl
 		location = &url.URL{Path: filepath.ToSlash(filePath)}
 	}
 
-	swagger, err = loader.LoadFromDataWithPath(b, location)
+	swagger, err = loader.LoadFromDataWithPath(out.Bytes(), location)
 	if err != nil {
 		return nil, fmt.Errorf("failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
 	}
