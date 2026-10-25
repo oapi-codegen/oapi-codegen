@@ -4,6 +4,9 @@
 package openapi31
 
 import (
+	"encoding/json"
+
+	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
@@ -167,6 +170,19 @@ type FileUploadFields struct {
 	RawFile openapi_types.File `json:"rawFile"`
 }
 
+// FlexibleId defines model for FlexibleId.
+type FlexibleId struct {
+	union json.RawMessage
+}
+
+// FlexibleId0 defines model for FlexibleId.0.
+type FlexibleId0 struct {
+	Id string `json:"id"`
+}
+
+// FlexibleId1 defines model for FlexibleId.1.
+type FlexibleId1 = any
+
 // Measurement defines model for Measurement.
 type Measurement struct {
 	NullableValue any `json:"nullableValue"`
@@ -199,6 +215,9 @@ type PetStatus string
 // Port defines model for Port.
 type Port int
 
+// ReadingList defines model for ReadingList.
+type ReadingList = []any
+
 // Severity How urgent a problem is.
 type Severity int
 
@@ -210,3 +229,65 @@ type UnionEnum = any
 
 // UnionValue defines model for UnionValue.
 type UnionValue = any
+
+// AsFlexibleId0 returns the union data inside the FlexibleId as a FlexibleId0
+func (t FlexibleId) AsFlexibleId0() (FlexibleId0, error) {
+	var body FlexibleId0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFlexibleId0 overwrites any union data inside the FlexibleId as the provided FlexibleId0
+func (t *FlexibleId) FromFlexibleId0(v FlexibleId0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeFlexibleId0 performs a merge with any union data inside the FlexibleId, using the provided FlexibleId0
+func (t *FlexibleId) MergeFlexibleId0(v FlexibleId0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsFlexibleId1 returns the union data inside the FlexibleId as a FlexibleId1
+func (t FlexibleId) AsFlexibleId1() (FlexibleId1, error) {
+	var body FlexibleId1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromFlexibleId1 overwrites any union data inside the FlexibleId as the provided FlexibleId1
+func (t *FlexibleId) FromFlexibleId1(v FlexibleId1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeFlexibleId1 performs a merge with any union data inside the FlexibleId, using the provided FlexibleId1
+func (t *FlexibleId) MergeFlexibleId1(v FlexibleId1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t FlexibleId) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *FlexibleId) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
