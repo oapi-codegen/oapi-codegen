@@ -25,7 +25,6 @@ r.{{.Method | lower | title }}(options.BaseURL+{{.Path | swaggerUriToChiUri | to
 {{/* --- server-interface.tmpl --- */}}
 {{define "interface.unimplemented"}}
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
-
 type Unimplemented struct {}
  {{range .}}{{if not .IsAlias}}{{.SummaryAsComment .OperationId }}
  // ({{.Method}} {{.Path}})

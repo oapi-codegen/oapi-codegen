@@ -1036,3 +1036,37 @@ components:
 	assert.Contains(t, code, `[]string{"a\\", ",os.Exit(1)//"}`)
 	assert.NotContains(t, code, `,os.Exit(1)//"}`+"\n")
 }
+
+func TestChiUnimplementedDocComment(t *testing.T) {
+	opts := Configuration{
+		PackageName: "testswagger",
+		Generate: GenerateOptions{
+			ChiServer: true,
+			Models:    true,
+		},
+	}
+
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(`
+openapi: 3.0.1
+info:
+  title: unimplemented
+  version: 1.0.0
+paths:
+  /ping:
+    get:
+      operationId: ping
+      responses:
+        "200":
+          description: ok
+`))
+	require.NoError(t, err)
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+
+	// The doc comment must be directly attached to the type, with no blank
+	// line in between, so that godoc and gopls render it.
+	assert.Contains(t, code,
+		"// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.\ntype Unimplemented struct{}")
+}
