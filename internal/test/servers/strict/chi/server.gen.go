@@ -80,7 +80,6 @@ type ServerInterface interface {
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
-
 type Unimplemented struct{}
 
 // (POST /json)
