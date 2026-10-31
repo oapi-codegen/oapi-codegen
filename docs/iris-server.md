@@ -126,3 +126,17 @@ func main() {
 
 > [!NOTE]
 > This doesn't include [validation of incoming requests](../README.md#requestresponse-validation-middleware).
+
+## OpenAPI 3.2 custom HTTP methods
+
+If your spec uses the OpenAPI 3.2 `query` operation (HTTP `QUERY`) or `additionalOperations`, the generated code registers those routes with `router.Handle`, which iris accepts without any setup. iris keeps a separate list of known methods for its `Any()`-style helpers and route debug output; if you want those to cover the custom methods too, extend it once at application startup:
+
+```go
+func main() {
+	iris.RegisterMethods("QUERY")
+
+	app := iris.New()
+	api.RegisterHandlers(app, server)
+	// ...
+}
+```

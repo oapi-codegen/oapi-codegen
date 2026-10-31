@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: echo5
+generate:
+  echo5-server: true
+  strict-server: true
+  models: true
+output: echo5/out.gen.go
