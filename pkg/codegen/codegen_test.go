@@ -973,3 +973,40 @@ components:
 	assert.Contains(t, code, `[]string{"a\\", ",os.Exit(1)//"}`)
 	assert.NotContains(t, code, `,os.Exit(1)//"}`+"\n")
 }
+
+// TestImplicitDiscriminatorMappingKeyIsValidated checks that the name a $ref
+// variant is mapped under when the discriminator has no mapping for it is
+// validated like an explicit mapping key. It is written into the generated
+// union's switch, and the schema name it comes from may otherwise contain a
+// quote.
+func TestImplicitDiscriminatorMappingKeyIsValidated(t *testing.T) {
+	spec := `openapi: "3.0.0"
+info:
+  title: t
+  version: "1.0"
+paths: {}
+components:
+  schemas:
+    Cat:
+      type: object
+      properties:
+        petType: {type: string}
+    'Dog"Name':
+      type: object
+      properties:
+        petType: {type: string}
+    Pet:
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog"Name'
+      discriminator:
+        propertyName: petType
+`
+	opts := Configuration{PackageName: "api", Generate: GenerateOptions{Models: true}, OutputOptions: OutputOptions{SkipPrune: true}}
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	require.NoError(t, err)
+	_, err = Generate(swagger, opts)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `implicit discriminator mapping key for #/components/schemas/Dog"Name`)
+	assert.Contains(t, err.Error(), "double quote")
+}
