@@ -3,7 +3,7 @@
 // This is a simple interface which specifies echo.Route addition functions which
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
-type EchoRouter interface {
+type {{names.Echo.Router}} interface {
 	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
 	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
 	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
@@ -15,8 +15,8 @@ type EchoRouter interface {
 	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
 }
 
-// RegisterHandlersOptions configures RegisterHandlersWithOptions.
-type RegisterHandlersOptions struct {
+// {{names.RegisterHandlersOptions}} configures {{names.RegisterHandlersWithOptions}}.
+type {{names.RegisterHandlersOptions}} struct {
     // BaseURL is prepended to every registered path so the API can be served
     // under a prefix.
     BaseURL string
@@ -28,22 +28,22 @@ type RegisterHandlersOptions struct {
     OperationMiddlewares map[string][]echo.MiddlewareFunc
 }
 
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
-    RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{})
+// {{names.RegisterHandlers}} adds each server route to the {{names.Echo.Router}}.
+func {{names.RegisterHandlers}}(router {{names.Echo.Router}}, si {{names.ServerInterface}}) {
+    {{names.RegisterHandlersWithOptions}}(router, si, {{names.RegisterHandlersOptions}}{})
 }
 
-// RegisterHandlersWithBaseURL registers handlers and prepends BaseURL to the
+// {{names.RegisterHandlersWithBaseURL}} registers handlers and prepends BaseURL to the
 // paths so the API can be served under a prefix.
-func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
-    RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{BaseURL: baseURL})
+func {{names.RegisterHandlersWithBaseURL}}(router {{names.Echo.Router}}, si {{names.ServerInterface}}, baseURL string) {
+    {{names.RegisterHandlersWithOptions}}(router, si, {{names.RegisterHandlersOptions}}{BaseURL: baseURL})
 }
 
-// RegisterHandlersWithOptions registers handlers using the supplied options,
+// {{names.RegisterHandlersWithOptions}} registers handlers using the supplied options,
 // including any per-operation middleware.
-func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options RegisterHandlersOptions) {
+func {{names.RegisterHandlersWithOptions}}(router {{names.Echo.Router}}, si {{names.ServerInterface}}, options {{names.RegisterHandlersOptions}}) {
 {{if .Operations}}
-    wrapper := ServerInterfaceWrapper{
+    wrapper := {{names.ServerInterfaceWrapper}}{
         Handler: si,
     }
 {{end}}

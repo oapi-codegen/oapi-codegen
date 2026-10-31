@@ -1,18 +1,18 @@
-// FiberServerOptions provides options for the Fiber server.
-type FiberServerOptions struct {
+// {{names.FiberServerOptions}} provides options for the Fiber server.
+type {{names.FiberServerOptions}} struct {
     BaseURL string
-    Middlewares []MiddlewareFunc
-    HandlerMiddlewares []HandlerMiddlewareFunc
+    Middlewares []{{names.MiddlewareFunc}}
+    HandlerMiddlewares []{{names.Fiber.HandlerMiddlewareFunc}}
 }
 
-// RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
-func RegisterHandlers(router fiber.Router, si ServerInterface) {
-  RegisterHandlersWithOptions(router, si, FiberServerOptions{})
+// {{names.RegisterHandlers}} creates http.Handler with routing matching OpenAPI spec.
+func {{names.RegisterHandlers}}(router fiber.Router, si {{names.ServerInterface}}) {
+  {{names.RegisterHandlersWithOptions}}(router, si, {{names.FiberServerOptions}}{})
 }
 
-// RegisterHandlersWithOptions creates http.Handler with additional options
-func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, options FiberServerOptions) {
-{{if .}}wrapper := ServerInterfaceWrapper{
+// {{names.RegisterHandlersWithOptions}} creates http.Handler with additional options
+func {{names.RegisterHandlersWithOptions}}(router fiber.Router, si {{names.ServerInterface}}, options {{names.FiberServerOptions}}) {
+{{if .}}wrapper := {{names.ServerInterfaceWrapper}}{
 Handler: si,
 HandlerMiddlewares: options.HandlerMiddlewares,
 }
