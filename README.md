@@ -1223,6 +1223,16 @@ This takes advantage of the [OpenAPI Overlay specification](https://github.com/O
 >
 > There is a [proposed modification to the specification](https://github.com/OAI/Overlay-Specification/pull/32) which would relax the need for JSON Path as the targeting mechanism.
 
+> [!NOTE]
+> The Overlay implementation changed in v2.9.0: action targets are now [RFC 9535](https://www.rfc-editor.org/rfc/rfc9535) JSONPath, where earlier versions read them in a different dialect. The main differences are:
+>
+> - a filter selects the children of the node it follows that match it, so drop one `.*` before it: `$.paths.*.*[?(@.x-internal)]` becomes `$.paths.*[?@['x-internal']]`
+> - names that contain `-` or `/`, or start with a digit, must be bracketed: `.x-internal` becomes `['x-internal']`
+> - `X =~ /re/` becomes `search(X, 're')`
+> - `X[*] == v` becomes `X[?@ == v]`
+>
+> The setting is all-or-nothing: by default every target in the overlay is read as RFC 9535, including targets that are valid in both dialects but mean something different in each. For instance `$.paths.*.*[?(!@.servers)]` used to select operations without `servers`, and now selects the children of operations without `servers`; oapi-codegen does not try to detect which dialect a target was written in. Check your targets, or keep the previous behaviour for the whole overlay by setting `compatibility.overlays-use-yaml-jsonpath: true`.
+
 For instance, let's say that we have the following OpenAPI specification, which provides insight into an internal endpoint that we should not be generating any code for (denoted by `x-internal`):
 
 ```yaml
@@ -1269,10 +1279,10 @@ actions:
           responses:
             '200':
               description: Perform a ping request
-- target: $.paths.*[?(@.x-internal)]
+- target: $.paths[?@['x-internal']]
   description: Remove internal endpoints (noted by x-internal)
   remove: true
-- target: $.paths.*.*[?(@.x-internal)]
+- target: $.paths.*[?@['x-internal']]
   description: Remove internal endpoints (noted by x-internal)
   remove: true
 ```

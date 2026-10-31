@@ -446,6 +446,19 @@ type CompatibilityOptions struct {
 	// old sorted registration order.
 	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/1887
 	SortHandlerRegistrations bool `yaml:"sort-handler-registrations,omitempty"`
+
+	// OverlaysUseYamlJsonpath reads the targets of `output-options.overlay`
+	// actions in the JSONPath dialect used by oapi-codegen before v2.9.0
+	// (yaml-jsonpath), by translating them to RFC 9535. The setting applies
+	// to the whole overlay: by default every target is read as RFC 9535
+	// JSONPath, including targets that are valid in both dialects but mean
+	// something else in each, such as `$.paths.*.*[?(!@.servers)]`; there
+	// is no per-target detection. The translation covers the differences
+	// found in practice, but is not an exact emulation; its known
+	// limitations are documented in the internal/overlay/legacyjsonpath
+	// package.
+	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/2502
+	OverlaysUseYamlJsonpath bool `yaml:"overlays-use-yaml-jsonpath,omitempty"`
 }
 
 // The values of CompatibilityOptions.SchemaMergingBehavior.
@@ -831,6 +844,9 @@ func (m *contentTypeNameTags) TagFor(contentType string) (string, error) {
 }
 
 type OutputOptionsOverlay struct {
+	// Path is the path to the Overlay file. Action targets are RFC 9535
+	// JSONPath expressions; set CompatibilityOptions.OverlaysUseYamlJsonpath
+	// to read all of them in the dialect of earlier versions instead.
 	Path string `yaml:"path"`
 
 	// Strict defines whether the Overlay should be applied in a strict way, highlighting any actions that will not take any effect. This can, however, lead to more work when testing new actions in an Overlay, so can be turned off with this setting.

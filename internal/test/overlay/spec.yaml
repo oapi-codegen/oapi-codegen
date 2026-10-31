@@ -1,0 +1,197 @@
+# The spec that the rfc9535 and legacy_jsonpath leaves apply their overlays
+# to. The two overlays express the same actions, one in each JSONPath
+# dialect, so both leaves must generate from the same overlaid document.
+#
+# Based on examples/overlay/api/api.yaml. Operations tagged `internal` carry
+# no other tags, so that the previous dialect's "every tag" comparison and
+# RFC 9535's "any tag" nested filter select the same operations (see #2502).
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Overlay test
+tags:
+  - name: public
+paths:
+  /ping:
+    get:
+      operationId: ping
+      tags:
+        - public
+      responses:
+        '200':
+          description: pet response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Pong'
+    delete:
+      operationId: deletePing
+      x-internal: true
+      responses:
+        '202':
+          description: deleted
+  /status:
+    get:
+      operationId: status
+      servers:
+        - url: https://status.example.com
+      responses:
+        '200':
+          description: status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  healthy:
+                    type: boolean
+                  build:
+                    type: string
+                    x-internal: true
+                required:
+                  - healthy
+  /admin/autoscaling:
+    get:
+      operationId: getAutoscaling
+      # an operation-level `tags`
+      tags:
+        - internal
+      responses:
+        '200':
+          description: autoscaling
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  instances:
+                    type: number
+                required:
+                  - instances
+  /debug/vars:
+    get:
+      operationId: debugVars
+      responses:
+        '200':
+          description: debug variables
+  /healthz:
+    x-internal: true
+    get:
+      operationId: healthz
+      responses:
+        '200':
+          description: healthy
+  /users:
+    post:
+      operationId: createUser
+      tags:
+        - public
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                not_documented:
+                  type: string
+                  format: uuid
+                  x-internal: true
+              required:
+                - username
+      responses:
+        '201':
+          description: created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+  /widgets:
+    get:
+      operationId: listWidgets
+      tags:
+        - public
+      responses:
+        '200':
+          description: widgets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Widget'
+components:
+  schemas:
+    Pong:
+      type: object
+      required:
+        - ping
+      properties:
+        ping:
+          type: string
+          example: pong
+        seed:
+          type: number
+          description: The seed for the internal randomness. SHOULD NOT be explained to users
+        # undocumented and not useful
+        verbose:
+          type: boolean
+          x-internal: true
+        ratio:
+          type: number
+          minimum: 0.10
+          maximum: 1.50
+    User:
+      type: object
+      required:
+        - username
+      properties:
+        username:
+          type: string
+        password_hash:
+          type: string
+          x-internal: true
+    InternalAudit:
+      x-internal: true
+      type: object
+      properties:
+        actor:
+          type: string
+    # The overlays add oapi-codegen's extensions to Widget and the schemas it
+    # uses, some through filters.
+    Widget:
+      type: object
+      required:
+        - id
+        - label
+      properties:
+        id:
+          $ref: '#/components/schemas/WidgetIdentifier'
+        serial:
+          type: string
+          format: uuid
+        label:
+          type: string
+        created:
+          type: string
+          format: date-time
+        notes:
+          type: string
+        secret:
+          type: string
+        zeta:
+          type: string
+        alpha:
+          type: string
+        gizmo:
+          $ref: '#/components/schemas/Gizmo'
+    WidgetIdentifier:
+      type: string
+      format: widget-id
+    Gizmo:
+      type: object
+      description: rename me
+      properties:
+        size:
+          type: integer

@@ -312,6 +312,7 @@ func main() {
 		Path: opts.OutputOptions.Overlay.Path,
 		// default to strict, but can be overridden
 		Strict:              true,
+		LegacyJSONPath:      opts.Compatibility.OverlaysUseYamlJsonpath,
 		AllowRemoteRefsFrom: opts.AllowRemoteRefsFrom,
 	}
 

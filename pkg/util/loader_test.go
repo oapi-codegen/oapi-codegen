@@ -240,3 +240,85 @@ func TestRemoteRefAllowed(t *testing.T) {
 	assert.False(t, RemoteRefAllowed([]string{"http://A.example/x.yaml"}, loc("http://a.example/x.yaml")), "nothing is normalised")
 	assert.False(t, RemoteRefAllowed([]string{"a.example"}, loc("http://a.example/x.yaml")))
 }
+
+func TestLoadSwaggerWithOverlay_JSONPathDialects(t *testing.T) {
+	dir := t.TempDir()
+	spec := filepath.Join(dir, "spec.yaml")
+	require.NoError(t, os.WriteFile(spec, []byte(`openapi: "3.0.0"
+info:
+  title: dialects
+  version: "1.0.0"
+paths:
+  /public:
+    get:
+      responses:
+        "200":
+          description: ok
+  /internal:
+    get:
+      x-internal: true
+      responses:
+        "200":
+          description: ok
+`), 0o600))
+	writeOverlay := func(target string) string {
+		path := filepath.Join(t.TempDir(), "overlay.yaml")
+		require.NoError(t, os.WriteFile(path, []byte(`overlay: 1.0.0
+info:
+  title: remove internal operations
+  version: 1.0.0
+actions:
+  - target: "`+target+`"
+    remove: true
+`), 0o600))
+		return path
+	}
+	legacy := writeOverlay("$.paths.*.*[?(@.x-internal)]")
+	rfc := writeOverlay("$.paths.*[?@['x-internal']]")
+
+	_, err := LoadSwaggerWithOverlay(spec, LoadSwaggerWithOverlayOpts{Path: legacy, Strict: true})
+	require.ErrorContains(t, err, "is not valid RFC 9535 JSONPath")
+	assert.ErrorContains(t, err, `"$.paths.*[?@['x-internal']]"`)
+	assert.ErrorContains(t, err, "compatibility.overlays-use-yaml-jsonpath: true")
+
+	for name, opts := range map[string]LoadSwaggerWithOverlayOpts{
+		"RFC 9535":      {Path: rfc, Strict: true},
+		"yaml-jsonpath": {Path: legacy, Strict: true, LegacyJSONPath: true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			swagger, err := LoadSwaggerWithOverlay(spec, opts)
+			require.NoError(t, err)
+			assert.NotNil(t, swagger.Paths.Find("/public").Get)
+			assert.Nil(t, swagger.Paths.Find("/internal").Get)
+		})
+	}
+}
+
+func TestLoadSwaggerWithOverlay_Strict(t *testing.T) {
+	dir := t.TempDir()
+	spec := writeSpec(t, dir, "spec.yaml", "./remote.yaml#/components/schemas/Remote")
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "remote.yaml"), []byte(remoteDoc), 0o600))
+	overlay := filepath.Join(dir, "overlay.yaml")
+	require.NoError(t, os.WriteFile(overlay, []byte(`overlay: 1.0.0
+info:
+  title: one action misses
+  version: 1.0.0
+actions:
+  - target: $.components.schemas.Missing
+    description: nothing to update
+    update:
+      description: never applied
+  - target: $.info
+    update:
+      description: overlaid
+`), 0o600))
+
+	_, err := LoadSwaggerWithOverlay(spec, LoadSwaggerWithOverlayOpts{Path: overlay, Strict: true})
+	require.ErrorContains(t, err, `action at index 0 (target "$.components.schemas.Missing", description "nothing to update")`)
+
+	swagger, err := LoadSwaggerWithOverlay(spec, LoadSwaggerWithOverlayOpts{Path: overlay})
+	require.NoError(t, err)
+	assert.Equal(t, "overlaid", swagger.Info.Description)
+	remote := swagger.Components.Schemas["Local"].Value.Properties["remote"]
+	require.NotNil(t, remote.Value, "the local $ref still resolves in the overlaid document")
+}
