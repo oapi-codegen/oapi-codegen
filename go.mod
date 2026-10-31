@@ -7,7 +7,7 @@ require (
 	github.com/oasdiff/yaml v0.1.3
 	github.com/stretchr/testify v1.12.1
 	github.com/theory/jsonpath v0.12.2
-	go.yaml.in/yaml/v3 v3.0.5
+	go.yaml.in/yaml/v3 v3.0.6
 	golang.org/x/mod v0.40.0
 	golang.org/x/text v0.41.0
 	golang.org/x/tools v0.49.0

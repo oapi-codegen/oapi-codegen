@@ -20,7 +20,7 @@ require (
 	github.com/oapi-codegen/runtime v1.8.0
 	github.com/oapi-codegen/testutil v1.1.0
 	github.com/stretchr/testify v1.12.1
-	go.yaml.in/yaml/v3 v3.0.5
+	go.yaml.in/yaml/v3 v3.0.6
 	golang.org/x/time v0.15.0
 )
 
