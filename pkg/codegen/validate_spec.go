@@ -30,17 +30,32 @@ import (
 // package whose contents are never copied into the generated output. A
 // whole-document `$ref` (one without a fragment, such as `./other.yaml`) is
 // followed, because code generation inlines what it points at (see descend).
+//
+// The members of an allOf are validated as the default schema-merging
+// behavior combines them (see allOfMergesUnions). Generate validates with the
+// behavior its options select instead, through validateSpec.
 func ValidateSpec(spec *openapi3.T) error {
+	return validateSpec(spec, true)
+}
+
+// validateSpec is ValidateSpec for a known schema-merging behavior: mergeAllOf
+// says whether the members of an allOf are merged into one schema before
+// generation, so that their oneOf and anyOf lists and a discriminator one of
+// them declares form a single union (see allOfMergesUnions).
+func validateSpec(spec *openapi3.T, mergeAllOf bool) error {
 	if spec == nil {
 		return nil
 	}
-	v := &specValidator{}
+	v := &specValidator{mergeAllOf: mergeAllOf}
 	v.walkDocument(spec)
 	return errors.Join(v.errs...)
 }
 
 type specValidator struct {
 	errs []error
+	// mergeAllOf is whether the allOf members are combined into one union
+	// (see validateSpec).
+	mergeAllOf bool
 	// seen holds the resolved values of the whole-document $refs that have
 	// been walked, so that documents referring to each other are walked once.
 	seen map[any]bool
@@ -607,8 +622,9 @@ func collectUnionView(s *openapi3.Schema, view *unionView, mergeAllOf bool, seen
 // discriminator one of them declares form a single union. The v1 merge
 // (`old-merge-schemas: true`) generates each member on its own instead, and a
 // member's union then has only the discriminator the member itself declares.
-// Like the generators, this reads the options of the current run; outside a
-// run, the default merge is assumed.
+// Like the generators, this reads the options of the run Generate has set up;
+// ValidateSpec does not call it, so that its result does not depend on an
+// earlier run.
 func allOfMergesUnions() bool {
 	return !globalState.options.Compatibility.OldMergeSchemas
 }
@@ -629,7 +645,7 @@ func allOfMergesUnions() bool {
 // is seen as part of the composition it is merged into.
 func (v *specValidator) checkImplicitMappingKeys(s *openapi3.Schema, where string) {
 	var view unionView
-	collectUnionView(s, &view, allOfMergesUnions(), map[*openapi3.Schema]bool{})
+	collectUnionView(s, &view, v.mergeAllOf, map[*openapi3.Schema]bool{})
 	if len(view.discriminators) == 0 {
 		return
 	}
