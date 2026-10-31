@@ -110,6 +110,22 @@ func (v *specValidator) checkNoControl(value, what string) {
 	}
 }
 
+// checkDiscriminatorValue validates a discriminator mapping key, explicit or
+// implicit. Besides the places checkText guards, the value is written between
+// the quotes of an interpreted Go string literal (`case "<value>":`) and into
+// the JSON object the From* helpers stamp, where a backslash starts an escape
+// sequence: `case "Dog\Name":` does not compile. So a backslash is rejected
+// too, as the union generators already do for the value an inline variant
+// pins.
+func (v *specValidator) checkDiscriminatorValue(value, what string) {
+	for _, r := range value {
+		if r == '"' || r == '`' || r == '\\' || unicode.IsControl(r) {
+			v.addf("%s may not contain %s: %q", what, describeRune(r), value)
+			return
+		}
+	}
+}
+
 // checkIdentifier validates a value that becomes a Go identifier (the `x-go-name`
 // and `x-go-type-name` extensions). It must be a valid, non-keyword Go
 // identifier, which by definition excludes quotes, backticks and control
@@ -218,6 +234,8 @@ func describeRune(r rune) string {
 		return "a double quote"
 	case '`':
 		return "a backtick"
+	case '\\':
+		return "a backslash"
 	case '\n':
 		return "a newline"
 	case '\r':
@@ -551,20 +569,22 @@ func (v *specValidator) walkSchema(s *openapi3.Schema, where string) {
 	if s.Discriminator != nil {
 		v.checkText(s.Discriminator.PropertyName, "discriminator propertyName in "+where)
 		for _, key := range SortedMapKeys(s.Discriminator.Mapping) {
-			v.checkText(key, "discriminator mapping key in "+where)
+			v.checkDiscriminatorValue(key, "discriminator mapping key in "+where)
 		}
 		// A $ref variant the mapping does not name is mapped implicitly, under
 		// the last segment of its ref (the schema's name), and that key is
 		// written into the generated code exactly like an explicit one. The
 		// name itself is otherwise allowed to contain quotes (see
 		// walkComponents), and a ref into another document names a schema
-		// this walk never sees, so the derived key is checked here.
+		// this walk never sees, so the derived key is checked here. A
+		// null-typed branch is a nullability marker the union generators skip
+		// before mapping, so it never becomes a key.
 		for _, variants := range [][]*openapi3.SchemaRef{s.OneOf, s.AnyOf} {
 			for _, variant := range variants {
-				if variant == nil || variant.Ref == "" || mappedExplicitly(s.Discriminator, variant.Ref) {
+				if variant == nil || variant.Ref == "" || isNullTypeSchema(variant.Value) || mappedExplicitly(s.Discriminator, variant.Ref) {
 					continue
 				}
-				v.checkText(RefPathToObjName(variant.Ref), fmt.Sprintf("implicit discriminator mapping key for %s in %s", variant.Ref, where))
+				v.checkDiscriminatorValue(RefPathToObjName(variant.Ref), fmt.Sprintf("implicit discriminator mapping key for %s in %s", variant.Ref, where))
 			}
 		}
 	}
