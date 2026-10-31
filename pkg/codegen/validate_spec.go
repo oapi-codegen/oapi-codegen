@@ -542,20 +542,25 @@ func (v *specValidator) walkSchemaRef(ref *openapi3.SchemaRef, where string) {
 	// walked too is decided by descend: only a whole-document ref is, since
 	// its contents are inlined into the generated code.
 	v.checkExtensions(ref.Extensions, where)
-	if ref.Value == nil || !v.descend(ref.Ref, ref.Value) {
+	if ref.Value == nil {
 		return
 	}
 	// An x-go-type next to a whole-document ref, or at the root of the
 	// document it points at, replaces the document: generateGoSchema returns
 	// the override before it reads any of the document's contents, so none
 	// of them reach the generated code. Only the root's own extensions are
-	// checked then. An inline schema with x-go-type has always been walked
-	// in full, and still is.
-	if ref.Ref != "" {
+	// checked then. This is decided before descend marks the document as
+	// walked: another ref to the same document without an override inlines
+	// it, and has to find it unvisited. An inline schema with x-go-type has
+	// always been walked in full, and still is.
+	if IsWholeDocumentReference(ref.Ref) {
 		if _, overridden := combinedSchemaExtensions(ref)[extPropGoType]; overridden {
 			v.checkExtensions(ref.Value.Extensions, where)
 			return
 		}
+	}
+	if !v.descend(ref.Ref, ref.Value) {
+		return
 	}
 	v.walkSchema(ref.Value, where)
 }
@@ -573,9 +578,10 @@ type unionView struct {
 	variants       []*openapi3.SchemaRef
 }
 
-// collectUnionView gathers s's unionView. seen stops at a composition that
-// refers back to itself.
-func collectUnionView(s *openapi3.Schema, view *unionView, seen map[*openapi3.Schema]bool) {
+// collectUnionView gathers s's unionView. The allOf members are included
+// only when the merge in effect combines them (see allOfMergesUnions). seen
+// stops at a composition that refers back to itself.
+func collectUnionView(s *openapi3.Schema, view *unionView, mergeAllOf bool, seen map[*openapi3.Schema]bool) {
 	if s == nil || seen[s] {
 		return
 	}
@@ -585,11 +591,26 @@ func collectUnionView(s *openapi3.Schema, view *unionView, seen map[*openapi3.Sc
 	}
 	view.variants = append(view.variants, s.OneOf...)
 	view.variants = append(view.variants, s.AnyOf...)
+	if !mergeAllOf {
+		return
+	}
 	for _, member := range s.AllOf {
 		if member != nil {
-			collectUnionView(member.Value, view, seen)
+			collectUnionView(member.Value, view, mergeAllOf, seen)
 		}
 	}
+}
+
+// allOfMergesUnions reports whether the schema-merging behavior of the
+// current run merges the members of an allOf into one schema before
+// generating it, so that the members' oneOf and anyOf lists and the
+// discriminator one of them declares form a single union. The v1 merge
+// (`old-merge-schemas: true`) generates each member on its own instead, and a
+// member's union then has only the discriminator the member itself declares.
+// Like the generators, this reads the options of the current run; outside a
+// run, the default merge is assumed.
+func allOfMergesUnions() bool {
+	return !globalState.options.Compatibility.OldMergeSchemas
 }
 
 // checkImplicitMappingKeys validates the discriminator mapping keys the union
@@ -608,7 +629,7 @@ func collectUnionView(s *openapi3.Schema, view *unionView, seen map[*openapi3.Sc
 // is seen as part of the composition it is merged into.
 func (v *specValidator) checkImplicitMappingKeys(s *openapi3.Schema, where string) {
 	var view unionView
-	collectUnionView(s, &view, map[*openapi3.Schema]bool{})
+	collectUnionView(s, &view, allOfMergesUnions(), map[*openapi3.Schema]bool{})
 	if len(view.discriminators) == 0 {
 		return
 	}

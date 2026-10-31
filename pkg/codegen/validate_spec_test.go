@@ -510,6 +510,24 @@ func TestValidateSpec_ImplicitDiscriminatorMappingKey(t *testing.T) {
 		require.NoError(t, ValidateSpec(spec(components(pet))))
 	})
 
+	t.Run("allOf: the v1 merge generates each member on its own", func(t *testing.T) {
+		// Under old-merge-schemas the members are not combined, so the member
+		// with the variants has no discriminator and no key is derived. A
+		// member whose own oneOf and discriminator sit together is still a
+		// discriminated union.
+		globalState.options.Compatibility.OldMergeSchemas = true
+		t.Cleanup(func() { globalState.options.Compatibility.OldMergeSchemas = false })
+		pet := &openapi3.Schema{AllOf: []*openapi3.SchemaRef{variantsMember(), discriminatorMember(nil)}}
+		require.NoError(t, ValidateSpec(spec(components(pet))))
+
+		pet = &openapi3.Schema{AllOf: []*openapi3.SchemaRef{
+			{Value: union(&openapi3.Discriminator{PropertyName: "petType"}, "#/components/schemas/Cat", "#/components/schemas/"+name)},
+		}}
+		err := ValidateSpec(spec(components(pet)))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `implicit discriminator mapping key for #/components/schemas/Dog"Name in allOf[0] in schema "Pet"`)
+	})
+
 	t.Run("allOf: a composition that refers back to itself ends", func(t *testing.T) {
 		pet := &openapi3.Schema{AllOf: []*openapi3.SchemaRef{discriminatorMember(nil)}}
 		pet.AllOf = append(pet.AllOf, &openapi3.SchemaRef{Ref: "#/components/schemas/Pet", Value: pet})
@@ -587,6 +605,23 @@ func TestValidateSpec_WholeDocumentRefIsWalked(t *testing.T) {
 		err := ValidateSpec(spec(&openapi3.Components{Schemas: schemas}))
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "x-go-type")
+	})
+
+	t.Run("a document replaced by x-go-type in one place is inlined in another", func(t *testing.T) {
+		// The loader hands every ref to the same document the same value. The
+		// ref with the override, walked first, must not mark the document as
+		// visited, or the ref without it is never checked.
+		schemas := openapi3.Schemas{"Container": {Value: &openapi3.Schema{
+			Type: &openapi3.Types{"object"},
+			Properties: openapi3.Schemas{
+				"a": {Ref: "./evil.json", Value: external, Extensions: map[string]any{"x-go-type": "string"}},
+				"b": {Ref: "./evil.json", Value: external},
+			},
+		}}}
+		err := ValidateSpec(spec(&openapi3.Components{Schemas: schemas}))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `property "b"`)
+		assert.Contains(t, err.Error(), "backtick")
 	})
 
 	t.Run("fragment ref is a type reference and is not walked", func(t *testing.T) {
