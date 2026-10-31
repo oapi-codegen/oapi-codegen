@@ -28,6 +28,12 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
     {{end}}
 
     {{range . -}}
+    {{/* gin has no CONNECT/TRACE shortcuts, and the OpenAPI 3.2 QUERY method
+         and additionalOperations have none anywhere; those go through Handle. */ -}}
+    {{if or (isCustomHTTPMethod .Method) (eq .Method "CONNECT") (eq .Method "TRACE") -}}
+    router.Handle({{.Method | toGoString}}, options.BaseURL+{{.Path | swaggerUriToGinUri | toGoString}}, wrapper.{{.HandlerName}})
+    {{else -}}
     router.{{.Method }}(options.BaseURL+{{.Path | swaggerUriToGinUri | toGoString}}, wrapper.{{.HandlerName}})
+    {{end -}}
     {{end -}}
 }

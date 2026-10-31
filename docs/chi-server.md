@@ -138,3 +138,17 @@ func main() {
 
 > [!NOTE]
 > This doesn't include [validation of incoming requests](../README.md#requestresponse-validation-middleware).
+
+## OpenAPI 3.2 custom HTTP methods
+
+If your spec uses the OpenAPI 3.2 `query` operation (HTTP `QUERY`) or `additionalOperations`, the generated code registers those routes with `r.MethodFunc`. chi only routes methods it has been told about, and `chi.RegisterMethod` is process-wide state, so the generated code does not call it: one process often hosts several generated packages. Register each custom method once at application startup, before any routes are registered, or route registration panics with `chi: 'QUERY' http method is not supported`:
+
+```go
+func main() {
+	chi.RegisterMethod("QUERY")
+
+	r := chi.NewRouter()
+	api.HandlerFromMux(server, r)
+	// ...
+}
+```

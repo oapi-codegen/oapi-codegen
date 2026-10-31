@@ -16,6 +16,12 @@ fiber-handler.tmpl).
 {{define "fiber.ctxType"}}fiber.Ctx{{end}}
 {{define "fiber.ctxAccessor"}}RequestCtx{{end}}
 
+{{/* --- fiber-handler.tmpl ---
+fiber v3's Add takes a slice of methods where v2 takes a single method. Used
+for the OpenAPI 3.2 QUERY method and additionalOperations, which have no
+router.<Method> shortcut. */}}
+{{define "fiber.registerCustomMethod"}}router.Add([]string{ {{.Method | toGoString}} }, options.BaseURL+{{.Path | swaggerUriToFiberUri | toGoString}}, wrapper.{{.HandlerName}}){{end}}
+
 {{/* --- strict/strict-fiber.tmpl ---
 fiber v3 binds request bodies through ctx.Bind().Body rather than v2's
 ctx.BodyParser, and the request context comes from ctx.Context() rather than

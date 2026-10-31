@@ -30,6 +30,7 @@ With `oapi-codegen`, there are a few [Key Design Decisions](#key-design-decision
 - [Key design decisions](#key-design-decisions)
 - [Generating server-side boilerplate](#generating-server-side-boilerplate)
   - [Supported Servers](#supported-servers)
+  - [OpenAPI 3.2 HTTP methods (<code>query</code> and <code>additionalOperations</code>)](#openapi-32-http-methods-query-and-additionaloperations)
   - [Strict server](#strict-server)
 - [Generating API clients](#generating-api-clients)
   - [With Server URLs](#with-server-urls)
@@ -445,6 +446,7 @@ We can see that this provides the best means to focus on the implementation of t
 - Support multiple OpenAPI files by having a package per OpenAPI file
 - Support of OpenAPI 3.0 and 3.1
   - OpenAPI 3.1 support includes [webhooks](https://spec.openapis.org/oas/v3.1.0#oasWebhooks) and version-aware handling of 3.1 idioms such as `type: [T, "null"]` nullability and enums declared via `oneOf` + `const`
+  - OpenAPI 3.2's `query` operation (HTTP `QUERY`) and `additionalOperations` (arbitrary HTTP methods) are generated for clients and every server framework; see [OpenAPI 3.2 HTTP methods](#openapi-32-http-methods-query-and-additionaloperations)
   - Note that this does not include OpenAPI 2.0 (aka Swagger). If you have an old Swagger
     specification, you can use a [converter](https://converter.swagger.io/) before
     using oapi-codegen.
@@ -478,6 +480,46 @@ older version of Go, we don't promise that it'll work.
 | [gorilla/mux](https://github.com/gorilla/mux) | `gorilla-server` | 1.24+      | [gorilla/mux documentation](docs/gorilla-server.md) |
 | [Iris](https://github.com/kataras/iris) | `iris-server` | 1.24+      | [Iris documentation](docs/iris-server.md) |
 | [`net/http`](https://pkg.go.dev/net/http) | `std-http-server` | 1.24+      | [`net/http` documentation](docs/stdhttp-server.md) |
+
+### OpenAPI 3.2 HTTP methods (`query` and `additionalOperations`)
+
+OpenAPI 3.2 adds the `query` operation (the HTTP [`QUERY`](https://datatracker.ietf.org/doc/draft-ietf-httpbis-safe-method-w-body/) method) to the Path Item, and an `additionalOperations` map for any other HTTP method:
+
+```yaml
+paths:
+  /items:
+    query:
+      operationId: queryItems
+      # ...
+    additionalOperations:
+      PURGE:
+        operationId: purgeItem
+        # ...
+```
+
+These are generated like any other operation, for clients, servers and strict servers. Route registration uses each router's string-method API. Some routers only accept methods they have been told about, and because that is application-wide state (one process often hosts several generated packages), the generated code never registers methods itself. Your application does it once, at startup, before any routes are registered:
+
+- **Chi**: call `chi.RegisterMethod` for each custom method before `Handler`/`HandlerFromMux`, otherwise route registration panics with `chi: 'QUERY' http method is not supported`:
+
+  ```go
+  chi.RegisterMethod("QUERY")
+  chi.RegisterMethod("PURGE")
+  r := chi.NewRouter()
+  api.HandlerFromMux(server, r)
+  ```
+
+- **Fiber** (v2 and v3): list the custom methods in the application config (keep the defaults, the list replaces them), otherwise `RegisterHandlers` panics with `add: invalid http method`:
+
+  ```go
+  app := fiber.New(fiber.Config{
+      RequestMethods: append(slices.Clone(fiber.DefaultMethods), "QUERY", "PURGE"),
+  })
+  api.RegisterHandlers(app, server)
+  ```
+
+- **Iris**: routes for custom methods work as-is. `iris.RegisterMethods("QUERY")` is only needed if you also want iris's `Any()` helpers and route debug listing to include them.
+- **Echo** (v4 and v5): nothing to register. The generated `EchoRouter` interface gains an `Add` method, which `*echo.Echo` and `*echo.Group` both satisfy; a custom `EchoRouter` implementation needs `Add` too.
+- **Gin**, **gorilla/mux**, **`net/http`**: nothing to do.
 
 ### Strict server
 
