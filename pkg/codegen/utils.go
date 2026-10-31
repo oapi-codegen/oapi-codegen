@@ -15,8 +15,8 @@ package codegen
 
 import (
 	"bytes"
-	"errors"
 	"cmp"
+	"errors"
 	"fmt"
 	"go/token"
 	"maps"
@@ -1275,11 +1275,97 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 // TypeDefinitionsEquivalent checks for equality between two type definitions, but
 // not every field is considered. We only want to know if they are fundamentally
 // the same type.
+//
+// The loader records source locations (openapi3.Loader.IncludeOrigin), so two
+// identical schemas declared on different lines differ in their Origin fields.
+// Those carry no type information, so they are blanked for the duration of the
+// comparison and restored afterwards. Comparing the JSON encodings instead
+// would not work: a $ref encodes as its string alone, so two schemas whose
+// $refs resolve to different targets would look equal.
 func TypeDefinitionsEquivalent(t1, t2 TypeDefinition) bool {
 	if t1.TypeName != t2.TypeName {
 		return false
 	}
+	restore := clearOrigins(t1.Schema.OAPISchema, t2.Schema.OAPISchema)
+	defer restore()
 	return reflect.DeepEqual(t1.Schema.OAPISchema, t2.Schema.OAPISchema)
+}
+
+var originPtrType = reflect.TypeFor[*openapi3.Origin]()
+
+// clearOrigins sets every *openapi3.Origin field reachable from roots to nil
+// and returns a function that puts the original values back. Only exported
+// fields are visited; kin-openapi's unexported ones (SchemaRef.sibling and
+// friends) are built by plain json.Unmarshal and never carry origins.
+func clearOrigins(roots ...any) (restore func()) {
+	type visit struct {
+		ptr uintptr
+		typ reflect.Type
+		len int // only for slices; two slices can share a backing array
+	}
+	visited := map[visit]bool{}
+	var cleared []reflect.Value
+
+	var walk func(v reflect.Value)
+	walk = func(v reflect.Value) {
+		switch v.Kind() {
+		case reflect.Pointer, reflect.Map, reflect.Slice:
+			if v.IsNil() {
+				return
+			}
+			key := visit{ptr: uintptr(v.UnsafePointer()), typ: v.Type()}
+			if v.Kind() == reflect.Slice {
+				key.len = v.Len()
+			}
+			if visited[key] {
+				return
+			}
+			visited[key] = true
+		}
+
+		switch v.Kind() {
+		case reflect.Pointer, reflect.Interface:
+			if !v.IsNil() {
+				walk(v.Elem())
+			}
+		case reflect.Struct:
+			for i := range v.NumField() {
+				f := v.Field(i)
+				if !v.Type().Field(i).IsExported() {
+					continue
+				}
+				if f.Type() == originPtrType {
+					if !f.IsNil() && f.CanSet() {
+						cleared = append(cleared, f)
+					}
+					continue
+				}
+				walk(f)
+			}
+		case reflect.Map:
+			for iter := v.MapRange(); iter.Next(); {
+				walk(iter.Value())
+			}
+		case reflect.Slice, reflect.Array:
+			for i := range v.Len() {
+				walk(v.Index(i))
+			}
+		}
+	}
+	for _, root := range roots {
+		walk(reflect.ValueOf(root))
+	}
+
+	origins := make([]reflect.Value, len(cleared))
+	for i, f := range cleared {
+		origins[i] = reflect.ValueOf(f.Interface())
+		f.Set(reflect.Zero(originPtrType))
+	}
+	return func() {
+		for i, f := range cleared {
+			f.Set(origins[i])
+		}
+	}
 }
 
 // isAdditionalPropertiesExplicitFalse determines whether an openapi3.Schema is explicitly defined as `additionalProperties: false`
