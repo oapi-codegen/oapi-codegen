@@ -76,10 +76,10 @@ Be pragmatic: do not demand identical changes in seven places. Do your best to a
 - `naming/` — identifier generation and type-name collision handling
 - `openapi31/` — OpenAPI 3.1-specific behavior
 - `options/` — output-options flags (name-normalizer, filters, skip-prune, yaml-tags, …)
-- `overlay/` — OpenAPI Overlay application (`output-options.overlay`), including both JSONPath dialects (`compatibility.overlays-use-yaml-jsonpath`): `rfc9535/` and `legacy_jsonpath/` share one `spec.yaml` and are compared by a top-level test
+- `overlay/` — how `output-options.overlay` applies an Overlay, in both JSONPath dialects (`compatibility.overlays-use-yaml-jsonpath`): `rfc9535/` and `legacy_jsonpath/` share one `spec.yaml` and are compared by a top-level test. Tests of other features that merely use an overlay stay in their feature's category.
 - `parameters/` — parameter binding, styles, encoding, nil handling (incl. the cross-framework `roundtrip/` harness)
 - `paths/` — path-level routing edge cases: literal colons in paths, URL escaping of reserved characters, and path-parameter precedence. Because colon-in-path routing is backend-specific, leaves here may fan out into per-framework subpackages (`echo/`, `gin/`, `fiber/`, `fiberv3/`, …) each with its own `config.yaml` and generated server, driven by one shared `spec.yaml` and a single top-level routing test — mirroring `parameters/roundtrip/`. This multi-subpackage shape is expected for routing fixtures and is not the "standard leaf layout" churn to flag.
-- `references/` — external `$ref`s, import-mapping, multi-package generation
+- `references/` — external `$ref`s, import-mapping, multi-package generation, overlays
 - `schemas/` — schema-to-type mapping (primitives, objects, enums, nullable, recursive, …)
 - `servers/` — server codegen (routers, middleware, strict servers)
 - `spec_validation/` — pre-generation spec validation
