@@ -621,6 +621,43 @@ Notice that because we've not set `deprecated: true` to the `name` field, it doe
 
 You can see this in more detail in [the example code](../examples/extensions/xdeprecatedreason/).
 
+## `x-stability-level`
+
+Note an operation's stability level in the generated client GoDoc.
+
+When an operation sets `x-stability-level` to a string, that level is noted in the Godoc of the generated client methods (`ClientInterface`, `Client`, `ClientWithResponsesInterface` and `ClientWithResponses`), so callers can see whether the API is potentially unstable. The value is rendered as-is; [oasdiff](https://github.com/oasdiff/oasdiff/blob/main/docs/STABILITY.md) defines the levels `draft`, `alpha`, `beta` and `stable`, and treats operations without the extension as `stable`. Operations without the extension get no extra Godoc.
+
+We can see this at play with the following operation:
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-stability-level
+paths:
+  /pets:
+    get:
+      operationId: listPets
+      summary: List pets
+      x-stability-level: alpha
+      responses:
+        "200":
+          description: A list of pets
+```
+
+From here, the generated client method is documented as:
+
+```go
+// ListPets List pets
+//
+// Corresponds with GET /pets (the `ListPets` operationId).
+//
+// This operation has been marked with the `alpha` stability level upstream (via `x-stability-level`).
+ListPets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+```
+
+You can see this in more detail in [the example code](../examples/extensions/xstabilitylevel/).
+
 ## `x-order`
 
 Explicitly order struct fields.
