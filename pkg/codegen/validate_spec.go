@@ -25,9 +25,11 @@ import (
 //
 // It is meant to run after any overlay has been applied and after tag/operation
 // filtering and component pruning, so only values that will actually be emitted
-// are checked. `$ref`s are not followed: every ref resolves to a component that
-// is validated at its own definition, and the contents of external documents are
-// never copied into the generated output, so they cannot affect it.
+// are checked. A `$ref` with a fragment is not followed: it resolves to a
+// component that is validated at its own definition, or to a type in another
+// package whose contents are never copied into the generated output. A
+// whole-document `$ref` (one without a fragment, such as `./other.yaml`) is
+// followed, because code generation inlines what it points at (see descend).
 func ValidateSpec(spec *openapi3.T) error {
 	if spec == nil {
 		return nil
@@ -39,6 +41,40 @@ func ValidateSpec(spec *openapi3.T) error {
 
 type specValidator struct {
 	errs []error
+	// seen holds the resolved values of the whole-document $refs that have
+	// been walked, so that documents referring to each other are walked once.
+	seen map[any]bool
+}
+
+// descend reports whether the validator should walk into a $ref's resolved
+// value, given the ref string and the (non-nil) value it resolved to.
+//
+// An inline object (no ref) is always walked. A ref with a fragment, local
+// (`#/components/schemas/Foo`) or external (`other.yaml#/components/schemas/Foo`),
+// is not: a local one resolves to a component that is validated at its own
+// definition, and an external one becomes a type in another Go package whose
+// contents are never copied into the generated output. A whole-document ref
+// (`./other.yaml`, with no fragment) has no name that could be referred to, so
+// code generation inlines its contents as if they were written in place
+// (IsGoTypeReference is false for it); everything in that document reaches the
+// generated source and has to be checked like the inline object it becomes.
+// Each such document is walked once, so documents that refer to each other
+// do not loop.
+func (v *specValidator) descend(ref string, value any) bool {
+	if ref == "" {
+		return true
+	}
+	if !IsWholeDocumentReference(ref) {
+		return false
+	}
+	if v.seen[value] {
+		return false
+	}
+	if v.seen == nil {
+		v.seen = make(map[any]bool)
+	}
+	v.seen[value] = true
+	return true
 }
 
 func (v *specValidator) addf(format string, args ...any) {
@@ -161,6 +197,19 @@ func (v *specValidator) checkSecurity(reqs openapi3.SecurityRequirements, where 
 			}
 		}
 	}
+}
+
+// mappedExplicitly reports whether the discriminator's mapping names ref as
+// one of its values, in which case the mapping key is used rather than the
+// name derived from the ref. This mirrors how the union generators decide
+// between an explicit and an implicit mapping.
+func mappedExplicitly(d *openapi3.Discriminator, ref string) bool {
+	for _, target := range d.Mapping {
+		if target.Ref == ref {
+			return true
+		}
+	}
+	return false
 }
 
 func describeRune(r rune) string {
@@ -335,7 +384,7 @@ func (v *specValidator) walkParameterRef(ref *openapi3.ParameterRef, where strin
 		return
 	}
 	v.checkExtensions(ref.Extensions, where)
-	if ref.Ref != "" || ref.Value == nil {
+	if ref.Value == nil || !v.descend(ref.Ref, ref.Value) {
 		return
 	}
 	p := ref.Value
@@ -352,7 +401,7 @@ func (v *specValidator) walkRequestBodyRef(ref *openapi3.RequestBodyRef, where s
 		return
 	}
 	v.checkExtensions(ref.Extensions, where)
-	if ref.Ref != "" || ref.Value == nil {
+	if ref.Value == nil || !v.descend(ref.Ref, ref.Value) {
 		return
 	}
 	loc := "request body in " + where
@@ -365,7 +414,7 @@ func (v *specValidator) walkResponseRef(ref *openapi3.ResponseRef, where string)
 		return
 	}
 	v.checkExtensions(ref.Extensions, where)
-	if ref.Ref != "" || ref.Value == nil {
+	if ref.Value == nil || !v.descend(ref.Ref, ref.Value) {
 		return
 	}
 	r := ref.Value
@@ -382,7 +431,7 @@ func (v *specValidator) walkHeaderRef(ref *openapi3.HeaderRef, where string) {
 		return
 	}
 	v.checkExtensions(ref.Extensions, where)
-	if ref.Ref != "" || ref.Value == nil {
+	if ref.Value == nil || !v.descend(ref.Ref, ref.Value) {
 		return
 	}
 	v.checkExtensions(ref.Value.Extensions, where)
@@ -443,7 +492,7 @@ func (v *specValidator) walkCallbackRef(ref *openapi3.CallbackRef, where string)
 		return
 	}
 	v.checkExtensions(ref.Extensions, where)
-	if ref.Ref != "" || ref.Value == nil {
+	if ref.Value == nil || !v.descend(ref.Ref, ref.Value) {
 		return
 	}
 	items := ref.Value.Map()
@@ -471,11 +520,11 @@ func (v *specValidator) walkSchemaRef(ref *openapi3.SchemaRef, where string) {
 	}
 	// Extensions on the ref node itself are honoured by code generation even for
 	// a $ref — e.g. an `x-go-type` sibling next to a `$ref` overrides the
-	// referenced type — so they must be checked here. The referenced target is
-	// validated at its own definition, so we still do not follow the ref, which
-	// also keeps inline schemas a finite tree with no cycle tracking needed.
+	// referenced type — so they must be checked here. Whether the target is
+	// walked too is decided by descend: only a whole-document ref is, since
+	// its contents are inlined into the generated code.
 	v.checkExtensions(ref.Extensions, where)
-	if ref.Ref != "" || ref.Value == nil {
+	if ref.Value == nil || !v.descend(ref.Ref, ref.Value) {
 		return
 	}
 	v.walkSchema(ref.Value, where)
@@ -503,6 +552,20 @@ func (v *specValidator) walkSchema(s *openapi3.Schema, where string) {
 		v.checkText(s.Discriminator.PropertyName, "discriminator propertyName in "+where)
 		for _, key := range SortedMapKeys(s.Discriminator.Mapping) {
 			v.checkText(key, "discriminator mapping key in "+where)
+		}
+		// A $ref variant the mapping does not name is mapped implicitly, under
+		// the last segment of its ref (the schema's name), and that key is
+		// written into the generated code exactly like an explicit one. The
+		// name itself is otherwise allowed to contain quotes (see
+		// walkComponents), and a ref into another document names a schema
+		// this walk never sees, so the derived key is checked here.
+		for _, variants := range [][]*openapi3.SchemaRef{s.OneOf, s.AnyOf} {
+			for _, variant := range variants {
+				if variant == nil || variant.Ref == "" || mappedExplicitly(s.Discriminator, variant.Ref) {
+					continue
+				}
+				v.checkText(RefPathToObjName(variant.Ref), fmt.Sprintf("implicit discriminator mapping key for %s in %s", variant.Ref, where))
+			}
 		}
 	}
 	for _, name := range SortedMapKeys(s.Properties) {
