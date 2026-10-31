@@ -1059,6 +1059,52 @@ func TestTypeDefinitionsEquivalentCycles(t *testing.T) {
 	assert.False(t, TypeDefinitionsEquivalent(def(node(1, "string")), def(node(2, "integer"))))
 }
 
+// TestTypeDefinitionsEquivalentRestoresOrigins checks that the comparison
+// leaves the schemas' source locations in place, since the generator reads
+// origins elsewhere (for example to order paths by line).
+func TestTypeDefinitionsEquivalentRestoresOrigins(t *testing.T) {
+	spec := `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths: {}
+components:
+  schemas:
+    Client:
+      type: object
+      properties:
+        product: {type: object, x-go-type-name: Product, properties: {city: {type: string}}}
+    CreateClientRequest:
+      type: object
+      properties:
+        product: {type: object, x-go-type-name: Product, properties: {city: {type: string}}}
+`
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	s1 := swagger.Components.Schemas["Client"].Value.Properties["product"].Value
+	s2 := swagger.Components.Schemas["CreateClientRequest"].Value.Properties["product"].Value
+	require.NotNil(t, s1.Origin)
+	require.NotNil(t, s1.Properties["city"].Origin)
+	require.NotNil(t, s1.Properties["city"].Value.Origin)
+	origins := []*openapi3.Origin{
+		s1.Origin, s1.Properties["city"].Origin, s1.Properties["city"].Value.Origin,
+		s2.Origin, s2.Properties["city"].Origin, s2.Properties["city"].Value.Origin,
+	}
+
+	def := func(s *openapi3.Schema) TypeDefinition {
+		return TypeDefinition{TypeName: "Product", Schema: Schema{OAPISchema: s}}
+	}
+	assert.True(t, TypeDefinitionsEquivalent(def(s1), def(s2)))
+
+	assert.Equal(t, origins, []*openapi3.Origin{
+		s1.Origin, s1.Properties["city"].Origin, s1.Properties["city"].Value.Origin,
+		s2.Origin, s2.Properties["city"].Origin, s2.Properties["city"].Value.Origin,
+	})
+	assert.NotEqual(t, s1.Origin.Key.Line, s2.Origin.Key.Line)
+}
+
 func TestRefPathToObjName(t *testing.T) {
 	t.Parallel()
 
