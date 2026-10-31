@@ -1138,4 +1138,13 @@ components:
 	_, err = Generate(swagger, opts)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `implicit discriminator mapping key for #/components/schemas/Dog"Name in schema "Pet"`)
+
+	// The v1 merge generates each member on its own: the variants' member
+	// has no discriminator, so no key is derived and the document generates.
+	v1 := opts
+	v1.Compatibility.OldMergeSchemas = true
+	swagger, err = openapi3.NewLoader().LoadFromData([]byte(split))
+	require.NoError(t, err)
+	_, err = Generate(swagger, v1)
+	require.NoError(t, err)
 }
