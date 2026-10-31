@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/overlays/external_json_ref/packageA"
+	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/overlay/external_json_ref/packageA"
 )
 
 // Container defines model for Container.
