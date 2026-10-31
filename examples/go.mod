@@ -1,6 +1,6 @@
 module github.com/oapi-codegen/oapi-codegen/v2/examples
 
-go 1.25.0
+go 1.26.0
 
 replace github.com/oapi-codegen/oapi-codegen/v2 => ../
 
