@@ -344,7 +344,7 @@ func (sh *strictHandler) UpdateThing(w http.ResponseWriter, r *http.Request, id 
 	request.Params = params
 
 	var body UpdateThingJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}

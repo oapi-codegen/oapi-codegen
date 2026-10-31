@@ -590,7 +590,7 @@ func (d *Discriminator) literal(value string) string {
 	if ok {
 		return value
 	}
-	return `"` + value + `"`
+	return strconv.Quote(value)
 }
 
 func (d *Discriminator) JSONTag() string {

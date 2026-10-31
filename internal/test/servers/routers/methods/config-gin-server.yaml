@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: gin
+generate:
+  gin-server: true
+  strict-server: true
+  models: true
+output: gin/out.gen.go

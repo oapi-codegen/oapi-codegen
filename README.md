@@ -30,6 +30,7 @@ With `oapi-codegen`, there are a few [Key Design Decisions](#key-design-decision
 - [Key design decisions](#key-design-decisions)
 - [Generating server-side boilerplate](#generating-server-side-boilerplate)
   - [Supported Servers](#supported-servers)
+  - [OpenAPI 3.2 HTTP methods (<code>query</code> and <code>additionalOperations</code>)](#openapi-32-http-methods-query-and-additionaloperations)
   - [Strict server](#strict-server)
 - [Generating API clients](#generating-api-clients)
   - [With Server URLs](#with-server-urls)
@@ -99,7 +100,7 @@ go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 
 ### Installing
 
-`oapi-codegen` requires Go 1.25+ to build and install. Note that the *generated* code has its own, lower requirements — see [Supported Servers](#supported-servers).
+`oapi-codegen` requires Go 1.26+ to build and install. Note that the *generated* code has its own, lower requirements — see [Supported Servers](#supported-servers).
 
 It is recommended to use [`go tool` support](https://www.jvt.me/posts/2025/01/27/go-tools-124/) for managing the dependency of `oapi-codegen` alongside your core application.
 
@@ -172,7 +173,7 @@ For full details of what is supported, check out the [oapi-codegen configuration
 We also have [a JSON Schema](configuration-schema.json) that can be used by IDEs/editors with the Language Server Protocol (LSP) to perform intelligent suggestions, i.e.:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 package: api
 # ...
 ```
@@ -434,7 +435,7 @@ func (p *PetStore) FindPets(ctx context.Context, request FindPetsRequestObject) 
 }
 ```
 
-We can see that this provides the best means to focus on the implementation of the business logic within the endpoint, rather than (un)marshalling types to and from JSON, or wrangling cookies or headers.
+We can see that this provides the best means to focus on the implementation of the business logic within the endpoint, rather than (un)marshalling types to and from JSON, or wrangling cookies or headers. In order to actually use your strict server implementation use `NewStrictHandler` or `NewStrictHandlerWithOptions` to generate a (non-strict) server interface to use with the examples below.
 
 ## Key design decisions
 
@@ -445,6 +446,7 @@ We can see that this provides the best means to focus on the implementation of t
 - Support multiple OpenAPI files by having a package per OpenAPI file
 - Support of OpenAPI 3.0 and 3.1
   - OpenAPI 3.1 support includes [webhooks](https://spec.openapis.org/oas/v3.1.0#oasWebhooks) and version-aware handling of 3.1 idioms such as `type: [T, "null"]` nullability and enums declared via `oneOf` + `const`
+  - OpenAPI 3.2's `query` operation (HTTP `QUERY`) and `additionalOperations` (arbitrary HTTP methods) are generated for clients and every server framework; see [OpenAPI 3.2 HTTP methods](#openapi-32-http-methods-query-and-additionaloperations)
   - Note that this does not include OpenAPI 2.0 (aka Swagger). If you have an old Swagger
     specification, you can use a [converter](https://converter.swagger.io/) before
     using oapi-codegen.
@@ -479,6 +481,46 @@ older version of Go, we don't promise that it'll work.
 | [Iris](https://github.com/kataras/iris) | `iris-server` | 1.24+      | [Iris documentation](docs/iris-server.md) |
 | [`net/http`](https://pkg.go.dev/net/http) | `std-http-server` | 1.24+      | [`net/http` documentation](docs/stdhttp-server.md) |
 
+### OpenAPI 3.2 HTTP methods (`query` and `additionalOperations`)
+
+OpenAPI 3.2 adds the `query` operation (the HTTP [`QUERY`](https://datatracker.ietf.org/doc/draft-ietf-httpbis-safe-method-w-body/) method) to the Path Item, and an `additionalOperations` map for any other HTTP method:
+
+```yaml
+paths:
+  /items:
+    query:
+      operationId: queryItems
+      # ...
+    additionalOperations:
+      PURGE:
+        operationId: purgeItem
+        # ...
+```
+
+These are generated like any other operation, for clients, servers and strict servers. Route registration uses each router's string-method API. Some routers only accept methods they have been told about, and because that is application-wide state (one process often hosts several generated packages), the generated code never registers methods itself. Your application does it once, at startup, before any routes are registered:
+
+- **Chi**: call `chi.RegisterMethod` for each custom method before `Handler`/`HandlerFromMux`, otherwise route registration panics with `chi: 'QUERY' http method is not supported`:
+
+  ```go
+  chi.RegisterMethod("QUERY")
+  chi.RegisterMethod("PURGE")
+  r := chi.NewRouter()
+  api.HandlerFromMux(server, r)
+  ```
+
+- **Fiber** (v2 and v3): list the custom methods in the application config (keep the defaults, the list replaces them), otherwise `RegisterHandlers` panics with `add: invalid http method`:
+
+  ```go
+  app := fiber.New(fiber.Config{
+      RequestMethods: append(slices.Clone(fiber.DefaultMethods), "QUERY", "PURGE"),
+  })
+  api.RegisterHandlers(app, server)
+  ```
+
+- **Iris**: routes for custom methods work as-is. `iris.RegisterMethods("QUERY")` is only needed if you also want iris's `Any()` helpers and route debug listing to include them.
+- **Echo** (v4 and v5): nothing to register. The generated `EchoRouter` interface gains an `Add` method, which `*echo.Echo` and `*echo.Group` both satisfy; a custom `EchoRouter` implementation needs `Add` too.
+- **Gin**, **gorilla/mux**, **`net/http`**: nothing to do.
+
 ### Strict server
 
 `oapi-codegen` also supports generating a server that is much more strict with the contract that the implementer requires, and takes inspiration from server-side code generation for RPC servers.
@@ -506,7 +548,7 @@ You can see a little more detail of the generated code in the ["What does it loo
 > To configure the strict server generation, you must specify another server to be generated. For instance:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 package: api
 generate:
   # NOTE another server must be added!
@@ -584,7 +626,7 @@ components:
 And a `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 package: client
 output: client.gen.go
 generate:
@@ -745,7 +787,7 @@ servers:
 It is possible to opt-in to the generation of these Server URLs with the following configuration:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 package: serverurls
 output: gen.go
 generate:
@@ -830,7 +872,7 @@ components:
 If you were to generate with this configuration:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 package: client
 output: client.gen.go
 generate:
@@ -856,7 +898,7 @@ This would then result in `go build` failures:
 To fix this, use the `response-type-suffix` Output Option:
 
 ```diff
- # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+ # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
  package: client
  output: client.gen.go
  generate:
@@ -946,7 +988,7 @@ components:
 And a `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 package: onlymodels
 output: only-models.gen.go
 generate:
@@ -975,7 +1017,7 @@ type Client struct {
 If you wish to also generate the `Unreferenced` type, you would need the following `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 package: onlymodels
 output: only-models.gen.go
 generate:
@@ -1008,6 +1050,16 @@ This is supported by `oapi-codegen`, through the ability to perform "Import Mapp
 > The keys of `import-mapping` are the paths of the `$ref`'d documents — a relative file path or a URL, exactly as it is written in the `$ref` — and the values are the Go packages their types are generated into.
 >
 > A key cannot be a JSON pointer such as `#/components/schemas`. References within a single document always resolve to the package being generated, so there's nothing to map — if you want your models in a different Go package to your server, split them into their own spec file and map that file, as shown below.
+
+<a name=remote-references></a>
+
+> [!IMPORTANT]
+> External references to local files are always followed. External references to URLs are **not** followed unless the URL is listed in `allow-remote-refs-from`, because an untrusted spec could otherwise make `oapi-codegen` issue requests to any host reachable from the machine running it. List each referenced document's URL exactly as it appears in the `$ref`, without the `#...` fragment, or `"*"` to allow any URL:
+>
+>     allow-remote-refs-from:
+>       - https://raw.githubusercontent.com/example/specs/main/common.yaml
+>
+> There is no host or prefix matching: a reference to a different path, port or scheme on the same host is refused until it is listed too. A relative `$ref` inside a remote document resolves to an absolute URL, and that absolute URL is what has to be listed. A spec passed to `oapi-codegen` as a URL is fetched without listing it, but the documents it references still have to be.
 
 For instance, let's say that we have a large API, which has a user-facing API and an admin API, both of which use a common set of API models.
 
@@ -1089,7 +1141,7 @@ $ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg-us
 This therefore means that we need multiple configuration files, such as `cfg-api.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 package: samepackage
 output: server.gen.go
 generate:
@@ -1106,7 +1158,7 @@ import-mapping:
 And then our `cfg-user.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 package: samepackage
 output: user.gen.go
 generate:
@@ -1136,7 +1188,7 @@ To get `oapi-codegen`'s multi-package support working, we need to set up our dir
 We could start with our configuration file for our admin API spec:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 # admin/cfg.yaml
 package: admin
 output: server.gen.go
@@ -1158,7 +1210,7 @@ error generating code: error creating operation definitions: error generating re
 This is because `oapi-codegen` requires the `import-mapping`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 package: admin
 output: server.gen.go
 generate:
@@ -1213,6 +1265,16 @@ This takes advantage of the [OpenAPI Overlay specification](https://github.com/O
 >
 > There is a [proposed modification to the specification](https://github.com/OAI/Overlay-Specification/pull/32) which would relax the need for JSON Path as the targeting mechanism.
 
+> [!NOTE]
+> The Overlay implementation changed in v2.9.0: action targets are now [RFC 9535](https://www.rfc-editor.org/rfc/rfc9535) JSONPath, where earlier versions read them in a different dialect. The main differences are:
+>
+> - a filter selects the children of the node it follows that match it, so drop one `.*` before it: `$.paths.*.*[?(@.x-internal)]` becomes `$.paths.*[?@['x-internal']]`
+> - names that contain `-` or `/`, or start with a digit, must be bracketed: `.x-internal` becomes `['x-internal']`
+> - `X =~ /re/` becomes `search(X, 're')`
+> - `X[*] == v` becomes `X[?@ == v]`
+>
+> The setting is all-or-nothing: by default every target in the overlay is read as RFC 9535, including targets that are valid in both dialects but mean something different in each. For instance `$.paths.*.*[?(!@.servers)]` used to select operations without `servers`, and now selects the children of operations without `servers`; oapi-codegen does not try to detect which dialect a target was written in. Check your targets, or keep the previous behaviour for the whole overlay by setting `compatibility.overlays-use-yaml-jsonpath: true`.
+
 For instance, let's say that we have the following OpenAPI specification, which provides insight into an internal endpoint that we should not be generating any code for (denoted by `x-internal`):
 
 ```yaml
@@ -1259,10 +1321,10 @@ actions:
           responses:
             '200':
               description: Perform a ping request
-- target: $.paths.*[?(@.x-internal)]
+- target: $.paths[?@['x-internal']]
   description: Remove internal endpoints (noted by x-internal)
   remove: true
-- target: $.paths.*.*[?(@.x-internal)]
+- target: $.paths.*[?@['x-internal']]
   description: Remove internal endpoints (noted by x-internal)
   remove: true
 ```
@@ -1270,7 +1332,7 @@ actions:
 And our configuration file for `oapi-codegen`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 package: api
 output: ping.gen.go
 generate:
@@ -1494,6 +1556,17 @@ Any other server (which conforms to `net/http`)
 > [!NOTE]
 > It is [not currently possible](https://github.com/oapi-codegen/oapi-codegen/issues/1038) to validate the HTTP response with a middleware.
 
+> [!TIP]
+> A validation middleware decodes the JSON request body to validate it, and the generated handler then decodes it again. Because `encoding/json` matches member names case-insensitively, a body such as `{"role":"user","ROLE":"admin"}` validates as `role: user` but is bound as `Role: "admin"`, bypassing the schema's constraints.
+>
+> [Strict](#strict-server) net/http, Chi, gorilla/mux, Echo, Gin, Iris and Fiber servers avoid the second decode when the middleware keeps the value it validated. `nethttp-middleware` v1.3.1, `echo-middleware` v1.2.1, `echo-v5-middleware` v0.2.1, `gin-middleware` v1.2.1, `iris-middleware` v1.2.1, `fiber-middleware` v1.3.0 and `fiber-v3-middleware` v0.3.0 and later do this by default (opt out with `Options.DiscardValidatedValue`). With an older version, or with your own `openapi3filter` setup, set kin-openapi's `KeepValidatedValue` option, shown here for `nethttp-middleware`:
+>
+>     r.Use(middleware.OapiRequestValidatorWithOptions(spec, &middleware.Options{
+>         Options: openapi3filter.Options{KeepValidatedValue: true},
+>     }))
+>
+> The generated handler then binds the validated value (via `runtime.BindJSONBody` or `runtime.BindJSONValue`, runtime v1.8.0 or later) with exact member-name matching, and only falls back to the framework's decoder when no validated value is present. This requires kin-openapi v0.151.0 or later. Fiber does not run on `net/http`, so the validated value cannot travel on the request body; `fiber-middleware` and `fiber-v3-middleware` store it in the Fiber context under `ValidatedBodyLocalsKey` (`x-oapi-codegen-validated-body`) and the generated strict Fiber handler reads it from there, which means the Fiber middleware versions above are required rather than the `KeepValidatedValue` option alone. See [#2605](https://github.com/oapi-codegen/oapi-codegen/issues/2605).
+
 ## Implementing security
 
 If you're using a specification with [Security Schemes](https://spec.openapis.org/oas/v3.0.3#security-scheme-object) and [Security Requirements](https://spec.openapis.org/oas/v3.0.3#security-requirement-object), you'll want to authenticate and authorize requests.
@@ -1576,7 +1649,7 @@ You can specify, through your configuration file, the `output-options.user-templ
 Within your configuration file, you can specify relative or absolute paths to a file to reference for the template, such as:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 # ...
 output-options:
   user-templates:
@@ -1604,7 +1677,7 @@ It is also possible to use HTTPS URLs.
 To use it, you can use the following configuration:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 # ...
 output-options:
   user-templates:
@@ -1626,7 +1699,7 @@ output-options:
 It's also possible to set the templates inline in the configuration file:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 # ...
 output-options:
   user-templates:
@@ -2024,7 +2097,7 @@ In both cases, there is control on a per-field level to set `x-go-type-skip-opti
 For example, when combining both options:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 package: preferskipoptionalpointerwithomitzero
 output: gen.go
 generate:
@@ -2601,7 +2674,7 @@ By default, `oapi-codegen` will generate everything from the specification.
 If you'd like to reduce what's generated, you can use one of a few options in [the configuration file](#usage) to tune the generation of the resulting output:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 output-options:
   include-tags: []
   exclude-tags: []

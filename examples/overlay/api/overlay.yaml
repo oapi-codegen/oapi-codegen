@@ -20,7 +20,11 @@ actions:
 ####################################################################################################
 # Wildcard/Targeted overlays, via https://github.com/OAI/Overlay-Specification/blob/main/versions/1.0.0.md#examples
 #
-- target: $.paths.*.*[?(!@.servers)]
+# Targets are RFC 9535 JSONPath (https://www.rfc-editor.org/rfc/rfc9535). A filter selects the children of the
+# node it follows that match it, so `$.paths[?@['x-internal']]` selects the path items that have `x-internal`.
+# Names that contain characters such as `-` or `/` must be written in brackets.
+#
+- target: $.paths.*[?!@.servers]
   description: Override the servers
   update:
     servers:
@@ -40,26 +44,26 @@ actions:
   description: Hide information about the Seed parameter
   remove: true
 
-- target: $.components.schemas.*.*.*[?(@.x-internal)]
+- target: $.components.schemas.*.*[?@['x-internal']]
   description: Remove any internal fields on Schemas (noted by x-internal)
   remove: true
 
-- target: $.paths.*.*.requestBody.*.*.schema..[?(@.x-internal)]
+- target: $.paths.*.*.requestBody.*.*.schema..[?@['x-internal']]
   description: Remove any internal fields on request bodies (noted by x-internal)
   remove: true
 
-- target: $.paths.*.*.responses.*.*.*.schema..[?(@.x-internal)]
+- target: $.paths.*.*.responses.*.*.*.schema..[?@['x-internal']]
   description: Remove any internal fields on responses (noted by x-internal)
   remove: true
 
-- target: $.paths.*[?(@.x-internal)]
+- target: $.paths[?@['x-internal']]
   description: Remove internal endpoints (noted by x-internal)
   remove: true
 
-- target: $.paths.*.*[?(@.x-internal)]
+- target: $.paths.*[?@['x-internal']]
   description: Remove internal endpoints (noted by x-internal)
   remove: true
 
-- target: $.paths.*.*[?(@.tags[*] == 'internal')]
+- target: $.paths.*[?@.tags[?@ == 'internal']]
   description: Remove internal endpoints (noted by internal tag)
   remove: true

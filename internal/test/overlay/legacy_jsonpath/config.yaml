@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: legacyjsonpath
+output: legacy_jsonpath.gen.go
+generate:
+  models: true
+  std-http-server: true
+  embedded-spec: true
+compatibility:
+  overlays-use-yaml-jsonpath: true
+output-options:
+  overlay:
+    path: overlay.yaml

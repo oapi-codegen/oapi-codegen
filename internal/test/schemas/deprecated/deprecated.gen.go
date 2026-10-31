@@ -2067,7 +2067,7 @@ func (sh *strictHandler) PostClients(w http.ResponseWriter, r *http.Request) {
 	var request PostClientsRequestObject
 
 	var body PostClientsJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -2122,7 +2122,7 @@ func (sh *strictHandler) PostDeprecatedEndpointWithNonDeprecatedBody(w http.Resp
 	var request PostDeprecatedEndpointWithNonDeprecatedBodyRequestObject
 
 	var body PostDeprecatedEndpointWithNonDeprecatedBodyJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -2206,7 +2206,7 @@ func (sh *strictHandler) PostDeprecatedRequestBody(w http.ResponseWriter, r *htt
 	var request PostDeprecatedRequestBodyRequestObject
 
 	var body PostDeprecatedRequestBodyJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}

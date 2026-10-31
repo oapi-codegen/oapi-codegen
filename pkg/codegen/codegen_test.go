@@ -5,6 +5,7 @@ import (
 	"go/format"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -232,7 +233,10 @@ func TestRemoteExternalReference(t *testing.T) {
 		},
 	}
 	spec := "test_specs/remote-external-reference.yaml"
-	swagger, err := util.LoadSwagger(spec)
+	// Remote references are refused unless the referenced document is allowed.
+	swagger, err := util.LoadSwaggerWithOverlay(spec, util.LoadSwaggerWithOverlayOpts{
+		AllowRemoteRefsFrom: []string{remoteRefFile},
+	})
 	require.NoError(t, err)
 
 	// Run our code generation:
@@ -960,4 +964,247 @@ components:
 `
 	code := generateSpec(t, spec)
 	assert.Equal(t, 1, strings.Count(code, `"time"`), code)
+}
+
+// generateFromSpec loads an inline document, runs code generation with opts and
+// checks that the output is valid Go.
+func generateFromSpec(t *testing.T, spec string, opts Configuration) string {
+	t.Helper()
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	require.NoError(t, err)
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+	_, err = format.Source([]byte(code))
+	require.NoError(t, err, "generated code must be valid Go:\n%s", code)
+	return code
+}
+
+// TestEchoOperationMiddlewareKeyIsQuoted checks that the raw operationId, used
+// as the key into OperationMiddlewares, is emitted through strconv.Quote. A
+// double quote in it used to close the string literal and the rest ran as Go.
+func TestEchoOperationMiddlewareKeyIsQuoted(t *testing.T) {
+	const operationID = `x"]...); panic("code-injection"); //`
+	spec := `openapi: "3.0.0"
+info:
+  title: t
+  version: "1.0"
+paths:
+  /pets:
+    get:
+      operationId: '` + operationID + `'
+      responses:
+        "200":
+          description: OK
+`
+	code := generateFromSpec(t, spec, Configuration{PackageName: "api", Generate: GenerateOptions{EchoServer: true}})
+	assert.Contains(t, code, `options.OperationMiddlewares[`+strconv.Quote(operationID)+`]...)`)
+	assert.NotContains(t, code, `); panic("code-injection"); //"]`)
+}
+
+// TestInitiatorContentTypeIsQuoted checks that a webhook initiator emits the
+// request body's content type through strconv.Quote, as the client does. MIME
+// parameters may legitimately carry quoted strings, and a crafted one used to
+// splice runtime variables into the literal.
+func TestInitiatorContentTypeIsQuoted(t *testing.T) {
+	const contentType = `application/json; x="+targetURL+"`
+	spec := `openapi: "3.1.0"
+info:
+  title: t
+  version: "1.0"
+paths: {}
+webhooks:
+  newResource:
+    post:
+      operationId: createResource
+      requestBody:
+        required: true
+        content:
+          '` + contentType + `':
+            schema:
+              type: object
+      responses:
+        "201":
+          description: Created
+`
+	code := generateFromSpec(t, spec, Configuration{PackageName: "api", Generate: GenerateOptions{Client: true, Models: true}})
+	assert.Contains(t, code, `RequestWithBody(targetURL, `+strconv.Quote(contentType)+`, bodyReader)`)
+	assert.NotContains(t, code, `"application/json; x="+targetURL+""`)
+}
+
+// TestNonStringEnumValuesMustBeLiterals checks that an enum whose Go type is
+// not a string only accepts values that are number or boolean literals, since
+// they are emitted unquoted into the const block.
+func TestNonStringEnumValuesMustBeLiterals(t *testing.T) {
+	spec := func(values string) string {
+		return `openapi: "3.0.0"
+info:
+  title: t
+  version: "1.0"
+paths: {}
+components:
+  schemas:
+    Level:
+      type: integer
+      enum: [` + values + `]
+`
+	}
+	opts := Configuration{PackageName: "api", Generate: GenerateOptions{Models: true}, OutputOptions: OutputOptions{SkipPrune: true}}
+
+	code := generateFromSpec(t, spec("1, 2, 30"), opts)
+	assert.Contains(t, code, "N30 Level = 30")
+
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec(`1, '2 + 0; func init() { panic("code-injection") }; const _ = 3'`)))
+	require.NoError(t, err)
+	_, err = Generate(swagger, opts)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "is not a number or boolean literal")
+}
+
+// TestSecurityScopesAreQuotedIndividually checks that scopes are rendered with
+// strconv.Quote one by one. Joining raw values with `","` let a scope ending in
+// a backslash escape the quote the joiner supplied, so the next scope ran as Go.
+func TestSecurityScopesAreQuotedIndividually(t *testing.T) {
+	spec := `openapi: "3.0.0"
+info:
+  title: t
+  version: "1.0"
+paths:
+  /pets:
+    get:
+      operationId: listPets
+      security:
+        - oauth: ['a\', ',os.Exit(1)//']
+      responses:
+        "200":
+          description: OK
+components:
+  securitySchemes:
+    oauth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://example.com/auth
+          scopes:
+            'a\': first
+            ',os.Exit(1)//': second
+`
+	code := generateFromSpec(t, spec, Configuration{
+		PackageName:   "api",
+		Generate:      GenerateOptions{EchoServer: true},
+		Compatibility: CompatibilityOptions{EnableAuthScopesOnContext: true},
+	})
+	assert.Contains(t, code, `[]string{"a\\", ",os.Exit(1)//"}`)
+	assert.NotContains(t, code, `,os.Exit(1)//"}`+"\n")
+}
+
+func TestChiUnimplementedDocComment(t *testing.T) {
+	opts := Configuration{
+		PackageName: "testswagger",
+		Generate: GenerateOptions{
+			ChiServer: true,
+			Models:    true,
+		},
+	}
+
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(`
+openapi: 3.0.1
+info:
+  title: unimplemented
+  version: 1.0.0
+paths:
+  /ping:
+    get:
+      operationId: ping
+      responses:
+        "200":
+          description: ok
+`))
+	require.NoError(t, err)
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+
+	// The doc comment must be directly attached to the type, with no blank
+	// line in between, so that godoc and gopls render it.
+	assert.Contains(t, code,
+		"// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.\ntype Unimplemented struct{}")
+}
+
+// TestImplicitDiscriminatorMappingKeyIsValidated checks that the name a $ref
+// variant is mapped under when the discriminator has no mapping for it is
+// validated like an explicit mapping key. It is written into the generated
+// union's switch, and the schema name it comes from may otherwise contain a
+// quote.
+func TestImplicitDiscriminatorMappingKeyIsValidated(t *testing.T) {
+	spec := `openapi: "3.0.0"
+info:
+  title: t
+  version: "1.0"
+paths: {}
+components:
+  schemas:
+    Cat:
+      type: object
+      properties:
+        petType: {type: string}
+    'Dog"Name':
+      type: object
+      properties:
+        petType: {type: string}
+    Pet:
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog"Name'
+      discriminator:
+        propertyName: petType
+`
+	opts := Configuration{PackageName: "api", Generate: GenerateOptions{Models: true}, OutputOptions: OutputOptions{SkipPrune: true}}
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	require.NoError(t, err)
+	_, err = Generate(swagger, opts)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `implicit discriminator mapping key for #/components/schemas/Dog"Name`)
+	assert.Contains(t, err.Error(), "double quote")
+
+	// A backslash would start an escape sequence in the generated
+	// `case "Dog\Name":` label, which does not compile.
+	swagger, err = openapi3.NewLoader().LoadFromData([]byte(strings.ReplaceAll(spec, `Dog"Name`, `Dog\Name`)))
+	require.NoError(t, err)
+	_, err = Generate(swagger, opts)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `implicit discriminator mapping key for #/components/schemas/Dog\Name`)
+	assert.Contains(t, err.Error(), "backslash")
+
+	// The allOf merge assembles the same union from a member holding the
+	// variants and another holding the discriminator.
+	split := strings.Replace(spec, `    Pet:
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog"Name'
+      discriminator:
+        propertyName: petType
+`, `    Pet:
+      allOf:
+        - oneOf:
+            - $ref: '#/components/schemas/Cat'
+            - $ref: '#/components/schemas/Dog"Name'
+        - discriminator:
+            propertyName: petType
+`, 1)
+	require.NotEqual(t, spec, split)
+	swagger, err = openapi3.NewLoader().LoadFromData([]byte(split))
+	require.NoError(t, err)
+	_, err = Generate(swagger, opts)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `implicit discriminator mapping key for #/components/schemas/Dog"Name in schema "Pet"`)
+
+	// The v1 merge generates each member on its own: the variants' member
+	// has no discriminator, so no key is derived and the document generates.
+	v1 := opts
+	v1.Compatibility.OldMergeSchemas = true
+	swagger, err = openapi3.NewLoader().LoadFromData([]byte(split))
+	require.NoError(t, err)
+	_, err = Generate(swagger, v1)
+	require.NoError(t, err)
 }

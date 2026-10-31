@@ -3,7 +3,7 @@
 For a Fiber server, you will want a configuration file such as:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
 package: api
 generate:
   fiber-server: true
@@ -126,3 +126,15 @@ func main() {
 
 > [!NOTE]
 > This doesn't include [validation of incoming requests](../README.md#requestresponse-validation-middleware).
+
+## OpenAPI 3.2 custom HTTP methods
+
+If your spec uses the OpenAPI 3.2 `query` operation (HTTP `QUERY`) or `additionalOperations`, the generated code registers those routes with `router.Add`. Fiber only accepts methods listed in its application config, and `RegisterHandlers` is handed an existing `fiber.Router`, so the application must be created with the custom methods enabled or route registration panics with `add: invalid http method`:
+
+```go
+app := fiber.New(fiber.Config{
+	RequestMethods: append(slices.Clone(fiber.DefaultMethods), "QUERY"),
+})
+
+api.RegisterHandlers(app, server)
+```

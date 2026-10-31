@@ -311,7 +311,9 @@ func main() {
 	overlayOpts := util.LoadSwaggerWithOverlayOpts{
 		Path: opts.OutputOptions.Overlay.Path,
 		// default to strict, but can be overridden
-		Strict: true,
+		Strict:              true,
+		LegacyJSONPath:      opts.Compatibility.OverlaysUseYamlJsonpath,
+		AllowRemoteRefsFrom: opts.AllowRemoteRefsFrom,
 	}
 
 	if opts.OutputOptions.Overlay.Strict != nil {

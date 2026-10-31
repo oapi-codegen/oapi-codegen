@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 	"text/template"
 
@@ -357,12 +358,16 @@ func responsesWithHeaders(responses []ResponseDefinition) []ResponseDefinition {
 }
 
 // This outputs a string array
+// toStringArray renders a `[]string{...}` literal. Each element is quoted on
+// its own with strconv.Quote: joining raw values with `","` let a value ending
+// in a backslash escape the quote the joiner supplied, and whatever followed
+// became code.
 func toStringArray(sarr []string) string {
-	s := strings.Join(sarr, `","`)
-	if len(s) > 0 {
-		s = `"` + s + `"`
+	quoted := make([]string, len(sarr))
+	for i, s := range sarr {
+		quoted[i] = strconv.Quote(s)
 	}
-	return `[]string{` + s + `}`
+	return `[]string{` + strings.Join(quoted, ", ") + `}`
 }
 
 // stripNewLines removes newlines so untrusted spec text stays inside a single
@@ -422,6 +427,45 @@ func httpMethodConstant(method string) string {
 	default:
 		return fmt.Sprintf("%q", method)
 	}
+}
+
+// isCustomHTTPMethod reports whether method is one of the OpenAPI 3.2
+// additions to the path item: the fixed `query` field (HTTP QUERY) or any
+// key under `additionalOperations`. The OpenAPI 3.0/3.1 methods all have
+// dedicated registration shortcuts on every supported router
+// (router.Get(...), router.GET(...)), whereas these need the router's
+// generic string-method registration (chi.MethodFunc, echo.Add,
+// gin.Handle, fiber.Add, iris.Handle). net/http and gorilla/mux take the
+// method as a string either way.
+func isCustomHTTPMethod(method string) bool {
+	switch method {
+	case "GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "CONNECT", "OPTIONS", "TRACE":
+		return false
+	default:
+		return true
+	}
+}
+
+// customHTTPMethods returns the distinct custom HTTP methods (see
+// isCustomHTTPMethod) used by ops, sorted, so router templates can emit
+// one-time setup per method (e.g. chi.RegisterMethod) before registering
+// routes. Returns nil when the spec uses only standard methods, so the
+// generated code for existing specs does not change.
+func customHTTPMethods(ops []OperationDefinition) []string {
+	seen := map[string]struct{}{}
+	var methods []string
+	for _, op := range ops {
+		if !isCustomHTTPMethod(op.Method) {
+			continue
+		}
+		if _, ok := seen[op.Method]; ok {
+			continue
+		}
+		seen[op.Method] = struct{}{}
+		methods = append(methods, op.Method)
+	}
+	slices.Sort(methods)
+	return methods
 }
 
 // unionTypesFragment renders the Types field of a runtime bind-options
@@ -506,4 +550,6 @@ var TemplateFunctions = template.FuncMap{
 
 	"genServerURLWithVariablesFunctionParams": genServerURLWithVariablesFunctionParams,
 	"httpMethodConstant":                      httpMethodConstant,
+	"isCustomHTTPMethod":                      isCustomHTTPMethod,
+	"customHTTPMethods":                       customHTTPMethods,
 }

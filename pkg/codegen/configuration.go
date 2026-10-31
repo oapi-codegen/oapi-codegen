@@ -3,6 +3,7 @@ package codegen
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"reflect"
 	"regexp"
 	"sort"
@@ -35,6 +36,13 @@ type Configuration struct {
 	OutputOptions OutputOptions `yaml:"output-options,omitempty"`
 	// ImportMapping specifies the golang package path for each external reference
 	ImportMapping map[string]string `yaml:"import-mapping,omitempty"`
+	// AllowRemoteRefsFrom lists the remote documents that external $refs in
+	// the input specification may be fetched from while it is loaded. Each
+	// entry is the URL of a referenced document exactly as it appears in the
+	// $ref, without the fragment, or "*" to allow every URL. When empty, which
+	// is the default, remote references are refused and only references to
+	// local files are followed.
+	AllowRemoteRefsFrom []string `yaml:"allow-remote-refs-from,omitempty"`
 	// AdditionalImports defines any additional Go imports to add to the generated code
 	AdditionalImports []AdditionalImport `yaml:"additional-imports,omitempty"`
 	// NoVCSVersionOverride allows overriding the version of the application for cases where no Version Control System (VCS) is available when building, for instance when using a Nix derivation.
@@ -46,6 +54,17 @@ type Configuration struct {
 func (o Configuration) Validate() error {
 	if o.PackageName == "" {
 		return errors.New("package name must be specified")
+	}
+
+	for _, entry := range o.AllowRemoteRefsFrom {
+		entry = strings.TrimSpace(entry)
+		if entry == "*" {
+			continue
+		}
+		u, err := url.Parse(entry)
+		if err != nil || u.Scheme == "" || u.Host == "" || u.Fragment != "" || u.RawFragment != "" {
+			return fmt.Errorf("allow-remote-refs-from entries are the URL of a referenced document without its fragment, or \"*\": got %q", entry)
+		}
 	}
 
 	// Only one server type should be specified at a time.
@@ -208,6 +227,7 @@ func (g GenerateOptions) RouterImports() []AdditionalImport {
 		imports = append(imports, AdditionalImport{Package: "github.com/go-chi/chi/v5"})
 	case g.GinServer:
 		imports = append(imports, AdditionalImport{Package: "github.com/gin-gonic/gin"})
+		imports = append(imports, AdditionalImport{Package: "github.com/gin-gonic/gin/binding"})
 	case g.GorillaServer:
 		imports = append(imports, AdditionalImport{Package: "github.com/gorilla/mux"})
 	case g.FiberServer:
@@ -426,6 +446,19 @@ type CompatibilityOptions struct {
 	// old sorted registration order.
 	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/1887
 	SortHandlerRegistrations bool `yaml:"sort-handler-registrations,omitempty"`
+
+	// OverlaysUseYamlJsonpath reads the targets of `output-options.overlay`
+	// actions in the JSONPath dialect used by oapi-codegen before v2.9.0
+	// (yaml-jsonpath), by translating them to RFC 9535. The setting applies
+	// to the whole overlay: by default every target is read as RFC 9535
+	// JSONPath, including targets that are valid in both dialects but mean
+	// something else in each, such as `$.paths.*.*[?(!@.servers)]`; there
+	// is no per-target detection. The translation covers the differences
+	// found in practice, but is not an exact emulation; its known
+	// limitations are documented in the internal/overlay/legacyjsonpath
+	// package.
+	// Please see https://github.com/oapi-codegen/oapi-codegen/issues/2502
+	OverlaysUseYamlJsonpath bool `yaml:"overlays-use-yaml-jsonpath,omitempty"`
 }
 
 // The values of CompatibilityOptions.SchemaMergingBehavior.
@@ -811,6 +844,9 @@ func (m *contentTypeNameTags) TagFor(contentType string) (string, error) {
 }
 
 type OutputOptionsOverlay struct {
+	// Path is the path to the Overlay file. Action targets are RFC 9535
+	// JSONPath expressions; set CompatibilityOptions.OverlaysUseYamlJsonpath
+	// to read all of them in the dialect of earlier versions instead.
 	Path string `yaml:"path"`
 
 	// Strict defines whether the Overlay should be applied in a strict way, highlighting any actions that will not take any effect. This can, however, lead to more work when testing new actions in an Overlay, so can be turned off with this setting.

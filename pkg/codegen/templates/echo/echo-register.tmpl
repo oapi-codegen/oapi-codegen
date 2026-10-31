@@ -13,6 +13,12 @@ type EchoRouter interface {
 	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
 	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
 	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
+{{- if customHTTPMethods .Operations}}
+	// Add registers a route for an arbitrary HTTP method. It is required
+	// because this API uses the OpenAPI 3.2 QUERY method and/or
+	// additionalOperations, which have no dedicated echo shortcut.
+	Add(method, path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
+{{- end}}
 }
 
 // RegisterHandlersOptions configures RegisterHandlersWithOptions.
@@ -47,6 +53,6 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
         Handler: si,
     }
 {{end}}
-{{range .Operations}}router.{{.Method}}(options.BaseURL + {{.Path | swaggerUriToEchoUri | toGoString}}, wrapper.{{.HandlerName}}, options.OperationMiddlewares["{{.MiddlewareKey}}"]...)
+{{range .Operations}}{{if isCustomHTTPMethod .Method}}router.Add({{.Method | toGoString}}, options.BaseURL + {{.Path | swaggerUriToEchoUri | toGoString}}, wrapper.{{.HandlerName}}, options.OperationMiddlewares[{{.MiddlewareKey | toGoString}}]...){{else}}router.{{.Method}}(options.BaseURL + {{.Path | swaggerUriToEchoUri | toGoString}}, wrapper.{{.HandlerName}}, options.OperationMiddlewares[{{.MiddlewareKey | toGoString}}]...){{end}}
 {{end}}
 }

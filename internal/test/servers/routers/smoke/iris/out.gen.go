@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/kataras/iris/v12"
+	"github.com/oapi-codegen/runtime"
 )
 
 // PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody defines body for PostPostMultibody for application/ld+json; profile="https://www.w3.org/ns/activitystreams" ContentType.
@@ -259,7 +260,18 @@ func (sh *strictHandler) PostPostMultibody(ctx iris.Context) {
 	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"") {
 
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
-		if err := ctx.ReadJSON(&body); err != nil {
+		var err error
+		// A request validator built on kin-openapi's openapi3filter with
+		// KeepValidatedValue leaves the value it validated on the body. Bind
+		// that value, matching member names exactly, so the handler receives
+		// what was validated instead of a second, case-insensitive decode.
+		if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+			err = ctx.ReadJSON(&body)
+		} else {
+			// ReadJSON runs the application's validator after decoding; keep that.
+			err = ctx.Application().Validate(&body)
+		}
+		if err != nil {
 			if !errors.Is(err, io.EOF) {
 				ctx.StopWithError(http.StatusBadRequest, err)
 				return
@@ -271,7 +283,18 @@ func (sh *strictHandler) PostPostMultibody(ctx iris.Context) {
 	if strings.HasPrefix(ctx.GetHeader("Content-Type"), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"") {
 
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody
-		if err := ctx.ReadJSON(&body); err != nil {
+		var err error
+		// A request validator built on kin-openapi's openapi3filter with
+		// KeepValidatedValue leaves the value it validated on the body. Bind
+		// that value, matching member names exactly, so the handler receives
+		// what was validated instead of a second, case-insensitive decode.
+		if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+			err = ctx.ReadJSON(&body)
+		} else {
+			// ReadJSON runs the application's validator after decoding; keep that.
+			err = ctx.Application().Validate(&body)
+		}
+		if err != nil {
 			if !errors.Is(err, io.EOF) {
 				ctx.StopWithError(http.StatusBadRequest, err)
 				return
@@ -309,7 +332,18 @@ func (sh *strictHandler) PostPostObject(ctx iris.Context) {
 	var request PostPostObjectRequestObject
 
 	var body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
-	if err := ctx.ReadJSON(&body); err != nil {
+	var err error
+	// A request validator built on kin-openapi's openapi3filter with
+	// KeepValidatedValue leaves the value it validated on the body. Bind
+	// that value, matching member names exactly, so the handler receives
+	// what was validated instead of a second, case-insensitive decode.
+	if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+		err = ctx.ReadJSON(&body)
+	} else {
+		// ReadJSON runs the application's validator after decoding; keep that.
+		err = ctx.Application().Validate(&body)
+	}
+	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			ctx.StopWithError(http.StatusBadRequest, err)
 			return
