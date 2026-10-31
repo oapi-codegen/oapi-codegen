@@ -514,16 +514,16 @@ func TestValidateSpec_ImplicitDiscriminatorMappingKey(t *testing.T) {
 		// Under old-merge-schemas the members are not combined, so the member
 		// with the variants has no discriminator and no key is derived. A
 		// member whose own oneOf and discriminator sit together is still a
-		// discriminated union.
-		globalState.options.Compatibility.OldMergeSchemas = true
-		t.Cleanup(func() { globalState.options.Compatibility.OldMergeSchemas = false })
+		// discriminated union. Generate selects this through validateSpec;
+		// the public ValidateSpec always assumes the default merge.
 		pet := &openapi3.Schema{AllOf: []*openapi3.SchemaRef{variantsMember(), discriminatorMember(nil)}}
-		require.NoError(t, ValidateSpec(spec(components(pet))))
+		require.NoError(t, validateSpec(spec(components(pet)), false))
+		requireImplicitKeyError(t, ValidateSpec(spec(components(pet))))
 
 		pet = &openapi3.Schema{AllOf: []*openapi3.SchemaRef{
 			{Value: union(&openapi3.Discriminator{PropertyName: "petType"}, "#/components/schemas/Cat", "#/components/schemas/"+name)},
 		}}
-		err := ValidateSpec(spec(components(pet)))
+		err := validateSpec(spec(components(pet)), false)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), `implicit discriminator mapping key for #/components/schemas/Dog"Name in allOf[0] in schema "Pet"`)
 	})

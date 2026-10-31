@@ -1100,10 +1100,6 @@ components:
         propertyName: petType
 `
 	opts := Configuration{PackageName: "api", Generate: GenerateOptions{Models: true}, OutputOptions: OutputOptions{SkipPrune: true}}
-	// Generate leaves its options in globalState, which ValidateSpec reads
-	// for the merge behavior; the v1 run below must not leak into other tests.
-	saved := globalState.options
-	t.Cleanup(func() { globalState.options = saved })
 	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
 	require.NoError(t, err)
 	_, err = Generate(swagger, opts)
