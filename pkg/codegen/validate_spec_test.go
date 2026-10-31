@@ -422,6 +422,38 @@ func TestValidateSpec_ImplicitDiscriminatorMappingKey(t *testing.T) {
 		assert.Contains(t, err.Error(), "implicit discriminator mapping key")
 	})
 
+	t.Run("local ref with a backslash in the schema name", func(t *testing.T) {
+		// A backslash starts an escape sequence in the `case "..."` label.
+		name := `Dog\Name`
+		err := ValidateSpec(spec(openapi3.Schemas{
+			name:  variant(),
+			"Pet": {Value: union(&openapi3.Discriminator{PropertyName: "petType"}, "#/components/schemas/"+name)},
+		}))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "implicit discriminator mapping key")
+		assert.Contains(t, err.Error(), "backslash")
+	})
+
+	t.Run("explicit mapping key with a backslash", func(t *testing.T) {
+		d := &openapi3.Discriminator{PropertyName: "petType", Mapping: map[string]openapi3.MappingRef{
+			`dog\x`: {Ref: "#/components/schemas/Cat"},
+		}}
+		err := ValidateSpec(spec(openapi3.Schemas{"Cat": variant(), "Pet": {Value: union(d, "#/components/schemas/Cat")}}))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "discriminator mapping key")
+		assert.Contains(t, err.Error(), "backslash")
+	})
+
+	t.Run("null branch is a nullability marker, not a key", func(t *testing.T) {
+		// The union generators skip a null-typed branch before mapping, so
+		// its name never reaches the generated code (OpenAPI 3.1).
+		name := `Null"Value`
+		null := &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"null"}}}
+		s := union(&openapi3.Discriminator{PropertyName: "petType"}, "#/components/schemas/Cat")
+		s.OneOf = append(s.OneOf, &openapi3.SchemaRef{Ref: "#/components/schemas/" + name, Value: null.Value})
+		require.NoError(t, ValidateSpec(spec(openapi3.Schemas{"Cat": variant(), name: null, "Pet": {Value: s}})))
+	})
+
 	t.Run("explicitly mapped ref uses the mapping key instead", func(t *testing.T) {
 		name := `Dog"Name`
 		d := &openapi3.Discriminator{PropertyName: "petType", Mapping: map[string]openapi3.MappingRef{

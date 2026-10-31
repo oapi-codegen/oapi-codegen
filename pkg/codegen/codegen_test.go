@@ -1009,4 +1009,13 @@ components:
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `implicit discriminator mapping key for #/components/schemas/Dog"Name`)
 	assert.Contains(t, err.Error(), "double quote")
+
+	// A backslash would start an escape sequence in the generated
+	// `case "Dog\Name":` label, which does not compile.
+	swagger, err = openapi3.NewLoader().LoadFromData([]byte(strings.ReplaceAll(spec, `Dog"Name`, `Dog\Name`)))
+	require.NoError(t, err)
+	_, err = Generate(swagger, opts)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `implicit discriminator mapping key for #/components/schemas/Dog\Name`)
+	assert.Contains(t, err.Error(), "backslash")
 }
