@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: wholefileunion
+output: union.gen.go
+generate:
+  models: true
