@@ -148,7 +148,7 @@
         },
         "overlays-use-yaml-jsonpath": {
           "type": "boolean",
-          "description": "Accepts the targets of `output-options.overlay` actions in the JSONPath dialect used by oapi-codegen before v2.9.0 (yaml-jsonpath), by translating them to RFC 9535. By default targets are RFC 9535 JSONPath. The translation covers the differences found in practice, but is not an exact emulation; its known limitations are documented in the internal/overlay/legacyjsonpath package.\nPlease see https://github.com/oapi-codegen/oapi-codegen/issues/2502"
+          "description": "Reads the targets of `output-options.overlay` actions in the JSONPath dialect used by oapi-codegen before v2.9.0 (yaml-jsonpath), by translating them to RFC 9535. The setting applies to the whole overlay: by default every target is read as RFC 9535 JSONPath, including targets that are valid in both dialects but mean something else in each; there is no per-target detection. The translation covers the differences found in practice, but is not an exact emulation; its known limitations are documented in the internal/overlay/legacyjsonpath package.\nPlease see https://github.com/oapi-codegen/oapi-codegen/issues/2502"
         }
       }
     },

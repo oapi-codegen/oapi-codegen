@@ -64,7 +64,7 @@ compatibility:
   headers-implicitly-required: false
   enable-auth-scopes-on-context: false
   sort-handler-registrations: false
-  overlays-use-yaml-jsonpath: false  # read overlay targets in the pre-v2.9.0 JSONPath dialect instead of RFC 9535
+  overlays-use-yaml-jsonpath: false  # read every overlay target in the pre-v2.9.0 JSONPath dialect instead of RFC 9535 (whole overlay, no per-target detection)
 
 # Output modification options
 # See <a href="https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen#OutputOptions">OutputOptions</a>
