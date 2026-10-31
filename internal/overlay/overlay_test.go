@@ -40,9 +40,18 @@ func TestParseAndValidate(t *testing.T) {
 			wantErrs: []string{"overlay version must be defined", "overlay info title must be defined", "overlay info version must be defined", "overlay must define at least one action"},
 		},
 		{
+			name:    "version 1.1.0 is accepted",
+			overlay: "overlay: 1.1.0\ninfo: {title: t, version: v}\nactions: [{target: $, update: {}}]\n",
+		},
+		{
 			name:     "unsupported version",
-			overlay:  "overlay: 1.1.0\ninfo: {title: t, version: v}\nactions: [{target: $, update: {}}]\n",
-			wantErrs: []string{`overlay version "1.1.0" is not supported: it must be 1.0.x`},
+			overlay:  "overlay: 1.2.0\ninfo: {title: t, version: v}\nactions: [{target: $, update: {}}]\n",
+			wantErrs: []string{`overlay version "1.2.0" is not supported: it must be 1.0.x or 1.1.x`},
+		},
+		{
+			name:     "copy actions are not supported",
+			overlay:  "overlay: 1.1.0\ninfo: {title: t, version: v}\nactions: [{target: $.a, copy: $.b}]\n",
+			wantErrs: []string{"overlay action at index 0 uses copy, which is not supported"},
 		},
 		{
 			name:     "not a version",

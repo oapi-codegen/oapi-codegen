@@ -122,6 +122,11 @@ func parseAction(i int, v any) Action {
 	a.Target, a.errs = stringField(m, "target", what+" target", a.errs)
 	a.Description, a.errs = scalarField(m, "description", what+" description", a.errs)
 	a.Update, a.HasUpdate = m["update"]
+	if _, has := m["copy"]; has {
+		// Overlay 1.1.0 drafts add a copy action; the previous implementation
+		// accepted the version without applying it in oapi-codegen's flow.
+		a.errs = append(a.errs, fmt.Errorf("%s uses copy, which is not supported", what))
+	}
 	switch r := m["remove"].(type) {
 	case nil:
 	case bool:
@@ -158,7 +163,10 @@ func scalarField(m map[string]any, key, what string, errs []error) (string, []er
 	}
 }
 
-var supportedVersion = regexp.MustCompile(`^1\.0\.\d+$`)
+// supportedVersion accepts Overlay 1.0.x, and 1.1.x for documents written for
+// the previous implementation, which took "1.1.0" to mean RFC 9535 targets:
+// what every overlay gets here.
+var supportedVersion = regexp.MustCompile(`^1\.[01]\.\d+$`)
 
 // Validate checks the overlay against the Overlay 1.0.0 specification and
 // returns every problem it finds, joined into one error.
@@ -168,7 +176,7 @@ func (o *Overlay) Validate() error {
 	case o.Version == "":
 		errs = append(errs, errors.New("overlay version must be defined"))
 	case !supportedVersion.MatchString(o.Version):
-		errs = append(errs, fmt.Errorf("overlay version %q is not supported: it must be 1.0.x", o.Version))
+		errs = append(errs, fmt.Errorf("overlay version %q is not supported: it must be 1.0.x or 1.1.x", o.Version))
 	}
 	if o.Info.Title == "" {
 		errs = append(errs, errors.New("overlay info title must be defined"))
