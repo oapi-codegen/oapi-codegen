@@ -545,7 +545,89 @@ func (v *specValidator) walkSchemaRef(ref *openapi3.SchemaRef, where string) {
 	if ref.Value == nil || !v.descend(ref.Ref, ref.Value) {
 		return
 	}
+	// An x-go-type next to a whole-document ref, or at the root of the
+	// document it points at, replaces the document: generateGoSchema returns
+	// the override before it reads any of the document's contents, so none
+	// of them reach the generated code. Only the root's own extensions are
+	// checked then. An inline schema with x-go-type has always been walked
+	// in full, and still is.
+	if ref.Ref != "" {
+		if _, overridden := combinedSchemaExtensions(ref)[extPropGoType]; overridden {
+			v.checkExtensions(ref.Value.Extensions, where)
+			return
+		}
+	}
 	v.walkSchema(ref.Value, where)
+}
+
+// unionView is the discriminated union a schema describes once its allOf, if
+// any, has been merged: every discriminator and every oneOf/anyOf variant
+// found on the schema itself or on any member, through nested allOf and
+// through $ref members, which the merge resolves. The merge concatenates the
+// members' oneOf and anyOf lists and lets the one member that declares a
+// discriminator govern the result, so a $ref variant from one member and a
+// discriminator from another form a discriminated union that neither member
+// shows on its own.
+type unionView struct {
+	discriminators []*openapi3.Discriminator
+	variants       []*openapi3.SchemaRef
+}
+
+// collectUnionView gathers s's unionView. seen stops at a composition that
+// refers back to itself.
+func collectUnionView(s *openapi3.Schema, view *unionView, seen map[*openapi3.Schema]bool) {
+	if s == nil || seen[s] {
+		return
+	}
+	seen[s] = true
+	if s.Discriminator != nil {
+		view.discriminators = append(view.discriminators, s.Discriminator)
+	}
+	view.variants = append(view.variants, s.OneOf...)
+	view.variants = append(view.variants, s.AnyOf...)
+	for _, member := range s.AllOf {
+		if member != nil {
+			collectUnionView(member.Value, view, seen)
+		}
+	}
+}
+
+// checkImplicitMappingKeys validates the discriminator mapping keys the union
+// generators derive rather than read from the spec. A $ref variant the mapping
+// does not name is mapped implicitly, under the last segment of its ref (the
+// schema's name), and that key is written into the generated code exactly
+// like an explicit one. The name itself is otherwise allowed to contain quotes
+// (see walkComponents), and a ref into another document names a schema this
+// walk never sees, so the derived key is checked here. A null-typed branch is
+// a nullability marker the union generators skip before mapping, so it never
+// becomes a key.
+//
+// The variants and the discriminator are taken from the schema's unionView,
+// so a union the allOf merge assembles from several members is checked too.
+// A $ref member's own union is also validated where it is defined; here it
+// is seen as part of the composition it is merged into.
+func (v *specValidator) checkImplicitMappingKeys(s *openapi3.Schema, where string) {
+	var view unionView
+	collectUnionView(s, &view, map[*openapi3.Schema]bool{})
+	if len(view.discriminators) == 0 {
+		return
+	}
+	for _, variant := range view.variants {
+		if variant == nil || variant.Ref == "" || isNullTypeSchema(variant.Value) {
+			continue
+		}
+		explicit := false
+		for _, d := range view.discriminators {
+			if mappedExplicitly(d, variant.Ref) {
+				explicit = true
+				break
+			}
+		}
+		if explicit {
+			continue
+		}
+		v.checkDiscriminatorValue(RefPathToObjName(variant.Ref), fmt.Sprintf("implicit discriminator mapping key for %s in %s", variant.Ref, where))
+	}
 }
 
 func (v *specValidator) walkSchema(s *openapi3.Schema, where string) {
@@ -571,23 +653,8 @@ func (v *specValidator) walkSchema(s *openapi3.Schema, where string) {
 		for _, key := range SortedMapKeys(s.Discriminator.Mapping) {
 			v.checkDiscriminatorValue(key, "discriminator mapping key in "+where)
 		}
-		// A $ref variant the mapping does not name is mapped implicitly, under
-		// the last segment of its ref (the schema's name), and that key is
-		// written into the generated code exactly like an explicit one. The
-		// name itself is otherwise allowed to contain quotes (see
-		// walkComponents), and a ref into another document names a schema
-		// this walk never sees, so the derived key is checked here. A
-		// null-typed branch is a nullability marker the union generators skip
-		// before mapping, so it never becomes a key.
-		for _, variants := range [][]*openapi3.SchemaRef{s.OneOf, s.AnyOf} {
-			for _, variant := range variants {
-				if variant == nil || variant.Ref == "" || isNullTypeSchema(variant.Value) || mappedExplicitly(s.Discriminator, variant.Ref) {
-					continue
-				}
-				v.checkDiscriminatorValue(RefPathToObjName(variant.Ref), fmt.Sprintf("implicit discriminator mapping key for %s in %s", variant.Ref, where))
-			}
-		}
 	}
+	v.checkImplicitMappingKeys(s, where)
 	for _, name := range SortedMapKeys(s.Properties) {
 		v.checkText(name, "property name in "+where)
 		v.walkSchemaRef(s.Properties[name], fmt.Sprintf("property %q in %s", name, where))

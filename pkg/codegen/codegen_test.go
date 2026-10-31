@@ -1018,4 +1018,27 @@ components:
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), `implicit discriminator mapping key for #/components/schemas/Dog\Name`)
 	assert.Contains(t, err.Error(), "backslash")
+
+	// The allOf merge assembles the same union from a member holding the
+	// variants and another holding the discriminator.
+	split := strings.Replace(spec, `    Pet:
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog"Name'
+      discriminator:
+        propertyName: petType
+`, `    Pet:
+      allOf:
+        - oneOf:
+            - $ref: '#/components/schemas/Cat'
+            - $ref: '#/components/schemas/Dog"Name'
+        - discriminator:
+            propertyName: petType
+`, 1)
+	require.NotEqual(t, spec, split)
+	swagger, err = openapi3.NewLoader().LoadFromData([]byte(split))
+	require.NoError(t, err)
+	_, err = Generate(swagger, opts)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `implicit discriminator mapping key for #/components/schemas/Dog"Name in schema "Pet"`)
 }
