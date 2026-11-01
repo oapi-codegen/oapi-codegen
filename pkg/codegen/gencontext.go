@@ -47,6 +47,12 @@ type genContext struct {
 	// changing that would rename nested types across every spec.
 	nameHint []string
 
+	// unionBranch marks the schema being generated as a branch of a oneOf or
+	// anyOf, which names that branch after its path. An array branch hands
+	// its inline-enum items a path of their own then, so the items' enum does
+	// not take the branch's name (issue #2640).
+	unionBranch bool
+
 	// rootPosition marks the top of a components/schemas entry, where
 	// GenerateTypesForSchemas defines the type under a name renameSchema
 	// chooses rather than one derived from the path. A composition there
@@ -165,6 +171,7 @@ func newRootGenContext(nameHint []string) genContext {
 func (ctx genContext) at(nameHint []string) genContext {
 	ctx.nameHint = slices.Clone(nameHint)
 	ctx.rootPosition = false
+	ctx.unionBranch = false
 	return ctx
 }
 
