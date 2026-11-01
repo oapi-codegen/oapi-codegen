@@ -1726,7 +1726,15 @@ func oapiSchemaToGoType(ctx genContext, schema *openapi3.Schema, path []string, 
 		// For arrays, we'll get the type of the Items and throw a
 		// [] in front of it.
 		itemHint := append(slices.Clone(path), "Item")
-		arrayType, err := generateGoSchema(ctx.at(itemHint), schema.Items, path)
+		itemPath := path
+		if ctx.unionBranch && schema.Items != nil && schema.Items.Ref == "" && schema.Items.Value != nil &&
+			len(schema.Items.Value.Enum) > 0 {
+			// The union names this array branch after path, and an inline
+			// enum is named after its path too: give the items' enum its own.
+			itemPath = itemHint
+		}
+		itemCtx := ctx.at(itemHint)
+		arrayType, err := generateGoSchema(itemCtx, schema.Items, itemPath)
 		if err != nil {
 			return fmt.Errorf("error generating type for array: %w", err)
 		}

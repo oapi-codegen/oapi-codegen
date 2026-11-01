@@ -81,7 +81,9 @@ func generateUnions(ctx genContext, outSchema *Schema, schema *openapi3.Schema, 
 // that name in outSchema's additional types unless it generated as that named
 // type already, along with the types it brings.
 func generateUnionElement(ctx genContext, outSchema *Schema, element *openapi3.SchemaRef, elementPath []string) (Schema, error) {
-	elementSchema, err := generateGoSchema(ctx.at(elementPath), element, elementPath)
+	elementCtx := ctx.at(elementPath)
+	elementCtx.unionBranch = element.Ref == ""
+	elementSchema, err := generateGoSchema(elementCtx, element, elementPath)
 	if err != nil {
 		return Schema{}, err
 	}
