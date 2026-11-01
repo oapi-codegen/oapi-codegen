@@ -86,3 +86,60 @@ components:
 	require.Regexp(t, `Roles \*\[\]Choice0Roles `, code)
 	require.NotContains(t, code, "Choice0RolesItem")
 }
+
+func TestUnionArrayBranchExplicitEnumNameLegacyConstants(t *testing.T) {
+	const spec = `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths: {}
+components:
+  schemas:
+    Choice:
+      oneOf:
+        - {type: string}
+        - {type: array, items: {type: string, enum: [admin, viewer], x-go-type-name: Role}}
+`
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	require.NoError(t, err)
+	code, err := Generate(swagger, Configuration{
+		PackageName:   "api",
+		Generate:      GenerateOptions{Models: true},
+		OutputOptions: OutputOptions{SkipPrune: true},
+		Compatibility: CompatibilityOptions{OldEnumConflicts: true},
+	})
+	require.NoError(t, err)
+	require.Regexp(t, `(?m)^\s*Choice1Admin\s+Role\s*=`, code)
+	require.Regexp(t, `(?m)^\s*Choice1Viewer\s+Role\s*=`, code)
+	require.NotContains(t, code, "Choice1ItemAdmin")
+}
+
+func TestUnionArrayBranchOfOpenAPI31InlineEnums(t *testing.T) {
+	for _, tc := range []struct{ name, items string }{
+		{"const", "type: string, const: admin"},
+		{"oneOf", "oneOf: [{title: Admin, const: admin}, {title: Viewer, const: viewer}]"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			spec := `
+openapi: 3.1.0
+info: {title: t, version: "1"}
+paths: {}
+components:
+  schemas:
+    Choice:
+      oneOf:
+        - {type: string}
+        - {type: array, items: {` + tc.items + `}}
+`
+			swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+			require.NoError(t, err)
+			code, err := Generate(swagger, Configuration{
+				PackageName:   "api",
+				Generate:      GenerateOptions{Models: true},
+				OutputOptions: OutputOptions{SkipPrune: true},
+			})
+			require.NoError(t, err)
+			require.Regexp(t, `(?m)^type Choice1 = ?\[\]Choice1Item$`, code)
+			require.Regexp(t, `(?m)^type Choice1Item string$`, code)
+		})
+	}
+}

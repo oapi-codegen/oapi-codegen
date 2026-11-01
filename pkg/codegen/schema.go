@@ -1727,11 +1727,23 @@ func oapiSchemaToGoType(ctx genContext, schema *openapi3.Schema, path []string, 
 		// [] in front of it.
 		itemHint := append(slices.Clone(path), "Item")
 		itemPath := path
-		if ctx.unionBranch && schema.Items != nil && schema.Items.Ref == "" && schema.Items.Value != nil &&
-			len(schema.Items.Value.Enum) > 0 {
-			// The union names this array branch after path, and an inline
-			// enum is named after its path too: give the items' enum its own.
-			itemPath = itemHint
+		if ctx.unionBranch && schema.Items != nil && schema.Items.Ref == "" && schema.Items.Value != nil {
+			items := schema.Items.Value
+			extensions := combinedSchemaExtensions(schema.Items)
+			if _, named := extensions[extGoTypeName]; !named {
+				_, overridden := extensions[extPropGoType]
+				var oneOfEnum []enumViaOneOfValue
+				if !overridden && items.AllOf == nil {
+					oneOfEnum, _, _ = detectEnumViaOneOf(items)
+				}
+				itemType := schemaPrimaryType(items.Type)
+				isConst := globalState.is31 && items.Const != nil && !overridden && items.AllOf == nil &&
+					itemType.Slice() != nil && !itemType.Is("object") && !itemType.Is("array") && !isMultiTypeUnion(itemType)
+				if len(items.Enum) > 0 || isConst || oneOfEnum != nil {
+					// The branch and its inline enum would otherwise share a name.
+					itemPath = itemHint
+				}
+			}
 		}
 		itemCtx := ctx.at(itemHint)
 		arrayType, err := generateGoSchema(itemCtx, schema.Items, itemPath)
