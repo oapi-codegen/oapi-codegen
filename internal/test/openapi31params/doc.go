@@ -3,7 +3,7 @@
 // lowering of unions to `any` is covered in the sibling openapi31 suite;
 // this suite generates a std-http server and client so the emitted
 // bind-option Types lists are exercised against the real runtime binder
-// (runtime >= v1.7.0), in path, query, and header positions:
+// (runtime >= v1.7.0), in path, query, header, and response header positions:
 //
 //   - the value binds to the first union member that parses, trying
 //     boolean, integer, number, then string — so "42" arrives as int64(42)
