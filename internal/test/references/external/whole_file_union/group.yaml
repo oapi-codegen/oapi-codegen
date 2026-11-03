@@ -1,0 +1,5 @@
+# From issue-2639: a whole file used as a union branch.
+type: object
+properties:
+  id:
+    type: integer
