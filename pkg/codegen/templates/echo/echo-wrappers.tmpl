@@ -1,10 +1,10 @@
-// ServerInterfaceWrapper converts echo contexts to parameters.
-type ServerInterfaceWrapper struct {
-    Handler ServerInterface
+// {{names.ServerInterfaceWrapper}} converts echo contexts to parameters.
+type {{names.ServerInterfaceWrapper}} struct {
+    Handler {{names.ServerInterface}}
 }
 
 {{range .}}{{$opid := .OperationId}}{{if not .IsAlias}}// {{$opid}} converts echo context to params.
-func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx {{block "echo.ctxType" .}}echo.Context{{end}}) error {
+func (w *{{names.ServerInterfaceWrapper}}) {{.OperationId}} (ctx {{block "echo.ctxType" .}}echo.Context{{end}}) error {
     var err error
 {{range .PathParams}}// ------------- Path parameter "{{.ParamName}}" -------------
     var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}

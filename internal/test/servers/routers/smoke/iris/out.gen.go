@@ -84,7 +84,7 @@ func (w *ServerInterfaceWrapper) PostPostObject(ctx iris.Context) {
 	w.Handler.PostPostObject(ctx)
 }
 
-// IrisServerOption is the option for iris server
+// IrisServerOptions is the option for iris server
 type IrisServerOptions struct {
 	BaseURL     string
 	Middlewares []MiddlewareFunc

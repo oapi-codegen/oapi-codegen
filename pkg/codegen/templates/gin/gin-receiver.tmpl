@@ -1,9 +1,9 @@
-// {{.Prefix}}ReceiverInterface represents handlers for receiving inbound
+// {{names.Prefix}}{{.Prefix}}ReceiverInterface represents handlers for receiving inbound
 // {{.PrefixLower}} requests. Each {{.PrefixLower}} becomes a Handle*{{.Prefix}}
 // method that the implementation fills in. The caller mounts the per-
 // {{.PrefixLower}} gin.HandlerFunc returned by {Op}{{.Prefix}}Handler at
 // whatever URL path they advertise to senders.
-type {{.Prefix}}ReceiverInterface interface {
+type {{names.Prefix}}{{.Prefix}}ReceiverInterface interface {
 {{range .Operations -}}
 {{.SummaryAsComment ""}}
 // Handle{{.OperationId}}{{$.Prefix}} handles the {{.Method}} {{$.PrefixLower}} for {{.SourceName}}.
@@ -20,7 +20,7 @@ Handle{{.OperationId}}{{$.Prefix}}(c *gin.Context{{if .RequiresParamObject}}, pa
 // of the form {"error": "..."}. Engine-level middleware can be applied
 // via gin.Engine.Use(); per-handler middleware is not generated here
 // (gin's idiom prefers route-group / engine .Use composition).
-func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface) gin.HandlerFunc {
+func {{$opid}}{{$.Prefix}}Handler(si {{names.Prefix}}{{$.Prefix}}ReceiverInterface) gin.HandlerFunc {
     return func(c *gin.Context) {
 {{- if .RequiresParamObject}}
         var err error

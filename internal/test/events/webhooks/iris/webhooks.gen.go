@@ -306,7 +306,7 @@ type ServerInterfaceWrapper struct {
 
 type MiddlewareFunc iris.Handler
 
-// IrisServerOption is the option for iris server
+// IrisServerOptions is the option for iris server
 type IrisServerOptions struct {
 	BaseURL     string
 	Middlewares []MiddlewareFunc

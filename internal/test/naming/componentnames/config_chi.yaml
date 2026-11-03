@@ -1,0 +1,15 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: namingcomponentnames
+output: componentnames_chi.gen.go
+# A second generation run from the same spec into the same Go package. Every
+# fixed name it emits -- including the unexported swaggerSpec, rawSpec,
+# decodeSpec and decodeSpecCached -- would collide with the run above were it
+# not for the differing prefix. `models` stays off: the operation-derived
+# types (GetThingParams, ...) are declared once, by the config above.
+generate:
+  chi-server: true
+  embedded-spec: true
+output-options:
+  component-names:
+    prefix: Admin
+    unimplemented: NotImplementedYet

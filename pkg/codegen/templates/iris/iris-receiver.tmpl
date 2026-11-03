@@ -1,9 +1,9 @@
-// {{.Prefix}}ReceiverInterface represents handlers for receiving inbound
+// {{names.Prefix}}{{.Prefix}}ReceiverInterface represents handlers for receiving inbound
 // {{.PrefixLower}} requests. Each {{.PrefixLower}} becomes a Handle*{{.Prefix}}
 // method that the implementation fills in. The caller mounts the per-
 // {{.PrefixLower}} iris.Handler returned by {Op}{{.Prefix}}Handler at
 // whatever URL path they advertise to senders.
-type {{.Prefix}}ReceiverInterface interface {
+type {{names.Prefix}}{{.Prefix}}ReceiverInterface interface {
 {{range .Operations -}}
 {{.SummaryAsComment ""}}
 // Handle{{.OperationId}}{{$.Prefix}} handles the {{.Method}} {{$.PrefixLower}} for {{.SourceName}}.
@@ -19,7 +19,7 @@ Handle{{.OperationId}}{{$.Prefix}}(ctx iris.Context{{if .RequiresParamObject}}, 
 // Parameter-binding errors set status 400 with a plain-text reason.
 // Per-handler middleware is not generated; iris's idiom prefers
 // app.Use() / Party-level middleware.
-func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface) iris.Handler {
+func {{$opid}}{{$.Prefix}}Handler(si {{names.Prefix}}{{$.Prefix}}ReceiverInterface) iris.Handler {
     return func(ctx iris.Context) {
 {{- if .RequiresParamObject}}
         var err error

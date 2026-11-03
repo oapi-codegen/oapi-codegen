@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: namingcomponentnames
+output: componentnames.gen.go
+# Every generator that declares fixed component names is on, so that a name
+# the templates still hardcode fails to compile rather than going unnoticed.
+generate:
+  models: true
+  client: true
+  std-http-server: true
+  strict-server: true
+  embedded-spec: true
+output-options:
+  component-names:
+    # The prefix is prepended to every resolved name, the explicit overrides
+    # below included: `client: API` resolves to `PetStoreAPI`, not `API`.
+    prefix: PetStore
+    client: API
+    server-interface: Server
+    strict-server-interface: StrictServer
+    handler: Mux
+    get-swagger: LoadSwagger
+    get-spec: LoadSpec
+    errors:
+      required-param-error: MissingQueryParam
+    stdhttp:
+      serve-mux: Router
