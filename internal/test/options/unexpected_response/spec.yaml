@@ -1,0 +1,52 @@
+# ==========================================================================
+# Category: options/unexpected_response  (shared spec for the enabled/ + skipped/ sub-packages)
+# Tests:    the client-response-error-on-unexpected-response output option.
+#
+# Both sub-packages generate client+models from THIS spec; only the
+# client-response-error-on-unexpected-response flag differs. They live in
+# separate Go packages because each emits the same client infrastructure
+# (Client, GetThingResponse, ParseGetThingResponse, ...) which would collide
+# in one package.
+#
+# The spec deliberately declares only a 200 response, so any other status code
+# (or an unexpected content-type on 200) is "unexpected" and exercises the
+# generated default case.
+# ==========================================================================
+openapi: "3.0.0"
+info:
+  version: "1.0.0"
+  title: unexpected_response
+  description: |
+    Example for the client-response-error-on-unexpected-response output option:
+    GET /things/{id} declares only a 200 (Thing) response, so ParseGetThingResponse
+    has a single case in its response switch.
+paths:
+  /things/{id}:
+    get:
+      summary: Get a thing by id
+      operationId: getThing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: a thing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Thing'
+components:
+  schemas:
+    Thing:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
