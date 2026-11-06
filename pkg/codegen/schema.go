@@ -1649,19 +1649,29 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 		if len(enumSource) == 0 {
 			enumSource = []any{schema.Const}
 		}
-		enumValues := make([]string, len(enumSource))
-		for i, enumValue := range enumSource {
-			enumValues[i] = fmt.Sprintf("%v", enumValue)
-		}
-
-		enumNames := enumValues
+		var extNames []string
 		for _, key := range []string{extEnumVarNames, extEnumNames} {
 			if extension, ok := extensions[key]; ok {
 				if extEnumNames, err := extParseEnumVarNames(extension); err == nil {
-					enumNames = extEnumNames
+					extNames = extEnumNames
 					break
 				}
 			}
+		}
+
+		var enumNames, enumValues []string
+		for i, enumValue := range enumSource {
+			// A non-string enum has no literal for null; the pointer or nullable field carries it.
+			if enumValue == nil && outSchema.GoType != "string" {
+				continue
+			}
+			value := fmt.Sprintf("%v", enumValue)
+			name := value
+			if i < len(extNames) {
+				name = extNames[i]
+			}
+			enumValues = append(enumValues, value)
+			enumNames = append(enumNames, name)
 		}
 
 		sanitizedValues := SanitizeEnumNames(enumNames, enumValues)
