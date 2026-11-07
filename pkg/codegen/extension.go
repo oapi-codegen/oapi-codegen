@@ -29,6 +29,7 @@ const (
 	extEnumVarNames      = "x-enum-varnames"
 	extEnumNames         = "x-enumNames"
 	extDeprecationReason = "x-deprecated-reason"
+	extStabilityLevel    = "x-stability-level"
 	extOrder             = "x-order"
 	// extOapiCodegenEnumMerge chooses how schema-merging-behavior v3 merges
 	// the enums of an allOf's members: "intersection", the default, allows
