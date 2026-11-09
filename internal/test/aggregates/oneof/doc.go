@@ -6,6 +6,7 @@
 // Folds in:
 //   - issues/issue-1530 (discriminator)            -> config_discriminator.yaml / spec_discriminator.yaml
 //   - issues/issue-970  (union response, strict)   -> config_union.yaml / spec_union.yaml
+//   - issue #2549 (allOf-union and additionalProperties responses, strict) -> config_union.yaml / spec_union.yaml
 //   - components/components.yaml (oneOf+anyOf)      -> config_components.yaml / spec_components.yaml
 package aggregatesoneof
 

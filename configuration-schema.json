@@ -78,7 +78,13 @@
       "properties": {
         "old-merge-schemas": {
           "type": "boolean",
-          "description": "In the past, we merged schemas for `allOf` by inlining each schema within the schema list. This approach, though, is incorrect because `allOf` merges at the schema definition level, not at the resulting model level. So, new behavior merges OpenAPI specs but generates different code than we have in the past. Set OldMergeSchemas to true for the old behavior. Please see https://github.com/oapi-codegen/oapi-codegen/issues/531"
+          "deprecated": true,
+          "description": "Deprecated: set `schema-merging-behavior: v1` instead, which this is an alias for. In the past, we merged schemas for `allOf` by inlining each schema within the schema list. This approach, though, is incorrect because `allOf` merges at the schema definition level, not at the resulting model level. So, new behavior merges OpenAPI specs but generates different code than we have in the past. Set OldMergeSchemas to true for the old behavior. Please see https://github.com/oapi-codegen/oapi-codegen/issues/531"
+        },
+        "schema-merging-behavior": {
+          "type": "string",
+          "enum": ["v1", "v2", "v3"],
+          "description": "Selects how schemas composed with `allOf` are merged into Go types, and how `anyOf` and `oneOf` are turned into Go unions. `v1`: `allOf` members that are `$ref`s are embedded in the Go struct and the fields of inline members are inlined, while `anyOf`/`oneOf` are handled as in `v2`; the only behavior before v1.11.0, and what `old-merge-schemas: true` is an alias for. `v2`: `allOf` members are merged keyword by keyword into one Go type, and `anyOf`/`oneOf` become a union type with `As*`, `From*` and `Merge*` methods; the default since v1.11.0. `v3`: `allOf` members are merged by what `allOf` means, and members no value can match are an error; unions model more of the spec. Added in v2.9.0 as an option; it becomes the default after at least one release as an option. Leaving it unset means `v2`. See https://github.com/oapi-codegen/oapi-codegen/blob/main/docs/schema-merging.md"
         },
         "old-allof-sibling-merging": {
           "type": "boolean",
@@ -139,6 +145,10 @@
         "sort-handler-registrations": {
           "type": "boolean",
           "description": "Restores the historical behavior of registering generated route handlers in sorted (lexicographic, by path then method) order. By default handlers are registered in the order their paths are declared in the spec, so that on routers which match in registration order (e.g. Fiber, Gorilla/mux) overlapping paths can be disambiguated by ordering them in the spec. Set this to true to opt out and go back to the old sorted registration order.\nPlease see https://github.com/oapi-codegen/oapi-codegen/issues/1887"
+        },
+        "overlays-use-yaml-jsonpath": {
+          "type": "boolean",
+          "description": "Reads the targets of `output-options.overlay` actions in the JSONPath dialect used by oapi-codegen before v2.9.0 (yaml-jsonpath), by translating them to RFC 9535. The setting applies to the whole overlay: by default every target is read as RFC 9535 JSONPath, including targets that are valid in both dialects but mean something else in each; there is no per-target detection. The translation covers the differences found in practice, but is not an exact emulation; its known limitations are documented in the internal/overlay/legacyjsonpath package.\nPlease see https://github.com/oapi-codegen/oapi-codegen/issues/2502"
         }
       }
     },
@@ -162,6 +172,11 @@
         "skip-enum-via-oneof": {
           "type": "boolean",
           "description": "Disables detection of the OpenAPI 3.1 enum-via-oneOf idiom: a schema with `type: string|integer` and `oneOf:` members that each carry `const` + `title` will normally be emitted as a Go enum with named constants. Set this to true to fall through to the standard union generator instead."
+        },
+        "lenient-union-accessors": {
+          "type": "boolean",
+          "description": "Makes a union's As* methods ignore the properties a variant with `additionalProperties: false` doesn't declare, as they do for any other variant. By default, with `compatibility.schema-merging-behavior: v3`, such a variant's As* returns an error for a property that neither the variant nor anything else in the union's object declares, so that data of another variant isn't taken for it. The older values ignore this option: their As* always ignore such properties.",
+          "default": false
         },
         "include-tags": {
           "type": "array",
@@ -264,7 +279,7 @@
           "description": "Overlay defines configuration for the OpenAPI Overlay (https://github.com/OAI/Overlay-Specification) to manipulate the OpenAPI specification before generation. This allows modifying the specification without needing to apply changes directly to it, making it easier to keep it up-to-date.",
           "properties": {
             "path": {
-              "description": "The path to the Overlay file",
+              "description": "The path to the Overlay file. Action targets are RFC 9535 JSONPath expressions; set `compatibility.overlays-use-yaml-jsonpath` to read them in the dialect of earlier versions",
               "type": "string"
             },
             "strict": {
@@ -366,6 +381,13 @@
         "type": "string",
         "description": "ImportMapping specifies the golang package path for each external reference. A value of `-` will indicate that the current package will be used"
       }
+    },
+    "allow-remote-refs-from": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "AllowRemoteRefsFrom lists the remote documents that external $refs in the input specification may be fetched from while it is loaded. Each entry is the URL of a referenced document exactly as it appears in the $ref, without the fragment, or \"*\" to allow every URL. When empty (the default), remote references are refused and only references to local files are followed."
     },
     "additional-imports": {
       "type": "array",

@@ -723,3 +723,45 @@ type TypeWithUnexportedField struct {
 ```
 
 You can see this in more detail in [the example code](../examples/extensions/xoapicodegenonlyhonourgoname).
+
+## `x-oapi-codegen-enum-merge`
+
+Choose how the enums of an `allOf`'s members combine, with `compatibility.schema-merging-behavior: v3`.
+
+A value matches an `allOf` when it matches every member, so `v3` keeps only the enum values the members have in common, and reports an error when they have none. Some specs use `allOf` to add values to an enum instead. Set `x-oapi-codegen-enum-merge: union` on the schema with the `allOf`, or on a member's property that refines a property, to keep all the members' values:
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-oapi-codegen-enum-merge
+components:
+  schemas:
+    Status:
+      type: string
+      enum:
+        - active
+        - inactive
+    ExtendedStatus:
+      x-oapi-codegen-enum-merge: union
+      allOf:
+        - $ref: '#/components/schemas/Status'
+        - enum:
+            - archived
+```
+
+From here, we now get:
+
+```go
+// Defines values for ExtendedStatus.
+const (
+	ExtendedStatusActive   ExtendedStatus = "active"
+	ExtendedStatusArchived ExtendedStatus = "archived"
+	ExtendedStatusInactive ExtendedStatus = "inactive"
+)
+
+// ExtendedStatus defines model for ExtendedStatus.
+type ExtendedStatus string
+```
+
+The other value, `intersection`, is the default. `v2` ignores the extension: it always keeps all the values. `v1` doesn't merge enums at all: it embeds the member's type. Validators read the `allOf` literally, so a service that validates requests against the spec has to accept the extra values some other way. See [How `allOf`, `anyOf` and `oneOf` become Go types](schema-merging.md#enums).

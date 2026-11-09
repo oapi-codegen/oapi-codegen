@@ -1,0 +1,101 @@
+openapi: 3.0.3
+info:
+  title: Union parameters
+  version: 1.0.0
+paths:
+  /things/{accept}:
+    get:
+      operationId: getThing
+      parameters:
+        - name: accept
+          in: path
+          required: true
+          schema:
+            anyOf:
+              - type: boolean
+              - type: string
+        - name: q
+          in: query
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+        - name: r
+          in: query
+          schema:
+            $ref: '#/components/schemas/IntOrString'
+        - name: n
+          in: query
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/IntOrString'
+              - type: boolean
+        - name: X-Amount
+          in: header
+          schema:
+            oneOf:
+              - type: number
+              - type: boolean
+      responses:
+        "200":
+          description: The parameters the server bound, as JSON.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bound'
+  # A union parameter shared by the path item, next to a schema named Id: its
+  # union type is IdParam, since Id is taken. A union declared under
+  # components/parameters, and one in a cookie.
+  /items/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          anyOf:
+            - type: integer
+            - type: string
+    get:
+      operationId: getItem
+      parameters:
+        - $ref: '#/components/parameters/Filter'
+        - name: session
+          in: cookie
+          schema:
+            oneOf:
+              - type: integer
+              - type: boolean
+      responses:
+        "200":
+          description: The parameters the server bound, as JSON.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bound'
+        "404":
+          description: Not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Id'
+components:
+  parameters:
+    Filter:
+      name: filter
+      in: query
+      schema:
+        oneOf:
+          - type: integer
+          - type: string
+  schemas:
+    Id:
+      type: object
+      properties:
+        value: {type: string}
+    IntOrString:
+      oneOf:
+        - type: integer
+        - type: string
+    Bound:
+      type: object
+      additionalProperties: true

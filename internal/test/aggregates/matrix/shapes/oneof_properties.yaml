@@ -1,0 +1,25 @@
+versions: [v2, v3]
+description: oneOf over two $ref variants next to fixed properties of the union itself.
+subject:
+  type: object
+  required: [id]
+  properties:
+    id: {type: string}
+    label: {type: string}
+  oneOf:
+    - $ref: '#/components/schemas/Cat'
+    - $ref: '#/components/schemas/Dog'
+components:
+  Cat:
+    type: object
+    required: [meow]
+    properties:
+      meow: {type: string}
+  Dog:
+    type: object
+    required: [bark]
+    properties:
+      bark: {type: string}
+samples:
+  - '{"id": "1", "meow": "purr"}'
+  - '{"id": "2", "label": "rex", "bark": "woof"}'

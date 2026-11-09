@@ -1,0 +1,23 @@
+versions: [v1, v2, v3]
+broken:
+  v1:
+    holder-inline: >-
+      v1 embeds Open in an unnamed struct. Before Go 1.27, encoding/json
+      doesn't call Open's UnmarshalJSON for list and map elements of such a
+      struct, so their additional properties are lost.
+description: >-
+  allOf over a single $ref to an object with additionalProperties. The
+  composition is an alias of the referenced type, and keeps its generated
+  MarshalJSON: at a strict-server response, the envelope has to delegate to
+  it, or the additional properties are lost.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Open'
+components:
+  Open:
+    type: object
+    properties:
+      b: {type: string}
+    additionalProperties: {type: string}
+samples:
+  - '{"b": "x", "k": "v"}'

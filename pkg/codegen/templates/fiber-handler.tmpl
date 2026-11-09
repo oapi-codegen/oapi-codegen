@@ -22,6 +22,6 @@ for _, m := range options.Middlewares {
 }
 {{end}}
 {{range .}}
-router.{{.Method | lower | title }}(options.BaseURL+{{.Path | swaggerUriToFiberUri | toGoString}}, wrapper.{{.HandlerName}})
+{{if isCustomHTTPMethod .Method}}{{block "fiber.registerCustomMethod" .}}router.Add({{.Method | toGoString}}, options.BaseURL+{{.Path | swaggerUriToFiberUri | toGoString}}, wrapper.{{.HandlerName}}){{end}}{{else}}router.{{.Method | lower | title }}(options.BaseURL+{{.Path | swaggerUriToFiberUri | toGoString}}, wrapper.{{.HandlerName}}){{end}}
 {{end}}
 }

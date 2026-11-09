@@ -1,0 +1,69 @@
+openapi: 3.1.0
+info:
+  title: Strict response bodies lowered to any
+  version: "1.0.0"
+paths:
+  /union:
+    get:
+      operationId: GetUnion
+      responses:
+        "200":
+          description: A multi-type response
+          content:
+            application/json:
+              schema:
+                type: [string, number, boolean]
+  /null:
+    get:
+      operationId: GetNull
+      responses:
+        "200":
+          description: A null response
+          content:
+            application/json:
+              schema:
+                type: "null"
+  /nullable-ref:
+    get:
+      operationId: GetNullableRef
+      responses:
+        "200":
+          description: A nullable union collapsed to an untyped component
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/Untyped"
+                  - type: "null"
+  /text:
+    get:
+      operationId: GetText
+      responses:
+        "200":
+          description: A text response without a schema
+          content:
+            text/plain: {}
+  /text-ref:
+    get:
+      operationId: GetTextRef
+      responses:
+        "200":
+          $ref: "#/components/responses/UntypedText"
+  /form:
+    get:
+      operationId: GetForm
+      responses:
+        "200":
+          description: An untyped form response
+          content:
+            application/x-www-form-urlencoded:
+              schema: {}
+components:
+  schemas:
+    Untyped: {}
+  responses:
+    UntypedText:
+      description: A reusable untyped text response
+      content:
+        text/plain:
+          schema: {}

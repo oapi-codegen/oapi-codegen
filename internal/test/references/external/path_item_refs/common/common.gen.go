@@ -151,8 +151,11 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 type StrictServerInterface interface {
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+// StrictHandlerFunc and StrictMiddlewareFunc are type aliases rather than
+// distinct named types, so middleware written against one generated package
+// can be shared with every other generated package using the same framework.
+type StrictHandlerFunc = func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -197,7 +200,7 @@ type strictHandler struct {
 var swaggerSpec = []string{
 	"RMw/TwMxDAXw7/Lm6HQVW3YGFha6IYaQmNboahvHRUJVvjtKT4jJf95P74aqF1MhiY58Q69nupT7+uh+",
 	"9FJZTk/tWeOFJObbXI08mO6oaqM548cIGT2c5YQxEpy+ruzUkF939Zb+lL5/Ug2MyVg+dBY06tXZglWQ",
-	"caQeSAiOjf7Pb/K+54dlXVaMBDWSYoyMh2VdDkiwEueOLNdtG78BAAD//w==",
+	"caQeSAiOjf7Pb/K+54dlXVaMBDWSYoyMh2VdDkiwEueOLNdtG78DAA==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

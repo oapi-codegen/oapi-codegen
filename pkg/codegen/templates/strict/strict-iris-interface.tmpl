@@ -46,7 +46,7 @@
                 {{else -}}
                 type {{$receiverTypeName}} struct{ {{$ref}}{{.NameTagOrContentType}}Response }
                 {{end}}
-            {{else if and (not $hasHeaders) ($fixedStatusCode) (.IsSupported) -}}
+            {{else if and (not $hasHeaders) ($fixedStatusCode) (.CanUseDirectResponseType) -}}
                 type {{$receiverTypeName}} {{if .IsMultipart}}func(writer *multipart.Writer)error{{else if .IsSupported}}{{if and .Schema.IsRef (not .Schema.IsExternalRef)}}={{end}} {{.Schema.TypeDecl}}{{else}}io.Reader{{end}}
                 {{- if and .IsJSON .Schema.HasCustomMarshalJSON}}
 
@@ -91,15 +91,16 @@
                     }
                 {{end -}}
                 ctx.StatusCode({{if $fixedStatusCode}}{{$statusCode}}{{else}}response.StatusCode{{end}})
-                {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .IsSupported)}}
+                {{$hasBodyVar := or ($hasHeaders) (not $fixedStatusCode) (not .CanUseDirectResponseType)}}
                 {{if .IsJSON -}}
-                    {{$hasUnionElements := ne 0 (len .Schema.UnionElements)}}
-                    return ctx.JSON(&{{if $hasBodyVar}}response.Body{{else}}response{{end}}{{if and $hasUnionElements (not .Schema.IsExternalRef)}}.union{{end}})
+                    {{/* See strict-interface.tmpl: encode a $ref response's embedded envelope, not the wrapper. */ -}}
+                    return ctx.JSON(&{{if $hasBodyVar}}response.Body{{else if $isRef}}response.{{$ref | withoutPkgName}}{{.NameTagOrContentType}}Response{{else}}response{{end}})
                 {{else if .IsText -}}
                     _, err := ctx.WriteString(fmt.Sprint({{if $hasBodyVar}}response.Body{{else}}response{{end}}))
                     return err
                 {{else if .IsFormdata -}}
-                    if form, err := runtime.MarshalForm({{if $hasBodyVar}}response.Body{{else}}response{{end}}, nil); err != nil {
+                    {{/* See strict-interface.tmpl: marshal a $ref response's embedded envelope, not the wrapper. */ -}}
+                    if form, err := runtime.MarshalForm({{if $hasBodyVar}}response.Body{{else if $isRef}}response.{{$ref | withoutPkgName}}{{.NameTagOrContentType}}Response{{else}}response{{end}}, nil); err != nil {
                         return err
                     } else {
                         _, err := ctx.WriteString(form.Encode())

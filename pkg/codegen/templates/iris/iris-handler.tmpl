@@ -21,7 +21,7 @@ func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, o
         Handler: si,
     }
 {{end}}
-{{range .}}router.{{.Method | lower | title}}(options.BaseURL + {{.Path | swaggerUriToIrisUri | toGoString}}, wrapper.{{.HandlerName}})
+{{range .}}{{if isCustomHTTPMethod .Method}}router.Handle({{.Method | toGoString}}, options.BaseURL + {{.Path | swaggerUriToIrisUri | toGoString}}, wrapper.{{.HandlerName}}){{else}}router.{{.Method | lower | title}}(options.BaseURL + {{.Path | swaggerUriToIrisUri | toGoString}}, wrapper.{{.HandlerName}}){{end}}
 {{end}}
     router.Build()
 }

@@ -1,0 +1,21 @@
+versions: [v2, v3]
+description: >-
+  allOf over a $ref and a member that declares one of its properties with a
+  different type, which no value satisfies. The sample is one that v2, where
+  the last member to declare a property decides its schema, accepts.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Base'
+    - properties:
+        age: {type: string}
+components:
+  Base:
+    type: object
+    required: [name]
+    properties:
+      name: {type: string}
+      age: {type: integer}
+samples:
+  - '{"name": "rex", "age": "three"}'
+rejects:
+  v3: "allOf can't merge #/components/schemas/Base/properties/age (type integer) with allOf/1/properties/age (type string)"

@@ -185,8 +185,11 @@ type TestMultipartResponse func(writer *multipart.Writer) error
 type StrictServerInterface interface {
 }
 
-type StrictHandlerFunc func(ctx *gin.Context, request any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+// StrictHandlerFunc and StrictMiddlewareFunc are type aliases rather than
+// distinct named types, so middleware written against one generated package
+// can be shared with every other generated package using the same framework.
+type StrictHandlerFunc = func(ctx *gin.Context, request any) (any, error)
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictGinServerOptions struct {
 	// RequestErrorHandlerFunc is called when a request cannot be parsed or
@@ -247,9 +250,9 @@ type strictHandler struct {
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"hI/BTgQhDIbfpXoki6s3jh58D3a2uBimbdruwUzm3Q1gYkwmWS78wP/loxssvAoTkhukDRRNmAzHwdG8",
-	"7wuTI4243ptXyepRsWXHa7+05YZr7kmUBdXr5L+M6T1rj8+KBRI8xT9dnJjFS1bYw2h/MD9qF2bY5wq/",
-	"5iG7TNH/H5SK7fo6ZvkWhATmWukTBlym7IA4HxKdqVQYEt1bC8CClKVCgrfTy+kMAST7zebz/hMAAP//",
+	"hI5BTgMxDEXv8mE56lDYZcmCe6RThwZlbMt2F6iau6NkkFgAajZ5if/T9w2LrCpMHI50g5GrsNN4BHn0",
+	"exEO4oHrtUXVbDEbtRx07p++XGjNndREyaLu/ocLv2br+GhUkPAw/9TNu+bzKRu2aaTfRO6liwi2/Uzf",
+	"zaPslO33BqVSOz93ik8lJHhY5XcMuYj8Yxz/NLpTuQgSX1ubIEqctSLh5fB0OGKC5rj4Pt6+BgA=",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

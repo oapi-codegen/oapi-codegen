@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: serversstrictresponsebodyv1
+output: responsebody_v1.gen.go
+generate:
+  std-http-server: true
+  strict-server: true
+  models: true
+# The point of this package: the strict responses of servers/strict/responsebody
+# whose shape depends on the schema-merging behavior, under v1.
+compatibility:
+  schema-merging-behavior: v1

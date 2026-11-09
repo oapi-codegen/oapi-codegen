@@ -388,13 +388,13 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"VFLRbtUwDP0Vy/AYbu/GWx+R2ITEHzA0RYl7a9TaUexOukz9d5T0bsCTTxwf+djHr5h0LSokbji+oqWZ",
-	"1tjhl1hbINlWHH8gBnxQxdDzHcM7+nSgu38L4Hi0ABjw+UH1udXgz4B+LYQjmleWC+77HpBl0tYuk6XK",
+	"VFLRbtUwDP0Vy/AYbu/GWx+R2ITEHzA0RYl7a9TaUexOukz9d5T0ssGTTxwf+djHr5h0LSokbji+oqWZ",
+	"1tjhl1hbINlWHH8gBnxQxdDzHcMb+nSgu38L4Hi0ABjw+UH1udXgz4B+LYQjmleWC+77HpBl0tYuk6XK",
 	"xVkFR/wq2woWhZ1/x5YbIWmmCwmsmzmUqnlLBC9x4QyPCpxJnCemajBphaa+/W5kT+JzdIiVgNbiVzja",
 	"W4Ck4pEFrMREFmC+lpnEAiwUM8sFMl/YLTzJLTF4jby0n00yVUtaG08rJF0WzgRxcqogWte43KSfngQD",
 	"OvvSZz8WPTSBhgFfqNox893pfDrjHlALSSyMI34+nU/3GLBEn7s3w6R9WxfyFrRQ7T2+ZRzxkfzYfSUr",
-	"Kkadcn8+t9BmJemsWMrCqfOGX9Z6v/nfEDutnfix0oQjfhj+Xsrwpr5Zvb/7GWuN18PO/238zuagUzuY",
-	"mxmtat/3PwEAAP//",
+	"Kkadcn8+t9BmJemsWMrCqfOGX6by7n9D7LR24sdKE474YXi/lOGv+mb1/uZnrDVeDzv/t/E7m4NO7WBu",
+	"ZrSqfd//DAA=",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

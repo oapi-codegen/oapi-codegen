@@ -27,12 +27,12 @@ type Response struct {
 	Value *string `json:"value,omitempty"`
 }
 
-// MultipartEndpointMultipartBody defines parameters for MultipartEndpoint.
+// MultipartEndpointMultipartBody defines body for MultipartEndpoint for multipart/form-data ContentType.
 type MultipartEndpointMultipartBody struct {
 	Field *string `json:"field,omitempty"`
 }
 
-// TextEndpointTextBody defines parameters for TextEndpoint.
+// TextEndpointTextBody defines body for TextEndpoint for text/plain ContentType.
 type TextEndpointTextBody = string
 
 // FormdataEndpointFormdataRequestBody defines body for FormdataEndpoint for application/x-www-form-urlencoded ContentType.
@@ -404,8 +404,11 @@ type StrictServerInterface interface {
 	TextEndpoint(ctx context.Context, request TextEndpointRequestObject) (TextEndpointResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+// StrictHandlerFunc and StrictMiddlewareFunc are type aliases rather than
+// distinct named types, so middleware written against one generated package
+// can be shared with every other generated package using the same framework.
+type StrictHandlerFunc = func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -509,7 +512,7 @@ func (sh *strictHandler) JsonEndpoint(w http.ResponseWriter, r *http.Request) {
 	var request JsonEndpointRequestObject
 
 	var body JsonEndpointJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}

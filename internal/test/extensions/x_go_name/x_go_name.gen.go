@@ -42,12 +42,12 @@ type RenamedRequestBody struct {
 	Field SchemaObject `json:"Field"`
 }
 
-// XJSONBody defines parameters for X.
+// XJSONBody defines body for X for application/json ContentType.
 type XJSONBody struct {
 	Field SchemaObject `json:"Field"`
 }
 
-// XTextBody defines parameters for X.
+// XTextBody defines body for X for text/plain ContentType.
 type XTextBody = string
 
 // XJSONRequestBody defines body for X for application/json ContentType.

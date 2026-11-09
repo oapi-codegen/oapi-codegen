@@ -48,13 +48,12 @@ type bearerAuthContextKey string
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"nFRNq9swEPwv2x4F4V19e4F3fqGhuYRgFHkdq5UldbUuNUb/vUh2PkxccHrTancmszOKB1Cu9c6i5QDF",
-	"AEE12Mp8/LCkVYPV94CUamnMZw3FcYCvhDUU8GVzx24m4MZL9VNecFsGj6rM2CgG8OQ8EmvM1PiHSZa1",
-	"RlOlknuPUEBg0vYCMYrrjTv/QMUQT1HAZz6/p/k5mZUtLrCICV2eU3O95PF3thCTjj1L7sLOBd7J3jhZ",
-	"/a8RI9HhbcEMQhmcXe3Dstq1rsQnhm/O5EG0XQvFEWTVagsCuhTdSTzburTYRwY/kCjWvxEEaDsd1zId",
-	"3uYWz7cKeea1QB8Upu0Jf3WasEoyJ7rTCqOv/4K5Hl0tvjxyZuozti/KzXnco5dEsk91yuNfoc630hU8",
-	"jD8vFwUEVB1p7vdJwih1i5KQ3jtubt+BBDrna7iRNMx+fEba1g4K2xkjwHm00msoAJJx3ISxE/8GAAD/",
-	"/w==",
+	"nFRNb9wgEP0v0x6RVrlyy0o5J2rUXKKVxeJxTIuBDuOqlsV/r8DeD3ddyZvbAPOe37yHGUH7LniHjiPI",
+	"EaJusVOlfHJkdIv194iU18ra5wbk+whfCRuQ8GV3we5m4C4o/VN94L6KAXVVsEmMEMgHJDZYqPEPk6oa",
+	"g7bOSx4CgoTIZNwHpCROO/74AzVDOiQBz6V+BPkvmVMdrrCIGV0dQd4jefrOHlLW8cqK+/jiI7+owXpV",
+	"f9aIiejtYcUMQhW92+zDutqtrqQbhm/elkZ0fQfyHVTdGQcC+hzdQdzaujbYUwFfkWg2vxEEGDeXW5ne",
+	"HpYWL6eKpee+QK8U5ukJf/WGsM4yZ7rDBqNPf8FSj6lXbx55O58zdnfKLXlcoldEaoA05fG/UJdTmRqu",
+	"2m+HSwIi6p4MD69ZwiR1j4qQHntuz+9ABh3LNpxJWuYwXSPjGg/S9dYK8AGdCgYkQDaO2zidpL8DAA==",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

@@ -76,6 +76,7 @@ Be pragmatic: do not demand identical changes in seven places. Do your best to a
 - `naming/` — identifier generation and type-name collision handling
 - `openapi31/` — OpenAPI 3.1-specific behavior
 - `options/` — output-options flags (name-normalizer, filters, skip-prune, yaml-tags, …)
+- `overlay/` — how `output-options.overlay` applies an Overlay, in both JSONPath dialects (`compatibility.overlays-use-yaml-jsonpath`): `rfc9535/` and `legacy_jsonpath/` share one `spec.yaml` and are compared by a top-level test. Tests of other features that merely use an overlay stay in their feature's category.
 - `parameters/` — parameter binding, styles, encoding, nil handling (incl. the cross-framework `roundtrip/` harness)
 - `paths/` — path-level routing edge cases: literal colons in paths, URL escaping of reserved characters, and path-parameter precedence. Because colon-in-path routing is backend-specific, leaves here may fan out into per-framework subpackages (`echo/`, `gin/`, `fiber/`, `fiberv3/`, …) each with its own `config.yaml` and generated server, driven by one shared `spec.yaml` and a single top-level routing test — mirroring `parameters/roundtrip/`. This multi-subpackage shape is expected for routing fixtures and is not the "standard leaf layout" churn to flag.
 - `references/` — external `$ref`s, import-mapping, multi-package generation, overlays
@@ -94,3 +95,21 @@ When a PR adds a test, enforce the following:
 
 - The repo is a multi-module monorepo. Cross-module changes (e.g., to `runtime/` consumers) deserve extra scrutiny.
 - Generated files are committed; CI fails if `make generate` produces a diff. If a PR's generated files look stale, that will fail CI regardless — but flagging it in review saves a round-trip.
+
+## 5. Schema-merging versions must not regress
+
+`compatibility.schema-merging-behavior` selects how `allOf`, `anyOf` and `oneOf` schemas become Go types, in sequential versions (`v1`, `v2`). These versions still receive bug fixes, but they must never regress: a spec that generated working code under a version must keep generating code that compiles against users' existing code and behaves the same way. New behavior goes into a new version, with code of its own.
+
+The tests that guard these versions are:
+
+- `pkg/codegen/merge_schemas_v2_test.go`, and the tests that cover `v1`: `TestMergeSchemasRecursionUnderOldMergeSchemas` and `TestSchemaMergingV1IsOldMergeSchemas`
+- `internal/test/aggregates/matrix/v1/` and `internal/test/aggregates/matrix/v2/`, both the generated code and the tests
+- the shape files in `internal/test/aggregates/matrix/shapes/` that run under these versions: those that list `v1` or `v2` under `versions:` (a shape that lists no versions runs under `v2`)
+- `internal/test/aggregates/allof/config_old_merge.yaml` and its generated `allof_old_merge.gen.go`, which cover `v1` through `old-merge-schemas`
+- other fixtures under `internal/test/` whose config sets `schema-merging-behavior: v2`: they test shapes that `v3` rejects, so they stay on `v2`
+
+**Check that none of these tests is updated to accept a breaking change.** Adding tests is fine, and so is updating them for a bug fix: output that failed to generate, didn't compile, or lost data now works. Changing an existing expectation so that it accepts different Go types (removed or renamed types, fields or methods; changed field types) or different wire behavior for a spec that used to work is a regression: flag it. A commit that changes these tests should say why, so this can be checked. Shape files that these versions use should not be edited to test something new; new cases go into new shape files.
+
+`v3` is the version under development. Its code (`pkg/codegen/merge_schemas_v3.go`, `pkg/codegen/union_v3.go`) and tests (`internal/test/aggregates/matrix/v3/`, `pkg/codegen/*_v3_test.go`) are expected to change as it takes shape; this rule doesn't apply to them.
+
+The code of these versions is `pkg/codegen/merge_schemas_v1.go`, `pkg/codegen/merge_schemas_v2.go` and `pkg/codegen/union_v2.go`, but it also calls code every version shares, such as `generateGoSchema`, `detectEnumViaOneOf`, `schemaIsNullable` and `nonNullTypes` in `pkg/codegen`, and the union and additional-properties templates. A change there can alter these versions' output too, and the tests above are what catch it.

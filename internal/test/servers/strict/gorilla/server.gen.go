@@ -54,6 +54,9 @@ type ServerInterface interface {
 	// (POST /reusable-responses)
 	ReusableResponses(w http.ResponseWriter, r *http.Request)
 
+	// (POST /reusable-urlencoded-response)
+	ReusableURLEncodedResponse(w http.ResponseWriter, r *http.Request)
+
 	// (POST /same-name-param-and-body-property/{name})
 	SameNameParamAndBodyProperty(w http.ResponseWriter, r *http.Request, name string)
 
@@ -214,6 +217,20 @@ func (siw *ServerInterfaceWrapper) ReusableResponses(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ReusableResponses(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReusableURLEncodedResponse operation middleware
+func (siw *ServerInterfaceWrapper) ReusableURLEncodedResponse(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReusableURLEncodedResponse(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -517,6 +534,8 @@ func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.H
 
 	r.HandleFunc(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses).Methods(http.MethodPost)
 
+	r.HandleFunc(options.BaseURL+"/reusable-urlencoded-response", wrapper.ReusableURLEncodedResponse).Methods(http.MethodPost)
+
 	r.HandleFunc(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType).Methods(http.MethodPost)
 
 	r.HandleFunc(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody).Methods(http.MethodPost)
@@ -544,6 +563,8 @@ type ReusableresponseJSONResponse struct {
 
 	Headers ReusableresponseResponseHeaders
 }
+
+type ReusableurlencodedresponseFormdataResponse Example
 
 type JSONExampleRequestObject struct {
 	Body *JSONExampleJSONRequestBody
@@ -928,6 +949,46 @@ func (response ReusableResponsesdefaultResponse) VisitReusableResponsesResponse(
 	return nil
 }
 
+type ReusableURLEncodedResponseRequestObject struct {
+	Body *ReusableURLEncodedResponseFormdataRequestBody
+}
+
+type ReusableURLEncodedResponseResponseObject interface {
+	VisitReusableURLEncodedResponseResponse(w http.ResponseWriter) error
+}
+
+type ReusableURLEncodedResponse200FormdataResponse struct {
+	ReusableurlencodedresponseFormdataResponse
+}
+
+func (response ReusableURLEncodedResponse200FormdataResponse) VisitReusableURLEncodedResponseResponse(w http.ResponseWriter) error {
+
+	form, err := runtime.MarshalForm(response.ReusableurlencodedresponseFormdataResponse, nil)
+	if err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	w.WriteHeader(200)
+	_, err = w.Write([]byte(form.Encode()))
+	return err
+}
+
+type ReusableURLEncodedResponse400Response = BadrequestResponse
+
+func (response ReusableURLEncodedResponse400Response) VisitReusableURLEncodedResponseResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ReusableURLEncodedResponsedefaultResponse struct {
+	StatusCode int
+}
+
+func (response ReusableURLEncodedResponsedefaultResponse) VisitReusableURLEncodedResponseResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
+	return nil
+}
+
 type SameNameParamAndBodyPropertyRequestObject struct {
 	Name string `json:"name"`
 	Body *SameNameParamAndBodyPropertyJSONRequestBody
@@ -1263,7 +1324,7 @@ type UnionExample200JSONResponse struct {
 func (response UnionExample200JSONResponse) VisitUnionExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body.union); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1332,6 +1393,9 @@ type StrictServerInterface interface {
 	// (POST /reusable-responses)
 	ReusableResponses(ctx context.Context, request ReusableResponsesRequestObject) (ReusableResponsesResponseObject, error)
 
+	// (POST /reusable-urlencoded-response)
+	ReusableURLEncodedResponse(ctx context.Context, request ReusableURLEncodedResponseRequestObject) (ReusableURLEncodedResponseResponseObject, error)
+
 	// (POST /same-name-param-and-body-property/{name})
 	SameNameParamAndBodyProperty(ctx context.Context, request SameNameParamAndBodyPropertyRequestObject) (SameNameParamAndBodyPropertyResponseObject, error)
 
@@ -1354,8 +1418,11 @@ type StrictServerInterface interface {
 	UnionExample(ctx context.Context, request UnionExampleRequestObject) (UnionExampleResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+// StrictHandlerFunc and StrictMiddlewareFunc are type aliases rather than
+// distinct named types, so middleware written against one generated package
+// can be shared with every other generated package using the same framework.
+type StrictHandlerFunc = func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -1398,7 +1465,7 @@ func (sh *strictHandler) JSONExample(w http.ResponseWriter, r *http.Request) {
 	var request JSONExampleRequestObject
 
 	var body JSONExampleJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		if !errors.Is(err, io.EOF) {
 			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 			return
@@ -1499,7 +1566,7 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(w http.ResponseWriter, 
 	if strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
 
 		var body MultipleRequestAndResponseTypesJSONRequestBody
-		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		if err := runtime.BindJSONBody(r, &body); err != nil {
 			if !errors.Is(err, io.EOF) {
 				sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 				return
@@ -1592,7 +1659,7 @@ func (sh *strictHandler) RequiredJSONBody(w http.ResponseWriter, r *http.Request
 	var request RequiredJSONBodyRequestObject
 
 	var body RequiredJSONBodyJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -1681,7 +1748,7 @@ func (sh *strictHandler) ReusableResponses(w http.ResponseWriter, r *http.Reques
 	var request ReusableResponsesRequestObject
 
 	var body ReusableResponsesJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		if !errors.Is(err, io.EOF) {
 			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 			return
@@ -1710,6 +1777,41 @@ func (sh *strictHandler) ReusableResponses(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// ReusableURLEncodedResponse operation middleware
+func (sh *strictHandler) ReusableURLEncodedResponse(w http.ResponseWriter, r *http.Request) {
+	var request ReusableURLEncodedResponseRequestObject
+
+	if err := r.ParseForm(); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode formdata: %w", err))
+		return
+	}
+	var body ReusableURLEncodedResponseFormdataRequestBody
+	if err := runtime.BindForm(&body, r.Form, nil, nil); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't bind formdata: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error) {
+		return sh.ssi.ReusableURLEncodedResponse(ctx, request.(ReusableURLEncodedResponseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReusableURLEncodedResponse")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReusableURLEncodedResponseResponseObject); ok {
+		if err := validResponse.VisitReusableURLEncodedResponseResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // SameNameParamAndBodyProperty operation middleware
 func (sh *strictHandler) SameNameParamAndBodyProperty(w http.ResponseWriter, r *http.Request, name string) {
 	var request SameNameParamAndBodyPropertyRequestObject
@@ -1717,7 +1819,7 @@ func (sh *strictHandler) SameNameParamAndBodyProperty(w http.ResponseWriter, r *
 	request.Name = name
 
 	var body SameNameParamAndBodyPropertyJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		if !errors.Is(err, io.EOF) {
 			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 			return
@@ -1876,7 +1978,7 @@ func (sh *strictHandler) HeadersExample(w http.ResponseWriter, r *http.Request, 
 	request.Params = params
 
 	var body HeadersExampleJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		if !errors.Is(err, io.EOF) {
 			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 			return
@@ -1910,7 +2012,7 @@ func (sh *strictHandler) UnionExample(w http.ResponseWriter, r *http.Request) {
 	var request UnionExampleRequestObject
 
 	var body UnionExampleJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		if !errors.Is(err, io.EOF) {
 			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 			return
@@ -1944,30 +2046,31 @@ func (sh *strictHandler) UnionExample(w http.ResponseWriter, r *http.Request) {
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
+	"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",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

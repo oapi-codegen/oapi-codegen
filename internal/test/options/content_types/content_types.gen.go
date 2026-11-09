@@ -14,6 +14,8 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/oapi-codegen/runtime"
 )
 
 // Pet defines model for Pet.
@@ -21,7 +23,7 @@ type Pet struct {
 	Name string `json:"name"`
 }
 
-// UploadReportCSVBody defines parameters for UploadReport.
+// UploadReportCSVBody defines body for UploadReport for text/csv ContentType.
 type UploadReportCSVBody = string
 
 // AddPetV1RequestBody defines body for AddPet for application/vnd.mycompany.v1+json ContentType.
@@ -673,8 +675,11 @@ type StrictServerInterface interface {
 	UploadReport(ctx context.Context, request UploadReportRequestObject) (UploadReportResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+// StrictHandlerFunc and StrictMiddlewareFunc are type aliases rather than
+// distinct named types, so middleware written against one generated package
+// can be shared with every other generated package using the same framework.
+type StrictHandlerFunc = func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -717,7 +722,7 @@ func (sh *strictHandler) AddPet(w http.ResponseWriter, r *http.Request) {
 	var request AddPetRequestObject
 
 	var body AddPetV1RequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}

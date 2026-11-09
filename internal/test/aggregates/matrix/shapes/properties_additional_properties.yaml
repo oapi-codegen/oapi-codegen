@@ -1,0 +1,14 @@
+versions: [v2, v3]
+description: >-
+  An object with fixed properties and typed additionalProperties. Not an
+  aggregate, but it gets the same custom JSON methods, and the same envelope
+  handling, as unions do.
+subject:
+  type: object
+  required: [kind]
+  properties:
+    kind: {type: string}
+  additionalProperties: {type: integer}
+samples:
+  - '{"kind": "bag"}'
+  - '{"kind": "bag", "extra": 42, "more": 7}'

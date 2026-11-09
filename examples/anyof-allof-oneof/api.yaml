@@ -21,7 +21,7 @@ components:
         issuer:
           type: string
 
-    # allOf performs a union of all types defined
+    # allOf merges the schemas it lists into one type
     ClientWithId:
       allOf:
         - $ref: '#/components/schemas/Client'
@@ -31,25 +31,17 @@ components:
           required:
             - id
 
-    # allOf performs a union of all types defined, but if there's a duplicate field defined, it'll be overwritten by the last schema
-    # https://github.com/oapi-codegen/oapi-codegen/issues/1569
+    # a property several schemas declare is merged: here, the second schema
+    # adds a description and a length limit to Identity's `issuer`. Their
+    # types have to agree; `v3` reports an error when they can't
     IdentityWithDuplicateField:
       allOf:
-        # `issuer` will be ignored
         - $ref: '#/components/schemas/Identity'
-        # `issuer` will be ignored
         - properties:
             issuer:
-              type: integer
-        # `issuer` will take precedence
-        - properties:
-            issuer:
-              type: object
-              properties:
-                name:
-                  type: string
-              required:
-                - name
+              type: string
+              description: The URL of the issuer.
+              maxLength: 255
 
     # anyOf results in a type that has an `AsClient`/`MergeClient`/`FromClient` and an `AsIdentity`/`MergeIdentity`/`FromIdentity` method so you can choose which of them you want to retrieve
     ClientAndMaybeIdentity:

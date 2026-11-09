@@ -1,0 +1,15 @@
+versions: [v2, v3]
+description: >-
+  allOf over a $ref to an enum and an enum of its own, which overlap: the
+  composition allows the values in both.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Color'
+    - enum: [green, blue, violet]
+components:
+  Color:
+    type: string
+    enum: [red, green, blue]
+samples:
+  - '"green"'
+  - '"blue"'

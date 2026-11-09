@@ -57,72 +57,72 @@ type ImplicitDog struct {
 // ImplicitDogKind defines model for ImplicitDog.Kind.
 type ImplicitDogKind string
 
-// PostBodyPropertyOneOfJSONBody defines parameters for PostBodyPropertyOneOf.
+// PostBodyPropertyOneOfJSONBody defines body for PostBodyPropertyOneOf for application/json ContentType.
 type PostBodyPropertyOneOfJSONBody struct {
 	Pet *PostBodyPropertyOneOfJSONBody_Pet `json:"pet,omitempty"`
 }
 
-// PostBodyPropertyOneOfJSONBody_Pet defines parameters for PostBodyPropertyOneOf.
+// PostBodyPropertyOneOfJSONBody_Pet defines model for PostBodyPropertyOneOfJSONBody.Pet.
 type PostBodyPropertyOneOfJSONBody_Pet struct {
 	union json.RawMessage
 }
 
-// PostBodyRootOneOfJSONBody defines parameters for PostBodyRootOneOf.
+// PostBodyRootOneOfJSONBody defines body for PostBodyRootOneOf for application/json ContentType.
 type PostBodyRootOneOfJSONBody struct {
 	union json.RawMessage
 }
 
-// TriggerCallbackJSONBody defines parameters for TriggerCallback.
+// TriggerCallbackJSONBody defines body for TriggerCallback for application/json ContentType.
 type TriggerCallbackJSONBody struct {
 	CallbackUrl string `json:"callbackUrl"`
 }
 
-// GetResponseDeepNested200JSONResponseBody_Wrapper_Inner defines parameters for GetResponseDeepNested.
+// GetResponseDeepNested200JSONResponseBody_Wrapper_Inner defines model for GetResponseDeepNested200JSONResponseBody.Wrapper.Inner.
 type GetResponseDeepNested200JSONResponseBody_Wrapper_Inner struct {
 	union json.RawMessage
 }
 
-// GetResponseItemsOneOf200JSONResponseBody_Items_Item defines parameters for GetResponseItemsOneOf.
+// GetResponseItemsOneOf200JSONResponseBody_Items_Item defines model for GetResponseItemsOneOf200JSONResponseBody.items.Item.
 type GetResponseItemsOneOf200JSONResponseBody_Items_Item struct {
 	union json.RawMessage
 }
 
-// GetResponseRootAnyOf200JSONResponseBody defines parameters for GetResponseRootAnyOf.
+// GetResponseRootAnyOf200JSONResponseBody defines the 200 response body for GetResponseRootAnyOf for application/json ContentType.
 type GetResponseRootAnyOf200JSONResponseBody struct {
 	union json.RawMessage
 }
 
-// GetResponseRootOneOf200JSONResponseBody defines parameters for GetResponseRootOneOf.
+// GetResponseRootOneOf200JSONResponseBody defines the 200 response body for GetResponseRootOneOf for application/json ContentType.
 type GetResponseRootOneOf200JSONResponseBody struct {
 	union json.RawMessage
 }
 
-// WebhookBodyPropertyOneOfJSONBody defines parameters for WebhookBodyPropertyOneOf.
+// WebhookBodyPropertyOneOfJSONBody defines body for WebhookBodyPropertyOneOf for application/json ContentType.
 type WebhookBodyPropertyOneOfJSONBody struct {
 	Pet *WebhookBodyPropertyOneOfJSONBody_Pet `json:"pet,omitempty"`
 }
 
-// WebhookBodyPropertyOneOfJSONBody_Pet defines parameters for WebhookBodyPropertyOneOf.
+// WebhookBodyPropertyOneOfJSONBody_Pet defines model for WebhookBodyPropertyOneOfJSONBody.Pet.
 type WebhookBodyPropertyOneOfJSONBody_Pet struct {
 	union json.RawMessage
 }
 
-// WebhookBodyRootOneOfJSONBody defines parameters for WebhookBodyRootOneOf.
+// WebhookBodyRootOneOfJSONBody defines body for WebhookBodyRootOneOf for application/json ContentType.
 type WebhookBodyRootOneOfJSONBody struct {
 	union json.RawMessage
 }
 
-// CallbackBodyPropertyOneOfJSONBody defines parameters for CallbackBodyPropertyOneOf.
+// CallbackBodyPropertyOneOfJSONBody defines body for CallbackBodyPropertyOneOf for application/json ContentType.
 type CallbackBodyPropertyOneOfJSONBody struct {
 	Pet *CallbackBodyPropertyOneOfJSONBody_Pet `json:"pet,omitempty"`
 }
 
-// CallbackBodyPropertyOneOfJSONBody_Pet defines parameters for CallbackBodyPropertyOneOf.
+// CallbackBodyPropertyOneOfJSONBody_Pet defines model for CallbackBodyPropertyOneOfJSONBody.Pet.
 type CallbackBodyPropertyOneOfJSONBody_Pet struct {
 	union json.RawMessage
 }
 
-// CallbackBodyRootOneOfJSONBody defines parameters for CallbackBodyRootOneOf.
+// CallbackBodyRootOneOfJSONBody defines body for CallbackBodyRootOneOf for application/json ContentType.
 type CallbackBodyRootOneOfJSONBody struct {
 	union json.RawMessage
 }

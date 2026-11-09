@@ -1,0 +1,77 @@
+# The imported package: reusable responses whose body types are not named
+# types of this package, and a path item that the api spec reuses by $ref.
+openapi: "3.0.4"
+info:
+  title: Common
+  version: "0.0.1"
+paths:
+  /things/{id}:
+    post:
+      operationId: updateThing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                $ref: "#/components/schemas/Thing"
+      responses:
+        "200":
+          description: The updated things
+          headers:
+            X-Thing-ID:
+              required: true
+              schema:
+                $ref: "#/components/schemas/ThingID"
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Thing"
+        default:
+          description: An untyped error
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    ThingID:
+      type: string
+    Thing:
+      type: object
+      required: [id]
+      properties:
+        id:
+          $ref: "#/components/schemas/ThingID"
+  responses:
+    Untyped:
+      description: An untyped body
+      content:
+        application/json:
+          schema: {}
+    Pointer:
+      description: A pointer body
+      content:
+        application/json:
+          schema:
+            x-go-type: "*string"
+    Things:
+      description: A list of things
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/Thing"

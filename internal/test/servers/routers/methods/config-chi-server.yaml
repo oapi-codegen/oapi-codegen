@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: chi
+generate:
+  chi-server: true
+  strict-server: true
+  models: true
+output: chi/out.gen.go

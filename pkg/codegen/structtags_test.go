@@ -161,3 +161,20 @@ func TestOutputOptionsValidateStructTags(t *testing.T) {
 	require.Contains(t, problems, "struct-tags")
 	assert.Contains(t, problems["struct-tags"], "invalid struct tag template")
 }
+
+// TestJSONTagKey: the JSON key a json tag gives a field, as encoding/json
+// reads it.
+func TestJSONTagKey(t *testing.T) {
+	for tag, want := range map[string]string{
+		"card":           "card",
+		"card,omitempty": "card",
+		",omitempty":     "Card",
+		"":               "Card",
+		"-,":             "-",
+		"-":              "",
+	} {
+		key, ok := jsonTagKey(tag, "Card")
+		assert.Equal(t, want, key, tag)
+		assert.Equal(t, want != "", ok, tag)
+	}
+}

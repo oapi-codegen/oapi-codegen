@@ -243,6 +243,18 @@ func testImpl(t *testing.T, handler http.Handler) {
 		assert.NoError(t, err)
 		assert.Equal(t, requestBody, responseBody)
 	})
+	t.Run("ReusableURLEncodedResponse", func(t *testing.T) {
+		// The operation embeds the reusable form envelope, which must be
+		// encoded itself rather than as a field of the operation's struct.
+		value := "zxcv"
+		requestBody := clientAPI.Example{Value: &value}
+		requestBodyEncoded, err := runtime.MarshalForm(&requestBody, nil)
+		assert.NoError(t, err)
+		rr := testutil.NewRequest().Post("/reusable-urlencoded-response").WithContentType("application/x-www-form-urlencoded").WithBody([]byte(requestBodyEncoded.Encode())).GoWithHTTPHandler(t, handler).Recorder
+		assert.Equal(t, http.StatusOK, rr.Code)
+		assert.Equal(t, "application/x-www-form-urlencoded", rr.Header().Get("Content-Type"))
+		assert.Equal(t, "value=zxcv", rr.Body.String())
+	})
 	t.Run("UnionResponses", func(t *testing.T) {
 		value := "union"
 		requestBody := clientAPI.Example{Value: &value}

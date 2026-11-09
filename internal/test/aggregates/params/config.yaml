@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: aggregatesparams
+output: params.gen.go
+generate:
+  models: true
+  client: true
+  std-http-server: true
+  strict-server: true

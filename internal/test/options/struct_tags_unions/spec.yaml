@@ -1,0 +1,46 @@
+# ==========================================================================
+# Category: options/struct_tags_unions
+# Tests:    struct-tags json template with v3 unions.
+#           - As* of a closed variant allows the keys the template gives
+#           - From* of a union in an allOf of unions replaces them, also
+#             when another union's variant has a property of the same name
+#             that the template gives a different key
+# ==========================================================================
+openapi: "3.0.1"
+info:
+  title: options/struct_tags_unions
+  version: "1.0.0"
+paths: {}
+components:
+  schemas:
+    Card:
+      type: object
+      additionalProperties: false
+      required: [card]
+      properties:
+        card: {type: string}
+        holder: {type: string}
+    Transfer:
+      type: object
+      additionalProperties: false
+      required: [iban]
+      properties:
+        iban: {type: string}
+    Courier:
+      type: object
+      additionalProperties: false
+      required: [address, holder]
+      properties:
+        address: {type: string}
+        holder: {type: string}
+    Payment:
+      oneOf:
+        - $ref: '#/components/schemas/Card'
+        - $ref: '#/components/schemas/Transfer'
+    Delivery:
+      oneOf:
+        - $ref: '#/components/schemas/Courier'
+    Order:
+      allOf:
+        - $ref: '#/components/schemas/Payment'
+        - $ref: '#/components/schemas/Delivery'

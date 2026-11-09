@@ -1,0 +1,17 @@
+versions: [v2, v3]
+description: >-
+  allOf over a $ref to a schema that x-go-type replaces, and a member that
+  only annotates it.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Typed'
+    - description: A decorated Typed.
+components:
+  Typed:
+    type: object
+    required: [name]
+    properties:
+      name: {type: string}
+    x-go-type: map[string]any
+samples:
+  - '{"name": "rex"}'
