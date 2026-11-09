@@ -6,7 +6,7 @@ require (
 	github.com/getkin/kin-openapi v0.152.0
 	github.com/oasdiff/yaml v0.1.3
 	github.com/stretchr/testify v1.12.1
-	github.com/theory/jsonpath v0.12.2
+	github.com/theory/jsonpath v0.12.3
 	go.yaml.in/yaml/v4 v4.0.0
 	golang.org/x/mod v0.42.0
 	golang.org/x/text v0.43.0
