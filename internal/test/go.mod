@@ -89,7 +89,7 @@ require (
 	github.com/stretchr/objx v0.5.3 // indirect
 	github.com/tdewolff/minify/v2 v2.24.24 // indirect
 	github.com/tdewolff/parse/v2 v2.8.20 // indirect
-	github.com/theory/jsonpath v0.12.2 // indirect
+	github.com/theory/jsonpath v0.12.3 // indirect
 	github.com/tinylib/msgp v1.6.5 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.2 // indirect
@@ -100,10 +100,11 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/yosssi/ace v0.0.5 // indirect
 	go.mongodb.org/mongo-driver/v2 v2.9.2 // indirect
+	go.yaml.in/yaml/v4 v4.0.0 // indirect
 	golang.org/x/arch v0.32.0 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e // indirect
-	golang.org/x/mod v0.42.0 // indirect
+	golang.org/x/mod v0.43.0 // indirect
 	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect

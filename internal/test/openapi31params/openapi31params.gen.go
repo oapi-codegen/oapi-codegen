@@ -299,6 +299,11 @@ type ClientWithResponsesInterface interface {
 	UpdateThingWithResponse(ctx context.Context, id any, params *UpdateThingParams, body UpdateThingJSONRequestBody, reqEditors ...RequestEditorFn) (*UpdateThingResponse, error)
 }
 
+// UpdateThingResponse200Headers the declared response headers of an HTTP 200 response for UpdateThing
+type UpdateThingResponse200Headers struct {
+	XEcho any
+}
+
 type UpdateThingResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -306,6 +311,8 @@ type UpdateThingResponse struct {
 	JSON200 *struct {
 		Id any `json:"id,omitempty"`
 	}
+	// Headers200 the parsed response headers for an HTTP 200 response
+	Headers200 *UpdateThingResponse200Headers
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
@@ -389,6 +396,19 @@ func ParseUpdateThingResponse(rsp *http.Response) (*UpdateThingResponse, error) 
 		}
 		response.JSON200 = &dest
 
+	}
+
+	switch {
+	case rsp.StatusCode == 200:
+		var headers UpdateThingResponse200Headers
+		if values := rsp.Header.Values("X-Echo"); len(values) > 0 {
+			var value any
+			if err := runtime.BindStyledParameterWithOptions("simple", "X-Echo", values[0], &value, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "", Format: "", Types: []string{"integer", "string"}}); err != nil {
+				return nil, err
+			}
+			headers.XEcho = value
+		}
+		response.Headers200 = &headers
 	}
 
 	return response, nil
