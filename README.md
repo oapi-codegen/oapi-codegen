@@ -1810,13 +1810,13 @@ func (a *Thing) Set(fieldName string, value interface{}) {
 // Override default JSON handling for Thing to handle AdditionalProperties
 func (a *Thing) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["id"]; found {
-		err = json.Unmarshal(raw, &a.Id)
+		err = runtime.JSONUnmarshal(raw, &a.Id)
 		if err != nil {
 			return fmt.Errorf("error reading 'id': %w", err)
 		}
@@ -1827,7 +1827,7 @@ func (a *Thing) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]interface{})
 		for fieldName, fieldBuf := range object {
 			var fieldVal interface{}
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -1842,18 +1842,18 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["id"], err = json.Marshal(a.Id)
+	object["id"], err = runtime.JSONMarshal(a.Id)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'id': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 ```
 
@@ -1914,13 +1914,13 @@ func (a *Thing) Set(fieldName string, value int) {
 // Override default JSON handling for Thing to handle AdditionalProperties
 func (a *Thing) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["id"]; found {
-		err = json.Unmarshal(raw, &a.Id)
+		err = runtime.JSONUnmarshal(raw, &a.Id)
 		if err != nil {
 			return fmt.Errorf("error reading 'id': %w", err)
 		}
@@ -1931,7 +1931,7 @@ func (a *Thing) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]int)
 		for fieldName, fieldBuf := range object {
 			var fieldVal int
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -1946,18 +1946,18 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["id"], err = json.Marshal(a.Id)
+	object["id"], err = runtime.JSONMarshal(a.Id)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'id': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 ```
 
@@ -2028,13 +2028,13 @@ func (a *Thing) Set(fieldName string, value struct {
 // Override default JSON handling for Thing to handle AdditionalProperties
 func (a *Thing) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["id"]; found {
-		err = json.Unmarshal(raw, &a.Id)
+		err = runtime.JSONUnmarshal(raw, &a.Id)
 		if err != nil {
 			return fmt.Errorf("error reading 'id': %w", err)
 		}
@@ -2049,7 +2049,7 @@ func (a *Thing) UnmarshalJSON(b []byte) error {
 			var fieldVal struct {
 				Foo *string `json:"foo,omitempty"`
 			}
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -2064,18 +2064,18 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["id"], err = json.Marshal(a.Id)
+	object["id"], err = runtime.JSONMarshal(a.Id)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'id': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 ```
 
@@ -2531,20 +2531,20 @@ type ClientAndMaybeIdentity struct {
 // AsClient returns the union data inside the ClientAndMaybeIdentity as a Client
 func (t ClientAndMaybeIdentity) AsClient() (Client, error) {
 	var body Client
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromClient overwrites any union data inside the ClientAndMaybeIdentity as the provided Client
 func (t *ClientAndMaybeIdentity) FromClient(v Client) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeClient performs a merge with any union data inside the ClientAndMaybeIdentity, using the provided Client
 func (t *ClientAndMaybeIdentity) MergeClient(v Client) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2557,20 +2557,20 @@ func (t *ClientAndMaybeIdentity) MergeClient(v Client) error {
 // AsIdentity returns the union data inside the ClientAndMaybeIdentity as a Identity
 func (t ClientAndMaybeIdentity) AsIdentity() (Identity, error) {
 	var body Identity
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromIdentity overwrites any union data inside the ClientAndMaybeIdentity as the provided Identity
 func (t *ClientAndMaybeIdentity) FromIdentity(v Identity) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeIdentity performs a merge with any union data inside the ClientAndMaybeIdentity, using the provided Identity
 func (t *ClientAndMaybeIdentity) MergeIdentity(v Identity) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2603,20 +2603,20 @@ func (t *ClientAndMaybeIdentity) UnmarshalJSON(b []byte) error {
 // AsClient returns the union data inside the ClientOrIdentity as a Client
 func (t ClientOrIdentity) AsClient() (Client, error) {
 	var body Client
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromClient overwrites any union data inside the ClientOrIdentity as the provided Client
 func (t *ClientOrIdentity) FromClient(v Client) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeClient performs a merge with any union data inside the ClientOrIdentity, using the provided Client
 func (t *ClientOrIdentity) MergeClient(v Client) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2629,20 +2629,20 @@ func (t *ClientOrIdentity) MergeClient(v Client) error {
 // AsIdentity returns the union data inside the ClientOrIdentity as a Identity
 func (t ClientOrIdentity) AsIdentity() (Identity, error) {
 	var body Identity
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromIdentity overwrites any union data inside the ClientOrIdentity as the provided Identity
 func (t *ClientOrIdentity) FromIdentity(v Identity) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeIdentity performs a merge with any union data inside the ClientOrIdentity, using the provided Identity
 func (t *ClientOrIdentity) MergeIdentity(v Identity) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}

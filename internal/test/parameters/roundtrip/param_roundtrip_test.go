@@ -38,6 +38,7 @@ import (
 	irisgen "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/roundtrip/iris/gen"
 	stdhttpparams "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/roundtrip/stdhttp"
 	stdhttpgen "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/roundtrip/stdhttp/gen"
+	"github.com/oapi-codegen/runtime"
 )
 
 func TestEchoParameterRoundTrip(t *testing.T) {
@@ -577,6 +578,75 @@ func testImpl(t *testing.T, handler http.Handler, routesEncodedSlash bool) {
 			assert.Equal(t, expectedObject, *got.O)
 		})
 	})
+
+	t.Run("JSON codec", func(t *testing.T) {
+		testJSONCodec(t, handler)
+	})
+}
+
+// countingCodec counts the calls that reach it.
+type countingCodec struct {
+	runtime.StdJSONCodec
+	marshals, unmarshals int
+}
+
+func (c *countingCodec) Marshal(v any) ([]byte, error) {
+	c.marshals++
+	return c.StdJSONCodec.Marshal(v)
+}
+
+func (c *countingCodec) Unmarshal(data []byte, v any) error {
+	c.unmarshals++
+	return c.StdJSONCodec.Unmarshal(data, v)
+}
+
+// testJSONCodec verifies that JSON-valued (content: application/json)
+// parameters use the codec set with runtime.SetJSONCodec in every location:
+// the generated client marshals the value with it, and the generated server
+// unmarshals the value with it.
+func testJSONCodec(t *testing.T, handler http.Handler) {
+	t.Helper()
+
+	const server = "http://example.com"
+	object := paramclient.ComplexObject{
+		Object:  paramclient.Object{FirstName: "Alex", Role: "admin"},
+		Id:      12345,
+		IsAdmin: true,
+	}
+
+	requests := map[string]func() (*http.Request, error){
+		"path": func() (*http.Request, error) {
+			return paramclient.NewGetContentObjectRequest(server, object)
+		},
+		"query": func() (*http.Request, error) {
+			return paramclient.NewGetQueryFormRequest(server, &paramclient.GetQueryFormParams{Co: &object})
+		},
+		"header": func() (*http.Request, error) {
+			return paramclient.NewGetHeaderRequest(server, &paramclient.GetHeaderParams{XComplexObject: &object})
+		},
+		"cookie": func() (*http.Request, error) {
+			return paramclient.NewGetCookieRequest(server, &paramclient.GetCookieParams{Co: &object})
+		},
+	}
+
+	for location, newRequest := range requests {
+		t.Run(location, func(t *testing.T) {
+			var codec countingCodec
+			runtime.SetJSONCodec(&codec)
+			t.Cleanup(func() { runtime.SetJSONCodec(nil) })
+
+			req, err := newRequest()
+			require.NoError(t, err)
+			assert.Equal(t, 1, codec.marshals, "client")
+			assert.Zero(t, codec.unmarshals, "client")
+
+			req.RequestURI = req.URL.RequestURI()
+			rec := httptest.NewRecorder()
+			handler.ServeHTTP(rec, req)
+			require.Equal(t, http.StatusOK, rec.Code, "body: %s", rec.Body.String())
+			assert.Equal(t, 1, codec.unmarshals, "server")
+		})
+	}
 }
 
 // testStringEscaping verifies that string path parameter values survive the

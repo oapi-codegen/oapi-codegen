@@ -75,7 +75,7 @@ func TestContentTypesShortName(t *testing.T) {
 	// as JSON (derived from the media type, not the name).
 	assert.Contains(t, code, "V1200 *Pet")
 	assert.Contains(t, code, "response.V1200 = &dest")
-	assert.Contains(t, code, "json.Unmarshal(bodyBytes, &dest)")
+	assert.Contains(t, code, "runtime.JSONUnmarshal(bodyBytes, &dest)")
 	// Strict server envelope uses the short name.
 	assert.Contains(t, code, "type AddPet200V1Response Pet")
 }

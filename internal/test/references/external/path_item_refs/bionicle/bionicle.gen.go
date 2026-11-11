@@ -37,20 +37,20 @@ type GetBionicleName400JSONResponseBody struct {
 // AsBionicle returns the union data inside the GetBionicleName400JSONResponseBody as a Bionicle
 func (t GetBionicleName400JSONResponseBody) AsBionicle() (Bionicle, error) {
 	var body Bionicle
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBionicle overwrites any union data inside the GetBionicleName400JSONResponseBody as the provided Bionicle
 func (t *GetBionicleName400JSONResponseBody) FromBionicle(v Bionicle) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeBionicle performs a merge with any union data inside the GetBionicleName400JSONResponseBody, using the provided Bionicle
 func (t *GetBionicleName400JSONResponseBody) MergeBionicle(v Bionicle) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -244,7 +244,7 @@ type GetBionicleName200JSONResponse Bionicle
 func (response GetBionicleName200JSONResponse) VisitGetBionicleNameResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -258,7 +258,7 @@ type GetBionicleName400JSONResponse = GetBionicleName400JSONResponseBody
 func (response GetBionicleName400JSONResponse) VisitGetBionicleNameResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

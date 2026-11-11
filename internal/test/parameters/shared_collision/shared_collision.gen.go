@@ -104,20 +104,20 @@ type OnDataPostParams struct {
 // AsHd147675Id0 returns the union data inside the Hd147675IdParam as a Hd147675Id0
 func (t Hd147675IdParam) AsHd147675Id0() (Hd147675Id0, error) {
 	var body Hd147675Id0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromHd147675Id0 overwrites any union data inside the Hd147675IdParam as the provided Hd147675Id0
 func (t *Hd147675IdParam) FromHd147675Id0(v Hd147675Id0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeHd147675Id0 performs a merge with any union data inside the Hd147675IdParam, using the provided Hd147675Id0
 func (t *Hd147675IdParam) MergeHd147675Id0(v Hd147675Id0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -130,20 +130,20 @@ func (t *Hd147675IdParam) MergeHd147675Id0(v Hd147675Id0) error {
 // AsHd147675Id1 returns the union data inside the Hd147675IdParam as a Hd147675Id1
 func (t Hd147675IdParam) AsHd147675Id1() (Hd147675Id1, error) {
 	var body Hd147675Id1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromHd147675Id1 overwrites any union data inside the Hd147675IdParam as the provided Hd147675Id1
 func (t *Hd147675IdParam) FromHd147675Id1(v Hd147675Id1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeHd147675Id1 performs a merge with any union data inside the Hd147675IdParam, using the provided Hd147675Id1
 func (t *Hd147675IdParam) MergeHd147675Id1(v Hd147675Id1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -157,7 +157,7 @@ func (t *Hd147675IdParam) MergeHd147675Id1(v Hd147675Id1) error {
 // parameter, which carries no JSON type.
 // The text is taken as a string.
 func (t *Hd147675IdParam) UnmarshalText(text []byte) error {
-	b, err := json.Marshal(string(text))
+	b, err := runtime.JSONMarshal(string(text))
 	if err != nil {
 		return err
 	}
@@ -183,20 +183,20 @@ func (t *Hd147675IdParam) UnmarshalJSON(b []byte) error {
 // AsHdf81445Id0 returns the union data inside the Hdf81445IdParam as a Hdf81445Id0
 func (t Hdf81445IdParam) AsHdf81445Id0() (Hdf81445Id0, error) {
 	var body Hdf81445Id0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromHdf81445Id0 overwrites any union data inside the Hdf81445IdParam as the provided Hdf81445Id0
 func (t *Hdf81445IdParam) FromHdf81445Id0(v Hdf81445Id0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeHdf81445Id0 performs a merge with any union data inside the Hdf81445IdParam, using the provided Hdf81445Id0
 func (t *Hdf81445IdParam) MergeHdf81445Id0(v Hdf81445Id0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -209,20 +209,20 @@ func (t *Hdf81445IdParam) MergeHdf81445Id0(v Hdf81445Id0) error {
 // AsHdf81445Id1 returns the union data inside the Hdf81445IdParam as a Hdf81445Id1
 func (t Hdf81445IdParam) AsHdf81445Id1() (Hdf81445Id1, error) {
 	var body Hdf81445Id1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromHdf81445Id1 overwrites any union data inside the Hdf81445IdParam as the provided Hdf81445Id1
 func (t *Hdf81445IdParam) FromHdf81445Id1(v Hdf81445Id1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeHdf81445Id1 performs a merge with any union data inside the Hdf81445IdParam, using the provided Hdf81445Id1
 func (t *Hdf81445IdParam) MergeHdf81445Id1(v Hdf81445Id1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -236,7 +236,7 @@ func (t *Hdf81445IdParam) MergeHdf81445Id1(v Hdf81445Id1) error {
 // parameter, which carries no JSON type.
 // The text is taken as a string.
 func (t *Hdf81445IdParam) UnmarshalText(text []byte) error {
-	b, err := json.Marshal(string(text))
+	b, err := runtime.JSONMarshal(string(text))
 	if err != nil {
 		return err
 	}
@@ -262,20 +262,20 @@ func (t *Hdf81445IdParam) UnmarshalJSON(b []byte) error {
 // AsRef0 returns the union data inside the RefParam as a Ref0
 func (t RefParam) AsRef0() (Ref0, error) {
 	var body Ref0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromRef0 overwrites any union data inside the RefParam as the provided Ref0
 func (t *RefParam) FromRef0(v Ref0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeRef0 performs a merge with any union data inside the RefParam, using the provided Ref0
 func (t *RefParam) MergeRef0(v Ref0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -288,20 +288,20 @@ func (t *RefParam) MergeRef0(v Ref0) error {
 // AsRef1 returns the union data inside the RefParam as a Ref1
 func (t RefParam) AsRef1() (Ref1, error) {
 	var body Ref1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromRef1 overwrites any union data inside the RefParam as the provided Ref1
 func (t *RefParam) FromRef1(v Ref1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeRef1 performs a merge with any union data inside the RefParam, using the provided Ref1
 func (t *RefParam) MergeRef1(v Ref1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -315,7 +315,7 @@ func (t *RefParam) MergeRef1(v Ref1) error {
 // parameter, which carries no JSON type.
 // The text is taken as a string.
 func (t *RefParam) UnmarshalText(text []byte) error {
-	b, err := json.Marshal(string(text))
+	b, err := runtime.JSONMarshal(string(text))
 	if err != nil {
 		return err
 	}
@@ -341,20 +341,20 @@ func (t *RefParam) UnmarshalJSON(b []byte) error {
 // AsWid0 returns the union data inside the WidParam as a Wid0
 func (t WidParam) AsWid0() (Wid0, error) {
 	var body Wid0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromWid0 overwrites any union data inside the WidParam as the provided Wid0
 func (t *WidParam) FromWid0(v Wid0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeWid0 performs a merge with any union data inside the WidParam, using the provided Wid0
 func (t *WidParam) MergeWid0(v Wid0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -367,20 +367,20 @@ func (t *WidParam) MergeWid0(v Wid0) error {
 // AsWid1 returns the union data inside the WidParam as a Wid1
 func (t WidParam) AsWid1() (Wid1, error) {
 	var body Wid1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromWid1 overwrites any union data inside the WidParam as the provided Wid1
 func (t *WidParam) FromWid1(v Wid1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeWid1 performs a merge with any union data inside the WidParam, using the provided Wid1
 func (t *WidParam) MergeWid1(v Wid1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -394,7 +394,7 @@ func (t *WidParam) MergeWid1(v Wid1) error {
 // parameter, which carries no JSON type.
 // The text is taken as a string.
 func (t *WidParam) UnmarshalText(text []byte) error {
-	b, err := json.Marshal(string(text))
+	b, err := runtime.JSONMarshal(string(text))
 	if err != nil {
 		return err
 	}
@@ -420,20 +420,20 @@ func (t *WidParam) UnmarshalJSON(b []byte) error {
 // AsWhid0 returns the union data inside the WhidParam as a Whid0
 func (t WhidParam) AsWhid0() (Whid0, error) {
 	var body Whid0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromWhid0 overwrites any union data inside the WhidParam as the provided Whid0
 func (t *WhidParam) FromWhid0(v Whid0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeWhid0 performs a merge with any union data inside the WhidParam, using the provided Whid0
 func (t *WhidParam) MergeWhid0(v Whid0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -446,20 +446,20 @@ func (t *WhidParam) MergeWhid0(v Whid0) error {
 // AsWhid1 returns the union data inside the WhidParam as a Whid1
 func (t WhidParam) AsWhid1() (Whid1, error) {
 	var body Whid1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromWhid1 overwrites any union data inside the WhidParam as the provided Whid1
 func (t *WhidParam) FromWhid1(v Whid1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeWhid1 performs a merge with any union data inside the WhidParam, using the provided Whid1
 func (t *WhidParam) MergeWhid1(v Whid1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -473,7 +473,7 @@ func (t *WhidParam) MergeWhid1(v Whid1) error {
 // parameter, which carries no JSON type.
 // The text is taken as a string.
 func (t *WhidParam) UnmarshalText(text []byte) error {
-	b, err := json.Marshal(string(text))
+	b, err := runtime.JSONMarshal(string(text))
 	if err != nil {
 		return err
 	}
@@ -499,20 +499,20 @@ func (t *WhidParam) UnmarshalJSON(b []byte) error {
 // AsCbid0 returns the union data inside the CbidParam as a Cbid0
 func (t CbidParam) AsCbid0() (Cbid0, error) {
 	var body Cbid0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCbid0 overwrites any union data inside the CbidParam as the provided Cbid0
 func (t *CbidParam) FromCbid0(v Cbid0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeCbid0 performs a merge with any union data inside the CbidParam, using the provided Cbid0
 func (t *CbidParam) MergeCbid0(v Cbid0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -525,20 +525,20 @@ func (t *CbidParam) MergeCbid0(v Cbid0) error {
 // AsCbid1 returns the union data inside the CbidParam as a Cbid1
 func (t CbidParam) AsCbid1() (Cbid1, error) {
 	var body Cbid1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCbid1 overwrites any union data inside the CbidParam as the provided Cbid1
 func (t *CbidParam) FromCbid1(v Cbid1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeCbid1 performs a merge with any union data inside the CbidParam, using the provided Cbid1
 func (t *CbidParam) MergeCbid1(v Cbid1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -552,7 +552,7 @@ func (t *CbidParam) MergeCbid1(v Cbid1) error {
 // parameter, which carries no JSON type.
 // The text is taken as a string.
 func (t *CbidParam) UnmarshalText(text []byte) error {
-	b, err := json.Marshal(string(text))
+	b, err := runtime.JSONMarshal(string(text))
 	if err != nil {
 		return err
 	}

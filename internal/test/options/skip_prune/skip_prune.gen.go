@@ -5,11 +5,12 @@ package optionsskipprune
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/oapi-codegen/runtime"
 )
 
 // ClientTypeSkip defines model for ClientTypeSkip.
@@ -372,7 +373,7 @@ func ParseGetClientSkipResponse(rsp *http.Response) (*GetClientSkipResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ClientTypeSkip
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -400,7 +401,7 @@ func ParseUpdateClientSkipResponse(rsp *http.Response) (*UpdateClientSkipRespons
 		var dest struct {
 			Code string `json:"code"`
 		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest

@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"compress/flate"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -118,7 +117,7 @@ func (w *ServerInterfaceWrapper) GetContentObject(ctx echo.Context) error {
 	// ------------- Path parameter "param" -------------
 	var param ComplexObject
 
-	err = json.Unmarshal([]byte(ctx.Param("param")), &param)
+	err = runtime.JSONUnmarshal([]byte(ctx.Param("param")), &param)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'param' as JSON")
 	}
@@ -209,7 +208,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx echo.Context) error {
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "Error unescaping cookie parameter 'co'")
 		}
-		err = json.Unmarshal([]byte(decoded), &value)
+		err = runtime.JSONUnmarshal([]byte(decoded), &value)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'co' as JSON")
 		}
@@ -357,7 +356,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx echo.Context) error {
 			return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Expected one value for X-Complex-Object, got %d", n))
 		}
 
-		err = json.Unmarshal([]byte(valueList[0]), &XComplexObject)
+		err = runtime.JSONUnmarshal([]byte(valueList[0]), &XComplexObject)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'X-Complex-Object' as JSON")
 		}
@@ -705,7 +704,7 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 	if paramValue := ctx.QueryParam("co"); paramValue != "" {
 
 		var value ComplexObject
-		err = json.Unmarshal([]byte(paramValue), &value)
+		err = runtime.JSONUnmarshal([]byte(paramValue), &value)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter 'co' as JSON")
 		}

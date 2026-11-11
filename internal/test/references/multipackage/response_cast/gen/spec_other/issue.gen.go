@@ -6,7 +6,6 @@ package spec_other
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -223,7 +222,7 @@ type GetOtherExample400JSONResponse struct{ externalRef0.N400JSONResponse }
 func (response GetOtherExample400JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.N400JSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.N400JSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -237,7 +236,7 @@ type GetOtherExample401JSONResponse struct{ externalRef0.N401JSONResponse }
 func (response GetOtherExample401JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.N401JSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.N401JSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -251,7 +250,7 @@ type GetOtherExample402JSONResponse struct{ externalRef0.N402JSONResponse }
 func (response GetOtherExample402JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -265,7 +264,7 @@ type GetOtherExample403JSONResponse struct{ externalRef0.N403JSONResponse }
 func (response GetOtherExample403JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -288,7 +287,7 @@ type GetOtherExample404JSONResponse struct {
 func (response GetOtherExample404JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -304,7 +303,7 @@ type GetOtherExample405JSONResponse struct {
 func (response GetOtherExample405JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -320,7 +319,7 @@ type GetOtherExample406JSONResponse struct {
 func (response GetOtherExample406JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -334,7 +333,7 @@ type GetOtherExample407JSONResponse uuid.UUID
 func (response GetOtherExample407JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -348,7 +347,7 @@ type GetOtherExample408JSONResponse support.GenericResponse[string]
 func (response GetOtherExample408JSONResponse) VisitGetOtherExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

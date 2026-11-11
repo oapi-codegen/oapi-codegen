@@ -8,12 +8,13 @@ package textandjson
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/oapi-codegen/runtime"
 )
 
 // Success defines model for Success.
@@ -255,7 +256,7 @@ func ParseGetTestResponse(rsp *http.Response) (*GetTestResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Success
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -436,7 +437,7 @@ type GetTest200JSONResponse struct{ SuccessJSONResponse }
 func (response GetTest200JSONResponse) VisitGetTestResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.SuccessJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.SuccessJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

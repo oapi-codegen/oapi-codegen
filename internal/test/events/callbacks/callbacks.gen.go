@@ -8,12 +8,13 @@ package eventscallbacks
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/oapi-codegen/runtime"
 )
 
 // TreePlantingRequest defines model for TreePlantingRequest.
@@ -160,7 +161,7 @@ func (c *Client) PlantTree(ctx context.Context, body PlantTreeJSONRequestBody, r
 // NewPlantTreeRequest calls the generic PlantTree builder with application/json body
 func NewPlantTreeRequest(server string, body PlantTreeJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -432,7 +433,7 @@ func (p *CallbackInitiator) TreePlanted(ctx context.Context, targetURL string, b
 // NewTreePlantedCallbackRequest builds a application/json POST request for the treePlanted callback
 func NewTreePlantedCallbackRequest(targetURL string, body TreePlantedJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}

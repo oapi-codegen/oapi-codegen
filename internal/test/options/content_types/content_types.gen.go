@@ -8,7 +8,6 @@ package optionscontenttypes
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -164,7 +163,7 @@ func (c *Client) UploadReportWithBody(ctx context.Context, contentType string, b
 // NewAddPetRequestWithV1Body calls the generic AddPet builder with application/vnd.mycompany.v1+json body
 func NewAddPetRequestWithV1Body(server string, body AddPetV1RequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -416,7 +415,7 @@ func ParseAddPetResponse(rsp *http.Response) (*AddPetResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Pet
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.V1200 = &dest
@@ -628,7 +627,7 @@ type AddPet200V1Response Pet
 func (response AddPet200V1Response) VisitAddPetResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/vnd.mycompany.v1+json")

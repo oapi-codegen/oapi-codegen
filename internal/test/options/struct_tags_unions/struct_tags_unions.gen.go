@@ -48,7 +48,7 @@ type Transfer struct {
 func (t Delivery) AsCourier() (Courier, error) {
 	var body Courier
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -64,20 +64,20 @@ func (t Delivery) AsCourier() (Courier, error) {
 			return body, fmt.Errorf("Courier doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier overwrites any union data inside the Delivery as the provided Courier
 func (t *Delivery) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeCourier performs a merge with any union data inside the Delivery, using the provided Courier
 func (t *Delivery) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -103,7 +103,7 @@ func (t *Delivery) UnmarshalJSON(b []byte) error {
 func (t Order) AsCard() (Card, error) {
 	var body Card
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -119,19 +119,19 @@ func (t Order) AsCard() (Card, error) {
 			return body, fmt.Errorf("Card doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard sets the union data inside the Order to the provided Card. It replaces
 // the data of Card's own union and keeps the other unions' data.
 func (t *Order) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card_wire")
 		delete(kept, "iban_wire")
 		delete(kept, "opt_holder_wire")
@@ -146,7 +146,7 @@ func (t *Order) FromCard(v Card) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -157,7 +157,7 @@ func (t *Order) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the Order, using the provided Card
 func (t *Order) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -173,7 +173,7 @@ func (t *Order) MergeCard(v Card) error {
 func (t Order) AsTransfer() (Transfer, error) {
 	var body Transfer
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -189,19 +189,19 @@ func (t Order) AsTransfer() (Transfer, error) {
 			return body, fmt.Errorf("Transfer doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer sets the union data inside the Order to the provided Transfer. It replaces
 // the data of Transfer's own union and keeps the other unions' data.
 func (t *Order) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card_wire")
 		delete(kept, "iban_wire")
 		delete(kept, "opt_holder_wire")
@@ -216,7 +216,7 @@ func (t *Order) FromTransfer(v Transfer) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -227,7 +227,7 @@ func (t *Order) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the Order, using the provided Transfer
 func (t *Order) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -243,7 +243,7 @@ func (t *Order) MergeTransfer(v Transfer) error {
 func (t Order) AsCourier() (Courier, error) {
 	var body Courier
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -259,19 +259,19 @@ func (t Order) AsCourier() (Courier, error) {
 			return body, fmt.Errorf("Courier doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier sets the union data inside the Order to the provided Courier. It replaces
 // the data of Courier's own union and keeps the other unions' data.
 func (t *Order) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address_wire")
 		delete(kept, "holder_wire")
 		added := object == nil
@@ -285,7 +285,7 @@ func (t *Order) FromCourier(v Courier) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -296,7 +296,7 @@ func (t *Order) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the Order, using the provided Courier
 func (t *Order) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -313,14 +313,14 @@ func (t Order) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "address_wire")
 		delete(object, "holder_wire")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -328,12 +328,12 @@ func (t Order) AsPayment() (Payment, error) {
 // replaces that union's data and keeps the other unions' data; a zero Payment clears that
 // union's data.
 func (t *Order) FromPayment(v Payment) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card_wire")
 		delete(kept, "iban_wire")
 		delete(kept, "opt_holder_wire")
@@ -348,7 +348,7 @@ func (t *Order) FromPayment(v Payment) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -364,15 +364,15 @@ func (t Order) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "card_wire")
 		delete(object, "iban_wire")
 		delete(object, "opt_holder_wire")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -380,12 +380,12 @@ func (t Order) AsDelivery() (Delivery, error) {
 // replaces that union's data and keeps the other unions' data; a zero Delivery clears that
 // union's data.
 func (t *Order) FromDelivery(v Delivery) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address_wire")
 		delete(kept, "holder_wire")
 		added := object == nil
@@ -399,7 +399,7 @@ func (t *Order) FromDelivery(v Delivery) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -424,7 +424,7 @@ func (t *Order) UnmarshalJSON(b []byte) error {
 func (t Payment) AsCard() (Card, error) {
 	var body Card
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -440,20 +440,20 @@ func (t Payment) AsCard() (Card, error) {
 			return body, fmt.Errorf("Card doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard overwrites any union data inside the Payment as the provided Card
 func (t *Payment) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeCard performs a merge with any union data inside the Payment, using the provided Card
 func (t *Payment) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -469,7 +469,7 @@ func (t *Payment) MergeCard(v Card) error {
 func (t Payment) AsTransfer() (Transfer, error) {
 	var body Transfer
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -485,20 +485,20 @@ func (t Payment) AsTransfer() (Transfer, error) {
 			return body, fmt.Errorf("Transfer doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer overwrites any union data inside the Payment as the provided Transfer
 func (t *Payment) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeTransfer performs a merge with any union data inside the Payment, using the provided Transfer
 func (t *Payment) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}

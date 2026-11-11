@@ -6,7 +6,6 @@ package schemasnullable
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/oapi-codegen/nullable"
+	"github.com/oapi-codegen/runtime"
 )
 
 // ComplexOptionalNullable Complex, optional and nullable
@@ -190,7 +190,7 @@ func (c *Client) ExamplePatch(ctx context.Context, body ExamplePatchJSONRequestB
 // NewExamplePatchRequest calls the generic ExamplePatch builder with application/json body
 func NewExamplePatchRequest(server string, body ExamplePatchJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}

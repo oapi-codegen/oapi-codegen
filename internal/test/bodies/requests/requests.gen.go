@@ -6,7 +6,6 @@ package bodiesrequests
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
@@ -152,7 +151,7 @@ func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JS
 // NewIssue9Request calls the generic Issue9 builder with application/json body
 func NewIssue9Request(server string, params *Issue9Params, body Issue9JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}

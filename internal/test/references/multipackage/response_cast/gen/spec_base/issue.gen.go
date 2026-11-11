@@ -6,7 +6,6 @@ package spec_base
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"mime/multipart"
 	"net/http"
@@ -266,7 +265,7 @@ type GetExample400JSONResponse struct{ N400JSONResponse }
 func (response GetExample400JSONResponse) VisitGetExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.N400JSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.N400JSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -280,7 +279,7 @@ type GetExample401JSONResponse struct{ N401JSONResponse }
 func (response GetExample401JSONResponse) VisitGetExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.N401JSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.N401JSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -294,7 +293,7 @@ type GetExample402JSONResponse struct{ N402JSONResponse }
 func (response GetExample402JSONResponse) VisitGetExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -308,7 +307,7 @@ type GetExample403JSONResponse struct{ N403JSONResponse }
 func (response GetExample403JSONResponse) VisitGetExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -329,7 +328,7 @@ type GetExample404JSONResponse N400
 func (response GetExample404JSONResponse) VisitGetExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
