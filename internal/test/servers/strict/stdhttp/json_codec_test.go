@@ -4,6 +4,8 @@ package api
 
 import (
 	"context"
+	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -13,6 +15,7 @@ import (
 
 	clientAPI "github.com/oapi-codegen/oapi-codegen/v2/internal/test/servers/strict/client"
 	"github.com/oapi-codegen/runtime"
+	"github.com/oapi-codegen/testutil"
 )
 
 // countingCodec counts the calls that reach it. It doesn't implement
@@ -59,4 +62,46 @@ func TestJSONCodec(t *testing.T) {
 
 	assert.Equal(t, 2, marshals, "client request body and server response")
 	assert.Equal(t, 2, unmarshals, "server request body and client response")
+}
+
+// streamingCodec implements runtime.StreamingJSONCodec on top of countingCodec.
+type streamingCodec struct {
+	countingCodec
+	writes, reads *int
+}
+
+func (c streamingCodec) MarshalWrite(w io.Writer, v any) error {
+	*c.writes++
+	return json.NewEncoder(w).Encode(v)
+}
+
+func (c streamingCodec) UnmarshalRead(r io.Reader, v any) error {
+	*c.reads++
+	return json.NewDecoder(r).Decode(v)
+}
+
+// TestStreamingJSONCodec checks that the strict server hands a codec that
+// implements runtime.StreamingJSONCodec the request body and the response as
+// streams, and doesn't go through the codec's Marshal and Unmarshal for them.
+func TestStreamingJSONCodec(t *testing.T) {
+	var marshals, unmarshals, writes, reads int
+	runtime.SetJSONCodec(streamingCodec{
+		countingCodec: countingCodec{marshals: &marshals, unmarshals: &unmarshals},
+		writes:        &writes,
+		reads:         &reads,
+	})
+	t.Cleanup(func() { runtime.SetJSONCodec(nil) })
+
+	m := http.NewServeMux()
+	HandlerFromMux(NewStrictHandler(StrictServer{}, nil), m)
+
+	// The request is built by hand, so that only the server reaches the codec.
+	rr := testutil.NewRequest().Post("/json").WithContentType("application/json").WithBody([]byte(`{"value":"123"}`)).GoWithHTTPHandler(t, m).Recorder
+	require.Equal(t, http.StatusOK, rr.Code, rr.Body.String())
+	assert.JSONEq(t, `{"value":"123"}`, rr.Body.String())
+
+	assert.Equal(t, 1, reads, "request body")
+	assert.Equal(t, 1, writes, "response")
+	assert.Zero(t, marshals)
+	assert.Zero(t, unmarshals)
 }
