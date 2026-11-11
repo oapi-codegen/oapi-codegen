@@ -100,7 +100,7 @@ go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 
 ### Installing
 
-`oapi-codegen` requires Go 1.26+ to build and install. Note that the *generated* code has its own, lower requirements — see [Supported Servers](#supported-servers).
+`oapi-codegen` requires Go 1.26+ to build and install. The *generated* code requires Go 1.26+ as well — see [Supported Servers](#supported-servers).
 
 It is recommended to use [`go tool` support](https://www.jvt.me/posts/2025/01/27/go-tools-124/) for managing the dependency of `oapi-codegen` alongside your core application.
 
@@ -465,21 +465,21 @@ To provide you a fully Test Driven Development style test harness to confirm you
 ### Supported Servers
 
 Right now, we support the following servers, and are supportive of adding new servers, too! Each
-server lists a minimum require Go version to compile the generated code, which may
-be different from that of oapi-codegen itself. While the code may compile on an
-older version of Go, we don't promise that it'll work.
+server lists the minimum Go version required to compile the generated code. That is
+currently Go 1.26 for all of them, because the generated code imports
+`github.com/oapi-codegen/runtime`, which requires Go 1.26.
 
 | Server | `generate` flag | Go Version | Documentation |
 | --- | --- |------------| --- |
-| [Chi](https://github.com/go-chi/chi) | `chi-server` | 1.24+      | [Chi documentation](docs/chi-server.md) |
-| [Echo](https://github.com/labstack/echo) | `echo-server` | 1.24+      | [Echo documentation](docs/echo-server.md) |
-| [Echo v5](https://github.com/labstack/echo) | `echo5-server` | 1.25+      | [Echo v5 documentation](docs/echo5-server.md) |
-| [Fiber](https://github.com/gofiber/fiber) | `fiber-server` | 1.24+      | [Fiber documentation](docs/fiber-server.md) |
-| [Fiber v3](https://github.com/gofiber/fiber) | `fiber-v3-server` | 1.25+      | [Fiber v3 documentation](docs/fiber-v3-server.md) |
-| [Gin](https://github.com/gin-gonic/gin) | `gin-server` | 1.25+      | [Gin documentation](docs/gin-server.md) |
-| [gorilla/mux](https://github.com/gorilla/mux) | `gorilla-server` | 1.24+      | [gorilla/mux documentation](docs/gorilla-server.md) |
-| [Iris](https://github.com/kataras/iris) | `iris-server` | 1.24+      | [Iris documentation](docs/iris-server.md) |
-| [`net/http`](https://pkg.go.dev/net/http) | `std-http-server` | 1.24+      | [`net/http` documentation](docs/stdhttp-server.md) |
+| [Chi](https://github.com/go-chi/chi) | `chi-server` | 1.26+      | [Chi documentation](docs/chi-server.md) |
+| [Echo](https://github.com/labstack/echo) | `echo-server` | 1.26+      | [Echo documentation](docs/echo-server.md) |
+| [Echo v5](https://github.com/labstack/echo) | `echo5-server` | 1.26+      | [Echo v5 documentation](docs/echo5-server.md) |
+| [Fiber](https://github.com/gofiber/fiber) | `fiber-server` | 1.26+      | [Fiber documentation](docs/fiber-server.md) |
+| [Fiber v3](https://github.com/gofiber/fiber) | `fiber-v3-server` | 1.26+      | [Fiber v3 documentation](docs/fiber-v3-server.md) |
+| [Gin](https://github.com/gin-gonic/gin) | `gin-server` | 1.26+      | [Gin documentation](docs/gin-server.md) |
+| [gorilla/mux](https://github.com/gorilla/mux) | `gorilla-server` | 1.26+      | [gorilla/mux documentation](docs/gorilla-server.md) |
+| [Iris](https://github.com/kataras/iris) | `iris-server` | 1.26+      | [Iris documentation](docs/iris-server.md) |
+| [`net/http`](https://pkg.go.dev/net/http) | `std-http-server` | 1.26+      | [`net/http` documentation](docs/stdhttp-server.md) |
 
 ### OpenAPI 3.2 HTTP methods (`query` and `additionalOperations`)
 
