@@ -113,3 +113,25 @@ The tests that guard these versions are:
 `v3` is the version under development. Its code (`pkg/codegen/merge_schemas_v3.go`, `pkg/codegen/union_v3.go`) and tests (`internal/test/aggregates/matrix/v3/`, `pkg/codegen/*_v3_test.go`) are expected to change as it takes shape; this rule doesn't apply to them.
 
 The code of these versions is `pkg/codegen/merge_schemas_v1.go`, `pkg/codegen/merge_schemas_v2.go` and `pkg/codegen/union_v2.go`, but it also calls code every version shares, such as `generateGoSchema`, `detectEnumViaOneOf`, `schemaIsNullable` and `nonNullTypes` in `pkg/codegen`, and the union and additional-properties templates. A change there can alter these versions' output too, and the tests above are what catch it.
+
+## 9. Generated JSON goes through the runtime codec
+
+Generated code encodes and decodes JSON through the process-wide codec in `github.com/oapi-codegen/runtime` (v1.9.0 or later), so that one `runtime.SetJSONCodec` call applies to all of it: models, clients and servers. A single direct call to `encoding/json` in generated code silently escapes the codec, and no test will notice, because the default codec is `encoding/json`.
+
+Flag any change to a template under `pkg/codegen/templates/`, or to Go code in `pkg/codegen/` that emits generated source (such as `template_helpers.go`), that adds one of these to the generated output:
+
+- `json.Marshal(` or `json.MarshalIndent(`: use `runtime.JSONMarshal` instead.
+- `json.Unmarshal(`: use `runtime.JSONUnmarshal` instead.
+- `json.NewEncoder(...).Encode(`: use `runtime.JSONMarshalWrite(w, v)` instead.
+- `json.NewDecoder(...).Decode(`: use `runtime.JSONUnmarshalRead(r, v)` instead, or `runtime.BindJSONBody` for a request body.
+
+When spot checking `*.gen.go` files, a new `json.Marshal`, `json.Unmarshal`, `json.NewEncoder` or `json.NewDecoder` call is the same finding: trace it back to the template that emitted it.
+
+The strict response in `strict/strict-interface.tmpl` encodes into a buffer with `runtime.JSONMarshalWrite` before it calls `WriteHeader`, so that an encoding error still becomes a 500. Flag a change that writes the body to the `http.ResponseWriter` directly, or that moves the encode after `WriteHeader`.
+
+These are not violations:
+
+- `encoding/json` types and helpers that don't encode or decode an application value: `json.RawMessage`, `json.Number`, `json.Valid`, and the `json.Marshaler` and `json.Unmarshaler` interfaces.
+- The `json.NewDecoder(...).UseNumber()` probe in the union `UnmarshalText` in `union.tmpl`. It classifies a text value and depends on `UseNumber`.
+- JSON that a web framework handles: request body binding in the echo, gin, fiber and iris strict servers (`ctx.Bind`, `ShouldBindJSON`, `BodyParser`, `Bind().Body`, `ReadJSON`), and `ctx.JSON` responses. These are deliberately outside the codec's reach.
+- The generator's own use of `encoding/json` while it runs (for example in `pkg/codegen/merge_schemas.go` and `pkg/codegen/schema.go`), hand-written tests, and hand-written handler code in `examples/` and the docs.
