@@ -80,7 +80,9 @@ func generateUnions(ctx genContext, outSchema *Schema, schema *openapi3.Schema, 
 // elementPath, and returns its schema with GoType set to the type the union's
 // accessors use. An inline branch is named after its path, and defined under
 // that name in outSchema's additional types unless it generated as that named
-// type already, along with the types it brings.
+// type already, along with the types it brings. A $ref to a whole file names
+// no Go type (see IsGoTypeReference) and generates inline, so it is named the
+// same way.
 func generateUnionElement(ctx genContext, outSchema *Schema, element *openapi3.SchemaRef, elementPath []string) (Schema, error) {
 	elementSchema, err := generateGoSchema(ctx.at(elementPath), element, elementPath)
 	if err != nil {
@@ -88,7 +90,7 @@ func generateUnionElement(ctx genContext, outSchema *Schema, element *openapi3.S
 		// only thing that says which inline branch failed.
 		return Schema{}, fmt.Errorf("branch %s: %w", elementPath[len(elementPath)-1], err)
 	}
-	if element.Ref == "" {
+	if !IsGoTypeReference(element.Ref) {
 		elementName := SchemaNameToTypeName(PathToTypeName(elementPath))
 		if elementSchema.TypeDecl() == elementName {
 			elementSchema.GoType = elementName
