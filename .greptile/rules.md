@@ -96,7 +96,7 @@ When a PR adds a test, enforce the following:
 - The repo is a multi-module monorepo. Cross-module changes (e.g., to `runtime/` consumers) deserve extra scrutiny.
 - Generated files are committed; CI fails if `make generate` produces a diff. If a PR's generated files look stale, that will fail CI regardless — but flagging it in review saves a round-trip.
 
-## 5. Schema-merging versions must not regress
+## 8. Schema-merging versions must not regress
 
 `compatibility.schema-merging-behavior` selects how `allOf`, `anyOf` and `oneOf` schemas become Go types, in sequential versions (`v1`, `v2`). These versions still receive bug fixes, but they must never regress: a spec that generated working code under a version must keep generating code that compiles against users' existing code and behaves the same way. New behavior goes into a new version, with code of its own.
 
