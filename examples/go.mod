@@ -24,7 +24,7 @@ require (
 	github.com/oapi-codegen/iris-middleware v1.2.1
 	github.com/oapi-codegen/nethttp-middleware v1.3.1
 	github.com/oapi-codegen/oapi-codegen/v2 v2.0.0-00010101000000-000000000000
-	github.com/oapi-codegen/runtime v1.8.0
+	github.com/oapi-codegen/runtime v1.9.0
 	github.com/oapi-codegen/testutil v1.1.0
 	github.com/stretchr/testify v1.12.1
 )

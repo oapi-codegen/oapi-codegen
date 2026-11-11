@@ -103,20 +103,20 @@ type UnionExampleJSONRequestBody = Example
 // AsUnionExample200JSONResponseBody0 returns the union data inside the UnionExample200JSONResponseBody as a UnionExample200JSONResponseBody0
 func (t UnionExample200JSONResponseBody) AsUnionExample200JSONResponseBody0() (UnionExample200JSONResponseBody0, error) {
 	var body UnionExample200JSONResponseBody0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromUnionExample200JSONResponseBody0 overwrites any union data inside the UnionExample200JSONResponseBody as the provided UnionExample200JSONResponseBody0
 func (t *UnionExample200JSONResponseBody) FromUnionExample200JSONResponseBody0(v UnionExample200JSONResponseBody0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeUnionExample200JSONResponseBody0 performs a merge with any union data inside the UnionExample200JSONResponseBody, using the provided UnionExample200JSONResponseBody0
 func (t *UnionExample200JSONResponseBody) MergeUnionExample200JSONResponseBody0(v UnionExample200JSONResponseBody0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -129,20 +129,20 @@ func (t *UnionExample200JSONResponseBody) MergeUnionExample200JSONResponseBody0(
 // AsExample returns the union data inside the UnionExample200JSONResponseBody as a Example
 func (t UnionExample200JSONResponseBody) AsExample() (Example, error) {
 	var body Example
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromExample overwrites any union data inside the UnionExample200JSONResponseBody as the provided Example
 func (t *UnionExample200JSONResponseBody) FromExample(v Example) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeExample performs a merge with any union data inside the UnionExample200JSONResponseBody, using the provided Example
 func (t *UnionExample200JSONResponseBody) MergeExample(v Example) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -872,7 +872,7 @@ func (c *Client) UnionExample(ctx context.Context, body UnionExampleJSONRequestB
 // NewJSONExampleRequest calls the generic JSONExample builder with application/json body
 func NewJSONExampleRequest(server string, body JSONExampleJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -970,7 +970,7 @@ func NewMultipartRelatedExampleRequestWithBody(server string, contentType string
 // NewMultipleRequestAndResponseTypesRequest calls the generic MultipleRequestAndResponseTypes builder with application/json body
 func NewMultipleRequestAndResponseTypesRequest(server string, body MultipleRequestAndResponseTypesJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1059,7 +1059,7 @@ func NewNoContentHeadersRequest(server string) (*http.Request, error) {
 // NewRequiredJSONBodyRequest calls the generic RequiredJSONBody builder with application/json body
 func NewRequiredJSONBodyRequest(server string, body RequiredJSONBodyJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1173,7 +1173,7 @@ func NewReservedGoKeywordParametersRequest(server string, pType string) (*http.R
 // NewReusableResponsesRequest calls the generic ReusableResponses builder with application/json body
 func NewReusableResponsesRequest(server string, body ReusableResponsesJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1253,7 +1253,7 @@ func NewReusableURLEncodedResponseRequestWithBody(server string, contentType str
 // NewSameNameParamAndBodyPropertyRequest calls the generic SameNameParamAndBodyProperty builder with application/json body
 func NewSameNameParamAndBodyPropertyRequest(server string, name string, body SameNameParamAndBodyPropertyJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1438,7 +1438,7 @@ func NewURLEncodedExampleRequestWithBody(server string, contentType string, body
 // NewHeadersExampleRequest calls the generic HeadersExample builder with application/json body
 func NewHeadersExampleRequest(server string, params *HeadersExampleParams, body HeadersExampleJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1502,7 +1502,7 @@ func NewHeadersExampleRequestWithBody(server string, params *HeadersExampleParam
 // NewUnionExampleRequest calls the generic UnionExample builder with application/json body
 func NewUnionExampleRequest(server string, body UnionExampleJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2848,7 +2848,7 @@ func ParseJSONExampleResponse(rsp *http.Response) (*JSONExampleResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Example
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2909,7 +2909,7 @@ func ParseMultipleRequestAndResponseTypesResponse(rsp *http.Response) (*Multiple
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Example
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2977,7 +2977,7 @@ func ParseRequiredJSONBodyResponse(rsp *http.Response) (*RequiredJSONBodyRespons
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Example
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3038,7 +3038,7 @@ func ParseReusableResponsesResponse(rsp *http.Response) (*ReusableResponsesRespo
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Reusableresponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3103,7 +3103,7 @@ func ParseSameNameParamAndBodyPropertyResponse(rsp *http.Response) (*SameNamePar
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest SameName
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3193,7 +3193,7 @@ func ParseHeadersExampleResponse(rsp *http.Response) (*HeadersExampleResponse, e
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Example
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3256,14 +3256,14 @@ func ParseUnionExampleResponse(rsp *http.Response) (*UnionExampleResponse, error
 	switch {
 	case rsp.Header.Get("Content-Type") == "application/alternative+json" && rsp.StatusCode == 200:
 		var dest Example
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationalternativeJSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
 		var dest UnionExample200JSONResponseBody
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest

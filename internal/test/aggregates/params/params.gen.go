@@ -135,20 +135,20 @@ type GetThingParamsAccept struct {
 // AsIntOrString0 returns the union data inside the IntOrString as a IntOrString0
 func (t IntOrString) AsIntOrString0() (IntOrString0, error) {
 	var body IntOrString0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromIntOrString0 overwrites any union data inside the IntOrString as the provided IntOrString0
 func (t *IntOrString) FromIntOrString0(v IntOrString0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeIntOrString0 performs a merge with any union data inside the IntOrString, using the provided IntOrString0
 func (t *IntOrString) MergeIntOrString0(v IntOrString0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -161,20 +161,20 @@ func (t *IntOrString) MergeIntOrString0(v IntOrString0) error {
 // AsIntOrString1 returns the union data inside the IntOrString as a IntOrString1
 func (t IntOrString) AsIntOrString1() (IntOrString1, error) {
 	var body IntOrString1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromIntOrString1 overwrites any union data inside the IntOrString as the provided IntOrString1
 func (t *IntOrString) FromIntOrString1(v IntOrString1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeIntOrString1 performs a merge with any union data inside the IntOrString, using the provided IntOrString1
 func (t *IntOrString) MergeIntOrString1(v IntOrString1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -199,7 +199,7 @@ func (t *IntOrString) UnmarshalText(text []byte) error {
 			}
 		}
 	}
-	b, err := json.Marshal(string(text))
+	b, err := runtime.JSONMarshal(string(text))
 	if err != nil {
 		return err
 	}
@@ -225,20 +225,20 @@ func (t *IntOrString) UnmarshalJSON(b []byte) error {
 // AsFilter0 returns the union data inside the Filter as a Filter0
 func (t Filter) AsFilter0() (Filter0, error) {
 	var body Filter0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromFilter0 overwrites any union data inside the Filter as the provided Filter0
 func (t *Filter) FromFilter0(v Filter0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeFilter0 performs a merge with any union data inside the Filter, using the provided Filter0
 func (t *Filter) MergeFilter0(v Filter0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -251,20 +251,20 @@ func (t *Filter) MergeFilter0(v Filter0) error {
 // AsFilter1 returns the union data inside the Filter as a Filter1
 func (t Filter) AsFilter1() (Filter1, error) {
 	var body Filter1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromFilter1 overwrites any union data inside the Filter as the provided Filter1
 func (t *Filter) FromFilter1(v Filter1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeFilter1 performs a merge with any union data inside the Filter, using the provided Filter1
 func (t *Filter) MergeFilter1(v Filter1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -289,7 +289,7 @@ func (t *Filter) UnmarshalText(text []byte) error {
 			}
 		}
 	}
-	b, err := json.Marshal(string(text))
+	b, err := runtime.JSONMarshal(string(text))
 	if err != nil {
 		return err
 	}
@@ -315,20 +315,20 @@ func (t *Filter) UnmarshalJSON(b []byte) error {
 // AsGetItemParamsSession0 returns the union data inside the GetItemParamsSession as a GetItemParamsSession0
 func (t GetItemParamsSession) AsGetItemParamsSession0() (GetItemParamsSession0, error) {
 	var body GetItemParamsSession0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromGetItemParamsSession0 overwrites any union data inside the GetItemParamsSession as the provided GetItemParamsSession0
 func (t *GetItemParamsSession) FromGetItemParamsSession0(v GetItemParamsSession0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeGetItemParamsSession0 performs a merge with any union data inside the GetItemParamsSession, using the provided GetItemParamsSession0
 func (t *GetItemParamsSession) MergeGetItemParamsSession0(v GetItemParamsSession0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -341,20 +341,20 @@ func (t *GetItemParamsSession) MergeGetItemParamsSession0(v GetItemParamsSession
 // AsGetItemParamsSession1 returns the union data inside the GetItemParamsSession as a GetItemParamsSession1
 func (t GetItemParamsSession) AsGetItemParamsSession1() (GetItemParamsSession1, error) {
 	var body GetItemParamsSession1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromGetItemParamsSession1 overwrites any union data inside the GetItemParamsSession as the provided GetItemParamsSession1
 func (t *GetItemParamsSession) FromGetItemParamsSession1(v GetItemParamsSession1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeGetItemParamsSession1 performs a merge with any union data inside the GetItemParamsSession, using the provided GetItemParamsSession1
 func (t *GetItemParamsSession) MergeGetItemParamsSession1(v GetItemParamsSession1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -404,20 +404,20 @@ func (t *GetItemParamsSession) UnmarshalJSON(b []byte) error {
 // AsId0 returns the union data inside the IdParam as a Id0
 func (t IdParam) AsId0() (Id0, error) {
 	var body Id0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromId0 overwrites any union data inside the IdParam as the provided Id0
 func (t *IdParam) FromId0(v Id0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeId0 performs a merge with any union data inside the IdParam, using the provided Id0
 func (t *IdParam) MergeId0(v Id0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -430,20 +430,20 @@ func (t *IdParam) MergeId0(v Id0) error {
 // AsId1 returns the union data inside the IdParam as a Id1
 func (t IdParam) AsId1() (Id1, error) {
 	var body Id1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromId1 overwrites any union data inside the IdParam as the provided Id1
 func (t *IdParam) FromId1(v Id1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeId1 performs a merge with any union data inside the IdParam, using the provided Id1
 func (t *IdParam) MergeId1(v Id1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -468,7 +468,7 @@ func (t *IdParam) UnmarshalText(text []byte) error {
 			}
 		}
 	}
-	b, err := json.Marshal(string(text))
+	b, err := runtime.JSONMarshal(string(text))
 	if err != nil {
 		return err
 	}
@@ -494,20 +494,20 @@ func (t *IdParam) UnmarshalJSON(b []byte) error {
 // AsGetThingParamsQ0 returns the union data inside the GetThingParamsQ as a GetThingParamsQ0
 func (t GetThingParamsQ) AsGetThingParamsQ0() (GetThingParamsQ0, error) {
 	var body GetThingParamsQ0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromGetThingParamsQ0 overwrites any union data inside the GetThingParamsQ as the provided GetThingParamsQ0
 func (t *GetThingParamsQ) FromGetThingParamsQ0(v GetThingParamsQ0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeGetThingParamsQ0 performs a merge with any union data inside the GetThingParamsQ, using the provided GetThingParamsQ0
 func (t *GetThingParamsQ) MergeGetThingParamsQ0(v GetThingParamsQ0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -520,20 +520,20 @@ func (t *GetThingParamsQ) MergeGetThingParamsQ0(v GetThingParamsQ0) error {
 // AsGetThingParamsQ1 returns the union data inside the GetThingParamsQ as a GetThingParamsQ1
 func (t GetThingParamsQ) AsGetThingParamsQ1() (GetThingParamsQ1, error) {
 	var body GetThingParamsQ1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromGetThingParamsQ1 overwrites any union data inside the GetThingParamsQ as the provided GetThingParamsQ1
 func (t *GetThingParamsQ) FromGetThingParamsQ1(v GetThingParamsQ1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeGetThingParamsQ1 performs a merge with any union data inside the GetThingParamsQ, using the provided GetThingParamsQ1
 func (t *GetThingParamsQ) MergeGetThingParamsQ1(v GetThingParamsQ1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -558,7 +558,7 @@ func (t *GetThingParamsQ) UnmarshalText(text []byte) error {
 			}
 		}
 	}
-	b, err := json.Marshal(string(text))
+	b, err := runtime.JSONMarshal(string(text))
 	if err != nil {
 		return err
 	}
@@ -584,20 +584,20 @@ func (t *GetThingParamsQ) UnmarshalJSON(b []byte) error {
 // AsIntOrString returns the union data inside the GetThingParamsN as a IntOrString
 func (t GetThingParamsN) AsIntOrString() (IntOrString, error) {
 	var body IntOrString
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromIntOrString overwrites any union data inside the GetThingParamsN as the provided IntOrString
 func (t *GetThingParamsN) FromIntOrString(v IntOrString) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeIntOrString performs a merge with any union data inside the GetThingParamsN, using the provided IntOrString
 func (t *GetThingParamsN) MergeIntOrString(v IntOrString) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -610,20 +610,20 @@ func (t *GetThingParamsN) MergeIntOrString(v IntOrString) error {
 // AsGetThingParamsN1 returns the union data inside the GetThingParamsN as a GetThingParamsN1
 func (t GetThingParamsN) AsGetThingParamsN1() (GetThingParamsN1, error) {
 	var body GetThingParamsN1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromGetThingParamsN1 overwrites any union data inside the GetThingParamsN as the provided GetThingParamsN1
 func (t *GetThingParamsN) FromGetThingParamsN1(v GetThingParamsN1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeGetThingParamsN1 performs a merge with any union data inside the GetThingParamsN, using the provided GetThingParamsN1
 func (t *GetThingParamsN) MergeGetThingParamsN1(v GetThingParamsN1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -652,7 +652,7 @@ func (t *GetThingParamsN) UnmarshalText(text []byte) error {
 			}
 		}
 	}
-	b, err := json.Marshal(string(text))
+	b, err := runtime.JSONMarshal(string(text))
 	if err != nil {
 		return err
 	}
@@ -678,20 +678,20 @@ func (t *GetThingParamsN) UnmarshalJSON(b []byte) error {
 // AsGetThingParamsXAmount0 returns the union data inside the GetThingParamsXAmount as a GetThingParamsXAmount0
 func (t GetThingParamsXAmount) AsGetThingParamsXAmount0() (GetThingParamsXAmount0, error) {
 	var body GetThingParamsXAmount0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromGetThingParamsXAmount0 overwrites any union data inside the GetThingParamsXAmount as the provided GetThingParamsXAmount0
 func (t *GetThingParamsXAmount) FromGetThingParamsXAmount0(v GetThingParamsXAmount0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeGetThingParamsXAmount0 performs a merge with any union data inside the GetThingParamsXAmount, using the provided GetThingParamsXAmount0
 func (t *GetThingParamsXAmount) MergeGetThingParamsXAmount0(v GetThingParamsXAmount0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -704,20 +704,20 @@ func (t *GetThingParamsXAmount) MergeGetThingParamsXAmount0(v GetThingParamsXAmo
 // AsGetThingParamsXAmount1 returns the union data inside the GetThingParamsXAmount as a GetThingParamsXAmount1
 func (t GetThingParamsXAmount) AsGetThingParamsXAmount1() (GetThingParamsXAmount1, error) {
 	var body GetThingParamsXAmount1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromGetThingParamsXAmount1 overwrites any union data inside the GetThingParamsXAmount as the provided GetThingParamsXAmount1
 func (t *GetThingParamsXAmount) FromGetThingParamsXAmount1(v GetThingParamsXAmount1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeGetThingParamsXAmount1 performs a merge with any union data inside the GetThingParamsXAmount, using the provided GetThingParamsXAmount1
 func (t *GetThingParamsXAmount) MergeGetThingParamsXAmount1(v GetThingParamsXAmount1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -765,20 +765,20 @@ func (t *GetThingParamsXAmount) UnmarshalJSON(b []byte) error {
 // AsGetThingParamsAccept0 returns the union data inside the GetThingParamsAccept as a GetThingParamsAccept0
 func (t GetThingParamsAccept) AsGetThingParamsAccept0() (GetThingParamsAccept0, error) {
 	var body GetThingParamsAccept0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromGetThingParamsAccept0 overwrites any union data inside the GetThingParamsAccept as the provided GetThingParamsAccept0
 func (t *GetThingParamsAccept) FromGetThingParamsAccept0(v GetThingParamsAccept0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeGetThingParamsAccept0 performs a merge with any union data inside the GetThingParamsAccept, using the provided GetThingParamsAccept0
 func (t *GetThingParamsAccept) MergeGetThingParamsAccept0(v GetThingParamsAccept0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -791,20 +791,20 @@ func (t *GetThingParamsAccept) MergeGetThingParamsAccept0(v GetThingParamsAccept
 // AsGetThingParamsAccept1 returns the union data inside the GetThingParamsAccept as a GetThingParamsAccept1
 func (t GetThingParamsAccept) AsGetThingParamsAccept1() (GetThingParamsAccept1, error) {
 	var body GetThingParamsAccept1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromGetThingParamsAccept1 overwrites any union data inside the GetThingParamsAccept as the provided GetThingParamsAccept1
 func (t *GetThingParamsAccept) FromGetThingParamsAccept1(v GetThingParamsAccept1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeGetThingParamsAccept1 performs a merge with any union data inside the GetThingParamsAccept, using the provided GetThingParamsAccept1
 func (t *GetThingParamsAccept) MergeGetThingParamsAccept1(v GetThingParamsAccept1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -827,7 +827,7 @@ func (t *GetThingParamsAccept) UnmarshalText(text []byte) error {
 			return nil
 		}
 	}
-	b, err := json.Marshal(string(text))
+	b, err := runtime.JSONMarshal(string(text))
 	if err != nil {
 		return err
 	}
@@ -1317,14 +1317,14 @@ func ParseGetItemResponse(rsp *http.Response) (*GetItemResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Bound
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest Id
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON404 = &dest
@@ -1350,7 +1350,7 @@ func ParseGetThingResponse(rsp *http.Response) (*GetThingResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Bound
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1665,7 +1665,7 @@ type GetItem200JSONResponse Bound
 func (response GetItem200JSONResponse) VisitGetItemResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1679,7 +1679,7 @@ type GetItem404JSONResponse Id
 func (response GetItem404JSONResponse) VisitGetItemResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1702,7 +1702,7 @@ type GetThing200JSONResponse Bound
 func (response GetThing200JSONResponse) VisitGetThingResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

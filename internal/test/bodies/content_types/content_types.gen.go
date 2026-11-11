@@ -120,13 +120,13 @@ func (a *ProblemDetails) Set(fieldName string, value any) {
 // Override default JSON handling for ProblemDetails to handle AdditionalProperties
 func (a *ProblemDetails) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["detail"]; found {
-		err = json.Unmarshal(raw, &a.Detail)
+		err = runtime.JSONUnmarshal(raw, &a.Detail)
 		if err != nil {
 			return fmt.Errorf("error reading 'detail': %w", err)
 		}
@@ -134,7 +134,7 @@ func (a *ProblemDetails) UnmarshalJSON(b []byte) error {
 	}
 
 	if raw, found := object["instance"]; found {
-		err = json.Unmarshal(raw, &a.Instance)
+		err = runtime.JSONUnmarshal(raw, &a.Instance)
 		if err != nil {
 			return fmt.Errorf("error reading 'instance': %w", err)
 		}
@@ -142,7 +142,7 @@ func (a *ProblemDetails) UnmarshalJSON(b []byte) error {
 	}
 
 	if raw, found := object["status"]; found {
-		err = json.Unmarshal(raw, &a.Status)
+		err = runtime.JSONUnmarshal(raw, &a.Status)
 		if err != nil {
 			return fmt.Errorf("error reading 'status': %w", err)
 		}
@@ -150,7 +150,7 @@ func (a *ProblemDetails) UnmarshalJSON(b []byte) error {
 	}
 
 	if raw, found := object["title"]; found {
-		err = json.Unmarshal(raw, &a.Title)
+		err = runtime.JSONUnmarshal(raw, &a.Title)
 		if err != nil {
 			return fmt.Errorf("error reading 'title': %w", err)
 		}
@@ -158,7 +158,7 @@ func (a *ProblemDetails) UnmarshalJSON(b []byte) error {
 	}
 
 	if raw, found := object["type"]; found {
-		err = json.Unmarshal(raw, &a.Type)
+		err = runtime.JSONUnmarshal(raw, &a.Type)
 		if err != nil {
 			return fmt.Errorf("error reading 'type': %w", err)
 		}
@@ -169,7 +169,7 @@ func (a *ProblemDetails) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
 			var fieldVal any
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -185,66 +185,66 @@ func (a ProblemDetails) MarshalJSON() ([]byte, error) {
 	object := make(map[string]json.RawMessage)
 
 	if a.Detail != nil {
-		object["detail"], err = json.Marshal(a.Detail)
+		object["detail"], err = runtime.JSONMarshal(a.Detail)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'detail': %w", err)
 		}
 	}
 
 	if a.Instance != nil {
-		object["instance"], err = json.Marshal(a.Instance)
+		object["instance"], err = runtime.JSONMarshal(a.Instance)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'instance': %w", err)
 		}
 	}
 
 	if a.Status != nil {
-		object["status"], err = json.Marshal(a.Status)
+		object["status"], err = runtime.JSONMarshal(a.Status)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'status': %w", err)
 		}
 	}
 
 	if a.Title != nil {
-		object["title"], err = json.Marshal(a.Title)
+		object["title"], err = runtime.JSONMarshal(a.Title)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'title': %w", err)
 		}
 	}
 
 	if a.Type != nil {
-		object["type"], err = json.Marshal(a.Type)
+		object["type"], err = runtime.JSONMarshal(a.Type)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'type': %w", err)
 		}
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // AsErrorA returns the union data inside the CreateItem422ApplicationVndAPIPlusJSONResponseBody as a ErrorA
 func (t CreateItem422ApplicationVndAPIPlusJSONResponseBody) AsErrorA() (ErrorA, error) {
 	var body ErrorA
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromErrorA overwrites any union data inside the CreateItem422ApplicationVndAPIPlusJSONResponseBody as the provided ErrorA
 func (t *CreateItem422ApplicationVndAPIPlusJSONResponseBody) FromErrorA(v ErrorA) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeErrorA performs a merge with any union data inside the CreateItem422ApplicationVndAPIPlusJSONResponseBody, using the provided ErrorA
 func (t *CreateItem422ApplicationVndAPIPlusJSONResponseBody) MergeErrorA(v ErrorA) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -257,20 +257,20 @@ func (t *CreateItem422ApplicationVndAPIPlusJSONResponseBody) MergeErrorA(v Error
 // AsErrorB returns the union data inside the CreateItem422ApplicationVndAPIPlusJSONResponseBody as a ErrorB
 func (t CreateItem422ApplicationVndAPIPlusJSONResponseBody) AsErrorB() (ErrorB, error) {
 	var body ErrorB
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromErrorB overwrites any union data inside the CreateItem422ApplicationVndAPIPlusJSONResponseBody as the provided ErrorB
 func (t *CreateItem422ApplicationVndAPIPlusJSONResponseBody) FromErrorB(v ErrorB) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeErrorB performs a merge with any union data inside the CreateItem422ApplicationVndAPIPlusJSONResponseBody, using the provided ErrorB
 func (t *CreateItem422ApplicationVndAPIPlusJSONResponseBody) MergeErrorB(v ErrorB) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -792,7 +792,7 @@ func NewGetV1TestRequest(server string) (*http.Request, error) {
 // NewCreateWhateverRequestWithApplicationWildcardPlusJSONBody calls the generic CreateWhatever builder with application/*+json body
 func NewCreateWhateverRequestWithApplicationWildcardPlusJSONBody(server string, body CreateWhateverApplicationWildcardPlusJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -803,7 +803,7 @@ func NewCreateWhateverRequestWithApplicationWildcardPlusJSONBody(server string, 
 // NewCreateWhateverRequest calls the generic CreateWhatever builder with application/json body
 func NewCreateWhateverRequest(server string, body CreateWhateverJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -814,7 +814,7 @@ func NewCreateWhateverRequest(server string, body CreateWhateverJSONRequestBody)
 // NewCreateWhateverRequestWithApplicationJSONPatchPlusJSONBody calls the generic CreateWhatever builder with application/json-patch+json body
 func NewCreateWhateverRequestWithApplicationJSONPatchPlusJSONBody(server string, body CreateWhateverApplicationJSONPatchPlusJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1443,14 +1443,14 @@ func ParseIssue1051Response(rsp *http.Response) (*Issue1051Response, error) {
 	switch {
 	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
 		var dest map[string]any
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/vnd.something.v1+json" && rsp.StatusCode == 200:
 		var dest map[string]any
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationvndSomethingV1JSON200 = &dest
@@ -1476,7 +1476,7 @@ func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest GenericObject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1497,7 +1497,7 @@ func ParseIssue127Response(rsp *http.Response) (*Issue127Response, error) {
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest GenericObject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSONDefault = &dest
@@ -1529,14 +1529,14 @@ func ParseCreateItemResponse(rsp *http.Response) (*CreateItemResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Item
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationvndApiJSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest CreateItem422ApplicationVndAPIPlusJSONResponseBody
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationvndApiJSON422 = &dest
@@ -1594,14 +1594,14 @@ func ParseGetV1TestResponse(rsp *http.Response) (*GetV1TestResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest Misc400Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationproblemJSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest Misc404Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationproblemJSON404 = &dest
@@ -1627,7 +1627,7 @@ func ParseCreateWhateverResponse(rsp *http.Response) (*CreateWhateverResponse, e
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
 		var dest Whatever
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON201 = &dest

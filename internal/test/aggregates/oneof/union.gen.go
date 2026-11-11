@@ -137,13 +137,13 @@ func (a *Bag) Set(fieldName string, value any) {
 // Override default JSON handling for Bag to handle AdditionalProperties
 func (a *Bag) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["kind"]; found {
-		err = json.Unmarshal(raw, &a.Kind)
+		err = runtime.JSONUnmarshal(raw, &a.Kind)
 		if err != nil {
 			return fmt.Errorf("error reading 'kind': %w", err)
 		}
@@ -154,7 +154,7 @@ func (a *Bag) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
 			var fieldVal any
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -169,18 +169,18 @@ func (a Bag) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["kind"], err = json.Marshal(a.Kind)
+	object["kind"], err = runtime.JSONMarshal(a.Kind)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Getter for additional properties for Both. Returns the specified
@@ -211,16 +211,16 @@ func (a *Both) Set(fieldName string, value any) {
 // the new union data.
 func (t *Both) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
+	_ = runtime.JSONUnmarshal(previous, &held)
 	if raw, found := object["kind"]; found {
 		var old, next string
-		unchanged := json.Unmarshal(held["kind"], &old) == nil && reflect.DeepEqual(old, t.Kind)
+		unchanged := runtime.JSONUnmarshal(held["kind"], &old) == nil && reflect.DeepEqual(old, t.Kind)
 		current := reflect.ValueOf(t.Kind)
-		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+		if (unchanged || !current.IsValid() || current.IsZero()) && runtime.JSONUnmarshal(raw, &next) == nil {
 			t.Kind = next
 		}
 	}
@@ -234,13 +234,13 @@ func (t *Both) adoptUnion(previous, b json.RawMessage) {
 // AsCat returns the union data inside the Both as a Cat
 func (t Both) AsCat() (Cat, error) {
 	var body Cat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCat overwrites any union data inside the Both as the provided Cat
 func (t *Both) FromCat(v Cat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -251,7 +251,7 @@ func (t *Both) FromCat(v Cat) error {
 
 // MergeCat performs a merge with any union data inside the Both, using the provided Cat
 func (t *Both) MergeCat(v Cat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -268,13 +268,13 @@ func (t *Both) MergeCat(v Cat) error {
 // AsDog returns the union data inside the Both as a Dog
 func (t Both) AsDog() (Dog, error) {
 	var body Dog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromDog overwrites any union data inside the Both as the provided Dog
 func (t *Both) FromDog(v Dog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -285,7 +285,7 @@ func (t *Both) FromDog(v Dog) error {
 
 // MergeDog performs a merge with any union data inside the Both, using the provided Dog
 func (t *Both) MergeDog(v Dog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -302,20 +302,20 @@ func (t *Both) MergeDog(v Dog) error {
 // AsOnetimeEvent returns the union data inside the Event as a OnetimeEvent
 func (t Event) AsOnetimeEvent() (OnetimeEvent, error) {
 	var body OnetimeEvent
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromOnetimeEvent overwrites any union data inside the Event as the provided OnetimeEvent
 func (t *Event) FromOnetimeEvent(v OnetimeEvent) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeOnetimeEvent performs a merge with any union data inside the Event, using the provided OnetimeEvent
 func (t *Event) MergeOnetimeEvent(v OnetimeEvent) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -328,20 +328,20 @@ func (t *Event) MergeOnetimeEvent(v OnetimeEvent) error {
 // AsRepeatableEvent returns the union data inside the Event as a RepeatableEvent
 func (t Event) AsRepeatableEvent() (RepeatableEvent, error) {
 	var body RepeatableEvent
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromRepeatableEvent overwrites any union data inside the Event as the provided RepeatableEvent
 func (t *Event) FromRepeatableEvent(v RepeatableEvent) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeRepeatableEvent performs a merge with any union data inside the Event, using the provided RepeatableEvent
 func (t *Event) MergeRepeatableEvent(v RepeatableEvent) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -364,20 +364,20 @@ func (t *Event) UnmarshalJSON(b []byte) error {
 // AsCat returns the union data inside the EventImpl as a Cat
 func (t EventImpl) AsCat() (Cat, error) {
 	var body Cat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCat overwrites any union data inside the EventImpl as the provided Cat
 func (t *EventImpl) FromCat(v Cat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeCat performs a merge with any union data inside the EventImpl, using the provided Cat
 func (t *EventImpl) MergeCat(v Cat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -390,20 +390,20 @@ func (t *EventImpl) MergeCat(v Cat) error {
 // AsDog returns the union data inside the EventImpl as a Dog
 func (t EventImpl) AsDog() (Dog, error) {
 	var body Dog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromDog overwrites any union data inside the EventImpl as the provided Dog
 func (t *EventImpl) FromDog(v Dog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeDog performs a merge with any union data inside the EventImpl, using the provided Dog
 func (t *EventImpl) MergeDog(v Dog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -431,16 +431,16 @@ func (t *EventImpl) UnmarshalJSON(b []byte) error {
 // when marshaling.
 func (t *Thing) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
+	_ = runtime.JSONUnmarshal(previous, &held)
 	if raw, found := object["id"]; found {
 		var old, next string
-		unchanged := json.Unmarshal(held["id"], &old) == nil && reflect.DeepEqual(old, t.Id)
+		unchanged := runtime.JSONUnmarshal(held["id"], &old) == nil && reflect.DeepEqual(old, t.Id)
 		current := reflect.ValueOf(t.Id)
-		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+		if (unchanged || !current.IsValid() || current.IsZero()) && runtime.JSONUnmarshal(raw, &next) == nil {
 			t.Id = next
 		}
 	}
@@ -449,13 +449,13 @@ func (t *Thing) adoptUnion(previous, b json.RawMessage) {
 // AsCat returns the union data inside the Thing as a Cat
 func (t Thing) AsCat() (Cat, error) {
 	var body Cat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCat overwrites any union data inside the Thing as the provided Cat
 func (t *Thing) FromCat(v Cat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -466,7 +466,7 @@ func (t *Thing) FromCat(v Cat) error {
 
 // MergeCat performs a merge with any union data inside the Thing, using the provided Cat
 func (t *Thing) MergeCat(v Cat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -483,13 +483,13 @@ func (t *Thing) MergeCat(v Cat) error {
 // AsDog returns the union data inside the Thing as a Dog
 func (t Thing) AsDog() (Dog, error) {
 	var body Dog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromDog overwrites any union data inside the Thing as the provided Dog
 func (t *Thing) FromDog(v Dog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -500,7 +500,7 @@ func (t *Thing) FromDog(v Dog) error {
 
 // MergeDog performs a merge with any union data inside the Thing, using the provided Dog
 func (t *Thing) MergeDog(v Dog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -521,18 +521,18 @@ func (t Thing) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	object["id"], err = json.Marshal(t.Id)
+	object["id"], err = runtime.JSONMarshal(t.Id)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'id': %w", err)
 	}
 
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -542,13 +542,13 @@ func (t *Thing) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["id"]; found {
-		err = json.Unmarshal(raw, &t.Id)
+		err = runtime.JSONUnmarshal(raw, &t.Id)
 		if err != nil {
 			return fmt.Errorf("error reading 'id': %w", err)
 		}
@@ -565,16 +565,16 @@ func (t *Thing) UnmarshalJSON(b []byte) error {
 // when marshaling.
 func (t *GetInlineThing200JSONResponseBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
+	_ = runtime.JSONUnmarshal(previous, &held)
 	if raw, found := object["id"]; found {
 		var old, next string
-		unchanged := json.Unmarshal(held["id"], &old) == nil && reflect.DeepEqual(old, t.Id)
+		unchanged := runtime.JSONUnmarshal(held["id"], &old) == nil && reflect.DeepEqual(old, t.Id)
 		current := reflect.ValueOf(t.Id)
-		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+		if (unchanged || !current.IsValid() || current.IsZero()) && runtime.JSONUnmarshal(raw, &next) == nil {
 			t.Id = next
 		}
 	}
@@ -583,13 +583,13 @@ func (t *GetInlineThing200JSONResponseBody) adoptUnion(previous, b json.RawMessa
 // AsCat returns the union data inside the GetInlineThing200JSONResponseBody as a Cat
 func (t GetInlineThing200JSONResponseBody) AsCat() (Cat, error) {
 	var body Cat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCat overwrites any union data inside the GetInlineThing200JSONResponseBody as the provided Cat
 func (t *GetInlineThing200JSONResponseBody) FromCat(v Cat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -600,7 +600,7 @@ func (t *GetInlineThing200JSONResponseBody) FromCat(v Cat) error {
 
 // MergeCat performs a merge with any union data inside the GetInlineThing200JSONResponseBody, using the provided Cat
 func (t *GetInlineThing200JSONResponseBody) MergeCat(v Cat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -617,13 +617,13 @@ func (t *GetInlineThing200JSONResponseBody) MergeCat(v Cat) error {
 // AsDog returns the union data inside the GetInlineThing200JSONResponseBody as a Dog
 func (t GetInlineThing200JSONResponseBody) AsDog() (Dog, error) {
 	var body Dog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromDog overwrites any union data inside the GetInlineThing200JSONResponseBody as the provided Dog
 func (t *GetInlineThing200JSONResponseBody) FromDog(v Dog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -634,7 +634,7 @@ func (t *GetInlineThing200JSONResponseBody) FromDog(v Dog) error {
 
 // MergeDog performs a merge with any union data inside the GetInlineThing200JSONResponseBody, using the provided Dog
 func (t *GetInlineThing200JSONResponseBody) MergeDog(v Dog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -655,18 +655,18 @@ func (t GetInlineThing200JSONResponseBody) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	object["id"], err = json.Marshal(t.Id)
+	object["id"], err = runtime.JSONMarshal(t.Id)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'id': %w", err)
 	}
 
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -676,13 +676,13 @@ func (t *GetInlineThing200JSONResponseBody) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["id"]; found {
-		err = json.Unmarshal(raw, &t.Id)
+		err = runtime.JSONUnmarshal(raw, &t.Id)
 		if err != nil {
 			return fmt.Errorf("error reading 'id': %w", err)
 		}
@@ -698,13 +698,13 @@ func (a *Both) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["kind"]; found {
-		err = json.Unmarshal(raw, &a.Kind)
+		err = runtime.JSONUnmarshal(raw, &a.Kind)
 		if err != nil {
 			return fmt.Errorf("error reading 'kind': %w", err)
 		}
@@ -715,7 +715,7 @@ func (a *Both) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
 			var fieldVal any
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -734,24 +734,24 @@ func (a Both) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if a.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	object["kind"], err = json.Marshal(a.Kind)
+	object["kind"], err = runtime.JSONMarshal(a.Kind)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // ServerInterface represents all server handlers.
@@ -1019,7 +1019,7 @@ func (t *GetBag200JSONResponse) UnmarshalJSON(b []byte) error {
 func (response GetBag200JSONResponse) VisitGetBagResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1048,7 +1048,7 @@ func (t *GetBoth200JSONResponse) UnmarshalJSON(b []byte) error {
 func (response GetBoth200JSONResponse) VisitGetBothResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1077,7 +1077,7 @@ func (t *GetEvent200JSONResponse) UnmarshalJSON(b []byte) error {
 func (response GetEvent200JSONResponse) VisitGetEventResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1098,7 +1098,7 @@ type GetInlineThing200JSONResponse = GetInlineThing200JSONResponseBody
 func (response GetInlineThing200JSONResponse) VisitGetInlineThingResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1127,7 +1127,7 @@ func (t *GetRenamed200JSONResponse) UnmarshalJSON(b []byte) error {
 func (response GetRenamed200JSONResponse) VisitGetRenamedResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1156,7 +1156,7 @@ func (t *GetThing200JSONResponse) UnmarshalJSON(b []byte) error {
 func (response GetThing200JSONResponse) VisitGetThingResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

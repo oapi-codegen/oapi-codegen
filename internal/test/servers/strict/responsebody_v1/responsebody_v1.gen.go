@@ -8,9 +8,10 @@ package serversstrictresponsebodyv1
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/oapi-codegen/runtime"
 )
 
 // Untyped defines model for Untyped.
@@ -242,7 +243,7 @@ type GetAllOf200JSONResponse struct {
 func (response GetAllOf200JSONResponse) VisitGetAllOfResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -265,7 +266,7 @@ type GetAllOfSibling200JSONResponse struct {
 func (response GetAllOfSibling200JSONResponse) VisitGetAllOfSiblingResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -288,7 +289,7 @@ type GetNullable200JSONResponse struct {
 func (response GetNullable200JSONResponse) VisitGetNullableResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -311,7 +312,7 @@ type GetWrapped200JSONResponse struct {
 func (response GetWrapped200JSONResponse) VisitGetWrappedResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

@@ -95,13 +95,13 @@ type RequiredNull struct {
 // AsCat returns the union data inside the DiscriminatedPet as a Cat
 func (t DiscriminatedPet) AsCat() (Cat, error) {
 	var body Cat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCat overwrites any union data inside the DiscriminatedPet as the provided Cat
 func (t *DiscriminatedPet) FromCat(v Cat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -112,7 +112,7 @@ func (t *DiscriminatedPet) FromCat(v Cat) error {
 
 // MergeCat performs a merge with any union data inside the DiscriminatedPet, using the provided Cat
 func (t *DiscriminatedPet) MergeCat(v Cat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -129,13 +129,13 @@ func (t *DiscriminatedPet) MergeCat(v Cat) error {
 // AsDog returns the union data inside the DiscriminatedPet as a Dog
 func (t DiscriminatedPet) AsDog() (Dog, error) {
 	var body Dog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromDog overwrites any union data inside the DiscriminatedPet as the provided Dog
 func (t *DiscriminatedPet) FromDog(v Dog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -146,7 +146,7 @@ func (t *DiscriminatedPet) FromDog(v Dog) error {
 
 // MergeDog performs a merge with any union data inside the DiscriminatedPet, using the provided Dog
 func (t *DiscriminatedPet) MergeDog(v Dog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -164,7 +164,7 @@ func (t DiscriminatedPet) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"kind"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 

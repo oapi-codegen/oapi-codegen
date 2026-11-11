@@ -233,20 +233,20 @@ type UnionValue = any
 // AsFlexibleId0 returns the union data inside the FlexibleId as a FlexibleId0
 func (t FlexibleId) AsFlexibleId0() (FlexibleId0, error) {
 	var body FlexibleId0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromFlexibleId0 overwrites any union data inside the FlexibleId as the provided FlexibleId0
 func (t *FlexibleId) FromFlexibleId0(v FlexibleId0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeFlexibleId0 performs a merge with any union data inside the FlexibleId, using the provided FlexibleId0
 func (t *FlexibleId) MergeFlexibleId0(v FlexibleId0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -259,20 +259,20 @@ func (t *FlexibleId) MergeFlexibleId0(v FlexibleId0) error {
 // AsFlexibleId1 returns the union data inside the FlexibleId as a FlexibleId1
 func (t FlexibleId) AsFlexibleId1() (FlexibleId1, error) {
 	var body FlexibleId1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromFlexibleId1 overwrites any union data inside the FlexibleId as the provided FlexibleId1
 func (t *FlexibleId) FromFlexibleId1(v FlexibleId1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeFlexibleId1 performs a merge with any union data inside the FlexibleId, using the provided FlexibleId1
 func (t *FlexibleId) MergeFlexibleId1(v FlexibleId1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}

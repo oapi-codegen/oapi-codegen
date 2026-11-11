@@ -8,7 +8,6 @@ package serversstrictbuffering
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -337,7 +336,7 @@ type JsonEndpoint200JSONResponse Response
 func (response JsonEndpoint200JSONResponse) VisitJsonEndpointResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

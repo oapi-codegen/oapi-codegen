@@ -8,7 +8,6 @@ package openapi31params
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -146,7 +145,7 @@ func (c *Client) UpdateThing(ctx context.Context, id any, params *UpdateThingPar
 // NewUpdateThingRequest calls the generic UpdateThing builder with application/json body
 func NewUpdateThingRequest(server string, id any, params *UpdateThingParams, body UpdateThingJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -391,7 +390,7 @@ func ParseUpdateThingResponse(rsp *http.Response) (*UpdateThingResponse, error) 
 		var dest struct {
 			Id any `json:"id,omitempty"`
 		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest

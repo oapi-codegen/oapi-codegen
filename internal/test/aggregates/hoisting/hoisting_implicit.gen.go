@@ -175,20 +175,20 @@ func (t *CallbackBodyRootOneOfJSONRequestBody) UnmarshalJSON(b []byte) error {
 // AsImplicitCat returns the union data inside the PostBodyPropertyOneOfJSONBody_Pet as a ImplicitCat
 func (t PostBodyPropertyOneOfJSONBody_Pet) AsImplicitCat() (ImplicitCat, error) {
 	var body ImplicitCat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitCat overwrites any union data inside the PostBodyPropertyOneOfJSONBody_Pet as the provided ImplicitCat
 func (t *PostBodyPropertyOneOfJSONBody_Pet) FromImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitCat performs a merge with any union data inside the PostBodyPropertyOneOfJSONBody_Pet, using the provided ImplicitCat
 func (t *PostBodyPropertyOneOfJSONBody_Pet) MergeImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -201,20 +201,20 @@ func (t *PostBodyPropertyOneOfJSONBody_Pet) MergeImplicitCat(v ImplicitCat) erro
 // AsImplicitDog returns the union data inside the PostBodyPropertyOneOfJSONBody_Pet as a ImplicitDog
 func (t PostBodyPropertyOneOfJSONBody_Pet) AsImplicitDog() (ImplicitDog, error) {
 	var body ImplicitDog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitDog overwrites any union data inside the PostBodyPropertyOneOfJSONBody_Pet as the provided ImplicitDog
 func (t *PostBodyPropertyOneOfJSONBody_Pet) FromImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitDog performs a merge with any union data inside the PostBodyPropertyOneOfJSONBody_Pet, using the provided ImplicitDog
 func (t *PostBodyPropertyOneOfJSONBody_Pet) MergeImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -237,20 +237,20 @@ func (t *PostBodyPropertyOneOfJSONBody_Pet) UnmarshalJSON(b []byte) error {
 // AsImplicitCat returns the union data inside the PostBodyRootOneOfJSONBody as a ImplicitCat
 func (t PostBodyRootOneOfJSONBody) AsImplicitCat() (ImplicitCat, error) {
 	var body ImplicitCat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitCat overwrites any union data inside the PostBodyRootOneOfJSONBody as the provided ImplicitCat
 func (t *PostBodyRootOneOfJSONBody) FromImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitCat performs a merge with any union data inside the PostBodyRootOneOfJSONBody, using the provided ImplicitCat
 func (t *PostBodyRootOneOfJSONBody) MergeImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -263,20 +263,20 @@ func (t *PostBodyRootOneOfJSONBody) MergeImplicitCat(v ImplicitCat) error {
 // AsImplicitDog returns the union data inside the PostBodyRootOneOfJSONBody as a ImplicitDog
 func (t PostBodyRootOneOfJSONBody) AsImplicitDog() (ImplicitDog, error) {
 	var body ImplicitDog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitDog overwrites any union data inside the PostBodyRootOneOfJSONBody as the provided ImplicitDog
 func (t *PostBodyRootOneOfJSONBody) FromImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitDog performs a merge with any union data inside the PostBodyRootOneOfJSONBody, using the provided ImplicitDog
 func (t *PostBodyRootOneOfJSONBody) MergeImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -299,20 +299,20 @@ func (t *PostBodyRootOneOfJSONBody) UnmarshalJSON(b []byte) error {
 // AsImplicitCat returns the union data inside the GetResponseDeepNested200JSONResponseBody_Wrapper_Inner as a ImplicitCat
 func (t GetResponseDeepNested200JSONResponseBody_Wrapper_Inner) AsImplicitCat() (ImplicitCat, error) {
 	var body ImplicitCat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitCat overwrites any union data inside the GetResponseDeepNested200JSONResponseBody_Wrapper_Inner as the provided ImplicitCat
 func (t *GetResponseDeepNested200JSONResponseBody_Wrapper_Inner) FromImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitCat performs a merge with any union data inside the GetResponseDeepNested200JSONResponseBody_Wrapper_Inner, using the provided ImplicitCat
 func (t *GetResponseDeepNested200JSONResponseBody_Wrapper_Inner) MergeImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -325,20 +325,20 @@ func (t *GetResponseDeepNested200JSONResponseBody_Wrapper_Inner) MergeImplicitCa
 // AsImplicitDog returns the union data inside the GetResponseDeepNested200JSONResponseBody_Wrapper_Inner as a ImplicitDog
 func (t GetResponseDeepNested200JSONResponseBody_Wrapper_Inner) AsImplicitDog() (ImplicitDog, error) {
 	var body ImplicitDog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitDog overwrites any union data inside the GetResponseDeepNested200JSONResponseBody_Wrapper_Inner as the provided ImplicitDog
 func (t *GetResponseDeepNested200JSONResponseBody_Wrapper_Inner) FromImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitDog performs a merge with any union data inside the GetResponseDeepNested200JSONResponseBody_Wrapper_Inner, using the provided ImplicitDog
 func (t *GetResponseDeepNested200JSONResponseBody_Wrapper_Inner) MergeImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -361,20 +361,20 @@ func (t *GetResponseDeepNested200JSONResponseBody_Wrapper_Inner) UnmarshalJSON(b
 // AsImplicitCat returns the union data inside the GetResponseItemsOneOf200JSONResponseBody_Items_Item as a ImplicitCat
 func (t GetResponseItemsOneOf200JSONResponseBody_Items_Item) AsImplicitCat() (ImplicitCat, error) {
 	var body ImplicitCat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitCat overwrites any union data inside the GetResponseItemsOneOf200JSONResponseBody_Items_Item as the provided ImplicitCat
 func (t *GetResponseItemsOneOf200JSONResponseBody_Items_Item) FromImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitCat performs a merge with any union data inside the GetResponseItemsOneOf200JSONResponseBody_Items_Item, using the provided ImplicitCat
 func (t *GetResponseItemsOneOf200JSONResponseBody_Items_Item) MergeImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -387,20 +387,20 @@ func (t *GetResponseItemsOneOf200JSONResponseBody_Items_Item) MergeImplicitCat(v
 // AsImplicitDog returns the union data inside the GetResponseItemsOneOf200JSONResponseBody_Items_Item as a ImplicitDog
 func (t GetResponseItemsOneOf200JSONResponseBody_Items_Item) AsImplicitDog() (ImplicitDog, error) {
 	var body ImplicitDog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitDog overwrites any union data inside the GetResponseItemsOneOf200JSONResponseBody_Items_Item as the provided ImplicitDog
 func (t *GetResponseItemsOneOf200JSONResponseBody_Items_Item) FromImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitDog performs a merge with any union data inside the GetResponseItemsOneOf200JSONResponseBody_Items_Item, using the provided ImplicitDog
 func (t *GetResponseItemsOneOf200JSONResponseBody_Items_Item) MergeImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -423,20 +423,20 @@ func (t *GetResponseItemsOneOf200JSONResponseBody_Items_Item) UnmarshalJSON(b []
 // AsImplicitCat returns the union data inside the GetResponseRootAnyOf200JSONResponseBody as a ImplicitCat
 func (t GetResponseRootAnyOf200JSONResponseBody) AsImplicitCat() (ImplicitCat, error) {
 	var body ImplicitCat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitCat overwrites any union data inside the GetResponseRootAnyOf200JSONResponseBody as the provided ImplicitCat
 func (t *GetResponseRootAnyOf200JSONResponseBody) FromImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitCat performs a merge with any union data inside the GetResponseRootAnyOf200JSONResponseBody, using the provided ImplicitCat
 func (t *GetResponseRootAnyOf200JSONResponseBody) MergeImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -449,20 +449,20 @@ func (t *GetResponseRootAnyOf200JSONResponseBody) MergeImplicitCat(v ImplicitCat
 // AsImplicitDog returns the union data inside the GetResponseRootAnyOf200JSONResponseBody as a ImplicitDog
 func (t GetResponseRootAnyOf200JSONResponseBody) AsImplicitDog() (ImplicitDog, error) {
 	var body ImplicitDog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitDog overwrites any union data inside the GetResponseRootAnyOf200JSONResponseBody as the provided ImplicitDog
 func (t *GetResponseRootAnyOf200JSONResponseBody) FromImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitDog performs a merge with any union data inside the GetResponseRootAnyOf200JSONResponseBody, using the provided ImplicitDog
 func (t *GetResponseRootAnyOf200JSONResponseBody) MergeImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -485,20 +485,20 @@ func (t *GetResponseRootAnyOf200JSONResponseBody) UnmarshalJSON(b []byte) error 
 // AsImplicitCat returns the union data inside the GetResponseRootOneOf200JSONResponseBody as a ImplicitCat
 func (t GetResponseRootOneOf200JSONResponseBody) AsImplicitCat() (ImplicitCat, error) {
 	var body ImplicitCat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitCat overwrites any union data inside the GetResponseRootOneOf200JSONResponseBody as the provided ImplicitCat
 func (t *GetResponseRootOneOf200JSONResponseBody) FromImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitCat performs a merge with any union data inside the GetResponseRootOneOf200JSONResponseBody, using the provided ImplicitCat
 func (t *GetResponseRootOneOf200JSONResponseBody) MergeImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -511,20 +511,20 @@ func (t *GetResponseRootOneOf200JSONResponseBody) MergeImplicitCat(v ImplicitCat
 // AsImplicitDog returns the union data inside the GetResponseRootOneOf200JSONResponseBody as a ImplicitDog
 func (t GetResponseRootOneOf200JSONResponseBody) AsImplicitDog() (ImplicitDog, error) {
 	var body ImplicitDog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitDog overwrites any union data inside the GetResponseRootOneOf200JSONResponseBody as the provided ImplicitDog
 func (t *GetResponseRootOneOf200JSONResponseBody) FromImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitDog performs a merge with any union data inside the GetResponseRootOneOf200JSONResponseBody, using the provided ImplicitDog
 func (t *GetResponseRootOneOf200JSONResponseBody) MergeImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -547,20 +547,20 @@ func (t *GetResponseRootOneOf200JSONResponseBody) UnmarshalJSON(b []byte) error 
 // AsImplicitCat returns the union data inside the WebhookBodyPropertyOneOfJSONBody_Pet as a ImplicitCat
 func (t WebhookBodyPropertyOneOfJSONBody_Pet) AsImplicitCat() (ImplicitCat, error) {
 	var body ImplicitCat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitCat overwrites any union data inside the WebhookBodyPropertyOneOfJSONBody_Pet as the provided ImplicitCat
 func (t *WebhookBodyPropertyOneOfJSONBody_Pet) FromImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitCat performs a merge with any union data inside the WebhookBodyPropertyOneOfJSONBody_Pet, using the provided ImplicitCat
 func (t *WebhookBodyPropertyOneOfJSONBody_Pet) MergeImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -573,20 +573,20 @@ func (t *WebhookBodyPropertyOneOfJSONBody_Pet) MergeImplicitCat(v ImplicitCat) e
 // AsImplicitDog returns the union data inside the WebhookBodyPropertyOneOfJSONBody_Pet as a ImplicitDog
 func (t WebhookBodyPropertyOneOfJSONBody_Pet) AsImplicitDog() (ImplicitDog, error) {
 	var body ImplicitDog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitDog overwrites any union data inside the WebhookBodyPropertyOneOfJSONBody_Pet as the provided ImplicitDog
 func (t *WebhookBodyPropertyOneOfJSONBody_Pet) FromImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitDog performs a merge with any union data inside the WebhookBodyPropertyOneOfJSONBody_Pet, using the provided ImplicitDog
 func (t *WebhookBodyPropertyOneOfJSONBody_Pet) MergeImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -609,20 +609,20 @@ func (t *WebhookBodyPropertyOneOfJSONBody_Pet) UnmarshalJSON(b []byte) error {
 // AsImplicitCat returns the union data inside the WebhookBodyRootOneOfJSONBody as a ImplicitCat
 func (t WebhookBodyRootOneOfJSONBody) AsImplicitCat() (ImplicitCat, error) {
 	var body ImplicitCat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitCat overwrites any union data inside the WebhookBodyRootOneOfJSONBody as the provided ImplicitCat
 func (t *WebhookBodyRootOneOfJSONBody) FromImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitCat performs a merge with any union data inside the WebhookBodyRootOneOfJSONBody, using the provided ImplicitCat
 func (t *WebhookBodyRootOneOfJSONBody) MergeImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -635,20 +635,20 @@ func (t *WebhookBodyRootOneOfJSONBody) MergeImplicitCat(v ImplicitCat) error {
 // AsImplicitDog returns the union data inside the WebhookBodyRootOneOfJSONBody as a ImplicitDog
 func (t WebhookBodyRootOneOfJSONBody) AsImplicitDog() (ImplicitDog, error) {
 	var body ImplicitDog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitDog overwrites any union data inside the WebhookBodyRootOneOfJSONBody as the provided ImplicitDog
 func (t *WebhookBodyRootOneOfJSONBody) FromImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitDog performs a merge with any union data inside the WebhookBodyRootOneOfJSONBody, using the provided ImplicitDog
 func (t *WebhookBodyRootOneOfJSONBody) MergeImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -671,20 +671,20 @@ func (t *WebhookBodyRootOneOfJSONBody) UnmarshalJSON(b []byte) error {
 // AsImplicitCat returns the union data inside the CallbackBodyPropertyOneOfJSONBody_Pet as a ImplicitCat
 func (t CallbackBodyPropertyOneOfJSONBody_Pet) AsImplicitCat() (ImplicitCat, error) {
 	var body ImplicitCat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitCat overwrites any union data inside the CallbackBodyPropertyOneOfJSONBody_Pet as the provided ImplicitCat
 func (t *CallbackBodyPropertyOneOfJSONBody_Pet) FromImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitCat performs a merge with any union data inside the CallbackBodyPropertyOneOfJSONBody_Pet, using the provided ImplicitCat
 func (t *CallbackBodyPropertyOneOfJSONBody_Pet) MergeImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -697,20 +697,20 @@ func (t *CallbackBodyPropertyOneOfJSONBody_Pet) MergeImplicitCat(v ImplicitCat) 
 // AsImplicitDog returns the union data inside the CallbackBodyPropertyOneOfJSONBody_Pet as a ImplicitDog
 func (t CallbackBodyPropertyOneOfJSONBody_Pet) AsImplicitDog() (ImplicitDog, error) {
 	var body ImplicitDog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitDog overwrites any union data inside the CallbackBodyPropertyOneOfJSONBody_Pet as the provided ImplicitDog
 func (t *CallbackBodyPropertyOneOfJSONBody_Pet) FromImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitDog performs a merge with any union data inside the CallbackBodyPropertyOneOfJSONBody_Pet, using the provided ImplicitDog
 func (t *CallbackBodyPropertyOneOfJSONBody_Pet) MergeImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -733,20 +733,20 @@ func (t *CallbackBodyPropertyOneOfJSONBody_Pet) UnmarshalJSON(b []byte) error {
 // AsImplicitCat returns the union data inside the CallbackBodyRootOneOfJSONBody as a ImplicitCat
 func (t CallbackBodyRootOneOfJSONBody) AsImplicitCat() (ImplicitCat, error) {
 	var body ImplicitCat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitCat overwrites any union data inside the CallbackBodyRootOneOfJSONBody as the provided ImplicitCat
 func (t *CallbackBodyRootOneOfJSONBody) FromImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitCat performs a merge with any union data inside the CallbackBodyRootOneOfJSONBody, using the provided ImplicitCat
 func (t *CallbackBodyRootOneOfJSONBody) MergeImplicitCat(v ImplicitCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -759,20 +759,20 @@ func (t *CallbackBodyRootOneOfJSONBody) MergeImplicitCat(v ImplicitCat) error {
 // AsImplicitDog returns the union data inside the CallbackBodyRootOneOfJSONBody as a ImplicitDog
 func (t CallbackBodyRootOneOfJSONBody) AsImplicitDog() (ImplicitDog, error) {
 	var body ImplicitDog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromImplicitDog overwrites any union data inside the CallbackBodyRootOneOfJSONBody as the provided ImplicitDog
 func (t *CallbackBodyRootOneOfJSONBody) FromImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeImplicitDog performs a merge with any union data inside the CallbackBodyRootOneOfJSONBody, using the provided ImplicitDog
 func (t *CallbackBodyRootOneOfJSONBody) MergeImplicitDog(v ImplicitDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}

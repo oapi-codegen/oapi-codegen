@@ -89,13 +89,13 @@ func (a *ArrayContainer) Set(fieldName string, value any) {
 // Override default JSON handling for ArrayContainer to handle AdditionalProperties
 func (a *ArrayContainer) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["values"]; found {
-		err = json.Unmarshal(raw, &a.Values)
+		err = runtime.JSONUnmarshal(raw, &a.Values)
 		if err != nil {
 			return fmt.Errorf("error reading 'values': %w", err)
 		}
@@ -106,7 +106,7 @@ func (a *ArrayContainer) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]any)
 		for fieldName, fieldBuf := range object {
 			var fieldVal any
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -122,19 +122,19 @@ func (a ArrayContainer) MarshalJSON() ([]byte, error) {
 	object := make(map[string]json.RawMessage)
 
 	if a.Values != nil {
-		object["values"], err = json.Marshal(a.Values)
+		object["values"], err = runtime.JSONMarshal(a.Values)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'values': %w", err)
 		}
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Getter for additional properties for Thing. Returns the specified
@@ -157,13 +157,13 @@ func (a *Thing) Set(fieldName string, value string) {
 // Override default JSON handling for Thing to handle AdditionalProperties
 func (a *Thing) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["labels"]; found {
-		err = json.Unmarshal(raw, &a.Labels)
+		err = runtime.JSONUnmarshal(raw, &a.Labels)
 		if err != nil {
 			return fmt.Errorf("error reading 'labels': %w", err)
 		}
@@ -171,7 +171,7 @@ func (a *Thing) UnmarshalJSON(b []byte) error {
 	}
 
 	if raw, found := object["tags"]; found {
-		err = json.Unmarshal(raw, &a.Tags)
+		err = runtime.JSONUnmarshal(raw, &a.Tags)
 		if err != nil {
 			return fmt.Errorf("error reading 'tags': %w", err)
 		}
@@ -182,7 +182,7 @@ func (a *Thing) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]string)
 		for fieldName, fieldBuf := range object {
 			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -198,26 +198,26 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 	object := make(map[string]json.RawMessage)
 
 	if a.Labels != nil {
-		object["labels"], err = json.Marshal(a.Labels)
+		object["labels"], err = runtime.JSONMarshal(a.Labels)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'labels': %w", err)
 		}
 	}
 
 	if a.Tags != nil {
-		object["tags"], err = json.Marshal(a.Tags)
+		object["tags"], err = runtime.JSONMarshal(a.Tags)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'tags': %w", err)
 		}
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
@@ -416,7 +416,7 @@ func NewListThingsRequest(server string, params *ListThingsParams) (*http.Reques
 // NewCreateThingRequest calls the generic CreateThing builder with application/json body
 func NewCreateThingRequest(server string, body CreateThingJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
