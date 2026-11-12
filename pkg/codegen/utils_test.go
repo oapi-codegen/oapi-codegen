@@ -1259,3 +1259,39 @@ paths:
 	})
 	require.NoError(t, err)
 }
+
+func TestSanitizeEnumNames_NumericSuffixDoesNotCollide(t *testing.T) {
+	tests := []struct {
+		name   string
+		values []string
+		want   map[string]string
+	}{
+		{
+			name:   "no collisions keep their names",
+			values: []string{"a", "A", "b"},
+			want:   map[string]string{"A": "a", "A1": "A", "B": "b"},
+		},
+		{
+			name:   "deduplicated name does not overwrite a later value",
+			values: []string{"A", "a", "A1"},
+			want:   map[string]string{"A": "A", "A2": "a", "A1": "A1"},
+		},
+		{
+			name:   "deduplicated name does not overwrite an earlier value",
+			values: []string{"A", "A1", "a"},
+			want:   map[string]string{"A": "A", "A1": "A1", "A2": "a"},
+		},
+		{
+			name:   "several duplicates around an explicit suffixed value",
+			values: []string{"a", "A", "A1", "_a"},
+			want:   map[string]string{"A": "a", "A2": "A", "A1": "A1", "UnderscoreA": "_a"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := SanitizeEnumNames(nil, tt.values)
+			assert.Equal(t, tt.want, got)
+			assert.Len(t, got, len(tt.values), "every enum value must keep its own constant name")
+		})
+	}
+}
