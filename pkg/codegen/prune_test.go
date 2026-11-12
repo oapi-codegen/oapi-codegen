@@ -69,7 +69,7 @@ func TestFilterOnlyCat(t *testing.T) {
 
 	assert.NotEmpty(t, swagger.Paths.Value("/cat"), "/cat path should still be in spec")
 	assert.NotEmpty(t, swagger.Paths.Value("/cat").Get, "GET /cat operation should still be in spec")
-	assert.Empty(t, swagger.Paths.Value("/dog").Get, "GET /dog should have been removed from spec")
+	assert.Nil(t, swagger.Paths.Value("/dog"), "/dog path should have been removed from spec")
 
 	pruneUnusedComponents(swagger)
 
@@ -99,7 +99,7 @@ func TestFilterOnlyDog(t *testing.T) {
 
 	assert.NotEmpty(t, swagger.Paths.Value("/dog"))
 	assert.NotEmpty(t, swagger.Paths.Value("/dog").Get)
-	assert.Empty(t, swagger.Paths.Value("/cat").Get)
+	assert.Nil(t, swagger.Paths.Value("/cat"))
 
 	pruneUnusedComponents(swagger)
 
