@@ -14,20 +14,35 @@ type RefWrapper struct {
 }
 
 func walkSwagger(swagger *openapi3.T, doFn func(RefWrapper) (bool, error)) error {
-	if swagger == nil || swagger.Paths == nil {
+	if swagger == nil {
 		return nil
 	}
 
-	for _, p := range swagger.Paths.Map() {
-		for _, param := range p.Parameters {
-			_ = walkParameterRef(param, doFn)
+	if swagger.Paths != nil {
+		for _, pathItem := range swagger.Paths.Map() {
+			_ = walkPathItem(pathItem, doFn)
 		}
-		for _, op := range p.Operations() {
-			_ = walkOperation(op, doFn)
-		}
+	}
+	for _, webhook := range swagger.Webhooks {
+		_ = walkPathItem(webhook, doFn)
 	}
 
 	_ = walkComponents(swagger.Components, doFn)
+
+	return nil
+}
+
+func walkPathItem(pathItem *openapi3.PathItem, doFn func(RefWrapper) (bool, error)) error {
+	if pathItem == nil {
+		return nil
+	}
+
+	for _, parameter := range pathItem.Parameters {
+		_ = walkParameterRef(parameter, doFn)
+	}
+	for _, operation := range pathItem.Operations() {
+		_ = walkOperation(operation, doFn)
+	}
 
 	return nil
 }
@@ -103,44 +118,83 @@ func walkComponents(components *openapi3.Components, doFn func(RefWrapper) (bool
 }
 
 func walkSchemaRef(ref *openapi3.SchemaRef, doFn func(RefWrapper) (bool, error)) error {
+	return walkSchemaRefWithVisited(ref, doFn, make(map[*openapi3.SchemaRef]struct{}))
+}
+
+func walkSchemaRefWithVisited(ref *openapi3.SchemaRef, doFn func(RefWrapper) (bool, error), visited map[*openapi3.SchemaRef]struct{}) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
 	}
+	if _, ok := visited[ref]; ok {
+		return nil
+	}
+	visited[ref] = struct{}{}
+
 	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
 	}
-	if !shouldContinue {
+	// In OpenAPI 3.1, SchemaRef.Value can also contain schema keywords which
+	// are siblings of $ref. Walk those children even when the callback stops at
+	// the reference itself. visited prevents resolved recursive refs from
+	// causing an infinite traversal.
+	if !shouldContinue && ref.Ref == "" {
 		return nil
 	}
 	if ref.Value == nil {
 		return nil
 	}
 
-	for _, ref := range ref.Value.OneOf {
-		_ = walkSchemaRef(ref, doFn)
+	for _, child := range schemaChildRefs(ref.Value) {
+		_ = walkSchemaRefWithVisited(child, doFn, visited)
 	}
-
-	for _, ref := range ref.Value.AnyOf {
-		_ = walkSchemaRef(ref, doFn)
-	}
-
-	for _, ref := range ref.Value.AllOf {
-		_ = walkSchemaRef(ref, doFn)
-	}
-
-	_ = walkSchemaRef(ref.Value.Not, doFn)
-	_ = walkSchemaRef(ref.Value.Items, doFn)
-
-	for _, ref := range ref.Value.Properties {
-		_ = walkSchemaRef(ref, doFn)
-	}
-
-	_ = walkSchemaRef(ref.Value.AdditionalProperties.Schema, doFn)
 
 	return nil
+}
+
+// schemaChildRefs returns every SchemaRef-bearing keyword supported by the
+// current kin-openapi Schema type. Keep this list in sync when that type grows.
+func schemaChildRefs(schema *openapi3.Schema) []*openapi3.SchemaRef {
+	if schema == nil {
+		return nil
+	}
+
+	refs := make([]*openapi3.SchemaRef, 0,
+		len(schema.OneOf)+len(schema.AnyOf)+len(schema.AllOf)+
+			len(schema.Properties)+len(schema.PrefixItems)+
+			len(schema.PatternProperties)+len(schema.DependentSchemas)+len(schema.Defs)+12)
+	refs = append(refs, schema.OneOf...)
+	refs = append(refs, schema.AnyOf...)
+	refs = append(refs, schema.AllOf...)
+	refs = append(refs, schema.Not, schema.Items)
+	for _, child := range schema.Properties {
+		refs = append(refs, child)
+	}
+	refs = append(refs, schema.AdditionalProperties.Schema)
+	refs = append(refs, schema.PrefixItems...)
+	refs = append(refs, schema.Contains)
+	for _, child := range schema.PatternProperties {
+		refs = append(refs, child)
+	}
+	for _, child := range schema.DependentSchemas {
+		refs = append(refs, child)
+	}
+	refs = append(refs,
+		schema.PropertyNames,
+		schema.UnevaluatedItems.Schema,
+		schema.UnevaluatedProperties.Schema,
+		schema.If,
+		schema.Then,
+		schema.Else,
+	)
+	for _, child := range schema.Defs {
+		refs = append(refs, child)
+	}
+	refs = append(refs, schema.ContentSchema)
+
+	return refs
 }
 
 func walkParameterRef(ref *openapi3.ParameterRef, doFn func(RefWrapper) (bool, error)) error {
@@ -166,16 +220,7 @@ func walkParameterRef(ref *openapi3.ParameterRef, doFn func(RefWrapper) (bool, e
 		_ = walkExampleRef(example, doFn)
 	}
 
-	for _, mediaType := range ref.Value.Content {
-		if mediaType == nil {
-			continue
-		}
-		_ = walkSchemaRef(mediaType.Schema, doFn)
-
-		for _, example := range mediaType.Examples {
-			_ = walkExampleRef(example, doFn)
-		}
-	}
+	_ = walkContent(ref.Value.Content, doFn)
 
 	return nil
 }
@@ -197,16 +242,7 @@ func walkRequestBodyRef(ref *openapi3.RequestBodyRef, doFn func(RefWrapper) (boo
 		return nil
 	}
 
-	for _, mediaType := range ref.Value.Content {
-		if mediaType == nil {
-			continue
-		}
-		_ = walkSchemaRef(mediaType.Schema, doFn)
-
-		for _, example := range mediaType.Examples {
-			_ = walkExampleRef(example, doFn)
-		}
-	}
+	_ = walkContent(ref.Value.Content, doFn)
 
 	return nil
 }
@@ -232,19 +268,34 @@ func walkResponseRef(ref *openapi3.ResponseRef, doFn func(RefWrapper) (bool, err
 		_ = walkHeaderRef(header, doFn)
 	}
 
-	for _, mediaType := range ref.Value.Content {
+	_ = walkContent(ref.Value.Content, doFn)
+
+	for _, link := range ref.Value.Links {
+		_ = walkLinkRef(link, doFn)
+	}
+
+	return nil
+}
+
+func walkContent(content openapi3.Content, doFn func(RefWrapper) (bool, error)) error {
+	for _, mediaType := range content {
 		if mediaType == nil {
 			continue
 		}
 		_ = walkSchemaRef(mediaType.Schema, doFn)
+		_ = walkSchemaRef(mediaType.ItemSchema, doFn)
 
 		for _, example := range mediaType.Examples {
 			_ = walkExampleRef(example, doFn)
 		}
-	}
-
-	for _, link := range ref.Value.Links {
-		_ = walkLinkRef(link, doFn)
+		for _, encoding := range mediaType.Encoding {
+			if encoding == nil {
+				continue
+			}
+			for _, header := range encoding.Headers {
+				_ = walkHeaderRef(header, doFn)
+			}
+		}
 	}
 
 	return nil
@@ -268,18 +319,7 @@ func walkCallbackRef(ref *openapi3.CallbackRef, doFn func(RefWrapper) (bool, err
 	}
 
 	for _, pathItem := range ref.Value.Map() {
-		for _, parameter := range pathItem.Parameters {
-			_ = walkParameterRef(parameter, doFn)
-		}
-		_ = walkOperation(pathItem.Connect, doFn)
-		_ = walkOperation(pathItem.Delete, doFn)
-		_ = walkOperation(pathItem.Get, doFn)
-		_ = walkOperation(pathItem.Head, doFn)
-		_ = walkOperation(pathItem.Options, doFn)
-		_ = walkOperation(pathItem.Patch, doFn)
-		_ = walkOperation(pathItem.Post, doFn)
-		_ = walkOperation(pathItem.Put, doFn)
-		_ = walkOperation(pathItem.Trace, doFn)
+		_ = walkPathItem(pathItem, doFn)
 	}
 
 	return nil
@@ -303,6 +343,7 @@ func walkHeaderRef(ref *openapi3.HeaderRef, doFn func(RefWrapper) (bool, error))
 	}
 
 	_ = walkSchemaRef(ref.Value.Schema, doFn)
+	_ = walkContent(ref.Value.Content, doFn)
 
 	return nil
 }

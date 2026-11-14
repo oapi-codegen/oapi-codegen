@@ -46,6 +46,159 @@ func TestFindReferences(t *testing.T) {
 	})
 }
 
+func TestFindReferencesInOpenAPI31SchemaFields(t *testing.T) {
+	const target = "#/components/schemas/Target"
+	newRef := func() *openapi3.SchemaRef {
+		return &openapi3.SchemaRef{Ref: target}
+	}
+
+	swagger := &openapi3.T{
+		OpenAPI: "3.1.0",
+		Components: &openapi3.Components{
+			Schemas: openapi3.Schemas{
+				"Container": {
+					Value: &openapi3.Schema{
+						PrefixItems:           openapi3.SchemaRefs{newRef()},
+						Contains:              newRef(),
+						PatternProperties:     openapi3.Schemas{"pattern": newRef()},
+						DependentSchemas:      openapi3.Schemas{"dependency": newRef()},
+						PropertyNames:         newRef(),
+						UnevaluatedItems:      openapi3.BoolSchema{Schema: newRef()},
+						UnevaluatedProperties: openapi3.BoolSchema{Schema: newRef()},
+						If:                    newRef(),
+						Then:                  newRef(),
+						Else:                  newRef(),
+						Defs:                  openapi3.Schemas{"definition": newRef()},
+						ContentSchema:         newRef(),
+					},
+				},
+			},
+		},
+	}
+
+	refs := findComponentRefs(swagger)
+	assert.Len(t, refs, 12)
+	for _, ref := range refs {
+		assert.Equal(t, target, ref)
+	}
+}
+
+func TestPruningPreservesReferencesInOpenAPI31RefSiblings(t *testing.T) {
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(`
+openapi: 3.1.0
+info:
+  title: Schema ref siblings
+  version: 1.0.0
+paths:
+  /test:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Container"
+components:
+  schemas:
+    Base:
+      type: object
+      properties:
+        parent:
+          $ref: "#/components/schemas/Base"
+    Target:
+      type: string
+    Container:
+      $ref: "#/components/schemas/Base"
+      propertyNames:
+        $ref: "#/components/schemas/Target"
+    Unused:
+      type: string
+`))
+	assert.NoError(t, err)
+
+	pruneUnusedComponents(swagger)
+
+	assert.Contains(t, swagger.Components.Schemas, "Base")
+	assert.Contains(t, swagger.Components.Schemas, "Container")
+	assert.Contains(t, swagger.Components.Schemas, "Target")
+	assert.NotContains(t, swagger.Components.Schemas, "Unused")
+}
+
+func TestFindReferencesInWebhooksAndContent(t *testing.T) {
+	newRef := func(name string) *openapi3.SchemaRef {
+		return &openapi3.SchemaRef{Ref: "#/components/schemas/" + name}
+	}
+
+	encodingHeader := &openapi3.HeaderRef{Value: &openapi3.Header{
+		Parameter: openapi3.Parameter{
+			Content: openapi3.Content{
+				"application/json": {Schema: newRef("EncodingHeader")},
+			},
+		},
+	}}
+	parameter := &openapi3.ParameterRef{Value: &openapi3.Parameter{
+		Content: openapi3.Content{
+			"application/json": {
+				Schema:     newRef("ParameterSchema"),
+				ItemSchema: newRef("ParameterItemSchema"),
+				Encoding: openapi3.Encodings{
+					"value": {Headers: openapi3.Headers{"X-Metadata": encodingHeader}},
+				},
+			},
+		},
+	}}
+	requestBody := &openapi3.RequestBodyRef{Value: &openapi3.RequestBody{
+		Content: openapi3.Content{
+			"application/json": {ItemSchema: newRef("RequestBodyItemSchema")},
+		},
+	}}
+	response := &openapi3.ResponseRef{Value: &openapi3.Response{
+		Content: openapi3.Content{
+			"application/json": {ItemSchema: newRef("ResponseItemSchema")},
+		},
+	}}
+	header := &openapi3.HeaderRef{Value: &openapi3.Header{
+		Parameter: openapi3.Parameter{
+			Content: openapi3.Content{
+				"application/json": {Schema: newRef("HeaderSchema")},
+			},
+		},
+	}}
+	webhookResponse := &openapi3.ResponseRef{Value: &openapi3.Response{
+		Content: openapi3.Content{
+			"application/json": {Schema: newRef("WebhookSchema")},
+		},
+	}}
+
+	swagger := &openapi3.T{
+		OpenAPI: "3.2.0",
+		Webhooks: map[string]*openapi3.PathItem{
+			"event": {
+				Post: &openapi3.Operation{
+					Responses: openapi3.NewResponses(openapi3.WithStatus(200, webhookResponse)),
+				},
+			},
+		},
+		Components: &openapi3.Components{
+			Parameters:    openapi3.ParametersMap{"Parameter": parameter},
+			RequestBodies: openapi3.RequestBodies{"RequestBody": requestBody},
+			Responses:     openapi3.ResponseBodies{"Response": response},
+			Headers:       openapi3.Headers{"Header": header},
+		},
+	}
+
+	assert.ElementsMatch(t, []string{
+		"#/components/schemas/EncodingHeader",
+		"#/components/schemas/HeaderSchema",
+		"#/components/schemas/ParameterItemSchema",
+		"#/components/schemas/ParameterSchema",
+		"#/components/schemas/RequestBodyItemSchema",
+		"#/components/schemas/ResponseItemSchema",
+		"#/components/schemas/WebhookSchema",
+	}, findComponentRefs(swagger))
+}
+
 func TestFilterOnlyCat(t *testing.T) {
 	// Get a spec from the test definition in this file:
 	swagger, err := openapi3.NewLoader().LoadFromData([]byte(pruneSpecTestFixture))
