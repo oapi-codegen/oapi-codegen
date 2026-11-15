@@ -1,0 +1,37 @@
+versions: [v3]
+description: >-
+  oneof_closed_variants with output-options.lenient-union-accessors: As* of a
+  variant with additionalProperties: false ignores the keys it doesn't
+  declare, as it does for any other variant.
+config:
+  output-options:
+    lenient-union-accessors: true
+subject:
+  type: object
+  required: [kind]
+  properties:
+    kind: {type: string}
+  discriminator:
+    propertyName: kind
+    mapping:
+      cat: '#/components/schemas/Cat'
+      dog: '#/components/schemas/Dog'
+  oneOf:
+    - $ref: '#/components/schemas/Cat'
+    - $ref: '#/components/schemas/Dog'
+components:
+  Cat:
+    type: object
+    additionalProperties: false
+    required: [meow]
+    properties:
+      meow: {type: string}
+  Dog:
+    type: object
+    additionalProperties: false
+    required: [bark]
+    properties:
+      bark: {type: string}
+samples:
+  - '{"kind": "cat", "meow": "purr"}'
+  - '{"kind": "dog", "bark": "woof"}'

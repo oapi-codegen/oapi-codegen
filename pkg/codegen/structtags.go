@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"strings"
 	"text/template"
 )
 
@@ -139,6 +140,19 @@ func newStructTagGenerator(config StructTagsConfig) (*structTagGenerator, error)
 		g.templates = append(g.templates, tagTemplate{name: tag.Name, tmpl: tmpl})
 	}
 	return g, nil
+}
+
+// jsonTagKey returns the JSON key a json tag gives a field, as encoding/json
+// reads it, and false when the tag leaves the field off the wire.
+func jsonTagKey(tag, goFieldName string) (string, bool) {
+	if tag == "-" {
+		return "", false
+	}
+	key, _, _ := strings.Cut(tag, ",")
+	if key == "" {
+		return goFieldName, true
+	}
+	return key, true
 }
 
 // generateTagsMap renders every configured template for the given field

@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: schemasrecursivev1
+output: recursive_v1.gen.go
+generate:
+  models: true
+# The point of this package: the recursive allOf compositions of
+# schemas/recursive under schema-merging-behavior v1.
+compatibility:
+  schema-merging-behavior: v1
+# skip-prune: schemas are not referenced from any path (paths: {}) so pruning
+# would silently drop them; this preserves all declared schemas.
+output-options:
+  skip-prune: true

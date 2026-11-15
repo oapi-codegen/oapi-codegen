@@ -1,0 +1,19 @@
+versions: [v1, v2, v3]
+description: >-
+  allOf over a $ref and a member whose oneOf only adds constraints to it: one
+  of email or phone is required.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Contact'
+    - oneOf:
+        - required: [email]
+        - required: [phone]
+components:
+  Contact:
+    type: object
+    properties:
+      email: {type: string}
+      phone: {type: string}
+samples:
+  - '{"email": "a@example.com"}'
+  - '{"phone": "555"}'

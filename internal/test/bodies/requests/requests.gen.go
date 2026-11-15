@@ -6,7 +6,6 @@ package bodiesrequests
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
@@ -15,7 +14,7 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// Issue9JSONBody defines parameters for Issue9.
+// Issue9JSONBody defines body for Issue9 for application/json ContentType.
 type Issue9JSONBody = any
 
 // Issue9Params defines parameters for Issue9.
@@ -152,7 +151,7 @@ func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JS
 // NewIssue9Request calls the generic Issue9 builder with application/json body
 func NewIssue9Request(server string, params *Issue9Params, body Issue9JSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}

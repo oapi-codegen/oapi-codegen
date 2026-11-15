@@ -6,12 +6,13 @@ package extensionsxgoname
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/oapi-codegen/runtime"
 )
 
 // ReferenceToRenameMe When a Schema is renamed, $ref should refer to the new name
@@ -42,12 +43,12 @@ type RenamedRequestBody struct {
 	Field SchemaObject `json:"Field"`
 }
 
-// XJSONBody defines parameters for X.
+// XJSONBody defines body for X for application/json ContentType.
 type XJSONBody struct {
 	Field SchemaObject `json:"Field"`
 }
 
-// XTextBody defines parameters for X.
+// XTextBody defines body for X for text/plain ContentType.
 type XTextBody = string
 
 // XJSONRequestBody defines body for X for application/json ContentType.
@@ -188,7 +189,7 @@ func (c *Client) XWithTextBody(ctx context.Context, body XTextRequestBody, reqEd
 // NewXRequest calls the generic X builder with application/json body
 func NewXRequest(server string, body XJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -384,7 +385,7 @@ func ParseXResponse(rsp *http.Response) (*XResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest RenamedResponseObject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSONDefault = &dest

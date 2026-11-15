@@ -1,0 +1,28 @@
+# Reuses the common spec's reusable responses from non-fixed status codes, and
+# its path item by $ref, so their body, parameter and header types are
+# declared by the imported package.
+openapi: "3.0.4"
+info:
+  title: API
+  version: "0.0.1"
+paths:
+  /things/{id}:
+    $ref: "./common/spec.yaml#/paths/~1things~1{id}"
+  /untyped:
+    get:
+      operationId: getUntyped
+      responses:
+        default:
+          $ref: "./common/spec.yaml#/components/responses/Untyped"
+  /pointer:
+    get:
+      operationId: getPointer
+      responses:
+        default:
+          $ref: "./common/spec.yaml#/components/responses/Pointer"
+  /things:
+    get:
+      operationId: listThings
+      responses:
+        default:
+          $ref: "./common/spec.yaml#/components/responses/Things"

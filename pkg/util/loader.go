@@ -1,31 +1,111 @@
 package util
 
 import (
-	"bytes"
+	"encoding/json"
 	"fmt"
+	"net/http"
 	"net/url"
 	"path/filepath"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/speakeasy-api/openapi/overlay/loader"
-	"gopkg.in/yaml.v3"
+
+	"github.com/oapi-codegen/oapi-codegen/v2/internal/overlay"
 )
 
+// LoadSwagger loads the OpenAPI document at filePath, which is a local path or
+// a URL, and resolves its external references. References to other local
+// files are followed; references to remote URLs are refused. Use
+// LoadSwaggerWithOverlay with AllowRemoteRefsFrom to follow remote references.
 func LoadSwagger(filePath string) (swagger *openapi3.T, err error) {
+	return loadSwagger(filePath, nil, http.DefaultClient)
+}
 
+func loadSwagger(filePath string, allowRemoteRefsFrom []string, client *http.Client) (*openapi3.T, error) {
+	if u := specURL(filePath); u != nil {
+		return newLoader(filePath, allowRemoteRefsFrom, client).LoadFromURI(u)
+	}
+	return newLoader(filePath, allowRemoteRefsFrom, client).LoadFromFile(filePath)
+}
+
+// specURL returns filePath parsed as a URL when it is one with a scheme and a
+// host, and nil when it is a local path.
+func specURL(filePath string) *url.URL {
+	u, err := url.Parse(filePath)
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		return nil
+	}
+	return u
+}
+
+// newLoader returns a kin-openapi loader for the document at filePath that
+// follows references to local files and to the remote URLs listed in
+// allowRemoteRefsFrom. When filePath is itself a URL, the document is fetched
+// through the same reader, so that one URL is allowed as well: the caller
+// named it.
+func newLoader(filePath string, allowRemoteRefsFrom []string, client *http.Client) *openapi3.Loader {
+	if u := specURL(filePath); u != nil {
+		// Listed like any other entry: the document URL without a fragment,
+		// which is what the reader compares against.
+		allowRemoteRefsFrom = append([]string{remoteRefKey(u)}, allowRemoteRefsFrom...)
+	}
 	loader := openapi3.NewLoader()
 	loader.IsExternalRefsAllowed = true
 	// Record each element's source location so route registration can be
 	// emitted in the order paths are declared in the spec (issue #1887).
 	loader.IncludeOrigin = true
+	// A custom ReadFromURIFunc owns the access policy: kin-openapi's default
+	// reader fetches any URL and reads any local path a $ref names, which lets
+	// an untrusted document make the generator issue requests to arbitrary
+	// hosts. Remote references go through the allow list first; local files
+	// keep working so that import-mapping across files is unaffected.
+	loader.ReadFromURIFunc = openapi3.URIMapCache(openapi3.ReadFromURIs(
+		remoteRefReader(allowRemoteRefsFrom, client),
+		openapi3.ReadFromFile,
+	))
+	return loader
+}
 
-	u, err := url.Parse(filePath)
-	if err == nil && u.Scheme != "" && u.Host != "" {
-		return loader.LoadFromURI(u)
-	} else {
-		return loader.LoadFromFile(filePath)
+// remoteRefReader returns a reader for references that name a host. It refuses
+// URLs that are not allowed and fetches the rest over HTTP. Locations without
+// a host are left to the next reader.
+func remoteRefReader(allowed []string, client *http.Client) openapi3.ReadFromURIFunc {
+	readHTTP := openapi3.ReadFromHTTP(client)
+	return func(loader *openapi3.Loader, location *url.URL) ([]byte, error) {
+		if location.Scheme == "" || location.Host == "" {
+			return nil, openapi3.ErrURINotSupported
+		}
+		if !RemoteRefAllowed(allowed, location) {
+			return nil, fmt.Errorf("refusing to resolve remote reference %q: it is not listed in allow-remote-refs-from", remoteRefKey(location))
+		}
+		return readHTTP(loader, location)
 	}
+}
+
+// RemoteRefAllowed reports whether a $ref to location may be fetched given the
+// allow-remote-refs-from list. An entry of "*" allows every URL. Any other
+// entry must equal the URL of the referenced document exactly, that is the
+// $ref with its fragment removed. A relative $ref inside a remote document
+// resolves to an absolute URL before it gets here, and that absolute URL is
+// what has to be listed. Nothing is normalised on purpose.
+func RemoteRefAllowed(allowed []string, location *url.URL) bool {
+	key := remoteRefKey(location)
+	for _, entry := range allowed {
+		entry = strings.TrimSpace(entry)
+		if entry == "*" || entry == key {
+			return true
+		}
+	}
+	return false
+}
+
+// remoteRefKey is the URL of the document a $ref points at: the location
+// without its fragment.
+func remoteRefKey(location *url.URL) string {
+	doc := *location
+	doc.Fragment = ""
+	doc.RawFragment = ""
+	return doc.String()
 }
 
 // Deprecated: In kin-openapi v0.126.0 (https://github.com/getkin/kin-openapi/tree/v0.126.0?tab=readme-ov-file#v01260) the Circular Reference Counter functionality was removed, instead resolving all references with backtracking, to avoid needing to provide a limit to reference counts.
@@ -36,12 +116,27 @@ func LoadSwaggerWithCircularReferenceCount(filePath string, _ int) (swagger *ope
 }
 
 type LoadSwaggerWithOverlayOpts struct {
-	Path   string
+	// Path is the Overlay document to apply. Empty applies none.
+	Path string
+	// Strict fails the load when the target of an Overlay action matches
+	// nothing in the document.
 	Strict bool
+	// LegacyJSONPath reads Overlay targets in the JSONPath dialect that
+	// oapi-codegen used before it moved to RFC 9535 (yaml-jsonpath), by
+	// translating them. See compatibility.overlays-use-yaml-jsonpath.
+	LegacyJSONPath bool
+	// AllowRemoteRefsFrom lists the remote document URLs that external $refs
+	// may be fetched from, see RemoteRefAllowed. Empty refuses every remote
+	// reference.
+	AllowRemoteRefsFrom []string
 }
 
 func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (swagger *openapi3.T, err error) {
-	spec, err := LoadSwagger(filePath)
+	return loadSwaggerWithOverlay(filePath, opts, http.DefaultClient)
+}
+
+func loadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts, client *http.Client) (swagger *openapi3.T, err error) {
+	spec, err := loadSwagger(filePath, opts.AllowRemoteRefsFrom, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load OpenAPI specification: %w", err)
 	}
@@ -50,56 +145,45 @@ func LoadSwaggerWithOverlay(filePath string, opts LoadSwaggerWithOverlayOpts) (s
 		return spec, nil
 	}
 
-	// parse out the yaml.Node, which is required by the overlay library
-	buf := &bytes.Buffer{}
-	enc := yaml.NewEncoder(buf)
-	// set to 2 to work around https://github.com/yaml/go-yaml/issues/76
-	enc.SetIndent(2)
-	err = enc.Encode(spec)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal spec from %#v as YAML: %w", filePath, err)
-	}
-
-	var node yaml.Node
-	err = yaml.NewDecoder(buf).Decode(&node)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse spec from %#v: %w", filePath, err)
-	}
-
-	overlay, err := loader.LoadOverlay(opts.Path)
+	ov, err := overlay.ParseFile(opts.Path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load Overlay from %#v: %v", opts.Path, err)
 	}
 
-	err = overlay.Validate()
+	err = ov.Validate()
 	if err != nil {
 		return nil, fmt.Errorf("the Overlay in %#v was not valid: %v", opts.Path, err)
 	}
 
-	if opts.Strict {
-		vs, err := overlay.ApplyToStrict(&node)
-		if err != nil {
-			return nil, fmt.Errorf("failed to apply Overlay %#v to specification %#v: %v\nAdditionally, the following validation errors were found:\n- %s", opts.Path, filePath, err, strings.Join(vs, "\n- "))
-		}
-	} else {
-		err = overlay.ApplyTo(&node)
-		if err != nil {
-			return nil, fmt.Errorf("failed to apply Overlay %#v to specification %#v: %v", opts.Path, filePath, err)
-		}
+	specJSON, err := json.Marshal(spec)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal spec from %#v as JSON: %w", filePath, err)
+	}
+	doc, err := overlay.DecodeJSON(specJSON)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse spec from %#v: %w", filePath, err)
 	}
 
-	b, err := yaml.Marshal(&node)
+	doc, err = ov.Apply(doc, overlay.Options{Strict: opts.Strict, LegacyJSONPath: opts.LegacyJSONPath})
+	if err != nil {
+		return nil, fmt.Errorf("failed to apply Overlay %#v to specification %#v: %v", opts.Path, filePath, err)
+	}
+
+	out, err := json.Marshal(doc)
 	if err != nil {
 		return nil, fmt.Errorf("failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
 	}
 
-	loader := openapi3.NewLoader()
-	loader.IsExternalRefsAllowed = true
-	loader.IncludeOrigin = true
+	// The same policy as the first load, including the document's own URL,
+	// and the same location, so that relative references in the overlaid
+	// document resolve where they did in the original one.
+	loader := newLoader(filePath, opts.AllowRemoteRefsFrom, client)
+	location := specURL(filePath)
+	if location == nil {
+		location = &url.URL{Path: filepath.ToSlash(filePath)}
+	}
 
-	swagger, err = loader.LoadFromDataWithPath(b, &url.URL{
-		Path: filepath.ToSlash(filePath),
-	})
+	swagger, err = loader.LoadFromDataWithPath(out, location)
 	if err != nil {
 		return nil, fmt.Errorf("failed to serialize Overlay'd specification %#v: %v", opts.Path, err)
 	}

@@ -10,7 +10,7 @@ This page is a structural overview. The authoritative, always-current reference 
 To get the IDE experience, add this line to the top of your configuration file:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 package: api
 # ...
 ```
@@ -47,7 +47,8 @@ generate:
 # behavior when a bug fix or improvement changes generated output.
 # See <a href="https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen#CompatibilityOptions">CompatibilityOptions</a>
 compatibility:
-  old-merge-schemas: false
+  schema-merging-behavior: v2   # v1, v2 or v3: how allOf, anyOf and oneOf become Go types; see <a href="schema-merging.md">schema-merging.md</a>
+  old-merge-schemas: false      # deprecated: an alias for schema-merging-behavior: v1
   old-allof-sibling-merging: false
   old-enum-conflicts: false
   old-aliasing: false
@@ -63,6 +64,7 @@ compatibility:
   headers-implicitly-required: false
   enable-auth-scopes-on-context: false
   sort-handler-registrations: false
+  overlays-use-yaml-jsonpath: false  # read every overlay target in the pre-v2.9.0 JSONPath dialect instead of RFC 9535 (whole overlay, no per-target detection)
 
 # Output modification options
 # See <a href="https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen#OutputOptions">OutputOptions</a>
@@ -87,6 +89,7 @@ output-options:
   prefer-skip-optional-pointer-on-container-types: false
   skip-enum-validate: false
   skip-enum-via-oneof: false
+  lenient-union-accessors: false   # schema-merging-behavior v3 only: see <a href="schema-merging.md#variants-with-additionalproperties-false">schema-merging.md</a>
   generate-types-for-anonymous-schemas: false
   # How OpenAPI type/format combinations map to Go types; user-specified
   # mappings are merged on top of these defaults.
@@ -168,6 +171,12 @@ output-options:
 # External reference to Go package mapping, used when
 # <a href="../README.md#import-mapping">splitting specs across multiple packages</a>
 import-mapping: {}
+
+# Remote documents that external $refs may be fetched from while the spec is
+# loaded: each entry is a $ref URL without its fragment, or "*" for any URL.
+# Empty by default: remote references are refused and only local files are
+# followed. See <a href="../README.md#remote-references">remote references</a>
+allow-remote-refs-from: []
 
 # Additional Go imports to add to the generated code
 additional-imports: []

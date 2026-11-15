@@ -1,0 +1,30 @@
+versions: [v1, v2, v3]
+description: >-
+  A discriminated oneOf with an int64 discriminator whose mapping includes a
+  value one past 2^53, which a float64 can't hold. Each value dispatches and
+  stamps exactly.
+subject:
+  oneOf:
+    - $ref: '#/components/schemas/Small'
+    - $ref: '#/components/schemas/Big'
+  discriminator:
+    propertyName: id
+    mapping:
+      '1': '#/components/schemas/Small'
+      '9007199254740993': '#/components/schemas/Big'
+components:
+  Small:
+    type: object
+    required: [id, name]
+    properties:
+      id: {type: integer, format: int64}
+      name: {type: string}
+  Big:
+    type: object
+    required: [id, size]
+    properties:
+      id: {type: integer, format: int64}
+      size: {type: string}
+samples:
+  - '{"id": 1, "name": "a"}'
+  - '{"id": 9007199254740993, "size": "b"}'

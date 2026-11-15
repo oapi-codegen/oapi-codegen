@@ -43,7 +43,7 @@ func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface) iris.Handler
             {{end}}
             {{if .IsJson}}
             var value {{.TypeDef}}
-            err = json.Unmarshal([]byte(paramValue), &value)
+            err = runtime.JSONUnmarshal([]byte(paramValue), &value)
             if err != nil {
                 ctx.StatusCode(http.StatusBadRequest)
                 _, _ = ctx.WriteString(fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
@@ -72,7 +72,7 @@ func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface) iris.Handler
             params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}valueList[0]
             {{end}}
             {{if .IsJson}}
-            err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+            err = runtime.JSONUnmarshal([]byte(valueList[0]), &{{.GoName}})
             if err != nil {
                 ctx.StatusCode(http.StatusBadRequest)
                 _, _ = ctx.WriteString(fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))

@@ -1,0 +1,129 @@
+openapi: "3.0.0"
+info:
+  title: schemas/recursive_v1
+  version: "1.0.0"
+  description: |
+    The recursive allOf compositions of schemas/recursive (issue #2542, in its
+    union, object, transitive, mutual, bystander and additionalProperties
+    forms) under schema-merging-behavior v1, plus a composition that refers
+    back to itself through a whole-document $ref, which v1 alone used to
+    overflow the stack on.
+paths: {}
+components:
+  schemas:
+    # --- issue #2542: recursive anyOf wrapping self-$ref in allOf ---
+    Node:
+      anyOf:
+        - type: object
+          properties:
+            leaf:
+              type: string
+        - type: object
+          properties:
+            children:
+              type: array
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/Node'
+                  - type: object
+                    properties:
+                      extra:
+                        type: string
+
+    # --- issue #2542 (object variant): plain recursive object + allOf ---
+    NodeObject:
+      type: object
+      properties:
+        children:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/NodeObject'
+              - type: object
+                properties:
+                  extra:
+                    type: string
+
+    # --- issue #2542 (transitive variant): self-$ref behind nested allOf ---
+    NodeNestedAllOf:
+      anyOf:
+        - type: object
+          properties:
+            leaf:
+              type: string
+        - type: object
+          properties:
+            children:
+              type: array
+              items:
+                allOf:
+                  - allOf:
+                      - $ref: '#/components/schemas/NodeNestedAllOf'
+                  - type: object
+                    properties:
+                      extra:
+                        type: string
+
+    # --- issue #2542 (mutual variant): a cycle that never reaches the
+    # component being generated ---
+    MutualA:
+      type: object
+      properties:
+        b:
+          allOf:
+            - $ref: '#/components/schemas/MutualB'
+            - type: object
+              properties:
+                tag:
+                  type: string
+    MutualB:
+      type: object
+      properties:
+        c:
+          allOf:
+            - $ref: '#/components/schemas/MutualC'
+            - type: object
+              properties:
+                x:
+                  type: string
+    MutualC:
+      type: object
+      properties:
+        back:
+          allOf:
+            - $ref: '#/components/schemas/MutualB'
+            - type: object
+              properties:
+                y:
+                  type: string
+
+    # --- issue #2542 (bystander variant): the cycle is reached from a
+    # component that is not part of it ---
+    Wrapper:
+      type: object
+      properties:
+        n:
+          allOf:
+            - $ref: '#/components/schemas/NodeObject'
+            - type: object
+              properties:
+                extra:
+                  type: string
+
+    # --- issue #2542 (additionalProperties variant): the cycle closes
+    # through a map at the component root ---
+    NodeMap:
+      type: object
+      additionalProperties:
+        allOf:
+          - $ref: '#/components/schemas/NodeMap'
+          - type: object
+            properties:
+              extra:
+                type: string
+
+    # --- whole-document variant: tree.yaml composes itself by a $ref to the
+    # whole file. Such a $ref names no Go type, so its value is generated
+    # inline, and v1 used to generate it again without end. ---
+    Tree:
+      $ref: './tree.yaml'

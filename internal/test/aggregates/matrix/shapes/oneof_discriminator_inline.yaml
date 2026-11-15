@@ -1,0 +1,32 @@
+versions: [v1, v2, v3]
+description: >-
+  A discriminated oneOf whose variants are inline, two pinning their
+  discriminator value with a single-value enum (e05) and one pinning none,
+  which the discriminator doesn't lead to. An inline variant has no name for
+  the mapping, so these failed with "not all schemas were mapped".
+subject:
+  oneOf:
+    - type: object
+      required: [petType, meow]
+      properties:
+        petType: {type: string, enum: [cat]}
+        meow: {type: string}
+    - type: object
+      required: [petType, bark]
+      properties:
+        petType: {type: string, enum: [dog]}
+        bark: {type: string}
+    - type: object
+      required: [petType, chirp]
+      properties:
+        petType: {type: string}
+        chirp: {type: string}
+  discriminator:
+    propertyName: petType
+samples:
+  - '{"petType": "cat", "meow": "purr"}'
+  - '{"petType": "dog", "bark": "woof"}'
+  - '{"petType": "finch", "chirp": "tweet"}'
+rejects:
+  v1: "discriminator: not all schemas were mapped"
+  v2: "discriminator: not all schemas were mapped"

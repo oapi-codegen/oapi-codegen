@@ -8,12 +8,13 @@ package optionscontenttypes
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/oapi-codegen/runtime"
 )
 
 // Pet defines model for Pet.
@@ -21,7 +22,7 @@ type Pet struct {
 	Name string `json:"name"`
 }
 
-// UploadReportCSVBody defines parameters for UploadReport.
+// UploadReportCSVBody defines body for UploadReport for text/csv ContentType.
 type UploadReportCSVBody = string
 
 // AddPetV1RequestBody defines body for AddPet for application/vnd.mycompany.v1+json ContentType.
@@ -162,7 +163,7 @@ func (c *Client) UploadReportWithBody(ctx context.Context, contentType string, b
 // NewAddPetRequestWithV1Body calls the generic AddPet builder with application/vnd.mycompany.v1+json body
 func NewAddPetRequestWithV1Body(server string, body AddPetV1RequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -414,7 +415,7 @@ func ParseAddPetResponse(rsp *http.Response) (*AddPetResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Pet
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.V1200 = &dest
@@ -626,7 +627,7 @@ type AddPet200V1Response Pet
 func (response AddPet200V1Response) VisitAddPetResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/vnd.mycompany.v1+json")
@@ -673,8 +674,11 @@ type StrictServerInterface interface {
 	UploadReport(ctx context.Context, request UploadReportRequestObject) (UploadReportResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+// StrictHandlerFunc and StrictMiddlewareFunc are type aliases rather than
+// distinct named types, so middleware written against one generated package
+// can be shared with every other generated package using the same framework.
+type StrictHandlerFunc = func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -717,7 +721,7 @@ func (sh *strictHandler) AddPet(w http.ResponseWriter, r *http.Request) {
 	var request AddPetRequestObject
 
 	var body AddPetV1RequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}

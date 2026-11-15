@@ -1,0 +1,32 @@
+versions: [v1, v2, v3]
+description: >-
+  A discriminated oneOf whose variants are each an allOf of the schema that
+  lists them: the inheritance style some generators write, with the parent
+  listing its children. Each child is one branch of the parent, so it isn't a
+  union of all of them.
+subject:
+  type: object
+  required: [petType]
+  properties:
+    petType: {type: string}
+  discriminator:
+    propertyName: petType
+  oneOf:
+    - $ref: '#/components/schemas/Cat'
+    - $ref: '#/components/schemas/Dog'
+components:
+  Cat:
+    allOf:
+      - $ref: '#/components/schemas/Subject'
+      - type: object
+        properties:
+          meow: {type: string}
+  Dog:
+    allOf:
+      - $ref: '#/components/schemas/Subject'
+      - type: object
+        properties:
+          bark: {type: string}
+samples:
+  - '{"petType": "Cat", "meow": "m"}'
+  - '{"petType": "Dog", "bark": "b"}'

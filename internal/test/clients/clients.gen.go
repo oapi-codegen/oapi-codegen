@@ -6,11 +6,12 @@ package clients
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/oapi-codegen/runtime"
 )
 
 // SchemaObject defines model for SchemaObject.
@@ -19,7 +20,7 @@ type SchemaObject struct {
 	Role      string `json:"role"`
 }
 
-// PostVendorJsonApplicationVndAPIPlusJSONBody defines parameters for PostVendorJson.
+// PostVendorJsonApplicationVndAPIPlusJSONBody defines body for PostVendorJson for application/vnd.api+json ContentType.
 type PostVendorJsonApplicationVndAPIPlusJSONBody = map[string]any
 
 // PostBothJSONRequestBody defines body for PostBoth for application/json ContentType.
@@ -299,7 +300,7 @@ func (c *Client) PostVendorJsonWithApplicationVndAPIPlusJSONBody(ctx context.Con
 // NewPostBothRequest calls the generic PostBoth builder with application/json body
 func NewPostBothRequest(server string, body PostBothJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -366,7 +367,7 @@ func NewGetBothRequest(server string) (*http.Request, error) {
 // NewPostJsonRequest calls the generic PostJson builder with application/json body
 func NewPostJsonRequest(server string, body PostJsonJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -516,7 +517,7 @@ func NewGetJsonWithTrailingSlashRequest(server string) (*http.Request, error) {
 // NewPostVendorJsonRequestWithApplicationVndAPIPlusJSONBody calls the generic PostVendorJson builder with application/vnd.api+json body
 func NewPostVendorJsonRequestWithApplicationVndAPIPlusJSONBody(server string, body PostVendorJsonApplicationVndAPIPlusJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
