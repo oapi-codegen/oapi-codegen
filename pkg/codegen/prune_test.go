@@ -179,28 +179,7 @@ components:
 // document it came from, so they must not keep alive a component of this
 // document which happens to have the same name.
 func TestPruningIgnoresReferencesInsideExternalSchemas(t *testing.T) {
-	documents := map[string]string{
-		"main.yaml": `
-openapi: 3.0.3
-info:
-  title: Main
-  version: 1.0.0
-paths:
-  /test:
-    get:
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: "other.yaml#/components/schemas/Thing"
-components:
-  schemas:
-    Inner:
-      type: string
-`,
-		"other.yaml": `
+	const other = `
 openapi: 3.0.3
 info:
   title: Other
@@ -215,26 +194,88 @@ components:
           $ref: "#/components/schemas/Inner"
     Inner:
       type: integer
+`
+	const mainHeader = `
+openapi: 3.0.3
+info:
+  title: Main
+  version: 1.0.0
+paths:
+  /test:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+`
+
+	tests := []struct {
+		name     string
+		main     string
+		wantRefs []string
+		wantKept []string
+	}{
+		{
+			name: "referenced directly",
+			main: mainHeader + `
+                $ref: "other.yaml#/components/schemas/Thing"
+components:
+  schemas:
+    Inner:
+      type: string
 `,
+			wantRefs: []string{"other.yaml#/components/schemas/Thing"},
+		},
+		{
+			// The reference in the response is a local one, but it resolves to
+			// the schema from the other document all the same.
+			name: "referenced through a local alias",
+			main: mainHeader + `
+                $ref: "#/components/schemas/Alias"
+components:
+  schemas:
+    Alias:
+      $ref: "other.yaml#/components/schemas/Thing"
+    Inner:
+      type: string
+`,
+			wantRefs: []string{
+				"#/components/schemas/Alias",
+				"other.yaml#/components/schemas/Thing",
+			},
+			wantKept: []string{"Alias"},
+		},
 	}
 
-	loader := openapi3.NewLoader()
-	loader.IsExternalRefsAllowed = true
-	loader.ReadFromURIFunc = func(_ *openapi3.Loader, location *url.URL) ([]byte, error) {
-		document, ok := documents[location.Path]
-		if !ok {
-			return nil, fmt.Errorf("no such document: %s", location)
-		}
-		return []byte(document), nil
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			documents := map[string]string{"main.yaml": tt.main, "other.yaml": other}
+
+			loader := openapi3.NewLoader()
+			loader.IsExternalRefsAllowed = true
+			loader.ReadFromURIFunc = func(_ *openapi3.Loader, location *url.URL) ([]byte, error) {
+				document, ok := documents[location.Path]
+				if !ok {
+					return nil, fmt.Errorf("no such document: %s", location)
+				}
+				return []byte(document), nil
+			}
+
+			swagger, err := loader.LoadFromURI(&url.URL{Path: "main.yaml"})
+			assert.NoError(t, err)
+
+			assert.ElementsMatch(t, tt.wantRefs, findComponentRefs(swagger))
+
+			pruneUnusedComponents(swagger)
+			kept := make([]string, 0, len(swagger.Components.Schemas))
+			for name := range swagger.Components.Schemas {
+				kept = append(kept, name)
+			}
+			assert.ElementsMatch(t, tt.wantKept, kept)
+		})
 	}
-
-	swagger, err := loader.LoadFromURI(&url.URL{Path: "main.yaml"})
-	assert.NoError(t, err)
-
-	assert.Equal(t, []string{"other.yaml#/components/schemas/Thing"}, findComponentRefs(swagger))
-
-	pruneUnusedComponents(swagger)
-	assert.NotContains(t, swagger.Components.Schemas, "Inner")
 }
 
 func TestFindReferencesInWebhooksAndContent(t *testing.T) {

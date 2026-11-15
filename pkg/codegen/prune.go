@@ -400,8 +400,32 @@ func walkExampleRef(ref *openapi3.ExampleRef, doFn func(RefWrapper) (bool, error
 	return nil
 }
 
+// isLocalRef reports whether ref points into the document it is written in.
+func isLocalRef(ref string) bool {
+	return strings.HasPrefix(ref, "#/")
+}
+
+// findExternalSchemas returns the schemas which the document takes from other
+// documents: the ones its external schema references resolve to.
+func findExternalSchemas(swagger *openapi3.T) map[*openapi3.Schema]struct{} {
+	external := map[*openapi3.Schema]struct{}{}
+
+	_ = walkSwagger(swagger, func(ref RefWrapper) (bool, error) {
+		if ref.Ref == "" {
+			return true, nil
+		}
+		if schemaRef, ok := ref.SourceRef.(*openapi3.SchemaRef); ok && schemaRef.Value != nil && !isLocalRef(ref.Ref) {
+			external[schemaRef.Value] = struct{}{}
+		}
+		return false, nil
+	})
+
+	return external
+}
+
 func findComponentRefs(swagger *openapi3.T) []string {
 	refs := []string{}
+	external := findExternalSchemas(swagger)
 	// The schemas already walked. Resolved schemas share their children, and
 	// can refer back to themselves, so without this the walk below would
 	// neither be linear in the size of the document nor terminate.
@@ -426,10 +450,16 @@ func findComponentRefs(swagger *openapi3.T) []string {
 		// Value, which is then a copy of the referenced schema with the siblings
 		// applied, so the only way to reach them is to walk that Value.
 		//
-		// Don't do so for a reference into another document: the references
-		// within its Value are relative to that document, and would be mistaken
-		// for references to the components of this one.
-		return isSchema && strings.HasPrefix(ref.Ref, "#/"), nil
+		// Don't do so for a schema from another document: the references within
+		// it are relative to that document, and would be mistaken for references
+		// to the components of this one. A local reference can resolve to such a
+		// schema too, when it points at a component which is itself an external
+		// reference, hence the check on what it resolved to.
+		if !isSchema || !isLocalRef(ref.Ref) {
+			return false, nil
+		}
+		_, isExternal := external[schemaRef.Value]
+		return !isExternal, nil
 	})
 
 	return refs
