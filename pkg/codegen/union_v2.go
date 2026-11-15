@@ -29,20 +29,24 @@ func generateUnionsV2(ctx genContext, outSchema *Schema, schema *openapi3.Schema
 		anyOfPath = append(slices.Clone(path), "AnyOf")
 		oneOfPath = append(slices.Clone(path), "OneOf")
 	}
+	// A list that collapses into its only non-null branch takes that
+	// branch's union members only when it is the schema's one list (see
+	// collapseNullableUnion).
+	alone := schema.AnyOf == nil || schema.OneOf == nil
 	if schema.AnyOf != nil {
-		if err := generateUnionV2(ctx, outSchema, schema.AnyOf, schema.Discriminator, anyOfPath); err != nil {
+		if err := generateUnionV2(ctx, outSchema, schema.AnyOf, schema.Discriminator, anyOfPath, alone); err != nil {
 			return fmt.Errorf("error generating type for anyOf: %w", err)
 		}
 	}
 	if schema.OneOf != nil {
-		if err := generateUnionV2(ctx, outSchema, schema.OneOf, schema.Discriminator, oneOfPath); err != nil {
+		if err := generateUnionV2(ctx, outSchema, schema.OneOf, schema.Discriminator, oneOfPath, alone); err != nil {
 			return fmt.Errorf("error generating type for oneOf: %w", err)
 		}
 	}
 	return nil
 }
 
-func generateUnionV2(ctx genContext, outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string) error {
+func generateUnionV2(ctx genContext, outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string, alone bool) error {
 	if discriminator != nil {
 		outSchema.Discriminator = &Discriminator{
 			Property:  discriminator.PropertyName,
@@ -59,7 +63,7 @@ func generateUnionV2(ctx genContext, outSchema *Schema, elements openapi3.Schema
 	// scoped to the bug fix.
 	effectiveCount, hadNullBranch, soleEffective := effectiveBranches(elements)
 	if effectiveCount == 1 && hadNullBranch && discriminator == nil {
-		return collapseNullableUnion(ctx, outSchema, soleEffective, path)
+		return collapseNullableUnion(ctx, outSchema, soleEffective, path, alone)
 	}
 
 	for i, element := range elements {

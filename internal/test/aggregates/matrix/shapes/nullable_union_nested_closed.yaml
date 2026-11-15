@@ -1,0 +1,29 @@
+versions: [v2, v3]
+description: >-
+  An OpenAPI 3.1 nullable anyOf whose only other branch is an inline oneOf over
+  variants with additionalProperties: false. In v3, As* of a variant rejects
+  the other variant's keys, as it does when the oneOf isn't wrapped (issue
+  #2565).
+openapi: 3.1.0
+subject:
+  anyOf:
+    - oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    - type: 'null'
+components:
+  Cat:
+    type: object
+    additionalProperties: false
+    required: [meow]
+    properties:
+      meow: {type: string}
+  Dog:
+    type: object
+    additionalProperties: false
+    required: [bark]
+    properties:
+      bark: {type: string}
+samples:
+  - '{"meow": "purr"}'
+  - '{"bark": "woof"}'

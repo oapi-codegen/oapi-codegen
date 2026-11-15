@@ -1,0 +1,29 @@
+versions: [v2, v3]
+description: >-
+  An OpenAPI 3.1 nullable anyOf whose only other branch is an inline oneOf
+  next to untyped additionalProperties. From* drops the previous variant's
+  keys from the additional properties, as it does when the oneOf isn't wrapped
+  (issue #2565).
+openapi: 3.1.0
+subject:
+  anyOf:
+    - type: object
+      additionalProperties: true
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    - type: 'null'
+components:
+  Cat:
+    type: object
+    required: [meow]
+    properties:
+      meow: {type: string}
+  Dog:
+    type: object
+    required: [bark]
+    properties:
+      bark: {type: string}
+samples:
+  - '{"meow": "purr"}'
+  - '{"bark": "woof", "extra": 7}'
