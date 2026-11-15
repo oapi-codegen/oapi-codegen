@@ -1,6 +1,9 @@
 package codegen
 
 import (
+	"fmt"
+	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -123,6 +126,115 @@ components:
 	assert.Contains(t, swagger.Components.Schemas, "Container")
 	assert.Contains(t, swagger.Components.Schemas, "Target")
 	assert.NotContains(t, swagger.Components.Schemas, "Unused")
+}
+
+// A reference is recorded once per place it is written, however many other
+// references resolve to the schema holding it. Following resolved references
+// without remembering what was already walked makes this quadratic.
+func TestFindReferencesIsLinearInResolvedSchemas(t *testing.T) {
+	const schemaCount = 50
+
+	var spec strings.Builder
+	spec.WriteString(`
+openapi: 3.0.3
+info:
+  title: Mutually referencing schemas
+  version: 1.0.0
+paths:
+  /test:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/S0"
+components:
+  schemas:
+`)
+	for i := range schemaCount {
+		fmt.Fprintf(&spec, `
+    S%d:
+      type: object
+      properties:
+        next:
+          $ref: "#/components/schemas/S%d"
+        skip:
+          $ref: "#/components/schemas/S%d"
+`, i, (i+1)%schemaCount, (i+2)%schemaCount)
+	}
+
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec.String()))
+	assert.NoError(t, err)
+
+	// Two per schema, and the one in the response.
+	assert.Len(t, findComponentRefs(swagger), 2*schemaCount+1)
+
+	pruneUnusedComponents(swagger)
+	assert.Len(t, swagger.Components.Schemas, schemaCount)
+}
+
+// The references inside an externally referenced schema are relative to the
+// document it came from, so they must not keep alive a component of this
+// document which happens to have the same name.
+func TestPruningIgnoresReferencesInsideExternalSchemas(t *testing.T) {
+	documents := map[string]string{
+		"main.yaml": `
+openapi: 3.0.3
+info:
+  title: Main
+  version: 1.0.0
+paths:
+  /test:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "other.yaml#/components/schemas/Thing"
+components:
+  schemas:
+    Inner:
+      type: string
+`,
+		"other.yaml": `
+openapi: 3.0.3
+info:
+  title: Other
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Thing:
+      type: object
+      properties:
+        inner:
+          $ref: "#/components/schemas/Inner"
+    Inner:
+      type: integer
+`,
+	}
+
+	loader := openapi3.NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.ReadFromURIFunc = func(_ *openapi3.Loader, location *url.URL) ([]byte, error) {
+		document, ok := documents[location.Path]
+		if !ok {
+			return nil, fmt.Errorf("no such document: %s", location)
+		}
+		return []byte(document), nil
+	}
+
+	swagger, err := loader.LoadFromURI(&url.URL{Path: "main.yaml"})
+	assert.NoError(t, err)
+
+	assert.Equal(t, []string{"other.yaml#/components/schemas/Thing"}, findComponentRefs(swagger))
+
+	pruneUnusedComponents(swagger)
+	assert.NotContains(t, swagger.Components.Schemas, "Inner")
 }
 
 func TestFindReferencesInWebhooksAndContent(t *testing.T) {

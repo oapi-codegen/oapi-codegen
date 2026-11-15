@@ -3,6 +3,7 @@ package codegen
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -118,29 +119,16 @@ func walkComponents(components *openapi3.Components, doFn func(RefWrapper) (bool
 }
 
 func walkSchemaRef(ref *openapi3.SchemaRef, doFn func(RefWrapper) (bool, error)) error {
-	return walkSchemaRefWithVisited(ref, doFn, make(map[*openapi3.SchemaRef]struct{}))
-}
-
-func walkSchemaRefWithVisited(ref *openapi3.SchemaRef, doFn func(RefWrapper) (bool, error), visited map[*openapi3.SchemaRef]struct{}) error {
 	// Not a valid ref, ignore it and continue
 	if ref == nil {
 		return nil
 	}
-	if _, ok := visited[ref]; ok {
-		return nil
-	}
-	visited[ref] = struct{}{}
-
 	refWrapper := RefWrapper{Ref: ref.Ref, HasValue: ref.Value != nil, SourceRef: ref}
 	shouldContinue, err := doFn(refWrapper)
 	if err != nil {
 		return err
 	}
-	// In OpenAPI 3.1, SchemaRef.Value can also contain schema keywords which
-	// are siblings of $ref. Walk those children even when the callback stops at
-	// the reference itself. visited prevents resolved recursive refs from
-	// causing an infinite traversal.
-	if !shouldContinue && ref.Ref == "" {
+	if !shouldContinue {
 		return nil
 	}
 	if ref.Value == nil {
@@ -148,7 +136,7 @@ func walkSchemaRefWithVisited(ref *openapi3.SchemaRef, doFn func(RefWrapper) (bo
 	}
 
 	for _, child := range schemaChildRefs(ref.Value) {
-		_ = walkSchemaRefWithVisited(child, doFn, visited)
+		_ = walkSchemaRef(child, doFn)
 	}
 
 	return nil
@@ -414,13 +402,34 @@ func walkExampleRef(ref *openapi3.ExampleRef, doFn func(RefWrapper) (bool, error
 
 func findComponentRefs(swagger *openapi3.T) []string {
 	refs := []string{}
+	// The schemas already walked. Resolved schemas share their children, and
+	// can refer back to themselves, so without this the walk below would
+	// neither be linear in the size of the document nor terminate.
+	seen := map[*openapi3.SchemaRef]struct{}{}
 
 	_ = walkSwagger(swagger, func(ref RefWrapper) (bool, error) {
-		if ref.Ref != "" {
-			refs = append(refs, ref.Ref)
-			return false, nil
+		schemaRef, isSchema := ref.SourceRef.(*openapi3.SchemaRef)
+		if isSchema {
+			if _, ok := seen[schemaRef]; ok {
+				return false, nil
+			}
+			seen[schemaRef] = struct{}{}
 		}
-		return true, nil
+
+		if ref.Ref == "" {
+			return true, nil
+		}
+		refs = append(refs, ref.Ref)
+
+		// In OpenAPI 3.1 a schema $ref may have sibling keywords, and those can
+		// hold references of their own. kin-openapi keeps them in the reference's
+		// Value, which is then a copy of the referenced schema with the siblings
+		// applied, so the only way to reach them is to walk that Value.
+		//
+		// Don't do so for a reference into another document: the references
+		// within its Value are relative to that document, and would be mistaken
+		// for references to the components of this one.
+		return isSchema && strings.HasPrefix(ref.Ref, "#/"), nil
 	})
 
 	return refs
