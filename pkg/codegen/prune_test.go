@@ -1,6 +1,9 @@
 package codegen
 
 import (
+	"fmt"
+	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -44,6 +47,354 @@ func TestFindReferences(t *testing.T) {
 		refs := findComponentRefs(swagger)
 		assert.Len(t, refs, 7)
 	})
+}
+
+func TestFindReferencesInOpenAPI31SchemaFields(t *testing.T) {
+	const target = "#/components/schemas/Target"
+	newRef := func() *openapi3.SchemaRef {
+		return &openapi3.SchemaRef{Ref: target}
+	}
+
+	swagger := &openapi3.T{
+		OpenAPI: "3.1.0",
+		Components: &openapi3.Components{
+			Schemas: openapi3.Schemas{
+				"Container": {
+					Value: &openapi3.Schema{
+						PrefixItems:           openapi3.SchemaRefs{newRef()},
+						Contains:              newRef(),
+						PatternProperties:     openapi3.Schemas{"pattern": newRef()},
+						DependentSchemas:      openapi3.Schemas{"dependency": newRef()},
+						PropertyNames:         newRef(),
+						UnevaluatedItems:      openapi3.BoolSchema{Schema: newRef()},
+						UnevaluatedProperties: openapi3.BoolSchema{Schema: newRef()},
+						If:                    newRef(),
+						Then:                  newRef(),
+						Else:                  newRef(),
+						Defs:                  openapi3.Schemas{"definition": newRef()},
+						ContentSchema:         newRef(),
+					},
+				},
+			},
+		},
+	}
+
+	refs := findComponentRefs(swagger)
+	assert.Len(t, refs, 12)
+	for _, ref := range refs {
+		assert.Equal(t, target, ref)
+	}
+}
+
+func TestPruningPreservesReferencesInOpenAPI31RefSiblings(t *testing.T) {
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(`
+openapi: 3.1.0
+info:
+  title: Schema ref siblings
+  version: 1.0.0
+paths:
+  /test:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Container"
+components:
+  schemas:
+    Base:
+      type: object
+      properties:
+        parent:
+          $ref: "#/components/schemas/Base"
+    Target:
+      type: string
+    Container:
+      $ref: "#/components/schemas/Base"
+      propertyNames:
+        $ref: "#/components/schemas/Target"
+    Unused:
+      type: string
+`))
+	assert.NoError(t, err)
+
+	pruneUnusedComponents(swagger)
+
+	assert.Contains(t, swagger.Components.Schemas, "Base")
+	assert.Contains(t, swagger.Components.Schemas, "Container")
+	assert.Contains(t, swagger.Components.Schemas, "Target")
+	assert.NotContains(t, swagger.Components.Schemas, "Unused")
+}
+
+// A reference is recorded once per place it is written, however many other
+// references resolve to the schema holding it. Following resolved references
+// without remembering what was already walked makes this quadratic.
+func TestFindReferencesIsLinearInResolvedSchemas(t *testing.T) {
+	const schemaCount = 50
+
+	var spec strings.Builder
+	spec.WriteString(`
+openapi: 3.0.3
+info:
+  title: Mutually referencing schemas
+  version: 1.0.0
+paths:
+  /test:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/S0"
+components:
+  schemas:
+`)
+	for i := range schemaCount {
+		fmt.Fprintf(&spec, `
+    S%d:
+      type: object
+      properties:
+        next:
+          $ref: "#/components/schemas/S%d"
+        skip:
+          $ref: "#/components/schemas/S%d"
+`, i, (i+1)%schemaCount, (i+2)%schemaCount)
+	}
+
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec.String()))
+	assert.NoError(t, err)
+
+	// Two per schema, and the one in the response.
+	assert.Len(t, findComponentRefs(swagger), 2*schemaCount+1)
+
+	pruneUnusedComponents(swagger)
+	assert.Len(t, swagger.Components.Schemas, schemaCount)
+}
+
+// The references inside an externally referenced schema are relative to the
+// document it came from, so they must not keep alive a component of this
+// document which happens to have the same name.
+func TestPruningIgnoresReferencesInsideExternalSchemas(t *testing.T) {
+	const other = `
+openapi: 3.0.3
+info:
+  title: Other
+  version: 1.0.0
+paths: {}
+components:
+  schemas:
+    Thing:
+      type: object
+      properties:
+        inner:
+          $ref: "#/components/schemas/Inner"
+    Composed:
+      allOf:
+        - $ref: "#/components/schemas/Thing"
+        - type: object
+          properties:
+            more:
+              $ref: "#/components/schemas/Inner"
+    Inner:
+      type: integer
+`
+	const mainHeader = `
+info:
+  title: Main
+  version: 1.0.0
+paths:
+  /test:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+`
+
+	tests := []struct {
+		name     string
+		main     string
+		wantRefs []string
+		wantKept []string
+	}{
+		{
+			name: "referenced directly",
+			main: "openapi: 3.0.3" + mainHeader + `
+                $ref: "other.yaml#/components/schemas/Thing"
+components:
+  schemas:
+    Inner:
+      type: string
+`,
+			wantRefs: []string{"other.yaml#/components/schemas/Thing"},
+		},
+		{
+			// The reference in the response is a local one, but it resolves to
+			// the schema from the other document all the same.
+			name: "referenced through a local alias",
+			main: "openapi: 3.0.3" + mainHeader + `
+                $ref: "#/components/schemas/Alias"
+components:
+  schemas:
+    Alias:
+      $ref: "other.yaml#/components/schemas/Thing"
+    Inner:
+      type: string
+`,
+			wantRefs: []string{
+				"#/components/schemas/Alias",
+				"other.yaml#/components/schemas/Thing",
+			},
+			wantKept: []string{"Alias"},
+		},
+		{
+			// The description does not make the last allOf entry of the external
+			// schema, which refers to its own Inner, a sibling of the reference.
+			name: "referenced with an annotation next to it",
+			main: "openapi: 3.1.0" + mainHeader + `
+                $ref: "other.yaml#/components/schemas/Composed"
+                description: Described where it is used
+components:
+  schemas:
+    Inner:
+      type: string
+`,
+			wantRefs: []string{"other.yaml#/components/schemas/Composed"},
+		},
+		{
+			// The keywords next to the external reference are written in this
+			// document, so what they refer to is a component of this document.
+			name: "referenced with a local reference next to it",
+			main: "openapi: 3.1.0" + mainHeader + `
+                $ref: "#/components/schemas/Alias"
+components:
+  schemas:
+    Alias:
+      $ref: "other.yaml#/components/schemas/Thing"
+      properties:
+        target:
+          $ref: "#/components/schemas/Target"
+    Target:
+      type: string
+    Inner:
+      type: string
+`,
+			wantRefs: []string{
+				"#/components/schemas/Alias",
+				"other.yaml#/components/schemas/Thing",
+				"#/components/schemas/Target",
+			},
+			wantKept: []string{"Alias", "Target"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			documents := map[string]string{"main.yaml": tt.main, "other.yaml": other}
+
+			loader := openapi3.NewLoader()
+			loader.IsExternalRefsAllowed = true
+			loader.ReadFromURIFunc = func(_ *openapi3.Loader, location *url.URL) ([]byte, error) {
+				document, ok := documents[location.Path]
+				if !ok {
+					return nil, fmt.Errorf("no such document: %s", location)
+				}
+				return []byte(document), nil
+			}
+
+			swagger, err := loader.LoadFromURI(&url.URL{Path: "main.yaml"})
+			assert.NoError(t, err)
+
+			assert.ElementsMatch(t, tt.wantRefs, findComponentRefs(swagger))
+
+			pruneUnusedComponents(swagger)
+			kept := make([]string, 0, len(swagger.Components.Schemas))
+			for name := range swagger.Components.Schemas {
+				kept = append(kept, name)
+			}
+			assert.ElementsMatch(t, tt.wantKept, kept)
+		})
+	}
+}
+
+func TestFindReferencesInWebhooksAndContent(t *testing.T) {
+	newRef := func(name string) *openapi3.SchemaRef {
+		return &openapi3.SchemaRef{Ref: "#/components/schemas/" + name}
+	}
+
+	encodingHeader := &openapi3.HeaderRef{Value: &openapi3.Header{
+		Parameter: openapi3.Parameter{
+			Content: openapi3.Content{
+				"application/json": {Schema: newRef("EncodingHeader")},
+			},
+		},
+	}}
+	parameter := &openapi3.ParameterRef{Value: &openapi3.Parameter{
+		Content: openapi3.Content{
+			"application/json": {
+				Schema:     newRef("ParameterSchema"),
+				ItemSchema: newRef("ParameterItemSchema"),
+				Encoding: openapi3.Encodings{
+					"value": {Headers: openapi3.Headers{"X-Metadata": encodingHeader}},
+				},
+			},
+		},
+	}}
+	requestBody := &openapi3.RequestBodyRef{Value: &openapi3.RequestBody{
+		Content: openapi3.Content{
+			"application/json": {ItemSchema: newRef("RequestBodyItemSchema")},
+		},
+	}}
+	response := &openapi3.ResponseRef{Value: &openapi3.Response{
+		Content: openapi3.Content{
+			"application/json": {ItemSchema: newRef("ResponseItemSchema")},
+		},
+	}}
+	header := &openapi3.HeaderRef{Value: &openapi3.Header{
+		Parameter: openapi3.Parameter{
+			Content: openapi3.Content{
+				"application/json": {Schema: newRef("HeaderSchema")},
+			},
+		},
+	}}
+	webhookResponse := &openapi3.ResponseRef{Value: &openapi3.Response{
+		Content: openapi3.Content{
+			"application/json": {Schema: newRef("WebhookSchema")},
+		},
+	}}
+
+	swagger := &openapi3.T{
+		OpenAPI: "3.2.0",
+		Webhooks: map[string]*openapi3.PathItem{
+			"event": {
+				Post: &openapi3.Operation{
+					Responses: openapi3.NewResponses(openapi3.WithStatus(200, webhookResponse)),
+				},
+			},
+		},
+		Components: &openapi3.Components{
+			Parameters:    openapi3.ParametersMap{"Parameter": parameter},
+			RequestBodies: openapi3.RequestBodies{"RequestBody": requestBody},
+			Responses:     openapi3.ResponseBodies{"Response": response},
+			Headers:       openapi3.Headers{"Header": header},
+		},
+	}
+
+	assert.ElementsMatch(t, []string{
+		"#/components/schemas/EncodingHeader",
+		"#/components/schemas/HeaderSchema",
+		"#/components/schemas/ParameterItemSchema",
+		"#/components/schemas/ParameterSchema",
+		"#/components/schemas/RequestBodyItemSchema",
+		"#/components/schemas/ResponseItemSchema",
+		"#/components/schemas/WebhookSchema",
+	}, findComponentRefs(swagger))
 }
 
 func TestFilterOnlyCat(t *testing.T) {
