@@ -287,8 +287,57 @@ paths:
               schema:
                 $ref: '#/components/schemas/Pet'
 
+  # Field name collisions (issue #2495): properties whose JSON names differ
+  # only by separator derive the same Go field name.
+  /field-collisions:
+    get:
+      operationId: getFieldCollisions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FieldCollisions'
+
 components:
   schemas:
+    # Issue #2495: "host-fqdn" and "host_fqdn" are both HostFqdn, so each is
+    # renamed with a hash of its JSON name. "host_fqdn2" derives the name a
+    # numeric suffix would have taken, and keeps it. "zed" gives way to the
+    # x-go-name on "zzz".
+    FieldCollisions:
+      type: object
+      properties:
+        host-fqdn:
+          type: string
+        host_fqdn:
+          type: string
+        host_fqdn2:
+          type: integer
+        zed:
+          type: string
+        zzz:
+          type: integer
+          x-go-name: Zed
+        extras:
+          $ref: '#/components/schemas/FieldCollisionsWithExtras'
+
+    # The same, where the properties are read and written by generated
+    # marshaling code, and one derives the name of the field which holds the
+    # additional properties.
+    FieldCollisionsWithExtras:
+      type: object
+      additionalProperties:
+        type: string
+      properties:
+        host-fqdn:
+          type: string
+        host_fqdn:
+          type: string
+        additionalProperties:
+          type: string
+
     Bar:
       type: object
       properties:
