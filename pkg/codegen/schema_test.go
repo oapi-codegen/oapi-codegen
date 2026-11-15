@@ -2007,3 +2007,26 @@ func TestDiscriminatorLiteralQuotesStrings(t *testing.T) {
 	n := &Discriminator{ValueType: openapi3.TypeInteger}
 	assert.Equal(t, `7`, n.literal("7"))
 }
+
+// A struct may declare any number of blank fields, so properties which are all
+// named "_" don't collide, whether or not collisions are being resolved.
+func TestResolvePropertyGoFieldNameCollisions_AllowsBlankFields(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.options.Compatibility.AllowUnexportedStructFieldNames = true
+
+	blank := func(p Property) Property {
+		p.Extensions = map[string]any{extGoName: "_", extOapiCodegenOnlyHonourGoName: true}
+		return p
+	}
+
+	for _, resolve := range []bool{false, true} {
+		globalState.options.OutputOptions.ResolveTypeNameCollisions = resolve
+
+		props := stringProps("a", "b", "c")
+		props[0], props[1] = blank(props[0]), blank(props[1])
+		schema := Schema{Properties: props}
+		require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+		assert.Equal(t, map[string]string{"a": "_", "b": "_", "c": "C"}, fieldNames(schema))
+	}
+}

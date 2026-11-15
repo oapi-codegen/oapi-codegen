@@ -2083,11 +2083,16 @@ const additionalPropertiesFieldName = "AdditionalProperties"
 // property later would silently repoint code that uses it.
 //
 // A name the spec chose itself, with x-go-name, is never changed, and neither
-// is AdditionalProperties. Two of those colliding is an error.
+// is AdditionalProperties. Two of those colliding is an error. The blank
+// identifier is not a collision, as a struct may declare it more than once.
 func resolvePropertyGoFieldNameCollisions(schema *Schema, path []string) error {
 	groups := make(map[string][]int, len(schema.Properties))
 	for i, p := range schema.Properties {
 		name := p.derivedGoFieldName()
+		if name == "_" {
+			// A struct may declare any number of blank fields.
+			continue
+		}
 		groups[name] = append(groups[name], i)
 	}
 
@@ -2157,6 +2162,9 @@ func resolvePropertyGoFieldNameCollisions(schema *Schema, path []string) error {
 	// can resolve.
 	for _, p := range schema.Properties {
 		name := p.GoFieldName()
+		if name == "_" {
+			continue
+		}
 		desc := fmt.Sprintf("property '%s'", p.JsonFieldName)
 		if other, found := taken[name]; found {
 			return fmt.Errorf("%s: %s and %s would both be the Go field '%s'; please use x-go-name to rename one of them",
