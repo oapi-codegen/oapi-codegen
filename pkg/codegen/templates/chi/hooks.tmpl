@@ -17,15 +17,19 @@ the skeletons' {{block}} defaults.
 {{define "handler.routerType"}}chi.Router{{end}}
 {{define "handler.routerVar"}}r{{end}}
 {{define "handler.newRouter"}}chi.NewRouter(){{end}}
+{{/* chi only routes methods it knows about: the OpenAPI 3.2 QUERY method and
+     additionalOperations must be registered by the application with
+     chi.RegisterMethod before RegisterHandlers is called. That is process-wide
+     state, so the generated code does not do it (several generated packages
+     commonly share one process). */}}
 {{define "handler.register"}}r.Group(func(r chi.Router) {
-r.{{.Method | lower | title }}(options.BaseURL+{{.Path | swaggerUriToChiUri | toGoString}}, wrapper.{{.HandlerName}})
+{{if isCustomHTTPMethod .Method}}r.MethodFunc({{.Method | toGoString}}, options.BaseURL+{{.Path | swaggerUriToChiUri | toGoString}}, wrapper.{{.HandlerName}}){{else}}r.{{.Method | lower | title }}(options.BaseURL+{{.Path | swaggerUriToChiUri | toGoString}}, wrapper.{{.HandlerName}}){{end}}
 })
 {{end}}
 
 {{/* --- server-interface.tmpl --- */}}
 {{define "interface.unimplemented"}}
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
-
 type Unimplemented struct {}
  {{range .}}{{if not .IsAlias}}{{.SummaryAsComment .OperationId }}
  // ({{.Method}} {{.Path}})

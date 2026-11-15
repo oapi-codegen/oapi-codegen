@@ -62,6 +62,37 @@ func TestArrayOfInlineObjectsHoisted(t *testing.T) {
 	assert.Equal(t, "admin", roles[0].Name)
 }
 
+// TestNumericStatusHoistedTypeIsValidIdentifier verifies the fix for issue
+// #2555: a components/responses entry keyed by a numeric HTTP status code
+// ("400") whose body has a nested array property with inline object items
+// must hoist the nested item type into a valid Go identifier (N400_Errors),
+// not an invalid one (400_Errors) that fails to compile. The top-level
+// response type for the same status code (N400) already got this right
+// before the fix; this covers the nested hoist path too.
+func TestNumericStatusHoistedTypeIsValidIdentifier(t *testing.T) {
+	// Compile-time assertion: if either type still had an invalid,
+	// digit-leading name, this file would not compile at all.
+	var top N400
+	var nested N400_Errors
+	top.Errors = []N400_Errors{nested}
+	_ = top
+}
+
+func TestNumericStatusHoistedTypeRoundTrip(t *testing.T) {
+	body := N400{
+		Errors: []N400_Errors{
+			{Message: "field is required"},
+		},
+	}
+
+	encoded, err := json.Marshal(body)
+	require.NoError(t, err)
+
+	var decoded N400
+	require.NoError(t, json.Unmarshal(encoded, &decoded))
+	assert.Equal(t, body, decoded)
+}
+
 // ---- implicit/default hoisting (no flag; OpenAPI 3.1) ----
 // Source: anonymous_inner_hoisting/implicit
 

@@ -1,0 +1,18 @@
+versions: [v2, v3]
+description: >-
+  allOf over a $ref to a schema that declares a property next to an allOf of
+  an empty object. v2 generates a map, and keeps it one rather than add the
+  property (#2571); v3 generates the property.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Mid'
+    - type: object
+components:
+  Mid:
+    type: object
+    properties:
+      b: {type: string}
+    allOf:
+      - type: object
+samples:
+  - '{"b": "x"}'

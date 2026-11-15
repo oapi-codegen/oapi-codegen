@@ -24,7 +24,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
   {{$varName}} = c.Param("{{.ParamName}}")
   {{end}}
   {{if .IsJson}}
-  err = json.Unmarshal([]byte(c.Param("{{.ParamName}}")), &{{$varName}})
+  err = runtime.JSONUnmarshal([]byte(c.Param("{{.ParamName}}")), &{{$varName}})
   if err != nil {
     siw.ErrorHandler(c, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON"), http.StatusBadRequest)
     return
@@ -63,7 +63,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
 
         {{if .IsJson}}
           var value {{.TypeDef}}
-          err = json.Unmarshal([]byte(paramValue), &value)
+          err = runtime.JSONUnmarshal([]byte(paramValue), &value)
           if err != nil {
             siw.ErrorHandler(c, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err), http.StatusBadRequest)
             return
@@ -103,7 +103,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
         {{end}}
 
         {{if .IsJson}}
-          err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+          err = runtime.JSONUnmarshal([]byte(valueList[0]), &{{.GoName}})
           if err != nil {
             siw.ErrorHandler(c, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON"), http.StatusBadRequest)
             return
@@ -147,7 +147,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c *gin.Context) {
             return
         }
 
-        err = json.Unmarshal([]byte(decoded), &value)
+        err = runtime.JSONUnmarshal([]byte(decoded), &value)
         if err != nil {
             siw.ErrorHandler(c, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON"), http.StatusBadRequest)
             return

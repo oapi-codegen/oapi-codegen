@@ -4,6 +4,7 @@
 package aggregatesanyof
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -192,7 +193,7 @@ type RefRat struct {
 	Squeaks *bool   `json:"squeaks,omitempty"`
 }
 
-// GetInlinePets200JSONResponseBody_Data_Item defines parameters for GetInlinePets.
+// GetInlinePets200JSONResponseBody_Data_Item defines model for GetInlinePets200JSONResponseBody.data.Item.
 type GetInlinePets200JSONResponseBody_Data_Item struct {
 	union json.RawMessage
 }
@@ -206,20 +207,20 @@ type GetParamTestParams struct {
 // AsRefCat returns the union data inside the GetRefPetsDto_Data as a RefCat
 func (t GetRefPetsDto_Data) AsRefCat() (RefCat, error) {
 	var body RefCat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromRefCat overwrites any union data inside the GetRefPetsDto_Data as the provided RefCat
 func (t *GetRefPetsDto_Data) FromRefCat(v RefCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeRefCat performs a merge with any union data inside the GetRefPetsDto_Data, using the provided RefCat
 func (t *GetRefPetsDto_Data) MergeRefCat(v RefCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -232,20 +233,20 @@ func (t *GetRefPetsDto_Data) MergeRefCat(v RefCat) error {
 // AsRefDog returns the union data inside the GetRefPetsDto_Data as a RefDog
 func (t GetRefPetsDto_Data) AsRefDog() (RefDog, error) {
 	var body RefDog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromRefDog overwrites any union data inside the GetRefPetsDto_Data as the provided RefDog
 func (t *GetRefPetsDto_Data) FromRefDog(v RefDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeRefDog performs a merge with any union data inside the GetRefPetsDto_Data, using the provided RefDog
 func (t *GetRefPetsDto_Data) MergeRefDog(v RefDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -258,20 +259,20 @@ func (t *GetRefPetsDto_Data) MergeRefDog(v RefDog) error {
 // AsRefRat returns the union data inside the GetRefPetsDto_Data as a RefRat
 func (t GetRefPetsDto_Data) AsRefRat() (RefRat, error) {
 	var body RefRat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromRefRat overwrites any union data inside the GetRefPetsDto_Data as the provided RefRat
 func (t *GetRefPetsDto_Data) FromRefRat(v RefRat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeRefRat performs a merge with any union data inside the GetRefPetsDto_Data, using the provided RefRat
 func (t *GetRefPetsDto_Data) MergeRefRat(v RefRat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -294,20 +295,20 @@ func (t *GetRefPetsDto_Data) UnmarshalJSON(b []byte) error {
 // AsIssue1189TestFieldA0 returns the union data inside the Issue1189Test_FieldA as a Issue1189TestFieldA0
 func (t Issue1189Test_FieldA) AsIssue1189TestFieldA0() (Issue1189TestFieldA0, error) {
 	var body Issue1189TestFieldA0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromIssue1189TestFieldA0 overwrites any union data inside the Issue1189Test_FieldA as the provided Issue1189TestFieldA0
 func (t *Issue1189Test_FieldA) FromIssue1189TestFieldA0(v Issue1189TestFieldA0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeIssue1189TestFieldA0 performs a merge with any union data inside the Issue1189Test_FieldA, using the provided Issue1189TestFieldA0
 func (t *Issue1189Test_FieldA) MergeIssue1189TestFieldA0(v Issue1189TestFieldA0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -320,20 +321,20 @@ func (t *Issue1189Test_FieldA) MergeIssue1189TestFieldA0(v Issue1189TestFieldA0)
 // AsIssue1189TestFieldA1 returns the union data inside the Issue1189Test_FieldA as a Issue1189TestFieldA1
 func (t Issue1189Test_FieldA) AsIssue1189TestFieldA1() (Issue1189TestFieldA1, error) {
 	var body Issue1189TestFieldA1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromIssue1189TestFieldA1 overwrites any union data inside the Issue1189Test_FieldA as the provided Issue1189TestFieldA1
 func (t *Issue1189Test_FieldA) FromIssue1189TestFieldA1(v Issue1189TestFieldA1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeIssue1189TestFieldA1 performs a merge with any union data inside the Issue1189Test_FieldA, using the provided Issue1189TestFieldA1
 func (t *Issue1189Test_FieldA) MergeIssue1189TestFieldA1(v Issue1189TestFieldA1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -341,6 +342,23 @@ func (t *Issue1189Test_FieldA) MergeIssue1189TestFieldA1(v Issue1189TestFieldA1)
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// The text is taken as a string.
+func (t *Issue1189Test_FieldA) UnmarshalText(text []byte) error {
+	b, err := runtime.JSONMarshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *Issue1189Test_FieldA) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
 }
 
 func (t Issue1189Test_FieldA) MarshalJSON() ([]byte, error) {
@@ -356,20 +374,20 @@ func (t *Issue1189Test_FieldA) UnmarshalJSON(b []byte) error {
 // AsIssue1189TestFieldC0 returns the union data inside the Issue1189Test_FieldC as a Issue1189TestFieldC0
 func (t Issue1189Test_FieldC) AsIssue1189TestFieldC0() (Issue1189TestFieldC0, error) {
 	var body Issue1189TestFieldC0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromIssue1189TestFieldC0 overwrites any union data inside the Issue1189Test_FieldC as the provided Issue1189TestFieldC0
 func (t *Issue1189Test_FieldC) FromIssue1189TestFieldC0(v Issue1189TestFieldC0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeIssue1189TestFieldC0 performs a merge with any union data inside the Issue1189Test_FieldC, using the provided Issue1189TestFieldC0
 func (t *Issue1189Test_FieldC) MergeIssue1189TestFieldC0(v Issue1189TestFieldC0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -382,20 +400,20 @@ func (t *Issue1189Test_FieldC) MergeIssue1189TestFieldC0(v Issue1189TestFieldC0)
 // AsIssue1189TestFieldC1 returns the union data inside the Issue1189Test_FieldC as a Issue1189TestFieldC1
 func (t Issue1189Test_FieldC) AsIssue1189TestFieldC1() (Issue1189TestFieldC1, error) {
 	var body Issue1189TestFieldC1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromIssue1189TestFieldC1 overwrites any union data inside the Issue1189Test_FieldC as the provided Issue1189TestFieldC1
 func (t *Issue1189Test_FieldC) FromIssue1189TestFieldC1(v Issue1189TestFieldC1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeIssue1189TestFieldC1 performs a merge with any union data inside the Issue1189Test_FieldC, using the provided Issue1189TestFieldC1
 func (t *Issue1189Test_FieldC) MergeIssue1189TestFieldC1(v Issue1189TestFieldC1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -403,6 +421,23 @@ func (t *Issue1189Test_FieldC) MergeIssue1189TestFieldC1(v Issue1189TestFieldC1)
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// The text is taken as a string.
+func (t *Issue1189Test_FieldC) UnmarshalText(text []byte) error {
+	b, err := runtime.JSONMarshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *Issue1189Test_FieldC) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
 }
 
 func (t Issue1189Test_FieldC) MarshalJSON() ([]byte, error) {
@@ -418,20 +453,20 @@ func (t *Issue1189Test_FieldC) UnmarshalJSON(b []byte) error {
 // AsParamAnyOf0 returns the union data inside the ParamAnyOf as a ParamAnyOf0
 func (t ParamAnyOf) AsParamAnyOf0() (ParamAnyOf0, error) {
 	var body ParamAnyOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromParamAnyOf0 overwrites any union data inside the ParamAnyOf as the provided ParamAnyOf0
 func (t *ParamAnyOf) FromParamAnyOf0(v ParamAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeParamAnyOf0 performs a merge with any union data inside the ParamAnyOf, using the provided ParamAnyOf0
 func (t *ParamAnyOf) MergeParamAnyOf0(v ParamAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -444,20 +479,20 @@ func (t *ParamAnyOf) MergeParamAnyOf0(v ParamAnyOf0) error {
 // AsParamAnyOf1 returns the union data inside the ParamAnyOf as a ParamAnyOf1
 func (t ParamAnyOf) AsParamAnyOf1() (ParamAnyOf1, error) {
 	var body ParamAnyOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromParamAnyOf1 overwrites any union data inside the ParamAnyOf as the provided ParamAnyOf1
 func (t *ParamAnyOf) FromParamAnyOf1(v ParamAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeParamAnyOf1 performs a merge with any union data inside the ParamAnyOf, using the provided ParamAnyOf1
 func (t *ParamAnyOf) MergeParamAnyOf1(v ParamAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -480,20 +515,20 @@ func (t *ParamAnyOf) UnmarshalJSON(b []byte) error {
 // AsParamOneOf0 returns the union data inside the ParamOneOf as a ParamOneOf0
 func (t ParamOneOf) AsParamOneOf0() (ParamOneOf0, error) {
 	var body ParamOneOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromParamOneOf0 overwrites any union data inside the ParamOneOf as the provided ParamOneOf0
 func (t *ParamOneOf) FromParamOneOf0(v ParamOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeParamOneOf0 performs a merge with any union data inside the ParamOneOf, using the provided ParamOneOf0
 func (t *ParamOneOf) MergeParamOneOf0(v ParamOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -506,20 +541,20 @@ func (t *ParamOneOf) MergeParamOneOf0(v ParamOneOf0) error {
 // AsParamOneOf1 returns the union data inside the ParamOneOf as a ParamOneOf1
 func (t ParamOneOf) AsParamOneOf1() (ParamOneOf1, error) {
 	var body ParamOneOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromParamOneOf1 overwrites any union data inside the ParamOneOf as the provided ParamOneOf1
 func (t *ParamOneOf) FromParamOneOf1(v ParamOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeParamOneOf1 performs a merge with any union data inside the ParamOneOf, using the provided ParamOneOf1
 func (t *ParamOneOf) MergeParamOneOf1(v ParamOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -527,6 +562,34 @@ func (t *ParamOneOf) MergeParamOneOf1(v ParamOneOf1) error {
 	merged, err := runtime.JSONMerge(t.union, b)
 	t.union = merged
 	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON integer, with nothing around it, is taken as one; anything else is a string.
+func (t *ParamOneOf) UnmarshalText(text []byte) error {
+	var value any
+	decoder := json.NewDecoder(bytes.NewReader(text))
+	decoder.UseNumber()
+	if len(bytes.TrimSpace(text)) == len(text) && json.Valid(text) && decoder.Decode(&value) == nil {
+		if number, ok := value.(json.Number); ok {
+			if _, err := number.Int64(); err == nil {
+				t.union = json.RawMessage(number.String())
+				return nil
+			}
+		}
+	}
+	b, err := runtime.JSONMarshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *ParamOneOf) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
 }
 
 func (t ParamOneOf) MarshalJSON() ([]byte, error) {
@@ -542,20 +605,20 @@ func (t *ParamOneOf) UnmarshalJSON(b []byte) error {
 // AsInlineCat returns the union data inside the GetInlinePets200JSONResponseBody_Data_Item as a InlineCat
 func (t GetInlinePets200JSONResponseBody_Data_Item) AsInlineCat() (InlineCat, error) {
 	var body InlineCat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineCat overwrites any union data inside the GetInlinePets200JSONResponseBody_Data_Item as the provided InlineCat
 func (t *GetInlinePets200JSONResponseBody_Data_Item) FromInlineCat(v InlineCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeInlineCat performs a merge with any union data inside the GetInlinePets200JSONResponseBody_Data_Item, using the provided InlineCat
 func (t *GetInlinePets200JSONResponseBody_Data_Item) MergeInlineCat(v InlineCat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -568,20 +631,20 @@ func (t *GetInlinePets200JSONResponseBody_Data_Item) MergeInlineCat(v InlineCat)
 // AsInlineDog returns the union data inside the GetInlinePets200JSONResponseBody_Data_Item as a InlineDog
 func (t GetInlinePets200JSONResponseBody_Data_Item) AsInlineDog() (InlineDog, error) {
 	var body InlineDog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineDog overwrites any union data inside the GetInlinePets200JSONResponseBody_Data_Item as the provided InlineDog
 func (t *GetInlinePets200JSONResponseBody_Data_Item) FromInlineDog(v InlineDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeInlineDog performs a merge with any union data inside the GetInlinePets200JSONResponseBody_Data_Item, using the provided InlineDog
 func (t *GetInlinePets200JSONResponseBody_Data_Item) MergeInlineDog(v InlineDog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -594,20 +657,20 @@ func (t *GetInlinePets200JSONResponseBody_Data_Item) MergeInlineDog(v InlineDog)
 // AsInlineRat returns the union data inside the GetInlinePets200JSONResponseBody_Data_Item as a InlineRat
 func (t GetInlinePets200JSONResponseBody_Data_Item) AsInlineRat() (InlineRat, error) {
 	var body InlineRat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineRat overwrites any union data inside the GetInlinePets200JSONResponseBody_Data_Item as the provided InlineRat
 func (t *GetInlinePets200JSONResponseBody_Data_Item) FromInlineRat(v InlineRat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeInlineRat performs a merge with any union data inside the GetInlinePets200JSONResponseBody_Data_Item, using the provided InlineRat
 func (t *GetInlinePets200JSONResponseBody_Data_Item) MergeInlineRat(v InlineRat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1233,7 +1296,7 @@ func ParseGetInlinePetsResponse(rsp *http.Response) (*GetInlinePetsResponse, err
 		var dest struct {
 			Data *[]GetInlinePets200JSONResponseBody_Data_Item `json:"data,omitempty"`
 		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1265,7 +1328,7 @@ func ParseGetIssue1189TestResponse(rsp *http.Response) (*GetIssue1189TestRespons
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Issue1189Test
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1307,7 +1370,7 @@ func ParseGetRefPetsResponse(rsp *http.Response) (*GetRefPetsResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest GetRefPetsDto
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest

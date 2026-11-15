@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: gorilla
+generate:
+  gorilla-server: true
+  strict-server: true
+  models: true
+output: gorilla/out.gen.go

@@ -1,0 +1,74 @@
+openapi: "3.2.0"
+info:
+  title: OpenAPI 3.2 HTTP methods
+  version: 1.0.0
+  description: |
+    Exercises the OpenAPI 3.2 path-item additions: the fixed `query` field
+    (HTTP QUERY) and `additionalOperations` (arbitrary HTTP methods), next
+    to a plain GET so standard-method registration is covered in the same
+    package.
+paths:
+  /items:
+    get:
+      operationId: listItems
+      responses:
+        '200':
+          description: all items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+    query:
+      operationId: queryItems
+      description: Safe, idempotent search with a request body.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ItemFilter'
+      responses:
+        '200':
+          description: matching items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+  /items/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+    additionalOperations:
+      PURGE:
+        operationId: purgeItem
+        description: Custom method with path and query parameters.
+        parameters:
+          - name: force
+            in: query
+            schema:
+              type: boolean
+        responses:
+          '204':
+            description: purged
+components:
+  schemas:
+    Item:
+      type: object
+      required: [id, name]
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    ItemFilter:
+      type: object
+      properties:
+        name:
+          type: string

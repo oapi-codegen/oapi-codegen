@@ -6,8 +6,51 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/oapi-codegen/runtime"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+// countingCodec counts the calls that reach it.
+type countingCodec struct {
+	runtime.StdJSONCodec
+	marshals, unmarshals int
+}
+
+func (c *countingCodec) Marshal(v any) ([]byte, error) {
+	c.marshals++
+	return c.StdJSONCodec.Marshal(v)
+}
+
+func (c *countingCodec) Unmarshal(data []byte, v any) error {
+	c.unmarshals++
+	return c.StdJSONCodec.Unmarshal(data, v)
+}
+
+// TestAdditionalPropertiesJSONCodec checks that the MarshalJSON and
+// UnmarshalJSON of an additionalProperties type use the codec set with
+// runtime.SetJSONCodec. They run inside the codec's own Marshal and Unmarshal
+// of the value, so this is also the re-entrant case.
+func TestAdditionalPropertiesJSONCodec(t *testing.T) {
+	var codec countingCodec
+	runtime.SetJSONCodec(&codec)
+	t.Cleanup(func() { runtime.SetJSONCodec(nil) })
+
+	const buf = `{"name": "bob", "id": 5, "optional":"yes", "additional": 42}`
+	var dst AdditionalPropertiesObject1
+	require.NoError(t, runtime.JSONUnmarshal([]byte(buf), &dst))
+	additional, found := dst.Get("additional")
+	assert.True(t, found)
+	assert.Equal(t, 42, additional)
+	// One call from here, the rest from UnmarshalJSON.
+	assert.Greater(t, codec.unmarshals, 1)
+
+	marshaled, err := runtime.JSONMarshal(dst)
+	require.NoError(t, err)
+	assertJsonEqual(t, []byte(buf), marshaled)
+	// One call from here, the rest from MarshalJSON.
+	assert.Greater(t, codec.marshals, 1)
+}
 
 func assertJsonEqual(t *testing.T, j1 []byte, j2 []byte) {
 	t.Helper()

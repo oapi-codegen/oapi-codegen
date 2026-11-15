@@ -30,6 +30,7 @@ import (
 	"regexp"
 	"runtime/debug"
 	"slices"
+	"strconv"
 	"strings"
 	"text/template"
 	"time"
@@ -110,7 +111,9 @@ type importMap map[string]goImport
 // We use `-` to indicate that this is a bit of a special case
 const importMappingCurrentPackage = "-"
 
-// GoImports returns a slice of go import statements
+// GoImports returns a slice of go import statements, sorted so that the
+// generated output is deterministic even when it is not passed through gofmt
+// (output-options.skip-fmt), which would otherwise sort the import block.
 func (im importMap) GoImports() []string {
 	goImports := make([]string, 0, len(im))
 	for _, v := range im {
@@ -119,6 +122,7 @@ func (im importMap) GoImports() []string {
 		}
 		goImports = append(goImports, v.String())
 	}
+	slices.Sort(goImports)
 	return goImports
 }
 
@@ -167,6 +171,11 @@ func constructImportMapping(importMapping map[string]string) importMap {
 // the descriptions we've built up above from the schema objects.
 // opts defines
 func Generate(spec *openapi3.T, opts Configuration) (string, error) {
+	// Validate() already rejects these, but Generate is also called directly.
+	if _, err := opts.Compatibility.schemaMergingVersion(); err != nil {
+		return "", fmt.Errorf("invalid `compatibility` configuration: %w", err)
+	}
+
 	// This is global state
 	globalState.options = opts
 	globalState.spec = spec
@@ -204,7 +213,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	// (names, media types, enum values, extension hints containing quotes,
 	// backticks, or control characters). Run after filtering/pruning so only
 	// values that will actually be emitted are considered.
-	if err := ValidateSpec(spec); err != nil {
+	if err := validateSpec(spec, allOfMergesUnions()); err != nil {
 		return "", err
 	}
 	if opts.Generate.StdHTTPServer {
@@ -363,6 +372,9 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("error collecting operation types: %w", err)
 		}
+		if err := checkOperationTypeNames(componentTypes, allOps); err != nil {
+			return "", fmt.Errorf("error generating code for type definitions: %w", err)
+		}
 		opDecls, err := GenerateTypesForOperations(t, allOps)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go types for operations: %w", err)
@@ -400,6 +412,9 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 		// `const ( … )` block, and `Valid()` method. We do this here
 		// (rather than in collectComponentTypes) so the types are
 		// emitted even when `generate.models` is disabled.
+		if err := ValidateServerURLs(spec); err != nil {
+			return "", err
+		}
 		serverURLEnumTypes, err := BuildServerURLTypeDefinitions(spec)
 		if err != nil {
 			return "", fmt.Errorf("error generating Go types for server URL variables: %w", err)
@@ -1062,6 +1077,26 @@ func collectOperationTypes(ops []OperationDefinition) ([]TypeDefinition, error) 
 	return out, nil
 }
 
+// checkOperationTypeNames reports a type declared for an operation (its
+// parameters, bodies and the types hoisted out of them) under the same name as
+// a component type. Both are declared at package level, so the generated code
+// would not compile.
+func checkOperationTypeNames(componentTypes []TypeDefinition, ops []OperationDefinition) error {
+	names := make(map[string]bool, len(componentTypes))
+	for _, td := range componentTypes {
+		names[td.TypeName] = true
+	}
+	for _, op := range ops {
+		for _, td := range op.TypeDefinitions {
+			if names[td.TypeName] {
+				return fmt.Errorf("duplicate typename '%s' detected: operation %s declares it, and so does a component; "+
+					"please use x-go-name to rename one of them", td.TypeName, op.OperationId)
+			}
+		}
+	}
+	return nil
+}
+
 // renderBoilerplate runs the enum, additionalProperties, union, and
 // union+additionalProperties passes over the union of all emitted types.
 // These passes are "inner" — they emit methods/constants subordinate to
@@ -1164,7 +1199,7 @@ func GenerateTypesForSchemas(t *template.Template, schemas map[string]*openapi3.
 		}
 		schemaRef := schemas[schemaName]
 
-		goSchema, err := GenerateGoSchema(schemaRef, []string{schemaName})
+		goSchema, err := generateGoSchema(newRootGenContext([]string{schemaName}), schemaRef, []string{schemaName})
 		if err != nil {
 			return nil, fmt.Errorf("error converting Schema %s to Go type: %w", schemaName, err)
 		}
@@ -1210,6 +1245,17 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 			goTypeName = resolved
 		}
 
+		// A oneOf/anyOf parameter's members were named from an empty path
+		// (N0, N1, ...) and never declared, so the code did not compile.
+		// Name them after the parameter's type, <Name>0, and declare them.
+		if len(goType.UnionElements) > 0 && paramOrRef.Ref == "" {
+			goType, err = paramToGoType(paramOrRef.Value, []string{goTypeName})
+			if err != nil {
+				return nil, fmt.Errorf("error generating Go type for schema in parameter %s: %w", paramName, err)
+			}
+			types = append(types, goType.AdditionalTypes...)
+		}
+
 		typeDef := TypeDefinition{
 			JsonName: paramName,
 			Schema:   goType,
@@ -1228,6 +1274,67 @@ func GenerateTypesForParameters(t *template.Template, params map[string]*openapi
 		types = append(types, typeDef)
 	}
 	return types, nil
+}
+
+// componentResponseTypeName returns the Go type name that GenerateTypesForResponses
+// declares for the JSON content of components/responses/<responseName> under
+// mediaType. It honours x-go-name on the response, resolved-name collision
+// handling, and the per-media-type suffix used when a response declares more
+// than one JSON media type.
+//
+// GenerateResponseDefinitions uses the same name when it renders the strict
+// server's <Name>JSONResponse envelope for a component response, so that an
+// inline response-root schema which needs hoisting (a oneOf/anyOf union, an
+// object with additionalProperties, or any object under
+// generate-types-for-anonymous-schemas) references the model type declared
+// here instead of a synthetic <Name>JSONResponseBody type that nothing
+// declares (issue #2539).
+func componentResponseTypeName(responseName string, responseOrRef *openapi3.ResponseRef, mediaType string) (string, error) {
+	goTypeName, err := renameResponse(responseName, responseOrRef)
+	if err != nil {
+		return "", fmt.Errorf("error making name for components/responses/%s: %w", responseName, err)
+	}
+
+	if resolved := resolvedNameForComponent("responses", responseName, mediaType); resolved != "" {
+		goTypeName = resolved
+	}
+
+	if responseOrRef.Ref != "" {
+		// Generate a reference type for referenced parameters
+		refType, err := RefPathToGoType(responseOrRef.Ref)
+		if err != nil {
+			return "", fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", responseOrRef.Ref, responseName, err)
+		}
+		goTypeName = SchemaNameToTypeName(refType)
+	}
+
+	if suffix := responseMediaTypeSuffix(responseOrRef.Value.Content, mediaType); suffix != "" {
+		goTypeName += suffix
+	}
+
+	return goTypeName, nil
+}
+
+// componentResponseRefTypeName resolves a `$ref` that points at a
+// components/responses entry of the spec being generated to the Go type name
+// GenerateTypesForResponses declares for that entry's content under mediaType.
+// It returns "" when the ref points somewhere else (another document, or a
+// component this spec doesn't declare), in which case the caller must not
+// assume a local type of that name exists.
+func componentResponseRefTypeName(ref string, mediaType string) (string, error) {
+	const prefix = "#/components/responses/"
+	if !strings.HasPrefix(ref, prefix) {
+		return "", nil
+	}
+	if globalState.spec == nil || globalState.spec.Components == nil {
+		return "", nil
+	}
+	responseName := strings.TrimPrefix(ref, prefix)
+	componentRef, ok := globalState.spec.Components.Responses[responseName]
+	if !ok || componentRef == nil || componentRef.Value == nil {
+		return "", nil
+	}
+	return componentResponseTypeName(responseName, componentRef, mediaType)
 }
 
 // GenerateTypesForResponses generates type definitions for any custom types defined in the
@@ -1271,32 +1378,15 @@ func GenerateTypesForResponses(t *template.Template, responses openapi3.Response
 				return nil, fmt.Errorf("error generating Go type for schema in response %s: %w", responseName, err)
 			}
 
-			goTypeName, err := renameResponse(responseName, responseOrRef)
+			goTypeName, err := componentResponseTypeName(responseName, responseOrRef, mediaType)
 			if err != nil {
-				return nil, fmt.Errorf("error making name for components/responses/%s: %w", responseName, err)
-			}
-
-			if resolved := resolvedNameForComponent("responses", responseName, mediaType); resolved != "" {
-				goTypeName = resolved
+				return nil, err
 			}
 
 			typeDef := TypeDefinition{
 				JsonName: responseName,
 				Schema:   goType,
 				TypeName: goTypeName,
-			}
-
-			if responseOrRef.Ref != "" {
-				// Generate a reference type for referenced parameters
-				refType, err := RefPathToGoType(responseOrRef.Ref)
-				if err != nil {
-					return nil, fmt.Errorf("error generating Go type for (%s) in parameter %s: %w", responseOrRef.Ref, responseName, err)
-				}
-				typeDef.TypeName = SchemaNameToTypeName(refType)
-			}
-
-			if suffix := responseMediaTypeSuffix(content, mediaType); suffix != "" {
-				typeDef.TypeName = typeDef.TypeName + suffix
 			}
 
 			types = append(types, typeDef)
@@ -1585,12 +1675,35 @@ func GenerateEnums(t *template.Template, types []TypeDefinition) (string, error)
 		}
 	}
 
-	// Now see if enums conflict with any non-enum typenames
+	// A non-string enum is emitted without quotes, so each value is copied
+	// into the const block as Go source. Only a number or boolean literal is
+	// acceptable there; anything else would be an identifier or an expression
+	// the spec got to choose.
+	for _, e := range enums {
+		if e.ValueWrapper != "" {
+			continue
+		}
+		for _, value := range SortedMapKeys(e.Schema.EnumValues) {
+			if !isNumberOrBoolLiteral(e.Schema.EnumValues[value]) {
+				return "", fmt.Errorf("enum value %q of %s is not a number or boolean literal, which its Go type %s requires", e.Schema.EnumValues[value], e.TypeName, e.Schema.GoType)
+			}
+		}
+	}
 
 	return GenerateTemplates([]string{"constants.tmpl"}, t, Constants{
 		EnumDefinitions:  enums,
 		SkipEnumValidate: globalState.options.OutputOptions.SkipEnumValidate,
 	})
+}
+
+// isNumberOrBoolLiteral reports whether s is a Go number or boolean literal
+// that may be emitted unquoted as the value of a non-string enum constant.
+func isNumberOrBoolLiteral(s string) bool {
+	if s == "true" || s == "false" {
+		return true
+	}
+	_, err := strconv.ParseFloat(s, 64)
+	return err == nil
 }
 
 // enumsConflict reports whether two enums must be disambiguated by prefixing.
@@ -1653,7 +1766,40 @@ func GenerateImports(t *template.Template, externalImports []string, packageName
 		RouterImports:     globalState.options.Generate.RouterImports(),
 	}
 
-	return GenerateTemplates([]string{"imports.tmpl"}, t, context)
+	out, err := GenerateTemplates([]string{"imports.tmpl"}, t, context)
+	if err != nil {
+		return "", err
+	}
+	return dedupeImportLines(out), nil
+}
+
+// dedupeImportLines drops repeated lines from the import block of the rendered
+// imports template. The template imports a fixed set of packages, and an
+// x-go-type-import or additional-imports entry may name one of them again,
+// e.g. `x-go-type-import: {path: time}`; Go rejects the second import of the
+// same name. Lines are compared exactly, so an aliased import of a package is
+// left alone.
+func dedupeImportLines(src string) string {
+	lines := strings.Split(src, "\n")
+	out := make([]string, 0, len(lines))
+	seen := make(map[string]bool)
+	inBlock := false
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		switch {
+		case !inBlock && trimmed == "import (":
+			inBlock = true
+		case inBlock && trimmed == ")":
+			inBlock = false
+		case inBlock && trimmed != "":
+			if seen[trimmed] {
+				continue
+			}
+			seen[trimmed] = true
+		}
+		out = append(out, line)
+	}
+	return strings.Join(out, "\n")
 }
 
 // GenerateAdditionalPropertyBoilerplate generates all the glue code which provides
