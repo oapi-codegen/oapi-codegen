@@ -3,7 +3,6 @@ package codegen
 import (
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -400,67 +399,80 @@ func walkExampleRef(ref *openapi3.ExampleRef, doFn func(RefWrapper) (bool, error
 	return nil
 }
 
-// isLocalRef reports whether ref points into the document it is written in.
-func isLocalRef(ref string) bool {
-	return strings.HasPrefix(ref, "#/")
+// schemaKeywords are the keywords whose value is, or holds, a schema: the ones
+// schemaChildRefs reads. Keep the two in sync.
+var schemaKeywords = []string{
+	"oneOf", "anyOf", "allOf", "not", "items", "properties", "additionalProperties",
+	"prefixItems", "contains", "patternProperties", "dependentSchemas", "propertyNames",
+	"unevaluatedItems", "unevaluatedProperties", "if", "then", "else", "$defs", "contentSchema",
 }
 
-// findExternalSchemas returns the schemas which the document takes from other
-// documents: the ones its external schema references resolve to.
-func findExternalSchemas(swagger *openapi3.T) map[*openapi3.Schema]struct{} {
-	external := map[*openapi3.Schema]struct{}{}
+// refSiblingSchema returns the schema made of the keywords written next to a
+// schema $ref, or nil when there are none which could hold a reference.
+//
+// Since OpenAPI 3.1 a $ref may have sibling keywords, which apply alongside the
+// schema it refers to. kin-openapi does not expose them. What it does is make
+// the reference's Value a copy of the referenced schema, with one more allOf
+// entry holding the siblings, so that entry is what this returns. The only
+// trace of the siblings it leaves in the open is that it writes them back when
+// marshaling the reference, which is how this tells whether there are any.
+func refSiblingSchema(ref *openapi3.SchemaRef, isOpenAPI31OrLater bool) *openapi3.SchemaRef {
+	// Before 3.1 a $ref replaces the object it is in, siblings and all.
+	if !isOpenAPI31OrLater || ref.Ref == "" || ref.Value == nil || len(ref.Value.AllOf) == 0 {
+		return nil
+	}
 
-	_ = walkSwagger(swagger, func(ref RefWrapper) (bool, error) {
-		if ref.Ref == "" {
-			return true, nil
-		}
-		if schemaRef, ok := ref.SourceRef.(*openapi3.SchemaRef); ok && schemaRef.Value != nil && !isLocalRef(ref.Ref) {
-			external[schemaRef.Value] = struct{}{}
-		}
-		return false, nil
-	})
+	marshaled, err := ref.MarshalYAML()
+	if err != nil {
+		return nil
+	}
+	written, ok := marshaled.(map[string]any)
+	if !ok {
+		return nil
+	}
+	if !slices.ContainsFunc(schemaKeywords, func(keyword string) bool {
+		_, ok := written[keyword]
+		return ok
+	}) {
+		return nil
+	}
 
-	return external
+	siblings := ref.Value.AllOf[len(ref.Value.AllOf)-1]
+	if siblings == nil || siblings.Ref != "" {
+		return nil
+	}
+	return siblings
 }
 
 func findComponentRefs(swagger *openapi3.T) []string {
 	refs := []string{}
-	external := findExternalSchemas(swagger)
-	// The schemas already walked. Resolved schemas share their children, and
-	// can refer back to themselves, so without this the walk below would
-	// neither be linear in the size of the document nor terminate.
-	seen := map[*openapi3.SchemaRef]struct{}{}
+	if swagger == nil {
+		return refs
+	}
+	isOpenAPI31OrLater := swagger.IsOpenAPI31OrLater()
 
-	_ = walkSwagger(swagger, func(ref RefWrapper) (bool, error) {
-		schemaRef, isSchema := ref.SourceRef.(*openapi3.SchemaRef)
-		if isSchema {
-			if _, ok := seen[schemaRef]; ok {
-				return false, nil
-			}
-			seen[schemaRef] = struct{}{}
-		}
-
+	var record func(ref RefWrapper) (bool, error)
+	record = func(ref RefWrapper) (bool, error) {
 		if ref.Ref == "" {
 			return true, nil
 		}
 		refs = append(refs, ref.Ref)
 
-		// In OpenAPI 3.1 a schema $ref may have sibling keywords, and those can
-		// hold references of their own. kin-openapi keeps them in the reference's
-		// Value, which is then a copy of the referenced schema with the siblings
-		// applied, so the only way to reach them is to walk that Value.
+		// Stop here: what the reference resolves to is not written in this
+		// place. If it is a part of this document, the walk gets to it on its
+		// own. If it is a part of another one, the references within it are
+		// relative to that document, and would be mistaken for references to
+		// the components of this one.
 		//
-		// Don't do so for a schema from another document: the references within
-		// it are relative to that document, and would be mistaken for references
-		// to the components of this one. A local reference can resolve to such a
-		// schema too, when it points at a component which is itself an external
-		// reference, hence the check on what it resolved to.
-		if !isSchema || !isLocalRef(ref.Ref) {
-			return false, nil
+		// The keywords written next to the reference are a part of this
+		// document though, wherever the reference itself leads.
+		if schemaRef, ok := ref.SourceRef.(*openapi3.SchemaRef); ok {
+			_ = walkSchemaRef(refSiblingSchema(schemaRef, isOpenAPI31OrLater), record)
 		}
-		_, isExternal := external[schemaRef.Value]
-		return !isExternal, nil
-	})
+		return false, nil
+	}
+
+	_ = walkSwagger(swagger, record)
 
 	return refs
 }

@@ -192,11 +192,17 @@ components:
       properties:
         inner:
           $ref: "#/components/schemas/Inner"
+    Composed:
+      allOf:
+        - $ref: "#/components/schemas/Thing"
+        - type: object
+          properties:
+            more:
+              $ref: "#/components/schemas/Inner"
     Inner:
       type: integer
 `
 	const mainHeader = `
-openapi: 3.0.3
 info:
   title: Main
   version: 1.0.0
@@ -219,7 +225,7 @@ paths:
 	}{
 		{
 			name: "referenced directly",
-			main: mainHeader + `
+			main: "openapi: 3.0.3" + mainHeader + `
                 $ref: "other.yaml#/components/schemas/Thing"
 components:
   schemas:
@@ -232,7 +238,7 @@ components:
 			// The reference in the response is a local one, but it resolves to
 			// the schema from the other document all the same.
 			name: "referenced through a local alias",
-			main: mainHeader + `
+			main: "openapi: 3.0.3" + mainHeader + `
                 $ref: "#/components/schemas/Alias"
 components:
   schemas:
@@ -246,6 +252,45 @@ components:
 				"other.yaml#/components/schemas/Thing",
 			},
 			wantKept: []string{"Alias"},
+		},
+		{
+			// The description does not make the last allOf entry of the external
+			// schema, which refers to its own Inner, a sibling of the reference.
+			name: "referenced with an annotation next to it",
+			main: "openapi: 3.1.0" + mainHeader + `
+                $ref: "other.yaml#/components/schemas/Composed"
+                description: Described where it is used
+components:
+  schemas:
+    Inner:
+      type: string
+`,
+			wantRefs: []string{"other.yaml#/components/schemas/Composed"},
+		},
+		{
+			// The keywords next to the external reference are written in this
+			// document, so what they refer to is a component of this document.
+			name: "referenced with a local reference next to it",
+			main: "openapi: 3.1.0" + mainHeader + `
+                $ref: "#/components/schemas/Alias"
+components:
+  schemas:
+    Alias:
+      $ref: "other.yaml#/components/schemas/Thing"
+      properties:
+        target:
+          $ref: "#/components/schemas/Target"
+    Target:
+      type: string
+    Inner:
+      type: string
+`,
+			wantRefs: []string{
+				"#/components/schemas/Alias",
+				"other.yaml#/components/schemas/Thing",
+				"#/components/schemas/Target",
+			},
+			wantKept: []string{"Alias", "Target"},
 		},
 	}
 
