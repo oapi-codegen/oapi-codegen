@@ -49,6 +49,14 @@ func effectiveBranches(elements openapi3.SchemaRefs) (count int, hadNull bool, s
 // outSchema inherits the branch's underlying representation. The caller will
 // apply nullability (schemaIsNullable returns true because the original
 // anyOf/oneOf contained a null branch).
+//
+// The branch may itself be an inline union, as in `anyOf: [{oneOf: [A, B]},
+// {type: "null"}]` (issue #2565). Everything that describes the union is part
+// of that representation: the GoType is a struct holding the raw union, which
+// without its UnionElements and Discriminator gets no JSON methods or
+// accessors, so that a JSON round trip drops the payload; and the other Union*
+// fields decide what those accessors do, so without them the wrapped union
+// would behave differently from the same union on its own.
 func collapseNullableUnion(ctx genContext, outSchema *Schema, sole *openapi3.SchemaRef, path []string) error {
 	elementSchema, err := generateGoSchema(ctx.at(path), sole, path)
 	if err != nil {
@@ -63,6 +71,11 @@ func collapseNullableUnion(ctx genContext, outSchema *Schema, sole *openapi3.Sch
 	outSchema.ArrayType = elementSchema.ArrayType
 	outSchema.SkipOptionalPointer = elementSchema.SkipOptionalPointer
 	outSchema.UnionElements = elementSchema.UnionElements
+	outSchema.UnionTextKinds = elementSchema.UnionTextKinds
+	outSchema.UnionVariantProperties = elementSchema.UnionVariantProperties
+	outSchema.UnionOwnedKeys = elementSchema.UnionOwnedKeys
+	outSchema.UnionRefComponents = elementSchema.UnionRefComponents
+	outSchema.UnionAllowedKeys = elementSchema.UnionAllowedKeys
 	outSchema.Discriminator = elementSchema.Discriminator
 	outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
 	return nil

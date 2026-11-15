@@ -212,13 +212,13 @@ func (t *DiscriminatedPet) UnmarshalJSON(b []byte) error {
 // AsCat returns the union data inside the NestedNullableUnions_Multiple as a Cat
 func (t NestedNullableUnions_Multiple) AsCat() (Cat, error) {
 	var body Cat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCat overwrites any union data inside the NestedNullableUnions_Multiple as the provided Cat
 func (t *NestedNullableUnions_Multiple) FromCat(v Cat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -229,7 +229,7 @@ func (t *NestedNullableUnions_Multiple) FromCat(v Cat) error {
 
 // MergeCat performs a merge with any union data inside the NestedNullableUnions_Multiple, using the provided Cat
 func (t *NestedNullableUnions_Multiple) MergeCat(v Cat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -246,13 +246,13 @@ func (t *NestedNullableUnions_Multiple) MergeCat(v Cat) error {
 // AsDog returns the union data inside the NestedNullableUnions_Multiple as a Dog
 func (t NestedNullableUnions_Multiple) AsDog() (Dog, error) {
 	var body Dog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromDog overwrites any union data inside the NestedNullableUnions_Multiple as the provided Dog
 func (t *NestedNullableUnions_Multiple) FromDog(v Dog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -263,7 +263,7 @@ func (t *NestedNullableUnions_Multiple) FromDog(v Dog) error {
 
 // MergeDog performs a merge with any union data inside the NestedNullableUnions_Multiple, using the provided Dog
 func (t *NestedNullableUnions_Multiple) MergeDog(v Dog) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -281,7 +281,7 @@ func (t NestedNullableUnions_Multiple) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"kind"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
@@ -313,13 +313,13 @@ func (t *NestedNullableUnions_Multiple) UnmarshalJSON(b []byte) error {
 // AsCat returns the union data inside the NestedNullableUnions_Single as a Cat
 func (t NestedNullableUnions_Single) AsCat() (Cat, error) {
 	var body Cat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCat overwrites any union data inside the NestedNullableUnions_Single as the provided Cat
 func (t *NestedNullableUnions_Single) FromCat(v Cat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -330,7 +330,7 @@ func (t *NestedNullableUnions_Single) FromCat(v Cat) error {
 
 // MergeCat performs a merge with any union data inside the NestedNullableUnions_Single, using the provided Cat
 func (t *NestedNullableUnions_Single) MergeCat(v Cat) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -348,7 +348,7 @@ func (t NestedNullableUnions_Single) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"kind"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
