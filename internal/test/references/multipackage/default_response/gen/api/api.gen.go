@@ -6,12 +6,12 @@ package api
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/default_response/gen/common"
+	"github.com/oapi-codegen/runtime"
 )
 
 // ServerInterface represents all server handlers.
@@ -22,7 +22,6 @@ type ServerInterface interface {
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
-
 type Unimplemented struct{}
 
 // (GET /things)
@@ -186,7 +185,7 @@ type ListThings200JSONResponse []string
 func (response ListThings200JSONResponse) VisitListThingsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -202,7 +201,7 @@ type ListThings400JSONResponse struct {
 func (response ListThings400JSONResponse) VisitListThingsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.StandardErrorJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.StandardErrorJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -219,7 +218,7 @@ type ListThingsdefaultJSONResponse struct {
 func (response ListThingsdefaultJSONResponse) VisitListThingsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -235,8 +234,11 @@ type StrictServerInterface interface {
 	ListThings(ctx context.Context, request ListThingsRequestObject) (ListThingsResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+// StrictHandlerFunc and StrictMiddlewareFunc are type aliases rather than
+// distinct named types, so middleware written against one generated package
+// can be shared with every other generated package using the same framework.
+type StrictHandlerFunc = func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)

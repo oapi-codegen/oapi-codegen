@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"math"
+	"net/url"
 	"strings"
 	"testing"
 
@@ -793,7 +794,7 @@ func TestOapiSchemaToGoType_MultiTypeUnion(t *testing.T) {
 	for _, tc := range []struct {
 		name     string
 		types    openapi3.Types
-		wantErr  bool
+		wantErr  string
 		wantType string
 		wantSkip bool
 	}{
@@ -824,7 +825,7 @@ func TestOapiSchemaToGoType_MultiTypeUnion(t *testing.T) {
 		{
 			name:    "misspelled type name is still an error",
 			types:   openapi3.Types{"strng", "number"},
-			wantErr: true,
+			wantErr: `unhandled Schema type ["strng", "number"]: "strng" is not a valid JSON Schema type`,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -835,8 +836,8 @@ func TestOapiSchemaToGoType_MultiTypeUnion(t *testing.T) {
 
 			var out Schema
 			err := oapiSchemaToGoType(newGenContext(nil), &openapi3.Schema{Type: &tc.types}, []string{"Value"}, &out)
-			if tc.wantErr {
-				assert.ErrorContains(t, err, "unhandled Schema type")
+			if tc.wantErr != "" {
+				assert.ErrorContains(t, err, tc.wantErr)
 				return
 			}
 			require.NoError(t, err)
@@ -998,7 +999,167 @@ func TestOapiSchemaToGoType_MultiTypeUnionRequires31(t *testing.T) {
 
 	var out Schema
 	err := oapiSchemaToGoType(newGenContext(nil), &openapi3.Schema{Type: &openapi3.Types{"string", "number"}}, []string{"Value"}, &out)
-	assert.ErrorContains(t, err, "unhandled Schema type")
+	assert.ErrorContains(t, err,
+		`unhandled Schema type ["string", "number"]: a list of types requires OpenAPI 3.1 or later`)
+}
+
+// The dispatch handles every JSON Schema type, so falling off the end of it
+// means the `type` is not one the document may carry. The error has to say
+// which value that was and why, or the user is left with #1976's
+// "unhandled Schema type: &[int]" and nothing to act on.
+func TestOapiSchemaToGoType_UnhandledTypeError(t *testing.T) {
+	const expected = "expected one of array, boolean, integer, null, number, object, string"
+
+	for _, tc := range []struct {
+		name  string
+		is31  bool
+		spec  *openapi3.T
+		types openapi3.Types
+		want  []string
+	}{
+		{
+			name:  "unknown single type name",
+			types: openapi3.Types{"int"},
+			want:  []string{`unhandled Schema type "int": not a valid JSON Schema type`, expected},
+		},
+		{
+			name:  "unknown type name in a 3.1 list",
+			is31:  true,
+			types: openapi3.Types{"strng", "number"},
+			want: []string{
+				`unhandled Schema type ["strng", "number"]`,
+				`"strng" is not a valid JSON Schema type`,
+				expected,
+			},
+		},
+		{
+			name:  "several unknown type names in a 3.1 list",
+			is31:  true,
+			types: openapi3.Types{"strng", "numbr"},
+			want: []string{
+				`unhandled Schema type ["strng", "numbr"]`,
+				`"strng", "numbr" are not valid JSON Schema types`,
+			},
+		},
+		{
+			// The list form itself is what is unusable here: the entries are valid
+			// types, so the hint names the version.
+			name:  "list of valid types under a 3.0 document",
+			spec:  &openapi3.T{OpenAPI: "3.0.3"},
+			types: openapi3.Types{"string", "number"},
+			want: []string{
+				`unhandled Schema type ["string", "number"]`,
+				"a list of types requires OpenAPI 3.1 or later, but this document declares OpenAPI 3.0.3",
+			},
+		},
+		{
+			// The declared `type` is reported verbatim, "null" marker and
+			// all, so it matches what the reader has in front of them.
+			name:  "unknown type name alongside the null marker",
+			is31:  true,
+			types: openapi3.Types{"strng", "null"},
+			want:  []string{`unhandled Schema type ["strng", "null"]`, `"strng" is not a valid JSON Schema type`},
+		},
+		{
+			name:  "a type list naming nothing but null",
+			is31:  true,
+			types: openapi3.Types{"null", "null"},
+			want:  []string{`unhandled Schema type ["null", "null"]`, "type must name a JSON Schema type"},
+		},
+		{
+			name:  "an empty type list",
+			types: openapi3.Types{},
+			want:  []string{"unhandled Schema type []", "type must name a JSON Schema type"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			prev := globalState
+			t.Cleanup(func() { globalState = prev })
+			globalState.is31 = tc.is31
+			globalState.spec = tc.spec
+			globalState.typeMapping = DefaultTypeMapping
+
+			var out Schema
+			err := oapiSchemaToGoType(newGenContext(nil), &openapi3.Schema{Type: &tc.types}, []string{"Value"}, &out)
+			require.Error(t, err)
+			for _, want := range tc.want {
+				assert.ErrorContains(t, err, want)
+			}
+		})
+	}
+}
+
+// The version hint is a suffix, not the message: a caller that never ran
+// Generate() has no spec to read, and SetGlobalStateSpec sets the spec
+// without is31, so a 3.1 spec would otherwise be told it needs 3.1. Both
+// drop the suffix and keep the requirement.
+func TestUnhandledSchemaTypeErrorVersionSuffix(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		spec *openapi3.T
+	}{
+		{name: "no spec at all", spec: nil},
+		{name: "spec with no declared version", spec: &openapi3.T{}},
+		{
+			// SetGlobalStateSpec sets the spec without is31, so the two can
+			// disagree. Citing 3.1 here would contradict the requirement.
+			name: "spec already declares 3.1",
+			spec: &openapi3.T{OpenAPI: "3.1.0"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			prev := globalState
+			t.Cleanup(func() { globalState = prev })
+			globalState.is31 = false
+			globalState.spec = tc.spec
+
+			err := unhandledSchemaTypeError(&openapi3.Types{"string", "number"})
+			assert.ErrorContains(t, err, "a list of types requires OpenAPI 3.1 or later")
+			assert.NotContains(t, err.Error(), "but this document declares",
+				"an unusable or contradictory version must not be cited")
+		})
+	}
+}
+
+// components.responses generate with no operation, so the response label is
+// the component name alone rather than an empty operation and a stray dot.
+func TestGenerateResponseDefinitionsNamesComponentResponses(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.typeMapping = DefaultTypeMapping
+
+	responses := map[string]*openapi3.ResponseRef{
+		"NotFound": {Value: &openapi3.Response{
+			Content: openapi3.Content{
+				"application/json": &openapi3.MediaType{
+					Schema: &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"int"}}},
+				},
+			},
+		}},
+	}
+
+	_, err := GenerateResponseDefinitions("", responses, "")
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "for NotFound (application/json)")
+	assert.NotContains(t, err.Error(), "for .NotFound", "no empty operation prefix")
+}
+
+// An inline oneOf/anyOf branch is only identifiable by its index, which
+// generateUnionElement computes for naming and used to discard on the error path.
+func TestGenerateUnionNamesFailingBranch(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.typeMapping = DefaultTypeMapping
+
+	_, err := GenerateGoSchema(&openapi3.SchemaRef{Value: &openapi3.Schema{
+		OneOf: openapi3.SchemaRefs{
+			{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
+			{Value: &openapi3.Schema{Type: &openapi3.Types{"int"}}},
+		},
+	}}, []string{"Choice"})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "branch 1")
+	assert.ErrorContains(t, err, `unhandled Schema type "int"`)
 }
 
 // schemaUnionTypes feeds the Types bind option emitted for union
@@ -1083,6 +1244,172 @@ func TestParameterDefinitionSchemaType(t *testing.T) {
 		"unions carry no single Type; SchemaTypes has the members")
 	assert.Equal(t, []string{"string", "integer"}, paramWithTypes(&openapi3.Types{"string", "integer", "null"}).SchemaTypes())
 	assert.Nil(t, paramWithTypes(&openapi3.Types{"string"}).SchemaTypes())
+}
+
+// fieldNames returns the Go field name of each of schema's properties, by JSON
+// name.
+func fieldNames(schema Schema) map[string]string {
+	names := make(map[string]string, len(schema.Properties))
+	for _, p := range schema.Properties {
+		names[p.JsonFieldName] = p.GoFieldName()
+	}
+	return names
+}
+
+// stringProps returns a required string property for each JSON name.
+func stringProps(jsonNames ...string) []Property {
+	var props []Property
+	for _, name := range jsonNames {
+		props = append(props, Property{JsonFieldName: name, Schema: Schema{GoType: "string"}, Required: true})
+	}
+	return props
+}
+
+// withGoName returns p named by x-go-name.
+func withGoName(p Property, name string) Property {
+	p.Extensions = map[string]any{extGoName: name}
+	return p
+}
+
+// Issue #2495: JSON properties which differ only by separator ("host-fqdn",
+// "host_fqdn") derive the same Go field name, which declared the field twice.
+
+func TestResolvePropertyGoFieldNameCollisions_ErrorsWithoutResolver(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.options.OutputOptions.ResolveTypeNameCollisions = false
+
+	schema := Schema{Properties: stringProps("host-fqdn", "host_fqdn", "other")}
+	err := resolvePropertyGoFieldNameCollisions(&schema, []string{"Info"})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "schema 'Info'")
+	assert.ErrorContains(t, err, "property 'host-fqdn', property 'host_fqdn'")
+	assert.ErrorContains(t, err, "Go field 'HostFqdn'")
+	assert.ErrorContains(t, err, "x-go-name")
+	assert.ErrorContains(t, err, "resolve-type-name-collisions")
+
+	// The field holding additional properties collides just the same.
+	schema = Schema{HasAdditionalProperties: true, Properties: stringProps("additionalProperties")}
+	err = resolvePropertyGoFieldNameCollisions(&schema, nil)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "the field holding additional properties")
+
+	// Nothing collides, nothing is reported or renamed.
+	schema = Schema{HasAdditionalProperties: true, Properties: stringProps("host-fqdn", "other")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	assert.Equal(t, map[string]string{"host-fqdn": "HostFqdn", "other": "Other"}, fieldNames(schema))
+}
+
+func TestResolvePropertyGoFieldNameCollisions_RenamesEveryCollider(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
+
+	schema := Schema{Properties: stringProps("host-fqdn", "host_fqdn", "other")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	names := fieldNames(schema)
+
+	// Neither collider keeps the bare name, and the bystander is untouched.
+	assert.Regexp(t, `^HostFqdn_[0-9a-f]{7}$`, names["host-fqdn"])
+	assert.Regexp(t, `^HostFqdn_[0-9a-f]{7}$`, names["host_fqdn"])
+	assert.NotEqual(t, names["host-fqdn"], names["host_fqdn"])
+	assert.Equal(t, "Other", names["other"])
+
+	// The struct carries the new names and the original JSON names.
+	fields := GenFieldsFromProperties(schema.Properties)
+	require.Len(t, fields, 3)
+	assert.Contains(t, fields[0], names["host-fqdn"]+" ")
+	assert.Contains(t, fields[0], `json:"host-fqdn"`)
+	assert.Contains(t, fields[1], names["host_fqdn"]+" ")
+	assert.Contains(t, fields[1], `json:"host_fqdn"`)
+
+	// Resolving again changes nothing.
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	assert.Equal(t, names, fieldNames(schema))
+}
+
+// A property's name depends on nothing but the property: more colliders, a
+// different order, and a property which spells what a numeric suffix would
+// have produced all leave it alone.
+func TestResolvePropertyGoFieldNameCollisions_NamesAreStable(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
+
+	two := Schema{Properties: stringProps("host-fqdn", "host_fqdn")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&two, nil))
+
+	more := Schema{Properties: stringProps("host_fqdn2", "host.fqdn", "host_fqdn", "host fqdn", "host-fqdn")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&more, nil))
+
+	before, after := fieldNames(two), fieldNames(more)
+	assert.Equal(t, before["host-fqdn"], after["host-fqdn"])
+	assert.Equal(t, before["host_fqdn"], after["host_fqdn"])
+	assert.Equal(t, "HostFqdn2", after["host_fqdn2"])
+
+	seen := map[string]bool{}
+	for _, name := range after {
+		assert.False(t, seen[name], "field %s is declared twice", name)
+		seen[name] = true
+	}
+}
+
+func TestResolvePropertyGoFieldNameCollisions_KeepsExplicitNames(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
+
+	// x-go-name asks for a name another property derives: the derived one
+	// gives way, whichever comes first.
+	props := stringProps("zed", "zzz")
+	props[1] = withGoName(props[1], "Zed")
+	schema := Schema{Properties: props}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	names := fieldNames(schema)
+	assert.Equal(t, "Zed", names["zzz"])
+	assert.Regexp(t, `^Zed_[0-9a-f]{7}$`, names["zed"])
+
+	// x-go-name moving a property out of a collision resolves it, and the
+	// other property keeps its bare name.
+	props = stringProps("host-fqdn", "host_fqdn")
+	props[0] = withGoName(props[0], "HostFqdnDashed")
+	schema = Schema{Properties: props}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	assert.Equal(t, map[string]string{"host-fqdn": "HostFqdnDashed", "host_fqdn": "HostFqdn"}, fieldNames(schema))
+
+	// Two properties asking for the same name can't both have it.
+	props = stringProps("a", "b")
+	props[0] = withGoName(props[0], "Same")
+	props[1] = withGoName(props[1], "Same")
+	schema = Schema{Properties: props}
+	err := resolvePropertyGoFieldNameCollisions(&schema, []string{"Info"})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "property 'a', property 'b'")
+	assert.ErrorContains(t, err, "x-go-name")
+}
+
+func TestResolvePropertyGoFieldNameCollisions_ReservesAdditionalProperties(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
+
+	// The field holding additional properties keeps its name, and the
+	// property is renamed.
+	schema := Schema{HasAdditionalProperties: true, Properties: stringProps("additionalProperties")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	assert.Regexp(t, `^AdditionalProperties_[0-9a-f]{7}$`, schema.Properties[0].GoFieldName())
+	assert.Contains(t, GenFieldsFromProperties(schema.Properties)[0], `json:"additionalProperties"`)
+
+	// Without additional properties there is no such field to collide with.
+	schema = Schema{Properties: stringProps("additionalProperties")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	assert.Equal(t, "AdditionalProperties", schema.Properties[0].GoFieldName())
+
+	// A property which asks for the name with x-go-name can't have it.
+	props := stringProps("extras")
+	props[0] = withGoName(props[0], "AdditionalProperties")
+	schema = Schema{HasAdditionalProperties: true, Properties: props}
+	require.Error(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
 }
 
 // TestStrictResponseDelegatesCustomMarshalJSON pins which strict-server
@@ -1337,6 +1664,108 @@ components:
 	assert.NotContains(t, out, "func (t ConflictJSONResponse) MarshalJSON()")
 }
 
+// A form response reached through $ref embeds the reusable envelope, and
+// runtime.MarshalForm would encode that untagged embedded field under an
+// empty name ("[value]=..."), so the visitor marshals the envelope itself.
+func TestStrictReusableFormResponseMarshalsEnvelope(t *testing.T) {
+	const spec = `
+openapi: "3.0.3"
+info: {title: t, version: "1"}
+paths:
+  /local:
+    get:
+      operationId: localRef
+      responses:
+        "200": {$ref: "#/components/responses/Form"}
+  /external:
+    get:
+      operationId: externalRef
+      responses:
+        "200": {$ref: "./external.yaml#/components/responses/ExternalForm"}
+  /inline:
+    get:
+      operationId: inline
+      responses:
+        "200":
+          description: inline
+          content:
+            application/x-www-form-urlencoded:
+              schema: {$ref: "#/components/schemas/Example"}
+components:
+  schemas:
+    Example:
+      type: object
+      properties:
+        value: {type: string}
+  responses:
+    Form:
+      description: reusable
+      content:
+        application/x-www-form-urlencoded:
+          schema: {$ref: "#/components/schemas/Example"}
+`
+	const externalSpec = `
+openapi: "3.0.3"
+info: {title: external, version: "1"}
+paths: {}
+components:
+  schemas:
+    Example:
+      type: object
+      properties:
+        value: {type: string}
+  responses:
+    ExternalForm:
+      description: reusable
+      content:
+        application/x-www-form-urlencoded:
+          schema: {$ref: "#/components/schemas/Example"}
+`
+
+	visitor := func(t *testing.T, code, receiver string) string {
+		t.Helper()
+		start := strings.Index(code, "func (response "+receiver+") Visit")
+		require.NotEqual(t, -1, start, "no visitor for %s", receiver)
+		end := strings.Index(code[start:], "\n}\n")
+		require.NotEqual(t, -1, end)
+		return code[start : start+end]
+	}
+
+	for _, server := range []struct {
+		name     string
+		generate GenerateOptions
+	}{
+		{name: "standard", generate: GenerateOptions{StdHTTPServer: true}},
+		{name: "fiber", generate: GenerateOptions{FiberServer: true}},
+		{name: "iris", generate: GenerateOptions{IrisServer: true}},
+	} {
+		t.Run(server.name, func(t *testing.T) {
+			loader := openapi3.NewLoader()
+			loader.IsExternalRefsAllowed = true
+			loader.ReadFromURIFunc = func(_ *openapi3.Loader, _ *url.URL) ([]byte, error) {
+				return []byte(externalSpec), nil
+			}
+			swagger, err := loader.LoadFromDataWithPath([]byte(spec), &url.URL{Path: "root.yaml"})
+			require.NoError(t, err)
+
+			server.generate.Models = true
+			server.generate.Strict = true
+			code, err := Generate(swagger, Configuration{
+				PackageName:   "api",
+				Generate:      server.generate,
+				ImportMapping: map[string]string{"./external.yaml": "example.com/external"},
+			})
+			require.NoError(t, err)
+
+			assert.Contains(t, code, "type LocalRef200FormdataResponse struct{ FormFormdataResponse }")
+			assert.Contains(t, visitor(t, code, "LocalRef200FormdataResponse"), "runtime.MarshalForm(response.FormFormdataResponse, nil)")
+			assert.Contains(t, code, "type ExternalRef200FormdataResponse struct {\n\texternalRef0.ExternalFormFormdataResponse\n}")
+			assert.Contains(t, visitor(t, code, "ExternalRef200FormdataResponse"), "runtime.MarshalForm(response.ExternalFormFormdataResponse, nil)")
+			assert.Contains(t, visitor(t, code, "Inline200FormdataResponse"), "runtime.MarshalForm(response, nil)")
+		})
+	}
+}
+
 // TestUnionAdoptUnion pins what a union's From*/Merge* reconcile with its own
 // fields: only properties MarshalJSON always writes are filled from the
 // variant, an untyped (interface) property is checked without reflect
@@ -1566,4 +1995,38 @@ components:
 	assert.Contains(t, code, "// Text that is exactly a JSON boolean or integer, with nothing around it, is taken as one; anything else is a string.\nfunc (t *Flag) UnmarshalText(")
 	assert.NotContains(t, code, "func (t *WithArray) UnmarshalText(", "an array branch can't be bound from text")
 	assert.NotContains(t, code, "func (t *Loop) UnmarshalText(", "a union that contains itself can't be bound from text")
+}
+
+// TestDiscriminatorLiteralQuotesStrings checks that a string discriminator
+// value is emitted through strconv.Quote rather than wrapped in quotes by hand,
+// so a backslash in it cannot swallow the closing quote.
+func TestDiscriminatorLiteralQuotesStrings(t *testing.T) {
+	d := &Discriminator{ValueType: openapi3.TypeString}
+	assert.Equal(t, `"plain"`, d.literal("plain"))
+	assert.Equal(t, `"ends with \\"`, d.literal(`ends with \`))
+	n := &Discriminator{ValueType: openapi3.TypeInteger}
+	assert.Equal(t, `7`, n.literal("7"))
+}
+
+// A struct may declare any number of blank fields, so properties which are all
+// named "_" don't collide, whether or not collisions are being resolved.
+func TestResolvePropertyGoFieldNameCollisions_AllowsBlankFields(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.options.Compatibility.AllowUnexportedStructFieldNames = true
+
+	blank := func(p Property) Property {
+		p.Extensions = map[string]any{extGoName: "_", extOapiCodegenOnlyHonourGoName: true}
+		return p
+	}
+
+	for _, resolve := range []bool{false, true} {
+		globalState.options.OutputOptions.ResolveTypeNameCollisions = resolve
+
+		props := stringProps("a", "b", "c")
+		props[0], props[1] = blank(props[0]), blank(props[1])
+		schema := Schema{Properties: props}
+		require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+		assert.Equal(t, map[string]string{"a": "_", "b": "_", "c": "C"}, fieldNames(schema))
+	}
 }

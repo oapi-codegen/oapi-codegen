@@ -32,3 +32,31 @@ func TestConfigurationValidateImportMappingKeys(t *testing.T) {
 	}
 	require.NoError(t, cfg.Validate())
 }
+
+// TestConfigurationValidateAllowRemoteRefsFrom verifies that
+// allow-remote-refs-from entries are document URLs without a fragment, or
+// "*", so a misconfiguration fails loudly instead of silently allowing
+// nothing.
+func TestConfigurationValidateAllowRemoteRefsFrom(t *testing.T) {
+	cfg := Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{Models: true},
+	}
+	for _, good := range [][]string{
+		nil, {}, {"*"},
+		{"https://api.example.com/specs/common.yaml"},
+		{"http://localhost:8080/common.yaml", " https://api.example.com/v1/api.yaml "},
+	} {
+		cfg.AllowRemoteRefsFrom = good
+		assert.NoError(t, cfg.Validate(), "%q", good)
+	}
+	for _, bad := range []string{
+		"", "api.example.com", "api.example.com/specs/common.yaml", "/specs/common.yaml",
+		"https://api.example.com/specs/common.yaml#/components/schemas/X",
+	} {
+		cfg.AllowRemoteRefsFrom = []string{bad}
+		err := cfg.Validate()
+		require.Error(t, err, "%q", bad)
+		assert.Contains(t, err.Error(), "allow-remote-refs-from")
+	}
+}

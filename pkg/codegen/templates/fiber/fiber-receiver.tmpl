@@ -48,7 +48,7 @@ func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface) fiber.Handle
             {{end}}
             {{if .IsJson}}
             var value {{.TypeDef}}
-            err = json.Unmarshal([]byte(paramValue), &value)
+            err = runtime.JSONUnmarshal([]byte(paramValue), &value)
             if err != nil {
                 return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
             }
@@ -74,7 +74,7 @@ func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface) fiber.Handle
             params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
             {{end}}
             {{if .IsJson}}
-            err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+            err = runtime.JSONUnmarshal([]byte(valueList[0]), &{{.GoName}})
             if err != nil {
                 return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
             }

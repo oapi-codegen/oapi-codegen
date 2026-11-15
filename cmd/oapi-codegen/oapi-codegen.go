@@ -24,7 +24,7 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen"
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
@@ -311,7 +311,9 @@ func main() {
 	overlayOpts := util.LoadSwaggerWithOverlayOpts{
 		Path: opts.OutputOptions.Overlay.Path,
 		// default to strict, but can be overridden
-		Strict: true,
+		Strict:              true,
+		LegacyJSONPath:      opts.Compatibility.OverlaysUseYamlJsonpath,
+		AllowRemoteRefsFrom: opts.AllowRemoteRefsFrom,
 	}
 
 	if opts.OutputOptions.Overlay.Strict != nil {

@@ -8,7 +8,6 @@ import (
 	"compress/flate"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -53,6 +52,9 @@ type ServerInterface interface {
 
 	// (POST /reusable-responses)
 	ReusableResponses(ctx *echo.Context) error
+
+	// (POST /reusable-urlencoded-response)
+	ReusableURLEncodedResponse(ctx *echo.Context) error
 
 	// (POST /same-name-param-and-body-property/{name})
 	SameNameParamAndBodyProperty(ctx *echo.Context, name string) error
@@ -166,6 +168,15 @@ func (w *ServerInterfaceWrapper) ReusableResponses(ctx *echo.Context) error {
 
 	// Invoke the callback with all the unmarshaled arguments
 	err = w.Handler.ReusableResponses(ctx)
+	return err
+}
+
+// ReusableURLEncodedResponse converts echo context to params.
+func (w *ServerInterfaceWrapper) ReusableURLEncodedResponse(ctx *echo.Context) error {
+	var err error
+
+	// Invoke the callback with all the unmarshaled arguments
+	err = w.Handler.ReusableURLEncodedResponse(ctx)
 	return err
 }
 
@@ -333,6 +344,7 @@ func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options 
 	router.POST(options.BaseURL+"/with-headers", wrapper.HeadersExample, options.OperationMiddlewares["HeadersExample"]...)
 	router.POST(options.BaseURL+"/no-content-headers", wrapper.NoContentHeaders, options.OperationMiddlewares["NoContentHeaders"]...)
 	router.POST(options.BaseURL+"/reusable-responses", wrapper.ReusableResponses, options.OperationMiddlewares["ReusableResponses"]...)
+	router.POST(options.BaseURL+"/reusable-urlencoded-response", wrapper.ReusableURLEncodedResponse, options.OperationMiddlewares["ReusableURLEncodedResponse"]...)
 	router.POST(options.BaseURL+"/unspecified-content-type", wrapper.UnspecifiedContentType, options.OperationMiddlewares["UnspecifiedContentType"]...)
 	router.POST(options.BaseURL+"/required-json-body", wrapper.RequiredJSONBody, options.OperationMiddlewares["RequiredJSONBody"]...)
 	router.POST(options.BaseURL+"/required-text-body", wrapper.RequiredTextBody, options.OperationMiddlewares["RequiredTextBody"]...)
@@ -355,6 +367,8 @@ type ReusableresponseJSONResponse struct {
 	Headers ReusableresponseResponseHeaders
 }
 
+type ReusableurlencodedresponseFormdataResponse Example
+
 type JSONExampleRequestObject struct {
 	Body *JSONExampleJSONRequestBody
 }
@@ -368,7 +382,7 @@ type JSONExample200JSONResponse Example
 func (response JSONExample200JSONResponse) VisitJSONExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -482,7 +496,7 @@ type MultipleRequestAndResponseTypes200JSONResponse Example
 func (response MultipleRequestAndResponseTypes200JSONResponse) VisitMultipleRequestAndResponseTypesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -607,7 +621,7 @@ type RequiredJSONBody200JSONResponse Example
 func (response RequiredJSONBody200JSONResponse) VisitRequiredJSONBodyResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -699,7 +713,7 @@ type ReusableResponses200JSONResponse struct{ ReusableresponseJSONResponse }
 func (response ReusableResponses200JSONResponse) VisitReusableResponsesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -738,6 +752,46 @@ func (response ReusableResponsesdefaultResponse) VisitReusableResponsesResponse(
 	return nil
 }
 
+type ReusableURLEncodedResponseRequestObject struct {
+	Body *ReusableURLEncodedResponseFormdataRequestBody
+}
+
+type ReusableURLEncodedResponseResponseObject interface {
+	VisitReusableURLEncodedResponseResponse(w http.ResponseWriter) error
+}
+
+type ReusableURLEncodedResponse200FormdataResponse struct {
+	ReusableurlencodedresponseFormdataResponse
+}
+
+func (response ReusableURLEncodedResponse200FormdataResponse) VisitReusableURLEncodedResponseResponse(w http.ResponseWriter) error {
+
+	form, err := runtime.MarshalForm(response.ReusableurlencodedresponseFormdataResponse, nil)
+	if err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/x-www-form-urlencoded")
+	w.WriteHeader(200)
+	_, err = w.Write([]byte(form.Encode()))
+	return err
+}
+
+type ReusableURLEncodedResponse400Response = BadrequestResponse
+
+func (response ReusableURLEncodedResponse400Response) VisitReusableURLEncodedResponseResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type ReusableURLEncodedResponsedefaultResponse struct {
+	StatusCode int
+}
+
+func (response ReusableURLEncodedResponsedefaultResponse) VisitReusableURLEncodedResponseResponse(w http.ResponseWriter) error {
+	w.WriteHeader(response.StatusCode)
+	return nil
+}
+
 type SameNameParamAndBodyPropertyRequestObject struct {
 	Name string `json:"name"`
 	Body *SameNameParamAndBodyPropertyJSONRequestBody
@@ -752,7 +806,7 @@ type SameNameParamAndBodyProperty200JSONResponse SameName
 func (response SameNameParamAndBodyProperty200JSONResponse) VisitSameNameParamAndBodyPropertyResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -964,7 +1018,7 @@ type HeadersExample200JSONResponse struct {
 func (response HeadersExample200JSONResponse) VisitHeadersExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1042,7 +1096,7 @@ type UnionExample200ApplicationAlternativePlusJSONResponse struct {
 func (response UnionExample200ApplicationAlternativePlusJSONResponse) VisitUnionExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/alternative+json")
@@ -1073,7 +1127,7 @@ type UnionExample200JSONResponse struct {
 func (response UnionExample200JSONResponse) VisitUnionExampleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1142,6 +1196,9 @@ type StrictServerInterface interface {
 	// (POST /reusable-responses)
 	ReusableResponses(ctx context.Context, request ReusableResponsesRequestObject) (ReusableResponsesResponseObject, error)
 
+	// (POST /reusable-urlencoded-response)
+	ReusableURLEncodedResponse(ctx context.Context, request ReusableURLEncodedResponseRequestObject) (ReusableURLEncodedResponseResponseObject, error)
+
 	// (POST /same-name-param-and-body-property/{name})
 	SameNameParamAndBodyProperty(ctx context.Context, request SameNameParamAndBodyPropertyRequestObject) (SameNameParamAndBodyPropertyResponseObject, error)
 
@@ -1164,8 +1221,11 @@ type StrictServerInterface interface {
 	UnionExample(ctx context.Context, request UnionExampleRequestObject) (UnionExampleResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx *echo.Context, request any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+// StrictHandlerFunc and StrictMiddlewareFunc are type aliases rather than
+// distinct named types, so middleware written against one generated package
+// can be shared with every other generated package using the same framework.
+type StrictHandlerFunc = func(ctx *echo.Context, request any) (any, error)
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
 	return &strictHandler{ssi: ssi, middlewares: middlewares}
@@ -1183,12 +1243,19 @@ func (sh *strictHandler) JSONExample(ctx *echo.Context) error {
 	var body JSONExampleJSONRequestBody
 	var err error
 	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
-		// Bind only the request body, so that path and query parameters
-		// are not also bound into the body struct.
-		err = echo.BindBody(ctx, &body)
+		// A request validator built on kin-openapi's openapi3filter with
+		// KeepValidatedValue leaves the value it validated on the body. Bind
+		// that value, matching member names exactly, so the handler receives
+		// what was validated instead of a second, case-insensitive decode.
+		// Otherwise bind only the request body, so that path and query
+		// parameters are not also bound into the body struct.
+		if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+			err = echo.BindBody(ctx, &body)
+		}
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
-		// entirely, since echo.Binder does not expose body-only binding.
+		// entirely, since echo.Binder does not expose body-only binding and
+		// the binder may do more than decode (for example call ctx.Validate).
 		err = ctx.Bind(&body)
 	}
 	if err != nil {
@@ -1286,12 +1353,19 @@ func (sh *strictHandler) MultipleRequestAndResponseTypes(ctx *echo.Context) erro
 		var body MultipleRequestAndResponseTypesJSONRequestBody
 		var err error
 		if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
-			// Bind only the request body, so that path and query parameters
-			// are not also bound into the body struct.
-			err = echo.BindBody(ctx, &body)
+			// A request validator built on kin-openapi's openapi3filter with
+			// KeepValidatedValue leaves the value it validated on the body. Bind
+			// that value, matching member names exactly, so the handler receives
+			// what was validated instead of a second, case-insensitive decode.
+			// Otherwise bind only the request body, so that path and query
+			// parameters are not also bound into the body struct.
+			if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+				err = echo.BindBody(ctx, &body)
+			}
 		} else {
 			// A custom binder is installed on the Echo instance; defer to it
-			// entirely, since echo.Binder does not expose body-only binding.
+			// entirely, since echo.Binder does not expose body-only binding and
+			// the binder may do more than decode (for example call ctx.Validate).
 			err = ctx.Bind(&body)
 		}
 		if err != nil {
@@ -1383,12 +1457,19 @@ func (sh *strictHandler) RequiredJSONBody(ctx *echo.Context) error {
 	var body RequiredJSONBodyJSONRequestBody
 	var err error
 	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
-		// Bind only the request body, so that path and query parameters
-		// are not also bound into the body struct.
-		err = echo.BindBody(ctx, &body)
+		// A request validator built on kin-openapi's openapi3filter with
+		// KeepValidatedValue leaves the value it validated on the body. Bind
+		// that value, matching member names exactly, so the handler receives
+		// what was validated instead of a second, case-insensitive decode.
+		// Otherwise bind only the request body, so that path and query
+		// parameters are not also bound into the body struct.
+		if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+			err = echo.BindBody(ctx, &body)
+		}
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
-		// entirely, since echo.Binder does not expose body-only binding.
+		// entirely, since echo.Binder does not expose body-only binding and
+		// the binder may do more than decode (for example call ctx.Validate).
 		err = ctx.Bind(&body)
 	}
 	if err != nil {
@@ -1477,12 +1558,19 @@ func (sh *strictHandler) ReusableResponses(ctx *echo.Context) error {
 	var body ReusableResponsesJSONRequestBody
 	var err error
 	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
-		// Bind only the request body, so that path and query parameters
-		// are not also bound into the body struct.
-		err = echo.BindBody(ctx, &body)
+		// A request validator built on kin-openapi's openapi3filter with
+		// KeepValidatedValue leaves the value it validated on the body. Bind
+		// that value, matching member names exactly, so the handler receives
+		// what was validated instead of a second, case-insensitive decode.
+		// Otherwise bind only the request body, so that path and query
+		// parameters are not also bound into the body struct.
+		if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+			err = echo.BindBody(ctx, &body)
+		}
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
-		// entirely, since echo.Binder does not expose body-only binding.
+		// entirely, since echo.Binder does not expose body-only binding and
+		// the binder may do more than decode (for example call ctx.Validate).
 		err = ctx.Bind(&body)
 	}
 	if err != nil {
@@ -1512,6 +1600,39 @@ func (sh *strictHandler) ReusableResponses(ctx *echo.Context) error {
 	return nil
 }
 
+// ReusableURLEncodedResponse operation middleware
+func (sh *strictHandler) ReusableURLEncodedResponse(ctx *echo.Context) error {
+	var request ReusableURLEncodedResponseRequestObject
+
+	if form, err := ctx.FormValues(); err == nil {
+		var body ReusableURLEncodedResponseFormdataRequestBody
+		if err := runtime.BindForm(&body, form, nil, nil); err != nil {
+			return err
+		}
+		request.Body = &body
+	} else {
+		return err
+	}
+
+	handler := func(ctx *echo.Context, request any) (any, error) {
+		return sh.ssi.ReusableURLEncodedResponse(ctx.Request().Context(), request.(ReusableURLEncodedResponseRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReusableURLEncodedResponse")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		return err
+	} else if validResponse, ok := response.(ReusableURLEncodedResponseResponseObject); ok {
+		return validResponse.VisitReusableURLEncodedResponseResponse(ctx.Response())
+	} else if response != nil {
+		return fmt.Errorf("unexpected response type: %T", response)
+	}
+	return nil
+}
+
 // SameNameParamAndBodyProperty operation middleware
 func (sh *strictHandler) SameNameParamAndBodyProperty(ctx *echo.Context, name string) error {
 	var request SameNameParamAndBodyPropertyRequestObject
@@ -1521,12 +1642,19 @@ func (sh *strictHandler) SameNameParamAndBodyProperty(ctx *echo.Context, name st
 	var body SameNameParamAndBodyPropertyJSONRequestBody
 	var err error
 	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
-		// Bind only the request body, so that path and query parameters
-		// are not also bound into the body struct.
-		err = echo.BindBody(ctx, &body)
+		// A request validator built on kin-openapi's openapi3filter with
+		// KeepValidatedValue leaves the value it validated on the body. Bind
+		// that value, matching member names exactly, so the handler receives
+		// what was validated instead of a second, case-insensitive decode.
+		// Otherwise bind only the request body, so that path and query
+		// parameters are not also bound into the body struct.
+		if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+			err = echo.BindBody(ctx, &body)
+		}
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
-		// entirely, since echo.Binder does not expose body-only binding.
+		// entirely, since echo.Binder does not expose body-only binding and
+		// the binder may do more than decode (for example call ctx.Validate).
 		err = ctx.Bind(&body)
 	}
 	if err != nil {
@@ -1682,12 +1810,19 @@ func (sh *strictHandler) HeadersExample(ctx *echo.Context, params HeadersExample
 	var body HeadersExampleJSONRequestBody
 	var err error
 	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
-		// Bind only the request body, so that path and query parameters
-		// are not also bound into the body struct.
-		err = echo.BindBody(ctx, &body)
+		// A request validator built on kin-openapi's openapi3filter with
+		// KeepValidatedValue leaves the value it validated on the body. Bind
+		// that value, matching member names exactly, so the handler receives
+		// what was validated instead of a second, case-insensitive decode.
+		// Otherwise bind only the request body, so that path and query
+		// parameters are not also bound into the body struct.
+		if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+			err = echo.BindBody(ctx, &body)
+		}
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
-		// entirely, since echo.Binder does not expose body-only binding.
+		// entirely, since echo.Binder does not expose body-only binding and
+		// the binder may do more than decode (for example call ctx.Validate).
 		err = ctx.Bind(&body)
 	}
 	if err != nil {
@@ -1724,12 +1859,19 @@ func (sh *strictHandler) UnionExample(ctx *echo.Context) error {
 	var body UnionExampleJSONRequestBody
 	var err error
 	if _, ok := ctx.Echo().Binder.(*echo.DefaultBinder); ok {
-		// Bind only the request body, so that path and query parameters
-		// are not also bound into the body struct.
-		err = echo.BindBody(ctx, &body)
+		// A request validator built on kin-openapi's openapi3filter with
+		// KeepValidatedValue leaves the value it validated on the body. Bind
+		// that value, matching member names exactly, so the handler receives
+		// what was validated instead of a second, case-insensitive decode.
+		// Otherwise bind only the request body, so that path and query
+		// parameters are not also bound into the body struct.
+		if vb, ok := ctx.Request().Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+			err = echo.BindBody(ctx, &body)
+		}
 	} else {
 		// A custom binder is installed on the Echo instance; defer to it
-		// entirely, since echo.Binder does not expose body-only binding.
+		// entirely, since echo.Binder does not expose body-only binding and
+		// the binder may do more than decode (for example call ctx.Validate).
 		err = ctx.Bind(&body)
 	}
 	if err != nil {
@@ -1764,30 +1906,31 @@ func (sh *strictHandler) UnionExample(ctx *echo.Context) error {
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"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",
+	"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",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

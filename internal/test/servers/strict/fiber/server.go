@@ -130,6 +130,10 @@ func (s StrictServer) ReusableResponses(ctx context.Context, request ReusableRes
 	return ReusableResponses200JSONResponse{ReusableresponseJSONResponse: ReusableresponseJSONResponse{Body: *request.Body}}, nil
 }
 
+func (s StrictServer) ReusableURLEncodedResponse(ctx context.Context, request ReusableURLEncodedResponseRequestObject) (ReusableURLEncodedResponseResponseObject, error) {
+	return ReusableURLEncodedResponse200FormdataResponse{ReusableurlencodedresponseFormdataResponse: ReusableurlencodedresponseFormdataResponse(*request.Body)}, nil
+}
+
 func (s StrictServer) RequiredJSONBody(ctx context.Context, request RequiredJSONBodyRequestObject) (RequiredJSONBodyResponseObject, error) {
 	return RequiredJSONBody200JSONResponse(*request.Body), nil
 }

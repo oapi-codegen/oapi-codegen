@@ -6,7 +6,6 @@ package api
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -268,7 +267,7 @@ func ParseGetThingResponse(rsp *http.Response) (*GetThingResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest string
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -299,7 +298,6 @@ type ServerInterface interface {
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
-
 type Unimplemented struct{}
 
 // (GET /things/{id})
@@ -483,7 +481,7 @@ type GetThing200JSONResponse struct {
 func (response GetThing200JSONResponse) VisitGetThingResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -508,8 +506,11 @@ type StrictServerInterface interface {
 	GetThing(ctx context.Context, request GetThingRequestObject) (GetThingResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+// StrictHandlerFunc and StrictMiddlewareFunc are type aliases rather than
+// distinct named types, so middleware written against one generated package
+// can be shared with every other generated package using the same framework.
+type StrictHandlerFunc = func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)

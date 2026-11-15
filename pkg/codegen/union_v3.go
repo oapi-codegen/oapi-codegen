@@ -1,8 +1,7 @@
 package codegen
 
 // This file holds the anyOf/oneOf half of schema-merging-behavior v3, the
-// version under development. Its allOf half is in merge_schemas_v3.go. It
-// started as a copy of v2's (union_v2.go).
+// version under development. Its allOf half is in merge_schemas_v3.go.
 
 import (
 	"encoding/json"
@@ -18,13 +17,11 @@ import (
 )
 
 // generateUnionsV3 generates the anyOf and oneOf of an object schema into
-// outSchema's union members.
-//
-// A schema that combines several unions, an anyOf and a oneOf or an allOf's
-// merge of several, is a value that is one of each union's variants at once
-// (see unionComponent), and generates as generateUnionComponents describes.
+// outSchema's union members. A schema that combines several unions, an anyOf
+// and a oneOf or an allOf's merge of several (see unionComponent), generates
+// as generateUnionComponents describes.
 func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema, path []string) error {
-	components := ctx.unionComponents[schema]
+	components := ctx.v3.unionComponents[schema]
 	if components == nil && schema.AnyOf != nil && schema.OneOf != nil {
 		components = []unionComponent{
 			{branches: schema.AnyOf, anyOf: true},
@@ -68,12 +65,10 @@ func generateUnionsV3(ctx genContext, outSchema *Schema, schema *openapi3.Schema
 }
 
 // generateUnionComponents generates a union that combines several (see
-// unionComponent): the variants of each, and for each variant the JSON keys
-// its own union owns, those only its union's variants declare, which From*
-// replaces while keeping the other unions' data (see
-// Schema.UnionOwnedKeys). A key several unions declare, such as a shared id,
-// belongs to all of them and is never removed. A union that is a $ref to a
-// union type also gets As* and From* for that type.
+// unionComponent): each union's variants, with the JSON keys its union owns
+// (see Schema.UnionOwnedKeys), those only its variants declare, so that a key
+// several unions declare, such as a shared id, belongs to all of them; and As*
+// and From* for a union that is a $ref to a union type.
 //
 // Inline variants are named <path><union><index>, where <union> is OneOf or
 // AnyOf, numbered when there are several of a kind. It returns each union's
@@ -240,27 +235,14 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 	// mappedCount counts the variants the discriminator leads to.
 	mappedCount := 0
 	for i, element := range elements {
-		// Skip null-only branches: nullability marker, not a real
-		// union variant. See the collapse comment above for context.
+		// A null-only branch is a nullability marker, not a variant.
 		if element != nil && isNullTypeSchema(element.Value) {
 			continue
 		}
 		elementPath := append(path, fmt.Sprint(i))
-		elementSchema, err := generateGoSchema(ctx.at(elementPath), element, elementPath)
+		elementSchema, err := generateUnionElement(ctx, outSchema, element, elementPath)
 		if err != nil {
 			return nil, err
-		}
-
-		if element.Ref == "" {
-			elementName := SchemaNameToTypeName(PathToTypeName(elementPath))
-			if elementSchema.TypeDecl() == elementName {
-				elementSchema.GoType = elementName
-			} else {
-				td := TypeDefinition{Schema: elementSchema, TypeName: elementName, JsonName: strings.Join(elementPath, ".")}
-				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
-				elementSchema.GoType = td.TypeName
-			}
-			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
 		}
 
 		// An inline variant has no name for the mapping to use. It can still
@@ -293,16 +275,8 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 			inlineKeys[key] = true
 			outSchema.Discriminator.Mapping[key] = elementSchema.GoType
 		case discriminated:
-			// Explicit mapping.
-			var mapped bool
-			for k, v := range discriminator.Mapping {
-				if v.Ref == element.Ref {
-					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
-					mapped = true
-				}
-			}
-			// Implicit mapping.
-			if !mapped {
+			// Implicit mapping, unless the mapping names the $ref.
+			if !mapExplicitly(outSchema.Discriminator.Mapping, discriminator.Mapping, element.Ref, elementSchema.GoType) {
 				key := RefPathToObjName(element.Ref)
 				if inlineKeys[key] {
 					return nil, fmt.Errorf("discriminator: %s takes the %s value %q, which an inline schema also takes", element.Ref, discriminator.PropertyName, key)
@@ -311,15 +285,10 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 			}
 		}
 		members = append(members, UnionElement(elementSchema.GoType))
-		// The same type can appear twice, e.g. as a member of both an anyOf
-		// and a oneOf; its accessors are generated once.
-		outSchema.UnionElements = appendUnique(outSchema.UnionElements, UnionElement(elementSchema.GoType))
+		addUnionElement(outSchema, element, elementSchema.GoType)
 		if discriminated {
 			mappedCount++
 			outSchema.Discriminator.variants = appendUnique(outSchema.Discriminator.variants, UnionElement(elementSchema.GoType))
-		}
-		for _, name := range propertyNames(element.Value, 0) {
-			outSchema.UnionVariantProperties = appendUnique(outSchema.UnionVariantProperties, name)
 		}
 	}
 	slices.Sort(outSchema.UnionVariantProperties)
@@ -511,7 +480,7 @@ func (ctx genContext) variantKeys(b *openapi3.SchemaRef) ([]string, error) {
 	if b == nil || b.Value == nil || isOpaqueSchema(b) {
 		return nil, nil
 	}
-	if keys, ok := ctx.variantKeyCache[b.Value]; ok {
+	if keys, ok := ctx.v3.variantKeyCache[b.Value]; ok {
 		return keys, nil
 	}
 	// The variant is generated afresh, as its own type is, but sharing the
@@ -519,11 +488,11 @@ func (ctx genContext) variantKeys(b *openapi3.SchemaRef) ([]string, error) {
 	// it finds no keys while its own are being read: they only feed the
 	// unions of this throwaway generation, and a variant's keys come from
 	// its own fields, which don't depend on them.
-	ctx.variantKeyCache[b.Value] = nil
+	ctx.v3.variantKeyCache[b.Value] = nil
 	generate := func(s *openapi3.Schema) (Schema, error) {
 		fresh := newGenContext(ctx.nameHint)
 		fresh.run = ctx.run
-		fresh.variantKeyCache = ctx.variantKeyCache
+		fresh.v3.variantKeyCache = ctx.v3.variantKeyCache
 		return generateGoSchema(fresh, &openapi3.SchemaRef{Value: s}, ctx.nameHint)
 	}
 	s, err := generate(b.Value)
@@ -538,7 +507,7 @@ func (ctx genContext) variantKeys(b *openapi3.SchemaRef) ([]string, error) {
 		}
 	}
 	if err != nil {
-		delete(ctx.variantKeyCache, b.Value)
+		delete(ctx.v3.variantKeyCache, b.Value)
 		return nil, err
 	}
 	keys := []string{}
@@ -552,7 +521,7 @@ func (ctx genContext) variantKeys(b *openapi3.SchemaRef) ([]string, error) {
 			}
 		}
 	}
-	ctx.variantKeyCache[b.Value] = keys
+	ctx.v3.variantKeyCache[b.Value] = keys
 	return keys, nil
 }
 

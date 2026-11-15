@@ -82,6 +82,9 @@ type RequiredTextBodyTextRequestBody = RequiredTextBodyTextBody
 // ReusableResponsesJSONRequestBody defines body for ReusableResponses for application/json ContentType.
 type ReusableResponsesJSONRequestBody = Example
 
+// ReusableURLEncodedResponseFormdataRequestBody defines body for ReusableURLEncodedResponse for application/x-www-form-urlencoded ContentType.
+type ReusableURLEncodedResponseFormdataRequestBody = Example
+
 // SameNameParamAndBodyPropertyJSONRequestBody defines body for SameNameParamAndBodyProperty for application/json ContentType.
 type SameNameParamAndBodyPropertyJSONRequestBody = SameName
 
@@ -100,20 +103,20 @@ type UnionExampleJSONRequestBody = Example
 // AsUnionExample200JSONResponseBody0 returns the union data inside the UnionExample200JSONResponseBody as a UnionExample200JSONResponseBody0
 func (t UnionExample200JSONResponseBody) AsUnionExample200JSONResponseBody0() (UnionExample200JSONResponseBody0, error) {
 	var body UnionExample200JSONResponseBody0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromUnionExample200JSONResponseBody0 overwrites any union data inside the UnionExample200JSONResponseBody as the provided UnionExample200JSONResponseBody0
 func (t *UnionExample200JSONResponseBody) FromUnionExample200JSONResponseBody0(v UnionExample200JSONResponseBody0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeUnionExample200JSONResponseBody0 performs a merge with any union data inside the UnionExample200JSONResponseBody, using the provided UnionExample200JSONResponseBody0
 func (t *UnionExample200JSONResponseBody) MergeUnionExample200JSONResponseBody0(v UnionExample200JSONResponseBody0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -126,20 +129,20 @@ func (t *UnionExample200JSONResponseBody) MergeUnionExample200JSONResponseBody0(
 // AsExample returns the union data inside the UnionExample200JSONResponseBody as a Example
 func (t UnionExample200JSONResponseBody) AsExample() (Example, error) {
 	var body Example
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromExample overwrites any union data inside the UnionExample200JSONResponseBody as the provided Example
 func (t *UnionExample200JSONResponseBody) FromExample(v Example) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeExample performs a merge with any union data inside the UnionExample200JSONResponseBody, using the provided Example
 func (t *UnionExample200JSONResponseBody) MergeExample(v Example) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -322,6 +325,18 @@ type ClientInterface interface {
 	//
 	// Responses can be refs to components/responses.
 	ReusableResponses(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ReusableURLEncodedResponseWithBody performs a POST /reusable-urlencoded-response (the `ReusableURLEncodedResponse` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// A form response can be a ref to components/responses too.
+	ReusableURLEncodedResponseWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ReusableURLEncodedResponseWithFormdataBody performs a POST /reusable-urlencoded-response (the `ReusableURLEncodedResponse` operationId) request.
+	// Takes a body of the `application/x-www-form-urlencoded` content type.
+	//
+	// A form response can be a ref to components/responses too.
+	ReusableURLEncodedResponseWithFormdataBody(ctx context.Context, body ReusableURLEncodedResponseFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// SameNameParamAndBodyPropertyWithBody performs a POST /same-name-param-and-body-property/{name} (the `SameNameParamAndBodyProperty` operationId) request,
 	// with any type of body and a specified content type.
@@ -638,6 +653,38 @@ func (c *Client) ReusableResponses(ctx context.Context, body ReusableResponsesJS
 	return c.Client.Do(req)
 }
 
+// ReusableURLEncodedResponseWithBody performs a POST /reusable-urlencoded-response (the `ReusableURLEncodedResponse` operationId) request,
+// with any type of body and a specified content type.
+//
+// A form response can be a ref to components/responses too.
+func (c *Client) ReusableURLEncodedResponseWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReusableURLEncodedResponseRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// ReusableURLEncodedResponseWithFormdataBody performs a POST /reusable-urlencoded-response (the `ReusableURLEncodedResponse` operationId) request.
+// Takes a body of the `application/x-www-form-urlencoded` content type.
+//
+// A form response can be a ref to components/responses too.
+func (c *Client) ReusableURLEncodedResponseWithFormdataBody(ctx context.Context, body ReusableURLEncodedResponseFormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewReusableURLEncodedResponseRequestWithFormdataBody(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // SameNameParamAndBodyPropertyWithBody performs a POST /same-name-param-and-body-property/{name} (the `SameNameParamAndBodyProperty` operationId) request,
 // with any type of body and a specified content type.
 //
@@ -825,7 +872,7 @@ func (c *Client) UnionExample(ctx context.Context, body UnionExampleJSONRequestB
 // NewJSONExampleRequest calls the generic JSONExample builder with application/json body
 func NewJSONExampleRequest(server string, body JSONExampleJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -923,7 +970,7 @@ func NewMultipartRelatedExampleRequestWithBody(server string, contentType string
 // NewMultipleRequestAndResponseTypesRequest calls the generic MultipleRequestAndResponseTypes builder with application/json body
 func NewMultipleRequestAndResponseTypesRequest(server string, body MultipleRequestAndResponseTypesJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1012,7 +1059,7 @@ func NewNoContentHeadersRequest(server string) (*http.Request, error) {
 // NewRequiredJSONBodyRequest calls the generic RequiredJSONBody builder with application/json body
 func NewRequiredJSONBodyRequest(server string, body RequiredJSONBodyJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1126,7 +1173,7 @@ func NewReservedGoKeywordParametersRequest(server string, pType string) (*http.R
 // NewReusableResponsesRequest calls the generic ReusableResponses builder with application/json body
 func NewReusableResponsesRequest(server string, body ReusableResponsesJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1163,10 +1210,50 @@ func NewReusableResponsesRequestWithBody(server string, contentType string, body
 	return req, nil
 }
 
+// NewReusableURLEncodedResponseRequestWithFormdataBody calls the generic ReusableURLEncodedResponse builder with application/x-www-form-urlencoded body
+func NewReusableURLEncodedResponseRequestWithFormdataBody(server string, body ReusableURLEncodedResponseFormdataRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	bodyStr, err := runtime.MarshalForm(body, nil)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = strings.NewReader(bodyStr.Encode())
+	return NewReusableURLEncodedResponseRequestWithBody(server, "application/x-www-form-urlencoded", bodyReader)
+}
+
+// NewReusableURLEncodedResponseRequestWithBody constructs an http.Request for the ReusableURLEncodedResponse method, with any body, and a specified content type
+func NewReusableURLEncodedResponseRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := "/reusable-urlencoded-response"
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewSameNameParamAndBodyPropertyRequest calls the generic SameNameParamAndBodyProperty builder with application/json body
 func NewSameNameParamAndBodyPropertyRequest(server string, name string, body SameNameParamAndBodyPropertyJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1351,7 +1438,7 @@ func NewURLEncodedExampleRequestWithBody(server string, contentType string, body
 // NewHeadersExampleRequest calls the generic HeadersExample builder with application/json body
 func NewHeadersExampleRequest(server string, params *HeadersExampleParams, body HeadersExampleJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1415,7 +1502,7 @@ func NewHeadersExampleRequestWithBody(server string, params *HeadersExampleParam
 // NewUnionExampleRequest calls the generic UnionExample builder with application/json body
 func NewUnionExampleRequest(server string, body UnionExampleJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1603,6 +1690,20 @@ type ClientWithResponsesInterface interface {
 	//
 	// Responses can be refs to components/responses.
 	ReusableResponsesWithResponse(ctx context.Context, body ReusableResponsesJSONRequestBody, reqEditors ...RequestEditorFn) (*ReusableResponsesResponse, error)
+
+	// ReusableURLEncodedResponseWithBodyWithResponse performs a POST /reusable-urlencoded-response (the `ReusableURLEncodedResponse` operationId) request,
+	// with any type of body and a specified content type.
+	//
+	// A form response can be a ref to components/responses too.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	ReusableURLEncodedResponseWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReusableURLEncodedResponseResponse, error)
+
+	// ReusableURLEncodedResponseWithFormdataBodyWithResponse performs a POST /reusable-urlencoded-response (the `ReusableURLEncodedResponse` operationId) request.
+	// Takes a body of the `application/x-www-form-urlencoded` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// A form response can be a ref to components/responses too.
+	ReusableURLEncodedResponseWithFormdataBodyWithResponse(ctx context.Context, body ReusableURLEncodedResponseFormdataRequestBody, reqEditors ...RequestEditorFn) (*ReusableURLEncodedResponseResponse, error)
 
 	// SameNameParamAndBodyPropertyWithBodyWithResponse performs a POST /same-name-param-and-body-property/{name} (the `SameNameParamAndBodyProperty` operationId) request,
 	// with any type of body and a specified content type.
@@ -2027,6 +2128,40 @@ func (r ReusableResponsesResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r ReusableResponsesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type ReusableURLEncodedResponseResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+}
+
+// GetBody returns the raw response body bytes
+func (r ReusableURLEncodedResponseResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r ReusableURLEncodedResponseResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ReusableURLEncodedResponseResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r ReusableURLEncodedResponseResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -2521,6 +2656,32 @@ func (c *ClientWithResponses) ReusableResponsesWithResponse(ctx context.Context,
 	return ParseReusableResponsesResponse(rsp)
 }
 
+// ReusableURLEncodedResponseWithBodyWithResponse performs a POST /reusable-urlencoded-response (the `ReusableURLEncodedResponse` operationId) request,
+// with any type of body and a specified content type.
+//
+// A form response can be a ref to components/responses too.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) ReusableURLEncodedResponseWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ReusableURLEncodedResponseResponse, error) {
+	rsp, err := c.ReusableURLEncodedResponseWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReusableURLEncodedResponseResponse(rsp)
+}
+
+// ReusableURLEncodedResponseWithFormdataBodyWithResponse performs a POST /reusable-urlencoded-response (the `ReusableURLEncodedResponse` operationId) request.
+// Takes a body of the `application/x-www-form-urlencoded` content type, and returns a wrapper object for the known response body format(s).
+//
+// A form response can be a ref to components/responses too.
+func (c *ClientWithResponses) ReusableURLEncodedResponseWithFormdataBodyWithResponse(ctx context.Context, body ReusableURLEncodedResponseFormdataRequestBody, reqEditors ...RequestEditorFn) (*ReusableURLEncodedResponseResponse, error) {
+	rsp, err := c.ReusableURLEncodedResponseWithFormdataBody(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseReusableURLEncodedResponseResponse(rsp)
+}
+
 // SameNameParamAndBodyPropertyWithBodyWithResponse performs a POST /same-name-param-and-body-property/{name} (the `SameNameParamAndBodyProperty` operationId) request,
 // with any type of body and a specified content type.
 //
@@ -2687,7 +2848,7 @@ func ParseJSONExampleResponse(rsp *http.Response) (*JSONExampleResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Example
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2748,7 +2909,7 @@ func ParseMultipleRequestAndResponseTypesResponse(rsp *http.Response) (*Multiple
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Example
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2816,7 +2977,7 @@ func ParseRequiredJSONBodyResponse(rsp *http.Response) (*RequiredJSONBodyRespons
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Example
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2877,7 +3038,7 @@ func ParseReusableResponsesResponse(rsp *http.Response) (*ReusableResponsesRespo
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Reusableresponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2910,6 +3071,22 @@ func ParseReusableResponsesResponse(rsp *http.Response) (*ReusableResponsesRespo
 	return response, nil
 }
 
+// ParseReusableURLEncodedResponseResponse parses an HTTP response from a ReusableURLEncodedResponseWithResponse call
+func ParseReusableURLEncodedResponseResponse(rsp *http.Response) (*ReusableURLEncodedResponseResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ReusableURLEncodedResponseResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
+}
+
 // ParseSameNameParamAndBodyPropertyResponse parses an HTTP response from a SameNameParamAndBodyPropertyWithResponse call
 func ParseSameNameParamAndBodyPropertyResponse(rsp *http.Response) (*SameNameParamAndBodyPropertyResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -2926,7 +3103,7 @@ func ParseSameNameParamAndBodyPropertyResponse(rsp *http.Response) (*SameNamePar
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest SameName
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3016,7 +3193,7 @@ func ParseHeadersExampleResponse(rsp *http.Response) (*HeadersExampleResponse, e
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Example
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3079,14 +3256,14 @@ func ParseUnionExampleResponse(rsp *http.Response) (*UnionExampleResponse, error
 	switch {
 	case rsp.Header.Get("Content-Type") == "application/alternative+json" && rsp.StatusCode == 200:
 		var dest Example
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationalternativeJSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
 		var dest UnionExample200JSONResponseBody
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest

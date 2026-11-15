@@ -12,7 +12,6 @@ import (
 	"errors"
 	"fmt"
 	"slices"
-	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 )
@@ -70,47 +69,21 @@ func generateUnionV2(ctx genContext, outSchema *Schema, elements openapi3.Schema
 			continue
 		}
 		elementPath := append(path, fmt.Sprint(i))
-		elementSchema, err := generateGoSchema(ctx.at(elementPath), element, elementPath)
+		elementSchema, err := generateUnionElement(ctx, outSchema, element, elementPath)
 		if err != nil {
 			return err
-		}
-
-		if element.Ref == "" {
-			elementName := SchemaNameToTypeName(PathToTypeName(elementPath))
-			if elementSchema.TypeDecl() == elementName {
-				elementSchema.GoType = elementName
-			} else {
-				td := TypeDefinition{Schema: elementSchema, TypeName: elementName, JsonName: strings.Join(elementPath, ".")}
-				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
-				elementSchema.GoType = td.TypeName
-			}
-			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
 		}
 
 		if discriminator != nil {
 			if len(discriminator.Mapping) != 0 && element.Ref == "" {
 				return errors.New("ambiguous discriminator.mapping: please replace inlined object with $ref")
 			}
-
-			// Explicit mapping.
-			var mapped bool
-			for k, v := range discriminator.Mapping {
-				if v.Ref == element.Ref {
-					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
-					mapped = true
-				}
-			}
-			// Implicit mapping.
-			if !mapped {
+			// Implicit mapping, unless the mapping names the $ref.
+			if !mapExplicitly(outSchema.Discriminator.Mapping, discriminator.Mapping, element.Ref, elementSchema.GoType) {
 				outSchema.Discriminator.Mapping[RefPathToObjName(element.Ref)] = elementSchema.GoType
 			}
 		}
-		// The same type can appear twice, e.g. as a member of both an anyOf
-		// and a oneOf; its accessors are generated once.
-		outSchema.UnionElements = appendUnique(outSchema.UnionElements, UnionElement(elementSchema.GoType))
-		for _, name := range propertyNames(element.Value, 0) {
-			outSchema.UnionVariantProperties = appendUnique(outSchema.UnionVariantProperties, name)
-		}
+		addUnionElement(outSchema, element, elementSchema.GoType)
 	}
 	slices.Sort(outSchema.UnionVariantProperties)
 

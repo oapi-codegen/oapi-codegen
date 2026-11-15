@@ -1,6 +1,4 @@
 versions: [v1, v2, v3]
-broken:
-  v1: "v1 generates a struct for an allOf over an array schema."
 description: >-
   allOf decorating a $ref to an array with uniqueItems. Failed with "merging
   two schemas with different UniqueItems", and allOf over arrays dropped the

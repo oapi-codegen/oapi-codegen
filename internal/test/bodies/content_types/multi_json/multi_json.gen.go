@@ -8,7 +8,6 @@ import (
 	"compress/flate"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -19,6 +18,8 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
+	"github.com/oapi-codegen/runtime"
 )
 
 // SuffixBody defines model for SuffixBody.
@@ -176,7 +177,7 @@ func (c *Client) Test(ctx context.Context, reqEditors ...RequestEditorFn) (*http
 // NewSuffixTestRequestWithApplicationTestPlusJSONBody calls the generic SuffixTest builder with application/test+json body
 func NewSuffixTestRequestWithApplicationTestPlusJSONBody(server string, body SuffixTestApplicationTestPlusJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -461,28 +462,28 @@ func ParseTestResponse(rsp *http.Response) (*TestResponse, error) {
 	switch {
 	case rsp.Header.Get("Content-Type") == "application/bar+json" && rsp.StatusCode == 200:
 		var dest Bar
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationbarJSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/foo+json" && rsp.StatusCode == 200:
 		var dest Foo
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationfooJSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/bar+json" && rsp.StatusCode == 201:
 		var dest BazApplicationBarPlusJSON
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationbarJSON201 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/foo+json" && rsp.StatusCode == 201:
 		var dest BazApplicationFooPlusJSON
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationfooJSON201 = &dest
@@ -599,7 +600,7 @@ type Test200ApplicationBarPlusJSONResponse Bar
 func (response Test200ApplicationBarPlusJSONResponse) VisitTestResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/bar+json")
@@ -613,7 +614,7 @@ type Test200ApplicationFooPlusJSONResponse Foo
 func (response Test200ApplicationFooPlusJSONResponse) VisitTestResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/foo+json")
@@ -629,7 +630,7 @@ type Test201ApplicationBarPlusJSONResponse struct {
 func (response Test201ApplicationBarPlusJSONResponse) VisitTestResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.BazApplicationBarPlusJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.BazApplicationBarPlusJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/bar+json")
@@ -645,7 +646,7 @@ type Test201ApplicationFooPlusJSONResponse struct {
 func (response Test201ApplicationFooPlusJSONResponse) VisitTestResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.BazApplicationFooPlusJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.BazApplicationFooPlusJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/foo+json")
@@ -664,8 +665,11 @@ type StrictServerInterface interface {
 	Test(ctx context.Context, request TestRequestObject) (TestResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx *gin.Context, request any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+// StrictHandlerFunc and StrictMiddlewareFunc are type aliases rather than
+// distinct named types, so middleware written against one generated package
+// can be shared with every other generated package using the same framework.
+type StrictHandlerFunc = func(ctx *gin.Context, request any) (any, error)
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictGinServerOptions struct {
 	// RequestErrorHandlerFunc is called when a request cannot be parsed or
@@ -726,7 +730,18 @@ func (sh *strictHandler) SuffixTest(ctx *gin.Context) {
 	var request SuffixTestRequestObject
 
 	var body SuffixTestApplicationTestPlusJSONRequestBody
-	if err := ctx.ShouldBindJSON(&body); err != nil {
+	var err error
+	// A request validator built on kin-openapi's openapi3filter with
+	// KeepValidatedValue leaves the value it validated on the body. Bind
+	// that value, matching member names exactly, so the handler receives
+	// what was validated instead of a second, case-insensitive decode.
+	if vb, ok := ctx.Request.Body.(interface{ ValidatedValue() any }); !ok || runtime.BindJSONValue(vb.ValidatedValue(), &body) != nil {
+		err = ctx.ShouldBindJSON(&body)
+	} else if binding.Validator != nil {
+		// ShouldBindJSON runs the struct validator after decoding; keep that.
+		err = binding.Validator.ValidateStruct(&body)
+	}
+	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			sh.options.RequestErrorHandlerFunc(ctx, err)
 			return

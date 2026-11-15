@@ -8,7 +8,6 @@ package matrixv1allofarray
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -27,21 +26,9 @@ type Holder struct {
 
 // InlineHolder defines model for InlineHolder.
 type InlineHolder struct {
-	List *[]struct {
-		// Embedded struct due to allOf(#/components/schemas/Items)
-		Items `yaml:",inline"`
-		// Embedded fields due to inline allOf schema
-	} `json:"list,omitempty"`
-	Map *map[string]struct {
-		// Embedded struct due to allOf(#/components/schemas/Items)
-		Items `yaml:",inline"`
-		// Embedded fields due to inline allOf schema
-	} `json:"map,omitempty"`
-	One *struct {
-		// Embedded struct due to allOf(#/components/schemas/Items)
-		Items `yaml:",inline"`
-		// Embedded fields due to inline allOf schema
-	} `json:"one,omitempty"`
+	List *[]Items          `json:"list,omitempty"`
+	Map  *map[string]Items `json:"map,omitempty"`
+	One  *Items            `json:"one,omitempty"`
 }
 
 // Item defines model for Item.
@@ -53,51 +40,31 @@ type Item struct {
 type Items = []Item
 
 // Subject defines model for Subject.
-type Subject struct {
-	// Embedded struct due to allOf(#/components/schemas/Items)
-	Items `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-}
+type Subject = Items
 
 // InlineSubjectResponse defines model for InlineSubjectResponse.
-type InlineSubjectResponse struct {
-	// Embedded struct due to allOf(#/components/schemas/Items)
-	Items `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-}
+type InlineSubjectResponse = Items
 
 // SubjectResponse defines model for SubjectResponse.
 type SubjectResponse = Subject
 
 // InlineSubjectBody defines model for InlineSubjectBody.
-type InlineSubjectBody struct {
-	// Embedded struct due to allOf(#/components/schemas/Items)
-	Items `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-}
+type InlineSubjectBody = Items
 
 // SubjectBody defines model for SubjectBody.
 type SubjectBody = Subject
 
 // BodyComponentInlineJSONBody defines body for BodyComponentInline for application/json ContentType.
-type BodyComponentInlineJSONBody struct {
-	// Embedded struct due to allOf(#/components/schemas/Items)
-	Items `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-}
+type BodyComponentInlineJSONBody = Items
 
 // BodyInlineJSONBody defines body for BodyInline for application/json ContentType.
-type BodyInlineJSONBody struct {
-	// Embedded struct due to allOf(#/components/schemas/Items)
-	Items `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-}
+type BodyInlineJSONBody = Items
 
 // BodyComponentJSONRequestBody defines body for BodyComponent for application/json ContentType.
 type BodyComponentJSONRequestBody = Subject
 
 // BodyComponentInlineJSONRequestBody defines body for BodyComponentInline for application/json ContentType.
-type BodyComponentInlineJSONRequestBody BodyComponentInlineJSONBody
+type BodyComponentInlineJSONRequestBody = BodyComponentInlineJSONBody
 
 // BodyDefaultJSONRequestBody defines body for BodyDefault for application/json ContentType.
 type BodyDefaultJSONRequestBody = Subject
@@ -106,7 +73,7 @@ type BodyDefaultJSONRequestBody = Subject
 type BodyHeadersJSONRequestBody = Subject
 
 // BodyInlineJSONRequestBody defines body for BodyInline for application/json ContentType.
-type BodyInlineJSONRequestBody BodyInlineJSONBody
+type BodyInlineJSONRequestBody = BodyInlineJSONBody
 
 // BodyRefJSONRequestBody defines body for BodyRef for application/json ContentType.
 type BodyRefJSONRequestBody = Subject
@@ -483,7 +450,7 @@ func (c *Client) HolderInline(ctx context.Context, body HolderInlineJSONRequestB
 // NewBodyComponentRequest calls the generic BodyComponent builder with application/json body
 func NewBodyComponentRequest(server string, body BodyComponentJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -523,7 +490,7 @@ func NewBodyComponentRequestWithBody(server string, contentType string, body io.
 // NewBodyComponentInlineRequest calls the generic BodyComponentInline builder with application/json body
 func NewBodyComponentInlineRequest(server string, body BodyComponentInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -563,7 +530,7 @@ func NewBodyComponentInlineRequestWithBody(server string, contentType string, bo
 // NewBodyDefaultRequest calls the generic BodyDefault builder with application/json body
 func NewBodyDefaultRequest(server string, body BodyDefaultJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -603,7 +570,7 @@ func NewBodyDefaultRequestWithBody(server string, contentType string, body io.Re
 // NewBodyHeadersRequest calls the generic BodyHeaders builder with application/json body
 func NewBodyHeadersRequest(server string, body BodyHeadersJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -643,7 +610,7 @@ func NewBodyHeadersRequestWithBody(server string, contentType string, body io.Re
 // NewBodyInlineRequest calls the generic BodyInline builder with application/json body
 func NewBodyInlineRequest(server string, body BodyInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -683,7 +650,7 @@ func NewBodyInlineRequestWithBody(server string, contentType string, body io.Rea
 // NewBodyRefRequest calls the generic BodyRef builder with application/json body
 func NewBodyRefRequest(server string, body BodyRefJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -723,7 +690,7 @@ func NewBodyRefRequestWithBody(server string, contentType string, body io.Reader
 // NewHolderRequest calls the generic Holder builder with application/json body
 func NewHolderRequest(server string, body HolderJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -763,7 +730,7 @@ func NewHolderRequestWithBody(server string, contentType string, body io.Reader)
 // NewHolderInlineRequest calls the generic HolderInline builder with application/json body
 func NewHolderInlineRequest(server string, body HolderInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1100,19 +1067,11 @@ type BodyInlineResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	// JSON200 the response for an HTTP 200 `application/json` response
-	JSON200 *struct {
-		// Embedded struct due to allOf(#/components/schemas/Items)
-		Items `yaml:",inline"`
-		// Embedded fields due to inline allOf schema
-	}
+	JSON200 *Items
 }
 
 // GetJSON200 returns the response for an HTTP 200 `application/json` response
-func (r BodyInlineResponse) GetJSON200() *struct {
-	// Embedded struct due to allOf(#/components/schemas/Items)
-	Items `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-} {
+func (r BodyInlineResponse) GetJSON200() *Items {
 	return r.JSON200
 }
 
@@ -1460,7 +1419,7 @@ func ParseBodyComponentResponse(rsp *http.Response) (*BodyComponentResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest SubjectResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1486,7 +1445,7 @@ func ParseBodyComponentInlineResponse(rsp *http.Response) (*BodyComponentInlineR
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest InlineSubjectResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1512,7 +1471,7 @@ func ParseBodyDefaultResponse(rsp *http.Response) (*BodyDefaultResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSONDefault = &dest
@@ -1538,7 +1497,7 @@ func ParseBodyHeadersResponse(rsp *http.Response) (*BodyHeadersResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1576,12 +1535,8 @@ func ParseBodyInlineResponse(rsp *http.Response) (*BodyInlineResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest struct {
-			// Embedded struct due to allOf(#/components/schemas/Items)
-			Items `yaml:",inline"`
-			// Embedded fields due to inline allOf schema
-		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		var dest Items
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1607,7 +1562,7 @@ func ParseBodyRefResponse(rsp *http.Response) (*BodyRefResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1633,7 +1588,7 @@ func ParseHolderResponse(rsp *http.Response) (*HolderResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Holder
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1659,7 +1614,7 @@ func ParseHolderInlineResponse(rsp *http.Response) (*HolderInlineResponse, error
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest InlineHolder
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1950,11 +1905,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	return m
 }
 
-type InlineSubjectResponseJSONResponse struct {
-	// Embedded struct due to allOf(#/components/schemas/Items)
-	Items `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-}
+type InlineSubjectResponseJSONResponse Items
 
 type SubjectResponseJSONResponse Subject
 
@@ -1971,7 +1922,7 @@ type BodyComponent200JSONResponse struct{ SubjectResponseJSONResponse }
 func (response BodyComponent200JSONResponse) VisitBodyComponentResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.SubjectResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.SubjectResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1995,7 +1946,7 @@ type BodyComponentInline200JSONResponse struct {
 func (response BodyComponentInline200JSONResponse) VisitBodyComponentInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.InlineSubjectResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.InlineSubjectResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2020,7 +1971,7 @@ type BodyDefaultdefaultJSONResponse struct {
 func (response BodyDefaultdefaultJSONResponse) VisitBodyDefaultResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2049,7 +2000,7 @@ type BodyHeaders200JSONResponse struct {
 func (response BodyHeaders200JSONResponse) VisitBodyHeadersResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2073,16 +2024,12 @@ type BodyInlineResponseObject interface {
 	VisitBodyInlineResponse(w http.ResponseWriter) error
 }
 
-type BodyInline200JSONResponse struct {
-	// Embedded struct due to allOf(#/components/schemas/Items)
-	Items `yaml:",inline"`
-	// Embedded fields due to inline allOf schema
-}
+type BodyInline200JSONResponse Items
 
 func (response BodyInline200JSONResponse) VisitBodyInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2104,7 +2051,7 @@ type BodyRef200JSONResponse Subject
 func (response BodyRef200JSONResponse) VisitBodyRefResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2126,7 +2073,7 @@ type Holder200JSONResponse Holder
 func (response Holder200JSONResponse) VisitHolderResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2148,7 +2095,7 @@ type HolderInline200JSONResponse InlineHolder
 func (response HolderInline200JSONResponse) VisitHolderInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2185,8 +2132,11 @@ type StrictServerInterface interface {
 	HolderInline(ctx context.Context, request HolderInlineRequestObject) (HolderInlineResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+// StrictHandlerFunc and StrictMiddlewareFunc are type aliases rather than
+// distinct named types, so middleware written against one generated package
+// can be shared with every other generated package using the same framework.
+type StrictHandlerFunc = func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)
@@ -2229,7 +2179,7 @@ func (sh *strictHandler) BodyComponent(w http.ResponseWriter, r *http.Request) {
 	var request BodyComponentRequestObject
 
 	var body BodyComponentJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -2260,7 +2210,7 @@ func (sh *strictHandler) BodyComponentInline(w http.ResponseWriter, r *http.Requ
 	var request BodyComponentInlineRequestObject
 
 	var body BodyComponentInlineJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -2291,7 +2241,7 @@ func (sh *strictHandler) BodyDefault(w http.ResponseWriter, r *http.Request) {
 	var request BodyDefaultRequestObject
 
 	var body BodyDefaultJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -2322,7 +2272,7 @@ func (sh *strictHandler) BodyHeaders(w http.ResponseWriter, r *http.Request) {
 	var request BodyHeadersRequestObject
 
 	var body BodyHeadersJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -2353,7 +2303,7 @@ func (sh *strictHandler) BodyInline(w http.ResponseWriter, r *http.Request) {
 	var request BodyInlineRequestObject
 
 	var body BodyInlineJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -2384,7 +2334,7 @@ func (sh *strictHandler) BodyRef(w http.ResponseWriter, r *http.Request) {
 	var request BodyRefRequestObject
 
 	var body BodyRefJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -2415,7 +2365,7 @@ func (sh *strictHandler) Holder(w http.ResponseWriter, r *http.Request) {
 	var request HolderRequestObject
 
 	var body HolderJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}
@@ -2446,7 +2396,7 @@ func (sh *strictHandler) HolderInline(w http.ResponseWriter, r *http.Request) {
 	var request HolderInlineRequestObject
 
 	var body HolderInlineJSONRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+	if err := runtime.BindJSONBody(r, &body); err != nil {
 		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
 		return
 	}

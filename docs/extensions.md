@@ -179,6 +179,43 @@ type ClientRenamedByExtension struct {
 
 You can see this in more detail in [the example code](../examples/extensions/xgoname/).
 
+### Properties which get the same field name
+
+Two properties of one object can get the same field name. Go identifiers can't contain most of the characters a JSON property name can, so `host-fqdn` and `host_fqdn` are both `HostFqdn`:
+
+```yaml
+    Info:
+      type: object
+      properties:
+        host-fqdn:
+          type: string
+        host_fqdn:
+          type: string
+```
+
+A struct can't declare a field twice, so `oapi-codegen` reports an error which names the properties. There are two ways to resolve it.
+
+Name one of the fields yourself:
+
+```yaml
+        host-fqdn:
+          type: string
+          x-go-name: HostFqdnDashed
+```
+
+Or set `resolve-type-name-collisions` under `output-options` (see [configuration.md](configuration.md)), and each of the properties is renamed with a short hash of its JSON name:
+
+```go
+type Info struct {
+	HostFqdn_cea8c90 *string `json:"host-fqdn,omitempty"`
+	HostFqdn_bcac5e8 *string `json:"host_fqdn,omitempty"`
+}
+```
+
+Every property in the collision is renamed, and none of them keeps `HostFqdn`. That way a field's name depends only on its own property, and doesn't change, or come to mean a different property, as others are added to the spec. A field named with `x-go-name` is never renamed, so you can still pick the names you care about and leave the rest to the option.
+
+The same applies to a property named `additionalProperties` in an object which allows additional properties, as the field which holds those is called `AdditionalProperties`.
+
 ## `x-go-type-name`
 
 Override the generated name of a type.

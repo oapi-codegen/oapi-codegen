@@ -18,6 +18,7 @@ import (
 	"bytes"
 	"cmp"
 	"fmt"
+	"go/ast"
 	"hash/fnv"
 	"maps"
 	"slices"
@@ -1056,6 +1057,12 @@ func (o *OperationDefinition) GetResponseTypeDefinitions() ([]ResponseTypeDefini
 							responseSchema.RefType = responseBodyTypeName
 						}
 					}
+					// An inline response of an externally-ref'd path item was
+					// generated in the external document's context, so the
+					// types it names live in the imported package.
+					if !IsGoTypeReference(responseRef.Ref) {
+						ensureExternalRefsInSchema(&responseSchema, o.PathItemRef)
+					}
 
 					td := ResponseTypeDefinition{
 						TypeDefinition: TypeDefinition{
@@ -1333,6 +1340,89 @@ type ResponseContentDefinition struct {
 	// When we generate type names, we need a Tag for it, such as JSON, in
 	// which case we will produce "Response200JSONContent".
 	NameTag string
+
+	// NeedsBodyWrapper is true when a schema-backed strict response cannot use
+	// its generated Go type directly: as a method receiver, or, for a reusable
+	// response envelope, as an embedded field.
+	NeedsBodyWrapper bool
+}
+
+// responseSchemaNeedsBodyWrapper reports whether the strict response for a
+// schema must carry its body in a Body field. embedded is true when the
+// generated type is a reusable response envelope that operations embed in a
+// struct, rather than a type that operations use as a method receiver.
+func responseSchemaNeedsBodyWrapper(sref *openapi3.SchemaRef, schema Schema, path []string, embedded bool) (bool, error) {
+	return responseSchemaNeedsBodyWrapperSeen(sref, schema, path, embedded, map[string]struct{}{})
+}
+
+func responseSchemaNeedsBodyWrapperSeen(sref *openapi3.SchemaRef, schema Schema, path []string, embedded bool, seenRefs map[string]struct{}) (bool, error) {
+	if goTypeNeedsBodyWrapper(schema.TypeDecl(), embedded) {
+		return true, nil
+	}
+	// x-go-type-name uses a named type that is declared alongside the schema.
+	if td, ok := schema.namedTypeDef(); ok && goTypeNeedsBodyWrapper(td.Schema.TypeDecl(), embedded) {
+		return true, nil
+	}
+	if sref == nil || sref.Value == nil {
+		return false, nil
+	}
+
+	if IsGoTypeReference(sref.Ref) {
+		if _, seen := seenRefs[sref.Ref]; seen {
+			return false, nil
+		}
+		seenRefs[sref.Ref] = struct{}{}
+
+		resolved := *sref.Value
+		resolved.Extensions = combinedSchemaExtensions(sref)
+		resolvedRef := openapi3.NewSchemaRef("", &resolved)
+		resolvedSchema, err := GenerateGoSchema(resolvedRef, path)
+		if err != nil {
+			return false, fmt.Errorf("generating referenced response schema: %w", err)
+		}
+		return responseSchemaNeedsBodyWrapperSeen(resolvedRef, resolvedSchema, path, embedded, seenRefs)
+	}
+
+	// An explicit named x-go-type may be declared by user code in the current
+	// package or an imported package. Its underlying type is unavailable here,
+	// so preserve the existing direct response API.
+	if _, ok := combinedSchemaExtensions(sref)[extPropGoType]; ok {
+		return false, nil
+	}
+
+	// A composition lowered to a referenced member's type is classified by
+	// that member.
+	member, memberSchema, err := loweredToMember(sref.Value, schema.TypeDecl(), func(member *openapi3.SchemaRef) (Schema, error) {
+		return GenerateGoSchema(member, path)
+	})
+	if err != nil {
+		return false, fmt.Errorf("generating composed response schema: %w", err)
+	}
+	if member != nil {
+		return responseSchemaNeedsBodyWrapperSeen(member, memberSchema, path, embedded, seenRefs)
+	}
+
+	return false, nil
+}
+
+// goTypeNeedsBodyWrapper reports whether typeDecl cannot carry a strict
+// response directly. A method receiver cannot be a pointer or an interface
+// type. An embedded field can be an interface, but not a pointer.
+func goTypeNeedsBodyWrapper(typeDecl string, embedded bool) bool {
+	expr, _, ok := parseGoType(typeDecl)
+	if !ok {
+		return false
+	}
+	switch expr := unparen(expr).(type) {
+	case *ast.StarExpr:
+		return true
+	case *ast.InterfaceType:
+		return !embedded
+	case *ast.Ident:
+		return !embedded && (expr.Name == "any" || expr.Name == "error")
+	default:
+		return false
+	}
 }
 
 // TypeDef returns the Go type definition for a request body
@@ -1349,6 +1439,18 @@ func (r ResponseContentDefinition) TypeDef(opID string, statusCode int) *TypeDef
 // (output-options.content-types) don't change how a response is written.
 func (r ResponseContentDefinition) IsSupported() bool {
 	return r.IsJSON() || r.IsFormdata() || r.IsMultipart() || r.IsText()
+}
+
+// usesSchemaReceiver reports whether a strict response derives its receiver
+// from the response schema rather than a fixed callback or reader type.
+func (r ResponseContentDefinition) usesSchemaReceiver() bool {
+	return r.IsJSON() || r.IsText() || r.IsFormdata()
+}
+
+// CanUseDirectResponseType reports whether the strict response can use its
+// wire type directly instead of exposing a Body field.
+func (r ResponseContentDefinition) CanUseDirectResponseType() bool {
+	return r.IsSupported() && !r.NeedsBodyWrapper
 }
 
 // HasFixedContentType returns true if content type has fixed content type, i.e. contains no "*" symbol
@@ -2060,7 +2162,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		bodyTypeName := operationID + tag + "Body"
 		bodySchema, err := GenerateGoSchema(content.Schema, []string{bodyTypeName})
 		if err != nil {
-			return nil, nil, fmt.Errorf("error generating request body definition: %w", err)
+			return nil, nil, fmt.Errorf("error generating request body definition for %s (%s): %w", operationID, contentType, err)
 		}
 
 		// If the body is a pre-defined type
@@ -2143,6 +2245,16 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 		}
 		response := responseOrRef.Value
 
+		// Reusable components.responses are generated with no operation
+		// (see the GenerateResponseDefinitions("", ...) call in Generate),
+		// and the map key is then a response component name rather than a
+		// status code. Name it alone instead of qualifying it with an empty
+		// operation, which would read as a leading ".".
+		responseLabel := statusCode
+		if operationID != "" {
+			responseLabel = operationID + "." + statusCode
+		}
+
 		var responseContentDefinitions []ResponseContentDefinition
 
 		for _, contentType := range SortedMapKeys(response.Content) {
@@ -2179,7 +2291,7 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			responseBodyTypeName := responseTypeName + "Body"
 			contentSchema, err := GenerateGoSchema(content.Schema, []string{responseBodyTypeName})
 			if err != nil {
-				return nil, fmt.Errorf("error generating request body definition: %w", err)
+				return nil, fmt.Errorf("error generating response body definition for %s (%s): %w", responseLabel, contentType, err)
 			}
 
 			// Hoist inline response-root schemas that need method-emitting
@@ -2246,6 +2358,17 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 				NameTag:     tag,
 				Schema:      contentSchema,
 			}
+			if rcd.usesSchemaReceiver() {
+				// A components/responses envelope is embedded in the response
+				// struct of each operation that reaches it through $ref, so it
+				// is never a method receiver itself. A text envelope is the
+				// exception: the operation redeclares it as its receiver type.
+				embedded := (operationID == "" || responseOrRef.Ref != "") && !rcd.IsText()
+				rcd.NeedsBodyWrapper, err = responseSchemaNeedsBodyWrapper(content.Schema, contentSchema, []string{responseBodyTypeName}, embedded)
+				if err != nil {
+					return nil, fmt.Errorf("determining response body representation: %w", err)
+				}
+			}
 
 			responseContentDefinitions = append(responseContentDefinitions, rcd)
 		}
@@ -2255,7 +2378,7 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			header := response.Headers[headerName]
 			contentSchema, err := GenerateGoSchema(header.Value.Schema, []string{})
 			if err != nil {
-				return nil, fmt.Errorf("error generating response header definition: %w", err)
+				return nil, fmt.Errorf("error generating response header definition for %s header %q: %w", responseLabel, headerName, err)
 			}
 			// When the header component itself is an external `$ref` (it lives
 			// in another file) and its schema references a named type, that

@@ -3,7 +3,7 @@
 To use purely `net/http` (for Go 1.22+), you will want a configuration file such as:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.0/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 package: api
 generate:
   std-http-server: true
@@ -141,7 +141,7 @@ func main() {
 > If you feel like you've done everything right, but are still receiving `404 page not found` errors, make sure that you've got the `go` directive in your `go.mod` set to at least `1.22`, which enables the enhanced `net/http` routing. In practice it should be at least:
 
 ```go.mod
-go 1.24
+go 1.26
 ```
 
-> (the `github.com/oapi-codegen/runtime` module imported by the generated code requires Go 1.24+.)
+> (the `github.com/oapi-codegen/runtime` module imported by the generated code requires Go 1.26+.)

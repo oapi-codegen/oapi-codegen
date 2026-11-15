@@ -262,13 +262,13 @@ func (a *NodeMap_AdditionalProperties) Set(fieldName string, value NodeMap_Addit
 // Override default JSON handling for NodeMap_AdditionalProperties to handle AdditionalProperties
 func (a *NodeMap_AdditionalProperties) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["extra"]; found {
-		err = json.Unmarshal(raw, &a.Extra)
+		err = runtime.JSONUnmarshal(raw, &a.Extra)
 		if err != nil {
 			return fmt.Errorf("error reading 'extra': %w", err)
 		}
@@ -279,7 +279,7 @@ func (a *NodeMap_AdditionalProperties) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]NodeMap_AdditionalProperties)
 		for fieldName, fieldBuf := range object {
 			var fieldVal NodeMap_AdditionalProperties
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -295,38 +295,38 @@ func (a NodeMap_AdditionalProperties) MarshalJSON() ([]byte, error) {
 	object := make(map[string]json.RawMessage)
 
 	if a.Extra != nil {
-		object["extra"], err = json.Marshal(a.Extra)
+		object["extra"], err = runtime.JSONMarshal(a.Extra)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'extra': %w", err)
 		}
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // AsFilterValue returns the union data inside the FilterPredicate as a FilterValue
 func (t FilterPredicate) AsFilterValue() (FilterValue, error) {
 	var body FilterValue
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromFilterValue overwrites any union data inside the FilterPredicate as the provided FilterValue
 func (t *FilterPredicate) FromFilterValue(v FilterValue) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeFilterValue performs a merge with any union data inside the FilterPredicate, using the provided FilterValue
 func (t *FilterPredicate) MergeFilterValue(v FilterValue) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -339,20 +339,20 @@ func (t *FilterPredicate) MergeFilterValue(v FilterValue) error {
 // AsFilterPredicate1 returns the union data inside the FilterPredicate as a FilterPredicate1
 func (t FilterPredicate) AsFilterPredicate1() (FilterPredicate1, error) {
 	var body FilterPredicate1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromFilterPredicate1 overwrites any union data inside the FilterPredicate as the provided FilterPredicate1
 func (t *FilterPredicate) FromFilterPredicate1(v FilterPredicate1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeFilterPredicate1 performs a merge with any union data inside the FilterPredicate, using the provided FilterPredicate1
 func (t *FilterPredicate) MergeFilterPredicate1(v FilterPredicate1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -365,20 +365,20 @@ func (t *FilterPredicate) MergeFilterPredicate1(v FilterPredicate1) error {
 // AsFilterPredicateOp returns the union data inside the FilterPredicate as a FilterPredicateOp
 func (t FilterPredicate) AsFilterPredicateOp() (FilterPredicateOp, error) {
 	var body FilterPredicateOp
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromFilterPredicateOp overwrites any union data inside the FilterPredicate as the provided FilterPredicateOp
 func (t *FilterPredicate) FromFilterPredicateOp(v FilterPredicateOp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeFilterPredicateOp performs a merge with any union data inside the FilterPredicate, using the provided FilterPredicateOp
 func (t *FilterPredicate) MergeFilterPredicateOp(v FilterPredicateOp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -391,20 +391,20 @@ func (t *FilterPredicate) MergeFilterPredicateOp(v FilterPredicateOp) error {
 // AsFilterPredicateRangeOp returns the union data inside the FilterPredicate as a FilterPredicateRangeOp
 func (t FilterPredicate) AsFilterPredicateRangeOp() (FilterPredicateRangeOp, error) {
 	var body FilterPredicateRangeOp
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromFilterPredicateRangeOp overwrites any union data inside the FilterPredicate as the provided FilterPredicateRangeOp
 func (t *FilterPredicate) FromFilterPredicateRangeOp(v FilterPredicateRangeOp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeFilterPredicateRangeOp performs a merge with any union data inside the FilterPredicate, using the provided FilterPredicateRangeOp
 func (t *FilterPredicate) MergeFilterPredicateRangeOp(v FilterPredicateRangeOp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -427,20 +427,20 @@ func (t *FilterPredicate) UnmarshalJSON(b []byte) error {
 // AsFilterPredicateOpAny0 returns the union data inside the FilterPredicateOp_Any as a FilterPredicateOpAny0
 func (t FilterPredicateOp_Any) AsFilterPredicateOpAny0() (FilterPredicateOpAny0, error) {
 	var body FilterPredicateOpAny0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromFilterPredicateOpAny0 overwrites any union data inside the FilterPredicateOp_Any as the provided FilterPredicateOpAny0
 func (t *FilterPredicateOp_Any) FromFilterPredicateOpAny0(v FilterPredicateOpAny0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeFilterPredicateOpAny0 performs a merge with any union data inside the FilterPredicateOp_Any, using the provided FilterPredicateOpAny0
 func (t *FilterPredicateOp_Any) MergeFilterPredicateOpAny0(v FilterPredicateOpAny0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -463,20 +463,20 @@ func (t *FilterPredicateOp_Any) UnmarshalJSON(b []byte) error {
 // AsFilterPredicate returns the union data inside the FilterPredicateOp_None as a FilterPredicate
 func (t FilterPredicateOp_None) AsFilterPredicate() (FilterPredicate, error) {
 	var body FilterPredicate
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromFilterPredicate overwrites any union data inside the FilterPredicateOp_None as the provided FilterPredicate
 func (t *FilterPredicateOp_None) FromFilterPredicate(v FilterPredicate) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeFilterPredicate performs a merge with any union data inside the FilterPredicateOp_None, using the provided FilterPredicate
 func (t *FilterPredicateOp_None) MergeFilterPredicate(v FilterPredicate) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -489,20 +489,20 @@ func (t *FilterPredicateOp_None) MergeFilterPredicate(v FilterPredicate) error {
 // AsFilterPredicateOpNone1 returns the union data inside the FilterPredicateOp_None as a FilterPredicateOpNone1
 func (t FilterPredicateOp_None) AsFilterPredicateOpNone1() (FilterPredicateOpNone1, error) {
 	var body FilterPredicateOpNone1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromFilterPredicateOpNone1 overwrites any union data inside the FilterPredicateOp_None as the provided FilterPredicateOpNone1
 func (t *FilterPredicateOp_None) FromFilterPredicateOpNone1(v FilterPredicateOpNone1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeFilterPredicateOpNone1 performs a merge with any union data inside the FilterPredicateOp_None, using the provided FilterPredicateOpNone1
 func (t *FilterPredicateOp_None) MergeFilterPredicateOpNone1(v FilterPredicateOpNone1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -525,20 +525,20 @@ func (t *FilterPredicateOp_None) UnmarshalJSON(b []byte) error {
 // AsFilterRangeValue0 returns the union data inside the FilterRangeValue as a FilterRangeValue0
 func (t FilterRangeValue) AsFilterRangeValue0() (FilterRangeValue0, error) {
 	var body FilterRangeValue0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromFilterRangeValue0 overwrites any union data inside the FilterRangeValue as the provided FilterRangeValue0
 func (t *FilterRangeValue) FromFilterRangeValue0(v FilterRangeValue0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeFilterRangeValue0 performs a merge with any union data inside the FilterRangeValue, using the provided FilterRangeValue0
 func (t *FilterRangeValue) MergeFilterRangeValue0(v FilterRangeValue0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -551,20 +551,20 @@ func (t *FilterRangeValue) MergeFilterRangeValue0(v FilterRangeValue0) error {
 // AsFilterRangeValue1 returns the union data inside the FilterRangeValue as a FilterRangeValue1
 func (t FilterRangeValue) AsFilterRangeValue1() (FilterRangeValue1, error) {
 	var body FilterRangeValue1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromFilterRangeValue1 overwrites any union data inside the FilterRangeValue as the provided FilterRangeValue1
 func (t *FilterRangeValue) FromFilterRangeValue1(v FilterRangeValue1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeFilterRangeValue1 performs a merge with any union data inside the FilterRangeValue, using the provided FilterRangeValue1
 func (t *FilterRangeValue) MergeFilterRangeValue1(v FilterRangeValue1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -587,7 +587,7 @@ func (t *FilterRangeValue) UnmarshalText(text []byte) error {
 			return nil
 		}
 	}
-	b, err := json.Marshal(string(text))
+	b, err := runtime.JSONMarshal(string(text))
 	if err != nil {
 		return err
 	}
@@ -613,20 +613,20 @@ func (t *FilterRangeValue) UnmarshalJSON(b []byte) error {
 // AsFilterValue0 returns the union data inside the FilterValue as a FilterValue0
 func (t FilterValue) AsFilterValue0() (FilterValue0, error) {
 	var body FilterValue0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromFilterValue0 overwrites any union data inside the FilterValue as the provided FilterValue0
 func (t *FilterValue) FromFilterValue0(v FilterValue0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeFilterValue0 performs a merge with any union data inside the FilterValue, using the provided FilterValue0
 func (t *FilterValue) MergeFilterValue0(v FilterValue0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -639,20 +639,20 @@ func (t *FilterValue) MergeFilterValue0(v FilterValue0) error {
 // AsFilterValue1 returns the union data inside the FilterValue as a FilterValue1
 func (t FilterValue) AsFilterValue1() (FilterValue1, error) {
 	var body FilterValue1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromFilterValue1 overwrites any union data inside the FilterValue as the provided FilterValue1
 func (t *FilterValue) FromFilterValue1(v FilterValue1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeFilterValue1 performs a merge with any union data inside the FilterValue, using the provided FilterValue1
 func (t *FilterValue) MergeFilterValue1(v FilterValue1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -665,20 +665,20 @@ func (t *FilterValue) MergeFilterValue1(v FilterValue1) error {
 // AsFilterValue2 returns the union data inside the FilterValue as a FilterValue2
 func (t FilterValue) AsFilterValue2() (FilterValue2, error) {
 	var body FilterValue2
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromFilterValue2 overwrites any union data inside the FilterValue as the provided FilterValue2
 func (t *FilterValue) FromFilterValue2(v FilterValue2) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeFilterValue2 performs a merge with any union data inside the FilterValue, using the provided FilterValue2
 func (t *FilterValue) MergeFilterValue2(v FilterValue2) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -705,7 +705,7 @@ func (t *FilterValue) UnmarshalText(text []byte) error {
 			return nil
 		}
 	}
-	b, err := json.Marshal(string(text))
+	b, err := runtime.JSONMarshal(string(text))
 	if err != nil {
 		return err
 	}
@@ -731,20 +731,20 @@ func (t *FilterValue) UnmarshalJSON(b []byte) error {
 // AsNode0 returns the union data inside the Node as a Node0
 func (t Node) AsNode0() (Node0, error) {
 	var body Node0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromNode0 overwrites any union data inside the Node as the provided Node0
 func (t *Node) FromNode0(v Node0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeNode0 performs a merge with any union data inside the Node, using the provided Node0
 func (t *Node) MergeNode0(v Node0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -757,20 +757,20 @@ func (t *Node) MergeNode0(v Node0) error {
 // AsNode1 returns the union data inside the Node as a Node1
 func (t Node) AsNode1() (Node1, error) {
 	var body Node1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromNode1 overwrites any union data inside the Node as the provided Node1
 func (t *Node) FromNode1(v Node1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeNode1 performs a merge with any union data inside the Node, using the provided Node1
 func (t *Node) MergeNode1(v Node1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -793,20 +793,20 @@ func (t *Node) UnmarshalJSON(b []byte) error {
 // AsNode1Children0 returns the union data inside the Node_1_Children_Item as a Node1Children0
 func (t Node_1_Children_Item) AsNode1Children0() (Node1Children0, error) {
 	var body Node1Children0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromNode1Children0 overwrites any union data inside the Node_1_Children_Item as the provided Node1Children0
 func (t *Node_1_Children_Item) FromNode1Children0(v Node1Children0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeNode1Children0 performs a merge with any union data inside the Node_1_Children_Item, using the provided Node1Children0
 func (t *Node_1_Children_Item) MergeNode1Children0(v Node1Children0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -819,20 +819,20 @@ func (t *Node_1_Children_Item) MergeNode1Children0(v Node1Children0) error {
 // AsNode1Children1 returns the union data inside the Node_1_Children_Item as a Node1Children1
 func (t Node_1_Children_Item) AsNode1Children1() (Node1Children1, error) {
 	var body Node1Children1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromNode1Children1 overwrites any union data inside the Node_1_Children_Item as the provided Node1Children1
 func (t *Node_1_Children_Item) FromNode1Children1(v Node1Children1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeNode1Children1 performs a merge with any union data inside the Node_1_Children_Item, using the provided Node1Children1
 func (t *Node_1_Children_Item) MergeNode1Children1(v Node1Children1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -849,19 +849,19 @@ func (t Node_1_Children_Item) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if t.Extra != nil {
-		object["extra"], err = json.Marshal(t.Extra)
+		object["extra"], err = runtime.JSONMarshal(t.Extra)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'extra': %w", err)
 		}
 	}
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -871,13 +871,13 @@ func (t *Node_1_Children_Item) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["extra"]; found {
-		err = json.Unmarshal(raw, &t.Extra)
+		err = runtime.JSONUnmarshal(raw, &t.Extra)
 		if err != nil {
 			return fmt.Errorf("error reading 'extra': %w", err)
 		}
@@ -889,20 +889,20 @@ func (t *Node_1_Children_Item) UnmarshalJSON(b []byte) error {
 // AsNodeNestedAllOf0 returns the union data inside the NodeNestedAllOf as a NodeNestedAllOf0
 func (t NodeNestedAllOf) AsNodeNestedAllOf0() (NodeNestedAllOf0, error) {
 	var body NodeNestedAllOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromNodeNestedAllOf0 overwrites any union data inside the NodeNestedAllOf as the provided NodeNestedAllOf0
 func (t *NodeNestedAllOf) FromNodeNestedAllOf0(v NodeNestedAllOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeNodeNestedAllOf0 performs a merge with any union data inside the NodeNestedAllOf, using the provided NodeNestedAllOf0
 func (t *NodeNestedAllOf) MergeNodeNestedAllOf0(v NodeNestedAllOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -915,20 +915,20 @@ func (t *NodeNestedAllOf) MergeNodeNestedAllOf0(v NodeNestedAllOf0) error {
 // AsNodeNestedAllOf1 returns the union data inside the NodeNestedAllOf as a NodeNestedAllOf1
 func (t NodeNestedAllOf) AsNodeNestedAllOf1() (NodeNestedAllOf1, error) {
 	var body NodeNestedAllOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromNodeNestedAllOf1 overwrites any union data inside the NodeNestedAllOf as the provided NodeNestedAllOf1
 func (t *NodeNestedAllOf) FromNodeNestedAllOf1(v NodeNestedAllOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeNodeNestedAllOf1 performs a merge with any union data inside the NodeNestedAllOf, using the provided NodeNestedAllOf1
 func (t *NodeNestedAllOf) MergeNodeNestedAllOf1(v NodeNestedAllOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -951,20 +951,20 @@ func (t *NodeNestedAllOf) UnmarshalJSON(b []byte) error {
 // AsNodeNestedAllOf1Children0 returns the union data inside the NodeNestedAllOf_1_Children_Item as a NodeNestedAllOf1Children0
 func (t NodeNestedAllOf_1_Children_Item) AsNodeNestedAllOf1Children0() (NodeNestedAllOf1Children0, error) {
 	var body NodeNestedAllOf1Children0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromNodeNestedAllOf1Children0 overwrites any union data inside the NodeNestedAllOf_1_Children_Item as the provided NodeNestedAllOf1Children0
 func (t *NodeNestedAllOf_1_Children_Item) FromNodeNestedAllOf1Children0(v NodeNestedAllOf1Children0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeNodeNestedAllOf1Children0 performs a merge with any union data inside the NodeNestedAllOf_1_Children_Item, using the provided NodeNestedAllOf1Children0
 func (t *NodeNestedAllOf_1_Children_Item) MergeNodeNestedAllOf1Children0(v NodeNestedAllOf1Children0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -977,20 +977,20 @@ func (t *NodeNestedAllOf_1_Children_Item) MergeNodeNestedAllOf1Children0(v NodeN
 // AsNodeNestedAllOf1Children1 returns the union data inside the NodeNestedAllOf_1_Children_Item as a NodeNestedAllOf1Children1
 func (t NodeNestedAllOf_1_Children_Item) AsNodeNestedAllOf1Children1() (NodeNestedAllOf1Children1, error) {
 	var body NodeNestedAllOf1Children1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromNodeNestedAllOf1Children1 overwrites any union data inside the NodeNestedAllOf_1_Children_Item as the provided NodeNestedAllOf1Children1
 func (t *NodeNestedAllOf_1_Children_Item) FromNodeNestedAllOf1Children1(v NodeNestedAllOf1Children1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeNodeNestedAllOf1Children1 performs a merge with any union data inside the NodeNestedAllOf_1_Children_Item, using the provided NodeNestedAllOf1Children1
 func (t *NodeNestedAllOf_1_Children_Item) MergeNodeNestedAllOf1Children1(v NodeNestedAllOf1Children1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1007,19 +1007,19 @@ func (t NodeNestedAllOf_1_Children_Item) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if t.Extra != nil {
-		object["extra"], err = json.Marshal(t.Extra)
+		object["extra"], err = runtime.JSONMarshal(t.Extra)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'extra': %w", err)
 		}
 	}
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -1029,13 +1029,13 @@ func (t *NodeNestedAllOf_1_Children_Item) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["extra"]; found {
-		err = json.Unmarshal(raw, &t.Extra)
+		err = runtime.JSONUnmarshal(raw, &t.Extra)
 		if err != nil {
 			return fmt.Errorf("error reading 'extra': %w", err)
 		}

@@ -30,13 +30,13 @@ type GitDiffFile struct {
 // AsGitDiffFile returns the union data inside the DiffFile as a GitDiffFile
 func (t DiffFile) AsGitDiffFile() (GitDiffFile, error) {
 	var body GitDiffFile
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromGitDiffFile overwrites any union data inside the DiffFile as the provided GitDiffFile
 func (t *DiffFile) FromGitDiffFile(v GitDiffFile) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func (t *DiffFile) FromGitDiffFile(v GitDiffFile) error {
 
 // MergeGitDiffFile performs a merge with any union data inside the DiffFile, using the provided GitDiffFile
 func (t *DiffFile) MergeGitDiffFile(v GitDiffFile) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -64,13 +64,13 @@ func (t *DiffFile) MergeGitDiffFile(v GitDiffFile) error {
 // AsAddedImageDiffFile returns the union data inside the DiffFile as a AddedImageDiffFile
 func (t DiffFile) AsAddedImageDiffFile() (AddedImageDiffFile, error) {
 	var body AddedImageDiffFile
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromAddedImageDiffFile overwrites any union data inside the DiffFile as the provided AddedImageDiffFile
 func (t *DiffFile) FromAddedImageDiffFile(v AddedImageDiffFile) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func (t *DiffFile) FromAddedImageDiffFile(v AddedImageDiffFile) error {
 
 // MergeAddedImageDiffFile performs a merge with any union data inside the DiffFile, using the provided AddedImageDiffFile
 func (t *DiffFile) MergeAddedImageDiffFile(v AddedImageDiffFile) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (t DiffFile) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"diff_type"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
