@@ -59,12 +59,15 @@ func effectiveBranches(elements openapi3.SchemaRefs) (count int, hadNull bool, s
 // would behave differently from the same union on its own. UnionTextKinds is
 // the exception: the caller derives it from the schema's lists.
 //
-// outSchema may hold union members already. v1 and v2 generate a schema's
-// anyOf and its oneOf one after the other into the same outSchema, so with
-// `anyOf: [A, B]` next to `oneOf: [{...}, {type: "null"}]`, A and B are there
-// when the oneOf collapses. The branch's members are added to them, and a
-// branch that isn't a union leaves them as they are.
-func collapseNullableUnion(ctx genContext, outSchema *Schema, sole *openapi3.SchemaRef, path []string) error {
+// The union's fields are copied only when the list is alone: the schema's one
+// anyOf or oneOf. v1 and v2 generate a schema's anyOf and its oneOf one after
+// the other into the same outSchema, so with `anyOf: [A, B]` next to `oneOf:
+// [{...}, {type: "null"}]`, outSchema holds the members of both lists. Those
+// versions don't tell the unions of one schema apart (a discriminator must
+// cover every member, say), so a list that isn't alone collapses as it always
+// has: the other list's members stay, and the branch's aren't added. v3
+// doesn't collapse such a list at all.
+func collapseNullableUnion(ctx genContext, outSchema *Schema, sole *openapi3.SchemaRef, path []string, alone bool) error {
 	elementSchema, err := generateGoSchema(ctx.at(path), sole, path)
 	if err != nil {
 		return err
@@ -77,21 +80,12 @@ func collapseNullableUnion(ctx genContext, outSchema *Schema, sole *openapi3.Sch
 	outSchema.AdditionalPropertiesType = elementSchema.AdditionalPropertiesType
 	outSchema.ArrayType = elementSchema.ArrayType
 	outSchema.SkipOptionalPointer = elementSchema.SkipOptionalPointer
-	if len(elementSchema.UnionElements) > 0 {
-		for _, e := range elementSchema.UnionElements {
-			outSchema.UnionElements = appendUnique(outSchema.UnionElements, e)
-		}
-		for _, name := range elementSchema.UnionVariantProperties {
-			outSchema.UnionVariantProperties = appendUnique(outSchema.UnionVariantProperties, name)
-		}
-		slices.Sort(outSchema.UnionVariantProperties)
-		// Only v3 sets these, and it collapses a union only when it is
-		// the schema's one union, so there is nothing to add them to.
+	if alone {
+		outSchema.UnionElements = elementSchema.UnionElements
+		outSchema.UnionVariantProperties = elementSchema.UnionVariantProperties
 		outSchema.UnionOwnedKeys = elementSchema.UnionOwnedKeys
 		outSchema.UnionRefComponents = elementSchema.UnionRefComponents
 		outSchema.UnionAllowedKeys = elementSchema.UnionAllowedKeys
-		// A union with a discriminator of its own isn't collapsed, and
-		// sibling lists share that discriminator, so none is set yet.
 		outSchema.Discriminator = elementSchema.Discriminator
 	}
 	outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
