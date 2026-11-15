@@ -37,7 +37,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
   {{$varName}} = {{block "middleware.pathParamValue" .}}r.PathValue("{{.SanitizedParamName}}"){{end}}
   {{end}}
   {{if .IsJson}}
-  err = json.Unmarshal([]byte({{template "middleware.pathParamValue" .}}), &{{$varName}})
+  err = runtime.JSONUnmarshal([]byte({{template "middleware.pathParamValue" .}}), &{{$varName}})
   if err != nil {
     siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
     return
@@ -78,7 +78,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
 
         {{if .IsJson}}
           var value {{.TypeDef}}
-          err = json.Unmarshal([]byte(paramValue), &value)
+          err = runtime.JSONUnmarshal([]byte(paramValue), &value)
           if err != nil {
             siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
             return
@@ -122,7 +122,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
         {{end}}
 
         {{if .IsJson}}
-          err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+          err = runtime.JSONUnmarshal([]byte(valueList[0]), &{{.GoName}})
           if err != nil {
             siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
             return
@@ -168,7 +168,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(w http.ResponseWriter, r *http.Requ
           return
         }
 
-        err = json.Unmarshal([]byte(decoded), &value)
+        err = runtime.JSONUnmarshal([]byte(decoded), &value)
         if err != nil {
           siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "{{.ParamName}}", Err: err})
           return

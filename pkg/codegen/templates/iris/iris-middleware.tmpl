@@ -18,7 +18,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     {{$varName}} = ctx.Params().Get("{{.ParamName}}")
 {{end}}
 {{if .IsJson}}
-    err = json.Unmarshal([]byte(ctx.Params().Get("{{.ParamName}}")), &{{$varName}})
+    err = runtime.JSONUnmarshal([]byte(ctx.Params().Get("{{.ParamName}}")), &{{$varName}})
     if err != nil {
     	ctx.StatusCode(http.StatusBadRequest)
         ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
@@ -62,7 +62,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
     {{end}}
     {{if .IsJson}}
     var value {{.TypeDef}}
-    err = json.Unmarshal([]byte(paramValue), &value)
+    err = runtime.JSONUnmarshal([]byte(paramValue), &value)
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
@@ -93,7 +93,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
         {{.GoName}} = valueList[0]
 {{end}}
 {{if .IsJson}}
-        err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+        err = runtime.JSONUnmarshal([]byte(valueList[0]), &{{.GoName}})
         if err != nil {
             ctx.StatusCode(http.StatusBadRequest)
             ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")
@@ -131,7 +131,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx iris.Context) {
         ctx.WriteString("Error unescaping cookie parameter '{{.ParamName}}'")
         return
     }
-    err = json.Unmarshal([]byte(decoded), &value)
+    err = runtime.JSONUnmarshal([]byte(decoded), &value)
     if err != nil {
         ctx.StatusCode(http.StatusBadRequest)
         ctx.WriteString("Error unmarshaling parameter '{{.ParamName}}' as JSON")

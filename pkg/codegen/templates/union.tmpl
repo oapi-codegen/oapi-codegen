@@ -7,7 +7,7 @@ b replaces the union data whole. The caller returns before it on an error, so
 the union data doesn't change then. */ -}}
 {{define "union.keepOtherUnions" -}}
     var object, kept map[string]json.RawMessage
-    if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+    if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
         {{range . -}}
             delete(kept, {{printf "%q" .}})
         {{end -}}
@@ -22,7 +22,7 @@ the union data doesn't change then. */ -}}
             }
         }
         if added {
-            if b, err = json.Marshal(object); err != nil {
+            if b, err = runtime.JSONMarshal(object); err != nil {
                 return err
             }
         }
@@ -63,19 +63,19 @@ it declares one. */ -}}
         {{- end}}
         func (t *{{$typeName}}) adoptUnion(previous, b json.RawMessage) {
             object := make(map[string]json.RawMessage)
-            if json.Unmarshal(b, &object) != nil {
+            if runtime.JSONUnmarshal(b, &object) != nil {
                 return
             }
             {{if .Schema.AdoptedProperties -}}
             held := make(map[string]json.RawMessage)
-            _ = json.Unmarshal(previous, &held)
+            _ = runtime.JSONUnmarshal(previous, &held)
             {{end -}}
             {{range .Schema.AdoptedProperties -}}
                 if raw, found := object["{{.JsonFieldName}}"]; found {
                     var old, next {{.GoTypeDef}}
-                    unchanged := json.Unmarshal(held["{{.JsonFieldName}}"], &old) == nil && reflect.DeepEqual(old, t.{{.GoFieldName}})
+                    unchanged := runtime.JSONUnmarshal(held["{{.JsonFieldName}}"], &old) == nil && reflect.DeepEqual(old, t.{{.GoFieldName}})
                     current := reflect.ValueOf(t.{{.GoFieldName}})
-                    if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+                    if (unchanged || !current.IsValid() || current.IsZero()) && runtime.JSONUnmarshal(raw, &next) == nil {
                         t.{{.GoFieldName}} = next
                     }
                 }
@@ -102,7 +102,7 @@ it declares one. */ -}}
             {{if $schema.ClosedUnionVariant . -}}
                 {{$keys := $schema.UnionAllowedKeysFor . -}}
                 var object map[string]json.RawMessage
-                if json.Unmarshal(t.union, &object) == nil {
+                if runtime.JSONUnmarshal(t.union, &object) == nil {
                     // The first unknown key in sorted order, so the error is always the same.
                     unknown, found := "", false
                     for key := range object {
@@ -125,7 +125,7 @@ it declares one. */ -}}
                     }
                 }
             {{end -}}
-            err := json.Unmarshal(t.union, &body)
+            err := runtime.JSONUnmarshal(t.union, &body)
             return body, err
         }
 
@@ -137,7 +137,7 @@ it declares one. */ -}}
         {{- end}}
         func (t *{{$typeName}}) From{{ .Method }} (v {{.}}) error {
             {{template "union.stamp" $stamp -}}
-            b, err := json.Marshal(v)
+            b, err := runtime.JSONMarshal(v)
             {{if $stamp -}}
                 if err != nil {
                     return err
@@ -168,7 +168,7 @@ it declares one. */ -}}
         // Merge{{ .Method }} performs a merge with any union data inside the {{$typeName}}, using the provided {{.}}
         func (t *{{$typeName}}) Merge{{ .Method }} (v {{.}}) error {
             {{template "union.stamp" $stamp -}}
-            b, err := json.Marshal(v)
+            b, err := runtime.JSONMarshal(v)
             if err != nil {
               return err
             }
@@ -200,16 +200,16 @@ it declares one. */ -}}
             data := t.union
             {{if .OtherKeys -}}
                 var object map[string]json.RawMessage
-                if json.Unmarshal(data, &object) == nil && object != nil {
+                if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
                     {{range .OtherKeys -}}
                         delete(object, {{printf "%q" .}})
                     {{end -}}
-                    if own, err := json.Marshal(object); err == nil {
+                    if own, err := runtime.JSONMarshal(object); err == nil {
                         data = own
                     }
                 }
             {{end -}}
-            err := json.Unmarshal(data, &body)
+            err := runtime.JSONUnmarshal(data, &body)
             return body, err
         }
 
@@ -217,7 +217,7 @@ it declares one. */ -}}
         // replaces that union's data and keeps the other unions' data; a zero {{.Type}} clears that
         // union's data.
         func (t *{{$typeName}}) From{{ .Type.Method }} (v {{.Type}}) error {
-            b, err := json.Marshal(v)
+            b, err := runtime.JSONMarshal(v)
             if err != nil {
                 return err
             }
@@ -242,7 +242,7 @@ it declares one. */ -}}
             var discriminator struct {
                 Discriminator string {{$discriminator.JSONTag}}
             }
-            err := json.Unmarshal(t.union, &discriminator)
+            err := runtime.JSONUnmarshal(t.union, &discriminator)
             return discriminator.Discriminator, err
         }
         {{- else -}}
@@ -252,7 +252,7 @@ it declares one. */ -}}
             var discriminator struct {
                 Discriminator json.RawMessage {{$discriminator.JSONTag}}
             }
-            if err := json.Unmarshal(t.union, &discriminator); err != nil {
+            if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
                 return "", err
             }
             raw := discriminator.Discriminator
@@ -261,7 +261,7 @@ it declares one. */ -}}
                 return "", nil
             case raw[0] == '"':
                 var s string
-                err := json.Unmarshal(raw, &s)
+                err := runtime.JSONUnmarshal(raw, &s)
                 return s, err
             }
             return string(raw), nil
@@ -277,7 +277,7 @@ it declares one. */ -}}
                 var discriminator struct {
                     Value *{{$discriminator.SwitchType}} {{$discriminator.JSONTag}}
                 }
-                if err := json.Unmarshal(t.union, &discriminator); err != nil {
+                if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
                     return nil, err
                 }
                 if discriminator.Value == nil {
@@ -348,7 +348,7 @@ it declares one. */ -}}
             }
             {{end -}}
             {{if .Schema.UnionTextAccepts "string" -}}
-            b, err := json.Marshal(string(text))
+            b, err := runtime.JSONMarshal(string(text))
             if err != nil {
                 return err
             }
@@ -375,20 +375,20 @@ it declares one. */ -}}
             }
             object := make(map[string]json.RawMessage)
             if t.union != nil {
-              err = json.Unmarshal(b, &object)
+              err = runtime.JSONUnmarshal(b, &object)
               if err != nil {
                 return nil, err
               }
             }
             {{range .Schema.Properties}}
             {{if .RequiresNilCheck}}if t.{{.GoFieldName}} != nil { {{end}}
-                object["{{.JsonFieldName}}"], err = json.Marshal(t.{{.GoFieldName}})
+                object["{{.JsonFieldName}}"], err = runtime.JSONMarshal(t.{{.GoFieldName}})
                 if err != nil {
                     return nil, fmt.Errorf("error marshaling '{{.JsonFieldName}}': %w", err)
                 }
             {{if .RequiresNilCheck}} }{{end}}
             {{end -}}
-            b, err = json.Marshal(object)
+            b, err = runtime.JSONMarshal(object)
         {{end -}}
         return b, err
     }
@@ -400,13 +400,13 @@ it declares one. */ -}}
                 return err
             }
             object := make(map[string]json.RawMessage)
-            err = json.Unmarshal(b, &object)
+            err = runtime.JSONUnmarshal(b, &object)
             if err != nil {
                 return err
             }
             {{range .Schema.Properties}}
                 if raw, found := object["{{.JsonFieldName}}"]; found {
-                    err = json.Unmarshal(raw, &t.{{.GoFieldName}})
+                    err = runtime.JSONUnmarshal(raw, &t.{{.GoFieldName}})
                     if err != nil {
                         return fmt.Errorf("error reading '{{.JsonFieldName}}': %w", err)
                     }

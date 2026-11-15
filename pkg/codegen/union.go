@@ -8,6 +8,7 @@ package codegen
 // step.
 
 import (
+	"fmt"
 	"maps"
 	"slices"
 	"strings"
@@ -83,7 +84,9 @@ func generateUnions(ctx genContext, outSchema *Schema, schema *openapi3.Schema, 
 func generateUnionElement(ctx genContext, outSchema *Schema, element *openapi3.SchemaRef, elementPath []string) (Schema, error) {
 	elementSchema, err := generateGoSchema(ctx.at(elementPath), element, elementPath)
 	if err != nil {
-		return Schema{}, err
+		// The caller names the keyword (anyOf/oneOf); the index is the
+		// only thing that says which inline branch failed.
+		return Schema{}, fmt.Errorf("branch %s: %w", elementPath[len(elementPath)-1], err)
 	}
 	if element.Ref == "" {
 		elementName := SchemaNameToTypeName(PathToTypeName(elementPath))

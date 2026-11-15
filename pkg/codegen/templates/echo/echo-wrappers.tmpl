@@ -12,7 +12,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx {{block "echo.ctxType" .}
     {{$varName}} = ctx.Param("{{.ParamName}}")
 {{end}}
 {{if .IsJson}}
-    err = json.Unmarshal([]byte(ctx.Param("{{.ParamName}}")), &{{$varName}})
+    err = runtime.JSONUnmarshal([]byte(ctx.Param("{{.ParamName}}")), &{{$varName}})
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
     }
@@ -50,7 +50,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx {{block "echo.ctxType" .}
     {{end}}
     {{if .IsJson}}
     var value {{.TypeDef}}
-    err = json.Unmarshal([]byte(paramValue), &value)
+    err = runtime.JSONUnmarshal([]byte(paramValue), &value)
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
     }
@@ -75,7 +75,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx {{block "echo.ctxType" .}
         {{.GoName}} = valueList[0]
 {{end}}
 {{if .IsJson}}
-        err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+        err = runtime.JSONUnmarshal([]byte(valueList[0]), &{{.GoName}})
         if err != nil {
             return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
         }
@@ -105,7 +105,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx {{block "echo.ctxType" .}
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Error unescaping cookie parameter '{{.ParamName}}'")
     }
-    err = json.Unmarshal([]byte(decoded), &value)
+    err = runtime.JSONUnmarshal([]byte(decoded), &value)
     if err != nil {
         return echo.NewHTTPError(http.StatusBadRequest, "Error unmarshaling parameter '{{.ParamName}}' as JSON")
     }

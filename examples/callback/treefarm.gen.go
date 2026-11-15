@@ -8,13 +8,13 @@ package treefarm
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
+	"github.com/oapi-codegen/runtime"
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
@@ -228,7 +228,7 @@ func (c *Client) PlantTree(ctx context.Context, body PlantTreeJSONRequestBody, r
 // NewPlantTreeRequest calls the generic PlantTree builder with application/json body
 func NewPlantTreeRequest(server string, body PlantTreeJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -430,14 +430,14 @@ func ParsePlantTreeResponse(rsp *http.Response) (*PlantTreeResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
 		var dest TreeWithID
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON202 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSONDefault = &dest
@@ -547,7 +547,7 @@ func (p *CallbackInitiator) TreePlanted(ctx context.Context, targetURL string, b
 // NewTreePlantedCallbackRequest builds a application/json POST request for the treePlanted callback
 func NewTreePlantedCallbackRequest(targetURL string, body TreePlantedJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
