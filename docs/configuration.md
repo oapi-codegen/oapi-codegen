@@ -83,7 +83,7 @@ output-options:
   client-type-name: ""
   nullable-type: false
   disable-type-aliases-for-type: []
-  resolve-type-name-collisions: false
+  resolve-type-name-collisions: false   # also resolves colliding struct field names; not renamed, to keep existing configurations working
   prefer-skip-optional-pointer: false
   prefer-skip-optional-pointer-with-omitzero: false
   prefer-skip-optional-pointer-on-container-types: false
