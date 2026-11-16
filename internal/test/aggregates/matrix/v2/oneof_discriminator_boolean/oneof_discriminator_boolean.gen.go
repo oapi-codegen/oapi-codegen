@@ -141,13 +141,13 @@ type HolderInlineJSONRequestBody = InlineHolder
 // AsConfigHttp returns the union data inside the InlineHolder_List_Item as a ConfigHttp
 func (t InlineHolder_List_Item) AsConfigHttp() (ConfigHttp, error) {
 	var body ConfigHttp
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigHttp overwrites any union data inside the InlineHolder_List_Item as the provided ConfigHttp
 func (t *InlineHolder_List_Item) FromConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ func (t *InlineHolder_List_Item) FromConfigHttp(v ConfigHttp) error {
 
 // MergeConfigHttp performs a merge with any union data inside the InlineHolder_List_Item, using the provided ConfigHttp
 func (t *InlineHolder_List_Item) MergeConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -175,13 +175,13 @@ func (t *InlineHolder_List_Item) MergeConfigHttp(v ConfigHttp) error {
 // AsConfigSsh returns the union data inside the InlineHolder_List_Item as a ConfigSsh
 func (t InlineHolder_List_Item) AsConfigSsh() (ConfigSsh, error) {
 	var body ConfigSsh
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigSsh overwrites any union data inside the InlineHolder_List_Item as the provided ConfigSsh
 func (t *InlineHolder_List_Item) FromConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -192,7 +192,7 @@ func (t *InlineHolder_List_Item) FromConfigSsh(v ConfigSsh) error {
 
 // MergeConfigSsh performs a merge with any union data inside the InlineHolder_List_Item, using the provided ConfigSsh
 func (t *InlineHolder_List_Item) MergeConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -212,7 +212,7 @@ func (t InlineHolder_List_Item) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"is_http"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -221,7 +221,7 @@ func (t InlineHolder_List_Item) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -255,13 +255,13 @@ func (t *InlineHolder_List_Item) UnmarshalJSON(b []byte) error {
 // AsConfigHttp returns the union data inside the InlineHolder_Map_AdditionalProperties as a ConfigHttp
 func (t InlineHolder_Map_AdditionalProperties) AsConfigHttp() (ConfigHttp, error) {
 	var body ConfigHttp
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigHttp overwrites any union data inside the InlineHolder_Map_AdditionalProperties as the provided ConfigHttp
 func (t *InlineHolder_Map_AdditionalProperties) FromConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -272,7 +272,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromConfigHttp(v ConfigHttp) err
 
 // MergeConfigHttp performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided ConfigHttp
 func (t *InlineHolder_Map_AdditionalProperties) MergeConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -289,13 +289,13 @@ func (t *InlineHolder_Map_AdditionalProperties) MergeConfigHttp(v ConfigHttp) er
 // AsConfigSsh returns the union data inside the InlineHolder_Map_AdditionalProperties as a ConfigSsh
 func (t InlineHolder_Map_AdditionalProperties) AsConfigSsh() (ConfigSsh, error) {
 	var body ConfigSsh
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigSsh overwrites any union data inside the InlineHolder_Map_AdditionalProperties as the provided ConfigSsh
 func (t *InlineHolder_Map_AdditionalProperties) FromConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -306,7 +306,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromConfigSsh(v ConfigSsh) error
 
 // MergeConfigSsh performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided ConfigSsh
 func (t *InlineHolder_Map_AdditionalProperties) MergeConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -326,7 +326,7 @@ func (t InlineHolder_Map_AdditionalProperties) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"is_http"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -335,7 +335,7 @@ func (t InlineHolder_Map_AdditionalProperties) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -369,13 +369,13 @@ func (t *InlineHolder_Map_AdditionalProperties) UnmarshalJSON(b []byte) error {
 // AsConfigHttp returns the union data inside the InlineHolder_One as a ConfigHttp
 func (t InlineHolder_One) AsConfigHttp() (ConfigHttp, error) {
 	var body ConfigHttp
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigHttp overwrites any union data inside the InlineHolder_One as the provided ConfigHttp
 func (t *InlineHolder_One) FromConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -386,7 +386,7 @@ func (t *InlineHolder_One) FromConfigHttp(v ConfigHttp) error {
 
 // MergeConfigHttp performs a merge with any union data inside the InlineHolder_One, using the provided ConfigHttp
 func (t *InlineHolder_One) MergeConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -403,13 +403,13 @@ func (t *InlineHolder_One) MergeConfigHttp(v ConfigHttp) error {
 // AsConfigSsh returns the union data inside the InlineHolder_One as a ConfigSsh
 func (t InlineHolder_One) AsConfigSsh() (ConfigSsh, error) {
 	var body ConfigSsh
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigSsh overwrites any union data inside the InlineHolder_One as the provided ConfigSsh
 func (t *InlineHolder_One) FromConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -420,7 +420,7 @@ func (t *InlineHolder_One) FromConfigSsh(v ConfigSsh) error {
 
 // MergeConfigSsh performs a merge with any union data inside the InlineHolder_One, using the provided ConfigSsh
 func (t *InlineHolder_One) MergeConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -440,7 +440,7 @@ func (t InlineHolder_One) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"is_http"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -449,7 +449,7 @@ func (t InlineHolder_One) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -483,13 +483,13 @@ func (t *InlineHolder_One) UnmarshalJSON(b []byte) error {
 // AsConfigHttp returns the union data inside the Subject as a ConfigHttp
 func (t Subject) AsConfigHttp() (ConfigHttp, error) {
 	var body ConfigHttp
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigHttp overwrites any union data inside the Subject as the provided ConfigHttp
 func (t *Subject) FromConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -500,7 +500,7 @@ func (t *Subject) FromConfigHttp(v ConfigHttp) error {
 
 // MergeConfigHttp performs a merge with any union data inside the Subject, using the provided ConfigHttp
 func (t *Subject) MergeConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -517,13 +517,13 @@ func (t *Subject) MergeConfigHttp(v ConfigHttp) error {
 // AsConfigSsh returns the union data inside the Subject as a ConfigSsh
 func (t Subject) AsConfigSsh() (ConfigSsh, error) {
 	var body ConfigSsh
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigSsh overwrites any union data inside the Subject as the provided ConfigSsh
 func (t *Subject) FromConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -534,7 +534,7 @@ func (t *Subject) FromConfigSsh(v ConfigSsh) error {
 
 // MergeConfigSsh performs a merge with any union data inside the Subject, using the provided ConfigSsh
 func (t *Subject) MergeConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -554,7 +554,7 @@ func (t Subject) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"is_http"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -563,7 +563,7 @@ func (t Subject) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -597,13 +597,13 @@ func (t *Subject) UnmarshalJSON(b []byte) error {
 // AsConfigHttp returns the union data inside the InlineSubjectResponse as a ConfigHttp
 func (t InlineSubjectResponse) AsConfigHttp() (ConfigHttp, error) {
 	var body ConfigHttp
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigHttp overwrites any union data inside the InlineSubjectResponse as the provided ConfigHttp
 func (t *InlineSubjectResponse) FromConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -614,7 +614,7 @@ func (t *InlineSubjectResponse) FromConfigHttp(v ConfigHttp) error {
 
 // MergeConfigHttp performs a merge with any union data inside the InlineSubjectResponse, using the provided ConfigHttp
 func (t *InlineSubjectResponse) MergeConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -631,13 +631,13 @@ func (t *InlineSubjectResponse) MergeConfigHttp(v ConfigHttp) error {
 // AsConfigSsh returns the union data inside the InlineSubjectResponse as a ConfigSsh
 func (t InlineSubjectResponse) AsConfigSsh() (ConfigSsh, error) {
 	var body ConfigSsh
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigSsh overwrites any union data inside the InlineSubjectResponse as the provided ConfigSsh
 func (t *InlineSubjectResponse) FromConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -648,7 +648,7 @@ func (t *InlineSubjectResponse) FromConfigSsh(v ConfigSsh) error {
 
 // MergeConfigSsh performs a merge with any union data inside the InlineSubjectResponse, using the provided ConfigSsh
 func (t *InlineSubjectResponse) MergeConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -668,7 +668,7 @@ func (t InlineSubjectResponse) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"is_http"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -677,7 +677,7 @@ func (t InlineSubjectResponse) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -711,13 +711,13 @@ func (t *InlineSubjectResponse) UnmarshalJSON(b []byte) error {
 // AsConfigHttp returns the union data inside the InlineSubjectBody as a ConfigHttp
 func (t InlineSubjectBody) AsConfigHttp() (ConfigHttp, error) {
 	var body ConfigHttp
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigHttp overwrites any union data inside the InlineSubjectBody as the provided ConfigHttp
 func (t *InlineSubjectBody) FromConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -728,7 +728,7 @@ func (t *InlineSubjectBody) FromConfigHttp(v ConfigHttp) error {
 
 // MergeConfigHttp performs a merge with any union data inside the InlineSubjectBody, using the provided ConfigHttp
 func (t *InlineSubjectBody) MergeConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -745,13 +745,13 @@ func (t *InlineSubjectBody) MergeConfigHttp(v ConfigHttp) error {
 // AsConfigSsh returns the union data inside the InlineSubjectBody as a ConfigSsh
 func (t InlineSubjectBody) AsConfigSsh() (ConfigSsh, error) {
 	var body ConfigSsh
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigSsh overwrites any union data inside the InlineSubjectBody as the provided ConfigSsh
 func (t *InlineSubjectBody) FromConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -762,7 +762,7 @@ func (t *InlineSubjectBody) FromConfigSsh(v ConfigSsh) error {
 
 // MergeConfigSsh performs a merge with any union data inside the InlineSubjectBody, using the provided ConfigSsh
 func (t *InlineSubjectBody) MergeConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -782,7 +782,7 @@ func (t InlineSubjectBody) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"is_http"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -791,7 +791,7 @@ func (t InlineSubjectBody) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -825,13 +825,13 @@ func (t *InlineSubjectBody) UnmarshalJSON(b []byte) error {
 // AsConfigHttp returns the union data inside the BodyComponentInlineJSONBody as a ConfigHttp
 func (t BodyComponentInlineJSONBody) AsConfigHttp() (ConfigHttp, error) {
 	var body ConfigHttp
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigHttp overwrites any union data inside the BodyComponentInlineJSONBody as the provided ConfigHttp
 func (t *BodyComponentInlineJSONBody) FromConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -842,7 +842,7 @@ func (t *BodyComponentInlineJSONBody) FromConfigHttp(v ConfigHttp) error {
 
 // MergeConfigHttp performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided ConfigHttp
 func (t *BodyComponentInlineJSONBody) MergeConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -859,13 +859,13 @@ func (t *BodyComponentInlineJSONBody) MergeConfigHttp(v ConfigHttp) error {
 // AsConfigSsh returns the union data inside the BodyComponentInlineJSONBody as a ConfigSsh
 func (t BodyComponentInlineJSONBody) AsConfigSsh() (ConfigSsh, error) {
 	var body ConfigSsh
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigSsh overwrites any union data inside the BodyComponentInlineJSONBody as the provided ConfigSsh
 func (t *BodyComponentInlineJSONBody) FromConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -876,7 +876,7 @@ func (t *BodyComponentInlineJSONBody) FromConfigSsh(v ConfigSsh) error {
 
 // MergeConfigSsh performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided ConfigSsh
 func (t *BodyComponentInlineJSONBody) MergeConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -896,7 +896,7 @@ func (t BodyComponentInlineJSONBody) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"is_http"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -905,7 +905,7 @@ func (t BodyComponentInlineJSONBody) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -939,13 +939,13 @@ func (t *BodyComponentInlineJSONBody) UnmarshalJSON(b []byte) error {
 // AsConfigHttp returns the union data inside the BodyInlineJSONBody as a ConfigHttp
 func (t BodyInlineJSONBody) AsConfigHttp() (ConfigHttp, error) {
 	var body ConfigHttp
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigHttp overwrites any union data inside the BodyInlineJSONBody as the provided ConfigHttp
 func (t *BodyInlineJSONBody) FromConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -956,7 +956,7 @@ func (t *BodyInlineJSONBody) FromConfigHttp(v ConfigHttp) error {
 
 // MergeConfigHttp performs a merge with any union data inside the BodyInlineJSONBody, using the provided ConfigHttp
 func (t *BodyInlineJSONBody) MergeConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -973,13 +973,13 @@ func (t *BodyInlineJSONBody) MergeConfigHttp(v ConfigHttp) error {
 // AsConfigSsh returns the union data inside the BodyInlineJSONBody as a ConfigSsh
 func (t BodyInlineJSONBody) AsConfigSsh() (ConfigSsh, error) {
 	var body ConfigSsh
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigSsh overwrites any union data inside the BodyInlineJSONBody as the provided ConfigSsh
 func (t *BodyInlineJSONBody) FromConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -990,7 +990,7 @@ func (t *BodyInlineJSONBody) FromConfigSsh(v ConfigSsh) error {
 
 // MergeConfigSsh performs a merge with any union data inside the BodyInlineJSONBody, using the provided ConfigSsh
 func (t *BodyInlineJSONBody) MergeConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1010,7 +1010,7 @@ func (t BodyInlineJSONBody) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"is_http"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -1019,7 +1019,7 @@ func (t BodyInlineJSONBody) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -1053,13 +1053,13 @@ func (t *BodyInlineJSONBody) UnmarshalJSON(b []byte) error {
 // AsConfigHttp returns the union data inside the BodyInline200JSONResponseBody as a ConfigHttp
 func (t BodyInline200JSONResponseBody) AsConfigHttp() (ConfigHttp, error) {
 	var body ConfigHttp
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigHttp overwrites any union data inside the BodyInline200JSONResponseBody as the provided ConfigHttp
 func (t *BodyInline200JSONResponseBody) FromConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1070,7 +1070,7 @@ func (t *BodyInline200JSONResponseBody) FromConfigHttp(v ConfigHttp) error {
 
 // MergeConfigHttp performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided ConfigHttp
 func (t *BodyInline200JSONResponseBody) MergeConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1087,13 +1087,13 @@ func (t *BodyInline200JSONResponseBody) MergeConfigHttp(v ConfigHttp) error {
 // AsConfigSsh returns the union data inside the BodyInline200JSONResponseBody as a ConfigSsh
 func (t BodyInline200JSONResponseBody) AsConfigSsh() (ConfigSsh, error) {
 	var body ConfigSsh
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigSsh overwrites any union data inside the BodyInline200JSONResponseBody as the provided ConfigSsh
 func (t *BodyInline200JSONResponseBody) FromConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1104,7 +1104,7 @@ func (t *BodyInline200JSONResponseBody) FromConfigSsh(v ConfigSsh) error {
 
 // MergeConfigSsh performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided ConfigSsh
 func (t *BodyInline200JSONResponseBody) MergeConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1124,7 +1124,7 @@ func (t BodyInline200JSONResponseBody) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"is_http"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -1133,7 +1133,7 @@ func (t BodyInline200JSONResponseBody) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -1530,7 +1530,7 @@ func (c *Client) HolderInline(ctx context.Context, body HolderInlineJSONRequestB
 // NewBodyComponentRequest calls the generic BodyComponent builder with application/json body
 func NewBodyComponentRequest(server string, body BodyComponentJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1570,7 +1570,7 @@ func NewBodyComponentRequestWithBody(server string, contentType string, body io.
 // NewBodyComponentInlineRequest calls the generic BodyComponentInline builder with application/json body
 func NewBodyComponentInlineRequest(server string, body BodyComponentInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1610,7 +1610,7 @@ func NewBodyComponentInlineRequestWithBody(server string, contentType string, bo
 // NewBodyDefaultRequest calls the generic BodyDefault builder with application/json body
 func NewBodyDefaultRequest(server string, body BodyDefaultJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1650,7 +1650,7 @@ func NewBodyDefaultRequestWithBody(server string, contentType string, body io.Re
 // NewBodyHeadersRequest calls the generic BodyHeaders builder with application/json body
 func NewBodyHeadersRequest(server string, body BodyHeadersJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1690,7 +1690,7 @@ func NewBodyHeadersRequestWithBody(server string, contentType string, body io.Re
 // NewBodyInlineRequest calls the generic BodyInline builder with application/json body
 func NewBodyInlineRequest(server string, body BodyInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1730,7 +1730,7 @@ func NewBodyInlineRequestWithBody(server string, contentType string, body io.Rea
 // NewBodyRefRequest calls the generic BodyRef builder with application/json body
 func NewBodyRefRequest(server string, body BodyRefJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1770,7 +1770,7 @@ func NewBodyRefRequestWithBody(server string, contentType string, body io.Reader
 // NewHolderRequest calls the generic Holder builder with application/json body
 func NewHolderRequest(server string, body HolderJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1810,7 +1810,7 @@ func NewHolderRequestWithBody(server string, contentType string, body io.Reader)
 // NewHolderInlineRequest calls the generic HolderInline builder with application/json body
 func NewHolderInlineRequest(server string, body HolderInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2499,7 +2499,7 @@ func ParseBodyComponentResponse(rsp *http.Response) (*BodyComponentResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest SubjectResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2525,7 +2525,7 @@ func ParseBodyComponentInlineResponse(rsp *http.Response) (*BodyComponentInlineR
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest InlineSubjectResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2551,7 +2551,7 @@ func ParseBodyDefaultResponse(rsp *http.Response) (*BodyDefaultResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSONDefault = &dest
@@ -2577,7 +2577,7 @@ func ParseBodyHeadersResponse(rsp *http.Response) (*BodyHeadersResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2616,7 +2616,7 @@ func ParseBodyInlineResponse(rsp *http.Response) (*BodyInlineResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest BodyInline200JSONResponseBody
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2642,7 +2642,7 @@ func ParseBodyRefResponse(rsp *http.Response) (*BodyRefResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2668,7 +2668,7 @@ func ParseHolderResponse(rsp *http.Response) (*HolderResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Holder
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2694,7 +2694,7 @@ func ParseHolderInlineResponse(rsp *http.Response) (*HolderInlineResponse, error
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest InlineHolder
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3010,7 +3010,7 @@ type BodyComponent200JSONResponse struct{ SubjectResponseJSONResponse }
 func (response BodyComponent200JSONResponse) VisitBodyComponentResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.SubjectResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.SubjectResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3034,7 +3034,7 @@ type BodyComponentInline200JSONResponse struct {
 func (response BodyComponentInline200JSONResponse) VisitBodyComponentInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.InlineSubjectResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.InlineSubjectResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3059,7 +3059,7 @@ type BodyDefaultdefaultJSONResponse struct {
 func (response BodyDefaultdefaultJSONResponse) VisitBodyDefaultResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3088,7 +3088,7 @@ type BodyHeaders200JSONResponse struct {
 func (response BodyHeaders200JSONResponse) VisitBodyHeadersResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3117,7 +3117,7 @@ type BodyInline200JSONResponse = BodyInline200JSONResponseBody
 func (response BodyInline200JSONResponse) VisitBodyInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3147,7 +3147,7 @@ func (t *BodyRef200JSONResponse) UnmarshalJSON(b []byte) error {
 func (response BodyRef200JSONResponse) VisitBodyRefResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3169,7 +3169,7 @@ type Holder200JSONResponse Holder
 func (response Holder200JSONResponse) VisitHolderResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3191,7 +3191,7 @@ type HolderInline200JSONResponse InlineHolder
 func (response HolderInline200JSONResponse) VisitHolderInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

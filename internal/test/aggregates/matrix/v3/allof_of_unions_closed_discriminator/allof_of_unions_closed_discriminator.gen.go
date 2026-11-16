@@ -160,7 +160,7 @@ type HolderInlineJSONRequestBody = InlineHolder
 func (t Delivery) AsCourier() (Courier, error) {
 	var body Courier
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -176,20 +176,20 @@ func (t Delivery) AsCourier() (Courier, error) {
 			return body, fmt.Errorf("Courier doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier overwrites any union data inside the Delivery as the provided Courier
 func (t *Delivery) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeCourier performs a merge with any union data inside the Delivery, using the provided Courier
 func (t *Delivery) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -205,7 +205,7 @@ func (t *Delivery) MergeCourier(v Courier) error {
 func (t Delivery) AsPickup() (Pickup, error) {
 	var body Pickup
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -221,20 +221,20 @@ func (t Delivery) AsPickup() (Pickup, error) {
 			return body, fmt.Errorf("Pickup doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup overwrites any union data inside the Delivery as the provided Pickup
 func (t *Delivery) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergePickup performs a merge with any union data inside the Delivery, using the provided Pickup
 func (t *Delivery) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -260,7 +260,7 @@ func (t *Delivery) UnmarshalJSON(b []byte) error {
 func (t InlineHolder_List_Item) AsCard() (Card, error) {
 	var body Card
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -276,14 +276,14 @@ func (t InlineHolder_List_Item) AsCard() (Card, error) {
 			return body, fmt.Errorf("Card doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard sets the union data inside the InlineHolder_List_Item to the provided Card. It replaces
 // the data of Card's own union and keeps the other unions' data.
 func (t *InlineHolder_List_Item) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -292,7 +292,7 @@ func (t *InlineHolder_List_Item) FromCard(v Card) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -307,7 +307,7 @@ func (t *InlineHolder_List_Item) FromCard(v Card) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -318,7 +318,7 @@ func (t *InlineHolder_List_Item) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the InlineHolder_List_Item, using the provided Card
 func (t *InlineHolder_List_Item) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -338,7 +338,7 @@ func (t *InlineHolder_List_Item) MergeCard(v Card) error {
 func (t InlineHolder_List_Item) AsTransfer() (Transfer, error) {
 	var body Transfer
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -354,14 +354,14 @@ func (t InlineHolder_List_Item) AsTransfer() (Transfer, error) {
 			return body, fmt.Errorf("Transfer doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer sets the union data inside the InlineHolder_List_Item to the provided Transfer. It replaces
 // the data of Transfer's own union and keeps the other unions' data.
 func (t *InlineHolder_List_Item) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -370,7 +370,7 @@ func (t *InlineHolder_List_Item) FromTransfer(v Transfer) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -385,7 +385,7 @@ func (t *InlineHolder_List_Item) FromTransfer(v Transfer) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -396,7 +396,7 @@ func (t *InlineHolder_List_Item) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the InlineHolder_List_Item, using the provided Transfer
 func (t *InlineHolder_List_Item) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -416,7 +416,7 @@ func (t *InlineHolder_List_Item) MergeTransfer(v Transfer) error {
 func (t InlineHolder_List_Item) AsCourier() (Courier, error) {
 	var body Courier
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -432,19 +432,19 @@ func (t InlineHolder_List_Item) AsCourier() (Courier, error) {
 			return body, fmt.Errorf("Courier doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier sets the union data inside the InlineHolder_List_Item to the provided Courier. It replaces
 // the data of Courier's own union and keeps the other unions' data.
 func (t *InlineHolder_List_Item) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -458,7 +458,7 @@ func (t *InlineHolder_List_Item) FromCourier(v Courier) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -469,7 +469,7 @@ func (t *InlineHolder_List_Item) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the InlineHolder_List_Item, using the provided Courier
 func (t *InlineHolder_List_Item) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -485,7 +485,7 @@ func (t *InlineHolder_List_Item) MergeCourier(v Courier) error {
 func (t InlineHolder_List_Item) AsPickup() (Pickup, error) {
 	var body Pickup
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -501,19 +501,19 @@ func (t InlineHolder_List_Item) AsPickup() (Pickup, error) {
 			return body, fmt.Errorf("Pickup doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup sets the union data inside the InlineHolder_List_Item to the provided Pickup. It replaces
 // the data of Pickup's own union and keeps the other unions' data.
 func (t *InlineHolder_List_Item) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -527,7 +527,7 @@ func (t *InlineHolder_List_Item) FromPickup(v Pickup) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -538,7 +538,7 @@ func (t *InlineHolder_List_Item) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the InlineHolder_List_Item, using the provided Pickup
 func (t *InlineHolder_List_Item) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -555,15 +555,15 @@ func (t InlineHolder_List_Item) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "address")
 		delete(object, "method")
 		delete(object, "store")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -571,12 +571,12 @@ func (t InlineHolder_List_Item) AsPayment() (Payment, error) {
 // replaces that union's data and keeps the other unions' data; a zero Payment clears that
 // union's data.
 func (t *InlineHolder_List_Item) FromPayment(v Payment) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -591,7 +591,7 @@ func (t *InlineHolder_List_Item) FromPayment(v Payment) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -607,15 +607,15 @@ func (t InlineHolder_List_Item) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "card")
 		delete(object, "iban")
 		delete(object, "method")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -623,12 +623,12 @@ func (t InlineHolder_List_Item) AsDelivery() (Delivery, error) {
 // replaces that union's data and keeps the other unions' data; a zero Delivery clears that
 // union's data.
 func (t *InlineHolder_List_Item) FromDelivery(v Delivery) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -642,7 +642,7 @@ func (t *InlineHolder_List_Item) FromDelivery(v Delivery) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -655,7 +655,7 @@ func (t InlineHolder_List_Item) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"method"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
@@ -690,7 +690,7 @@ func (t *InlineHolder_List_Item) UnmarshalJSON(b []byte) error {
 func (t InlineHolder_Map_AdditionalProperties) AsCard() (Card, error) {
 	var body Card
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -706,14 +706,14 @@ func (t InlineHolder_Map_AdditionalProperties) AsCard() (Card, error) {
 			return body, fmt.Errorf("Card doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard sets the union data inside the InlineHolder_Map_AdditionalProperties to the provided Card. It replaces
 // the data of Card's own union and keeps the other unions' data.
 func (t *InlineHolder_Map_AdditionalProperties) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -722,7 +722,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromCard(v Card) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -737,7 +737,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromCard(v Card) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -748,7 +748,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided Card
 func (t *InlineHolder_Map_AdditionalProperties) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -768,7 +768,7 @@ func (t *InlineHolder_Map_AdditionalProperties) MergeCard(v Card) error {
 func (t InlineHolder_Map_AdditionalProperties) AsTransfer() (Transfer, error) {
 	var body Transfer
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -784,14 +784,14 @@ func (t InlineHolder_Map_AdditionalProperties) AsTransfer() (Transfer, error) {
 			return body, fmt.Errorf("Transfer doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer sets the union data inside the InlineHolder_Map_AdditionalProperties to the provided Transfer. It replaces
 // the data of Transfer's own union and keeps the other unions' data.
 func (t *InlineHolder_Map_AdditionalProperties) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -800,7 +800,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromTransfer(v Transfer) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -815,7 +815,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromTransfer(v Transfer) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -826,7 +826,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided Transfer
 func (t *InlineHolder_Map_AdditionalProperties) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -846,7 +846,7 @@ func (t *InlineHolder_Map_AdditionalProperties) MergeTransfer(v Transfer) error 
 func (t InlineHolder_Map_AdditionalProperties) AsCourier() (Courier, error) {
 	var body Courier
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -862,19 +862,19 @@ func (t InlineHolder_Map_AdditionalProperties) AsCourier() (Courier, error) {
 			return body, fmt.Errorf("Courier doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier sets the union data inside the InlineHolder_Map_AdditionalProperties to the provided Courier. It replaces
 // the data of Courier's own union and keeps the other unions' data.
 func (t *InlineHolder_Map_AdditionalProperties) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -888,7 +888,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromCourier(v Courier) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -899,7 +899,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided Courier
 func (t *InlineHolder_Map_AdditionalProperties) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -915,7 +915,7 @@ func (t *InlineHolder_Map_AdditionalProperties) MergeCourier(v Courier) error {
 func (t InlineHolder_Map_AdditionalProperties) AsPickup() (Pickup, error) {
 	var body Pickup
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -931,19 +931,19 @@ func (t InlineHolder_Map_AdditionalProperties) AsPickup() (Pickup, error) {
 			return body, fmt.Errorf("Pickup doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup sets the union data inside the InlineHolder_Map_AdditionalProperties to the provided Pickup. It replaces
 // the data of Pickup's own union and keeps the other unions' data.
 func (t *InlineHolder_Map_AdditionalProperties) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -957,7 +957,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromPickup(v Pickup) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -968,7 +968,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided Pickup
 func (t *InlineHolder_Map_AdditionalProperties) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -985,15 +985,15 @@ func (t InlineHolder_Map_AdditionalProperties) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "address")
 		delete(object, "method")
 		delete(object, "store")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -1001,12 +1001,12 @@ func (t InlineHolder_Map_AdditionalProperties) AsPayment() (Payment, error) {
 // replaces that union's data and keeps the other unions' data; a zero Payment clears that
 // union's data.
 func (t *InlineHolder_Map_AdditionalProperties) FromPayment(v Payment) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -1021,7 +1021,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromPayment(v Payment) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1037,15 +1037,15 @@ func (t InlineHolder_Map_AdditionalProperties) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "card")
 		delete(object, "iban")
 		delete(object, "method")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -1053,12 +1053,12 @@ func (t InlineHolder_Map_AdditionalProperties) AsDelivery() (Delivery, error) {
 // replaces that union's data and keeps the other unions' data; a zero Delivery clears that
 // union's data.
 func (t *InlineHolder_Map_AdditionalProperties) FromDelivery(v Delivery) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -1072,7 +1072,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromDelivery(v Delivery) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1085,7 +1085,7 @@ func (t InlineHolder_Map_AdditionalProperties) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"method"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
@@ -1120,7 +1120,7 @@ func (t *InlineHolder_Map_AdditionalProperties) UnmarshalJSON(b []byte) error {
 func (t InlineHolder_One) AsCard() (Card, error) {
 	var body Card
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -1136,14 +1136,14 @@ func (t InlineHolder_One) AsCard() (Card, error) {
 			return body, fmt.Errorf("Card doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard sets the union data inside the InlineHolder_One to the provided Card. It replaces
 // the data of Card's own union and keeps the other unions' data.
 func (t *InlineHolder_One) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1152,7 +1152,7 @@ func (t *InlineHolder_One) FromCard(v Card) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -1167,7 +1167,7 @@ func (t *InlineHolder_One) FromCard(v Card) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1178,7 +1178,7 @@ func (t *InlineHolder_One) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the InlineHolder_One, using the provided Card
 func (t *InlineHolder_One) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1198,7 +1198,7 @@ func (t *InlineHolder_One) MergeCard(v Card) error {
 func (t InlineHolder_One) AsTransfer() (Transfer, error) {
 	var body Transfer
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -1214,14 +1214,14 @@ func (t InlineHolder_One) AsTransfer() (Transfer, error) {
 			return body, fmt.Errorf("Transfer doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer sets the union data inside the InlineHolder_One to the provided Transfer. It replaces
 // the data of Transfer's own union and keeps the other unions' data.
 func (t *InlineHolder_One) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1230,7 +1230,7 @@ func (t *InlineHolder_One) FromTransfer(v Transfer) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -1245,7 +1245,7 @@ func (t *InlineHolder_One) FromTransfer(v Transfer) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1256,7 +1256,7 @@ func (t *InlineHolder_One) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the InlineHolder_One, using the provided Transfer
 func (t *InlineHolder_One) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1276,7 +1276,7 @@ func (t *InlineHolder_One) MergeTransfer(v Transfer) error {
 func (t InlineHolder_One) AsCourier() (Courier, error) {
 	var body Courier
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -1292,19 +1292,19 @@ func (t InlineHolder_One) AsCourier() (Courier, error) {
 			return body, fmt.Errorf("Courier doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier sets the union data inside the InlineHolder_One to the provided Courier. It replaces
 // the data of Courier's own union and keeps the other unions' data.
 func (t *InlineHolder_One) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -1318,7 +1318,7 @@ func (t *InlineHolder_One) FromCourier(v Courier) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1329,7 +1329,7 @@ func (t *InlineHolder_One) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the InlineHolder_One, using the provided Courier
 func (t *InlineHolder_One) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1345,7 +1345,7 @@ func (t *InlineHolder_One) MergeCourier(v Courier) error {
 func (t InlineHolder_One) AsPickup() (Pickup, error) {
 	var body Pickup
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -1361,19 +1361,19 @@ func (t InlineHolder_One) AsPickup() (Pickup, error) {
 			return body, fmt.Errorf("Pickup doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup sets the union data inside the InlineHolder_One to the provided Pickup. It replaces
 // the data of Pickup's own union and keeps the other unions' data.
 func (t *InlineHolder_One) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -1387,7 +1387,7 @@ func (t *InlineHolder_One) FromPickup(v Pickup) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1398,7 +1398,7 @@ func (t *InlineHolder_One) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the InlineHolder_One, using the provided Pickup
 func (t *InlineHolder_One) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1415,15 +1415,15 @@ func (t InlineHolder_One) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "address")
 		delete(object, "method")
 		delete(object, "store")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -1431,12 +1431,12 @@ func (t InlineHolder_One) AsPayment() (Payment, error) {
 // replaces that union's data and keeps the other unions' data; a zero Payment clears that
 // union's data.
 func (t *InlineHolder_One) FromPayment(v Payment) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -1451,7 +1451,7 @@ func (t *InlineHolder_One) FromPayment(v Payment) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1467,15 +1467,15 @@ func (t InlineHolder_One) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "card")
 		delete(object, "iban")
 		delete(object, "method")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -1483,12 +1483,12 @@ func (t InlineHolder_One) AsDelivery() (Delivery, error) {
 // replaces that union's data and keeps the other unions' data; a zero Delivery clears that
 // union's data.
 func (t *InlineHolder_One) FromDelivery(v Delivery) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -1502,7 +1502,7 @@ func (t *InlineHolder_One) FromDelivery(v Delivery) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1515,7 +1515,7 @@ func (t InlineHolder_One) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"method"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
@@ -1550,7 +1550,7 @@ func (t *InlineHolder_One) UnmarshalJSON(b []byte) error {
 func (t Payment) AsCard() (Card, error) {
 	var body Card
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -1566,20 +1566,20 @@ func (t Payment) AsCard() (Card, error) {
 			return body, fmt.Errorf("Card doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard overwrites any union data inside the Payment as the provided Card
 func (t *Payment) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeCard performs a merge with any union data inside the Payment, using the provided Card
 func (t *Payment) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1595,7 +1595,7 @@ func (t *Payment) MergeCard(v Card) error {
 func (t Payment) AsTransfer() (Transfer, error) {
 	var body Transfer
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -1611,20 +1611,20 @@ func (t Payment) AsTransfer() (Transfer, error) {
 			return body, fmt.Errorf("Transfer doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer overwrites any union data inside the Payment as the provided Transfer
 func (t *Payment) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeTransfer performs a merge with any union data inside the Payment, using the provided Transfer
 func (t *Payment) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1650,7 +1650,7 @@ func (t *Payment) UnmarshalJSON(b []byte) error {
 func (t Subject) AsCard() (Card, error) {
 	var body Card
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -1666,14 +1666,14 @@ func (t Subject) AsCard() (Card, error) {
 			return body, fmt.Errorf("Card doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard sets the union data inside the Subject to the provided Card. It replaces
 // the data of Card's own union and keeps the other unions' data.
 func (t *Subject) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1682,7 +1682,7 @@ func (t *Subject) FromCard(v Card) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -1697,7 +1697,7 @@ func (t *Subject) FromCard(v Card) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1708,7 +1708,7 @@ func (t *Subject) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the Subject, using the provided Card
 func (t *Subject) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1728,7 +1728,7 @@ func (t *Subject) MergeCard(v Card) error {
 func (t Subject) AsTransfer() (Transfer, error) {
 	var body Transfer
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -1744,14 +1744,14 @@ func (t Subject) AsTransfer() (Transfer, error) {
 			return body, fmt.Errorf("Transfer doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer sets the union data inside the Subject to the provided Transfer. It replaces
 // the data of Transfer's own union and keeps the other unions' data.
 func (t *Subject) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1760,7 +1760,7 @@ func (t *Subject) FromTransfer(v Transfer) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -1775,7 +1775,7 @@ func (t *Subject) FromTransfer(v Transfer) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1786,7 +1786,7 @@ func (t *Subject) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the Subject, using the provided Transfer
 func (t *Subject) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1806,7 +1806,7 @@ func (t *Subject) MergeTransfer(v Transfer) error {
 func (t Subject) AsCourier() (Courier, error) {
 	var body Courier
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -1822,19 +1822,19 @@ func (t Subject) AsCourier() (Courier, error) {
 			return body, fmt.Errorf("Courier doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier sets the union data inside the Subject to the provided Courier. It replaces
 // the data of Courier's own union and keeps the other unions' data.
 func (t *Subject) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -1848,7 +1848,7 @@ func (t *Subject) FromCourier(v Courier) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1859,7 +1859,7 @@ func (t *Subject) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the Subject, using the provided Courier
 func (t *Subject) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1875,7 +1875,7 @@ func (t *Subject) MergeCourier(v Courier) error {
 func (t Subject) AsPickup() (Pickup, error) {
 	var body Pickup
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -1891,19 +1891,19 @@ func (t Subject) AsPickup() (Pickup, error) {
 			return body, fmt.Errorf("Pickup doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup sets the union data inside the Subject to the provided Pickup. It replaces
 // the data of Pickup's own union and keeps the other unions' data.
 func (t *Subject) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -1917,7 +1917,7 @@ func (t *Subject) FromPickup(v Pickup) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1928,7 +1928,7 @@ func (t *Subject) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the Subject, using the provided Pickup
 func (t *Subject) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1945,15 +1945,15 @@ func (t Subject) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "address")
 		delete(object, "method")
 		delete(object, "store")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -1961,12 +1961,12 @@ func (t Subject) AsPayment() (Payment, error) {
 // replaces that union's data and keeps the other unions' data; a zero Payment clears that
 // union's data.
 func (t *Subject) FromPayment(v Payment) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -1981,7 +1981,7 @@ func (t *Subject) FromPayment(v Payment) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1997,15 +1997,15 @@ func (t Subject) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "card")
 		delete(object, "iban")
 		delete(object, "method")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -2013,12 +2013,12 @@ func (t Subject) AsDelivery() (Delivery, error) {
 // replaces that union's data and keeps the other unions' data; a zero Delivery clears that
 // union's data.
 func (t *Subject) FromDelivery(v Delivery) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -2032,7 +2032,7 @@ func (t *Subject) FromDelivery(v Delivery) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2045,7 +2045,7 @@ func (t Subject) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"method"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
@@ -2080,7 +2080,7 @@ func (t *Subject) UnmarshalJSON(b []byte) error {
 func (t InlineSubjectResponse) AsCard() (Card, error) {
 	var body Card
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -2096,14 +2096,14 @@ func (t InlineSubjectResponse) AsCard() (Card, error) {
 			return body, fmt.Errorf("Card doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard sets the union data inside the InlineSubjectResponse to the provided Card. It replaces
 // the data of Card's own union and keeps the other unions' data.
 func (t *InlineSubjectResponse) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2112,7 +2112,7 @@ func (t *InlineSubjectResponse) FromCard(v Card) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -2127,7 +2127,7 @@ func (t *InlineSubjectResponse) FromCard(v Card) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2138,7 +2138,7 @@ func (t *InlineSubjectResponse) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the InlineSubjectResponse, using the provided Card
 func (t *InlineSubjectResponse) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2158,7 +2158,7 @@ func (t *InlineSubjectResponse) MergeCard(v Card) error {
 func (t InlineSubjectResponse) AsTransfer() (Transfer, error) {
 	var body Transfer
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -2174,14 +2174,14 @@ func (t InlineSubjectResponse) AsTransfer() (Transfer, error) {
 			return body, fmt.Errorf("Transfer doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer sets the union data inside the InlineSubjectResponse to the provided Transfer. It replaces
 // the data of Transfer's own union and keeps the other unions' data.
 func (t *InlineSubjectResponse) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2190,7 +2190,7 @@ func (t *InlineSubjectResponse) FromTransfer(v Transfer) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -2205,7 +2205,7 @@ func (t *InlineSubjectResponse) FromTransfer(v Transfer) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2216,7 +2216,7 @@ func (t *InlineSubjectResponse) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the InlineSubjectResponse, using the provided Transfer
 func (t *InlineSubjectResponse) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2236,7 +2236,7 @@ func (t *InlineSubjectResponse) MergeTransfer(v Transfer) error {
 func (t InlineSubjectResponse) AsCourier() (Courier, error) {
 	var body Courier
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -2252,19 +2252,19 @@ func (t InlineSubjectResponse) AsCourier() (Courier, error) {
 			return body, fmt.Errorf("Courier doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier sets the union data inside the InlineSubjectResponse to the provided Courier. It replaces
 // the data of Courier's own union and keeps the other unions' data.
 func (t *InlineSubjectResponse) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -2278,7 +2278,7 @@ func (t *InlineSubjectResponse) FromCourier(v Courier) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2289,7 +2289,7 @@ func (t *InlineSubjectResponse) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the InlineSubjectResponse, using the provided Courier
 func (t *InlineSubjectResponse) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2305,7 +2305,7 @@ func (t *InlineSubjectResponse) MergeCourier(v Courier) error {
 func (t InlineSubjectResponse) AsPickup() (Pickup, error) {
 	var body Pickup
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -2321,19 +2321,19 @@ func (t InlineSubjectResponse) AsPickup() (Pickup, error) {
 			return body, fmt.Errorf("Pickup doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup sets the union data inside the InlineSubjectResponse to the provided Pickup. It replaces
 // the data of Pickup's own union and keeps the other unions' data.
 func (t *InlineSubjectResponse) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -2347,7 +2347,7 @@ func (t *InlineSubjectResponse) FromPickup(v Pickup) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2358,7 +2358,7 @@ func (t *InlineSubjectResponse) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the InlineSubjectResponse, using the provided Pickup
 func (t *InlineSubjectResponse) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2375,15 +2375,15 @@ func (t InlineSubjectResponse) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "address")
 		delete(object, "method")
 		delete(object, "store")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -2391,12 +2391,12 @@ func (t InlineSubjectResponse) AsPayment() (Payment, error) {
 // replaces that union's data and keeps the other unions' data; a zero Payment clears that
 // union's data.
 func (t *InlineSubjectResponse) FromPayment(v Payment) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -2411,7 +2411,7 @@ func (t *InlineSubjectResponse) FromPayment(v Payment) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2427,15 +2427,15 @@ func (t InlineSubjectResponse) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "card")
 		delete(object, "iban")
 		delete(object, "method")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -2443,12 +2443,12 @@ func (t InlineSubjectResponse) AsDelivery() (Delivery, error) {
 // replaces that union's data and keeps the other unions' data; a zero Delivery clears that
 // union's data.
 func (t *InlineSubjectResponse) FromDelivery(v Delivery) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -2462,7 +2462,7 @@ func (t *InlineSubjectResponse) FromDelivery(v Delivery) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2475,7 +2475,7 @@ func (t InlineSubjectResponse) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"method"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
@@ -2510,7 +2510,7 @@ func (t *InlineSubjectResponse) UnmarshalJSON(b []byte) error {
 func (t InlineSubjectBody) AsCard() (Card, error) {
 	var body Card
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -2526,14 +2526,14 @@ func (t InlineSubjectBody) AsCard() (Card, error) {
 			return body, fmt.Errorf("Card doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard sets the union data inside the InlineSubjectBody to the provided Card. It replaces
 // the data of Card's own union and keeps the other unions' data.
 func (t *InlineSubjectBody) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2542,7 +2542,7 @@ func (t *InlineSubjectBody) FromCard(v Card) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -2557,7 +2557,7 @@ func (t *InlineSubjectBody) FromCard(v Card) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2568,7 +2568,7 @@ func (t *InlineSubjectBody) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the InlineSubjectBody, using the provided Card
 func (t *InlineSubjectBody) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2588,7 +2588,7 @@ func (t *InlineSubjectBody) MergeCard(v Card) error {
 func (t InlineSubjectBody) AsTransfer() (Transfer, error) {
 	var body Transfer
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -2604,14 +2604,14 @@ func (t InlineSubjectBody) AsTransfer() (Transfer, error) {
 			return body, fmt.Errorf("Transfer doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer sets the union data inside the InlineSubjectBody to the provided Transfer. It replaces
 // the data of Transfer's own union and keeps the other unions' data.
 func (t *InlineSubjectBody) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2620,7 +2620,7 @@ func (t *InlineSubjectBody) FromTransfer(v Transfer) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -2635,7 +2635,7 @@ func (t *InlineSubjectBody) FromTransfer(v Transfer) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2646,7 +2646,7 @@ func (t *InlineSubjectBody) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the InlineSubjectBody, using the provided Transfer
 func (t *InlineSubjectBody) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2666,7 +2666,7 @@ func (t *InlineSubjectBody) MergeTransfer(v Transfer) error {
 func (t InlineSubjectBody) AsCourier() (Courier, error) {
 	var body Courier
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -2682,19 +2682,19 @@ func (t InlineSubjectBody) AsCourier() (Courier, error) {
 			return body, fmt.Errorf("Courier doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier sets the union data inside the InlineSubjectBody to the provided Courier. It replaces
 // the data of Courier's own union and keeps the other unions' data.
 func (t *InlineSubjectBody) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -2708,7 +2708,7 @@ func (t *InlineSubjectBody) FromCourier(v Courier) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2719,7 +2719,7 @@ func (t *InlineSubjectBody) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the InlineSubjectBody, using the provided Courier
 func (t *InlineSubjectBody) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2735,7 +2735,7 @@ func (t *InlineSubjectBody) MergeCourier(v Courier) error {
 func (t InlineSubjectBody) AsPickup() (Pickup, error) {
 	var body Pickup
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -2751,19 +2751,19 @@ func (t InlineSubjectBody) AsPickup() (Pickup, error) {
 			return body, fmt.Errorf("Pickup doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup sets the union data inside the InlineSubjectBody to the provided Pickup. It replaces
 // the data of Pickup's own union and keeps the other unions' data.
 func (t *InlineSubjectBody) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -2777,7 +2777,7 @@ func (t *InlineSubjectBody) FromPickup(v Pickup) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2788,7 +2788,7 @@ func (t *InlineSubjectBody) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the InlineSubjectBody, using the provided Pickup
 func (t *InlineSubjectBody) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2805,15 +2805,15 @@ func (t InlineSubjectBody) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "address")
 		delete(object, "method")
 		delete(object, "store")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -2821,12 +2821,12 @@ func (t InlineSubjectBody) AsPayment() (Payment, error) {
 // replaces that union's data and keeps the other unions' data; a zero Payment clears that
 // union's data.
 func (t *InlineSubjectBody) FromPayment(v Payment) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -2841,7 +2841,7 @@ func (t *InlineSubjectBody) FromPayment(v Payment) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2857,15 +2857,15 @@ func (t InlineSubjectBody) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "card")
 		delete(object, "iban")
 		delete(object, "method")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -2873,12 +2873,12 @@ func (t InlineSubjectBody) AsDelivery() (Delivery, error) {
 // replaces that union's data and keeps the other unions' data; a zero Delivery clears that
 // union's data.
 func (t *InlineSubjectBody) FromDelivery(v Delivery) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -2892,7 +2892,7 @@ func (t *InlineSubjectBody) FromDelivery(v Delivery) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2905,7 +2905,7 @@ func (t InlineSubjectBody) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"method"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
@@ -2940,7 +2940,7 @@ func (t *InlineSubjectBody) UnmarshalJSON(b []byte) error {
 func (t BodyComponentInlineJSONBody) AsCard() (Card, error) {
 	var body Card
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -2956,14 +2956,14 @@ func (t BodyComponentInlineJSONBody) AsCard() (Card, error) {
 			return body, fmt.Errorf("Card doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard sets the union data inside the BodyComponentInlineJSONBody to the provided Card. It replaces
 // the data of Card's own union and keeps the other unions' data.
 func (t *BodyComponentInlineJSONBody) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2972,7 +2972,7 @@ func (t *BodyComponentInlineJSONBody) FromCard(v Card) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -2987,7 +2987,7 @@ func (t *BodyComponentInlineJSONBody) FromCard(v Card) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2998,7 +2998,7 @@ func (t *BodyComponentInlineJSONBody) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided Card
 func (t *BodyComponentInlineJSONBody) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -3018,7 +3018,7 @@ func (t *BodyComponentInlineJSONBody) MergeCard(v Card) error {
 func (t BodyComponentInlineJSONBody) AsTransfer() (Transfer, error) {
 	var body Transfer
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -3034,14 +3034,14 @@ func (t BodyComponentInlineJSONBody) AsTransfer() (Transfer, error) {
 			return body, fmt.Errorf("Transfer doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer sets the union data inside the BodyComponentInlineJSONBody to the provided Transfer. It replaces
 // the data of Transfer's own union and keeps the other unions' data.
 func (t *BodyComponentInlineJSONBody) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -3050,7 +3050,7 @@ func (t *BodyComponentInlineJSONBody) FromTransfer(v Transfer) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -3065,7 +3065,7 @@ func (t *BodyComponentInlineJSONBody) FromTransfer(v Transfer) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -3076,7 +3076,7 @@ func (t *BodyComponentInlineJSONBody) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided Transfer
 func (t *BodyComponentInlineJSONBody) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -3096,7 +3096,7 @@ func (t *BodyComponentInlineJSONBody) MergeTransfer(v Transfer) error {
 func (t BodyComponentInlineJSONBody) AsCourier() (Courier, error) {
 	var body Courier
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -3112,19 +3112,19 @@ func (t BodyComponentInlineJSONBody) AsCourier() (Courier, error) {
 			return body, fmt.Errorf("Courier doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier sets the union data inside the BodyComponentInlineJSONBody to the provided Courier. It replaces
 // the data of Courier's own union and keeps the other unions' data.
 func (t *BodyComponentInlineJSONBody) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -3138,7 +3138,7 @@ func (t *BodyComponentInlineJSONBody) FromCourier(v Courier) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -3149,7 +3149,7 @@ func (t *BodyComponentInlineJSONBody) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided Courier
 func (t *BodyComponentInlineJSONBody) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -3165,7 +3165,7 @@ func (t *BodyComponentInlineJSONBody) MergeCourier(v Courier) error {
 func (t BodyComponentInlineJSONBody) AsPickup() (Pickup, error) {
 	var body Pickup
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -3181,19 +3181,19 @@ func (t BodyComponentInlineJSONBody) AsPickup() (Pickup, error) {
 			return body, fmt.Errorf("Pickup doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup sets the union data inside the BodyComponentInlineJSONBody to the provided Pickup. It replaces
 // the data of Pickup's own union and keeps the other unions' data.
 func (t *BodyComponentInlineJSONBody) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -3207,7 +3207,7 @@ func (t *BodyComponentInlineJSONBody) FromPickup(v Pickup) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -3218,7 +3218,7 @@ func (t *BodyComponentInlineJSONBody) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided Pickup
 func (t *BodyComponentInlineJSONBody) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -3235,15 +3235,15 @@ func (t BodyComponentInlineJSONBody) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "address")
 		delete(object, "method")
 		delete(object, "store")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -3251,12 +3251,12 @@ func (t BodyComponentInlineJSONBody) AsPayment() (Payment, error) {
 // replaces that union's data and keeps the other unions' data; a zero Payment clears that
 // union's data.
 func (t *BodyComponentInlineJSONBody) FromPayment(v Payment) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -3271,7 +3271,7 @@ func (t *BodyComponentInlineJSONBody) FromPayment(v Payment) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -3287,15 +3287,15 @@ func (t BodyComponentInlineJSONBody) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "card")
 		delete(object, "iban")
 		delete(object, "method")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -3303,12 +3303,12 @@ func (t BodyComponentInlineJSONBody) AsDelivery() (Delivery, error) {
 // replaces that union's data and keeps the other unions' data; a zero Delivery clears that
 // union's data.
 func (t *BodyComponentInlineJSONBody) FromDelivery(v Delivery) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -3322,7 +3322,7 @@ func (t *BodyComponentInlineJSONBody) FromDelivery(v Delivery) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -3335,7 +3335,7 @@ func (t BodyComponentInlineJSONBody) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"method"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
@@ -3370,7 +3370,7 @@ func (t *BodyComponentInlineJSONBody) UnmarshalJSON(b []byte) error {
 func (t BodyInlineJSONBody) AsCard() (Card, error) {
 	var body Card
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -3386,14 +3386,14 @@ func (t BodyInlineJSONBody) AsCard() (Card, error) {
 			return body, fmt.Errorf("Card doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard sets the union data inside the BodyInlineJSONBody to the provided Card. It replaces
 // the data of Card's own union and keeps the other unions' data.
 func (t *BodyInlineJSONBody) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -3402,7 +3402,7 @@ func (t *BodyInlineJSONBody) FromCard(v Card) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -3417,7 +3417,7 @@ func (t *BodyInlineJSONBody) FromCard(v Card) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -3428,7 +3428,7 @@ func (t *BodyInlineJSONBody) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the BodyInlineJSONBody, using the provided Card
 func (t *BodyInlineJSONBody) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -3448,7 +3448,7 @@ func (t *BodyInlineJSONBody) MergeCard(v Card) error {
 func (t BodyInlineJSONBody) AsTransfer() (Transfer, error) {
 	var body Transfer
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -3464,14 +3464,14 @@ func (t BodyInlineJSONBody) AsTransfer() (Transfer, error) {
 			return body, fmt.Errorf("Transfer doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer sets the union data inside the BodyInlineJSONBody to the provided Transfer. It replaces
 // the data of Transfer's own union and keeps the other unions' data.
 func (t *BodyInlineJSONBody) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -3480,7 +3480,7 @@ func (t *BodyInlineJSONBody) FromTransfer(v Transfer) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -3495,7 +3495,7 @@ func (t *BodyInlineJSONBody) FromTransfer(v Transfer) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -3506,7 +3506,7 @@ func (t *BodyInlineJSONBody) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the BodyInlineJSONBody, using the provided Transfer
 func (t *BodyInlineJSONBody) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -3526,7 +3526,7 @@ func (t *BodyInlineJSONBody) MergeTransfer(v Transfer) error {
 func (t BodyInlineJSONBody) AsCourier() (Courier, error) {
 	var body Courier
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -3542,19 +3542,19 @@ func (t BodyInlineJSONBody) AsCourier() (Courier, error) {
 			return body, fmt.Errorf("Courier doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier sets the union data inside the BodyInlineJSONBody to the provided Courier. It replaces
 // the data of Courier's own union and keeps the other unions' data.
 func (t *BodyInlineJSONBody) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -3568,7 +3568,7 @@ func (t *BodyInlineJSONBody) FromCourier(v Courier) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -3579,7 +3579,7 @@ func (t *BodyInlineJSONBody) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the BodyInlineJSONBody, using the provided Courier
 func (t *BodyInlineJSONBody) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -3595,7 +3595,7 @@ func (t *BodyInlineJSONBody) MergeCourier(v Courier) error {
 func (t BodyInlineJSONBody) AsPickup() (Pickup, error) {
 	var body Pickup
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -3611,19 +3611,19 @@ func (t BodyInlineJSONBody) AsPickup() (Pickup, error) {
 			return body, fmt.Errorf("Pickup doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup sets the union data inside the BodyInlineJSONBody to the provided Pickup. It replaces
 // the data of Pickup's own union and keeps the other unions' data.
 func (t *BodyInlineJSONBody) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -3637,7 +3637,7 @@ func (t *BodyInlineJSONBody) FromPickup(v Pickup) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -3648,7 +3648,7 @@ func (t *BodyInlineJSONBody) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the BodyInlineJSONBody, using the provided Pickup
 func (t *BodyInlineJSONBody) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -3665,15 +3665,15 @@ func (t BodyInlineJSONBody) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "address")
 		delete(object, "method")
 		delete(object, "store")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -3681,12 +3681,12 @@ func (t BodyInlineJSONBody) AsPayment() (Payment, error) {
 // replaces that union's data and keeps the other unions' data; a zero Payment clears that
 // union's data.
 func (t *BodyInlineJSONBody) FromPayment(v Payment) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -3701,7 +3701,7 @@ func (t *BodyInlineJSONBody) FromPayment(v Payment) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -3717,15 +3717,15 @@ func (t BodyInlineJSONBody) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "card")
 		delete(object, "iban")
 		delete(object, "method")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -3733,12 +3733,12 @@ func (t BodyInlineJSONBody) AsDelivery() (Delivery, error) {
 // replaces that union's data and keeps the other unions' data; a zero Delivery clears that
 // union's data.
 func (t *BodyInlineJSONBody) FromDelivery(v Delivery) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -3752,7 +3752,7 @@ func (t *BodyInlineJSONBody) FromDelivery(v Delivery) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -3765,7 +3765,7 @@ func (t BodyInlineJSONBody) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"method"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
@@ -3800,7 +3800,7 @@ func (t *BodyInlineJSONBody) UnmarshalJSON(b []byte) error {
 func (t BodyInline200JSONResponseBody) AsCard() (Card, error) {
 	var body Card
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -3816,14 +3816,14 @@ func (t BodyInline200JSONResponseBody) AsCard() (Card, error) {
 			return body, fmt.Errorf("Card doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard sets the union data inside the BodyInline200JSONResponseBody to the provided Card. It replaces
 // the data of Card's own union and keeps the other unions' data.
 func (t *BodyInline200JSONResponseBody) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -3832,7 +3832,7 @@ func (t *BodyInline200JSONResponseBody) FromCard(v Card) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -3847,7 +3847,7 @@ func (t *BodyInline200JSONResponseBody) FromCard(v Card) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -3858,7 +3858,7 @@ func (t *BodyInline200JSONResponseBody) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided Card
 func (t *BodyInline200JSONResponseBody) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -3878,7 +3878,7 @@ func (t *BodyInline200JSONResponseBody) MergeCard(v Card) error {
 func (t BodyInline200JSONResponseBody) AsTransfer() (Transfer, error) {
 	var body Transfer
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -3894,14 +3894,14 @@ func (t BodyInline200JSONResponseBody) AsTransfer() (Transfer, error) {
 			return body, fmt.Errorf("Transfer doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer sets the union data inside the BodyInline200JSONResponseBody to the provided Transfer. It replaces
 // the data of Transfer's own union and keeps the other unions' data.
 func (t *BodyInline200JSONResponseBody) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -3910,7 +3910,7 @@ func (t *BodyInline200JSONResponseBody) FromTransfer(v Transfer) error {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -3925,7 +3925,7 @@ func (t *BodyInline200JSONResponseBody) FromTransfer(v Transfer) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -3936,7 +3936,7 @@ func (t *BodyInline200JSONResponseBody) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided Transfer
 func (t *BodyInline200JSONResponseBody) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -3956,7 +3956,7 @@ func (t *BodyInline200JSONResponseBody) MergeTransfer(v Transfer) error {
 func (t BodyInline200JSONResponseBody) AsCourier() (Courier, error) {
 	var body Courier
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -3972,19 +3972,19 @@ func (t BodyInline200JSONResponseBody) AsCourier() (Courier, error) {
 			return body, fmt.Errorf("Courier doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier sets the union data inside the BodyInline200JSONResponseBody to the provided Courier. It replaces
 // the data of Courier's own union and keeps the other unions' data.
 func (t *BodyInline200JSONResponseBody) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -3998,7 +3998,7 @@ func (t *BodyInline200JSONResponseBody) FromCourier(v Courier) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -4009,7 +4009,7 @@ func (t *BodyInline200JSONResponseBody) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided Courier
 func (t *BodyInline200JSONResponseBody) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -4025,7 +4025,7 @@ func (t *BodyInline200JSONResponseBody) MergeCourier(v Courier) error {
 func (t BodyInline200JSONResponseBody) AsPickup() (Pickup, error) {
 	var body Pickup
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -4041,19 +4041,19 @@ func (t BodyInline200JSONResponseBody) AsPickup() (Pickup, error) {
 			return body, fmt.Errorf("Pickup doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup sets the union data inside the BodyInline200JSONResponseBody to the provided Pickup. It replaces
 // the data of Pickup's own union and keeps the other unions' data.
 func (t *BodyInline200JSONResponseBody) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -4067,7 +4067,7 @@ func (t *BodyInline200JSONResponseBody) FromPickup(v Pickup) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -4078,7 +4078,7 @@ func (t *BodyInline200JSONResponseBody) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided Pickup
 func (t *BodyInline200JSONResponseBody) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -4095,15 +4095,15 @@ func (t BodyInline200JSONResponseBody) AsPayment() (Payment, error) {
 	var body Payment
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "address")
 		delete(object, "method")
 		delete(object, "store")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -4111,12 +4111,12 @@ func (t BodyInline200JSONResponseBody) AsPayment() (Payment, error) {
 // replaces that union's data and keeps the other unions' data; a zero Payment clears that
 // union's data.
 func (t *BodyInline200JSONResponseBody) FromPayment(v Payment) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "card")
 		delete(kept, "iban")
 		delete(kept, "method")
@@ -4131,7 +4131,7 @@ func (t *BodyInline200JSONResponseBody) FromPayment(v Payment) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -4147,15 +4147,15 @@ func (t BodyInline200JSONResponseBody) AsDelivery() (Delivery, error) {
 	var body Delivery
 	data := t.union
 	var object map[string]json.RawMessage
-	if json.Unmarshal(data, &object) == nil && object != nil {
+	if runtime.JSONUnmarshal(data, &object) == nil && object != nil {
 		delete(object, "card")
 		delete(object, "iban")
 		delete(object, "method")
-		if own, err := json.Marshal(object); err == nil {
+		if own, err := runtime.JSONMarshal(object); err == nil {
 			data = own
 		}
 	}
-	err := json.Unmarshal(data, &body)
+	err := runtime.JSONUnmarshal(data, &body)
 	return body, err
 }
 
@@ -4163,12 +4163,12 @@ func (t BodyInline200JSONResponseBody) AsDelivery() (Delivery, error) {
 // replaces that union's data and keeps the other unions' data; a zero Delivery clears that
 // union's data.
 func (t *BodyInline200JSONResponseBody) FromDelivery(v Delivery) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "address")
 		delete(kept, "store")
 		added := object == nil
@@ -4182,7 +4182,7 @@ func (t *BodyInline200JSONResponseBody) FromDelivery(v Delivery) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -4195,7 +4195,7 @@ func (t BodyInline200JSONResponseBody) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"method"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
@@ -4590,7 +4590,7 @@ func (c *Client) HolderInline(ctx context.Context, body HolderInlineJSONRequestB
 // NewBodyComponentRequest calls the generic BodyComponent builder with application/json body
 func NewBodyComponentRequest(server string, body BodyComponentJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -4630,7 +4630,7 @@ func NewBodyComponentRequestWithBody(server string, contentType string, body io.
 // NewBodyComponentInlineRequest calls the generic BodyComponentInline builder with application/json body
 func NewBodyComponentInlineRequest(server string, body BodyComponentInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -4670,7 +4670,7 @@ func NewBodyComponentInlineRequestWithBody(server string, contentType string, bo
 // NewBodyDefaultRequest calls the generic BodyDefault builder with application/json body
 func NewBodyDefaultRequest(server string, body BodyDefaultJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -4710,7 +4710,7 @@ func NewBodyDefaultRequestWithBody(server string, contentType string, body io.Re
 // NewBodyHeadersRequest calls the generic BodyHeaders builder with application/json body
 func NewBodyHeadersRequest(server string, body BodyHeadersJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -4750,7 +4750,7 @@ func NewBodyHeadersRequestWithBody(server string, contentType string, body io.Re
 // NewBodyInlineRequest calls the generic BodyInline builder with application/json body
 func NewBodyInlineRequest(server string, body BodyInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -4790,7 +4790,7 @@ func NewBodyInlineRequestWithBody(server string, contentType string, body io.Rea
 // NewBodyRefRequest calls the generic BodyRef builder with application/json body
 func NewBodyRefRequest(server string, body BodyRefJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -4830,7 +4830,7 @@ func NewBodyRefRequestWithBody(server string, contentType string, body io.Reader
 // NewHolderRequest calls the generic Holder builder with application/json body
 func NewHolderRequest(server string, body HolderJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -4870,7 +4870,7 @@ func NewHolderRequestWithBody(server string, contentType string, body io.Reader)
 // NewHolderInlineRequest calls the generic HolderInline builder with application/json body
 func NewHolderInlineRequest(server string, body HolderInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -5559,7 +5559,7 @@ func ParseBodyComponentResponse(rsp *http.Response) (*BodyComponentResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest SubjectResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -5585,7 +5585,7 @@ func ParseBodyComponentInlineResponse(rsp *http.Response) (*BodyComponentInlineR
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest InlineSubjectResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -5611,7 +5611,7 @@ func ParseBodyDefaultResponse(rsp *http.Response) (*BodyDefaultResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSONDefault = &dest
@@ -5637,7 +5637,7 @@ func ParseBodyHeadersResponse(rsp *http.Response) (*BodyHeadersResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -5676,7 +5676,7 @@ func ParseBodyInlineResponse(rsp *http.Response) (*BodyInlineResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest BodyInline200JSONResponseBody
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -5702,7 +5702,7 @@ func ParseBodyRefResponse(rsp *http.Response) (*BodyRefResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -5728,7 +5728,7 @@ func ParseHolderResponse(rsp *http.Response) (*HolderResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Holder
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -5754,7 +5754,7 @@ func ParseHolderInlineResponse(rsp *http.Response) (*HolderInlineResponse, error
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest InlineHolder
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -6070,7 +6070,7 @@ type BodyComponent200JSONResponse struct{ SubjectResponseJSONResponse }
 func (response BodyComponent200JSONResponse) VisitBodyComponentResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.SubjectResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.SubjectResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -6094,7 +6094,7 @@ type BodyComponentInline200JSONResponse struct {
 func (response BodyComponentInline200JSONResponse) VisitBodyComponentInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.InlineSubjectResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.InlineSubjectResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -6119,7 +6119,7 @@ type BodyDefaultdefaultJSONResponse struct {
 func (response BodyDefaultdefaultJSONResponse) VisitBodyDefaultResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -6148,7 +6148,7 @@ type BodyHeaders200JSONResponse struct {
 func (response BodyHeaders200JSONResponse) VisitBodyHeadersResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -6177,7 +6177,7 @@ type BodyInline200JSONResponse = BodyInline200JSONResponseBody
 func (response BodyInline200JSONResponse) VisitBodyInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -6207,7 +6207,7 @@ func (t *BodyRef200JSONResponse) UnmarshalJSON(b []byte) error {
 func (response BodyRef200JSONResponse) VisitBodyRefResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -6229,7 +6229,7 @@ type Holder200JSONResponse Holder
 func (response Holder200JSONResponse) VisitHolderResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -6251,7 +6251,7 @@ type HolderInline200JSONResponse InlineHolder
 func (response HolderInline200JSONResponse) VisitHolderInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

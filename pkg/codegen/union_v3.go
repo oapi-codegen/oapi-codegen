@@ -225,7 +225,7 @@ func generateUnionV3(ctx genContext, outSchema *Schema, elements openapi3.Schema
 	// branch (`anyOf: [{type: X}]` alone) keeps its wrapper shape, as in v2.
 	effectiveCount, hadNullBranch, soleEffective := effectiveBranches(elements)
 	if alone && effectiveCount == 1 && hadNullBranch && discriminator == nil {
-		return nil, collapseNullableUnion(ctx, outSchema, soleEffective, path)
+		return nil, collapseNullableUnion(ctx, outSchema, soleEffective, path, true)
 	}
 
 	var members []UnionElement

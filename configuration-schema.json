@@ -346,7 +346,7 @@
         },
         "resolve-type-name-collisions": {
           "type": "boolean",
-          "description": "When set to true, automatically renames types that collide across different OpenAPI component sections (schemas, parameters, requestBodies, responses, headers) by appending a suffix based on the component section. Also detects collisions between component types and client response wrapper types. Without this, the codegen will error on duplicate type names, requiring manual resolution via x-go-name.",
+          "description": "When set to true, automatically renames types that collide across different OpenAPI component sections (schemas, parameters, requestBodies, responses, headers) by appending a suffix based on the component section. Also detects collisions between component types and client response wrapper types. Without this, the codegen will error on duplicate type names, requiring manual resolution via x-go-name. Also covers struct field names: properties of one object whose JSON names derive the same Go field name (`host-fqdn` and `host_fqdn` are both `HostFqdn`) are each renamed to that name and a short hash of the JSON name (`HostFqdn_cea8c90`), while a field named with x-go-name is never renamed; without this, such a collision is an error. The option is still named for type names, which is all it covered at first, so that existing configurations keep working.",
           "default": false
         },
         "generate-types-for-anonymous-schemas": {

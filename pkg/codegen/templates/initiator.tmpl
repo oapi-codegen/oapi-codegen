@@ -118,7 +118,7 @@ func (p *{{$.Prefix}}Initiator) {{$opid}}{{.Suffix}}(ctx context.Context, target
 func New{{$opid}}{{$.Prefix}}Request{{.Suffix}}(targetURL string{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Request, error) {
     var bodyReader io.Reader
     {{if .IsJSON -}}
-        buf, err := json.Marshal(body)
+        buf, err := runtime.JSONMarshal(body)
         if err != nil {
             return nil, err
         }
@@ -165,7 +165,7 @@ func New{{$opid}}{{$.Prefix}}Request{{$generic.Suffix}}(targetURL string{{$gener
             queryValues.Add("{{.ParamName}}", {{if .HasOptionalPointer}}*{{end}}params.{{.GoName}})
             {{end}}
             {{if .IsJson}}
-            if queryParamBuf, err := json.Marshal({{if .HasOptionalPointer}}*{{end}}params.{{.GoName}}); err != nil {
+            if queryParamBuf, err := runtime.JSONMarshal({{if .HasOptionalPointer}}*{{end}}params.{{.GoName}}); err != nil {
                 return nil, err
             } else {
                 queryValues.Add("{{.ParamName}}", string(queryParamBuf))

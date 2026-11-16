@@ -64,20 +64,20 @@ type ServiceError struct {
 // AsError returns the union data inside the BadRequest as a Error
 func (t BadRequest) AsError() (Error, error) {
 	var body Error
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromError overwrites any union data inside the BadRequest as the provided Error
 func (t *BadRequest) FromError(v Error) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeError performs a merge with any union data inside the BadRequest, using the provided Error
 func (t *BadRequest) MergeError(v Error) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -90,20 +90,20 @@ func (t *BadRequest) MergeError(v Error) error {
 // AsValidationError returns the union data inside the BadRequest as a ValidationError
 func (t BadRequest) AsValidationError() (ValidationError, error) {
 	var body ValidationError
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromValidationError overwrites any union data inside the BadRequest as the provided ValidationError
 func (t *BadRequest) FromValidationError(v ValidationError) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeValidationError performs a merge with any union data inside the BadRequest, using the provided ValidationError
 func (t *BadRequest) MergeValidationError(v ValidationError) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -131,16 +131,16 @@ func (t *BadRequest) UnmarshalJSON(b []byte) error {
 // when marshaling.
 func (t *Conflict) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
+	_ = runtime.JSONUnmarshal(previous, &held)
 	if raw, found := object["traceId"]; found {
 		var old, next string
-		unchanged := json.Unmarshal(held["traceId"], &old) == nil && reflect.DeepEqual(old, t.TraceId)
+		unchanged := runtime.JSONUnmarshal(held["traceId"], &old) == nil && reflect.DeepEqual(old, t.TraceId)
 		current := reflect.ValueOf(t.TraceId)
-		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+		if (unchanged || !current.IsValid() || current.IsZero()) && runtime.JSONUnmarshal(raw, &next) == nil {
 			t.TraceId = next
 		}
 	}
@@ -149,13 +149,13 @@ func (t *Conflict) adoptUnion(previous, b json.RawMessage) {
 // AsError returns the union data inside the Conflict as a Error
 func (t Conflict) AsError() (Error, error) {
 	var body Error
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromError overwrites any union data inside the Conflict as the provided Error
 func (t *Conflict) FromError(v Error) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -166,7 +166,7 @@ func (t *Conflict) FromError(v Error) error {
 
 // MergeError performs a merge with any union data inside the Conflict, using the provided Error
 func (t *Conflict) MergeError(v Error) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -183,13 +183,13 @@ func (t *Conflict) MergeError(v Error) error {
 // AsValidationError returns the union data inside the Conflict as a ValidationError
 func (t Conflict) AsValidationError() (ValidationError, error) {
 	var body ValidationError
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromValidationError overwrites any union data inside the Conflict as the provided ValidationError
 func (t *Conflict) FromValidationError(v ValidationError) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -200,7 +200,7 @@ func (t *Conflict) FromValidationError(v ValidationError) error {
 
 // MergeValidationError performs a merge with any union data inside the Conflict, using the provided ValidationError
 func (t *Conflict) MergeValidationError(v ValidationError) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -221,18 +221,18 @@ func (t Conflict) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	object["traceId"], err = json.Marshal(t.TraceId)
+	object["traceId"], err = runtime.JSONMarshal(t.TraceId)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'traceId': %w", err)
 	}
 
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -242,13 +242,13 @@ func (t *Conflict) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["traceId"]; found {
-		err = json.Unmarshal(raw, &t.TraceId)
+		err = runtime.JSONUnmarshal(raw, &t.TraceId)
 		if err != nil {
 			return fmt.Errorf("error reading 'traceId': %w", err)
 		}
@@ -260,20 +260,20 @@ func (t *Conflict) UnmarshalJSON(b []byte) error {
 // AsError returns the union data inside the ServiceError as a Error
 func (t ServiceError) AsError() (Error, error) {
 	var body Error
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromError overwrites any union data inside the ServiceError as the provided Error
 func (t *ServiceError) FromError(v Error) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeError performs a merge with any union data inside the ServiceError, using the provided Error
 func (t *ServiceError) MergeError(v Error) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -286,20 +286,20 @@ func (t *ServiceError) MergeError(v Error) error {
 // AsValidationError returns the union data inside the ServiceError as a ValidationError
 func (t ServiceError) AsValidationError() (ValidationError, error) {
 	var body ValidationError
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromValidationError overwrites any union data inside the ServiceError as the provided ValidationError
 func (t *ServiceError) FromValidationError(v ValidationError) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeValidationError performs a merge with any union data inside the ServiceError, using the provided ValidationError
 func (t *ServiceError) MergeValidationError(v ValidationError) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -597,42 +597,42 @@ func ParseListThingsResponse(rsp *http.Response) (*ListThingsResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest []Thing
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 400:
 		var dest BadRequest
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON400 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
 		var dest NotFound
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
 		var dest Conflict
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest ServiceError
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON422 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest BadRequest
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSONDefault = &dest
@@ -837,7 +837,7 @@ type ListThings200JSONResponse []Thing
 func (response ListThings200JSONResponse) VisitListThingsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -851,7 +851,7 @@ type ListThings400JSONResponse struct{ BadRequestJSONResponse }
 func (response ListThings400JSONResponse) VisitListThingsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.BadRequestJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.BadRequestJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -865,7 +865,7 @@ type ListThings404JSONResponse struct{ NotFoundJSONResponse }
 func (response ListThings404JSONResponse) VisitListThingsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.NotFoundJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.NotFoundJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -879,7 +879,7 @@ type ListThings409JSONResponse struct{ ConflictJSONResponse }
 func (response ListThings409JSONResponse) VisitListThingsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.ConflictJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.ConflictJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -893,7 +893,7 @@ type ListThings422JSONResponse struct{ ServiceErrorJSONResponse }
 func (response ListThings422JSONResponse) VisitListThingsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -917,7 +917,7 @@ type ListThingsdefaultJSONResponse struct {
 func (response ListThingsdefaultJSONResponse) VisitListThingsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

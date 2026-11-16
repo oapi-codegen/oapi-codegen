@@ -154,16 +154,16 @@ type HolderInlineJSONRequestBody = InlineHolder
 // when marshaling.
 func (t *InlineHolder_List_Item) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
+	_ = runtime.JSONUnmarshal(previous, &held)
 	if raw, found := object["version"]; found {
 		var old, next int
-		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		unchanged := runtime.JSONUnmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
 		current := reflect.ValueOf(t.Version)
-		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+		if (unchanged || !current.IsValid() || current.IsZero()) && runtime.JSONUnmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -172,14 +172,14 @@ func (t *InlineHolder_List_Item) adoptUnion(previous, b json.RawMessage) {
 // AsV1 returns the union data inside the InlineHolder_List_Item as a V1
 func (t InlineHolder_List_Item) AsV1() (V1, error) {
 	var body V1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV1 overwrites any union data inside the InlineHolder_List_Item as the provided V1
 func (t *InlineHolder_List_Item) FromV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -195,7 +195,7 @@ func (t *InlineHolder_List_Item) FromV1(v V1) error {
 // MergeV1 performs a merge with any union data inside the InlineHolder_List_Item, using the provided V1
 func (t *InlineHolder_List_Item) MergeV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -216,14 +216,14 @@ func (t *InlineHolder_List_Item) MergeV1(v V1) error {
 // AsV2 returns the union data inside the InlineHolder_List_Item as a V2
 func (t InlineHolder_List_Item) AsV2() (V2, error) {
 	var body V2
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV2 overwrites any union data inside the InlineHolder_List_Item as the provided V2
 func (t *InlineHolder_List_Item) FromV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -239,7 +239,7 @@ func (t *InlineHolder_List_Item) FromV2(v V2) error {
 // MergeV2 performs a merge with any union data inside the InlineHolder_List_Item, using the provided V2
 func (t *InlineHolder_List_Item) MergeV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -263,7 +263,7 @@ func (t InlineHolder_List_Item) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -272,7 +272,7 @@ func (t InlineHolder_List_Item) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -284,7 +284,7 @@ func (t InlineHolder_List_Item) ValueByDiscriminator() (any, error) {
 	var discriminator struct {
 		Value *int64 `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
 	if discriminator.Value == nil {
@@ -307,18 +307,18 @@ func (t InlineHolder_List_Item) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	object["version"], err = json.Marshal(t.Version)
+	object["version"], err = runtime.JSONMarshal(t.Version)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'version': %w", err)
 	}
 
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -328,13 +328,13 @@ func (t *InlineHolder_List_Item) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["version"]; found {
-		err = json.Unmarshal(raw, &t.Version)
+		err = runtime.JSONUnmarshal(raw, &t.Version)
 		if err != nil {
 			return fmt.Errorf("error reading 'version': %w", err)
 		}
@@ -351,16 +351,16 @@ func (t *InlineHolder_List_Item) UnmarshalJSON(b []byte) error {
 // when marshaling.
 func (t *InlineHolder_Map_AdditionalProperties) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
+	_ = runtime.JSONUnmarshal(previous, &held)
 	if raw, found := object["version"]; found {
 		var old, next int
-		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		unchanged := runtime.JSONUnmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
 		current := reflect.ValueOf(t.Version)
-		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+		if (unchanged || !current.IsValid() || current.IsZero()) && runtime.JSONUnmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -369,14 +369,14 @@ func (t *InlineHolder_Map_AdditionalProperties) adoptUnion(previous, b json.RawM
 // AsV1 returns the union data inside the InlineHolder_Map_AdditionalProperties as a V1
 func (t InlineHolder_Map_AdditionalProperties) AsV1() (V1, error) {
 	var body V1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV1 overwrites any union data inside the InlineHolder_Map_AdditionalProperties as the provided V1
 func (t *InlineHolder_Map_AdditionalProperties) FromV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -392,7 +392,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromV1(v V1) error {
 // MergeV1 performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided V1
 func (t *InlineHolder_Map_AdditionalProperties) MergeV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -413,14 +413,14 @@ func (t *InlineHolder_Map_AdditionalProperties) MergeV1(v V1) error {
 // AsV2 returns the union data inside the InlineHolder_Map_AdditionalProperties as a V2
 func (t InlineHolder_Map_AdditionalProperties) AsV2() (V2, error) {
 	var body V2
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV2 overwrites any union data inside the InlineHolder_Map_AdditionalProperties as the provided V2
 func (t *InlineHolder_Map_AdditionalProperties) FromV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -436,7 +436,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromV2(v V2) error {
 // MergeV2 performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided V2
 func (t *InlineHolder_Map_AdditionalProperties) MergeV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -460,7 +460,7 @@ func (t InlineHolder_Map_AdditionalProperties) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -469,7 +469,7 @@ func (t InlineHolder_Map_AdditionalProperties) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -481,7 +481,7 @@ func (t InlineHolder_Map_AdditionalProperties) ValueByDiscriminator() (any, erro
 	var discriminator struct {
 		Value *int64 `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
 	if discriminator.Value == nil {
@@ -504,18 +504,18 @@ func (t InlineHolder_Map_AdditionalProperties) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	object["version"], err = json.Marshal(t.Version)
+	object["version"], err = runtime.JSONMarshal(t.Version)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'version': %w", err)
 	}
 
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -525,13 +525,13 @@ func (t *InlineHolder_Map_AdditionalProperties) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["version"]; found {
-		err = json.Unmarshal(raw, &t.Version)
+		err = runtime.JSONUnmarshal(raw, &t.Version)
 		if err != nil {
 			return fmt.Errorf("error reading 'version': %w", err)
 		}
@@ -548,16 +548,16 @@ func (t *InlineHolder_Map_AdditionalProperties) UnmarshalJSON(b []byte) error {
 // when marshaling.
 func (t *InlineHolder_One) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
+	_ = runtime.JSONUnmarshal(previous, &held)
 	if raw, found := object["version"]; found {
 		var old, next int
-		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		unchanged := runtime.JSONUnmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
 		current := reflect.ValueOf(t.Version)
-		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+		if (unchanged || !current.IsValid() || current.IsZero()) && runtime.JSONUnmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -566,14 +566,14 @@ func (t *InlineHolder_One) adoptUnion(previous, b json.RawMessage) {
 // AsV1 returns the union data inside the InlineHolder_One as a V1
 func (t InlineHolder_One) AsV1() (V1, error) {
 	var body V1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV1 overwrites any union data inside the InlineHolder_One as the provided V1
 func (t *InlineHolder_One) FromV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -589,7 +589,7 @@ func (t *InlineHolder_One) FromV1(v V1) error {
 // MergeV1 performs a merge with any union data inside the InlineHolder_One, using the provided V1
 func (t *InlineHolder_One) MergeV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -610,14 +610,14 @@ func (t *InlineHolder_One) MergeV1(v V1) error {
 // AsV2 returns the union data inside the InlineHolder_One as a V2
 func (t InlineHolder_One) AsV2() (V2, error) {
 	var body V2
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV2 overwrites any union data inside the InlineHolder_One as the provided V2
 func (t *InlineHolder_One) FromV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -633,7 +633,7 @@ func (t *InlineHolder_One) FromV2(v V2) error {
 // MergeV2 performs a merge with any union data inside the InlineHolder_One, using the provided V2
 func (t *InlineHolder_One) MergeV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -657,7 +657,7 @@ func (t InlineHolder_One) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -666,7 +666,7 @@ func (t InlineHolder_One) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -678,7 +678,7 @@ func (t InlineHolder_One) ValueByDiscriminator() (any, error) {
 	var discriminator struct {
 		Value *int64 `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
 	if discriminator.Value == nil {
@@ -701,18 +701,18 @@ func (t InlineHolder_One) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	object["version"], err = json.Marshal(t.Version)
+	object["version"], err = runtime.JSONMarshal(t.Version)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'version': %w", err)
 	}
 
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -722,13 +722,13 @@ func (t *InlineHolder_One) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["version"]; found {
-		err = json.Unmarshal(raw, &t.Version)
+		err = runtime.JSONUnmarshal(raw, &t.Version)
 		if err != nil {
 			return fmt.Errorf("error reading 'version': %w", err)
 		}
@@ -745,16 +745,16 @@ func (t *InlineHolder_One) UnmarshalJSON(b []byte) error {
 // when marshaling.
 func (t *Subject) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
+	_ = runtime.JSONUnmarshal(previous, &held)
 	if raw, found := object["version"]; found {
 		var old, next int
-		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		unchanged := runtime.JSONUnmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
 		current := reflect.ValueOf(t.Version)
-		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+		if (unchanged || !current.IsValid() || current.IsZero()) && runtime.JSONUnmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -763,14 +763,14 @@ func (t *Subject) adoptUnion(previous, b json.RawMessage) {
 // AsV1 returns the union data inside the Subject as a V1
 func (t Subject) AsV1() (V1, error) {
 	var body V1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV1 overwrites any union data inside the Subject as the provided V1
 func (t *Subject) FromV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -786,7 +786,7 @@ func (t *Subject) FromV1(v V1) error {
 // MergeV1 performs a merge with any union data inside the Subject, using the provided V1
 func (t *Subject) MergeV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -807,14 +807,14 @@ func (t *Subject) MergeV1(v V1) error {
 // AsV2 returns the union data inside the Subject as a V2
 func (t Subject) AsV2() (V2, error) {
 	var body V2
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV2 overwrites any union data inside the Subject as the provided V2
 func (t *Subject) FromV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -830,7 +830,7 @@ func (t *Subject) FromV2(v V2) error {
 // MergeV2 performs a merge with any union data inside the Subject, using the provided V2
 func (t *Subject) MergeV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -854,7 +854,7 @@ func (t Subject) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -863,7 +863,7 @@ func (t Subject) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -875,7 +875,7 @@ func (t Subject) ValueByDiscriminator() (any, error) {
 	var discriminator struct {
 		Value *int64 `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
 	if discriminator.Value == nil {
@@ -898,18 +898,18 @@ func (t Subject) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	object["version"], err = json.Marshal(t.Version)
+	object["version"], err = runtime.JSONMarshal(t.Version)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'version': %w", err)
 	}
 
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -919,13 +919,13 @@ func (t *Subject) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["version"]; found {
-		err = json.Unmarshal(raw, &t.Version)
+		err = runtime.JSONUnmarshal(raw, &t.Version)
 		if err != nil {
 			return fmt.Errorf("error reading 'version': %w", err)
 		}
@@ -942,16 +942,16 @@ func (t *Subject) UnmarshalJSON(b []byte) error {
 // when marshaling.
 func (t *InlineSubjectResponse) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
+	_ = runtime.JSONUnmarshal(previous, &held)
 	if raw, found := object["version"]; found {
 		var old, next int
-		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		unchanged := runtime.JSONUnmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
 		current := reflect.ValueOf(t.Version)
-		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+		if (unchanged || !current.IsValid() || current.IsZero()) && runtime.JSONUnmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -960,14 +960,14 @@ func (t *InlineSubjectResponse) adoptUnion(previous, b json.RawMessage) {
 // AsV1 returns the union data inside the InlineSubjectResponse as a V1
 func (t InlineSubjectResponse) AsV1() (V1, error) {
 	var body V1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV1 overwrites any union data inside the InlineSubjectResponse as the provided V1
 func (t *InlineSubjectResponse) FromV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -983,7 +983,7 @@ func (t *InlineSubjectResponse) FromV1(v V1) error {
 // MergeV1 performs a merge with any union data inside the InlineSubjectResponse, using the provided V1
 func (t *InlineSubjectResponse) MergeV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1004,14 +1004,14 @@ func (t *InlineSubjectResponse) MergeV1(v V1) error {
 // AsV2 returns the union data inside the InlineSubjectResponse as a V2
 func (t InlineSubjectResponse) AsV2() (V2, error) {
 	var body V2
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV2 overwrites any union data inside the InlineSubjectResponse as the provided V2
 func (t *InlineSubjectResponse) FromV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1027,7 +1027,7 @@ func (t *InlineSubjectResponse) FromV2(v V2) error {
 // MergeV2 performs a merge with any union data inside the InlineSubjectResponse, using the provided V2
 func (t *InlineSubjectResponse) MergeV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1051,7 +1051,7 @@ func (t InlineSubjectResponse) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -1060,7 +1060,7 @@ func (t InlineSubjectResponse) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -1072,7 +1072,7 @@ func (t InlineSubjectResponse) ValueByDiscriminator() (any, error) {
 	var discriminator struct {
 		Value *int64 `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
 	if discriminator.Value == nil {
@@ -1095,18 +1095,18 @@ func (t InlineSubjectResponse) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	object["version"], err = json.Marshal(t.Version)
+	object["version"], err = runtime.JSONMarshal(t.Version)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'version': %w", err)
 	}
 
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -1116,13 +1116,13 @@ func (t *InlineSubjectResponse) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["version"]; found {
-		err = json.Unmarshal(raw, &t.Version)
+		err = runtime.JSONUnmarshal(raw, &t.Version)
 		if err != nil {
 			return fmt.Errorf("error reading 'version': %w", err)
 		}
@@ -1139,16 +1139,16 @@ func (t *InlineSubjectResponse) UnmarshalJSON(b []byte) error {
 // when marshaling.
 func (t *InlineSubjectBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
+	_ = runtime.JSONUnmarshal(previous, &held)
 	if raw, found := object["version"]; found {
 		var old, next int
-		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		unchanged := runtime.JSONUnmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
 		current := reflect.ValueOf(t.Version)
-		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+		if (unchanged || !current.IsValid() || current.IsZero()) && runtime.JSONUnmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -1157,14 +1157,14 @@ func (t *InlineSubjectBody) adoptUnion(previous, b json.RawMessage) {
 // AsV1 returns the union data inside the InlineSubjectBody as a V1
 func (t InlineSubjectBody) AsV1() (V1, error) {
 	var body V1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV1 overwrites any union data inside the InlineSubjectBody as the provided V1
 func (t *InlineSubjectBody) FromV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1180,7 +1180,7 @@ func (t *InlineSubjectBody) FromV1(v V1) error {
 // MergeV1 performs a merge with any union data inside the InlineSubjectBody, using the provided V1
 func (t *InlineSubjectBody) MergeV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1201,14 +1201,14 @@ func (t *InlineSubjectBody) MergeV1(v V1) error {
 // AsV2 returns the union data inside the InlineSubjectBody as a V2
 func (t InlineSubjectBody) AsV2() (V2, error) {
 	var body V2
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV2 overwrites any union data inside the InlineSubjectBody as the provided V2
 func (t *InlineSubjectBody) FromV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1224,7 +1224,7 @@ func (t *InlineSubjectBody) FromV2(v V2) error {
 // MergeV2 performs a merge with any union data inside the InlineSubjectBody, using the provided V2
 func (t *InlineSubjectBody) MergeV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1248,7 +1248,7 @@ func (t InlineSubjectBody) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -1257,7 +1257,7 @@ func (t InlineSubjectBody) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -1269,7 +1269,7 @@ func (t InlineSubjectBody) ValueByDiscriminator() (any, error) {
 	var discriminator struct {
 		Value *int64 `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
 	if discriminator.Value == nil {
@@ -1292,18 +1292,18 @@ func (t InlineSubjectBody) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	object["version"], err = json.Marshal(t.Version)
+	object["version"], err = runtime.JSONMarshal(t.Version)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'version': %w", err)
 	}
 
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -1313,13 +1313,13 @@ func (t *InlineSubjectBody) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["version"]; found {
-		err = json.Unmarshal(raw, &t.Version)
+		err = runtime.JSONUnmarshal(raw, &t.Version)
 		if err != nil {
 			return fmt.Errorf("error reading 'version': %w", err)
 		}
@@ -1336,16 +1336,16 @@ func (t *InlineSubjectBody) UnmarshalJSON(b []byte) error {
 // when marshaling.
 func (t *BodyComponentInlineJSONBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
+	_ = runtime.JSONUnmarshal(previous, &held)
 	if raw, found := object["version"]; found {
 		var old, next int
-		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		unchanged := runtime.JSONUnmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
 		current := reflect.ValueOf(t.Version)
-		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+		if (unchanged || !current.IsValid() || current.IsZero()) && runtime.JSONUnmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -1354,14 +1354,14 @@ func (t *BodyComponentInlineJSONBody) adoptUnion(previous, b json.RawMessage) {
 // AsV1 returns the union data inside the BodyComponentInlineJSONBody as a V1
 func (t BodyComponentInlineJSONBody) AsV1() (V1, error) {
 	var body V1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV1 overwrites any union data inside the BodyComponentInlineJSONBody as the provided V1
 func (t *BodyComponentInlineJSONBody) FromV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1377,7 +1377,7 @@ func (t *BodyComponentInlineJSONBody) FromV1(v V1) error {
 // MergeV1 performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided V1
 func (t *BodyComponentInlineJSONBody) MergeV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1398,14 +1398,14 @@ func (t *BodyComponentInlineJSONBody) MergeV1(v V1) error {
 // AsV2 returns the union data inside the BodyComponentInlineJSONBody as a V2
 func (t BodyComponentInlineJSONBody) AsV2() (V2, error) {
 	var body V2
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV2 overwrites any union data inside the BodyComponentInlineJSONBody as the provided V2
 func (t *BodyComponentInlineJSONBody) FromV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1421,7 +1421,7 @@ func (t *BodyComponentInlineJSONBody) FromV2(v V2) error {
 // MergeV2 performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided V2
 func (t *BodyComponentInlineJSONBody) MergeV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1445,7 +1445,7 @@ func (t BodyComponentInlineJSONBody) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -1454,7 +1454,7 @@ func (t BodyComponentInlineJSONBody) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -1466,7 +1466,7 @@ func (t BodyComponentInlineJSONBody) ValueByDiscriminator() (any, error) {
 	var discriminator struct {
 		Value *int64 `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
 	if discriminator.Value == nil {
@@ -1489,18 +1489,18 @@ func (t BodyComponentInlineJSONBody) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	object["version"], err = json.Marshal(t.Version)
+	object["version"], err = runtime.JSONMarshal(t.Version)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'version': %w", err)
 	}
 
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -1510,13 +1510,13 @@ func (t *BodyComponentInlineJSONBody) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["version"]; found {
-		err = json.Unmarshal(raw, &t.Version)
+		err = runtime.JSONUnmarshal(raw, &t.Version)
 		if err != nil {
 			return fmt.Errorf("error reading 'version': %w", err)
 		}
@@ -1533,16 +1533,16 @@ func (t *BodyComponentInlineJSONBody) UnmarshalJSON(b []byte) error {
 // when marshaling.
 func (t *BodyInlineJSONBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
+	_ = runtime.JSONUnmarshal(previous, &held)
 	if raw, found := object["version"]; found {
 		var old, next int
-		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		unchanged := runtime.JSONUnmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
 		current := reflect.ValueOf(t.Version)
-		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+		if (unchanged || !current.IsValid() || current.IsZero()) && runtime.JSONUnmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -1551,14 +1551,14 @@ func (t *BodyInlineJSONBody) adoptUnion(previous, b json.RawMessage) {
 // AsV1 returns the union data inside the BodyInlineJSONBody as a V1
 func (t BodyInlineJSONBody) AsV1() (V1, error) {
 	var body V1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV1 overwrites any union data inside the BodyInlineJSONBody as the provided V1
 func (t *BodyInlineJSONBody) FromV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1574,7 +1574,7 @@ func (t *BodyInlineJSONBody) FromV1(v V1) error {
 // MergeV1 performs a merge with any union data inside the BodyInlineJSONBody, using the provided V1
 func (t *BodyInlineJSONBody) MergeV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1595,14 +1595,14 @@ func (t *BodyInlineJSONBody) MergeV1(v V1) error {
 // AsV2 returns the union data inside the BodyInlineJSONBody as a V2
 func (t BodyInlineJSONBody) AsV2() (V2, error) {
 	var body V2
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV2 overwrites any union data inside the BodyInlineJSONBody as the provided V2
 func (t *BodyInlineJSONBody) FromV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1618,7 +1618,7 @@ func (t *BodyInlineJSONBody) FromV2(v V2) error {
 // MergeV2 performs a merge with any union data inside the BodyInlineJSONBody, using the provided V2
 func (t *BodyInlineJSONBody) MergeV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1642,7 +1642,7 @@ func (t BodyInlineJSONBody) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -1651,7 +1651,7 @@ func (t BodyInlineJSONBody) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -1663,7 +1663,7 @@ func (t BodyInlineJSONBody) ValueByDiscriminator() (any, error) {
 	var discriminator struct {
 		Value *int64 `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
 	if discriminator.Value == nil {
@@ -1686,18 +1686,18 @@ func (t BodyInlineJSONBody) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	object["version"], err = json.Marshal(t.Version)
+	object["version"], err = runtime.JSONMarshal(t.Version)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'version': %w", err)
 	}
 
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -1707,13 +1707,13 @@ func (t *BodyInlineJSONBody) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["version"]; found {
-		err = json.Unmarshal(raw, &t.Version)
+		err = runtime.JSONUnmarshal(raw, &t.Version)
 		if err != nil {
 			return fmt.Errorf("error reading 'version': %w", err)
 		}
@@ -1730,16 +1730,16 @@ func (t *BodyInlineJSONBody) UnmarshalJSON(b []byte) error {
 // when marshaling.
 func (t *BodyInline200JSONResponseBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	held := make(map[string]json.RawMessage)
-	_ = json.Unmarshal(previous, &held)
+	_ = runtime.JSONUnmarshal(previous, &held)
 	if raw, found := object["version"]; found {
 		var old, next int
-		unchanged := json.Unmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
+		unchanged := runtime.JSONUnmarshal(held["version"], &old) == nil && reflect.DeepEqual(old, t.Version)
 		current := reflect.ValueOf(t.Version)
-		if (unchanged || !current.IsValid() || current.IsZero()) && json.Unmarshal(raw, &next) == nil {
+		if (unchanged || !current.IsValid() || current.IsZero()) && runtime.JSONUnmarshal(raw, &next) == nil {
 			t.Version = next
 		}
 	}
@@ -1748,14 +1748,14 @@ func (t *BodyInline200JSONResponseBody) adoptUnion(previous, b json.RawMessage) 
 // AsV1 returns the union data inside the BodyInline200JSONResponseBody as a V1
 func (t BodyInline200JSONResponseBody) AsV1() (V1, error) {
 	var body V1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV1 overwrites any union data inside the BodyInline200JSONResponseBody as the provided V1
 func (t *BodyInline200JSONResponseBody) FromV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1771,7 +1771,7 @@ func (t *BodyInline200JSONResponseBody) FromV1(v V1) error {
 // MergeV1 performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided V1
 func (t *BodyInline200JSONResponseBody) MergeV1(v V1) error {
 	t.Version = 1
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1792,14 +1792,14 @@ func (t *BodyInline200JSONResponseBody) MergeV1(v V1) error {
 // AsV2 returns the union data inside the BodyInline200JSONResponseBody as a V2
 func (t BodyInline200JSONResponseBody) AsV2() (V2, error) {
 	var body V2
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromV2 overwrites any union data inside the BodyInline200JSONResponseBody as the provided V2
 func (t *BodyInline200JSONResponseBody) FromV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1815,7 +1815,7 @@ func (t *BodyInline200JSONResponseBody) FromV2(v V2) error {
 // MergeV2 performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided V2
 func (t *BodyInline200JSONResponseBody) MergeV2(v V2) error {
 	t.Version = 2
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1839,7 +1839,7 @@ func (t BodyInline200JSONResponseBody) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator json.RawMessage `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return "", err
 	}
 	raw := discriminator.Discriminator
@@ -1848,7 +1848,7 @@ func (t BodyInline200JSONResponseBody) Discriminator() (string, error) {
 		return "", nil
 	case raw[0] == '"':
 		var s string
-		err := json.Unmarshal(raw, &s)
+		err := runtime.JSONUnmarshal(raw, &s)
 		return s, err
 	}
 	return string(raw), nil
@@ -1860,7 +1860,7 @@ func (t BodyInline200JSONResponseBody) ValueByDiscriminator() (any, error) {
 	var discriminator struct {
 		Value *int64 `json:"version"`
 	}
-	if err := json.Unmarshal(t.union, &discriminator); err != nil {
+	if err := runtime.JSONUnmarshal(t.union, &discriminator); err != nil {
 		return nil, err
 	}
 	if discriminator.Value == nil {
@@ -1883,18 +1883,18 @@ func (t BodyInline200JSONResponseBody) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	object["version"], err = json.Marshal(t.Version)
+	object["version"], err = runtime.JSONMarshal(t.Version)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'version': %w", err)
 	}
 
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -1904,13 +1904,13 @@ func (t *BodyInline200JSONResponseBody) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["version"]; found {
-		err = json.Unmarshal(raw, &t.Version)
+		err = runtime.JSONUnmarshal(raw, &t.Version)
 		if err != nil {
 			return fmt.Errorf("error reading 'version': %w", err)
 		}
@@ -2285,7 +2285,7 @@ func (c *Client) HolderInline(ctx context.Context, body HolderInlineJSONRequestB
 // NewBodyComponentRequest calls the generic BodyComponent builder with application/json body
 func NewBodyComponentRequest(server string, body BodyComponentJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2325,7 +2325,7 @@ func NewBodyComponentRequestWithBody(server string, contentType string, body io.
 // NewBodyComponentInlineRequest calls the generic BodyComponentInline builder with application/json body
 func NewBodyComponentInlineRequest(server string, body BodyComponentInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2365,7 +2365,7 @@ func NewBodyComponentInlineRequestWithBody(server string, contentType string, bo
 // NewBodyDefaultRequest calls the generic BodyDefault builder with application/json body
 func NewBodyDefaultRequest(server string, body BodyDefaultJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2405,7 +2405,7 @@ func NewBodyDefaultRequestWithBody(server string, contentType string, body io.Re
 // NewBodyHeadersRequest calls the generic BodyHeaders builder with application/json body
 func NewBodyHeadersRequest(server string, body BodyHeadersJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2445,7 +2445,7 @@ func NewBodyHeadersRequestWithBody(server string, contentType string, body io.Re
 // NewBodyInlineRequest calls the generic BodyInline builder with application/json body
 func NewBodyInlineRequest(server string, body BodyInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2485,7 +2485,7 @@ func NewBodyInlineRequestWithBody(server string, contentType string, body io.Rea
 // NewBodyRefRequest calls the generic BodyRef builder with application/json body
 func NewBodyRefRequest(server string, body BodyRefJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2525,7 +2525,7 @@ func NewBodyRefRequestWithBody(server string, contentType string, body io.Reader
 // NewHolderRequest calls the generic Holder builder with application/json body
 func NewHolderRequest(server string, body HolderJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2565,7 +2565,7 @@ func NewHolderRequestWithBody(server string, contentType string, body io.Reader)
 // NewHolderInlineRequest calls the generic HolderInline builder with application/json body
 func NewHolderInlineRequest(server string, body HolderInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -3254,7 +3254,7 @@ func ParseBodyComponentResponse(rsp *http.Response) (*BodyComponentResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest SubjectResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3280,7 +3280,7 @@ func ParseBodyComponentInlineResponse(rsp *http.Response) (*BodyComponentInlineR
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest InlineSubjectResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3306,7 +3306,7 @@ func ParseBodyDefaultResponse(rsp *http.Response) (*BodyDefaultResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSONDefault = &dest
@@ -3332,7 +3332,7 @@ func ParseBodyHeadersResponse(rsp *http.Response) (*BodyHeadersResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3371,7 +3371,7 @@ func ParseBodyInlineResponse(rsp *http.Response) (*BodyInlineResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest BodyInline200JSONResponseBody
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3397,7 +3397,7 @@ func ParseBodyRefResponse(rsp *http.Response) (*BodyRefResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3423,7 +3423,7 @@ func ParseHolderResponse(rsp *http.Response) (*HolderResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Holder
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3449,7 +3449,7 @@ func ParseHolderInlineResponse(rsp *http.Response) (*HolderInlineResponse, error
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest InlineHolder
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3765,7 +3765,7 @@ type BodyComponent200JSONResponse struct{ SubjectResponseJSONResponse }
 func (response BodyComponent200JSONResponse) VisitBodyComponentResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.SubjectResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.SubjectResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3789,7 +3789,7 @@ type BodyComponentInline200JSONResponse struct {
 func (response BodyComponentInline200JSONResponse) VisitBodyComponentInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.InlineSubjectResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.InlineSubjectResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3814,7 +3814,7 @@ type BodyDefaultdefaultJSONResponse struct {
 func (response BodyDefaultdefaultJSONResponse) VisitBodyDefaultResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3843,7 +3843,7 @@ type BodyHeaders200JSONResponse struct {
 func (response BodyHeaders200JSONResponse) VisitBodyHeadersResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3872,7 +3872,7 @@ type BodyInline200JSONResponse = BodyInline200JSONResponseBody
 func (response BodyInline200JSONResponse) VisitBodyInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3902,7 +3902,7 @@ func (t *BodyRef200JSONResponse) UnmarshalJSON(b []byte) error {
 func (response BodyRef200JSONResponse) VisitBodyRefResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3924,7 +3924,7 @@ type Holder200JSONResponse Holder
 func (response Holder200JSONResponse) VisitHolderResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3946,7 +3946,7 @@ type HolderInline200JSONResponse InlineHolder
 func (response HolderInline200JSONResponse) VisitHolderInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

@@ -152,13 +152,13 @@ func (a *InlineHolder_List_Item) Set(fieldName string, value int) {
 // Override default JSON handling for InlineHolder_List_Item to handle AdditionalProperties
 func (a *InlineHolder_List_Item) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["kind"]; found {
-		err = json.Unmarshal(raw, &a.Kind)
+		err = runtime.JSONUnmarshal(raw, &a.Kind)
 		if err != nil {
 			return fmt.Errorf("error reading 'kind': %w", err)
 		}
@@ -169,7 +169,7 @@ func (a *InlineHolder_List_Item) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]int)
 		for fieldName, fieldBuf := range object {
 			var fieldVal int
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -184,18 +184,18 @@ func (a InlineHolder_List_Item) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["kind"], err = json.Marshal(a.Kind)
+	object["kind"], err = runtime.JSONMarshal(a.Kind)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Getter for additional properties for InlineHolder_Map_AdditionalProperties. Returns the specified
@@ -218,13 +218,13 @@ func (a *InlineHolder_Map_AdditionalProperties) Set(fieldName string, value int)
 // Override default JSON handling for InlineHolder_Map_AdditionalProperties to handle AdditionalProperties
 func (a *InlineHolder_Map_AdditionalProperties) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["kind"]; found {
-		err = json.Unmarshal(raw, &a.Kind)
+		err = runtime.JSONUnmarshal(raw, &a.Kind)
 		if err != nil {
 			return fmt.Errorf("error reading 'kind': %w", err)
 		}
@@ -235,7 +235,7 @@ func (a *InlineHolder_Map_AdditionalProperties) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]int)
 		for fieldName, fieldBuf := range object {
 			var fieldVal int
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -250,18 +250,18 @@ func (a InlineHolder_Map_AdditionalProperties) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["kind"], err = json.Marshal(a.Kind)
+	object["kind"], err = runtime.JSONMarshal(a.Kind)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Getter for additional properties for InlineHolder_One. Returns the specified
@@ -284,13 +284,13 @@ func (a *InlineHolder_One) Set(fieldName string, value int) {
 // Override default JSON handling for InlineHolder_One to handle AdditionalProperties
 func (a *InlineHolder_One) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["kind"]; found {
-		err = json.Unmarshal(raw, &a.Kind)
+		err = runtime.JSONUnmarshal(raw, &a.Kind)
 		if err != nil {
 			return fmt.Errorf("error reading 'kind': %w", err)
 		}
@@ -301,7 +301,7 @@ func (a *InlineHolder_One) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]int)
 		for fieldName, fieldBuf := range object {
 			var fieldVal int
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -316,18 +316,18 @@ func (a InlineHolder_One) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["kind"], err = json.Marshal(a.Kind)
+	object["kind"], err = runtime.JSONMarshal(a.Kind)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Getter for additional properties for Subject. Returns the specified
@@ -350,13 +350,13 @@ func (a *Subject) Set(fieldName string, value int) {
 // Override default JSON handling for Subject to handle AdditionalProperties
 func (a *Subject) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["kind"]; found {
-		err = json.Unmarshal(raw, &a.Kind)
+		err = runtime.JSONUnmarshal(raw, &a.Kind)
 		if err != nil {
 			return fmt.Errorf("error reading 'kind': %w", err)
 		}
@@ -367,7 +367,7 @@ func (a *Subject) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]int)
 		for fieldName, fieldBuf := range object {
 			var fieldVal int
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -382,18 +382,18 @@ func (a Subject) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["kind"], err = json.Marshal(a.Kind)
+	object["kind"], err = runtime.JSONMarshal(a.Kind)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Getter for additional properties for InlineSubjectResponse. Returns the specified
@@ -416,13 +416,13 @@ func (a *InlineSubjectResponse) Set(fieldName string, value int) {
 // Override default JSON handling for InlineSubjectResponse to handle AdditionalProperties
 func (a *InlineSubjectResponse) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["kind"]; found {
-		err = json.Unmarshal(raw, &a.Kind)
+		err = runtime.JSONUnmarshal(raw, &a.Kind)
 		if err != nil {
 			return fmt.Errorf("error reading 'kind': %w", err)
 		}
@@ -433,7 +433,7 @@ func (a *InlineSubjectResponse) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]int)
 		for fieldName, fieldBuf := range object {
 			var fieldVal int
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -448,18 +448,18 @@ func (a InlineSubjectResponse) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["kind"], err = json.Marshal(a.Kind)
+	object["kind"], err = runtime.JSONMarshal(a.Kind)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Getter for additional properties for InlineSubjectBody. Returns the specified
@@ -482,13 +482,13 @@ func (a *InlineSubjectBody) Set(fieldName string, value int) {
 // Override default JSON handling for InlineSubjectBody to handle AdditionalProperties
 func (a *InlineSubjectBody) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["kind"]; found {
-		err = json.Unmarshal(raw, &a.Kind)
+		err = runtime.JSONUnmarshal(raw, &a.Kind)
 		if err != nil {
 			return fmt.Errorf("error reading 'kind': %w", err)
 		}
@@ -499,7 +499,7 @@ func (a *InlineSubjectBody) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]int)
 		for fieldName, fieldBuf := range object {
 			var fieldVal int
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -514,18 +514,18 @@ func (a InlineSubjectBody) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["kind"], err = json.Marshal(a.Kind)
+	object["kind"], err = runtime.JSONMarshal(a.Kind)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Getter for additional properties for BodyComponentInlineJSONBody. Returns the specified
@@ -548,13 +548,13 @@ func (a *BodyComponentInlineJSONBody) Set(fieldName string, value int) {
 // Override default JSON handling for BodyComponentInlineJSONBody to handle AdditionalProperties
 func (a *BodyComponentInlineJSONBody) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["kind"]; found {
-		err = json.Unmarshal(raw, &a.Kind)
+		err = runtime.JSONUnmarshal(raw, &a.Kind)
 		if err != nil {
 			return fmt.Errorf("error reading 'kind': %w", err)
 		}
@@ -565,7 +565,7 @@ func (a *BodyComponentInlineJSONBody) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]int)
 		for fieldName, fieldBuf := range object {
 			var fieldVal int
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -580,18 +580,18 @@ func (a BodyComponentInlineJSONBody) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["kind"], err = json.Marshal(a.Kind)
+	object["kind"], err = runtime.JSONMarshal(a.Kind)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Getter for additional properties for BodyInlineJSONBody. Returns the specified
@@ -614,13 +614,13 @@ func (a *BodyInlineJSONBody) Set(fieldName string, value int) {
 // Override default JSON handling for BodyInlineJSONBody to handle AdditionalProperties
 func (a *BodyInlineJSONBody) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["kind"]; found {
-		err = json.Unmarshal(raw, &a.Kind)
+		err = runtime.JSONUnmarshal(raw, &a.Kind)
 		if err != nil {
 			return fmt.Errorf("error reading 'kind': %w", err)
 		}
@@ -631,7 +631,7 @@ func (a *BodyInlineJSONBody) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]int)
 		for fieldName, fieldBuf := range object {
 			var fieldVal int
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -646,18 +646,18 @@ func (a BodyInlineJSONBody) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["kind"], err = json.Marshal(a.Kind)
+	object["kind"], err = runtime.JSONMarshal(a.Kind)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Getter for additional properties for BodyInline200JSONResponseBody. Returns the specified
@@ -680,13 +680,13 @@ func (a *BodyInline200JSONResponseBody) Set(fieldName string, value int) {
 // Override default JSON handling for BodyInline200JSONResponseBody to handle AdditionalProperties
 func (a *BodyInline200JSONResponseBody) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["kind"]; found {
-		err = json.Unmarshal(raw, &a.Kind)
+		err = runtime.JSONUnmarshal(raw, &a.Kind)
 		if err != nil {
 			return fmt.Errorf("error reading 'kind': %w", err)
 		}
@@ -697,7 +697,7 @@ func (a *BodyInline200JSONResponseBody) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]int)
 		for fieldName, fieldBuf := range object {
 			var fieldVal int
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -712,18 +712,18 @@ func (a BodyInline200JSONResponseBody) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["kind"], err = json.Marshal(a.Kind)
+	object["kind"], err = runtime.JSONMarshal(a.Kind)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
@@ -1092,7 +1092,7 @@ func (c *Client) HolderInline(ctx context.Context, body HolderInlineJSONRequestB
 // NewBodyComponentRequest calls the generic BodyComponent builder with application/json body
 func NewBodyComponentRequest(server string, body BodyComponentJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1132,7 +1132,7 @@ func NewBodyComponentRequestWithBody(server string, contentType string, body io.
 // NewBodyComponentInlineRequest calls the generic BodyComponentInline builder with application/json body
 func NewBodyComponentInlineRequest(server string, body BodyComponentInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1172,7 +1172,7 @@ func NewBodyComponentInlineRequestWithBody(server string, contentType string, bo
 // NewBodyDefaultRequest calls the generic BodyDefault builder with application/json body
 func NewBodyDefaultRequest(server string, body BodyDefaultJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1212,7 +1212,7 @@ func NewBodyDefaultRequestWithBody(server string, contentType string, body io.Re
 // NewBodyHeadersRequest calls the generic BodyHeaders builder with application/json body
 func NewBodyHeadersRequest(server string, body BodyHeadersJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1252,7 +1252,7 @@ func NewBodyHeadersRequestWithBody(server string, contentType string, body io.Re
 // NewBodyInlineRequest calls the generic BodyInline builder with application/json body
 func NewBodyInlineRequest(server string, body BodyInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1292,7 +1292,7 @@ func NewBodyInlineRequestWithBody(server string, contentType string, body io.Rea
 // NewBodyRefRequest calls the generic BodyRef builder with application/json body
 func NewBodyRefRequest(server string, body BodyRefJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1332,7 +1332,7 @@ func NewBodyRefRequestWithBody(server string, contentType string, body io.Reader
 // NewHolderRequest calls the generic Holder builder with application/json body
 func NewHolderRequest(server string, body HolderJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1372,7 +1372,7 @@ func NewHolderRequestWithBody(server string, contentType string, body io.Reader)
 // NewHolderInlineRequest calls the generic HolderInline builder with application/json body
 func NewHolderInlineRequest(server string, body HolderInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2061,7 +2061,7 @@ func ParseBodyComponentResponse(rsp *http.Response) (*BodyComponentResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest SubjectResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2087,7 +2087,7 @@ func ParseBodyComponentInlineResponse(rsp *http.Response) (*BodyComponentInlineR
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest InlineSubjectResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2113,7 +2113,7 @@ func ParseBodyDefaultResponse(rsp *http.Response) (*BodyDefaultResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSONDefault = &dest
@@ -2139,7 +2139,7 @@ func ParseBodyHeadersResponse(rsp *http.Response) (*BodyHeadersResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2178,7 +2178,7 @@ func ParseBodyInlineResponse(rsp *http.Response) (*BodyInlineResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest BodyInline200JSONResponseBody
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2204,7 +2204,7 @@ func ParseBodyRefResponse(rsp *http.Response) (*BodyRefResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2230,7 +2230,7 @@ func ParseHolderResponse(rsp *http.Response) (*HolderResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Holder
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2256,7 +2256,7 @@ func ParseHolderInlineResponse(rsp *http.Response) (*HolderInlineResponse, error
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest InlineHolder
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2572,7 +2572,7 @@ type BodyComponent200JSONResponse struct{ SubjectResponseJSONResponse }
 func (response BodyComponent200JSONResponse) VisitBodyComponentResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.SubjectResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.SubjectResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2596,7 +2596,7 @@ type BodyComponentInline200JSONResponse struct {
 func (response BodyComponentInline200JSONResponse) VisitBodyComponentInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.InlineSubjectResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.InlineSubjectResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2621,7 +2621,7 @@ type BodyDefaultdefaultJSONResponse struct {
 func (response BodyDefaultdefaultJSONResponse) VisitBodyDefaultResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2650,7 +2650,7 @@ type BodyHeaders200JSONResponse struct {
 func (response BodyHeaders200JSONResponse) VisitBodyHeadersResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2679,7 +2679,7 @@ type BodyInline200JSONResponse = BodyInline200JSONResponseBody
 func (response BodyInline200JSONResponse) VisitBodyInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2709,7 +2709,7 @@ func (t *BodyRef200JSONResponse) UnmarshalJSON(b []byte) error {
 func (response BodyRef200JSONResponse) VisitBodyRefResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2731,7 +2731,7 @@ type Holder200JSONResponse Holder
 func (response Holder200JSONResponse) VisitHolderResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2753,7 +2753,7 @@ type HolderInline200JSONResponse InlineHolder
 func (response HolderInline200JSONResponse) VisitHolderInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

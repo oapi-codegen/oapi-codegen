@@ -8,7 +8,6 @@ import (
 	"compress/flate"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,6 +17,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
+	"github.com/oapi-codegen/runtime"
 )
 
 // Test defines model for Test.
@@ -273,21 +273,21 @@ func ParseTestResponse(rsp *http.Response) (*TestResponse, error) {
 	switch {
 	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
 		var dest Test
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/json; profile=\"Bar\"" && rsp.StatusCode == 200:
 		var dest Test
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationjsonProfileBar200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/json; profile=\"Foo\"" && rsp.StatusCode == 200:
 		var dest Test
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationjsonProfileFoo200 = &dest
@@ -381,7 +381,7 @@ type Test200JSONResponse Test
 func (response Test200JSONResponse) VisitTestResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -395,7 +395,7 @@ type Test200ApplicationJSONProfileBarResponse Test
 func (response Test200ApplicationJSONProfileBarResponse) VisitTestResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json; profile=\"Bar\"")
@@ -409,7 +409,7 @@ type Test200ApplicationJSONProfileFooResponse Test
 func (response Test200ApplicationJSONProfileFooResponse) VisitTestResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json; profile=\"Foo\"")

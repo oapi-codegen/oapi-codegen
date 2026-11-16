@@ -6,11 +6,12 @@ package client
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/oapi-codegen/runtime"
 )
 
 // PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody defines body for PostPostMultibody for application/ld+json; profile="https://www.w3.org/ns/activitystreams" ContentType.
@@ -285,7 +286,7 @@ func NewGetObjectRequest(server string) (*http.Request, error) {
 // NewPostPostMultibodyRequestWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody calls the generic PostPostMultibody builder with application/ld+json; profile="https://www.w3.org/ns/activitystreams" body
 func NewPostPostMultibodyRequestWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(server string, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -296,7 +297,7 @@ func NewPostPostMultibodyRequestWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsa
 // NewPostPostMultibodyRequestWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body calls the generic PostPostMultibody builder with application/ld+json; profile="https://www.w3.org/ns/activitystreams2" body
 func NewPostPostMultibodyRequestWithApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2Body(server string, body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -336,7 +337,7 @@ func NewPostPostMultibodyRequestWithBody(server string, contentType string, body
 // NewPostPostObjectRequestWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody calls the generic PostPostObject builder with application/ld+json; profile="https://www.w3.org/ns/activitystreams" body
 func NewPostPostObjectRequestWithApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody(server string, body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -701,14 +702,14 @@ func ParseGetGetMultibodyResponse(rsp *http.Response) (*GetGetMultibodyResponse,
 	switch {
 	case rsp.Header.Get("Content-Type") == "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"" && rsp.StatusCode == 200:
 		var dest string
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"" && rsp.StatusCode == 200:
 		var dest string
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams2200 = &dest
@@ -734,7 +735,7 @@ func ParseGetObjectResponse(rsp *http.Response) (*GetObjectResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest string
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationldJSONProfilehttpswwwW3Orgnsactivitystreams200 = &dest

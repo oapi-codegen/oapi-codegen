@@ -8,7 +8,6 @@ package schemasdeprecated
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -357,7 +356,7 @@ func (c *APIClient) GetLegacy(ctx context.Context, reqEditors ...RequestEditorFn
 // NewPostClientsRequest calls the generic PostClients builder with application/json body
 func NewPostClientsRequest(server string, body PostClientsJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -424,7 +423,7 @@ func NewGetDeprecatedEndpointRequest(server string) (*http.Request, error) {
 // NewPostDeprecatedEndpointWithNonDeprecatedBodyRequest calls the generic PostDeprecatedEndpointWithNonDeprecatedBody builder with application/json body
 func NewPostDeprecatedEndpointWithNonDeprecatedBodyRequest(server string, body PostDeprecatedEndpointWithNonDeprecatedBodyJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -596,7 +595,7 @@ func NewGetDeprecatedParamsOldIdRequest(server string, oldId string, params *Get
 // NewPostDeprecatedRequestBodyRequest calls the generic PostDeprecatedRequestBody builder with application/json body
 func NewPostDeprecatedRequestBodyRequest(server string, body PostDeprecatedRequestBodyJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1229,7 +1228,7 @@ func ParsePostClientsResponse(rsp *http.Response) (*PostClientsResponse, error) 
 			// Deprecated: This field and its type are both deprecated.
 			DeprecatedRefAndField *DeprecatedObject `json:"deprecated_ref_and_field,omitempty"`
 		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1258,7 +1257,7 @@ func ParseGetDeprecatedEndpointResponse(rsp *http.Response) (*GetDeprecatedEndpo
 			IsDeprecated  *ClientWithExtension `json:"is_deprecated,omitempty"`
 			NotDeprecated *string              `json:"not_deprecated,omitempty"`
 		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1307,7 +1306,7 @@ func ParseGetDeprecatedFieldResponse(rsp *http.Response) (*GetDeprecatedFieldRes
 			IsDeprecated      *ClientWithExtension `json:"is_deprecated,omitempty"`
 			NotDeprecated     *string              `json:"not_deprecated,omitempty"`
 		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1335,7 +1334,7 @@ func ParseGetDeprecatedParamsOldIdResponse(rsp *http.Response) (*GetDeprecatedPa
 		var dest struct {
 			Result *string `json:"result,omitempty"`
 		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1374,7 +1373,7 @@ func ParsePostDeprecatedRequestBodyResponse(rsp *http.Response) (*PostDeprecated
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest DeprecatedObject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1400,7 +1399,7 @@ func ParseGetLegacyResponse(rsp *http.Response) (*GetLegacyResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest LegacyResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -1811,7 +1810,7 @@ type PostClients200JSONResponse struct {
 func (response PostClients200JSONResponse) VisitPostClientsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1835,7 +1834,7 @@ type GetDeprecatedEndpoint200JSONResponse struct {
 func (response GetDeprecatedEndpoint200JSONResponse) VisitGetDeprecatedEndpointResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1880,7 +1879,7 @@ type GetDeprecatedField200JSONResponse struct {
 func (response GetDeprecatedField200JSONResponse) VisitGetDeprecatedFieldResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1913,7 +1912,7 @@ type GetDeprecatedParamsOldId200JSONResponse struct {
 func (response GetDeprecatedParamsOldId200JSONResponse) VisitGetDeprecatedParamsOldIdResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1944,7 +1943,7 @@ type PostDeprecatedRequestBody200JSONResponse DeprecatedObject
 func (response PostDeprecatedRequestBody200JSONResponse) VisitPostDeprecatedRequestBodyResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -1965,7 +1964,7 @@ type GetLegacy200JSONResponse struct{ LegacyResponseJSONResponse }
 func (response GetLegacy200JSONResponse) VisitGetLegacyResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

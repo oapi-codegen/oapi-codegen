@@ -6,7 +6,6 @@ package spec_base
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -15,6 +14,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/external/path_item_response_qualification/gen/spec_ext"
+	"github.com/oapi-codegen/runtime"
 )
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
@@ -353,7 +353,7 @@ func ParseGetV1OutcomeResponse(rsp *http.Response) (*GetV1OutcomeResponse, error
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest externalRef0.OutcomeResult
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -379,7 +379,7 @@ func ParseGetV1VersionResponse(rsp *http.Response) (*GetV1VersionResponse, error
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest externalRef0.VersionGetResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -587,7 +587,7 @@ type GetV1Outcome200JSONResponse struct {
 func (response GetV1Outcome200JSONResponse) VisitGetV1OutcomeResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.OutcomeJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.OutcomeJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -610,7 +610,7 @@ type GetV1Version200JSONResponse struct {
 func (response GetV1Version200JSONResponse) VisitGetV1VersionResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.VersionGetResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.VersionGetResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

@@ -326,19 +326,19 @@ type HolderInlineJSONRequestBody = InlineHolder
 // AsInlineHolderListAnyOf0 returns the union data inside the InlineHolder_List_Item as a InlineHolderListAnyOf0
 func (t InlineHolder_List_Item) AsInlineHolderListAnyOf0() (InlineHolderListAnyOf0, error) {
 	var body InlineHolderListAnyOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineHolderListAnyOf0 sets the union data inside the InlineHolder_List_Item to the provided InlineHolderListAnyOf0. It replaces
 // the data of InlineHolderListAnyOf0's own union and keeps the other unions' data.
 func (t *InlineHolder_List_Item) FromInlineHolderListAnyOf0(v InlineHolderListAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -352,7 +352,7 @@ func (t *InlineHolder_List_Item) FromInlineHolderListAnyOf0(v InlineHolderListAn
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -363,7 +363,7 @@ func (t *InlineHolder_List_Item) FromInlineHolderListAnyOf0(v InlineHolderListAn
 
 // MergeInlineHolderListAnyOf0 performs a merge with any union data inside the InlineHolder_List_Item, using the provided InlineHolderListAnyOf0
 func (t *InlineHolder_List_Item) MergeInlineHolderListAnyOf0(v InlineHolderListAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -376,19 +376,19 @@ func (t *InlineHolder_List_Item) MergeInlineHolderListAnyOf0(v InlineHolderListA
 // AsInlineHolderListAnyOf1 returns the union data inside the InlineHolder_List_Item as a InlineHolderListAnyOf1
 func (t InlineHolder_List_Item) AsInlineHolderListAnyOf1() (InlineHolderListAnyOf1, error) {
 	var body InlineHolderListAnyOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineHolderListAnyOf1 sets the union data inside the InlineHolder_List_Item to the provided InlineHolderListAnyOf1. It replaces
 // the data of InlineHolderListAnyOf1's own union and keeps the other unions' data.
 func (t *InlineHolder_List_Item) FromInlineHolderListAnyOf1(v InlineHolderListAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -402,7 +402,7 @@ func (t *InlineHolder_List_Item) FromInlineHolderListAnyOf1(v InlineHolderListAn
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -413,7 +413,7 @@ func (t *InlineHolder_List_Item) FromInlineHolderListAnyOf1(v InlineHolderListAn
 
 // MergeInlineHolderListAnyOf1 performs a merge with any union data inside the InlineHolder_List_Item, using the provided InlineHolderListAnyOf1
 func (t *InlineHolder_List_Item) MergeInlineHolderListAnyOf1(v InlineHolderListAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -426,19 +426,19 @@ func (t *InlineHolder_List_Item) MergeInlineHolderListAnyOf1(v InlineHolderListA
 // AsInlineHolderListOneOf0 returns the union data inside the InlineHolder_List_Item as a InlineHolderListOneOf0
 func (t InlineHolder_List_Item) AsInlineHolderListOneOf0() (InlineHolderListOneOf0, error) {
 	var body InlineHolderListOneOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineHolderListOneOf0 sets the union data inside the InlineHolder_List_Item to the provided InlineHolderListOneOf0. It replaces
 // the data of InlineHolderListOneOf0's own union and keeps the other unions' data.
 func (t *InlineHolder_List_Item) FromInlineHolderListOneOf0(v InlineHolderListOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -452,7 +452,7 @@ func (t *InlineHolder_List_Item) FromInlineHolderListOneOf0(v InlineHolderListOn
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -463,7 +463,7 @@ func (t *InlineHolder_List_Item) FromInlineHolderListOneOf0(v InlineHolderListOn
 
 // MergeInlineHolderListOneOf0 performs a merge with any union data inside the InlineHolder_List_Item, using the provided InlineHolderListOneOf0
 func (t *InlineHolder_List_Item) MergeInlineHolderListOneOf0(v InlineHolderListOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -476,19 +476,19 @@ func (t *InlineHolder_List_Item) MergeInlineHolderListOneOf0(v InlineHolderListO
 // AsInlineHolderListOneOf1 returns the union data inside the InlineHolder_List_Item as a InlineHolderListOneOf1
 func (t InlineHolder_List_Item) AsInlineHolderListOneOf1() (InlineHolderListOneOf1, error) {
 	var body InlineHolderListOneOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineHolderListOneOf1 sets the union data inside the InlineHolder_List_Item to the provided InlineHolderListOneOf1. It replaces
 // the data of InlineHolderListOneOf1's own union and keeps the other unions' data.
 func (t *InlineHolder_List_Item) FromInlineHolderListOneOf1(v InlineHolderListOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -502,7 +502,7 @@ func (t *InlineHolder_List_Item) FromInlineHolderListOneOf1(v InlineHolderListOn
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -513,7 +513,7 @@ func (t *InlineHolder_List_Item) FromInlineHolderListOneOf1(v InlineHolderListOn
 
 // MergeInlineHolderListOneOf1 performs a merge with any union data inside the InlineHolder_List_Item, using the provided InlineHolderListOneOf1
 func (t *InlineHolder_List_Item) MergeInlineHolderListOneOf1(v InlineHolderListOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -536,19 +536,19 @@ func (t *InlineHolder_List_Item) UnmarshalJSON(b []byte) error {
 // AsInlineHolderMapAnyOf0 returns the union data inside the InlineHolder_Map_AdditionalProperties as a InlineHolderMapAnyOf0
 func (t InlineHolder_Map_AdditionalProperties) AsInlineHolderMapAnyOf0() (InlineHolderMapAnyOf0, error) {
 	var body InlineHolderMapAnyOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineHolderMapAnyOf0 sets the union data inside the InlineHolder_Map_AdditionalProperties to the provided InlineHolderMapAnyOf0. It replaces
 // the data of InlineHolderMapAnyOf0's own union and keeps the other unions' data.
 func (t *InlineHolder_Map_AdditionalProperties) FromInlineHolderMapAnyOf0(v InlineHolderMapAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -562,7 +562,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromInlineHolderMapAnyOf0(v Inli
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -573,7 +573,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromInlineHolderMapAnyOf0(v Inli
 
 // MergeInlineHolderMapAnyOf0 performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided InlineHolderMapAnyOf0
 func (t *InlineHolder_Map_AdditionalProperties) MergeInlineHolderMapAnyOf0(v InlineHolderMapAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -586,19 +586,19 @@ func (t *InlineHolder_Map_AdditionalProperties) MergeInlineHolderMapAnyOf0(v Inl
 // AsInlineHolderMapAnyOf1 returns the union data inside the InlineHolder_Map_AdditionalProperties as a InlineHolderMapAnyOf1
 func (t InlineHolder_Map_AdditionalProperties) AsInlineHolderMapAnyOf1() (InlineHolderMapAnyOf1, error) {
 	var body InlineHolderMapAnyOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineHolderMapAnyOf1 sets the union data inside the InlineHolder_Map_AdditionalProperties to the provided InlineHolderMapAnyOf1. It replaces
 // the data of InlineHolderMapAnyOf1's own union and keeps the other unions' data.
 func (t *InlineHolder_Map_AdditionalProperties) FromInlineHolderMapAnyOf1(v InlineHolderMapAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -612,7 +612,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromInlineHolderMapAnyOf1(v Inli
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -623,7 +623,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromInlineHolderMapAnyOf1(v Inli
 
 // MergeInlineHolderMapAnyOf1 performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided InlineHolderMapAnyOf1
 func (t *InlineHolder_Map_AdditionalProperties) MergeInlineHolderMapAnyOf1(v InlineHolderMapAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -636,19 +636,19 @@ func (t *InlineHolder_Map_AdditionalProperties) MergeInlineHolderMapAnyOf1(v Inl
 // AsInlineHolderMapOneOf0 returns the union data inside the InlineHolder_Map_AdditionalProperties as a InlineHolderMapOneOf0
 func (t InlineHolder_Map_AdditionalProperties) AsInlineHolderMapOneOf0() (InlineHolderMapOneOf0, error) {
 	var body InlineHolderMapOneOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineHolderMapOneOf0 sets the union data inside the InlineHolder_Map_AdditionalProperties to the provided InlineHolderMapOneOf0. It replaces
 // the data of InlineHolderMapOneOf0's own union and keeps the other unions' data.
 func (t *InlineHolder_Map_AdditionalProperties) FromInlineHolderMapOneOf0(v InlineHolderMapOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -662,7 +662,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromInlineHolderMapOneOf0(v Inli
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -673,7 +673,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromInlineHolderMapOneOf0(v Inli
 
 // MergeInlineHolderMapOneOf0 performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided InlineHolderMapOneOf0
 func (t *InlineHolder_Map_AdditionalProperties) MergeInlineHolderMapOneOf0(v InlineHolderMapOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -686,19 +686,19 @@ func (t *InlineHolder_Map_AdditionalProperties) MergeInlineHolderMapOneOf0(v Inl
 // AsInlineHolderMapOneOf1 returns the union data inside the InlineHolder_Map_AdditionalProperties as a InlineHolderMapOneOf1
 func (t InlineHolder_Map_AdditionalProperties) AsInlineHolderMapOneOf1() (InlineHolderMapOneOf1, error) {
 	var body InlineHolderMapOneOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineHolderMapOneOf1 sets the union data inside the InlineHolder_Map_AdditionalProperties to the provided InlineHolderMapOneOf1. It replaces
 // the data of InlineHolderMapOneOf1's own union and keeps the other unions' data.
 func (t *InlineHolder_Map_AdditionalProperties) FromInlineHolderMapOneOf1(v InlineHolderMapOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -712,7 +712,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromInlineHolderMapOneOf1(v Inli
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -723,7 +723,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromInlineHolderMapOneOf1(v Inli
 
 // MergeInlineHolderMapOneOf1 performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided InlineHolderMapOneOf1
 func (t *InlineHolder_Map_AdditionalProperties) MergeInlineHolderMapOneOf1(v InlineHolderMapOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -746,19 +746,19 @@ func (t *InlineHolder_Map_AdditionalProperties) UnmarshalJSON(b []byte) error {
 // AsInlineHolderOneAnyOf0 returns the union data inside the InlineHolder_One as a InlineHolderOneAnyOf0
 func (t InlineHolder_One) AsInlineHolderOneAnyOf0() (InlineHolderOneAnyOf0, error) {
 	var body InlineHolderOneAnyOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineHolderOneAnyOf0 sets the union data inside the InlineHolder_One to the provided InlineHolderOneAnyOf0. It replaces
 // the data of InlineHolderOneAnyOf0's own union and keeps the other unions' data.
 func (t *InlineHolder_One) FromInlineHolderOneAnyOf0(v InlineHolderOneAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -772,7 +772,7 @@ func (t *InlineHolder_One) FromInlineHolderOneAnyOf0(v InlineHolderOneAnyOf0) er
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -783,7 +783,7 @@ func (t *InlineHolder_One) FromInlineHolderOneAnyOf0(v InlineHolderOneAnyOf0) er
 
 // MergeInlineHolderOneAnyOf0 performs a merge with any union data inside the InlineHolder_One, using the provided InlineHolderOneAnyOf0
 func (t *InlineHolder_One) MergeInlineHolderOneAnyOf0(v InlineHolderOneAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -796,19 +796,19 @@ func (t *InlineHolder_One) MergeInlineHolderOneAnyOf0(v InlineHolderOneAnyOf0) e
 // AsInlineHolderOneAnyOf1 returns the union data inside the InlineHolder_One as a InlineHolderOneAnyOf1
 func (t InlineHolder_One) AsInlineHolderOneAnyOf1() (InlineHolderOneAnyOf1, error) {
 	var body InlineHolderOneAnyOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineHolderOneAnyOf1 sets the union data inside the InlineHolder_One to the provided InlineHolderOneAnyOf1. It replaces
 // the data of InlineHolderOneAnyOf1's own union and keeps the other unions' data.
 func (t *InlineHolder_One) FromInlineHolderOneAnyOf1(v InlineHolderOneAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -822,7 +822,7 @@ func (t *InlineHolder_One) FromInlineHolderOneAnyOf1(v InlineHolderOneAnyOf1) er
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -833,7 +833,7 @@ func (t *InlineHolder_One) FromInlineHolderOneAnyOf1(v InlineHolderOneAnyOf1) er
 
 // MergeInlineHolderOneAnyOf1 performs a merge with any union data inside the InlineHolder_One, using the provided InlineHolderOneAnyOf1
 func (t *InlineHolder_One) MergeInlineHolderOneAnyOf1(v InlineHolderOneAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -846,19 +846,19 @@ func (t *InlineHolder_One) MergeInlineHolderOneAnyOf1(v InlineHolderOneAnyOf1) e
 // AsInlineHolderOneOneOf0 returns the union data inside the InlineHolder_One as a InlineHolderOneOneOf0
 func (t InlineHolder_One) AsInlineHolderOneOneOf0() (InlineHolderOneOneOf0, error) {
 	var body InlineHolderOneOneOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineHolderOneOneOf0 sets the union data inside the InlineHolder_One to the provided InlineHolderOneOneOf0. It replaces
 // the data of InlineHolderOneOneOf0's own union and keeps the other unions' data.
 func (t *InlineHolder_One) FromInlineHolderOneOneOf0(v InlineHolderOneOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -872,7 +872,7 @@ func (t *InlineHolder_One) FromInlineHolderOneOneOf0(v InlineHolderOneOneOf0) er
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -883,7 +883,7 @@ func (t *InlineHolder_One) FromInlineHolderOneOneOf0(v InlineHolderOneOneOf0) er
 
 // MergeInlineHolderOneOneOf0 performs a merge with any union data inside the InlineHolder_One, using the provided InlineHolderOneOneOf0
 func (t *InlineHolder_One) MergeInlineHolderOneOneOf0(v InlineHolderOneOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -896,19 +896,19 @@ func (t *InlineHolder_One) MergeInlineHolderOneOneOf0(v InlineHolderOneOneOf0) e
 // AsInlineHolderOneOneOf1 returns the union data inside the InlineHolder_One as a InlineHolderOneOneOf1
 func (t InlineHolder_One) AsInlineHolderOneOneOf1() (InlineHolderOneOneOf1, error) {
 	var body InlineHolderOneOneOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineHolderOneOneOf1 sets the union data inside the InlineHolder_One to the provided InlineHolderOneOneOf1. It replaces
 // the data of InlineHolderOneOneOf1's own union and keeps the other unions' data.
 func (t *InlineHolder_One) FromInlineHolderOneOneOf1(v InlineHolderOneOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -922,7 +922,7 @@ func (t *InlineHolder_One) FromInlineHolderOneOneOf1(v InlineHolderOneOneOf1) er
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -933,7 +933,7 @@ func (t *InlineHolder_One) FromInlineHolderOneOneOf1(v InlineHolderOneOneOf1) er
 
 // MergeInlineHolderOneOneOf1 performs a merge with any union data inside the InlineHolder_One, using the provided InlineHolderOneOneOf1
 func (t *InlineHolder_One) MergeInlineHolderOneOneOf1(v InlineHolderOneOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -956,19 +956,19 @@ func (t *InlineHolder_One) UnmarshalJSON(b []byte) error {
 // AsSubjectAnyOf0 returns the union data inside the Subject as a SubjectAnyOf0
 func (t Subject) AsSubjectAnyOf0() (SubjectAnyOf0, error) {
 	var body SubjectAnyOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromSubjectAnyOf0 sets the union data inside the Subject to the provided SubjectAnyOf0. It replaces
 // the data of SubjectAnyOf0's own union and keeps the other unions' data.
 func (t *Subject) FromSubjectAnyOf0(v SubjectAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -982,7 +982,7 @@ func (t *Subject) FromSubjectAnyOf0(v SubjectAnyOf0) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -993,7 +993,7 @@ func (t *Subject) FromSubjectAnyOf0(v SubjectAnyOf0) error {
 
 // MergeSubjectAnyOf0 performs a merge with any union data inside the Subject, using the provided SubjectAnyOf0
 func (t *Subject) MergeSubjectAnyOf0(v SubjectAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1006,19 +1006,19 @@ func (t *Subject) MergeSubjectAnyOf0(v SubjectAnyOf0) error {
 // AsSubjectAnyOf1 returns the union data inside the Subject as a SubjectAnyOf1
 func (t Subject) AsSubjectAnyOf1() (SubjectAnyOf1, error) {
 	var body SubjectAnyOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromSubjectAnyOf1 sets the union data inside the Subject to the provided SubjectAnyOf1. It replaces
 // the data of SubjectAnyOf1's own union and keeps the other unions' data.
 func (t *Subject) FromSubjectAnyOf1(v SubjectAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -1032,7 +1032,7 @@ func (t *Subject) FromSubjectAnyOf1(v SubjectAnyOf1) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1043,7 +1043,7 @@ func (t *Subject) FromSubjectAnyOf1(v SubjectAnyOf1) error {
 
 // MergeSubjectAnyOf1 performs a merge with any union data inside the Subject, using the provided SubjectAnyOf1
 func (t *Subject) MergeSubjectAnyOf1(v SubjectAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1056,19 +1056,19 @@ func (t *Subject) MergeSubjectAnyOf1(v SubjectAnyOf1) error {
 // AsSubjectOneOf0 returns the union data inside the Subject as a SubjectOneOf0
 func (t Subject) AsSubjectOneOf0() (SubjectOneOf0, error) {
 	var body SubjectOneOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromSubjectOneOf0 sets the union data inside the Subject to the provided SubjectOneOf0. It replaces
 // the data of SubjectOneOf0's own union and keeps the other unions' data.
 func (t *Subject) FromSubjectOneOf0(v SubjectOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -1082,7 +1082,7 @@ func (t *Subject) FromSubjectOneOf0(v SubjectOneOf0) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1093,7 +1093,7 @@ func (t *Subject) FromSubjectOneOf0(v SubjectOneOf0) error {
 
 // MergeSubjectOneOf0 performs a merge with any union data inside the Subject, using the provided SubjectOneOf0
 func (t *Subject) MergeSubjectOneOf0(v SubjectOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1106,19 +1106,19 @@ func (t *Subject) MergeSubjectOneOf0(v SubjectOneOf0) error {
 // AsSubjectOneOf1 returns the union data inside the Subject as a SubjectOneOf1
 func (t Subject) AsSubjectOneOf1() (SubjectOneOf1, error) {
 	var body SubjectOneOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromSubjectOneOf1 sets the union data inside the Subject to the provided SubjectOneOf1. It replaces
 // the data of SubjectOneOf1's own union and keeps the other unions' data.
 func (t *Subject) FromSubjectOneOf1(v SubjectOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -1132,7 +1132,7 @@ func (t *Subject) FromSubjectOneOf1(v SubjectOneOf1) error {
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1143,7 +1143,7 @@ func (t *Subject) FromSubjectOneOf1(v SubjectOneOf1) error {
 
 // MergeSubjectOneOf1 performs a merge with any union data inside the Subject, using the provided SubjectOneOf1
 func (t *Subject) MergeSubjectOneOf1(v SubjectOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1166,19 +1166,19 @@ func (t *Subject) UnmarshalJSON(b []byte) error {
 // AsInlineSubjectResponseAnyOf0 returns the union data inside the InlineSubjectResponse as a InlineSubjectResponseAnyOf0
 func (t InlineSubjectResponse) AsInlineSubjectResponseAnyOf0() (InlineSubjectResponseAnyOf0, error) {
 	var body InlineSubjectResponseAnyOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineSubjectResponseAnyOf0 sets the union data inside the InlineSubjectResponse to the provided InlineSubjectResponseAnyOf0. It replaces
 // the data of InlineSubjectResponseAnyOf0's own union and keeps the other unions' data.
 func (t *InlineSubjectResponse) FromInlineSubjectResponseAnyOf0(v InlineSubjectResponseAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -1192,7 +1192,7 @@ func (t *InlineSubjectResponse) FromInlineSubjectResponseAnyOf0(v InlineSubjectR
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1203,7 +1203,7 @@ func (t *InlineSubjectResponse) FromInlineSubjectResponseAnyOf0(v InlineSubjectR
 
 // MergeInlineSubjectResponseAnyOf0 performs a merge with any union data inside the InlineSubjectResponse, using the provided InlineSubjectResponseAnyOf0
 func (t *InlineSubjectResponse) MergeInlineSubjectResponseAnyOf0(v InlineSubjectResponseAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1216,19 +1216,19 @@ func (t *InlineSubjectResponse) MergeInlineSubjectResponseAnyOf0(v InlineSubject
 // AsInlineSubjectResponseAnyOf1 returns the union data inside the InlineSubjectResponse as a InlineSubjectResponseAnyOf1
 func (t InlineSubjectResponse) AsInlineSubjectResponseAnyOf1() (InlineSubjectResponseAnyOf1, error) {
 	var body InlineSubjectResponseAnyOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineSubjectResponseAnyOf1 sets the union data inside the InlineSubjectResponse to the provided InlineSubjectResponseAnyOf1. It replaces
 // the data of InlineSubjectResponseAnyOf1's own union and keeps the other unions' data.
 func (t *InlineSubjectResponse) FromInlineSubjectResponseAnyOf1(v InlineSubjectResponseAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -1242,7 +1242,7 @@ func (t *InlineSubjectResponse) FromInlineSubjectResponseAnyOf1(v InlineSubjectR
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1253,7 +1253,7 @@ func (t *InlineSubjectResponse) FromInlineSubjectResponseAnyOf1(v InlineSubjectR
 
 // MergeInlineSubjectResponseAnyOf1 performs a merge with any union data inside the InlineSubjectResponse, using the provided InlineSubjectResponseAnyOf1
 func (t *InlineSubjectResponse) MergeInlineSubjectResponseAnyOf1(v InlineSubjectResponseAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1266,19 +1266,19 @@ func (t *InlineSubjectResponse) MergeInlineSubjectResponseAnyOf1(v InlineSubject
 // AsInlineSubjectResponseOneOf0 returns the union data inside the InlineSubjectResponse as a InlineSubjectResponseOneOf0
 func (t InlineSubjectResponse) AsInlineSubjectResponseOneOf0() (InlineSubjectResponseOneOf0, error) {
 	var body InlineSubjectResponseOneOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineSubjectResponseOneOf0 sets the union data inside the InlineSubjectResponse to the provided InlineSubjectResponseOneOf0. It replaces
 // the data of InlineSubjectResponseOneOf0's own union and keeps the other unions' data.
 func (t *InlineSubjectResponse) FromInlineSubjectResponseOneOf0(v InlineSubjectResponseOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -1292,7 +1292,7 @@ func (t *InlineSubjectResponse) FromInlineSubjectResponseOneOf0(v InlineSubjectR
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1303,7 +1303,7 @@ func (t *InlineSubjectResponse) FromInlineSubjectResponseOneOf0(v InlineSubjectR
 
 // MergeInlineSubjectResponseOneOf0 performs a merge with any union data inside the InlineSubjectResponse, using the provided InlineSubjectResponseOneOf0
 func (t *InlineSubjectResponse) MergeInlineSubjectResponseOneOf0(v InlineSubjectResponseOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1316,19 +1316,19 @@ func (t *InlineSubjectResponse) MergeInlineSubjectResponseOneOf0(v InlineSubject
 // AsInlineSubjectResponseOneOf1 returns the union data inside the InlineSubjectResponse as a InlineSubjectResponseOneOf1
 func (t InlineSubjectResponse) AsInlineSubjectResponseOneOf1() (InlineSubjectResponseOneOf1, error) {
 	var body InlineSubjectResponseOneOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineSubjectResponseOneOf1 sets the union data inside the InlineSubjectResponse to the provided InlineSubjectResponseOneOf1. It replaces
 // the data of InlineSubjectResponseOneOf1's own union and keeps the other unions' data.
 func (t *InlineSubjectResponse) FromInlineSubjectResponseOneOf1(v InlineSubjectResponseOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -1342,7 +1342,7 @@ func (t *InlineSubjectResponse) FromInlineSubjectResponseOneOf1(v InlineSubjectR
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1353,7 +1353,7 @@ func (t *InlineSubjectResponse) FromInlineSubjectResponseOneOf1(v InlineSubjectR
 
 // MergeInlineSubjectResponseOneOf1 performs a merge with any union data inside the InlineSubjectResponse, using the provided InlineSubjectResponseOneOf1
 func (t *InlineSubjectResponse) MergeInlineSubjectResponseOneOf1(v InlineSubjectResponseOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1376,19 +1376,19 @@ func (t *InlineSubjectResponse) UnmarshalJSON(b []byte) error {
 // AsInlineSubjectBodyAnyOf0 returns the union data inside the InlineSubjectBody as a InlineSubjectBodyAnyOf0
 func (t InlineSubjectBody) AsInlineSubjectBodyAnyOf0() (InlineSubjectBodyAnyOf0, error) {
 	var body InlineSubjectBodyAnyOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineSubjectBodyAnyOf0 sets the union data inside the InlineSubjectBody to the provided InlineSubjectBodyAnyOf0. It replaces
 // the data of InlineSubjectBodyAnyOf0's own union and keeps the other unions' data.
 func (t *InlineSubjectBody) FromInlineSubjectBodyAnyOf0(v InlineSubjectBodyAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -1402,7 +1402,7 @@ func (t *InlineSubjectBody) FromInlineSubjectBodyAnyOf0(v InlineSubjectBodyAnyOf
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1413,7 +1413,7 @@ func (t *InlineSubjectBody) FromInlineSubjectBodyAnyOf0(v InlineSubjectBodyAnyOf
 
 // MergeInlineSubjectBodyAnyOf0 performs a merge with any union data inside the InlineSubjectBody, using the provided InlineSubjectBodyAnyOf0
 func (t *InlineSubjectBody) MergeInlineSubjectBodyAnyOf0(v InlineSubjectBodyAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1426,19 +1426,19 @@ func (t *InlineSubjectBody) MergeInlineSubjectBodyAnyOf0(v InlineSubjectBodyAnyO
 // AsInlineSubjectBodyAnyOf1 returns the union data inside the InlineSubjectBody as a InlineSubjectBodyAnyOf1
 func (t InlineSubjectBody) AsInlineSubjectBodyAnyOf1() (InlineSubjectBodyAnyOf1, error) {
 	var body InlineSubjectBodyAnyOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineSubjectBodyAnyOf1 sets the union data inside the InlineSubjectBody to the provided InlineSubjectBodyAnyOf1. It replaces
 // the data of InlineSubjectBodyAnyOf1's own union and keeps the other unions' data.
 func (t *InlineSubjectBody) FromInlineSubjectBodyAnyOf1(v InlineSubjectBodyAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -1452,7 +1452,7 @@ func (t *InlineSubjectBody) FromInlineSubjectBodyAnyOf1(v InlineSubjectBodyAnyOf
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1463,7 +1463,7 @@ func (t *InlineSubjectBody) FromInlineSubjectBodyAnyOf1(v InlineSubjectBodyAnyOf
 
 // MergeInlineSubjectBodyAnyOf1 performs a merge with any union data inside the InlineSubjectBody, using the provided InlineSubjectBodyAnyOf1
 func (t *InlineSubjectBody) MergeInlineSubjectBodyAnyOf1(v InlineSubjectBodyAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1476,19 +1476,19 @@ func (t *InlineSubjectBody) MergeInlineSubjectBodyAnyOf1(v InlineSubjectBodyAnyO
 // AsInlineSubjectBodyOneOf0 returns the union data inside the InlineSubjectBody as a InlineSubjectBodyOneOf0
 func (t InlineSubjectBody) AsInlineSubjectBodyOneOf0() (InlineSubjectBodyOneOf0, error) {
 	var body InlineSubjectBodyOneOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineSubjectBodyOneOf0 sets the union data inside the InlineSubjectBody to the provided InlineSubjectBodyOneOf0. It replaces
 // the data of InlineSubjectBodyOneOf0's own union and keeps the other unions' data.
 func (t *InlineSubjectBody) FromInlineSubjectBodyOneOf0(v InlineSubjectBodyOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -1502,7 +1502,7 @@ func (t *InlineSubjectBody) FromInlineSubjectBodyOneOf0(v InlineSubjectBodyOneOf
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1513,7 +1513,7 @@ func (t *InlineSubjectBody) FromInlineSubjectBodyOneOf0(v InlineSubjectBodyOneOf
 
 // MergeInlineSubjectBodyOneOf0 performs a merge with any union data inside the InlineSubjectBody, using the provided InlineSubjectBodyOneOf0
 func (t *InlineSubjectBody) MergeInlineSubjectBodyOneOf0(v InlineSubjectBodyOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1526,19 +1526,19 @@ func (t *InlineSubjectBody) MergeInlineSubjectBodyOneOf0(v InlineSubjectBodyOneO
 // AsInlineSubjectBodyOneOf1 returns the union data inside the InlineSubjectBody as a InlineSubjectBodyOneOf1
 func (t InlineSubjectBody) AsInlineSubjectBodyOneOf1() (InlineSubjectBodyOneOf1, error) {
 	var body InlineSubjectBodyOneOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromInlineSubjectBodyOneOf1 sets the union data inside the InlineSubjectBody to the provided InlineSubjectBodyOneOf1. It replaces
 // the data of InlineSubjectBodyOneOf1's own union and keeps the other unions' data.
 func (t *InlineSubjectBody) FromInlineSubjectBodyOneOf1(v InlineSubjectBodyOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -1552,7 +1552,7 @@ func (t *InlineSubjectBody) FromInlineSubjectBodyOneOf1(v InlineSubjectBodyOneOf
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1563,7 +1563,7 @@ func (t *InlineSubjectBody) FromInlineSubjectBodyOneOf1(v InlineSubjectBodyOneOf
 
 // MergeInlineSubjectBodyOneOf1 performs a merge with any union data inside the InlineSubjectBody, using the provided InlineSubjectBodyOneOf1
 func (t *InlineSubjectBody) MergeInlineSubjectBodyOneOf1(v InlineSubjectBodyOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1586,19 +1586,19 @@ func (t *InlineSubjectBody) UnmarshalJSON(b []byte) error {
 // AsBodyComponentInlineJSONBodyAnyOf0 returns the union data inside the BodyComponentInlineJSONBody as a BodyComponentInlineJSONBodyAnyOf0
 func (t BodyComponentInlineJSONBody) AsBodyComponentInlineJSONBodyAnyOf0() (BodyComponentInlineJSONBodyAnyOf0, error) {
 	var body BodyComponentInlineJSONBodyAnyOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBodyComponentInlineJSONBodyAnyOf0 sets the union data inside the BodyComponentInlineJSONBody to the provided BodyComponentInlineJSONBodyAnyOf0. It replaces
 // the data of BodyComponentInlineJSONBodyAnyOf0's own union and keeps the other unions' data.
 func (t *BodyComponentInlineJSONBody) FromBodyComponentInlineJSONBodyAnyOf0(v BodyComponentInlineJSONBodyAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -1612,7 +1612,7 @@ func (t *BodyComponentInlineJSONBody) FromBodyComponentInlineJSONBodyAnyOf0(v Bo
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1623,7 +1623,7 @@ func (t *BodyComponentInlineJSONBody) FromBodyComponentInlineJSONBodyAnyOf0(v Bo
 
 // MergeBodyComponentInlineJSONBodyAnyOf0 performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided BodyComponentInlineJSONBodyAnyOf0
 func (t *BodyComponentInlineJSONBody) MergeBodyComponentInlineJSONBodyAnyOf0(v BodyComponentInlineJSONBodyAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1636,19 +1636,19 @@ func (t *BodyComponentInlineJSONBody) MergeBodyComponentInlineJSONBodyAnyOf0(v B
 // AsBodyComponentInlineJSONBodyAnyOf1 returns the union data inside the BodyComponentInlineJSONBody as a BodyComponentInlineJSONBodyAnyOf1
 func (t BodyComponentInlineJSONBody) AsBodyComponentInlineJSONBodyAnyOf1() (BodyComponentInlineJSONBodyAnyOf1, error) {
 	var body BodyComponentInlineJSONBodyAnyOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBodyComponentInlineJSONBodyAnyOf1 sets the union data inside the BodyComponentInlineJSONBody to the provided BodyComponentInlineJSONBodyAnyOf1. It replaces
 // the data of BodyComponentInlineJSONBodyAnyOf1's own union and keeps the other unions' data.
 func (t *BodyComponentInlineJSONBody) FromBodyComponentInlineJSONBodyAnyOf1(v BodyComponentInlineJSONBodyAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -1662,7 +1662,7 @@ func (t *BodyComponentInlineJSONBody) FromBodyComponentInlineJSONBodyAnyOf1(v Bo
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1673,7 +1673,7 @@ func (t *BodyComponentInlineJSONBody) FromBodyComponentInlineJSONBodyAnyOf1(v Bo
 
 // MergeBodyComponentInlineJSONBodyAnyOf1 performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided BodyComponentInlineJSONBodyAnyOf1
 func (t *BodyComponentInlineJSONBody) MergeBodyComponentInlineJSONBodyAnyOf1(v BodyComponentInlineJSONBodyAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1686,19 +1686,19 @@ func (t *BodyComponentInlineJSONBody) MergeBodyComponentInlineJSONBodyAnyOf1(v B
 // AsBodyComponentInlineJSONBodyOneOf0 returns the union data inside the BodyComponentInlineJSONBody as a BodyComponentInlineJSONBodyOneOf0
 func (t BodyComponentInlineJSONBody) AsBodyComponentInlineJSONBodyOneOf0() (BodyComponentInlineJSONBodyOneOf0, error) {
 	var body BodyComponentInlineJSONBodyOneOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBodyComponentInlineJSONBodyOneOf0 sets the union data inside the BodyComponentInlineJSONBody to the provided BodyComponentInlineJSONBodyOneOf0. It replaces
 // the data of BodyComponentInlineJSONBodyOneOf0's own union and keeps the other unions' data.
 func (t *BodyComponentInlineJSONBody) FromBodyComponentInlineJSONBodyOneOf0(v BodyComponentInlineJSONBodyOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -1712,7 +1712,7 @@ func (t *BodyComponentInlineJSONBody) FromBodyComponentInlineJSONBodyOneOf0(v Bo
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1723,7 +1723,7 @@ func (t *BodyComponentInlineJSONBody) FromBodyComponentInlineJSONBodyOneOf0(v Bo
 
 // MergeBodyComponentInlineJSONBodyOneOf0 performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided BodyComponentInlineJSONBodyOneOf0
 func (t *BodyComponentInlineJSONBody) MergeBodyComponentInlineJSONBodyOneOf0(v BodyComponentInlineJSONBodyOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1736,19 +1736,19 @@ func (t *BodyComponentInlineJSONBody) MergeBodyComponentInlineJSONBodyOneOf0(v B
 // AsBodyComponentInlineJSONBodyOneOf1 returns the union data inside the BodyComponentInlineJSONBody as a BodyComponentInlineJSONBodyOneOf1
 func (t BodyComponentInlineJSONBody) AsBodyComponentInlineJSONBodyOneOf1() (BodyComponentInlineJSONBodyOneOf1, error) {
 	var body BodyComponentInlineJSONBodyOneOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBodyComponentInlineJSONBodyOneOf1 sets the union data inside the BodyComponentInlineJSONBody to the provided BodyComponentInlineJSONBodyOneOf1. It replaces
 // the data of BodyComponentInlineJSONBodyOneOf1's own union and keeps the other unions' data.
 func (t *BodyComponentInlineJSONBody) FromBodyComponentInlineJSONBodyOneOf1(v BodyComponentInlineJSONBodyOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -1762,7 +1762,7 @@ func (t *BodyComponentInlineJSONBody) FromBodyComponentInlineJSONBodyOneOf1(v Bo
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1773,7 +1773,7 @@ func (t *BodyComponentInlineJSONBody) FromBodyComponentInlineJSONBodyOneOf1(v Bo
 
 // MergeBodyComponentInlineJSONBodyOneOf1 performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided BodyComponentInlineJSONBodyOneOf1
 func (t *BodyComponentInlineJSONBody) MergeBodyComponentInlineJSONBodyOneOf1(v BodyComponentInlineJSONBodyOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1796,19 +1796,19 @@ func (t *BodyComponentInlineJSONBody) UnmarshalJSON(b []byte) error {
 // AsBodyInlineJSONBodyAnyOf0 returns the union data inside the BodyInlineJSONBody as a BodyInlineJSONBodyAnyOf0
 func (t BodyInlineJSONBody) AsBodyInlineJSONBodyAnyOf0() (BodyInlineJSONBodyAnyOf0, error) {
 	var body BodyInlineJSONBodyAnyOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBodyInlineJSONBodyAnyOf0 sets the union data inside the BodyInlineJSONBody to the provided BodyInlineJSONBodyAnyOf0. It replaces
 // the data of BodyInlineJSONBodyAnyOf0's own union and keeps the other unions' data.
 func (t *BodyInlineJSONBody) FromBodyInlineJSONBodyAnyOf0(v BodyInlineJSONBodyAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -1822,7 +1822,7 @@ func (t *BodyInlineJSONBody) FromBodyInlineJSONBodyAnyOf0(v BodyInlineJSONBodyAn
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1833,7 +1833,7 @@ func (t *BodyInlineJSONBody) FromBodyInlineJSONBodyAnyOf0(v BodyInlineJSONBodyAn
 
 // MergeBodyInlineJSONBodyAnyOf0 performs a merge with any union data inside the BodyInlineJSONBody, using the provided BodyInlineJSONBodyAnyOf0
 func (t *BodyInlineJSONBody) MergeBodyInlineJSONBodyAnyOf0(v BodyInlineJSONBodyAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1846,19 +1846,19 @@ func (t *BodyInlineJSONBody) MergeBodyInlineJSONBodyAnyOf0(v BodyInlineJSONBodyA
 // AsBodyInlineJSONBodyAnyOf1 returns the union data inside the BodyInlineJSONBody as a BodyInlineJSONBodyAnyOf1
 func (t BodyInlineJSONBody) AsBodyInlineJSONBodyAnyOf1() (BodyInlineJSONBodyAnyOf1, error) {
 	var body BodyInlineJSONBodyAnyOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBodyInlineJSONBodyAnyOf1 sets the union data inside the BodyInlineJSONBody to the provided BodyInlineJSONBodyAnyOf1. It replaces
 // the data of BodyInlineJSONBodyAnyOf1's own union and keeps the other unions' data.
 func (t *BodyInlineJSONBody) FromBodyInlineJSONBodyAnyOf1(v BodyInlineJSONBodyAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -1872,7 +1872,7 @@ func (t *BodyInlineJSONBody) FromBodyInlineJSONBodyAnyOf1(v BodyInlineJSONBodyAn
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1883,7 +1883,7 @@ func (t *BodyInlineJSONBody) FromBodyInlineJSONBodyAnyOf1(v BodyInlineJSONBodyAn
 
 // MergeBodyInlineJSONBodyAnyOf1 performs a merge with any union data inside the BodyInlineJSONBody, using the provided BodyInlineJSONBodyAnyOf1
 func (t *BodyInlineJSONBody) MergeBodyInlineJSONBodyAnyOf1(v BodyInlineJSONBodyAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1896,19 +1896,19 @@ func (t *BodyInlineJSONBody) MergeBodyInlineJSONBodyAnyOf1(v BodyInlineJSONBodyA
 // AsBodyInlineJSONBodyOneOf0 returns the union data inside the BodyInlineJSONBody as a BodyInlineJSONBodyOneOf0
 func (t BodyInlineJSONBody) AsBodyInlineJSONBodyOneOf0() (BodyInlineJSONBodyOneOf0, error) {
 	var body BodyInlineJSONBodyOneOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBodyInlineJSONBodyOneOf0 sets the union data inside the BodyInlineJSONBody to the provided BodyInlineJSONBodyOneOf0. It replaces
 // the data of BodyInlineJSONBodyOneOf0's own union and keeps the other unions' data.
 func (t *BodyInlineJSONBody) FromBodyInlineJSONBodyOneOf0(v BodyInlineJSONBodyOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -1922,7 +1922,7 @@ func (t *BodyInlineJSONBody) FromBodyInlineJSONBodyOneOf0(v BodyInlineJSONBodyOn
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1933,7 +1933,7 @@ func (t *BodyInlineJSONBody) FromBodyInlineJSONBodyOneOf0(v BodyInlineJSONBodyOn
 
 // MergeBodyInlineJSONBodyOneOf0 performs a merge with any union data inside the BodyInlineJSONBody, using the provided BodyInlineJSONBodyOneOf0
 func (t *BodyInlineJSONBody) MergeBodyInlineJSONBodyOneOf0(v BodyInlineJSONBodyOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1946,19 +1946,19 @@ func (t *BodyInlineJSONBody) MergeBodyInlineJSONBodyOneOf0(v BodyInlineJSONBodyO
 // AsBodyInlineJSONBodyOneOf1 returns the union data inside the BodyInlineJSONBody as a BodyInlineJSONBodyOneOf1
 func (t BodyInlineJSONBody) AsBodyInlineJSONBodyOneOf1() (BodyInlineJSONBodyOneOf1, error) {
 	var body BodyInlineJSONBodyOneOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBodyInlineJSONBodyOneOf1 sets the union data inside the BodyInlineJSONBody to the provided BodyInlineJSONBodyOneOf1. It replaces
 // the data of BodyInlineJSONBodyOneOf1's own union and keeps the other unions' data.
 func (t *BodyInlineJSONBody) FromBodyInlineJSONBodyOneOf1(v BodyInlineJSONBodyOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -1972,7 +1972,7 @@ func (t *BodyInlineJSONBody) FromBodyInlineJSONBodyOneOf1(v BodyInlineJSONBodyOn
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -1983,7 +1983,7 @@ func (t *BodyInlineJSONBody) FromBodyInlineJSONBodyOneOf1(v BodyInlineJSONBodyOn
 
 // MergeBodyInlineJSONBodyOneOf1 performs a merge with any union data inside the BodyInlineJSONBody, using the provided BodyInlineJSONBodyOneOf1
 func (t *BodyInlineJSONBody) MergeBodyInlineJSONBodyOneOf1(v BodyInlineJSONBodyOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2006,19 +2006,19 @@ func (t *BodyInlineJSONBody) UnmarshalJSON(b []byte) error {
 // AsBodyInline200JSONResponseBodyAnyOf0 returns the union data inside the BodyInline200JSONResponseBody as a BodyInline200JSONResponseBodyAnyOf0
 func (t BodyInline200JSONResponseBody) AsBodyInline200JSONResponseBodyAnyOf0() (BodyInline200JSONResponseBodyAnyOf0, error) {
 	var body BodyInline200JSONResponseBodyAnyOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBodyInline200JSONResponseBodyAnyOf0 sets the union data inside the BodyInline200JSONResponseBody to the provided BodyInline200JSONResponseBodyAnyOf0. It replaces
 // the data of BodyInline200JSONResponseBodyAnyOf0's own union and keeps the other unions' data.
 func (t *BodyInline200JSONResponseBody) FromBodyInline200JSONResponseBodyAnyOf0(v BodyInline200JSONResponseBodyAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -2032,7 +2032,7 @@ func (t *BodyInline200JSONResponseBody) FromBodyInline200JSONResponseBodyAnyOf0(
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2043,7 +2043,7 @@ func (t *BodyInline200JSONResponseBody) FromBodyInline200JSONResponseBodyAnyOf0(
 
 // MergeBodyInline200JSONResponseBodyAnyOf0 performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided BodyInline200JSONResponseBodyAnyOf0
 func (t *BodyInline200JSONResponseBody) MergeBodyInline200JSONResponseBodyAnyOf0(v BodyInline200JSONResponseBodyAnyOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2056,19 +2056,19 @@ func (t *BodyInline200JSONResponseBody) MergeBodyInline200JSONResponseBodyAnyOf0
 // AsBodyInline200JSONResponseBodyAnyOf1 returns the union data inside the BodyInline200JSONResponseBody as a BodyInline200JSONResponseBodyAnyOf1
 func (t BodyInline200JSONResponseBody) AsBodyInline200JSONResponseBodyAnyOf1() (BodyInline200JSONResponseBodyAnyOf1, error) {
 	var body BodyInline200JSONResponseBodyAnyOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBodyInline200JSONResponseBodyAnyOf1 sets the union data inside the BodyInline200JSONResponseBody to the provided BodyInline200JSONResponseBodyAnyOf1. It replaces
 // the data of BodyInline200JSONResponseBodyAnyOf1's own union and keeps the other unions' data.
 func (t *BodyInline200JSONResponseBody) FromBodyInline200JSONResponseBodyAnyOf1(v BodyInline200JSONResponseBodyAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "a")
 		delete(kept, "b")
 		added := object == nil
@@ -2082,7 +2082,7 @@ func (t *BodyInline200JSONResponseBody) FromBodyInline200JSONResponseBodyAnyOf1(
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2093,7 +2093,7 @@ func (t *BodyInline200JSONResponseBody) FromBodyInline200JSONResponseBodyAnyOf1(
 
 // MergeBodyInline200JSONResponseBodyAnyOf1 performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided BodyInline200JSONResponseBodyAnyOf1
 func (t *BodyInline200JSONResponseBody) MergeBodyInline200JSONResponseBodyAnyOf1(v BodyInline200JSONResponseBodyAnyOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2106,19 +2106,19 @@ func (t *BodyInline200JSONResponseBody) MergeBodyInline200JSONResponseBodyAnyOf1
 // AsBodyInline200JSONResponseBodyOneOf0 returns the union data inside the BodyInline200JSONResponseBody as a BodyInline200JSONResponseBodyOneOf0
 func (t BodyInline200JSONResponseBody) AsBodyInline200JSONResponseBodyOneOf0() (BodyInline200JSONResponseBodyOneOf0, error) {
 	var body BodyInline200JSONResponseBodyOneOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBodyInline200JSONResponseBodyOneOf0 sets the union data inside the BodyInline200JSONResponseBody to the provided BodyInline200JSONResponseBodyOneOf0. It replaces
 // the data of BodyInline200JSONResponseBodyOneOf0's own union and keeps the other unions' data.
 func (t *BodyInline200JSONResponseBody) FromBodyInline200JSONResponseBodyOneOf0(v BodyInline200JSONResponseBodyOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -2132,7 +2132,7 @@ func (t *BodyInline200JSONResponseBody) FromBodyInline200JSONResponseBodyOneOf0(
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2143,7 +2143,7 @@ func (t *BodyInline200JSONResponseBody) FromBodyInline200JSONResponseBodyOneOf0(
 
 // MergeBodyInline200JSONResponseBodyOneOf0 performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided BodyInline200JSONResponseBodyOneOf0
 func (t *BodyInline200JSONResponseBody) MergeBodyInline200JSONResponseBodyOneOf0(v BodyInline200JSONResponseBodyOneOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2156,19 +2156,19 @@ func (t *BodyInline200JSONResponseBody) MergeBodyInline200JSONResponseBodyOneOf0
 // AsBodyInline200JSONResponseBodyOneOf1 returns the union data inside the BodyInline200JSONResponseBody as a BodyInline200JSONResponseBodyOneOf1
 func (t BodyInline200JSONResponseBody) AsBodyInline200JSONResponseBodyOneOf1() (BodyInline200JSONResponseBodyOneOf1, error) {
 	var body BodyInline200JSONResponseBodyOneOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBodyInline200JSONResponseBodyOneOf1 sets the union data inside the BodyInline200JSONResponseBody to the provided BodyInline200JSONResponseBodyOneOf1. It replaces
 // the data of BodyInline200JSONResponseBodyOneOf1's own union and keeps the other unions' data.
 func (t *BodyInline200JSONResponseBody) FromBodyInline200JSONResponseBodyOneOf1(v BodyInline200JSONResponseBodyOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
 	var object, kept map[string]json.RawMessage
-	if json.Unmarshal(b, &object) == nil && json.Unmarshal(t.union, &kept) == nil && kept != nil {
+	if runtime.JSONUnmarshal(b, &object) == nil && runtime.JSONUnmarshal(t.union, &kept) == nil && kept != nil {
 		delete(kept, "c")
 		delete(kept, "d")
 		added := object == nil
@@ -2182,7 +2182,7 @@ func (t *BodyInline200JSONResponseBody) FromBodyInline200JSONResponseBodyOneOf1(
 			}
 		}
 		if added {
-			if b, err = json.Marshal(object); err != nil {
+			if b, err = runtime.JSONMarshal(object); err != nil {
 				return err
 			}
 		}
@@ -2193,7 +2193,7 @@ func (t *BodyInline200JSONResponseBody) FromBodyInline200JSONResponseBodyOneOf1(
 
 // MergeBodyInline200JSONResponseBodyOneOf1 performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided BodyInline200JSONResponseBodyOneOf1
 func (t *BodyInline200JSONResponseBody) MergeBodyInline200JSONResponseBodyOneOf1(v BodyInline200JSONResponseBodyOneOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2579,7 +2579,7 @@ func (c *Client) HolderInline(ctx context.Context, body HolderInlineJSONRequestB
 // NewBodyComponentRequest calls the generic BodyComponent builder with application/json body
 func NewBodyComponentRequest(server string, body BodyComponentJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2619,7 +2619,7 @@ func NewBodyComponentRequestWithBody(server string, contentType string, body io.
 // NewBodyComponentInlineRequest calls the generic BodyComponentInline builder with application/json body
 func NewBodyComponentInlineRequest(server string, body BodyComponentInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2659,7 +2659,7 @@ func NewBodyComponentInlineRequestWithBody(server string, contentType string, bo
 // NewBodyDefaultRequest calls the generic BodyDefault builder with application/json body
 func NewBodyDefaultRequest(server string, body BodyDefaultJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2699,7 +2699,7 @@ func NewBodyDefaultRequestWithBody(server string, contentType string, body io.Re
 // NewBodyHeadersRequest calls the generic BodyHeaders builder with application/json body
 func NewBodyHeadersRequest(server string, body BodyHeadersJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2739,7 +2739,7 @@ func NewBodyHeadersRequestWithBody(server string, contentType string, body io.Re
 // NewBodyInlineRequest calls the generic BodyInline builder with application/json body
 func NewBodyInlineRequest(server string, body BodyInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2779,7 +2779,7 @@ func NewBodyInlineRequestWithBody(server string, contentType string, body io.Rea
 // NewBodyRefRequest calls the generic BodyRef builder with application/json body
 func NewBodyRefRequest(server string, body BodyRefJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2819,7 +2819,7 @@ func NewBodyRefRequestWithBody(server string, contentType string, body io.Reader
 // NewHolderRequest calls the generic Holder builder with application/json body
 func NewHolderRequest(server string, body HolderJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2859,7 +2859,7 @@ func NewHolderRequestWithBody(server string, contentType string, body io.Reader)
 // NewHolderInlineRequest calls the generic HolderInline builder with application/json body
 func NewHolderInlineRequest(server string, body HolderInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -3548,7 +3548,7 @@ func ParseBodyComponentResponse(rsp *http.Response) (*BodyComponentResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest SubjectResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3574,7 +3574,7 @@ func ParseBodyComponentInlineResponse(rsp *http.Response) (*BodyComponentInlineR
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest InlineSubjectResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3600,7 +3600,7 @@ func ParseBodyDefaultResponse(rsp *http.Response) (*BodyDefaultResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSONDefault = &dest
@@ -3626,7 +3626,7 @@ func ParseBodyHeadersResponse(rsp *http.Response) (*BodyHeadersResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3665,7 +3665,7 @@ func ParseBodyInlineResponse(rsp *http.Response) (*BodyInlineResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest BodyInline200JSONResponseBody
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3691,7 +3691,7 @@ func ParseBodyRefResponse(rsp *http.Response) (*BodyRefResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3717,7 +3717,7 @@ func ParseHolderResponse(rsp *http.Response) (*HolderResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Holder
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3743,7 +3743,7 @@ func ParseHolderInlineResponse(rsp *http.Response) (*HolderInlineResponse, error
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest InlineHolder
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -4059,7 +4059,7 @@ type BodyComponent200JSONResponse struct{ SubjectResponseJSONResponse }
 func (response BodyComponent200JSONResponse) VisitBodyComponentResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.SubjectResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.SubjectResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -4083,7 +4083,7 @@ type BodyComponentInline200JSONResponse struct {
 func (response BodyComponentInline200JSONResponse) VisitBodyComponentInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.InlineSubjectResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.InlineSubjectResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -4108,7 +4108,7 @@ type BodyDefaultdefaultJSONResponse struct {
 func (response BodyDefaultdefaultJSONResponse) VisitBodyDefaultResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -4137,7 +4137,7 @@ type BodyHeaders200JSONResponse struct {
 func (response BodyHeaders200JSONResponse) VisitBodyHeadersResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -4166,7 +4166,7 @@ type BodyInline200JSONResponse = BodyInline200JSONResponseBody
 func (response BodyInline200JSONResponse) VisitBodyInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -4196,7 +4196,7 @@ func (t *BodyRef200JSONResponse) UnmarshalJSON(b []byte) error {
 func (response BodyRef200JSONResponse) VisitBodyRefResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -4218,7 +4218,7 @@ type Holder200JSONResponse Holder
 func (response Holder200JSONResponse) VisitHolderResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -4240,7 +4240,7 @@ type HolderInline200JSONResponse InlineHolder
 func (response HolderInline200JSONResponse) VisitHolderInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

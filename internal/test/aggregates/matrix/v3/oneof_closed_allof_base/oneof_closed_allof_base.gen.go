@@ -142,7 +142,7 @@ type HolderInlineJSONRequestBody = InlineHolder
 func (t InlineHolder_List_Item) AsBase() (Base, error) {
 	var body Base
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -158,20 +158,20 @@ func (t InlineHolder_List_Item) AsBase() (Base, error) {
 			return body, fmt.Errorf("Base doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBase overwrites any union data inside the InlineHolder_List_Item as the provided Base
 func (t *InlineHolder_List_Item) FromBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeBase performs a merge with any union data inside the InlineHolder_List_Item, using the provided Base
 func (t *InlineHolder_List_Item) MergeBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -187,7 +187,7 @@ func (t *InlineHolder_List_Item) MergeBase(v Base) error {
 func (t InlineHolder_List_Item) AsExtended() (Extended, error) {
 	var body Extended
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -203,20 +203,20 @@ func (t InlineHolder_List_Item) AsExtended() (Extended, error) {
 			return body, fmt.Errorf("Extended doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromExtended overwrites any union data inside the InlineHolder_List_Item as the provided Extended
 func (t *InlineHolder_List_Item) FromExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeExtended performs a merge with any union data inside the InlineHolder_List_Item, using the provided Extended
 func (t *InlineHolder_List_Item) MergeExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -242,7 +242,7 @@ func (t *InlineHolder_List_Item) UnmarshalJSON(b []byte) error {
 func (t InlineHolder_Map_AdditionalProperties) AsBase() (Base, error) {
 	var body Base
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -258,20 +258,20 @@ func (t InlineHolder_Map_AdditionalProperties) AsBase() (Base, error) {
 			return body, fmt.Errorf("Base doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBase overwrites any union data inside the InlineHolder_Map_AdditionalProperties as the provided Base
 func (t *InlineHolder_Map_AdditionalProperties) FromBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeBase performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided Base
 func (t *InlineHolder_Map_AdditionalProperties) MergeBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -287,7 +287,7 @@ func (t *InlineHolder_Map_AdditionalProperties) MergeBase(v Base) error {
 func (t InlineHolder_Map_AdditionalProperties) AsExtended() (Extended, error) {
 	var body Extended
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -303,20 +303,20 @@ func (t InlineHolder_Map_AdditionalProperties) AsExtended() (Extended, error) {
 			return body, fmt.Errorf("Extended doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromExtended overwrites any union data inside the InlineHolder_Map_AdditionalProperties as the provided Extended
 func (t *InlineHolder_Map_AdditionalProperties) FromExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeExtended performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided Extended
 func (t *InlineHolder_Map_AdditionalProperties) MergeExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -342,7 +342,7 @@ func (t *InlineHolder_Map_AdditionalProperties) UnmarshalJSON(b []byte) error {
 func (t InlineHolder_One) AsBase() (Base, error) {
 	var body Base
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -358,20 +358,20 @@ func (t InlineHolder_One) AsBase() (Base, error) {
 			return body, fmt.Errorf("Base doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBase overwrites any union data inside the InlineHolder_One as the provided Base
 func (t *InlineHolder_One) FromBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeBase performs a merge with any union data inside the InlineHolder_One, using the provided Base
 func (t *InlineHolder_One) MergeBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -387,7 +387,7 @@ func (t *InlineHolder_One) MergeBase(v Base) error {
 func (t InlineHolder_One) AsExtended() (Extended, error) {
 	var body Extended
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -403,20 +403,20 @@ func (t InlineHolder_One) AsExtended() (Extended, error) {
 			return body, fmt.Errorf("Extended doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromExtended overwrites any union data inside the InlineHolder_One as the provided Extended
 func (t *InlineHolder_One) FromExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeExtended performs a merge with any union data inside the InlineHolder_One, using the provided Extended
 func (t *InlineHolder_One) MergeExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -442,7 +442,7 @@ func (t *InlineHolder_One) UnmarshalJSON(b []byte) error {
 func (t Subject) AsBase() (Base, error) {
 	var body Base
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -458,20 +458,20 @@ func (t Subject) AsBase() (Base, error) {
 			return body, fmt.Errorf("Base doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBase overwrites any union data inside the Subject as the provided Base
 func (t *Subject) FromBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeBase performs a merge with any union data inside the Subject, using the provided Base
 func (t *Subject) MergeBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -487,7 +487,7 @@ func (t *Subject) MergeBase(v Base) error {
 func (t Subject) AsExtended() (Extended, error) {
 	var body Extended
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -503,20 +503,20 @@ func (t Subject) AsExtended() (Extended, error) {
 			return body, fmt.Errorf("Extended doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromExtended overwrites any union data inside the Subject as the provided Extended
 func (t *Subject) FromExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeExtended performs a merge with any union data inside the Subject, using the provided Extended
 func (t *Subject) MergeExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -542,7 +542,7 @@ func (t *Subject) UnmarshalJSON(b []byte) error {
 func (t InlineSubjectResponse) AsBase() (Base, error) {
 	var body Base
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -558,20 +558,20 @@ func (t InlineSubjectResponse) AsBase() (Base, error) {
 			return body, fmt.Errorf("Base doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBase overwrites any union data inside the InlineSubjectResponse as the provided Base
 func (t *InlineSubjectResponse) FromBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeBase performs a merge with any union data inside the InlineSubjectResponse, using the provided Base
 func (t *InlineSubjectResponse) MergeBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -587,7 +587,7 @@ func (t *InlineSubjectResponse) MergeBase(v Base) error {
 func (t InlineSubjectResponse) AsExtended() (Extended, error) {
 	var body Extended
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -603,20 +603,20 @@ func (t InlineSubjectResponse) AsExtended() (Extended, error) {
 			return body, fmt.Errorf("Extended doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromExtended overwrites any union data inside the InlineSubjectResponse as the provided Extended
 func (t *InlineSubjectResponse) FromExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeExtended performs a merge with any union data inside the InlineSubjectResponse, using the provided Extended
 func (t *InlineSubjectResponse) MergeExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -642,7 +642,7 @@ func (t *InlineSubjectResponse) UnmarshalJSON(b []byte) error {
 func (t InlineSubjectBody) AsBase() (Base, error) {
 	var body Base
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -658,20 +658,20 @@ func (t InlineSubjectBody) AsBase() (Base, error) {
 			return body, fmt.Errorf("Base doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBase overwrites any union data inside the InlineSubjectBody as the provided Base
 func (t *InlineSubjectBody) FromBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeBase performs a merge with any union data inside the InlineSubjectBody, using the provided Base
 func (t *InlineSubjectBody) MergeBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -687,7 +687,7 @@ func (t *InlineSubjectBody) MergeBase(v Base) error {
 func (t InlineSubjectBody) AsExtended() (Extended, error) {
 	var body Extended
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -703,20 +703,20 @@ func (t InlineSubjectBody) AsExtended() (Extended, error) {
 			return body, fmt.Errorf("Extended doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromExtended overwrites any union data inside the InlineSubjectBody as the provided Extended
 func (t *InlineSubjectBody) FromExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeExtended performs a merge with any union data inside the InlineSubjectBody, using the provided Extended
 func (t *InlineSubjectBody) MergeExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -742,7 +742,7 @@ func (t *InlineSubjectBody) UnmarshalJSON(b []byte) error {
 func (t BodyComponentInlineJSONBody) AsBase() (Base, error) {
 	var body Base
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -758,20 +758,20 @@ func (t BodyComponentInlineJSONBody) AsBase() (Base, error) {
 			return body, fmt.Errorf("Base doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBase overwrites any union data inside the BodyComponentInlineJSONBody as the provided Base
 func (t *BodyComponentInlineJSONBody) FromBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeBase performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided Base
 func (t *BodyComponentInlineJSONBody) MergeBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -787,7 +787,7 @@ func (t *BodyComponentInlineJSONBody) MergeBase(v Base) error {
 func (t BodyComponentInlineJSONBody) AsExtended() (Extended, error) {
 	var body Extended
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -803,20 +803,20 @@ func (t BodyComponentInlineJSONBody) AsExtended() (Extended, error) {
 			return body, fmt.Errorf("Extended doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromExtended overwrites any union data inside the BodyComponentInlineJSONBody as the provided Extended
 func (t *BodyComponentInlineJSONBody) FromExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeExtended performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided Extended
 func (t *BodyComponentInlineJSONBody) MergeExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -842,7 +842,7 @@ func (t *BodyComponentInlineJSONBody) UnmarshalJSON(b []byte) error {
 func (t BodyInlineJSONBody) AsBase() (Base, error) {
 	var body Base
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -858,20 +858,20 @@ func (t BodyInlineJSONBody) AsBase() (Base, error) {
 			return body, fmt.Errorf("Base doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBase overwrites any union data inside the BodyInlineJSONBody as the provided Base
 func (t *BodyInlineJSONBody) FromBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeBase performs a merge with any union data inside the BodyInlineJSONBody, using the provided Base
 func (t *BodyInlineJSONBody) MergeBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -887,7 +887,7 @@ func (t *BodyInlineJSONBody) MergeBase(v Base) error {
 func (t BodyInlineJSONBody) AsExtended() (Extended, error) {
 	var body Extended
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -903,20 +903,20 @@ func (t BodyInlineJSONBody) AsExtended() (Extended, error) {
 			return body, fmt.Errorf("Extended doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromExtended overwrites any union data inside the BodyInlineJSONBody as the provided Extended
 func (t *BodyInlineJSONBody) FromExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeExtended performs a merge with any union data inside the BodyInlineJSONBody, using the provided Extended
 func (t *BodyInlineJSONBody) MergeExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -942,7 +942,7 @@ func (t *BodyInlineJSONBody) UnmarshalJSON(b []byte) error {
 func (t BodyInline200JSONResponseBody) AsBase() (Base, error) {
 	var body Base
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -958,20 +958,20 @@ func (t BodyInline200JSONResponseBody) AsBase() (Base, error) {
 			return body, fmt.Errorf("Base doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromBase overwrites any union data inside the BodyInline200JSONResponseBody as the provided Base
 func (t *BodyInline200JSONResponseBody) FromBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeBase performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided Base
 func (t *BodyInline200JSONResponseBody) MergeBase(v Base) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -987,7 +987,7 @@ func (t *BodyInline200JSONResponseBody) MergeBase(v Base) error {
 func (t BodyInline200JSONResponseBody) AsExtended() (Extended, error) {
 	var body Extended
 	var object map[string]json.RawMessage
-	if json.Unmarshal(t.union, &object) == nil {
+	if runtime.JSONUnmarshal(t.union, &object) == nil {
 		// The first unknown key in sorted order, so the error is always the same.
 		unknown, found := "", false
 		for key := range object {
@@ -1003,20 +1003,20 @@ func (t BodyInline200JSONResponseBody) AsExtended() (Extended, error) {
 			return body, fmt.Errorf("Extended doesn't allow the property %q", unknown)
 		}
 	}
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromExtended overwrites any union data inside the BodyInline200JSONResponseBody as the provided Extended
 func (t *BodyInline200JSONResponseBody) FromExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeExtended performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided Extended
 func (t *BodyInline200JSONResponseBody) MergeExtended(v Extended) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1402,7 +1402,7 @@ func (c *Client) HolderInline(ctx context.Context, body HolderInlineJSONRequestB
 // NewBodyComponentRequest calls the generic BodyComponent builder with application/json body
 func NewBodyComponentRequest(server string, body BodyComponentJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1442,7 +1442,7 @@ func NewBodyComponentRequestWithBody(server string, contentType string, body io.
 // NewBodyComponentInlineRequest calls the generic BodyComponentInline builder with application/json body
 func NewBodyComponentInlineRequest(server string, body BodyComponentInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1482,7 +1482,7 @@ func NewBodyComponentInlineRequestWithBody(server string, contentType string, bo
 // NewBodyDefaultRequest calls the generic BodyDefault builder with application/json body
 func NewBodyDefaultRequest(server string, body BodyDefaultJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1522,7 +1522,7 @@ func NewBodyDefaultRequestWithBody(server string, contentType string, body io.Re
 // NewBodyHeadersRequest calls the generic BodyHeaders builder with application/json body
 func NewBodyHeadersRequest(server string, body BodyHeadersJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1562,7 +1562,7 @@ func NewBodyHeadersRequestWithBody(server string, contentType string, body io.Re
 // NewBodyInlineRequest calls the generic BodyInline builder with application/json body
 func NewBodyInlineRequest(server string, body BodyInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1602,7 +1602,7 @@ func NewBodyInlineRequestWithBody(server string, contentType string, body io.Rea
 // NewBodyRefRequest calls the generic BodyRef builder with application/json body
 func NewBodyRefRequest(server string, body BodyRefJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1642,7 +1642,7 @@ func NewBodyRefRequestWithBody(server string, contentType string, body io.Reader
 // NewHolderRequest calls the generic Holder builder with application/json body
 func NewHolderRequest(server string, body HolderJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1682,7 +1682,7 @@ func NewHolderRequestWithBody(server string, contentType string, body io.Reader)
 // NewHolderInlineRequest calls the generic HolderInline builder with application/json body
 func NewHolderInlineRequest(server string, body HolderInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2371,7 +2371,7 @@ func ParseBodyComponentResponse(rsp *http.Response) (*BodyComponentResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest SubjectResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2397,7 +2397,7 @@ func ParseBodyComponentInlineResponse(rsp *http.Response) (*BodyComponentInlineR
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest InlineSubjectResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2423,7 +2423,7 @@ func ParseBodyDefaultResponse(rsp *http.Response) (*BodyDefaultResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSONDefault = &dest
@@ -2449,7 +2449,7 @@ func ParseBodyHeadersResponse(rsp *http.Response) (*BodyHeadersResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2488,7 +2488,7 @@ func ParseBodyInlineResponse(rsp *http.Response) (*BodyInlineResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest BodyInline200JSONResponseBody
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2514,7 +2514,7 @@ func ParseBodyRefResponse(rsp *http.Response) (*BodyRefResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2540,7 +2540,7 @@ func ParseHolderResponse(rsp *http.Response) (*HolderResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Holder
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2566,7 +2566,7 @@ func ParseHolderInlineResponse(rsp *http.Response) (*HolderInlineResponse, error
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest InlineHolder
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -2882,7 +2882,7 @@ type BodyComponent200JSONResponse struct{ SubjectResponseJSONResponse }
 func (response BodyComponent200JSONResponse) VisitBodyComponentResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.SubjectResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.SubjectResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2906,7 +2906,7 @@ type BodyComponentInline200JSONResponse struct {
 func (response BodyComponentInline200JSONResponse) VisitBodyComponentInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.InlineSubjectResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.InlineSubjectResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2931,7 +2931,7 @@ type BodyDefaultdefaultJSONResponse struct {
 func (response BodyDefaultdefaultJSONResponse) VisitBodyDefaultResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2960,7 +2960,7 @@ type BodyHeaders200JSONResponse struct {
 func (response BodyHeaders200JSONResponse) VisitBodyHeadersResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -2989,7 +2989,7 @@ type BodyInline200JSONResponse = BodyInline200JSONResponseBody
 func (response BodyInline200JSONResponse) VisitBodyInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3019,7 +3019,7 @@ func (t *BodyRef200JSONResponse) UnmarshalJSON(b []byte) error {
 func (response BodyRef200JSONResponse) VisitBodyRefResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3041,7 +3041,7 @@ type Holder200JSONResponse Holder
 func (response Holder200JSONResponse) VisitHolderResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -3063,7 +3063,7 @@ type HolderInline200JSONResponse InlineHolder
 func (response HolderInline200JSONResponse) VisitHolderInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

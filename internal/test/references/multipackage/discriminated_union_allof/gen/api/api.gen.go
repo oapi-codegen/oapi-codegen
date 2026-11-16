@@ -26,13 +26,13 @@ type ViewedStatus struct {
 // AsExternalRef0GitDiffFile returns the union data inside the PRFile as a externalRef0.GitDiffFile
 func (t PRFile) AsExternalRef0GitDiffFile() (externalRef0.GitDiffFile, error) {
 	var body externalRef0.GitDiffFile
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromExternalRef0GitDiffFile overwrites any union data inside the PRFile as the provided externalRef0.GitDiffFile
 func (t *PRFile) FromExternalRef0GitDiffFile(v externalRef0.GitDiffFile) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func (t *PRFile) FromExternalRef0GitDiffFile(v externalRef0.GitDiffFile) error {
 
 // MergeExternalRef0GitDiffFile performs a merge with any union data inside the PRFile, using the provided externalRef0.GitDiffFile
 func (t *PRFile) MergeExternalRef0GitDiffFile(v externalRef0.GitDiffFile) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -60,13 +60,13 @@ func (t *PRFile) MergeExternalRef0GitDiffFile(v externalRef0.GitDiffFile) error 
 // AsExternalRef0AddedImageDiffFile returns the union data inside the PRFile as a externalRef0.AddedImageDiffFile
 func (t PRFile) AsExternalRef0AddedImageDiffFile() (externalRef0.AddedImageDiffFile, error) {
 	var body externalRef0.AddedImageDiffFile
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromExternalRef0AddedImageDiffFile overwrites any union data inside the PRFile as the provided externalRef0.AddedImageDiffFile
 func (t *PRFile) FromExternalRef0AddedImageDiffFile(v externalRef0.AddedImageDiffFile) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (t *PRFile) FromExternalRef0AddedImageDiffFile(v externalRef0.AddedImageDif
 
 // MergeExternalRef0AddedImageDiffFile performs a merge with any union data inside the PRFile, using the provided externalRef0.AddedImageDiffFile
 func (t *PRFile) MergeExternalRef0AddedImageDiffFile(v externalRef0.AddedImageDiffFile) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func (t PRFile) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"diff_type"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
@@ -121,19 +121,19 @@ func (t PRFile) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if t.Viewed != nil {
-		object["viewed"], err = json.Marshal(t.Viewed)
+		object["viewed"], err = runtime.JSONMarshal(t.Viewed)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'viewed': %w", err)
 		}
 	}
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -143,13 +143,13 @@ func (t *PRFile) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["viewed"]; found {
-		err = json.Unmarshal(raw, &t.Viewed)
+		err = runtime.JSONUnmarshal(raw, &t.Viewed)
 		if err != nil {
 			return fmt.Errorf("error reading 'viewed': %w", err)
 		}

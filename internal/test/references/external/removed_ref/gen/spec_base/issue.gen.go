@@ -6,12 +6,12 @@ package spec_base
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/external/removed_ref/gen/spec_ext"
+	"github.com/oapi-codegen/runtime"
 )
 
 // DirectBar defines model for DirectBar.
@@ -222,7 +222,7 @@ type PostInvalidExtRefTrouble300JSONResponse struct {
 func (response PostInvalidExtRefTrouble300JSONResponse) VisitPostInvalidExtRefTroubleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.PascalJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.PascalJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -248,7 +248,7 @@ type PostNoTrouble200JSONResponse struct {
 func (response PostNoTrouble200JSONResponse) VisitPostNoTroubleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")

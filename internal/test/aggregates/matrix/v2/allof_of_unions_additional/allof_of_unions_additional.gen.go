@@ -318,20 +318,20 @@ func (a *BodyInline200JSONResponseBody) Set(fieldName string, value string) {
 // AsCourier returns the union data inside the Delivery as a Courier
 func (t Delivery) AsCourier() (Courier, error) {
 	var body Courier
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier overwrites any union data inside the Delivery as the provided Courier
 func (t *Delivery) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeCourier performs a merge with any union data inside the Delivery, using the provided Courier
 func (t *Delivery) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -344,20 +344,20 @@ func (t *Delivery) MergeCourier(v Courier) error {
 // AsPickup returns the union data inside the Delivery as a Pickup
 func (t Delivery) AsPickup() (Pickup, error) {
 	var body Pickup
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup overwrites any union data inside the Delivery as the provided Pickup
 func (t *Delivery) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergePickup performs a merge with any union data inside the Delivery, using the provided Pickup
 func (t *Delivery) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -384,7 +384,7 @@ func (t *Delivery) UnmarshalJSON(b []byte) error {
 // the new union data.
 func (t *InlineHolder_List_Item) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	for fieldName := range object {
@@ -399,13 +399,13 @@ func (t *InlineHolder_List_Item) adoptUnion(previous, b json.RawMessage) {
 // AsCard returns the union data inside the InlineHolder_List_Item as a Card
 func (t InlineHolder_List_Item) AsCard() (Card, error) {
 	var body Card
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard overwrites any union data inside the InlineHolder_List_Item as the provided Card
 func (t *InlineHolder_List_Item) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -416,7 +416,7 @@ func (t *InlineHolder_List_Item) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the InlineHolder_List_Item, using the provided Card
 func (t *InlineHolder_List_Item) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -433,13 +433,13 @@ func (t *InlineHolder_List_Item) MergeCard(v Card) error {
 // AsTransfer returns the union data inside the InlineHolder_List_Item as a Transfer
 func (t InlineHolder_List_Item) AsTransfer() (Transfer, error) {
 	var body Transfer
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer overwrites any union data inside the InlineHolder_List_Item as the provided Transfer
 func (t *InlineHolder_List_Item) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -450,7 +450,7 @@ func (t *InlineHolder_List_Item) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the InlineHolder_List_Item, using the provided Transfer
 func (t *InlineHolder_List_Item) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -467,13 +467,13 @@ func (t *InlineHolder_List_Item) MergeTransfer(v Transfer) error {
 // AsCourier returns the union data inside the InlineHolder_List_Item as a Courier
 func (t InlineHolder_List_Item) AsCourier() (Courier, error) {
 	var body Courier
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier overwrites any union data inside the InlineHolder_List_Item as the provided Courier
 func (t *InlineHolder_List_Item) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -484,7 +484,7 @@ func (t *InlineHolder_List_Item) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the InlineHolder_List_Item, using the provided Courier
 func (t *InlineHolder_List_Item) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -501,13 +501,13 @@ func (t *InlineHolder_List_Item) MergeCourier(v Courier) error {
 // AsPickup returns the union data inside the InlineHolder_List_Item as a Pickup
 func (t InlineHolder_List_Item) AsPickup() (Pickup, error) {
 	var body Pickup
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup overwrites any union data inside the InlineHolder_List_Item as the provided Pickup
 func (t *InlineHolder_List_Item) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -518,7 +518,7 @@ func (t *InlineHolder_List_Item) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the InlineHolder_List_Item, using the provided Pickup
 func (t *InlineHolder_List_Item) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -539,7 +539,7 @@ func (t *InlineHolder_List_Item) MergePickup(v Pickup) error {
 // the new union data.
 func (t *InlineHolder_Map_AdditionalProperties) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	for fieldName := range object {
@@ -554,13 +554,13 @@ func (t *InlineHolder_Map_AdditionalProperties) adoptUnion(previous, b json.RawM
 // AsCard returns the union data inside the InlineHolder_Map_AdditionalProperties as a Card
 func (t InlineHolder_Map_AdditionalProperties) AsCard() (Card, error) {
 	var body Card
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard overwrites any union data inside the InlineHolder_Map_AdditionalProperties as the provided Card
 func (t *InlineHolder_Map_AdditionalProperties) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -571,7 +571,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided Card
 func (t *InlineHolder_Map_AdditionalProperties) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -588,13 +588,13 @@ func (t *InlineHolder_Map_AdditionalProperties) MergeCard(v Card) error {
 // AsTransfer returns the union data inside the InlineHolder_Map_AdditionalProperties as a Transfer
 func (t InlineHolder_Map_AdditionalProperties) AsTransfer() (Transfer, error) {
 	var body Transfer
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer overwrites any union data inside the InlineHolder_Map_AdditionalProperties as the provided Transfer
 func (t *InlineHolder_Map_AdditionalProperties) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -605,7 +605,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided Transfer
 func (t *InlineHolder_Map_AdditionalProperties) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -622,13 +622,13 @@ func (t *InlineHolder_Map_AdditionalProperties) MergeTransfer(v Transfer) error 
 // AsCourier returns the union data inside the InlineHolder_Map_AdditionalProperties as a Courier
 func (t InlineHolder_Map_AdditionalProperties) AsCourier() (Courier, error) {
 	var body Courier
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier overwrites any union data inside the InlineHolder_Map_AdditionalProperties as the provided Courier
 func (t *InlineHolder_Map_AdditionalProperties) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -639,7 +639,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided Courier
 func (t *InlineHolder_Map_AdditionalProperties) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -656,13 +656,13 @@ func (t *InlineHolder_Map_AdditionalProperties) MergeCourier(v Courier) error {
 // AsPickup returns the union data inside the InlineHolder_Map_AdditionalProperties as a Pickup
 func (t InlineHolder_Map_AdditionalProperties) AsPickup() (Pickup, error) {
 	var body Pickup
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup overwrites any union data inside the InlineHolder_Map_AdditionalProperties as the provided Pickup
 func (t *InlineHolder_Map_AdditionalProperties) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -673,7 +673,7 @@ func (t *InlineHolder_Map_AdditionalProperties) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the InlineHolder_Map_AdditionalProperties, using the provided Pickup
 func (t *InlineHolder_Map_AdditionalProperties) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -694,7 +694,7 @@ func (t *InlineHolder_Map_AdditionalProperties) MergePickup(v Pickup) error {
 // the new union data.
 func (t *InlineHolder_One) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	for fieldName := range object {
@@ -709,13 +709,13 @@ func (t *InlineHolder_One) adoptUnion(previous, b json.RawMessage) {
 // AsCard returns the union data inside the InlineHolder_One as a Card
 func (t InlineHolder_One) AsCard() (Card, error) {
 	var body Card
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard overwrites any union data inside the InlineHolder_One as the provided Card
 func (t *InlineHolder_One) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -726,7 +726,7 @@ func (t *InlineHolder_One) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the InlineHolder_One, using the provided Card
 func (t *InlineHolder_One) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -743,13 +743,13 @@ func (t *InlineHolder_One) MergeCard(v Card) error {
 // AsTransfer returns the union data inside the InlineHolder_One as a Transfer
 func (t InlineHolder_One) AsTransfer() (Transfer, error) {
 	var body Transfer
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer overwrites any union data inside the InlineHolder_One as the provided Transfer
 func (t *InlineHolder_One) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -760,7 +760,7 @@ func (t *InlineHolder_One) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the InlineHolder_One, using the provided Transfer
 func (t *InlineHolder_One) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -777,13 +777,13 @@ func (t *InlineHolder_One) MergeTransfer(v Transfer) error {
 // AsCourier returns the union data inside the InlineHolder_One as a Courier
 func (t InlineHolder_One) AsCourier() (Courier, error) {
 	var body Courier
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier overwrites any union data inside the InlineHolder_One as the provided Courier
 func (t *InlineHolder_One) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -794,7 +794,7 @@ func (t *InlineHolder_One) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the InlineHolder_One, using the provided Courier
 func (t *InlineHolder_One) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -811,13 +811,13 @@ func (t *InlineHolder_One) MergeCourier(v Courier) error {
 // AsPickup returns the union data inside the InlineHolder_One as a Pickup
 func (t InlineHolder_One) AsPickup() (Pickup, error) {
 	var body Pickup
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup overwrites any union data inside the InlineHolder_One as the provided Pickup
 func (t *InlineHolder_One) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -828,7 +828,7 @@ func (t *InlineHolder_One) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the InlineHolder_One, using the provided Pickup
 func (t *InlineHolder_One) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -845,20 +845,20 @@ func (t *InlineHolder_One) MergePickup(v Pickup) error {
 // AsCard returns the union data inside the Payment as a Card
 func (t Payment) AsCard() (Card, error) {
 	var body Card
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard overwrites any union data inside the Payment as the provided Card
 func (t *Payment) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeCard performs a merge with any union data inside the Payment, using the provided Card
 func (t *Payment) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -871,20 +871,20 @@ func (t *Payment) MergeCard(v Card) error {
 // AsTransfer returns the union data inside the Payment as a Transfer
 func (t Payment) AsTransfer() (Transfer, error) {
 	var body Transfer
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer overwrites any union data inside the Payment as the provided Transfer
 func (t *Payment) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeTransfer performs a merge with any union data inside the Payment, using the provided Transfer
 func (t *Payment) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -911,7 +911,7 @@ func (t *Payment) UnmarshalJSON(b []byte) error {
 // the new union data.
 func (t *Subject) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	for fieldName := range object {
@@ -926,13 +926,13 @@ func (t *Subject) adoptUnion(previous, b json.RawMessage) {
 // AsCard returns the union data inside the Subject as a Card
 func (t Subject) AsCard() (Card, error) {
 	var body Card
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard overwrites any union data inside the Subject as the provided Card
 func (t *Subject) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -943,7 +943,7 @@ func (t *Subject) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the Subject, using the provided Card
 func (t *Subject) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -960,13 +960,13 @@ func (t *Subject) MergeCard(v Card) error {
 // AsTransfer returns the union data inside the Subject as a Transfer
 func (t Subject) AsTransfer() (Transfer, error) {
 	var body Transfer
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer overwrites any union data inside the Subject as the provided Transfer
 func (t *Subject) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -977,7 +977,7 @@ func (t *Subject) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the Subject, using the provided Transfer
 func (t *Subject) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -994,13 +994,13 @@ func (t *Subject) MergeTransfer(v Transfer) error {
 // AsCourier returns the union data inside the Subject as a Courier
 func (t Subject) AsCourier() (Courier, error) {
 	var body Courier
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier overwrites any union data inside the Subject as the provided Courier
 func (t *Subject) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1011,7 +1011,7 @@ func (t *Subject) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the Subject, using the provided Courier
 func (t *Subject) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1028,13 +1028,13 @@ func (t *Subject) MergeCourier(v Courier) error {
 // AsPickup returns the union data inside the Subject as a Pickup
 func (t Subject) AsPickup() (Pickup, error) {
 	var body Pickup
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup overwrites any union data inside the Subject as the provided Pickup
 func (t *Subject) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1045,7 +1045,7 @@ func (t *Subject) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the Subject, using the provided Pickup
 func (t *Subject) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1066,7 +1066,7 @@ func (t *Subject) MergePickup(v Pickup) error {
 // the new union data.
 func (t *InlineSubjectResponse) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	for fieldName := range object {
@@ -1081,13 +1081,13 @@ func (t *InlineSubjectResponse) adoptUnion(previous, b json.RawMessage) {
 // AsCard returns the union data inside the InlineSubjectResponse as a Card
 func (t InlineSubjectResponse) AsCard() (Card, error) {
 	var body Card
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard overwrites any union data inside the InlineSubjectResponse as the provided Card
 func (t *InlineSubjectResponse) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1098,7 +1098,7 @@ func (t *InlineSubjectResponse) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the InlineSubjectResponse, using the provided Card
 func (t *InlineSubjectResponse) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1115,13 +1115,13 @@ func (t *InlineSubjectResponse) MergeCard(v Card) error {
 // AsTransfer returns the union data inside the InlineSubjectResponse as a Transfer
 func (t InlineSubjectResponse) AsTransfer() (Transfer, error) {
 	var body Transfer
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer overwrites any union data inside the InlineSubjectResponse as the provided Transfer
 func (t *InlineSubjectResponse) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1132,7 +1132,7 @@ func (t *InlineSubjectResponse) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the InlineSubjectResponse, using the provided Transfer
 func (t *InlineSubjectResponse) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1149,13 +1149,13 @@ func (t *InlineSubjectResponse) MergeTransfer(v Transfer) error {
 // AsCourier returns the union data inside the InlineSubjectResponse as a Courier
 func (t InlineSubjectResponse) AsCourier() (Courier, error) {
 	var body Courier
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier overwrites any union data inside the InlineSubjectResponse as the provided Courier
 func (t *InlineSubjectResponse) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1166,7 +1166,7 @@ func (t *InlineSubjectResponse) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the InlineSubjectResponse, using the provided Courier
 func (t *InlineSubjectResponse) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1183,13 +1183,13 @@ func (t *InlineSubjectResponse) MergeCourier(v Courier) error {
 // AsPickup returns the union data inside the InlineSubjectResponse as a Pickup
 func (t InlineSubjectResponse) AsPickup() (Pickup, error) {
 	var body Pickup
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup overwrites any union data inside the InlineSubjectResponse as the provided Pickup
 func (t *InlineSubjectResponse) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1200,7 +1200,7 @@ func (t *InlineSubjectResponse) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the InlineSubjectResponse, using the provided Pickup
 func (t *InlineSubjectResponse) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1221,7 +1221,7 @@ func (t *InlineSubjectResponse) MergePickup(v Pickup) error {
 // the new union data.
 func (t *InlineSubjectBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	for fieldName := range object {
@@ -1236,13 +1236,13 @@ func (t *InlineSubjectBody) adoptUnion(previous, b json.RawMessage) {
 // AsCard returns the union data inside the InlineSubjectBody as a Card
 func (t InlineSubjectBody) AsCard() (Card, error) {
 	var body Card
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard overwrites any union data inside the InlineSubjectBody as the provided Card
 func (t *InlineSubjectBody) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1253,7 +1253,7 @@ func (t *InlineSubjectBody) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the InlineSubjectBody, using the provided Card
 func (t *InlineSubjectBody) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1270,13 +1270,13 @@ func (t *InlineSubjectBody) MergeCard(v Card) error {
 // AsTransfer returns the union data inside the InlineSubjectBody as a Transfer
 func (t InlineSubjectBody) AsTransfer() (Transfer, error) {
 	var body Transfer
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer overwrites any union data inside the InlineSubjectBody as the provided Transfer
 func (t *InlineSubjectBody) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1287,7 +1287,7 @@ func (t *InlineSubjectBody) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the InlineSubjectBody, using the provided Transfer
 func (t *InlineSubjectBody) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1304,13 +1304,13 @@ func (t *InlineSubjectBody) MergeTransfer(v Transfer) error {
 // AsCourier returns the union data inside the InlineSubjectBody as a Courier
 func (t InlineSubjectBody) AsCourier() (Courier, error) {
 	var body Courier
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier overwrites any union data inside the InlineSubjectBody as the provided Courier
 func (t *InlineSubjectBody) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1321,7 +1321,7 @@ func (t *InlineSubjectBody) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the InlineSubjectBody, using the provided Courier
 func (t *InlineSubjectBody) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1338,13 +1338,13 @@ func (t *InlineSubjectBody) MergeCourier(v Courier) error {
 // AsPickup returns the union data inside the InlineSubjectBody as a Pickup
 func (t InlineSubjectBody) AsPickup() (Pickup, error) {
 	var body Pickup
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup overwrites any union data inside the InlineSubjectBody as the provided Pickup
 func (t *InlineSubjectBody) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1355,7 +1355,7 @@ func (t *InlineSubjectBody) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the InlineSubjectBody, using the provided Pickup
 func (t *InlineSubjectBody) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1376,7 +1376,7 @@ func (t *InlineSubjectBody) MergePickup(v Pickup) error {
 // the new union data.
 func (t *BodyComponentInlineJSONBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	for fieldName := range object {
@@ -1391,13 +1391,13 @@ func (t *BodyComponentInlineJSONBody) adoptUnion(previous, b json.RawMessage) {
 // AsCard returns the union data inside the BodyComponentInlineJSONBody as a Card
 func (t BodyComponentInlineJSONBody) AsCard() (Card, error) {
 	var body Card
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard overwrites any union data inside the BodyComponentInlineJSONBody as the provided Card
 func (t *BodyComponentInlineJSONBody) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1408,7 +1408,7 @@ func (t *BodyComponentInlineJSONBody) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided Card
 func (t *BodyComponentInlineJSONBody) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1425,13 +1425,13 @@ func (t *BodyComponentInlineJSONBody) MergeCard(v Card) error {
 // AsTransfer returns the union data inside the BodyComponentInlineJSONBody as a Transfer
 func (t BodyComponentInlineJSONBody) AsTransfer() (Transfer, error) {
 	var body Transfer
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer overwrites any union data inside the BodyComponentInlineJSONBody as the provided Transfer
 func (t *BodyComponentInlineJSONBody) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1442,7 +1442,7 @@ func (t *BodyComponentInlineJSONBody) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided Transfer
 func (t *BodyComponentInlineJSONBody) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1459,13 +1459,13 @@ func (t *BodyComponentInlineJSONBody) MergeTransfer(v Transfer) error {
 // AsCourier returns the union data inside the BodyComponentInlineJSONBody as a Courier
 func (t BodyComponentInlineJSONBody) AsCourier() (Courier, error) {
 	var body Courier
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier overwrites any union data inside the BodyComponentInlineJSONBody as the provided Courier
 func (t *BodyComponentInlineJSONBody) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1476,7 +1476,7 @@ func (t *BodyComponentInlineJSONBody) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided Courier
 func (t *BodyComponentInlineJSONBody) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1493,13 +1493,13 @@ func (t *BodyComponentInlineJSONBody) MergeCourier(v Courier) error {
 // AsPickup returns the union data inside the BodyComponentInlineJSONBody as a Pickup
 func (t BodyComponentInlineJSONBody) AsPickup() (Pickup, error) {
 	var body Pickup
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup overwrites any union data inside the BodyComponentInlineJSONBody as the provided Pickup
 func (t *BodyComponentInlineJSONBody) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1510,7 +1510,7 @@ func (t *BodyComponentInlineJSONBody) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the BodyComponentInlineJSONBody, using the provided Pickup
 func (t *BodyComponentInlineJSONBody) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1531,7 +1531,7 @@ func (t *BodyComponentInlineJSONBody) MergePickup(v Pickup) error {
 // the new union data.
 func (t *BodyInlineJSONBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	for fieldName := range object {
@@ -1546,13 +1546,13 @@ func (t *BodyInlineJSONBody) adoptUnion(previous, b json.RawMessage) {
 // AsCard returns the union data inside the BodyInlineJSONBody as a Card
 func (t BodyInlineJSONBody) AsCard() (Card, error) {
 	var body Card
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard overwrites any union data inside the BodyInlineJSONBody as the provided Card
 func (t *BodyInlineJSONBody) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1563,7 +1563,7 @@ func (t *BodyInlineJSONBody) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the BodyInlineJSONBody, using the provided Card
 func (t *BodyInlineJSONBody) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1580,13 +1580,13 @@ func (t *BodyInlineJSONBody) MergeCard(v Card) error {
 // AsTransfer returns the union data inside the BodyInlineJSONBody as a Transfer
 func (t BodyInlineJSONBody) AsTransfer() (Transfer, error) {
 	var body Transfer
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer overwrites any union data inside the BodyInlineJSONBody as the provided Transfer
 func (t *BodyInlineJSONBody) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1597,7 +1597,7 @@ func (t *BodyInlineJSONBody) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the BodyInlineJSONBody, using the provided Transfer
 func (t *BodyInlineJSONBody) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1614,13 +1614,13 @@ func (t *BodyInlineJSONBody) MergeTransfer(v Transfer) error {
 // AsCourier returns the union data inside the BodyInlineJSONBody as a Courier
 func (t BodyInlineJSONBody) AsCourier() (Courier, error) {
 	var body Courier
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier overwrites any union data inside the BodyInlineJSONBody as the provided Courier
 func (t *BodyInlineJSONBody) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1631,7 +1631,7 @@ func (t *BodyInlineJSONBody) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the BodyInlineJSONBody, using the provided Courier
 func (t *BodyInlineJSONBody) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1648,13 +1648,13 @@ func (t *BodyInlineJSONBody) MergeCourier(v Courier) error {
 // AsPickup returns the union data inside the BodyInlineJSONBody as a Pickup
 func (t BodyInlineJSONBody) AsPickup() (Pickup, error) {
 	var body Pickup
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup overwrites any union data inside the BodyInlineJSONBody as the provided Pickup
 func (t *BodyInlineJSONBody) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1665,7 +1665,7 @@ func (t *BodyInlineJSONBody) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the BodyInlineJSONBody, using the provided Pickup
 func (t *BodyInlineJSONBody) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1686,7 +1686,7 @@ func (t *BodyInlineJSONBody) MergePickup(v Pickup) error {
 // the new union data.
 func (t *BodyInline200JSONResponseBody) adoptUnion(previous, b json.RawMessage) {
 	object := make(map[string]json.RawMessage)
-	if json.Unmarshal(b, &object) != nil {
+	if runtime.JSONUnmarshal(b, &object) != nil {
 		return
 	}
 	for fieldName := range object {
@@ -1701,13 +1701,13 @@ func (t *BodyInline200JSONResponseBody) adoptUnion(previous, b json.RawMessage) 
 // AsCard returns the union data inside the BodyInline200JSONResponseBody as a Card
 func (t BodyInline200JSONResponseBody) AsCard() (Card, error) {
 	var body Card
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCard overwrites any union data inside the BodyInline200JSONResponseBody as the provided Card
 func (t *BodyInline200JSONResponseBody) FromCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1718,7 +1718,7 @@ func (t *BodyInline200JSONResponseBody) FromCard(v Card) error {
 
 // MergeCard performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided Card
 func (t *BodyInline200JSONResponseBody) MergeCard(v Card) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1735,13 +1735,13 @@ func (t *BodyInline200JSONResponseBody) MergeCard(v Card) error {
 // AsTransfer returns the union data inside the BodyInline200JSONResponseBody as a Transfer
 func (t BodyInline200JSONResponseBody) AsTransfer() (Transfer, error) {
 	var body Transfer
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromTransfer overwrites any union data inside the BodyInline200JSONResponseBody as the provided Transfer
 func (t *BodyInline200JSONResponseBody) FromTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1752,7 +1752,7 @@ func (t *BodyInline200JSONResponseBody) FromTransfer(v Transfer) error {
 
 // MergeTransfer performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided Transfer
 func (t *BodyInline200JSONResponseBody) MergeTransfer(v Transfer) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1769,13 +1769,13 @@ func (t *BodyInline200JSONResponseBody) MergeTransfer(v Transfer) error {
 // AsCourier returns the union data inside the BodyInline200JSONResponseBody as a Courier
 func (t BodyInline200JSONResponseBody) AsCourier() (Courier, error) {
 	var body Courier
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromCourier overwrites any union data inside the BodyInline200JSONResponseBody as the provided Courier
 func (t *BodyInline200JSONResponseBody) FromCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1786,7 +1786,7 @@ func (t *BodyInline200JSONResponseBody) FromCourier(v Courier) error {
 
 // MergeCourier performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided Courier
 func (t *BodyInline200JSONResponseBody) MergeCourier(v Courier) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1803,13 +1803,13 @@ func (t *BodyInline200JSONResponseBody) MergeCourier(v Courier) error {
 // AsPickup returns the union data inside the BodyInline200JSONResponseBody as a Pickup
 func (t BodyInline200JSONResponseBody) AsPickup() (Pickup, error) {
 	var body Pickup
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromPickup overwrites any union data inside the BodyInline200JSONResponseBody as the provided Pickup
 func (t *BodyInline200JSONResponseBody) FromPickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	previous := t.union
 	t.union = b
 	if err == nil {
@@ -1820,7 +1820,7 @@ func (t *BodyInline200JSONResponseBody) FromPickup(v Pickup) error {
 
 // MergePickup performs a merge with any union data inside the BodyInline200JSONResponseBody, using the provided Pickup
 func (t *BodyInline200JSONResponseBody) MergePickup(v Pickup) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -1841,7 +1841,7 @@ func (a *InlineHolder_List_Item) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
@@ -1850,7 +1850,7 @@ func (a *InlineHolder_List_Item) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]string)
 		for fieldName, fieldBuf := range object {
 			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -1869,19 +1869,19 @@ func (a InlineHolder_List_Item) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if a.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Override default JSON handling for InlineHolder_Map_AdditionalProperties to handle AdditionalProperties and union
@@ -1891,7 +1891,7 @@ func (a *InlineHolder_Map_AdditionalProperties) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
@@ -1900,7 +1900,7 @@ func (a *InlineHolder_Map_AdditionalProperties) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]string)
 		for fieldName, fieldBuf := range object {
 			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -1919,19 +1919,19 @@ func (a InlineHolder_Map_AdditionalProperties) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if a.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Override default JSON handling for InlineHolder_One to handle AdditionalProperties and union
@@ -1941,7 +1941,7 @@ func (a *InlineHolder_One) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
@@ -1950,7 +1950,7 @@ func (a *InlineHolder_One) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]string)
 		for fieldName, fieldBuf := range object {
 			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -1969,19 +1969,19 @@ func (a InlineHolder_One) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if a.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Override default JSON handling for Subject to handle AdditionalProperties and union
@@ -1991,7 +1991,7 @@ func (a *Subject) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
@@ -2000,7 +2000,7 @@ func (a *Subject) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]string)
 		for fieldName, fieldBuf := range object {
 			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -2019,19 +2019,19 @@ func (a Subject) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if a.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Override default JSON handling for InlineSubjectResponse to handle AdditionalProperties and union
@@ -2041,7 +2041,7 @@ func (a *InlineSubjectResponse) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
@@ -2050,7 +2050,7 @@ func (a *InlineSubjectResponse) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]string)
 		for fieldName, fieldBuf := range object {
 			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -2069,19 +2069,19 @@ func (a InlineSubjectResponse) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if a.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Override default JSON handling for InlineSubjectBody to handle AdditionalProperties and union
@@ -2091,7 +2091,7 @@ func (a *InlineSubjectBody) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
@@ -2100,7 +2100,7 @@ func (a *InlineSubjectBody) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]string)
 		for fieldName, fieldBuf := range object {
 			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -2119,19 +2119,19 @@ func (a InlineSubjectBody) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if a.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Override default JSON handling for BodyComponentInlineJSONBody to handle AdditionalProperties and union
@@ -2141,7 +2141,7 @@ func (a *BodyComponentInlineJSONBody) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
@@ -2150,7 +2150,7 @@ func (a *BodyComponentInlineJSONBody) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]string)
 		for fieldName, fieldBuf := range object {
 			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -2169,19 +2169,19 @@ func (a BodyComponentInlineJSONBody) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if a.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Override default JSON handling for BodyInlineJSONBody to handle AdditionalProperties and union
@@ -2191,7 +2191,7 @@ func (a *BodyInlineJSONBody) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
@@ -2200,7 +2200,7 @@ func (a *BodyInlineJSONBody) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]string)
 		for fieldName, fieldBuf := range object {
 			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -2219,19 +2219,19 @@ func (a BodyInlineJSONBody) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if a.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // Override default JSON handling for BodyInline200JSONResponseBody to handle AdditionalProperties and union
@@ -2241,7 +2241,7 @@ func (a *BodyInline200JSONResponseBody) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
@@ -2250,7 +2250,7 @@ func (a *BodyInline200JSONResponseBody) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]string)
 		for fieldName, fieldBuf := range object {
 			var fieldVal string
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -2269,19 +2269,19 @@ func (a BodyInline200JSONResponseBody) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if a.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
@@ -2650,7 +2650,7 @@ func (c *Client) HolderInline(ctx context.Context, body HolderInlineJSONRequestB
 // NewBodyComponentRequest calls the generic BodyComponent builder with application/json body
 func NewBodyComponentRequest(server string, body BodyComponentJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2690,7 +2690,7 @@ func NewBodyComponentRequestWithBody(server string, contentType string, body io.
 // NewBodyComponentInlineRequest calls the generic BodyComponentInline builder with application/json body
 func NewBodyComponentInlineRequest(server string, body BodyComponentInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2730,7 +2730,7 @@ func NewBodyComponentInlineRequestWithBody(server string, contentType string, bo
 // NewBodyDefaultRequest calls the generic BodyDefault builder with application/json body
 func NewBodyDefaultRequest(server string, body BodyDefaultJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2770,7 +2770,7 @@ func NewBodyDefaultRequestWithBody(server string, contentType string, body io.Re
 // NewBodyHeadersRequest calls the generic BodyHeaders builder with application/json body
 func NewBodyHeadersRequest(server string, body BodyHeadersJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2810,7 +2810,7 @@ func NewBodyHeadersRequestWithBody(server string, contentType string, body io.Re
 // NewBodyInlineRequest calls the generic BodyInline builder with application/json body
 func NewBodyInlineRequest(server string, body BodyInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2850,7 +2850,7 @@ func NewBodyInlineRequestWithBody(server string, contentType string, body io.Rea
 // NewBodyRefRequest calls the generic BodyRef builder with application/json body
 func NewBodyRefRequest(server string, body BodyRefJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2890,7 +2890,7 @@ func NewBodyRefRequestWithBody(server string, contentType string, body io.Reader
 // NewHolderRequest calls the generic Holder builder with application/json body
 func NewHolderRequest(server string, body HolderJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -2930,7 +2930,7 @@ func NewHolderRequestWithBody(server string, contentType string, body io.Reader)
 // NewHolderInlineRequest calls the generic HolderInline builder with application/json body
 func NewHolderInlineRequest(server string, body HolderInlineJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -3619,7 +3619,7 @@ func ParseBodyComponentResponse(rsp *http.Response) (*BodyComponentResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest SubjectResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3645,7 +3645,7 @@ func ParseBodyComponentInlineResponse(rsp *http.Response) (*BodyComponentInlineR
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest InlineSubjectResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3671,7 +3671,7 @@ func ParseBodyDefaultResponse(rsp *http.Response) (*BodyDefaultResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSONDefault = &dest
@@ -3697,7 +3697,7 @@ func ParseBodyHeadersResponse(rsp *http.Response) (*BodyHeadersResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3736,7 +3736,7 @@ func ParseBodyInlineResponse(rsp *http.Response) (*BodyInlineResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest BodyInline200JSONResponseBody
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3762,7 +3762,7 @@ func ParseBodyRefResponse(rsp *http.Response) (*BodyRefResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Subject
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3788,7 +3788,7 @@ func ParseHolderResponse(rsp *http.Response) (*HolderResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Holder
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3814,7 +3814,7 @@ func ParseHolderInlineResponse(rsp *http.Response) (*HolderInlineResponse, error
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest InlineHolder
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -4130,7 +4130,7 @@ type BodyComponent200JSONResponse struct{ SubjectResponseJSONResponse }
 func (response BodyComponent200JSONResponse) VisitBodyComponentResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.SubjectResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.SubjectResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -4154,7 +4154,7 @@ type BodyComponentInline200JSONResponse struct {
 func (response BodyComponentInline200JSONResponse) VisitBodyComponentInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.InlineSubjectResponseJSONResponse); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.InlineSubjectResponseJSONResponse); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -4179,7 +4179,7 @@ type BodyDefaultdefaultJSONResponse struct {
 func (response BodyDefaultdefaultJSONResponse) VisitBodyDefaultResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -4208,7 +4208,7 @@ type BodyHeaders200JSONResponse struct {
 func (response BodyHeaders200JSONResponse) VisitBodyHeadersResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -4237,7 +4237,7 @@ type BodyInline200JSONResponse = BodyInline200JSONResponseBody
 func (response BodyInline200JSONResponse) VisitBodyInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -4267,7 +4267,7 @@ func (t *BodyRef200JSONResponse) UnmarshalJSON(b []byte) error {
 func (response BodyRef200JSONResponse) VisitBodyRefResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -4289,7 +4289,7 @@ type Holder200JSONResponse Holder
 func (response Holder200JSONResponse) VisitHolderResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -4311,7 +4311,7 @@ type HolderInline200JSONResponse InlineHolder
 func (response HolderInline200JSONResponse) VisitHolderInlineResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
