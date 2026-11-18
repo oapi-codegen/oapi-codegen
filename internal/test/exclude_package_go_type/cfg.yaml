@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../configuration-schema.json
+package: exclude_package_go_type
+output: exclude_package_go_type.gen.go
+generate:
+  models: true
+output-options:
+  exclude-package-go-type: true
