@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: bodiesformencoding
+output: form_encoding.gen.go
+generate:
+  models: true
+  client: true
+  std-http-server: true
+  strict-server: true
+output-options:
+  skip-prune: true
