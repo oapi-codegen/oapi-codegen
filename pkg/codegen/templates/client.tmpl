@@ -122,7 +122,21 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
         }
         bodyReader = bytes.NewReader(buf)
     {{else if .IsFormdata -}}
+        {{if .ExplodedFormArrays -}}
+        // These arrays are encoded in the exploded form style: as repeated keys.
+        // The encodings are built in a scope of their own, so that nothing
+        // declared for them can collide with an argument of this function.
+        bodyStr, err := runtime.MarshalForm(body, func() map[string]runtime.RequestBodyEncoding {
+            explode := true
+            return map[string]runtime.RequestBodyEncoding{
+            {{range .ExplodedFormArrays -}}
+                {{printf "%q" .}}: {Style: "form", Explode: &explode},
+            {{end -}}
+            }
+        }())
+        {{else -}}
         bodyStr, err := runtime.MarshalForm(body, nil)
+        {{end -}}
         if err != nil {
             return nil, err
         }

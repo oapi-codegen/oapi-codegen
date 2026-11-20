@@ -1162,6 +1162,12 @@ type RequestBodyDefinition struct {
 	// Contains encoding options for formdata
 	Encoding map[string]RequestBodyEncoding
 
+	// ExplodedFormArrays lists, sorted, the properties of a form-urlencoded
+	// body which the client serializes with repeated keys (name=a&name=b)
+	// rather than indexed ones (name[0]=a&name[1]=b). See
+	// explodedFormArrays.
+	ExplodedFormArrays []string
+
 	// Deprecated indicates the parent operation is deprecated, so this body
 	// type alias should be marked deprecated too.
 	Deprecated bool
@@ -1294,6 +1300,73 @@ func (r RequestBodyDefinition) HasModel() bool {
 // IsFixedContentType returns true if content type has fixed content type, i.e. contains no "*" symbol
 func (r RequestBodyDefinition) IsFixedContentType() bool {
 	return !strings.Contains(r.ContentType, "*")
+}
+
+// explodedFormArrays returns, sorted, the names of the properties of a
+// form-urlencoded body whose encoding asks for repeated keys: an array of
+// primitives which declares style form, explode true, or both, and nothing to
+// the contrary (form is the default style, and it explodes by default).
+//
+// This is deliberately the one encoding the client honors. Generated servers
+// bind form bodies without looking at the encoding, and repeated keys are the
+// only styled serialization they read back the same as the indexed keys the
+// client writes otherwise. Every other declared encoding is ignored, as it
+// always has been: https://github.com/oapi-codegen/oapi-codegen/issues/2676
+func explodedFormArrays(schema *openapi3.SchemaRef, encodings map[string]*openapi3.Encoding) []string {
+	var names []string
+	if schema == nil {
+		return nil
+	}
+	for name, encoding := range encodings {
+		if encoding == nil || encoding.ContentType != "" {
+			continue
+		}
+		if encoding.Style == "" && encoding.Explode == nil {
+			continue
+		}
+		if encoding.Style != "" && encoding.Style != "form" {
+			continue
+		}
+		if encoding.Explode != nil && !*encoding.Explode {
+			continue
+		}
+		if isArrayOfPrimitives(findProperty(schema.Value, name, 0)) {
+			names = append(names, name)
+		}
+	}
+	slices.Sort(names)
+	return names
+}
+
+// isArrayOfPrimitives reports whether a schema is plainly an array of strings,
+// numbers or booleans, whose Go type is a slice of values that each serialize
+// to a single form value.
+func isArrayOfPrimitives(array *openapi3.Schema) bool {
+	if array == nil {
+		return false
+	}
+	if !array.Type.Is("array") || array.Nullable || array.Extensions[extPropGoType] != nil {
+		return false
+	}
+	if array.Items == nil || array.Items.Value == nil {
+		return false
+	}
+	item := array.Items.Value
+	if item.Nullable || item.Extensions[extPropGoType] != nil {
+		return false
+	}
+	if len(item.OneOf) != 0 || len(item.AnyOf) != 0 || len(item.AllOf) != 0 {
+		return false
+	}
+	switch {
+	case item.Type.Is("string"):
+		// Binary and base64 strings are files and byte slices, not single
+		// values.
+		return item.Format != "binary" && item.Format != "byte"
+	case item.Type.Is("integer"), item.Type.Is("number"), item.Type.Is("boolean"):
+		return true
+	}
+	return false
 }
 
 type RequestBodyEncoding struct {
@@ -2220,6 +2293,9 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 			for k, v := range content.Encoding {
 				encoding := RequestBodyEncoding{ContentType: v.ContentType, Style: v.Style, Explode: v.Explode}
 				bd.Encoding[k] = encoding
+			}
+			if bd.IsFormdata() {
+				bd.ExplodedFormArrays = explodedFormArrays(content.Schema, content.Encoding)
 			}
 		}
 
