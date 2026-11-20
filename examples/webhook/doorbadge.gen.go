@@ -8,7 +8,6 @@ package doorbadge
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -272,7 +271,7 @@ func NewDeregisterWebhookRequest(server string, id openapi_types.UUID) (*http.Re
 // NewRegisterWebhookRequest calls the generic RegisterWebhook builder with application/json body
 func NewRegisterWebhookRequest(server string, kind RegisterWebhookParamsKind, body RegisterWebhookJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -545,7 +544,7 @@ func ParseDeregisterWebhookResponse(rsp *http.Response) (*DeregisterWebhookRespo
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSONDefault = &dest
@@ -571,14 +570,14 @@ func ParseRegisterWebhookResponse(rsp *http.Response) (*RegisterWebhookResponse,
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
 		var dest WebhookRegistrationResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON201 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && true:
 		var dest Error
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSONDefault = &dest
@@ -716,7 +715,7 @@ func (p *WebhookInitiator) ExitEvent(ctx context.Context, targetURL string, body
 // NewEnterEventWebhookRequest builds a application/json POST request for the enterEvent webhook
 func NewEnterEventWebhookRequest(targetURL string, body EnterEventJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -747,7 +746,7 @@ func NewEnterEventWebhookRequestWithBody(targetURL string, contentType string, b
 // NewExitEventWebhookRequest builds a application/json POST request for the exitEvent webhook
 func NewExitEventWebhookRequest(targetURL string, body ExitEventJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}

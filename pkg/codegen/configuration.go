@@ -619,6 +619,17 @@ type OutputOptions struct {
 	// client response wrapper types (e.g., issue #1474). Without this, the
 	// codegen will error on duplicate type names, requiring manual resolution
 	// via x-go-name.
+	//
+	// It covers struct field names as well. Properties of one object whose
+	// JSON names derive the same Go field name ("host-fqdn" and "host_fqdn"
+	// are both "HostFqdn") are each renamed to that name and a short hash of
+	// the JSON name, as in "HostFqdn_cea8c90". Every colliding property is
+	// renamed, so that a field's name depends only on its own property and
+	// stays put as the spec changes around it. A field named with x-go-name
+	// is never renamed. Without this, such a collision is an error.
+	//
+	// The option is still named for type names, which is all it covered at
+	// first, so that existing configurations keep working.
 	ResolveTypeNameCollisions bool `yaml:"resolve-type-name-collisions,omitempty"`
 
 	// GenerateTypesForAnonymousSchemas, when true, causes oapi-codegen to

@@ -1,6 +1,7 @@
 package namingconflicts
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -499,4 +500,55 @@ func TestLineComments(t *testing.T) {
 
 func ptr[T any](v T) *T {
 	return &v
+}
+
+// TestFieldNameCollisions verifies that properties whose JSON names derive the
+// same Go field name each get a field of their own, named by a hash of the
+// JSON name, and still read and write their own JSON property.
+//
+// Covers issue: #2495
+func TestFieldNameCollisions(t *testing.T) {
+	dashed, underscored, zed := "dashed", "underscored", "zed"
+	two, zzz := 2, 3
+
+	in := FieldCollisions{
+		HostFqdn_cea8c90: &dashed,
+		HostFqdn_bcac5e8: &underscored,
+		// Derives the name a numeric suffix would have used, and keeps it.
+		HostFqdn2: &two,
+		// x-go-name keeps the name it asked for; the property deriving
+		// the same name gives way.
+		Zed:         &zzz,
+		Zed_ce5c161: &zed,
+	}
+	raw, err := json.Marshal(in)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"host-fqdn":"dashed","host_fqdn":"underscored","host_fqdn2":2,"zed":"zed","zzz":3}`, string(raw))
+
+	var out FieldCollisions
+	require.NoError(t, json.Unmarshal(raw, &out))
+	assert.Equal(t, in, out)
+}
+
+// TestFieldNameCollisionsWithAdditionalProperties verifies the same through
+// the generated marshaling code of a schema with additional properties, where
+// a property also derives the name of the field which holds them.
+//
+// Covers issue: #2495
+func TestFieldNameCollisionsWithAdditionalProperties(t *testing.T) {
+	const doc = `{"host-fqdn":"dashed","host_fqdn":"underscored","additionalProperties":"declared","extra":"undeclared"}`
+
+	var out FieldCollisionsWithExtras
+	require.NoError(t, json.Unmarshal([]byte(doc), &out))
+	require.NotNil(t, out.HostFqdn_cea8c90)
+	assert.Equal(t, "dashed", *out.HostFqdn_cea8c90)
+	require.NotNil(t, out.HostFqdn_bcac5e8)
+	assert.Equal(t, "underscored", *out.HostFqdn_bcac5e8)
+	require.NotNil(t, out.AdditionalProperties_f923a6e)
+	assert.Equal(t, "declared", *out.AdditionalProperties_f923a6e)
+	assert.Equal(t, map[string]string{"extra": "undeclared"}, out.AdditionalProperties)
+
+	raw, err := json.Marshal(out)
+	require.NoError(t, err)
+	assert.JSONEq(t, doc, string(raw))
 }

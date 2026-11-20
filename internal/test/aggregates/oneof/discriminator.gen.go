@@ -127,20 +127,20 @@ type PostRenamedPetJSONRequestBody = RenamedPetByKind
 // AsConfigHttp returns the union data inside the ConfigSaveReq as a ConfigHttp
 func (t ConfigSaveReq) AsConfigHttp() (ConfigHttp, error) {
 	var body ConfigHttp
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigHttp overwrites any union data inside the ConfigSaveReq as the provided ConfigHttp
 func (t *ConfigSaveReq) FromConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeConfigHttp performs a merge with any union data inside the ConfigSaveReq, using the provided ConfigHttp
 func (t *ConfigSaveReq) MergeConfigHttp(v ConfigHttp) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -153,20 +153,20 @@ func (t *ConfigSaveReq) MergeConfigHttp(v ConfigHttp) error {
 // AsConfigSsh returns the union data inside the ConfigSaveReq as a ConfigSsh
 func (t ConfigSaveReq) AsConfigSsh() (ConfigSsh, error) {
 	var body ConfigSsh
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromConfigSsh overwrites any union data inside the ConfigSaveReq as the provided ConfigSsh
 func (t *ConfigSaveReq) FromConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeConfigSsh performs a merge with any union data inside the ConfigSaveReq, using the provided ConfigSsh
 func (t *ConfigSaveReq) MergeConfigSsh(v ConfigSsh) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -180,7 +180,7 @@ func (t ConfigSaveReq) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"config_type"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
@@ -216,13 +216,13 @@ func (t *ConfigSaveReq) UnmarshalJSON(b []byte) error {
 // AsResourceConflictError returns the union data inside the ConflictError as a ResourceConflictError
 func (t ConflictError) AsResourceConflictError() (ResourceConflictError, error) {
 	var body ResourceConflictError
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromResourceConflictError overwrites any union data inside the ConflictError as the provided ResourceConflictError
 func (t *ConflictError) FromResourceConflictError(v ResourceConflictError) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -233,7 +233,7 @@ func (t *ConflictError) FromResourceConflictError(v ResourceConflictError) error
 
 // MergeResourceConflictError performs a merge with any union data inside the ConflictError, using the provided ResourceConflictError
 func (t *ConflictError) MergeResourceConflictError(v ResourceConflictError) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -250,13 +250,13 @@ func (t *ConflictError) MergeResourceConflictError(v ResourceConflictError) erro
 // AsIdempotencyConflictError returns the union data inside the ConflictError as a IdempotencyConflictError
 func (t ConflictError) AsIdempotencyConflictError() (IdempotencyConflictError, error) {
 	var body IdempotencyConflictError
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromIdempotencyConflictError overwrites any union data inside the ConflictError as the provided IdempotencyConflictError
 func (t *ConflictError) FromIdempotencyConflictError(v IdempotencyConflictError) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -267,7 +267,7 @@ func (t *ConflictError) FromIdempotencyConflictError(v IdempotencyConflictError)
 
 // MergeIdempotencyConflictError performs a merge with any union data inside the ConflictError, using the provided IdempotencyConflictError
 func (t *ConflictError) MergeIdempotencyConflictError(v IdempotencyConflictError) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -285,7 +285,7 @@ func (t ConflictError) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"code"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
@@ -317,7 +317,7 @@ func (t *ConflictError) UnmarshalJSON(b []byte) error {
 // AsKindCat returns the union data inside the PetByKind as a KindCat
 func (t PetByKind) AsKindCat() (KindCat, error) {
 	var body KindCat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
@@ -325,7 +325,7 @@ func (t PetByKind) AsKindCat() (KindCat, error) {
 func (t *PetByKind) FromKindCat(v KindCat) error {
 	var discriminator string = "cat"
 	t.Kind = &discriminator
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -338,7 +338,7 @@ func (t *PetByKind) FromKindCat(v KindCat) error {
 func (t *PetByKind) MergeKindCat(v KindCat) error {
 	var discriminator string = "cat"
 	t.Kind = &discriminator
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -355,7 +355,7 @@ func (t *PetByKind) MergeKindCat(v KindCat) error {
 // AsKindDog returns the union data inside the PetByKind as a KindDog
 func (t PetByKind) AsKindDog() (KindDog, error) {
 	var body KindDog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
@@ -363,7 +363,7 @@ func (t PetByKind) AsKindDog() (KindDog, error) {
 func (t *PetByKind) FromKindDog(v KindDog) error {
 	var discriminator string = "dog"
 	t.Kind = &discriminator
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -376,7 +376,7 @@ func (t *PetByKind) FromKindDog(v KindDog) error {
 func (t *PetByKind) MergeKindDog(v KindDog) error {
 	var discriminator string = "dog"
 	t.Kind = &discriminator
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -394,7 +394,7 @@ func (t PetByKind) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"kind"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
@@ -420,19 +420,19 @@ func (t PetByKind) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if t.Kind != nil {
-		object["kind"], err = json.Marshal(t.Kind)
+		object["kind"], err = runtime.JSONMarshal(t.Kind)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'kind': %w", err)
 		}
 	}
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -442,13 +442,13 @@ func (t *PetByKind) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["kind"]; found {
-		err = json.Unmarshal(raw, &t.Kind)
+		err = runtime.JSONUnmarshal(raw, &t.Kind)
 		if err != nil {
 			return fmt.Errorf("error reading 'kind': %w", err)
 		}
@@ -460,7 +460,7 @@ func (t *PetByKind) UnmarshalJSON(b []byte) error {
 // AsKindCat returns the union data inside the RenamedPetByKind as a KindCat
 func (t RenamedPetByKind) AsKindCat() (KindCat, error) {
 	var body KindCat
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
@@ -468,7 +468,7 @@ func (t RenamedPetByKind) AsKindCat() (KindCat, error) {
 func (t *RenamedPetByKind) FromKindCat(v KindCat) error {
 	var discriminator string = "cat"
 	t.Species = &discriminator
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -481,7 +481,7 @@ func (t *RenamedPetByKind) FromKindCat(v KindCat) error {
 func (t *RenamedPetByKind) MergeKindCat(v KindCat) error {
 	var discriminator string = "cat"
 	t.Species = &discriminator
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -498,7 +498,7 @@ func (t *RenamedPetByKind) MergeKindCat(v KindCat) error {
 // AsKindDog returns the union data inside the RenamedPetByKind as a KindDog
 func (t RenamedPetByKind) AsKindDog() (KindDog, error) {
 	var body KindDog
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
@@ -506,7 +506,7 @@ func (t RenamedPetByKind) AsKindDog() (KindDog, error) {
 func (t *RenamedPetByKind) FromKindDog(v KindDog) error {
 	var discriminator string = "dog"
 	t.Species = &discriminator
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -519,7 +519,7 @@ func (t *RenamedPetByKind) FromKindDog(v KindDog) error {
 func (t *RenamedPetByKind) MergeKindDog(v KindDog) error {
 	var discriminator string = "dog"
 	t.Species = &discriminator
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -537,7 +537,7 @@ func (t RenamedPetByKind) Discriminator() (string, error) {
 	var discriminator struct {
 		Discriminator string `json:"kind"`
 	}
-	err := json.Unmarshal(t.union, &discriminator)
+	err := runtime.JSONUnmarshal(t.union, &discriminator)
 	return discriminator.Discriminator, err
 }
 
@@ -563,19 +563,19 @@ func (t RenamedPetByKind) MarshalJSON() ([]byte, error) {
 	}
 	object := make(map[string]json.RawMessage)
 	if t.union != nil {
-		err = json.Unmarshal(b, &object)
+		err = runtime.JSONUnmarshal(b, &object)
 		if err != nil {
 			return nil, err
 		}
 	}
 
 	if t.Species != nil {
-		object["kind"], err = json.Marshal(t.Species)
+		object["kind"], err = runtime.JSONMarshal(t.Species)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling 'kind': %w", err)
 		}
 	}
-	b, err = json.Marshal(object)
+	b, err = runtime.JSONMarshal(object)
 	return b, err
 }
 
@@ -585,13 +585,13 @@ func (t *RenamedPetByKind) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	object := make(map[string]json.RawMessage)
-	err = json.Unmarshal(b, &object)
+	err = runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["kind"]; found {
-		err = json.Unmarshal(raw, &t.Species)
+		err = runtime.JSONUnmarshal(raw, &t.Species)
 		if err != nil {
 			return fmt.Errorf("error reading 'kind': %w", err)
 		}

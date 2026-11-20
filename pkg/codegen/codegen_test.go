@@ -1060,6 +1060,43 @@ components:
 	assert.Contains(t, err.Error(), "is not a number or boolean literal")
 }
 
+// TestNonStringEnumNullValueHasNoConstant checks that null in a non-string
+// enum, which is how a nullable enum allows null, is skipped instead of being
+// emitted as the value <nil>, which is not a Go literal. See issue #2636.
+func TestNonStringEnumNullValueHasNoConstant(t *testing.T) {
+	spec := `openapi: "3.0.3"
+info:
+  title: t
+  version: "1.0"
+paths: {}
+components:
+  schemas:
+    Level:
+      type: integer
+      nullable: true
+      enum: [null, 1, 2]
+      x-enum-varnames: [None, Low, High]
+    Credits:
+      oneOf:
+        - type: number
+          enum: [0]
+        - type: number
+          minimum: 1
+          maximum: 1000
+        - type: number
+          nullable: true
+          enum: [null]
+`
+	opts := Configuration{PackageName: "api", Generate: GenerateOptions{Models: true}, OutputOptions: OutputOptions{SkipPrune: true}}
+
+	code := generateFromSpec(t, spec, opts)
+	assert.NotContains(t, code, "<nil>")
+	assert.Regexp(t, `Low\s+Level = 1`, code)
+	assert.Regexp(t, `High\s+Level = 2`, code)
+	assert.NotRegexp(t, `None\s+Level`, code)
+	assert.Contains(t, code, "type Credits2 float32")
+}
+
 // TestSecurityScopesAreQuotedIndividually checks that scopes are rendered with
 // strconv.Quote one by one. Joining raw values with `","` let a scope ending in
 // a backslash escape the quote the joiner supplied, so the next scope ran as Go.

@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"compress/flate"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -123,7 +122,7 @@ func (w *ServerInterfaceWrapper) GetContentObject(ctx iris.Context) {
 	// ------------- Path parameter "param" -------------
 	var param ComplexObject
 
-	err = json.Unmarshal([]byte(ctx.Params().Get("param")), &param)
+	err = runtime.JSONUnmarshal([]byte(ctx.Params().Get("param")), &param)
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.WriteString("Error unmarshaling parameter 'param' as JSON")
@@ -231,7 +230,7 @@ func (w *ServerInterfaceWrapper) GetCookie(ctx iris.Context) {
 			ctx.WriteString("Error unescaping cookie parameter 'co'")
 			return
 		}
-		err = json.Unmarshal([]byte(decoded), &value)
+		err = runtime.JSONUnmarshal([]byte(decoded), &value)
 		if err != nil {
 			ctx.StatusCode(http.StatusBadRequest)
 			ctx.WriteString("Error unmarshaling parameter 'co' as JSON")
@@ -413,7 +412,7 @@ func (w *ServerInterfaceWrapper) GetHeader(ctx iris.Context) {
 			return
 		}
 
-		err = json.Unmarshal([]byte(valueList[0]), &XComplexObject)
+		err = runtime.JSONUnmarshal([]byte(valueList[0]), &XComplexObject)
 		if err != nil {
 			ctx.StatusCode(http.StatusBadRequest)
 			ctx.WriteString("Error unmarshaling parameter 'X-Complex-Object' as JSON")
@@ -842,7 +841,7 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx iris.Context) {
 	if paramValue := ctx.URLParam("co"); paramValue != "" {
 
 		var value ComplexObject
-		err = json.Unmarshal([]byte(paramValue), &value)
+		err = runtime.JSONUnmarshal([]byte(paramValue), &value)
 		if err != nil {
 			ctx.StatusCode(http.StatusBadRequest)
 			ctx.WriteString("Error unmarshaling parameter 'co' as JSON")

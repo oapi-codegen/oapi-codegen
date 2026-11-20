@@ -5,7 +5,6 @@ package paramclientgen
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
@@ -686,7 +685,7 @@ func NewGetContentObjectRequest(server string, param ComplexObject) (*http.Reque
 	var pathParam0 string
 
 	var pathParamBuf0 []byte
-	pathParamBuf0, err = json.Marshal(param)
+	pathParamBuf0, err = runtime.JSONMarshal(param)
 	if err != nil {
 		return nil, err
 	}
@@ -835,7 +834,7 @@ func NewGetCookieRequest(server string, params *GetCookieParams) (*http.Request,
 			var cookieParam6 string
 
 			var cookieParamBuf6 []byte
-			cookieParamBuf6, err = json.Marshal(*params.Co)
+			cookieParamBuf6, err = runtime.JSONMarshal(*params.Co)
 			if err != nil {
 				return nil, err
 			}
@@ -1016,7 +1015,7 @@ func NewGetHeaderRequest(server string, params *GetHeaderParams) (*http.Request,
 			var headerParam6 string
 
 			var headerParamBuf6 []byte
-			headerParamBuf6, err = json.Marshal(*params.XComplexObject)
+			headerParamBuf6, err = runtime.JSONMarshal(*params.XComplexObject)
 			if err != nil {
 				return nil, err
 			}
@@ -1718,7 +1717,7 @@ func NewGetQueryFormRequest(server string, params *GetQueryFormParams) (*http.Re
 
 		if params.Co != nil {
 
-			if queryParamBuf, err := json.Marshal(*params.Co); err != nil {
+			if queryParamBuf, err := runtime.JSONMarshal(*params.Co); err != nil {
 				return nil, err
 			} else {
 				queryValues.Add("co", string(queryParamBuf))
