@@ -6,9 +6,92 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/oapi-codegen/runtime"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// countingCodec counts the calls that reach it.
+type countingCodec struct {
+	runtime.StdJSONCodec
+	marshals, unmarshals int
+}
+
+func (c *countingCodec) Marshal(v any) ([]byte, error) {
+	c.marshals++
+	return c.StdJSONCodec.Marshal(v)
+}
+
+func (c *countingCodec) Unmarshal(data []byte, v any) error {
+	c.unmarshals++
+	return c.StdJSONCodec.Unmarshal(data, v)
+}
+
+// TestUnionJSONCodec checks that a union's From*, As*, Merge*, MarshalJSON and
+// UnmarshalJSON use the codec set with runtime.SetJSONCodec, with and without
+// additionalProperties. MarshalJSON and UnmarshalJSON run inside the codec's
+// own Marshal and Unmarshal of the value, so this is also the re-entrant case.
+func TestUnionJSONCodec(t *testing.T) {
+	var codec countingCodec
+	runtime.SetJSONCodec(&codec)
+	t.Cleanup(func() { runtime.SetJSONCodec(nil) })
+
+	// calls runs f and returns how many Marshal and Unmarshal calls it made.
+	calls := func(f func()) (marshals, unmarshals int) {
+		m, u := codec.marshals, codec.unmarshals
+		f()
+		return codec.marshals - m, codec.unmarshals - u
+	}
+
+	t.Run("union", func(t *testing.T) {
+		var dst OneOfObject1
+		m, u := calls(func() {
+			require.NoError(t, dst.FromOneOfVariant1(OneOfVariant1{Name: "123"}))
+		})
+		assert.Equal(t, 1, m, "From")
+		assert.Zero(t, u, "From")
+
+		m, u = calls(func() {
+			v1, err := dst.AsOneOfVariant1()
+			require.NoError(t, err)
+			assert.Equal(t, "123", v1.Name)
+		})
+		assert.Zero(t, m, "As")
+		assert.Equal(t, 1, u, "As")
+
+		m, _ = calls(func() {
+			require.NoError(t, dst.MergeOneOfVariant1(OneOfVariant1{Name: "456"}))
+		})
+		assert.Positive(t, m, "Merge")
+	})
+
+	t.Run("union and additionalProperties", func(t *testing.T) {
+		x := OneOfObject13{
+			AdditionalProperties: map[string]any{"x": "y"},
+		}
+		require.NoError(t, x.MergeOneOfVariant1(OneOfVariant1{Name: "test-name"}))
+
+		var b []byte
+		m, _ := calls(func() {
+			var err error
+			b, err = runtime.JSONMarshal(x)
+			require.NoError(t, err)
+		})
+		assert.JSONEq(t, `{"x":"y", "name":"test-name", "type":"v1"}`, string(b))
+		// One call from here, the rest from MarshalJSON.
+		assert.Greater(t, m, 1, "MarshalJSON")
+
+		var y OneOfObject13
+		_, u := calls(func() {
+			require.NoError(t, runtime.JSONUnmarshal(b, &y))
+		})
+		yAdditional, ok := y.Get("x")
+		assert.True(t, ok)
+		assert.Equal(t, "y", yAdditional)
+		// One call from here, the rest from UnmarshalJSON.
+		assert.Greater(t, u, 1, "UnmarshalJSON")
+	})
+}
 
 func assertJsonEqual(t *testing.T, j1 []byte, j2 []byte) {
 	t.Helper()

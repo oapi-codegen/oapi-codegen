@@ -8,7 +8,6 @@ import (
 	"compress/flate"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -18,6 +17,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/kataras/iris/v12"
+	"github.com/oapi-codegen/runtime"
 )
 
 // Test defines model for Test.
@@ -273,21 +273,21 @@ func ParseTestResponse(rsp *http.Response) (*TestResponse, error) {
 	switch {
 	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
 		var dest Test
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/json; profile=\"Bar\"" && rsp.StatusCode == 200:
 		var dest Test
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationjsonProfileBar200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/json; profile=\"Foo\"" && rsp.StatusCode == 200:
 		var dest Test
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationjsonProfileFoo200 = &dest
@@ -385,8 +385,11 @@ type StrictServerInterface interface {
 	Test(ctx context.Context, request TestRequestObject) (TestResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx iris.Context, request any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+// StrictHandlerFunc and StrictMiddlewareFunc are type aliases rather than
+// distinct named types, so middleware written against one generated package
+// can be shared with every other generated package using the same framework.
+type StrictHandlerFunc = func(ctx iris.Context, request any) (any, error)
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
 	return &strictHandler{ssi: ssi, middlewares: middlewares}

@@ -10,7 +10,7 @@ This page is a structural overview. The authoritative, always-current reference 
 To get the IDE experience, add this line to the top of your configuration file:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 package: api
 # ...
 ```
@@ -64,6 +64,7 @@ compatibility:
   headers-implicitly-required: false
   enable-auth-scopes-on-context: false
   sort-handler-registrations: false
+  overlays-use-yaml-jsonpath: false  # read every overlay target in the pre-v2.9.0 JSONPath dialect instead of RFC 9535 (whole overlay, no per-target detection)
 
 # Output modification options
 # See <a href="https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen#OutputOptions">OutputOptions</a>
@@ -82,7 +83,7 @@ output-options:
   client-type-name: ""
   nullable-type: false
   disable-type-aliases-for-type: []
-  resolve-type-name-collisions: false
+  resolve-type-name-collisions: false   # also resolves colliding struct field names; not renamed, to keep existing configurations working
   prefer-skip-optional-pointer: false
   prefer-skip-optional-pointer-with-omitzero: false
   prefer-skip-optional-pointer-on-container-types: false

@@ -30,6 +30,7 @@ With `oapi-codegen`, there are a few [Key Design Decisions](#key-design-decision
 - [Key design decisions](#key-design-decisions)
 - [Generating server-side boilerplate](#generating-server-side-boilerplate)
   - [Supported Servers](#supported-servers)
+  - [OpenAPI 3.2 HTTP methods (<code>query</code> and <code>additionalOperations</code>)](#openapi-32-http-methods-query-and-additionaloperations)
   - [Strict server](#strict-server)
 - [Generating API clients](#generating-api-clients)
   - [With Server URLs](#with-server-urls)
@@ -99,7 +100,7 @@ go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 
 ### Installing
 
-`oapi-codegen` requires Go 1.25+ to build and install. Note that the *generated* code has its own, lower requirements — see [Supported Servers](#supported-servers).
+`oapi-codegen` requires Go 1.26+ to build and install. The *generated* code requires Go 1.26+ as well — see [Supported Servers](#supported-servers).
 
 It is recommended to use [`go tool` support](https://www.jvt.me/posts/2025/01/27/go-tools-124/) for managing the dependency of `oapi-codegen` alongside your core application.
 
@@ -172,7 +173,7 @@ For full details of what is supported, check out the [oapi-codegen configuration
 We also have [a JSON Schema](configuration-schema.json) that can be used by IDEs/editors with the Language Server Protocol (LSP) to perform intelligent suggestions, i.e.:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 package: api
 # ...
 ```
@@ -445,6 +446,7 @@ We can see that this provides the best means to focus on the implementation of t
 - Support multiple OpenAPI files by having a package per OpenAPI file
 - Support of OpenAPI 3.0 and 3.1
   - OpenAPI 3.1 support includes [webhooks](https://spec.openapis.org/oas/v3.1.0#oasWebhooks) and version-aware handling of 3.1 idioms such as `type: [T, "null"]` nullability and enums declared via `oneOf` + `const`
+  - OpenAPI 3.2's `query` operation (HTTP `QUERY`) and `additionalOperations` (arbitrary HTTP methods) are generated for clients and every server framework; see [OpenAPI 3.2 HTTP methods](#openapi-32-http-methods-query-and-additionaloperations)
   - Note that this does not include OpenAPI 2.0 (aka Swagger). If you have an old Swagger
     specification, you can use a [converter](https://converter.swagger.io/) before
     using oapi-codegen.
@@ -463,21 +465,61 @@ To provide you a fully Test Driven Development style test harness to confirm you
 ### Supported Servers
 
 Right now, we support the following servers, and are supportive of adding new servers, too! Each
-server lists a minimum require Go version to compile the generated code, which may
-be different from that of oapi-codegen itself. While the code may compile on an
-older version of Go, we don't promise that it'll work.
+server lists the minimum Go version required to compile the generated code. That is
+currently Go 1.26 for all of them, because the generated code imports
+`github.com/oapi-codegen/runtime`, which requires Go 1.26.
 
 | Server | `generate` flag | Go Version | Documentation |
 | --- | --- |------------| --- |
-| [Chi](https://github.com/go-chi/chi) | `chi-server` | 1.24+      | [Chi documentation](docs/chi-server.md) |
-| [Echo](https://github.com/labstack/echo) | `echo-server` | 1.24+      | [Echo documentation](docs/echo-server.md) |
-| [Echo v5](https://github.com/labstack/echo) | `echo5-server` | 1.25+      | [Echo v5 documentation](docs/echo5-server.md) |
-| [Fiber](https://github.com/gofiber/fiber) | `fiber-server` | 1.24+      | [Fiber documentation](docs/fiber-server.md) |
-| [Fiber v3](https://github.com/gofiber/fiber) | `fiber-v3-server` | 1.25+      | [Fiber v3 documentation](docs/fiber-v3-server.md) |
-| [Gin](https://github.com/gin-gonic/gin) | `gin-server` | 1.25+      | [Gin documentation](docs/gin-server.md) |
-| [gorilla/mux](https://github.com/gorilla/mux) | `gorilla-server` | 1.24+      | [gorilla/mux documentation](docs/gorilla-server.md) |
-| [Iris](https://github.com/kataras/iris) | `iris-server` | 1.24+      | [Iris documentation](docs/iris-server.md) |
-| [`net/http`](https://pkg.go.dev/net/http) | `std-http-server` | 1.24+      | [`net/http` documentation](docs/stdhttp-server.md) |
+| [Chi](https://github.com/go-chi/chi) | `chi-server` | 1.26+      | [Chi documentation](docs/chi-server.md) |
+| [Echo](https://github.com/labstack/echo) | `echo-server` | 1.26+      | [Echo documentation](docs/echo-server.md) |
+| [Echo v5](https://github.com/labstack/echo) | `echo5-server` | 1.26+      | [Echo v5 documentation](docs/echo5-server.md) |
+| [Fiber](https://github.com/gofiber/fiber) | `fiber-server` | 1.26+      | [Fiber documentation](docs/fiber-server.md) |
+| [Fiber v3](https://github.com/gofiber/fiber) | `fiber-v3-server` | 1.26+      | [Fiber v3 documentation](docs/fiber-v3-server.md) |
+| [Gin](https://github.com/gin-gonic/gin) | `gin-server` | 1.26+      | [Gin documentation](docs/gin-server.md) |
+| [gorilla/mux](https://github.com/gorilla/mux) | `gorilla-server` | 1.26+      | [gorilla/mux documentation](docs/gorilla-server.md) |
+| [Iris](https://github.com/kataras/iris) | `iris-server` | 1.26+      | [Iris documentation](docs/iris-server.md) |
+| [`net/http`](https://pkg.go.dev/net/http) | `std-http-server` | 1.26+      | [`net/http` documentation](docs/stdhttp-server.md) |
+
+### OpenAPI 3.2 HTTP methods (`query` and `additionalOperations`)
+
+OpenAPI 3.2 adds the `query` operation (the HTTP [`QUERY`](https://datatracker.ietf.org/doc/draft-ietf-httpbis-safe-method-w-body/) method) to the Path Item, and an `additionalOperations` map for any other HTTP method:
+
+```yaml
+paths:
+  /items:
+    query:
+      operationId: queryItems
+      # ...
+    additionalOperations:
+      PURGE:
+        operationId: purgeItem
+        # ...
+```
+
+These are generated like any other operation, for clients, servers and strict servers. Route registration uses each router's string-method API. Some routers only accept methods they have been told about, and because that is application-wide state (one process often hosts several generated packages), the generated code never registers methods itself. Your application does it once, at startup, before any routes are registered:
+
+- **Chi**: call `chi.RegisterMethod` for each custom method before `Handler`/`HandlerFromMux`, otherwise route registration panics with `chi: 'QUERY' http method is not supported`:
+
+  ```go
+  chi.RegisterMethod("QUERY")
+  chi.RegisterMethod("PURGE")
+  r := chi.NewRouter()
+  api.HandlerFromMux(server, r)
+  ```
+
+- **Fiber** (v2 and v3): list the custom methods in the application config (keep the defaults, the list replaces them), otherwise `RegisterHandlers` panics with `add: invalid http method`:
+
+  ```go
+  app := fiber.New(fiber.Config{
+      RequestMethods: append(slices.Clone(fiber.DefaultMethods), "QUERY", "PURGE"),
+  })
+  api.RegisterHandlers(app, server)
+  ```
+
+- **Iris**: routes for custom methods work as-is. `iris.RegisterMethods("QUERY")` is only needed if you also want iris's `Any()` helpers and route debug listing to include them.
+- **Echo** (v4 and v5): nothing to register. The generated `EchoRouter` interface gains an `Add` method, which `*echo.Echo` and `*echo.Group` both satisfy; a custom `EchoRouter` implementation needs `Add` too.
+- **Gin**, **gorilla/mux**, **`net/http`**: nothing to do.
 
 ### Strict server
 
@@ -506,7 +548,7 @@ You can see a little more detail of the generated code in the ["What does it loo
 > To configure the strict server generation, you must specify another server to be generated. For instance:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 package: api
 generate:
   # NOTE another server must be added!
@@ -584,7 +626,7 @@ components:
 And a `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 package: client
 output: client.gen.go
 generate:
@@ -745,7 +787,7 @@ servers:
 It is possible to opt-in to the generation of these Server URLs with the following configuration:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 package: serverurls
 output: gen.go
 generate:
@@ -830,7 +872,7 @@ components:
 If you were to generate with this configuration:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 package: client
 output: client.gen.go
 generate:
@@ -856,7 +898,7 @@ This would then result in `go build` failures:
 To fix this, use the `response-type-suffix` Output Option:
 
 ```diff
- # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+ # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
  package: client
  output: client.gen.go
  generate:
@@ -946,7 +988,7 @@ components:
 And a `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 package: onlymodels
 output: only-models.gen.go
 generate:
@@ -975,7 +1017,7 @@ type Client struct {
 If you wish to also generate the `Unreferenced` type, you would need the following `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 package: onlymodels
 output: only-models.gen.go
 generate:
@@ -1099,7 +1141,7 @@ $ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg-us
 This therefore means that we need multiple configuration files, such as `cfg-api.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 package: samepackage
 output: server.gen.go
 generate:
@@ -1116,7 +1158,7 @@ import-mapping:
 And then our `cfg-user.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 package: samepackage
 output: user.gen.go
 generate:
@@ -1146,7 +1188,7 @@ To get `oapi-codegen`'s multi-package support working, we need to set up our dir
 We could start with our configuration file for our admin API spec:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 # admin/cfg.yaml
 package: admin
 output: server.gen.go
@@ -1168,7 +1210,7 @@ error generating code: error creating operation definitions: error generating re
 This is because `oapi-codegen` requires the `import-mapping`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 package: admin
 output: server.gen.go
 generate:
@@ -1223,6 +1265,16 @@ This takes advantage of the [OpenAPI Overlay specification](https://github.com/O
 >
 > There is a [proposed modification to the specification](https://github.com/OAI/Overlay-Specification/pull/32) which would relax the need for JSON Path as the targeting mechanism.
 
+> [!NOTE]
+> The Overlay implementation changed in v2.9.0: action targets are now [RFC 9535](https://www.rfc-editor.org/rfc/rfc9535) JSONPath, where earlier versions read them in a different dialect. The main differences are:
+>
+> - a filter selects the children of the node it follows that match it, so drop one `.*` before it: `$.paths.*.*[?(@.x-internal)]` becomes `$.paths.*[?@['x-internal']]`
+> - names that contain `-` or `/`, or start with a digit, must be bracketed: `.x-internal` becomes `['x-internal']`
+> - `X =~ /re/` becomes `search(X, 're')`
+> - `X[*] == v` becomes `X[?@ == v]`
+>
+> The setting is all-or-nothing: by default every target in the overlay is read as RFC 9535, including targets that are valid in both dialects but mean something different in each. For instance `$.paths.*.*[?(!@.servers)]` used to select operations without `servers`, and now selects the children of operations without `servers`; oapi-codegen does not try to detect which dialect a target was written in. Check your targets, or keep the previous behaviour for the whole overlay by setting `compatibility.overlays-use-yaml-jsonpath: true`.
+
 For instance, let's say that we have the following OpenAPI specification, which provides insight into an internal endpoint that we should not be generating any code for (denoted by `x-internal`):
 
 ```yaml
@@ -1269,10 +1321,10 @@ actions:
           responses:
             '200':
               description: Perform a ping request
-- target: $.paths.*[?(@.x-internal)]
+- target: $.paths[?@['x-internal']]
   description: Remove internal endpoints (noted by x-internal)
   remove: true
-- target: $.paths.*.*[?(@.x-internal)]
+- target: $.paths.*[?@['x-internal']]
   description: Remove internal endpoints (noted by x-internal)
   remove: true
 ```
@@ -1280,7 +1332,7 @@ actions:
 And our configuration file for `oapi-codegen`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 package: api
 output: ping.gen.go
 generate:
@@ -1597,7 +1649,7 @@ You can specify, through your configuration file, the `output-options.user-templ
 Within your configuration file, you can specify relative or absolute paths to a file to reference for the template, such as:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 # ...
 output-options:
   user-templates:
@@ -1625,7 +1677,7 @@ It is also possible to use HTTPS URLs.
 To use it, you can use the following configuration:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 # ...
 output-options:
   user-templates:
@@ -1647,7 +1699,7 @@ output-options:
 It's also possible to set the templates inline in the configuration file:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 # ...
 output-options:
   user-templates:
@@ -1758,13 +1810,13 @@ func (a *Thing) Set(fieldName string, value interface{}) {
 // Override default JSON handling for Thing to handle AdditionalProperties
 func (a *Thing) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["id"]; found {
-		err = json.Unmarshal(raw, &a.Id)
+		err = runtime.JSONUnmarshal(raw, &a.Id)
 		if err != nil {
 			return fmt.Errorf("error reading 'id': %w", err)
 		}
@@ -1775,7 +1827,7 @@ func (a *Thing) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]interface{})
 		for fieldName, fieldBuf := range object {
 			var fieldVal interface{}
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -1790,18 +1842,18 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["id"], err = json.Marshal(a.Id)
+	object["id"], err = runtime.JSONMarshal(a.Id)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'id': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 ```
 
@@ -1862,13 +1914,13 @@ func (a *Thing) Set(fieldName string, value int) {
 // Override default JSON handling for Thing to handle AdditionalProperties
 func (a *Thing) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["id"]; found {
-		err = json.Unmarshal(raw, &a.Id)
+		err = runtime.JSONUnmarshal(raw, &a.Id)
 		if err != nil {
 			return fmt.Errorf("error reading 'id': %w", err)
 		}
@@ -1879,7 +1931,7 @@ func (a *Thing) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]int)
 		for fieldName, fieldBuf := range object {
 			var fieldVal int
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -1894,18 +1946,18 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["id"], err = json.Marshal(a.Id)
+	object["id"], err = runtime.JSONMarshal(a.Id)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'id': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 ```
 
@@ -1976,13 +2028,13 @@ func (a *Thing) Set(fieldName string, value struct {
 // Override default JSON handling for Thing to handle AdditionalProperties
 func (a *Thing) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["id"]; found {
-		err = json.Unmarshal(raw, &a.Id)
+		err = runtime.JSONUnmarshal(raw, &a.Id)
 		if err != nil {
 			return fmt.Errorf("error reading 'id': %w", err)
 		}
@@ -1997,7 +2049,7 @@ func (a *Thing) UnmarshalJSON(b []byte) error {
 			var fieldVal struct {
 				Foo *string `json:"foo,omitempty"`
 			}
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -2012,18 +2064,18 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["id"], err = json.Marshal(a.Id)
+	object["id"], err = runtime.JSONMarshal(a.Id)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'id': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 ```
 
@@ -2045,7 +2097,7 @@ In both cases, there is control on a per-field level to set `x-go-type-skip-opti
 For example, when combining both options:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 package: preferskipoptionalpointerwithomitzero
 output: gen.go
 generate:
@@ -2479,20 +2531,20 @@ type ClientAndMaybeIdentity struct {
 // AsClient returns the union data inside the ClientAndMaybeIdentity as a Client
 func (t ClientAndMaybeIdentity) AsClient() (Client, error) {
 	var body Client
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromClient overwrites any union data inside the ClientAndMaybeIdentity as the provided Client
 func (t *ClientAndMaybeIdentity) FromClient(v Client) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeClient performs a merge with any union data inside the ClientAndMaybeIdentity, using the provided Client
 func (t *ClientAndMaybeIdentity) MergeClient(v Client) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2505,20 +2557,20 @@ func (t *ClientAndMaybeIdentity) MergeClient(v Client) error {
 // AsIdentity returns the union data inside the ClientAndMaybeIdentity as a Identity
 func (t ClientAndMaybeIdentity) AsIdentity() (Identity, error) {
 	var body Identity
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromIdentity overwrites any union data inside the ClientAndMaybeIdentity as the provided Identity
 func (t *ClientAndMaybeIdentity) FromIdentity(v Identity) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeIdentity performs a merge with any union data inside the ClientAndMaybeIdentity, using the provided Identity
 func (t *ClientAndMaybeIdentity) MergeIdentity(v Identity) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2551,20 +2603,20 @@ func (t *ClientAndMaybeIdentity) UnmarshalJSON(b []byte) error {
 // AsClient returns the union data inside the ClientOrIdentity as a Client
 func (t ClientOrIdentity) AsClient() (Client, error) {
 	var body Client
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromClient overwrites any union data inside the ClientOrIdentity as the provided Client
 func (t *ClientOrIdentity) FromClient(v Client) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeClient performs a merge with any union data inside the ClientOrIdentity, using the provided Client
 func (t *ClientOrIdentity) MergeClient(v Client) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2577,20 +2629,20 @@ func (t *ClientOrIdentity) MergeClient(v Client) error {
 // AsIdentity returns the union data inside the ClientOrIdentity as a Identity
 func (t ClientOrIdentity) AsIdentity() (Identity, error) {
 	var body Identity
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromIdentity overwrites any union data inside the ClientOrIdentity as the provided Identity
 func (t *ClientOrIdentity) FromIdentity(v Identity) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeIdentity performs a merge with any union data inside the ClientOrIdentity, using the provided Identity
 func (t *ClientOrIdentity) MergeIdentity(v Identity) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -2622,7 +2674,7 @@ By default, `oapi-codegen` will generate everything from the specification.
 If you'd like to reduce what's generated, you can use one of a few options in [the configuration file](#usage) to tune the generation of the resulting output:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.1/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.8.2/configuration-schema.json
 output-options:
   include-tags: []
   exclude-tags: []

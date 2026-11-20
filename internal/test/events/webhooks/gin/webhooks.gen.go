@@ -6,13 +6,13 @@ package gin
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/oapi-codegen/runtime"
 )
 
 // Defines values for PetStatusEventStatus.
@@ -267,7 +267,7 @@ func (p *WebhookInitiator) PetStatusChanged(ctx context.Context, targetURL strin
 // NewPetStatusChangedWebhookRequest builds a application/json POST request for the petStatusChanged webhook
 func NewPetStatusChangedWebhookRequest(targetURL string, body PetStatusChangedJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}

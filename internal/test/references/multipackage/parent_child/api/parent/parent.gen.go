@@ -8,7 +8,6 @@ import (
 	"compress/flate"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
+	"github.com/oapi-codegen/runtime"
 )
 
 // Pet defines model for Pet.
@@ -96,7 +96,7 @@ type GetPets200JSONResponse Pet
 func (response GetPets200JSONResponse) VisitGetPetsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -112,8 +112,11 @@ type StrictServerInterface interface {
 	GetPets(ctx context.Context, request GetPetsRequestObject) (GetPetsResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx *gin.Context, request any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+// StrictHandlerFunc and StrictMiddlewareFunc are type aliases rather than
+// distinct named types, so middleware written against one generated package
+// can be shared with every other generated package using the same framework.
+type StrictHandlerFunc = func(ctx *gin.Context, request any) (any, error)
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictGinServerOptions struct {
 	// RequestErrorHandlerFunc is called when a request cannot be parsed or

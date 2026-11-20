@@ -341,6 +341,66 @@ paths:
 	assert.Contains(t, code, "roleName string")
 }
 
+func TestIdenticalXGoTypeNameSchemasWithOrigin(t *testing.T) {
+	// Regression test for https://github.com/oapi-codegen/oapi-codegen/issues/2599
+	// Two identical inline schemas with the same x-go-type-name must produce
+	// one type, even though IncludeOrigin records different source lines.
+	spec := `
+openapi: 3.0.3
+info:
+  title: repro
+  version: 1.0.0
+paths:
+  /clients:
+    post:
+      operationId: createClient
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateClientRequest'
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Client'
+components:
+  schemas:
+    Client:
+      type: object
+      properties:
+        product:
+          type: string
+          enum: [MANAGE, API]
+          x-go-type-name: Product
+    CreateClientRequest:
+      type: object
+      properties:
+        product:
+          type: string
+          enum: [MANAGE, API]
+          x-go-type-name: Product
+`
+	loader := openapi3.NewLoader()
+	loader.IncludeOrigin = true
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	opts := Configuration{
+		PackageName: "api",
+		Generate: GenerateOptions{
+			Client: true,
+			Models: true,
+		},
+	}
+
+	code, err := Generate(swagger, opts)
+	require.NoError(t, err)
+	assert.Equal(t, 1, strings.Count(code, "type Product string"), code)
+}
+
 // TestEnumConflictDetectionOrderIndependent checks that conflict detection
 // doesn't miss overlaps because an enum was already marked for prefixing.
 func TestEnumConflictDetectionOrderIndependent(t *testing.T) {
@@ -1000,6 +1060,43 @@ components:
 	assert.Contains(t, err.Error(), "is not a number or boolean literal")
 }
 
+// TestNonStringEnumNullValueHasNoConstant checks that null in a non-string
+// enum, which is how a nullable enum allows null, is skipped instead of being
+// emitted as the value <nil>, which is not a Go literal. See issue #2636.
+func TestNonStringEnumNullValueHasNoConstant(t *testing.T) {
+	spec := `openapi: "3.0.3"
+info:
+  title: t
+  version: "1.0"
+paths: {}
+components:
+  schemas:
+    Level:
+      type: integer
+      nullable: true
+      enum: [null, 1, 2]
+      x-enum-varnames: [None, Low, High]
+    Credits:
+      oneOf:
+        - type: number
+          enum: [0]
+        - type: number
+          minimum: 1
+          maximum: 1000
+        - type: number
+          nullable: true
+          enum: [null]
+`
+	opts := Configuration{PackageName: "api", Generate: GenerateOptions{Models: true}, OutputOptions: OutputOptions{SkipPrune: true}}
+
+	code := generateFromSpec(t, spec, opts)
+	assert.NotContains(t, code, "<nil>")
+	assert.Regexp(t, `Low\s+Level = 1`, code)
+	assert.Regexp(t, `High\s+Level = 2`, code)
+	assert.NotRegexp(t, `None\s+Level`, code)
+	assert.Contains(t, code, "type Credits2 float32")
+}
+
 // TestSecurityScopesAreQuotedIndividually checks that scopes are rendered with
 // strconv.Quote one by one. Joining raw values with `","` let a scope ending in
 // a backslash escape the quote the joiner supplied, so the next scope ran as Go.
@@ -1069,4 +1166,82 @@ paths:
 	// line in between, so that godoc and gopls render it.
 	assert.Contains(t, code,
 		"// Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.\ntype Unimplemented struct{}")
+}
+
+// TestImplicitDiscriminatorMappingKeyIsValidated checks that the name a $ref
+// variant is mapped under when the discriminator has no mapping for it is
+// validated like an explicit mapping key. It is written into the generated
+// union's switch, and the schema name it comes from may otherwise contain a
+// quote.
+func TestImplicitDiscriminatorMappingKeyIsValidated(t *testing.T) {
+	spec := `openapi: "3.0.0"
+info:
+  title: t
+  version: "1.0"
+paths: {}
+components:
+  schemas:
+    Cat:
+      type: object
+      properties:
+        petType: {type: string}
+    'Dog"Name':
+      type: object
+      properties:
+        petType: {type: string}
+    Pet:
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog"Name'
+      discriminator:
+        propertyName: petType
+`
+	opts := Configuration{PackageName: "api", Generate: GenerateOptions{Models: true}, OutputOptions: OutputOptions{SkipPrune: true}}
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	require.NoError(t, err)
+	_, err = Generate(swagger, opts)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `implicit discriminator mapping key for #/components/schemas/Dog"Name`)
+	assert.Contains(t, err.Error(), "double quote")
+
+	// A backslash would start an escape sequence in the generated
+	// `case "Dog\Name":` label, which does not compile.
+	swagger, err = openapi3.NewLoader().LoadFromData([]byte(strings.ReplaceAll(spec, `Dog"Name`, `Dog\Name`)))
+	require.NoError(t, err)
+	_, err = Generate(swagger, opts)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `implicit discriminator mapping key for #/components/schemas/Dog\Name`)
+	assert.Contains(t, err.Error(), "backslash")
+
+	// The allOf merge assembles the same union from a member holding the
+	// variants and another holding the discriminator.
+	split := strings.Replace(spec, `    Pet:
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog"Name'
+      discriminator:
+        propertyName: petType
+`, `    Pet:
+      allOf:
+        - oneOf:
+            - $ref: '#/components/schemas/Cat'
+            - $ref: '#/components/schemas/Dog"Name'
+        - discriminator:
+            propertyName: petType
+`, 1)
+	require.NotEqual(t, spec, split)
+	swagger, err = openapi3.NewLoader().LoadFromData([]byte(split))
+	require.NoError(t, err)
+	_, err = Generate(swagger, opts)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `implicit discriminator mapping key for #/components/schemas/Dog"Name in schema "Pet"`)
+
+	// The v1 merge generates each member on its own: the variants' member
+	// has no discriminator, so no key is derived and the document generates.
+	v1 := opts
+	v1.Compatibility.OldMergeSchemas = true
+	swagger, err = openapi3.NewLoader().LoadFromData([]byte(split))
+	require.NoError(t, err)
+	_, err = Generate(swagger, v1)
+	require.NoError(t, err)
 }

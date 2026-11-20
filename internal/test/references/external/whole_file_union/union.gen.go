@@ -77,20 +77,20 @@ type GetMixed200JSONResponseBody struct {
 // AsHolderMember0 returns the union data inside the Holder_Member as a HolderMember0
 func (t Holder_Member) AsHolderMember0() (HolderMember0, error) {
 	var body HolderMember0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromHolderMember0 overwrites any union data inside the Holder_Member as the provided HolderMember0
 func (t *Holder_Member) FromHolderMember0(v HolderMember0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeHolderMember0 performs a merge with any union data inside the Holder_Member, using the provided HolderMember0
 func (t *Holder_Member) MergeHolderMember0(v HolderMember0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -103,20 +103,20 @@ func (t *Holder_Member) MergeHolderMember0(v HolderMember0) error {
 // AsHolderMember1 returns the union data inside the Holder_Member as a HolderMember1
 func (t Holder_Member) AsHolderMember1() (HolderMember1, error) {
 	var body HolderMember1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromHolderMember1 overwrites any union data inside the Holder_Member as the provided HolderMember1
 func (t *Holder_Member) FromHolderMember1(v HolderMember1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeHolderMember1 performs a merge with any union data inside the Holder_Member, using the provided HolderMember1
 func (t *Holder_Member) MergeHolderMember1(v HolderMember1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -139,20 +139,20 @@ func (t *Holder_Member) UnmarshalJSON(b []byte) error {
 // AsItem0 returns the union data inside the Item as a Item0
 func (t Item) AsItem0() (Item0, error) {
 	var body Item0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromItem0 overwrites any union data inside the Item as the provided Item0
 func (t *Item) FromItem0(v Item0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeItem0 performs a merge with any union data inside the Item, using the provided Item0
 func (t *Item) MergeItem0(v Item0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -165,20 +165,20 @@ func (t *Item) MergeItem0(v Item0) error {
 // AsItem1 returns the union data inside the Item as a Item1
 func (t Item) AsItem1() (Item1, error) {
 	var body Item1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromItem1 overwrites any union data inside the Item as the provided Item1
 func (t *Item) FromItem1(v Item1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeItem1 performs a merge with any union data inside the Item, using the provided Item1
 func (t *Item) MergeItem1(v Item1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -201,20 +201,20 @@ func (t *Item) UnmarshalJSON(b []byte) error {
 // AsGetItems200JSONResponseBody0 returns the union data inside the GetItems200JSONResponseBody as a GetItems200JSONResponseBody0
 func (t GetItems200JSONResponseBody) AsGetItems200JSONResponseBody0() (GetItems200JSONResponseBody0, error) {
 	var body GetItems200JSONResponseBody0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromGetItems200JSONResponseBody0 overwrites any union data inside the GetItems200JSONResponseBody as the provided GetItems200JSONResponseBody0
 func (t *GetItems200JSONResponseBody) FromGetItems200JSONResponseBody0(v GetItems200JSONResponseBody0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeGetItems200JSONResponseBody0 performs a merge with any union data inside the GetItems200JSONResponseBody, using the provided GetItems200JSONResponseBody0
 func (t *GetItems200JSONResponseBody) MergeGetItems200JSONResponseBody0(v GetItems200JSONResponseBody0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -227,20 +227,20 @@ func (t *GetItems200JSONResponseBody) MergeGetItems200JSONResponseBody0(v GetIte
 // AsGetItems200JSONResponseBody1 returns the union data inside the GetItems200JSONResponseBody as a GetItems200JSONResponseBody1
 func (t GetItems200JSONResponseBody) AsGetItems200JSONResponseBody1() (GetItems200JSONResponseBody1, error) {
 	var body GetItems200JSONResponseBody1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromGetItems200JSONResponseBody1 overwrites any union data inside the GetItems200JSONResponseBody as the provided GetItems200JSONResponseBody1
 func (t *GetItems200JSONResponseBody) FromGetItems200JSONResponseBody1(v GetItems200JSONResponseBody1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeGetItems200JSONResponseBody1 performs a merge with any union data inside the GetItems200JSONResponseBody, using the provided GetItems200JSONResponseBody1
 func (t *GetItems200JSONResponseBody) MergeGetItems200JSONResponseBody1(v GetItems200JSONResponseBody1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -263,20 +263,20 @@ func (t *GetItems200JSONResponseBody) UnmarshalJSON(b []byte) error {
 // AsGetMixed200JSONResponseBody0 returns the union data inside the GetMixed200JSONResponseBody as a GetMixed200JSONResponseBody0
 func (t GetMixed200JSONResponseBody) AsGetMixed200JSONResponseBody0() (GetMixed200JSONResponseBody0, error) {
 	var body GetMixed200JSONResponseBody0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromGetMixed200JSONResponseBody0 overwrites any union data inside the GetMixed200JSONResponseBody as the provided GetMixed200JSONResponseBody0
 func (t *GetMixed200JSONResponseBody) FromGetMixed200JSONResponseBody0(v GetMixed200JSONResponseBody0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeGetMixed200JSONResponseBody0 performs a merge with any union data inside the GetMixed200JSONResponseBody, using the provided GetMixed200JSONResponseBody0
 func (t *GetMixed200JSONResponseBody) MergeGetMixed200JSONResponseBody0(v GetMixed200JSONResponseBody0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -289,20 +289,20 @@ func (t *GetMixed200JSONResponseBody) MergeGetMixed200JSONResponseBody0(v GetMix
 // AsGetMixed200JSONResponseBody1 returns the union data inside the GetMixed200JSONResponseBody as a GetMixed200JSONResponseBody1
 func (t GetMixed200JSONResponseBody) AsGetMixed200JSONResponseBody1() (GetMixed200JSONResponseBody1, error) {
 	var body GetMixed200JSONResponseBody1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromGetMixed200JSONResponseBody1 overwrites any union data inside the GetMixed200JSONResponseBody as the provided GetMixed200JSONResponseBody1
 func (t *GetMixed200JSONResponseBody) FromGetMixed200JSONResponseBody1(v GetMixed200JSONResponseBody1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeGetMixed200JSONResponseBody1 performs a merge with any union data inside the GetMixed200JSONResponseBody, using the provided GetMixed200JSONResponseBody1
 func (t *GetMixed200JSONResponseBody) MergeGetMixed200JSONResponseBody1(v GetMixed200JSONResponseBody1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}

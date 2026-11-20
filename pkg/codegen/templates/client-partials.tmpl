@@ -25,7 +25,7 @@ locals, which both call sites declare.
         {{end}}
         {{if .IsJson}}
         var headerParamBuf{{$paramIdx}} []byte
-        headerParamBuf{{$paramIdx}}, err = json.Marshal({{if .HasOptionalPointer}}*{{end}}params.{{.GoName}})
+        headerParamBuf{{$paramIdx}}, err = runtime.JSONMarshal({{if .HasOptionalPointer}}*{{end}}params.{{.GoName}})
         if err != nil {
             return nil, err
         }

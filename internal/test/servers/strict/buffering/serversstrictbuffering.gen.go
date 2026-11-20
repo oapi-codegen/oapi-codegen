@@ -8,7 +8,6 @@ package serversstrictbuffering
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -337,7 +336,7 @@ type JsonEndpoint200JSONResponse Response
 func (response JsonEndpoint200JSONResponse) VisitJsonEndpointResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -404,8 +403,11 @@ type StrictServerInterface interface {
 	TextEndpoint(ctx context.Context, request TextEndpointRequestObject) (TextEndpointResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+// StrictHandlerFunc and StrictMiddlewareFunc are type aliases rather than
+// distinct named types, so middleware written against one generated package
+// can be shared with every other generated package using the same framework.
+type StrictHandlerFunc = func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictHTTPServerOptions struct {
 	RequestErrorHandlerFunc  func(w http.ResponseWriter, r *http.Request, err error)

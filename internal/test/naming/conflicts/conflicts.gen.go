@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -29,6 +30,24 @@ type Bar2 struct {
 type CreateItemResponse struct {
 	Id   *string `json:"id,omitempty"`
 	Name *string `json:"name,omitempty"`
+}
+
+// FieldCollisions defines model for FieldCollisions.
+type FieldCollisions struct {
+	Extras           *FieldCollisionsWithExtras `json:"extras,omitempty"`
+	HostFqdn_cea8c90 *string                    `json:"host-fqdn,omitempty"`
+	HostFqdn_bcac5e8 *string                    `json:"host_fqdn,omitempty"`
+	HostFqdn2        *int                       `json:"host_fqdn2,omitempty"`
+	Zed_ce5c161      *string                    `json:"zed,omitempty"`
+	Zed              *int                       `json:"zzz,omitempty"`
+}
+
+// FieldCollisionsWithExtras defines model for FieldCollisionsWithExtras.
+type FieldCollisionsWithExtras struct {
+	AdditionalProperties_f923a6e *string           `json:"additionalProperties,omitempty"`
+	HostFqdn_cea8c90             *string           `json:"host-fqdn,omitempty"`
+	HostFqdn_bcac5e8             *string           `json:"host_fqdn,omitempty"`
+	AdditionalProperties         map[string]string `json:"-"`
 }
 
 // GetStatusResponse defines model for GetStatusResponse.
@@ -314,23 +333,121 @@ type PatchResourceApplicationMergePatchPlusJSONRequestBody = ResourceMVO
 // PostZapJSONRequestBody defines body for PostZap for application/json ContentType.
 type PostZapJSONRequestBody = Zap
 
+// Getter for additional properties for FieldCollisionsWithExtras. Returns the specified
+// element and whether it was found
+func (a FieldCollisionsWithExtras) Get(fieldName string) (value string, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for FieldCollisionsWithExtras
+func (a *FieldCollisionsWithExtras) Set(fieldName string, value string) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]string)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for FieldCollisionsWithExtras to handle AdditionalProperties
+func (a *FieldCollisionsWithExtras) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := runtime.JSONUnmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["additionalProperties"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.AdditionalProperties_f923a6e)
+		if err != nil {
+			return fmt.Errorf("error reading 'additionalProperties': %w", err)
+		}
+		delete(object, "additionalProperties")
+	}
+
+	if raw, found := object["host-fqdn"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.HostFqdn_cea8c90)
+		if err != nil {
+			return fmt.Errorf("error reading 'host-fqdn': %w", err)
+		}
+		delete(object, "host-fqdn")
+	}
+
+	if raw, found := object["host_fqdn"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.HostFqdn_bcac5e8)
+		if err != nil {
+			return fmt.Errorf("error reading 'host_fqdn': %w", err)
+		}
+		delete(object, "host_fqdn")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]string)
+		for fieldName, fieldBuf := range object {
+			var fieldVal string
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for FieldCollisionsWithExtras to handle AdditionalProperties
+func (a FieldCollisionsWithExtras) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AdditionalProperties_f923a6e != nil {
+		object["additionalProperties"], err = runtime.JSONMarshal(a.AdditionalProperties_f923a6e)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'additionalProperties': %w", err)
+		}
+	}
+
+	if a.HostFqdn_cea8c90 != nil {
+		object["host-fqdn"], err = runtime.JSONMarshal(a.HostFqdn_cea8c90)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'host-fqdn': %w", err)
+		}
+	}
+
+	if a.HostFqdn_bcac5e8 != nil {
+		object["host_fqdn"], err = runtime.JSONMarshal(a.HostFqdn_bcac5e8)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'host_fqdn': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = runtime.JSONMarshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return runtime.JSONMarshal(object)
+}
+
 // AsResource returns the union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON as a Resource
 func (t N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) AsResource() (Resource, error) {
 	var body Resource
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromResource overwrites any union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON as the provided Resource
 func (t *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) FromResource(v Resource) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeResource performs a merge with any union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON, using the provided Resource
 func (t *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) MergeResource(v Resource) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -343,20 +460,20 @@ func (t *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) MergeResour
 // AsN200ResourcePatchApplicationJSONPatchPlusJSON1 returns the union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON as a N200ResourcePatchApplicationJSONPatchPlusJSON1
 func (t N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) AsN200ResourcePatchApplicationJSONPatchPlusJSON1() (N200ResourcePatchApplicationJSONPatchPlusJSON1, error) {
 	var body N200ResourcePatchApplicationJSONPatchPlusJSON1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromN200ResourcePatchApplicationJSONPatchPlusJSON1 overwrites any union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON as the provided N200ResourcePatchApplicationJSONPatchPlusJSON1
 func (t *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) FromN200ResourcePatchApplicationJSONPatchPlusJSON1(v N200ResourcePatchApplicationJSONPatchPlusJSON1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeN200ResourcePatchApplicationJSONPatchPlusJSON1 performs a merge with any union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON, using the provided N200ResourcePatchApplicationJSONPatchPlusJSON1
 func (t *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) MergeN200ResourcePatchApplicationJSONPatchPlusJSON1(v N200ResourcePatchApplicationJSONPatchPlusJSON1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -369,20 +486,20 @@ func (t *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) MergeN200Re
 // AsN200ResourcePatchApplicationJSONPatchPlusJSON2 returns the union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON as a N200ResourcePatchApplicationJSONPatchPlusJSON2
 func (t N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) AsN200ResourcePatchApplicationJSONPatchPlusJSON2() (N200ResourcePatchApplicationJSONPatchPlusJSON2, error) {
 	var body N200ResourcePatchApplicationJSONPatchPlusJSON2
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromN200ResourcePatchApplicationJSONPatchPlusJSON2 overwrites any union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON as the provided N200ResourcePatchApplicationJSONPatchPlusJSON2
 func (t *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) FromN200ResourcePatchApplicationJSONPatchPlusJSON2(v N200ResourcePatchApplicationJSONPatchPlusJSON2) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeN200ResourcePatchApplicationJSONPatchPlusJSON2 performs a merge with any union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON, using the provided N200ResourcePatchApplicationJSONPatchPlusJSON2
 func (t *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) MergeN200ResourcePatchApplicationJSONPatchPlusJSON2(v N200ResourcePatchApplicationJSONPatchPlusJSON2) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -405,20 +522,20 @@ func (t *N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) UnmarshalJS
 // AsResource returns the union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON as a Resource
 func (t N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) AsResource() (Resource, error) {
 	var body Resource
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromResource overwrites any union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON as the provided Resource
 func (t *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) FromResource(v Resource) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeResource performs a merge with any union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON, using the provided Resource
 func (t *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) MergeResource(v Resource) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -431,20 +548,20 @@ func (t *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) MergeR
 // AsN200ResourcePatchApplicationJSONPatchQueryPlusJSON1 returns the union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON as a N200ResourcePatchApplicationJSONPatchQueryPlusJSON1
 func (t N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) AsN200ResourcePatchApplicationJSONPatchQueryPlusJSON1() (N200ResourcePatchApplicationJSONPatchQueryPlusJSON1, error) {
 	var body N200ResourcePatchApplicationJSONPatchQueryPlusJSON1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromN200ResourcePatchApplicationJSONPatchQueryPlusJSON1 overwrites any union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON as the provided N200ResourcePatchApplicationJSONPatchQueryPlusJSON1
 func (t *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) FromN200ResourcePatchApplicationJSONPatchQueryPlusJSON1(v N200ResourcePatchApplicationJSONPatchQueryPlusJSON1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeN200ResourcePatchApplicationJSONPatchQueryPlusJSON1 performs a merge with any union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON, using the provided N200ResourcePatchApplicationJSONPatchQueryPlusJSON1
 func (t *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) MergeN200ResourcePatchApplicationJSONPatchQueryPlusJSON1(v N200ResourcePatchApplicationJSONPatchQueryPlusJSON1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -457,20 +574,20 @@ func (t *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) MergeN
 // AsN200ResourcePatchApplicationJSONPatchQueryPlusJSON2 returns the union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON as a N200ResourcePatchApplicationJSONPatchQueryPlusJSON2
 func (t N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) AsN200ResourcePatchApplicationJSONPatchQueryPlusJSON2() (N200ResourcePatchApplicationJSONPatchQueryPlusJSON2, error) {
 	var body N200ResourcePatchApplicationJSONPatchQueryPlusJSON2
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromN200ResourcePatchApplicationJSONPatchQueryPlusJSON2 overwrites any union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON as the provided N200ResourcePatchApplicationJSONPatchQueryPlusJSON2
 func (t *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) FromN200ResourcePatchApplicationJSONPatchQueryPlusJSON2(v N200ResourcePatchApplicationJSONPatchQueryPlusJSON2) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeN200ResourcePatchApplicationJSONPatchQueryPlusJSON2 performs a merge with any union data inside the N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON, using the provided N200ResourcePatchApplicationJSONPatchQueryPlusJSON2
 func (t *N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON) MergeN200ResourcePatchApplicationJSONPatchQueryPlusJSON2(v N200ResourcePatchApplicationJSONPatchQueryPlusJSON2) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -566,6 +683,9 @@ type ClientInterface interface {
 
 	// ListEntities performs a GET /entities (the `ListEntities` operationId) request.
 	ListEntities(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetFieldCollisions performs a GET /field-collisions (the `GetFieldCollisions` operationId) request.
+	GetFieldCollisions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// PostFooWithBody performs a POST /foo (the `PostFoo` operationId) request,
 	// with any type of body and a specified content type.
@@ -693,6 +813,19 @@ type ClientInterface interface {
 // ListEntities performs a GET /entities (the `ListEntities` operationId) request.
 func (c *Client) ListEntities(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListEntitiesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetFieldCollisions performs a GET /field-collisions (the `GetFieldCollisions` operationId) request.
+func (c *Client) GetFieldCollisions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetFieldCollisionsRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -1172,10 +1305,37 @@ func NewListEntitiesRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewGetFieldCollisionsRequest constructs an http.Request for the GetFieldCollisions method
+func NewGetFieldCollisionsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := "/field-collisions"
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewPostFooRequest calls the generic PostFoo builder with application/json body
 func NewPostFooRequest(server string, params *PostFooParams, body PostFooJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1269,7 +1429,7 @@ func NewListItemsRequest(server string) (*http.Request, error) {
 // NewCreateItemRequest calls the generic CreateItem builder with application/json body
 func NewCreateItemRequest(server string, body CreateItemJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1309,7 +1469,7 @@ func NewCreateItemRequestWithBody(server string, contentType string, body io.Rea
 // NewCreateOrderRequest calls the generic CreateOrder builder with application/json body
 func NewCreateOrderRequest(server string, body CreateOrderJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1320,7 +1480,7 @@ func NewCreateOrderRequest(server string, body CreateOrderJSONRequestBody) (*htt
 // NewCreateOrderRequestWithApplicationJSONPatchPlusJSONBody calls the generic CreateOrder builder with application/json-patch+json body
 func NewCreateOrderRequestWithApplicationJSONPatchPlusJSONBody(server string, body CreateOrderApplicationJSONPatchPlusJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1331,7 +1491,7 @@ func NewCreateOrderRequestWithApplicationJSONPatchPlusJSONBody(server string, bo
 // NewCreateOrderRequestWithApplicationMergePatchPlusJSONBody calls the generic CreateOrder builder with application/merge-patch+json body
 func NewCreateOrderRequestWithApplicationMergePatchPlusJSONBody(server string, body CreateOrderApplicationMergePatchPlusJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1398,7 +1558,7 @@ func NewGetOutcomeRequest(server string) (*http.Request, error) {
 // NewPostOutcomeRequest calls the generic PostOutcome builder with application/json body
 func NewPostOutcomeRequest(server string, body PostOutcomeJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1438,7 +1598,7 @@ func NewPostOutcomeRequestWithBody(server string, contentType string, body io.Re
 // NewSendPayloadRequest calls the generic SendPayload builder with application/json body
 func NewSendPayloadRequest(server string, body SendPayloadJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1478,7 +1638,7 @@ func NewSendPayloadRequestWithBody(server string, contentType string, body io.Re
 // NewCreatePetRequest calls the generic CreatePet builder with application/json body
 func NewCreatePetRequest(server string, body CreatePetJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1518,7 +1678,7 @@ func NewCreatePetRequestWithBody(server string, contentType string, body io.Read
 // NewQueryRequest calls the generic Query builder with application/json body
 func NewQueryRequest(server string, body QueryJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1585,7 +1745,7 @@ func NewGetQuxRequest(server string) (*http.Request, error) {
 // NewPostQuxRequest calls the generic PostQux builder with application/json body
 func NewPostQuxRequest(server string, body PostQuxJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1652,7 +1812,7 @@ func NewGetRenamedSchemaRequest(server string) (*http.Request, error) {
 // NewPostRenamedSchemaRequest calls the generic PostRenamedSchema builder with application/json body
 func NewPostRenamedSchemaRequest(server string, body PostRenamedSchemaJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1692,7 +1852,7 @@ func NewPostRenamedSchemaRequestWithBody(server string, contentType string, body
 // NewPatchResourceRequest calls the generic PatchResource builder with application/json body
 func NewPatchResourceRequest(server string, id string, body PatchResourceJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1703,7 +1863,7 @@ func NewPatchResourceRequest(server string, id string, body PatchResourceJSONReq
 // NewPatchResourceRequestWithApplicationJSONPatchPlusJSONBody calls the generic PatchResource builder with application/json-patch+json body
 func NewPatchResourceRequestWithApplicationJSONPatchPlusJSONBody(server string, id string, body PatchResourceApplicationJSONPatchPlusJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1714,7 +1874,7 @@ func NewPatchResourceRequestWithApplicationJSONPatchPlusJSONBody(server string, 
 // NewPatchResourceRequestWithApplicationMergePatchPlusJSONBody calls the generic PatchResource builder with application/merge-patch+json body
 func NewPatchResourceRequestWithApplicationMergePatchPlusJSONBody(server string, id string, body PatchResourceApplicationMergePatchPlusJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1815,7 +1975,7 @@ func NewGetZapRequest(server string) (*http.Request, error) {
 // NewPostZapRequest calls the generic PostZap builder with application/json body
 func NewPostZapRequest(server string, body PostZapJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -1900,6 +2060,11 @@ type ClientWithResponsesInterface interface {
 	//
 	// Returns a wrapper object for the known response body format(s).
 	ListEntitiesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListEntitiesResponse, error)
+
+	// GetFieldCollisionsWithResponse performs a GET /field-collisions (the `GetFieldCollisions` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	GetFieldCollisionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetFieldCollisionsResponse, error)
 
 	// PostFooWithBodyWithResponse performs a POST /foo (the `PostFoo` operationId) request,
 	// with any type of body and a specified content type.
@@ -2099,6 +2264,47 @@ func (r ListEntitiesResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r ListEntitiesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetFieldCollisionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *FieldCollisions
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetFieldCollisionsResponse) GetJSON200() *FieldCollisions {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes
+func (r GetFieldCollisionsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetFieldCollisionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetFieldCollisionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetFieldCollisionsResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -2813,6 +3019,17 @@ func (c *ClientWithResponses) ListEntitiesWithResponse(ctx context.Context, reqE
 	return ParseListEntitiesResponse(rsp)
 }
 
+// GetFieldCollisionsWithResponse performs a GET /field-collisions (the `GetFieldCollisions` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) GetFieldCollisionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetFieldCollisionsResponse, error) {
+	rsp, err := c.GetFieldCollisions(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetFieldCollisionsResponse(rsp)
+}
+
 // PostFooWithBodyWithResponse performs a POST /foo (the `PostFoo` operationId) request,
 // with any type of body and a specified content type.
 //
@@ -3180,7 +3397,33 @@ func ParseListEntitiesResponse(rsp *http.Response) (*ListEntitiesResponse, error
 			Data     *[]Widget `json:"data,omitempty"`
 			Metadata *Metadata `json:"metadata,omitempty"`
 		}
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetFieldCollisionsResponse parses an HTTP response from a GetFieldCollisionsWithResponse call
+func ParseGetFieldCollisionsResponse(rsp *http.Response) (*GetFieldCollisionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetFieldCollisionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest FieldCollisions
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3206,7 +3449,7 @@ func ParsePostFooResponse(rsp *http.Response) (*PostFooResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest BarResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3245,7 +3488,7 @@ func ParseListItemsResponse2(rsp *http.Response) (*ListItemsResponse2, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ListItemsResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3271,7 +3514,7 @@ func ParseCreateItemResponse2(rsp *http.Response) (*CreateItemResponse2, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest CreateItemResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3297,7 +3540,7 @@ func ParseCreateOrderResponse(rsp *http.Response) (*CreateOrderResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Order
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3323,7 +3566,7 @@ func ParseGetOutcomeResponse(rsp *http.Response) (*GetOutcomeResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest OutcomeResult
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3365,7 +3608,7 @@ func ParseSendPayloadResponse(rsp *http.Response) (*SendPayloadResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Payload
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3391,7 +3634,7 @@ func ParseCreatePetResponse(rsp *http.Response) (*CreatePetResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Pet
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3417,7 +3660,7 @@ func ParseQueryResponse2(rsp *http.Response) (*QueryResponse2, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest QueryResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3443,7 +3686,7 @@ func ParseGetQuxResponse(rsp *http.Response) (*GetQuxResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest QuxResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3485,7 +3728,7 @@ func ParseGetRenamedSchemaResponse(rsp *http.Response) (*GetRenamedSchemaRespons
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Renamer
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3527,28 +3770,28 @@ func ParsePatchResourceResponse(rsp *http.Response) (*PatchResourceResponse, err
 	switch {
 	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 200:
 		var dest N200ResourcePatchResponseJSONApplicationJSON
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/json-patch+json" && rsp.StatusCode == 200:
 		var dest N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationjsonPatchJSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/json-patch-query+json" && rsp.StatusCode == 200:
 		var dest N200ResourcePatchResponseJSON3ApplicationJSONPatchQueryPlusJSON
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationjsonPatchQueryJSON200 = &dest
 
 	case rsp.Header.Get("Content-Type") == "application/merge-patch+json" && rsp.StatusCode == 200:
 		var dest N200ResourcePatchResponseJSON4ApplicationMergePatchPlusJSON
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.ApplicationmergePatchJSON200 = &dest
@@ -3574,7 +3817,7 @@ func ParseGetStatusResponse2(rsp *http.Response) (*GetStatusResponse2, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest GetStatusResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest
@@ -3600,7 +3843,7 @@ func ParseGetZapResponse(rsp *http.Response) (*GetZapResponse, error) {
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest ZapResponse
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON200 = &dest

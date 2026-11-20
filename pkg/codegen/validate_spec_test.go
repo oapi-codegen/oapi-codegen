@@ -363,3 +363,294 @@ func TestValidateServerURLs(t *testing.T) {
 		require.NoError(t, ValidateSpec(spec))
 	})
 }
+
+func TestValidateSpec_ImplicitDiscriminatorMappingKey(t *testing.T) {
+	// A $ref variant that the mapping does not name is mapped under the last
+	// segment of its ref, and that key is written into the generated union's
+	// switch like an explicit mapping key, so it is checked like one. Quotes
+	// are otherwise allowed in a schema name (see
+	// TestValidateSpec_ComponentNamesWithControlCharacters), and a ref into
+	// another document names a schema this document never defines.
+	str := &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}}
+	variant := func() *openapi3.SchemaRef {
+		return &openapi3.SchemaRef{Value: &openapi3.Schema{
+			Type:       &openapi3.Types{"object"},
+			Properties: openapi3.Schemas{"petType": str},
+		}}
+	}
+	union := func(discriminator *openapi3.Discriminator, refs ...string) *openapi3.Schema {
+		s := &openapi3.Schema{Discriminator: discriminator}
+		for _, ref := range refs {
+			s.OneOf = append(s.OneOf, &openapi3.SchemaRef{Ref: ref, Value: variant().Value})
+		}
+		return s
+	}
+	spec := func(schemas openapi3.Schemas) *openapi3.T {
+		return &openapi3.T{OpenAPI: "3.0.3", Info: &openapi3.Info{Title: "t", Version: "0"},
+			Components: &openapi3.Components{Schemas: schemas}}
+	}
+
+	t.Run("local ref with a quote in the schema name", func(t *testing.T) {
+		name := `Dog"Name`
+		err := ValidateSpec(spec(openapi3.Schemas{
+			"Cat": variant(),
+			name:  variant(),
+			"Pet": {Value: union(&openapi3.Discriminator{PropertyName: "petType"},
+				"#/components/schemas/Cat", "#/components/schemas/"+name)},
+		}))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "implicit discriminator mapping key")
+		assert.Contains(t, err.Error(), "double quote")
+	})
+
+	t.Run("local ref with a backtick in the schema name, anyOf", func(t *testing.T) {
+		name := "Dog`Name"
+		s := union(&openapi3.Discriminator{PropertyName: "petType"})
+		s.AnyOf = []*openapi3.SchemaRef{{Ref: "#/components/schemas/" + name, Value: variant().Value}}
+		err := ValidateSpec(spec(openapi3.Schemas{name: variant(), "Pet": {Value: s}}))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "implicit discriminator mapping key")
+		assert.Contains(t, err.Error(), "backtick")
+	})
+
+	t.Run("external ref names a schema this document does not define", func(t *testing.T) {
+		err := ValidateSpec(spec(openapi3.Schemas{
+			"Pet": {Value: union(&openapi3.Discriminator{PropertyName: "petType"},
+				`other.yaml#/components/schemas/Dog"Name`)},
+		}))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "implicit discriminator mapping key")
+	})
+
+	t.Run("local ref with a backslash in the schema name", func(t *testing.T) {
+		// A backslash starts an escape sequence in the `case "..."` label.
+		name := `Dog\Name`
+		err := ValidateSpec(spec(openapi3.Schemas{
+			name:  variant(),
+			"Pet": {Value: union(&openapi3.Discriminator{PropertyName: "petType"}, "#/components/schemas/"+name)},
+		}))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "implicit discriminator mapping key")
+		assert.Contains(t, err.Error(), "backslash")
+	})
+
+	t.Run("explicit mapping key with a backslash", func(t *testing.T) {
+		d := &openapi3.Discriminator{PropertyName: "petType", Mapping: map[string]openapi3.MappingRef{
+			`dog\x`: {Ref: "#/components/schemas/Cat"},
+		}}
+		err := ValidateSpec(spec(openapi3.Schemas{"Cat": variant(), "Pet": {Value: union(d, "#/components/schemas/Cat")}}))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "discriminator mapping key")
+		assert.Contains(t, err.Error(), "backslash")
+	})
+
+	t.Run("null branch is a nullability marker, not a key", func(t *testing.T) {
+		// The union generators skip a null-typed branch before mapping, so
+		// its name never reaches the generated code (OpenAPI 3.1).
+		name := `Null"Value`
+		null := &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"null"}}}
+		s := union(&openapi3.Discriminator{PropertyName: "petType"}, "#/components/schemas/Cat")
+		s.OneOf = append(s.OneOf, &openapi3.SchemaRef{Ref: "#/components/schemas/" + name, Value: null.Value})
+		require.NoError(t, ValidateSpec(spec(openapi3.Schemas{"Cat": variant(), name: null, "Pet": {Value: s}})))
+	})
+
+	// The allOf merge concatenates the members' oneOf lists and lets the one
+	// member with a discriminator govern the result, so the implicit keys of
+	// a union split across members are checked on the merged view.
+	name := `Dog"Name`
+	variantsMember := func() *openapi3.SchemaRef {
+		return &openapi3.SchemaRef{Value: union(nil, "#/components/schemas/Cat", "#/components/schemas/"+name)}
+	}
+	discriminatorMember := func(mapping map[string]openapi3.MappingRef) *openapi3.SchemaRef {
+		return &openapi3.SchemaRef{Value: &openapi3.Schema{Discriminator: &openapi3.Discriminator{PropertyName: "petType", Mapping: mapping}}}
+	}
+	components := func(pet *openapi3.Schema) openapi3.Schemas {
+		return openapi3.Schemas{"Cat": variant(), name: variant(), "Pet": {Value: pet}}
+	}
+	requireImplicitKeyError := func(t *testing.T, err error) {
+		t.Helper()
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `implicit discriminator mapping key for #/components/schemas/Dog"Name in schema "Pet"`)
+		assert.Contains(t, err.Error(), "double quote")
+	}
+
+	t.Run("allOf: variants in one member, discriminator in another", func(t *testing.T) {
+		pet := &openapi3.Schema{AllOf: []*openapi3.SchemaRef{variantsMember(), discriminatorMember(nil)}}
+		requireImplicitKeyError(t, ValidateSpec(spec(components(pet))))
+	})
+
+	t.Run("allOf: discriminator on the schema, variants in a member", func(t *testing.T) {
+		pet := &openapi3.Schema{
+			Discriminator: &openapi3.Discriminator{PropertyName: "petType"},
+			AllOf:         []*openapi3.SchemaRef{variantsMember()},
+		}
+		requireImplicitKeyError(t, ValidateSpec(spec(components(pet))))
+	})
+
+	t.Run("allOf: variants behind a $ref member, nested allOf", func(t *testing.T) {
+		// The merge resolves $ref members and flattens nested allOf, so the
+		// variants are found through both.
+		schemas := components(nil)
+		schemas["Variants"] = variantsMember()
+		schemas["Pet"] = &openapi3.SchemaRef{Value: &openapi3.Schema{AllOf: []*openapi3.SchemaRef{
+			{Value: &openapi3.Schema{AllOf: []*openapi3.SchemaRef{{Ref: "#/components/schemas/Variants", Value: schemas["Variants"].Value}}}},
+			discriminatorMember(nil),
+		}}}
+		requireImplicitKeyError(t, ValidateSpec(spec(schemas)))
+	})
+
+	t.Run("allOf: the discriminator member maps the ref explicitly", func(t *testing.T) {
+		mapping := map[string]openapi3.MappingRef{"dog": {Ref: "#/components/schemas/" + name}}
+		pet := &openapi3.Schema{AllOf: []*openapi3.SchemaRef{variantsMember(), discriminatorMember(mapping)}}
+		require.NoError(t, ValidateSpec(spec(components(pet))))
+	})
+
+	t.Run("allOf: no discriminator anywhere", func(t *testing.T) {
+		pet := &openapi3.Schema{AllOf: []*openapi3.SchemaRef{variantsMember(), {Value: &openapi3.Schema{Type: &openapi3.Types{"object"}}}}}
+		require.NoError(t, ValidateSpec(spec(components(pet))))
+	})
+
+	t.Run("allOf: the v1 merge generates each member on its own", func(t *testing.T) {
+		// Under old-merge-schemas the members are not combined, so the member
+		// with the variants has no discriminator and no key is derived. A
+		// member whose own oneOf and discriminator sit together is still a
+		// discriminated union. Generate selects this through validateSpec;
+		// the public ValidateSpec always assumes the default merge.
+		pet := &openapi3.Schema{AllOf: []*openapi3.SchemaRef{variantsMember(), discriminatorMember(nil)}}
+		require.NoError(t, validateSpec(spec(components(pet)), false))
+		requireImplicitKeyError(t, ValidateSpec(spec(components(pet))))
+
+		pet = &openapi3.Schema{AllOf: []*openapi3.SchemaRef{
+			{Value: union(&openapi3.Discriminator{PropertyName: "petType"}, "#/components/schemas/Cat", "#/components/schemas/"+name)},
+		}}
+		err := validateSpec(spec(components(pet)), false)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `implicit discriminator mapping key for #/components/schemas/Dog"Name in allOf[0] in schema "Pet"`)
+	})
+
+	t.Run("allOf: a composition that refers back to itself ends", func(t *testing.T) {
+		pet := &openapi3.Schema{AllOf: []*openapi3.SchemaRef{discriminatorMember(nil)}}
+		pet.AllOf = append(pet.AllOf, &openapi3.SchemaRef{Ref: "#/components/schemas/Pet", Value: pet})
+		require.NoError(t, ValidateSpec(spec(components(pet))))
+	})
+
+	t.Run("explicitly mapped ref uses the mapping key instead", func(t *testing.T) {
+		name := `Dog"Name`
+		d := &openapi3.Discriminator{PropertyName: "petType", Mapping: map[string]openapi3.MappingRef{
+			"dog": {Ref: "#/components/schemas/" + name},
+		}}
+		require.NoError(t, ValidateSpec(spec(openapi3.Schemas{
+			name:  variant(),
+			"Pet": {Value: union(d, "#/components/schemas/"+name)},
+		})))
+	})
+
+	t.Run("no discriminator, nothing to map", func(t *testing.T) {
+		name := `Dog"Name`
+		require.NoError(t, ValidateSpec(spec(openapi3.Schemas{
+			name:  variant(),
+			"Pet": {Value: union(nil, "#/components/schemas/"+name)},
+		})))
+	})
+}
+
+func TestValidateSpec_WholeDocumentRefIsWalked(t *testing.T) {
+	// A $ref without a fragment ("./other.yaml") is inlined by code generation,
+	// so the document it points at reaches the generated source and is walked.
+	// A ref with a fragment is not: it is a type reference.
+	str := &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}}
+	badName := "a`b"
+	external := &openapi3.Schema{
+		Type:       &openapi3.Types{"object"},
+		Properties: openapi3.Schemas{badName: str},
+	}
+	container := func(ref string) openapi3.Schemas {
+		return openapi3.Schemas{"Container": {Value: &openapi3.Schema{
+			Type:       &openapi3.Types{"object"},
+			Properties: openapi3.Schemas{"ext": {Ref: ref, Value: external}},
+		}}}
+	}
+	spec := func(components *openapi3.Components) *openapi3.T {
+		return &openapi3.T{OpenAPI: "3.0.3", Info: &openapi3.Info{Title: "t", Version: "0"}, Components: components}
+	}
+
+	t.Run("schema", func(t *testing.T) {
+		err := ValidateSpec(spec(&openapi3.Components{Schemas: container("./evil.json")}))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "property name")
+		assert.Contains(t, err.Error(), "backtick")
+		assert.Contains(t, err.Error(), `property "ext"`)
+	})
+
+	t.Run("x-go-type replaces the document, so it is not walked", func(t *testing.T) {
+		// generateGoSchema returns the override before reading the document,
+		// whether the extension sits next to the $ref or at the document's root.
+		schemas := container("./evil.json")
+		schemas["Container"].Value.Properties["ext"].Extensions = map[string]any{"x-go-type": "string"}
+		require.NoError(t, ValidateSpec(spec(&openapi3.Components{Schemas: schemas})))
+
+		rooted := &openapi3.Schema{
+			Type:       &openapi3.Types{"object"},
+			Properties: openapi3.Schemas{badName: str},
+			Extensions: map[string]any{"x-go-type": "string"},
+		}
+		schemas = openapi3.Schemas{"Container": {Value: &openapi3.Schema{
+			Type:       &openapi3.Types{"object"},
+			Properties: openapi3.Schemas{"ext": {Ref: "./evil.json", Value: rooted}},
+		}}}
+		require.NoError(t, ValidateSpec(spec(&openapi3.Components{Schemas: schemas})))
+
+		// The override itself is still checked.
+		rooted.Extensions["x-go-type"] = "string; func init() {}"
+		err := ValidateSpec(spec(&openapi3.Components{Schemas: schemas}))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "x-go-type")
+	})
+
+	t.Run("a document replaced by x-go-type in one place is inlined in another", func(t *testing.T) {
+		// The loader hands every ref to the same document the same value. The
+		// ref with the override, walked first, must not mark the document as
+		// visited, or the ref without it is never checked.
+		schemas := openapi3.Schemas{"Container": {Value: &openapi3.Schema{
+			Type: &openapi3.Types{"object"},
+			Properties: openapi3.Schemas{
+				"a": {Ref: "./evil.json", Value: external, Extensions: map[string]any{"x-go-type": "string"}},
+				"b": {Ref: "./evil.json", Value: external},
+			},
+		}}}
+		err := ValidateSpec(spec(&openapi3.Components{Schemas: schemas}))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), `property "b"`)
+		assert.Contains(t, err.Error(), "backtick")
+	})
+
+	t.Run("fragment ref is a type reference and is not walked", func(t *testing.T) {
+		require.NoError(t, ValidateSpec(spec(&openapi3.Components{Schemas: container("other.yaml#/components/schemas/X")})))
+		require.NoError(t, ValidateSpec(spec(&openapi3.Components{Schemas: container("#/components/schemas/X")})))
+	})
+
+	t.Run("parameter", func(t *testing.T) {
+		err := ValidateSpec(spec(&openapi3.Components{Parameters: openapi3.ParametersMap{
+			"P": {Ref: "./param.yaml", Value: &openapi3.Parameter{Name: badName, In: "query", Schema: str}},
+		}}))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "parameter name")
+	})
+
+	t.Run("response", func(t *testing.T) {
+		desc := "d"
+		err := ValidateSpec(spec(&openapi3.Components{Responses: openapi3.ResponseBodies{
+			"R": {Ref: "./resp.yaml", Value: &openapi3.Response{Description: &desc, Headers: openapi3.Headers{badName: {Value: &openapi3.Header{}}}}},
+		}}))
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "response header name")
+	})
+
+	t.Run("documents referring to each other end", func(t *testing.T) {
+		a := &openapi3.Schema{Type: &openapi3.Types{"object"}, Properties: openapi3.Schemas{}}
+		b := &openapi3.Schema{Type: &openapi3.Types{"object"}, Properties: openapi3.Schemas{}}
+		a.Properties["b"] = &openapi3.SchemaRef{Ref: "./b.yaml", Value: b}
+		b.Properties["a"] = &openapi3.SchemaRef{Ref: "./a.yaml", Value: a}
+		require.NoError(t, ValidateSpec(spec(&openapi3.Components{Schemas: openapi3.Schemas{"A": {Value: a}}})))
+	})
+}

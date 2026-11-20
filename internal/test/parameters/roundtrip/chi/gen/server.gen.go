@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"compress/flate"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -269,7 +268,7 @@ func (siw *ServerInterfaceWrapper) GetContentObject(w http.ResponseWriter, r *ht
 	// ------------- Path parameter "param" -------------
 	var param ComplexObject
 
-	err = json.Unmarshal([]byte(chi.URLParam(r, "param")), &param)
+	err = runtime.JSONUnmarshal([]byte(chi.URLParam(r, "param")), &param)
 	if err != nil {
 		siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "param", Err: err})
 		return
@@ -398,7 +397,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(w http.ResponseWriter, r *http.Requ
 				return
 			}
 
-			err = json.Unmarshal([]byte(decoded), &value)
+			err = runtime.JSONUnmarshal([]byte(decoded), &value)
 			if err != nil {
 				siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "co", Err: err})
 				return
@@ -602,7 +601,7 @@ func (siw *ServerInterfaceWrapper) GetHeader(w http.ResponseWriter, r *http.Requ
 			return
 		}
 
-		err = json.Unmarshal([]byte(valueList[0]), &XComplexObject)
+		err = runtime.JSONUnmarshal([]byte(valueList[0]), &XComplexObject)
 		if err != nil {
 			siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "X-Complex-Object", Err: err})
 			return
@@ -1175,7 +1174,7 @@ func (siw *ServerInterfaceWrapper) GetQueryForm(w http.ResponseWriter, r *http.R
 	if paramValue := r.URL.Query().Get("co"); paramValue != "" {
 
 		var value ComplexObject
-		err = json.Unmarshal([]byte(paramValue), &value)
+		err = runtime.JSONUnmarshal([]byte(paramValue), &value)
 		if err != nil {
 			siw.ErrorHandlerFunc(w, r, &UnmarshalingParamError{ParamName: "co", Err: err})
 			return

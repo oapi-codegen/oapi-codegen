@@ -173,7 +173,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			case slices.Contains(contentTypesJSON, contentTypeName) || util.IsMediaTypeJson(contentTypeName):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
-						"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+						"if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil { \n"+
 						" return nil, err \n"+
 						"}\n"+
 						"response.%s = &dest",
@@ -429,6 +429,45 @@ func httpMethodConstant(method string) string {
 	}
 }
 
+// isCustomHTTPMethod reports whether method is one of the OpenAPI 3.2
+// additions to the path item: the fixed `query` field (HTTP QUERY) or any
+// key under `additionalOperations`. The OpenAPI 3.0/3.1 methods all have
+// dedicated registration shortcuts on every supported router
+// (router.Get(...), router.GET(...)), whereas these need the router's
+// generic string-method registration (chi.MethodFunc, echo.Add,
+// gin.Handle, fiber.Add, iris.Handle). net/http and gorilla/mux take the
+// method as a string either way.
+func isCustomHTTPMethod(method string) bool {
+	switch method {
+	case "GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "CONNECT", "OPTIONS", "TRACE":
+		return false
+	default:
+		return true
+	}
+}
+
+// customHTTPMethods returns the distinct custom HTTP methods (see
+// isCustomHTTPMethod) used by ops, sorted, so router templates can emit
+// one-time setup per method (e.g. chi.RegisterMethod) before registering
+// routes. Returns nil when the spec uses only standard methods, so the
+// generated code for existing specs does not change.
+func customHTTPMethods(ops []OperationDefinition) []string {
+	seen := map[string]struct{}{}
+	var methods []string
+	for _, op := range ops {
+		if !isCustomHTTPMethod(op.Method) {
+			continue
+		}
+		if _, ok := seen[op.Method]; ok {
+			continue
+		}
+		seen[op.Method] = struct{}{}
+		methods = append(methods, op.Method)
+	}
+	slices.Sort(methods)
+	return methods
+}
+
 // unionTypesFragment renders the Types field of a runtime bind-options
 // literal for an OpenAPI 3.1 multi-type union parameter, e.g.
 // `, Types: []string{"string", "integer"}`. It returns "" for the empty
@@ -500,6 +539,8 @@ var TemplateFunctions = template.FuncMap{
 	"getResponseTypeDefinitions": getResponseTypeDefinitions,
 	"toStringArray":              toStringArray,
 	"lower":                      strings.ToLower,
+	"hasPrefix":                  strings.HasPrefix,
+	"hasSuffix":                  strings.HasSuffix,
 	"title":                      titleCaser.String,
 	"stripNewLines":              stripNewLines,
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
@@ -511,4 +552,6 @@ var TemplateFunctions = template.FuncMap{
 
 	"genServerURLWithVariablesFunctionParams": genServerURLWithVariablesFunctionParams,
 	"httpMethodConstant":                      httpMethodConstant,
+	"isCustomHTTPMethod":                      isCustomHTTPMethod,
+	"customHTTPMethods":                       customHTTPMethods,
 }

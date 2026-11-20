@@ -213,7 +213,7 @@ func Generate(spec *openapi3.T, opts Configuration) (string, error) {
 	// (names, media types, enum values, extension hints containing quotes,
 	// backticks, or control characters). Run after filtering/pruning so only
 	// values that will actually be emitted are considered.
-	if err := ValidateSpec(spec); err != nil {
+	if err := validateSpec(spec, allOfMergesUnions()); err != nil {
 		return "", err
 	}
 	if opts.Generate.StdHTTPServer {

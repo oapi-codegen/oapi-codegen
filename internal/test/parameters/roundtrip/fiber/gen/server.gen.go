@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"compress/flate"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -130,7 +129,7 @@ func (siw *ServerInterfaceWrapper) GetContentObject(c *fiber.Ctx) error {
 		if decErr != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unescaping path parameter 'param': %w", decErr).Error())
 		}
-		err = json.Unmarshal([]byte(paramValue), &param)
+		err = runtime.JSONUnmarshal([]byte(paramValue), &param)
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter 'param' as JSON: %w", err).Error())
 		}
@@ -255,7 +254,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(c *fiber.Ctx) error {
 				return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unescaping cookie parameter 'co': %w", err).Error())
 			}
 
-			err = json.Unmarshal([]byte(decoded), &value)
+			err = runtime.JSONUnmarshal([]byte(decoded), &value)
 			if err != nil {
 				return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter 'co' as JSON: %w", err).Error())
 			}
@@ -452,7 +451,7 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Complex-Object, 1 is required, but %d found", n))
 		}
 
-		err = json.Unmarshal([]byte(valueList[0]), &XComplexObject)
+		err = runtime.JSONUnmarshal([]byte(valueList[0]), &XComplexObject)
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter 'X-Complex-Object' as JSON: %w", err).Error())
 		}
@@ -1034,7 +1033,7 @@ func (siw *ServerInterfaceWrapper) GetQueryForm(c *fiber.Ctx) error {
 	if paramValue := c.Query("co"); paramValue != "" {
 
 		var value ComplexObject
-		err = json.Unmarshal([]byte(paramValue), &value)
+		err = runtime.JSONUnmarshal([]byte(paramValue), &value)
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter 'co' as JSON: %w", err).Error())
 		}
