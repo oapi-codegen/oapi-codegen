@@ -912,18 +912,39 @@ func SanitizeEnumNames(enumNames, enumValues []string) map[string]string {
 		dupCheck[n] = 0
 	}
 
+	sanitizedNames := make([]string, len(deDup))
+	reserved := make(map[string]struct{}, len(deDup))
+	for i, p := range deDup {
+		sanitizedNames[i] = SanitizeGoIdentity(SchemaNameToTypeName(p[0]))
+		reserved[sanitizedNames[i]] = struct{}{}
+	}
+
 	dupCheck = make(map[string]int, len(deDup))
 	sanitizedDeDup := make(map[string]string, len(deDup))
 
-	for _, p := range deDup {
-		n, v := p[0], p[1]
-		sanitized := SanitizeGoIdentity(SchemaNameToTypeName(n))
+	for i, p := range deDup {
+		v := p[1]
+		sanitized := sanitizedNames[i]
 
 		if _, dup := dupCheck[sanitized]; !dup {
 			sanitizedDeDup[sanitized] = v
-		} else {
-			sanitizedDeDup[sanitized+strconv.Itoa(dupCheck[sanitized])] = v
+			dupCheck[sanitized] = 1
+			continue
 		}
+
+		// Append a numeric suffix, skipping any name another value already
+		// owns so that a suffixed name never overwrites a different value.
+		candidate := sanitized + strconv.Itoa(dupCheck[sanitized])
+		for {
+			_, isReserved := reserved[candidate]
+			_, isUsed := sanitizedDeDup[candidate]
+			if !isReserved && !isUsed {
+				break
+			}
+			dupCheck[sanitized]++
+			candidate = sanitized + strconv.Itoa(dupCheck[sanitized])
+		}
+		sanitizedDeDup[candidate] = v
 		dupCheck[sanitized]++
 	}
 
