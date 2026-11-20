@@ -128,3 +128,45 @@ func TestFilterOperationsByOperationID(t *testing.T) {
 		assert.NotContains(t, code, `"/cat"`)
 	})
 }
+
+func TestFilterRemovesPathsWithNoOperationsLeft(t *testing.T) {
+	const spec = `
+openapi: 3.0.3
+info:
+  title: filter
+  version: "1"
+paths:
+  /kept:
+    get:
+      operationId: getKept
+      tags: [kept]
+      responses:
+        "200":
+          description: ok
+  /dropped:
+    get:
+      operationId: getDropped
+      tags: [dropped]
+      responses:
+        "200":
+          description: ok
+`
+	load := func(t *testing.T) *openapi3.T {
+		t.Helper()
+		swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+		assert.NoError(t, err)
+		return swagger
+	}
+
+	t.Run("by tag", func(t *testing.T) {
+		swagger := load(t)
+		filterOperationsByTag(swagger, Configuration{OutputOptions: OutputOptions{IncludeTags: []string{"kept"}}})
+		assert.Equal(t, []string{"/kept"}, swagger.Paths.Keys())
+	})
+
+	t.Run("by operation id", func(t *testing.T) {
+		swagger := load(t)
+		filterOperationsByOperationID(swagger, Configuration{OutputOptions: OutputOptions{ExcludeOperationIDs: []string{"getDropped"}}})
+		assert.Equal(t, []string{"/kept"}, swagger.Paths.Keys())
+	})
+}
