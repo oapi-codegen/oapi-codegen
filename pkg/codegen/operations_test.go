@@ -271,73 +271,82 @@ func TestDeprecationComment(t *testing.T) {
 	}
 }
 
-func TestStabilityComment(t *testing.T) {
+func TestExtraCommentLines(t *testing.T) {
+	withComment := func(v any) OperationDefinition {
+		return OperationDefinition{
+			Spec: &openapi3.Operation{
+				Extensions: map[string]any{
+					"x-oapi-codegen-comment": v,
+				},
+			},
+		}
+	}
 	tests := []struct {
 		name string
 		op   OperationDefinition
-		want string
+		want []string
 	}{
 		{
-			name: "nil spec returns empty string",
+			name: "nil spec returns nil",
 			op:   OperationDefinition{Spec: nil},
-			want: "",
+			want: nil,
 		},
 		{
-			name: "no extension returns empty string",
+			name: "no extension returns nil",
 			op: OperationDefinition{
 				Spec: &openapi3.Operation{},
 			},
-			want: "",
+			want: nil,
 		},
 		{
-			name: "alpha returns the stability comment",
-			op: OperationDefinition{
-				Spec: &openapi3.Operation{
-					Extensions: map[string]any{
-						"x-stability-level": "alpha",
-					},
-				},
-			},
-			want: "// This operation has been marked with the `alpha` stability level upstream (via `x-stability-level`).",
+			name: "single line",
+			op:   withComment("This operation is in alpha."),
+			want: []string{"// This operation is in alpha."},
 		},
 		{
 			name: "surrounding whitespace is trimmed",
-			op: OperationDefinition{
-				Spec: &openapi3.Operation{
-					Extensions: map[string]any{
-						"x-stability-level": "  beta  ",
-					},
-				},
-			},
-			want: "// This operation has been marked with the `beta` stability level upstream (via `x-stability-level`).",
+			op:   withComment("  \n  This operation is in beta.  \n\n"),
+			want: []string{"// This operation is in beta."},
 		},
 		{
-			name: "empty string returns empty string",
-			op: OperationDefinition{
-				Spec: &openapi3.Operation{
-					Extensions: map[string]any{
-						"x-stability-level": "",
-					},
-				},
+			name: "multiple lines each become a comment line",
+			op:   withComment("Stability: alpha\nMay change without notice.\n\nSee https://example.com/stability"),
+			want: []string{
+				"// Stability: alpha",
+				"// May change without notice.",
+				"//",
+				"// See https://example.com/stability",
 			},
-			want: "",
 		},
 		{
-			name: "non-string value returns empty string",
-			op: OperationDefinition{
-				Spec: &openapi3.Operation{
-					Extensions: map[string]any{
-						"x-stability-level": 42,
-					},
-				},
+			name: "CRLF and CR line endings can't escape the comment",
+			op:   withComment("first\r\nsecond\rfunc Evil() {}"),
+			want: []string{
+				"// first",
+				"// second",
+				"// func Evil() {}",
 			},
-			want: "",
+		},
+		{
+			name: "empty string returns nil",
+			op:   withComment(""),
+			want: nil,
+		},
+		{
+			name: "whitespace-only string returns nil",
+			op:   withComment(" \n\t "),
+			want: nil,
+		},
+		{
+			name: "non-string value returns nil",
+			op:   withComment(42),
+			want: nil,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, tt.op.StabilityComment())
+			assert.Equal(t, tt.want, tt.op.ExtraCommentLines())
 		})
 	}
 }
@@ -630,7 +639,7 @@ func TestOperationDefinition_GenerateFunctionComment(t *testing.T) {
 				"// Corresponds with GET /foo (the `GetFoo` operationId).",
 		},
 		{
-			name: "has summary, x-stability-level, not with responses",
+			name: "has summary, x-oapi-codegen-comment, not with responses",
 			op: OperationDefinition{
 				OperationId: "GetFoo",
 				Method:      "GET",
@@ -638,7 +647,7 @@ func TestOperationDefinition_GenerateFunctionComment(t *testing.T) {
 				Summary:     "Get a foo",
 				Spec: &openapi3.Operation{
 					Extensions: map[string]any{
-						"x-stability-level": "alpha",
+						"x-oapi-codegen-comment": "Stability: alpha",
 					},
 				},
 			},
@@ -649,17 +658,17 @@ func TestOperationDefinition_GenerateFunctionComment(t *testing.T) {
 				"//\n" +
 				"// Corresponds with GET /foo (the `GetFoo` operationId).\n" +
 				"//\n" +
-				"// This operation has been marked with the `alpha` stability level upstream (via `x-stability-level`).",
+				"// Stability: alpha",
 		},
 		{
-			name: "no summary, x-stability-level, not with responses",
+			name: "no summary, x-oapi-codegen-comment, not with responses",
 			op: OperationDefinition{
 				OperationId: "GetFoo",
 				Method:      "GET",
 				Path:        "/foo",
 				Spec: &openapi3.Operation{
 					Extensions: map[string]any{
-						"x-stability-level": "alpha",
+						"x-oapi-codegen-comment": "Stability: alpha",
 					},
 				},
 			},
@@ -668,17 +677,17 @@ func TestOperationDefinition_GenerateFunctionComment(t *testing.T) {
 			isFunctionWithResponses: false,
 			want: "// GetFoo performs a GET /foo (the `GetFoo` operationId) request.\n" +
 				"//\n" +
-				"// This operation has been marked with the `alpha` stability level upstream (via `x-stability-level`).",
+				"// Stability: alpha",
 		},
 		{
-			name: "no summary, x-stability-level, with responses",
+			name: "no summary, x-oapi-codegen-comment, with responses",
 			op: OperationDefinition{
 				OperationId: "GetFoo",
 				Method:      "GET",
 				Path:        "/foo",
 				Spec: &openapi3.Operation{
 					Extensions: map[string]any{
-						"x-stability-level": "draft",
+						"x-oapi-codegen-comment": "Stability: draft\nMay change without notice.",
 					},
 				},
 			},
@@ -689,7 +698,8 @@ func TestOperationDefinition_GenerateFunctionComment(t *testing.T) {
 				"//\n" +
 				"// Returns a wrapper object for the known response body format(s).\n" +
 				"//\n" +
-				"// This operation has been marked with the `draft` stability level upstream (via `x-stability-level`).",
+				"// Stability: draft\n" +
+				"// May change without notice.",
 		},
 	}
 
@@ -728,24 +738,24 @@ func TestRequestBodyDefinition_GenerateFunctionComment(t *testing.T) {
 		Path:        "/foo",
 		Spec:        &openapi3.Operation{Description: "Detailed description."},
 	}
-	parentWithSummaryAndStability := OperationDefinition{
+	parentWithSummaryAndComment := OperationDefinition{
 		OperationId: "CreateFoo",
 		Method:      "POST",
 		Path:        "/foo",
 		Summary:     "Create a foo",
 		Spec: &openapi3.Operation{
 			Extensions: map[string]any{
-				"x-stability-level": "beta",
+				"x-oapi-codegen-comment": "Stability: beta",
 			},
 		},
 	}
-	parentNoSummaryWithStability := OperationDefinition{
+	parentNoSummaryWithComment := OperationDefinition{
 		OperationId: "CreateFoo",
 		Method:      "POST",
 		Path:        "/foo",
 		Spec: &openapi3.Operation{
 			Extensions: map[string]any{
-				"x-stability-level": "beta",
+				"x-oapi-codegen-comment": "Stability: beta",
 			},
 		},
 	}
@@ -903,9 +913,9 @@ func TestRequestBodyDefinition_GenerateFunctionComment(t *testing.T) {
 				"// Corresponds with POST /foo (the `CreateFoo` operationId).",
 		},
 		{
-			name:                    "has summary, x-stability-level, not with responses",
+			name:                    "has summary, x-oapi-codegen-comment, not with responses",
 			body:                    body,
-			parent:                  parentWithSummaryAndStability,
+			parent:                  parentWithSummaryAndComment,
 			originalFunctionName:    "CreateFoo",
 			functionSuffix:          "WithJSONBody",
 			isFunctionWithResponses: false,
@@ -915,24 +925,24 @@ func TestRequestBodyDefinition_GenerateFunctionComment(t *testing.T) {
 				"//\n" +
 				"// Corresponds with POST /foo (the `CreateFoo` operationId).\n" +
 				"//\n" +
-				"// This operation has been marked with the `beta` stability level upstream (via `x-stability-level`).",
+				"// Stability: beta",
 		},
 		{
-			name:                    "no summary, x-stability-level, not with responses",
+			name:                    "no summary, x-oapi-codegen-comment, not with responses",
 			body:                    body,
-			parent:                  parentNoSummaryWithStability,
+			parent:                  parentNoSummaryWithComment,
 			originalFunctionName:    "CreateFoo",
 			functionSuffix:          "WithJSONBody",
 			isFunctionWithResponses: false,
 			want: "// CreateFooWithJSONBody performs a POST /foo (the `CreateFoo` operationId) request.\n" +
 				"// Takes a body of the `application/json` content type.\n" +
 				"//\n" +
-				"// This operation has been marked with the `beta` stability level upstream (via `x-stability-level`).",
+				"// Stability: beta",
 		},
 		{
-			name:                    "has summary, x-stability-level, with responses",
+			name:                    "has summary, x-oapi-codegen-comment, with responses",
 			body:                    body,
-			parent:                  parentWithSummaryAndStability,
+			parent:                  parentWithSummaryAndComment,
 			originalFunctionName:    "CreateFoo",
 			functionSuffix:          "WithJSONBodyWithResponse",
 			isFunctionWithResponses: true,
@@ -942,7 +952,7 @@ func TestRequestBodyDefinition_GenerateFunctionComment(t *testing.T) {
 				"//\n" +
 				"// Corresponds with POST /foo (the `CreateFoo` operationId).\n" +
 				"//\n" +
-				"// This operation has been marked with the `beta` stability level upstream (via `x-stability-level`).",
+				"// Stability: beta",
 		},
 	}
 
