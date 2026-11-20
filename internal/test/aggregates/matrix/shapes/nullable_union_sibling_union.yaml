@@ -1,0 +1,30 @@
+versions: [v1, v2, v3]
+description: >-
+  An anyOf over two $refs next to an OpenAPI 3.1 nullable oneOf whose only
+  other branch is an inline object. v1 and v2 generate the object's
+  properties as fields beside the anyOf's union; collapsing the oneOf must
+  not take the anyOf's variants away (PR #2566).
+openapi: 3.1.0
+subject:
+  anyOf:
+    - $ref: '#/components/schemas/Cat'
+    - $ref: '#/components/schemas/Dog'
+  oneOf:
+    - type: object
+      properties:
+        id: {type: string}
+    - type: 'null'
+components:
+  Cat:
+    type: object
+    required: [meow]
+    properties:
+      meow: {type: string}
+  Dog:
+    type: object
+    required: [bark]
+    properties:
+      bark: {type: string}
+samples:
+  - '{"meow": "purr", "id": "1"}'
+  - '{"bark": "woof"}'

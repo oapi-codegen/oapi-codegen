@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -29,6 +30,24 @@ type Bar2 struct {
 type CreateItemResponse struct {
 	Id   *string `json:"id,omitempty"`
 	Name *string `json:"name,omitempty"`
+}
+
+// FieldCollisions defines model for FieldCollisions.
+type FieldCollisions struct {
+	Extras           *FieldCollisionsWithExtras `json:"extras,omitempty"`
+	HostFqdn_cea8c90 *string                    `json:"host-fqdn,omitempty"`
+	HostFqdn_bcac5e8 *string                    `json:"host_fqdn,omitempty"`
+	HostFqdn2        *int                       `json:"host_fqdn2,omitempty"`
+	Zed_ce5c161      *string                    `json:"zed,omitempty"`
+	Zed              *int                       `json:"zzz,omitempty"`
+}
+
+// FieldCollisionsWithExtras defines model for FieldCollisionsWithExtras.
+type FieldCollisionsWithExtras struct {
+	AdditionalProperties_f923a6e *string           `json:"additionalProperties,omitempty"`
+	HostFqdn_cea8c90             *string           `json:"host-fqdn,omitempty"`
+	HostFqdn_bcac5e8             *string           `json:"host_fqdn,omitempty"`
+	AdditionalProperties         map[string]string `json:"-"`
 }
 
 // GetStatusResponse defines model for GetStatusResponse.
@@ -314,6 +333,104 @@ type PatchResourceApplicationMergePatchPlusJSONRequestBody = ResourceMVO
 // PostZapJSONRequestBody defines body for PostZap for application/json ContentType.
 type PostZapJSONRequestBody = Zap
 
+// Getter for additional properties for FieldCollisionsWithExtras. Returns the specified
+// element and whether it was found
+func (a FieldCollisionsWithExtras) Get(fieldName string) (value string, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for FieldCollisionsWithExtras
+func (a *FieldCollisionsWithExtras) Set(fieldName string, value string) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]string)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for FieldCollisionsWithExtras to handle AdditionalProperties
+func (a *FieldCollisionsWithExtras) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := runtime.JSONUnmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["additionalProperties"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.AdditionalProperties_f923a6e)
+		if err != nil {
+			return fmt.Errorf("error reading 'additionalProperties': %w", err)
+		}
+		delete(object, "additionalProperties")
+	}
+
+	if raw, found := object["host-fqdn"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.HostFqdn_cea8c90)
+		if err != nil {
+			return fmt.Errorf("error reading 'host-fqdn': %w", err)
+		}
+		delete(object, "host-fqdn")
+	}
+
+	if raw, found := object["host_fqdn"]; found {
+		err = runtime.JSONUnmarshal(raw, &a.HostFqdn_bcac5e8)
+		if err != nil {
+			return fmt.Errorf("error reading 'host_fqdn': %w", err)
+		}
+		delete(object, "host_fqdn")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]string)
+		for fieldName, fieldBuf := range object {
+			var fieldVal string
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for FieldCollisionsWithExtras to handle AdditionalProperties
+func (a FieldCollisionsWithExtras) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.AdditionalProperties_f923a6e != nil {
+		object["additionalProperties"], err = runtime.JSONMarshal(a.AdditionalProperties_f923a6e)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'additionalProperties': %w", err)
+		}
+	}
+
+	if a.HostFqdn_cea8c90 != nil {
+		object["host-fqdn"], err = runtime.JSONMarshal(a.HostFqdn_cea8c90)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'host-fqdn': %w", err)
+		}
+	}
+
+	if a.HostFqdn_bcac5e8 != nil {
+		object["host_fqdn"], err = runtime.JSONMarshal(a.HostFqdn_bcac5e8)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'host_fqdn': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = runtime.JSONMarshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return runtime.JSONMarshal(object)
+}
+
 // AsResource returns the union data inside the N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON as a Resource
 func (t N200ResourcePatchResponseJSON2ApplicationJSONPatchPlusJSON) AsResource() (Resource, error) {
 	var body Resource
@@ -567,6 +684,9 @@ type ClientInterface interface {
 	// ListEntities performs a GET /entities (the `ListEntities` operationId) request.
 	ListEntities(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetFieldCollisions performs a GET /field-collisions (the `GetFieldCollisions` operationId) request.
+	GetFieldCollisions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// PostFooWithBody performs a POST /foo (the `PostFoo` operationId) request,
 	// with any type of body and a specified content type.
 	PostFooWithBody(ctx context.Context, params *PostFooParams, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -693,6 +813,19 @@ type ClientInterface interface {
 // ListEntities performs a GET /entities (the `ListEntities` operationId) request.
 func (c *Client) ListEntities(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListEntitiesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// GetFieldCollisions performs a GET /field-collisions (the `GetFieldCollisions` operationId) request.
+func (c *Client) GetFieldCollisions(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetFieldCollisionsRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -1155,6 +1288,33 @@ func NewListEntitiesRequest(server string) (*http.Request, error) {
 	}
 
 	operationPath := "/entities"
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetFieldCollisionsRequest constructs an http.Request for the GetFieldCollisions method
+func NewGetFieldCollisionsRequest(server string) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := "/field-collisions"
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -1901,6 +2061,11 @@ type ClientWithResponsesInterface interface {
 	// Returns a wrapper object for the known response body format(s).
 	ListEntitiesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ListEntitiesResponse, error)
 
+	// GetFieldCollisionsWithResponse performs a GET /field-collisions (the `GetFieldCollisions` operationId) request.
+	//
+	// Returns a wrapper object for the known response body format(s).
+	GetFieldCollisionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetFieldCollisionsResponse, error)
+
 	// PostFooWithBodyWithResponse performs a POST /foo (the `PostFoo` operationId) request,
 	// with any type of body and a specified content type.
 	//
@@ -2099,6 +2264,47 @@ func (r ListEntitiesResponse) StatusCode() int {
 
 // ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
 func (r ListEntitiesResponse) ContentType() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Header.Get("Content-Type")
+	}
+	return ""
+}
+
+type GetFieldCollisionsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	// JSON200 the response for an HTTP 200 `application/json` response
+	JSON200 *FieldCollisions
+}
+
+// GetJSON200 returns the response for an HTTP 200 `application/json` response
+func (r GetFieldCollisionsResponse) GetJSON200() *FieldCollisions {
+	return r.JSON200
+}
+
+// GetBody returns the raw response body bytes
+func (r GetFieldCollisionsResponse) GetBody() []byte {
+	return r.Body
+}
+
+// Status returns HTTPResponse.Status
+func (r GetFieldCollisionsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetFieldCollisionsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+// ContentType is a convenience method to retrieve the Content-Type value from the HTTP response headers
+func (r GetFieldCollisionsResponse) ContentType() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Header.Get("Content-Type")
 	}
@@ -2813,6 +3019,17 @@ func (c *ClientWithResponses) ListEntitiesWithResponse(ctx context.Context, reqE
 	return ParseListEntitiesResponse(rsp)
 }
 
+// GetFieldCollisionsWithResponse performs a GET /field-collisions (the `GetFieldCollisions` operationId) request.
+//
+// Returns a wrapper object for the known response body format(s).
+func (c *ClientWithResponses) GetFieldCollisionsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetFieldCollisionsResponse, error) {
+	rsp, err := c.GetFieldCollisions(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetFieldCollisionsResponse(rsp)
+}
+
 // PostFooWithBodyWithResponse performs a POST /foo (the `PostFoo` operationId) request,
 // with any type of body and a specified content type.
 //
@@ -3180,6 +3397,32 @@ func ParseListEntitiesResponse(rsp *http.Response) (*ListEntitiesResponse, error
 			Data     *[]Widget `json:"data,omitempty"`
 			Metadata *Metadata `json:"metadata,omitempty"`
 		}
+		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetFieldCollisionsResponse parses an HTTP response from a GetFieldCollisionsWithResponse call
+func ParseGetFieldCollisionsResponse(rsp *http.Response) (*GetFieldCollisionsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetFieldCollisionsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest FieldCollisions
 		if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

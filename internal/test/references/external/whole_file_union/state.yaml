@@ -1,0 +1,5 @@
+# A whole file that is an enum, used as a union branch.
+type: string
+enum:
+  - active
+  - retired

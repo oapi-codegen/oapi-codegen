@@ -1246,6 +1246,172 @@ func TestParameterDefinitionSchemaType(t *testing.T) {
 	assert.Nil(t, paramWithTypes(&openapi3.Types{"string"}).SchemaTypes())
 }
 
+// fieldNames returns the Go field name of each of schema's properties, by JSON
+// name.
+func fieldNames(schema Schema) map[string]string {
+	names := make(map[string]string, len(schema.Properties))
+	for _, p := range schema.Properties {
+		names[p.JsonFieldName] = p.GoFieldName()
+	}
+	return names
+}
+
+// stringProps returns a required string property for each JSON name.
+func stringProps(jsonNames ...string) []Property {
+	var props []Property
+	for _, name := range jsonNames {
+		props = append(props, Property{JsonFieldName: name, Schema: Schema{GoType: "string"}, Required: true})
+	}
+	return props
+}
+
+// withGoName returns p named by x-go-name.
+func withGoName(p Property, name string) Property {
+	p.Extensions = map[string]any{extGoName: name}
+	return p
+}
+
+// Issue #2495: JSON properties which differ only by separator ("host-fqdn",
+// "host_fqdn") derive the same Go field name, which declared the field twice.
+
+func TestResolvePropertyGoFieldNameCollisions_ErrorsWithoutResolver(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.options.OutputOptions.ResolveTypeNameCollisions = false
+
+	schema := Schema{Properties: stringProps("host-fqdn", "host_fqdn", "other")}
+	err := resolvePropertyGoFieldNameCollisions(&schema, []string{"Info"})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "schema 'Info'")
+	assert.ErrorContains(t, err, "property 'host-fqdn', property 'host_fqdn'")
+	assert.ErrorContains(t, err, "Go field 'HostFqdn'")
+	assert.ErrorContains(t, err, "x-go-name")
+	assert.ErrorContains(t, err, "resolve-type-name-collisions")
+
+	// The field holding additional properties collides just the same.
+	schema = Schema{HasAdditionalProperties: true, Properties: stringProps("additionalProperties")}
+	err = resolvePropertyGoFieldNameCollisions(&schema, nil)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "the field holding additional properties")
+
+	// Nothing collides, nothing is reported or renamed.
+	schema = Schema{HasAdditionalProperties: true, Properties: stringProps("host-fqdn", "other")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	assert.Equal(t, map[string]string{"host-fqdn": "HostFqdn", "other": "Other"}, fieldNames(schema))
+}
+
+func TestResolvePropertyGoFieldNameCollisions_RenamesEveryCollider(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
+
+	schema := Schema{Properties: stringProps("host-fqdn", "host_fqdn", "other")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	names := fieldNames(schema)
+
+	// Neither collider keeps the bare name, and the bystander is untouched.
+	assert.Regexp(t, `^HostFqdn_[0-9a-f]{7}$`, names["host-fqdn"])
+	assert.Regexp(t, `^HostFqdn_[0-9a-f]{7}$`, names["host_fqdn"])
+	assert.NotEqual(t, names["host-fqdn"], names["host_fqdn"])
+	assert.Equal(t, "Other", names["other"])
+
+	// The struct carries the new names and the original JSON names.
+	fields := GenFieldsFromProperties(schema.Properties)
+	require.Len(t, fields, 3)
+	assert.Contains(t, fields[0], names["host-fqdn"]+" ")
+	assert.Contains(t, fields[0], `json:"host-fqdn"`)
+	assert.Contains(t, fields[1], names["host_fqdn"]+" ")
+	assert.Contains(t, fields[1], `json:"host_fqdn"`)
+
+	// Resolving again changes nothing.
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	assert.Equal(t, names, fieldNames(schema))
+}
+
+// A property's name depends on nothing but the property: more colliders, a
+// different order, and a property which spells what a numeric suffix would
+// have produced all leave it alone.
+func TestResolvePropertyGoFieldNameCollisions_NamesAreStable(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
+
+	two := Schema{Properties: stringProps("host-fqdn", "host_fqdn")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&two, nil))
+
+	more := Schema{Properties: stringProps("host_fqdn2", "host.fqdn", "host_fqdn", "host fqdn", "host-fqdn")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&more, nil))
+
+	before, after := fieldNames(two), fieldNames(more)
+	assert.Equal(t, before["host-fqdn"], after["host-fqdn"])
+	assert.Equal(t, before["host_fqdn"], after["host_fqdn"])
+	assert.Equal(t, "HostFqdn2", after["host_fqdn2"])
+
+	seen := map[string]bool{}
+	for _, name := range after {
+		assert.False(t, seen[name], "field %s is declared twice", name)
+		seen[name] = true
+	}
+}
+
+func TestResolvePropertyGoFieldNameCollisions_KeepsExplicitNames(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
+
+	// x-go-name asks for a name another property derives: the derived one
+	// gives way, whichever comes first.
+	props := stringProps("zed", "zzz")
+	props[1] = withGoName(props[1], "Zed")
+	schema := Schema{Properties: props}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	names := fieldNames(schema)
+	assert.Equal(t, "Zed", names["zzz"])
+	assert.Regexp(t, `^Zed_[0-9a-f]{7}$`, names["zed"])
+
+	// x-go-name moving a property out of a collision resolves it, and the
+	// other property keeps its bare name.
+	props = stringProps("host-fqdn", "host_fqdn")
+	props[0] = withGoName(props[0], "HostFqdnDashed")
+	schema = Schema{Properties: props}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	assert.Equal(t, map[string]string{"host-fqdn": "HostFqdnDashed", "host_fqdn": "HostFqdn"}, fieldNames(schema))
+
+	// Two properties asking for the same name can't both have it.
+	props = stringProps("a", "b")
+	props[0] = withGoName(props[0], "Same")
+	props[1] = withGoName(props[1], "Same")
+	schema = Schema{Properties: props}
+	err := resolvePropertyGoFieldNameCollisions(&schema, []string{"Info"})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "property 'a', property 'b'")
+	assert.ErrorContains(t, err, "x-go-name")
+}
+
+func TestResolvePropertyGoFieldNameCollisions_ReservesAdditionalProperties(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
+
+	// The field holding additional properties keeps its name, and the
+	// property is renamed.
+	schema := Schema{HasAdditionalProperties: true, Properties: stringProps("additionalProperties")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	assert.Regexp(t, `^AdditionalProperties_[0-9a-f]{7}$`, schema.Properties[0].GoFieldName())
+	assert.Contains(t, GenFieldsFromProperties(schema.Properties)[0], `json:"additionalProperties"`)
+
+	// Without additional properties there is no such field to collide with.
+	schema = Schema{Properties: stringProps("additionalProperties")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	assert.Equal(t, "AdditionalProperties", schema.Properties[0].GoFieldName())
+
+	// A property which asks for the name with x-go-name can't have it.
+	props := stringProps("extras")
+	props[0] = withGoName(props[0], "AdditionalProperties")
+	schema = Schema{HasAdditionalProperties: true, Properties: props}
+	require.Error(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+}
+
 // TestStrictResponseDelegatesCustomMarshalJSON pins which strict-server
 // response envelopes get a delegating MarshalJSON/UnmarshalJSON pair.
 // See https://github.com/oapi-codegen/oapi-codegen/issues/2549.
@@ -1840,4 +2006,27 @@ func TestDiscriminatorLiteralQuotesStrings(t *testing.T) {
 	assert.Equal(t, `"ends with \\"`, d.literal(`ends with \`))
 	n := &Discriminator{ValueType: openapi3.TypeInteger}
 	assert.Equal(t, `7`, n.literal("7"))
+}
+
+// A struct may declare any number of blank fields, so properties which are all
+// named "_" don't collide, whether or not collisions are being resolved.
+func TestResolvePropertyGoFieldNameCollisions_AllowsBlankFields(t *testing.T) {
+	prev := globalState
+	t.Cleanup(func() { globalState = prev })
+	globalState.options.Compatibility.AllowUnexportedStructFieldNames = true
+
+	blank := func(p Property) Property {
+		p.Extensions = map[string]any{extGoName: "_", extOapiCodegenOnlyHonourGoName: true}
+		return p
+	}
+
+	for _, resolve := range []bool{false, true} {
+		globalState.options.OutputOptions.ResolveTypeNameCollisions = resolve
+
+		props := stringProps("a", "b", "c")
+		props[0], props[1] = blank(props[0]), blank(props[1])
+		schema := Schema{Properties: props}
+		require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+		assert.Equal(t, map[string]string{"a": "_", "b": "_", "c": "C"}, fieldNames(schema))
+	}
 }

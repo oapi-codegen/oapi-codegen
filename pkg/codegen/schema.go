@@ -272,9 +272,36 @@ type Property struct {
 	NeedsFormTag  bool
 	Extensions    map[string]any
 	Deprecated    bool
+
+	// resolvedGoFieldName, when non-empty, is the Go field name
+	// resolvePropertyGoFieldNameCollisions gave this property because its own
+	// name collided with a sibling's. GoFieldName returns it, so the struct
+	// declaration and the marshaling boilerplate agree. See issue #2495.
+	resolvedGoFieldName string
 }
 
+// GoFieldName returns the name of the struct field generated for p.
 func (p Property) GoFieldName() string {
+	if p.resolvedGoFieldName != "" {
+		return p.resolvedGoFieldName
+	}
+	return p.derivedGoFieldName()
+}
+
+// hasExplicitGoFieldName reports whether the spec names p's field itself, with
+// x-go-name. Such a name is never changed to resolve a collision.
+func (p Property) hasExplicitGoFieldName() bool {
+	extension, ok := p.Extensions[extGoName]
+	if !ok {
+		return false
+	}
+	_, err := extParseGoFieldName(extension)
+	return err == nil
+}
+
+// derivedGoFieldName returns the field name p gets from its JSON name or its
+// x-go-name, before any collision with a sibling is resolved.
+func (p Property) derivedGoFieldName() string {
 	goFieldName := p.JsonFieldName
 	if extension, ok := p.Extensions[extGoName]; ok {
 		if extGoFieldName, err := extParseGoFieldName(extension); err == nil {
@@ -1485,7 +1512,7 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 				}
 				typeName = tn
 			} else {
-				typeName = SchemaNameToTypeName(PathToTypeName(path))
+				typeName = ctx.enumTypeName(path)
 			}
 			typeDef := TypeDefinition{
 				TypeName: typeName,
@@ -1544,7 +1571,7 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 			// above with the specific definition.
 			if schema.AdditionalProperties.Schema != nil {
 				apHint := append(slices.Clone(path), "AdditionalProperties")
-				additionalSchema, err := generateGoSchema(ctx.at(apHint), schema.AdditionalProperties.Schema, path)
+				additionalSchema, err := generateGoSchema(ctx.sharingPath(apHint), schema.AdditionalProperties.Schema, path)
 				if err != nil {
 					return Schema{}, fmt.Errorf("error generating type for additional properties: %w", err)
 				}
@@ -1646,6 +1673,12 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 			// primitive's Go type and clears the struct-shaped fields;
 			// rebuilding `struct {}` here would clobber that.
 			if len(outSchema.Properties) > 0 || outSchema.HasAdditionalProperties || len(outSchema.UnionElements) > 0 {
+				// Resolve field name collisions before rendering, so that the
+				// struct declaration and the marshaling boilerplate agree on
+				// the names. See issue #2495.
+				if err := resolvePropertyGoFieldNameCollisions(&outSchema, path); err != nil {
+					return Schema{}, err
+				}
 				outSchema.GoType = GenStructFromSchema(outSchema)
 			}
 		}
@@ -1790,7 +1823,7 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 					return outSchema, fmt.Errorf("invalid value for %q: %w", extGoTypeName, err)
 				}
 			} else {
-				typeName = SchemaNameToTypeName(PathToTypeName(path))
+				typeName = ctx.enumTypeName(path)
 			}
 
 			typeDef := TypeDefinition{
@@ -1826,7 +1859,7 @@ func oapiSchemaToGoType(ctx genContext, schema *openapi3.Schema, path []string, 
 		// For arrays, we'll get the type of the Items and throw a
 		// [] in front of it.
 		itemHint := append(slices.Clone(path), "Item")
-		arrayType, err := generateGoSchema(ctx.at(itemHint), schema.Items, path)
+		arrayType, err := generateGoSchema(ctx.sharingPath(itemHint), schema.Items, path)
 		if err != nil {
 			return fmt.Errorf("error generating type for array: %w", err)
 		}
@@ -2030,6 +2063,118 @@ func GenFieldsFromProperties(props []Property) []string {
 	return fields
 }
 
+// additionalPropertiesFieldName is the struct field that holds the additional
+// properties of a schema which also declares properties.
+const additionalPropertiesFieldName = "AdditionalProperties"
+
+// resolvePropertyGoFieldNameCollisions makes the Go field names of schema's
+// properties unique. Distinct JSON property names can derive the same Go
+// identifier ("host-fqdn" and "host_fqdn" are both "HostFqdn"), and a property
+// can derive the name of the AdditionalProperties field, either of which
+// declares a struct field twice.
+//
+// Without output-options.resolve-type-name-collisions, a collision is an
+// error. With it, every colliding property is renamed to its derived name plus
+// a short hash of its JSON name, as in "HostFqdn_1a2b3c4". The hash depends on
+// nothing but the property, so a name survives properties being added, removed
+// or reordered around it, and is the same in every schema the property is
+// merged into. No member of a collision keeps the bare name, because which
+// one deserves it can't be told from the spec, and handing it to another
+// property later would silently repoint code that uses it.
+//
+// A name the spec chose itself, with x-go-name, is never changed, and neither
+// is AdditionalProperties. Two of those colliding is an error. The blank
+// identifier is not a collision, as a struct may declare it more than once.
+func resolvePropertyGoFieldNameCollisions(schema *Schema, path []string) error {
+	groups := make(map[string][]int, len(schema.Properties))
+	for i, p := range schema.Properties {
+		name := p.derivedGoFieldName()
+		if name == "_" {
+			// A struct may declare any number of blank fields.
+			continue
+		}
+		groups[name] = append(groups[name], i)
+	}
+
+	where := "schema"
+	if len(path) > 0 {
+		where = "schema '" + strings.Join(path, ".") + "'"
+	}
+
+	// describe lists the members of a collision for an error message.
+	describe := func(name string, members []int) string {
+		var parts []string
+		for _, i := range members {
+			parts = append(parts, fmt.Sprintf("property '%s'", schema.Properties[i].JsonFieldName))
+		}
+		if name == additionalPropertiesFieldName && schema.HasAdditionalProperties {
+			parts = append(parts, "the field holding additional properties")
+		}
+		return strings.Join(parts, ", ")
+	}
+
+	taken := make(map[string]string, len(schema.Properties)+1)
+	if schema.HasAdditionalProperties {
+		taken[additionalPropertiesFieldName] = "the field holding additional properties"
+	}
+
+	for _, name := range SortedMapKeys(groups) {
+		members := groups[name]
+		reserved := name == additionalPropertiesFieldName && schema.HasAdditionalProperties
+		if len(members) == 1 && !reserved {
+			continue
+		}
+
+		if !globalState.options.OutputOptions.ResolveTypeNameCollisions {
+			return fmt.Errorf("%s: %s would all be the Go field '%s'; "+
+				"please use x-go-name to rename them, or set output-options.resolve-type-name-collisions to have them renamed automatically",
+				where, describe(name, members), name)
+		}
+
+		var explicit, derived []int
+		for _, i := range members {
+			if schema.Properties[i].hasExplicitGoFieldName() {
+				explicit = append(explicit, i)
+			} else {
+				derived = append(derived, i)
+			}
+		}
+		if len(explicit) > 1 || (reserved && len(explicit) > 0) {
+			return fmt.Errorf("%s: %s would all be the Go field '%s', and x-go-name fixes that name for more than one of them; "+
+				"please give them different names", where, describe(name, members), name)
+		}
+
+		keys := make([]string, 0, len(derived))
+		for _, i := range derived {
+			keys = append(keys, schema.Properties[i].JsonFieldName)
+		}
+		tokens := assignScopeTokens(keys)
+		for _, i := range derived {
+			p := &schema.Properties[i]
+			// The token is "h" and then the hash, which reads better as a
+			// prefix than it does after the separator.
+			p.resolvedGoFieldName = name + "_" + strings.TrimPrefix(tokens[p.JsonFieldName], "h")
+		}
+	}
+
+	// A renamed field is unique among the members of its own collision. It
+	// could still spell the name of an unrelated field, which nothing here
+	// can resolve.
+	for _, p := range schema.Properties {
+		name := p.GoFieldName()
+		if name == "_" {
+			continue
+		}
+		desc := fmt.Sprintf("property '%s'", p.JsonFieldName)
+		if other, found := taken[name]; found {
+			return fmt.Errorf("%s: %s and %s would both be the Go field '%s'; please use x-go-name to rename one of them",
+				where, other, desc, name)
+		}
+		taken[name] = desc
+	}
+	return nil
+}
+
 // withSkipOptionalPointerExtension returns p with x-go-type-skip-optional-pointer
 // applied, which overrides whether its type is a pointer when it's optional.
 func (p Property) withSkipOptionalPointerExtension() Property {
@@ -2123,8 +2268,8 @@ func GenStructFromSchema(schema Schema) string {
 	// Close the struct
 	if schema.HasAdditionalProperties {
 		objectParts = append(objectParts,
-			fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`",
-				additionalPropertiesType(schema)))
+			fmt.Sprintf("%s map[string]%s `json:\"-\"`",
+				additionalPropertiesFieldName, additionalPropertiesType(schema)))
 	}
 	if len(schema.UnionElements) != 0 {
 		objectParts = append(objectParts, "union json.RawMessage")
