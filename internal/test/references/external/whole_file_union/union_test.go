@@ -61,4 +61,42 @@ func TestPropertyUnion(t *testing.T) {
 	assert.JSONEq(t, `{"member":{"id":7}}`, string(b))
 }
 
+// TestScalarUnion checks that whole-file branches whose types can name the
+// accessors keep them, as they did before whole-file branches were named
+// after their paths.
+func TestScalarUnion(t *testing.T) {
+	var scalar wholefileunion.Scalar
+	require.NoError(t, scalar.FromString("alice"))
+
+	b, err := json.Marshal(scalar)
+	require.NoError(t, err)
+	assert.JSONEq(t, `"alice"`, string(b))
+
+	require.NoError(t, json.Unmarshal([]byte(`7`), &scalar))
+	count, err := scalar.AsInt()
+	require.NoError(t, err)
+	assert.Equal(t, 7, count)
+}
+
+// TestEnumUnion checks that a whole-file enum branch is named after its path,
+// which declares its type and constants, next to a scalar that keeps its type.
+func TestEnumUnion(t *testing.T) {
+	var status wholefileunion.Status
+	require.NoError(t, status.FromStatus0(wholefileunion.Active))
+
+	b, err := json.Marshal(status)
+	require.NoError(t, err)
+	assert.JSONEq(t, `"active"`, string(b))
+
+	state, err := status.AsStatus0()
+	require.NoError(t, err)
+	assert.Equal(t, wholefileunion.Active, state)
+	assert.True(t, state.Valid())
+
+	require.NoError(t, status.FromInt(7))
+	count, err := status.AsInt()
+	require.NoError(t, err)
+	assert.Equal(t, 7, count)
+}
+
 func ptr[T any](v T) *T { return &v }

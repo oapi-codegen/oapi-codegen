@@ -4,10 +4,29 @@
 package wholefileunion
 
 import (
+	"bytes"
 	"encoding/json"
 
 	"github.com/oapi-codegen/runtime"
 )
+
+// Defines values for Status0.
+const (
+	Active  Status0 = "active"
+	Retired Status0 = "retired"
+)
+
+// Valid indicates whether the value is a known member of the Status0 enum.
+func (e Status0) Valid() bool {
+	switch e {
+	case Active:
+		return true
+	case Retired:
+		return true
+	default:
+		return false
+	}
+}
 
 // Holder defines model for Holder.
 type Holder struct {
@@ -43,6 +62,19 @@ type Item0 struct {
 type Item1 struct {
 	Id *int `json:"id,omitempty"`
 }
+
+// Scalar defines model for Scalar.
+type Scalar struct {
+	union json.RawMessage
+}
+
+// Status defines model for Status.
+type Status struct {
+	union json.RawMessage
+}
+
+// Status0 defines model for Status.0.
+type Status0 string
 
 // GetItems200JSONResponseBody0 defines model for GetItems200JSONResponseBody.0.
 type GetItems200JSONResponseBody0 struct {
@@ -194,6 +226,186 @@ func (t Item) MarshalJSON() ([]byte, error) {
 }
 
 func (t *Item) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsString returns the union data inside the Scalar as a string
+func (t Scalar) AsString() (string, error) {
+	var body string
+	err := runtime.JSONUnmarshal(t.union, &body)
+	return body, err
+}
+
+// FromString overwrites any union data inside the Scalar as the provided string
+func (t *Scalar) FromString(v string) error {
+	b, err := runtime.JSONMarshal(v)
+	t.union = b
+	return err
+}
+
+// MergeString performs a merge with any union data inside the Scalar, using the provided string
+func (t *Scalar) MergeString(v string) error {
+	b, err := runtime.JSONMarshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsInt returns the union data inside the Scalar as a int
+func (t Scalar) AsInt() (int, error) {
+	var body int
+	err := runtime.JSONUnmarshal(t.union, &body)
+	return body, err
+}
+
+// FromInt overwrites any union data inside the Scalar as the provided int
+func (t *Scalar) FromInt(v int) error {
+	b, err := runtime.JSONMarshal(v)
+	t.union = b
+	return err
+}
+
+// MergeInt performs a merge with any union data inside the Scalar, using the provided int
+func (t *Scalar) MergeInt(v int) error {
+	b, err := runtime.JSONMarshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON integer, with nothing around it, is taken as one; anything else is a string.
+func (t *Scalar) UnmarshalText(text []byte) error {
+	var value any
+	decoder := json.NewDecoder(bytes.NewReader(text))
+	decoder.UseNumber()
+	if len(bytes.TrimSpace(text)) == len(text) && json.Valid(text) && decoder.Decode(&value) == nil {
+		if number, ok := value.(json.Number); ok {
+			if _, err := number.Int64(); err == nil {
+				t.union = json.RawMessage(number.String())
+				return nil
+			}
+		}
+	}
+	b, err := runtime.JSONMarshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *Scalar) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
+}
+
+func (t Scalar) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Scalar) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsStatus0 returns the union data inside the Status as a Status0
+func (t Status) AsStatus0() (Status0, error) {
+	var body Status0
+	err := runtime.JSONUnmarshal(t.union, &body)
+	return body, err
+}
+
+// FromStatus0 overwrites any union data inside the Status as the provided Status0
+func (t *Status) FromStatus0(v Status0) error {
+	b, err := runtime.JSONMarshal(v)
+	t.union = b
+	return err
+}
+
+// MergeStatus0 performs a merge with any union data inside the Status, using the provided Status0
+func (t *Status) MergeStatus0(v Status0) error {
+	b, err := runtime.JSONMarshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsInt returns the union data inside the Status as a int
+func (t Status) AsInt() (int, error) {
+	var body int
+	err := runtime.JSONUnmarshal(t.union, &body)
+	return body, err
+}
+
+// FromInt overwrites any union data inside the Status as the provided int
+func (t *Status) FromInt(v int) error {
+	b, err := runtime.JSONMarshal(v)
+	t.union = b
+	return err
+}
+
+// MergeInt performs a merge with any union data inside the Status, using the provided int
+func (t *Status) MergeInt(v int) error {
+	b, err := runtime.JSONMarshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// UnmarshalText sets the union from the text of a path, query, header or cookie
+// parameter, which carries no JSON type.
+// Text that is exactly a JSON integer, with nothing around it, is taken as one; anything else is a string.
+func (t *Status) UnmarshalText(text []byte) error {
+	var value any
+	decoder := json.NewDecoder(bytes.NewReader(text))
+	decoder.UseNumber()
+	if len(bytes.TrimSpace(text)) == len(text) && json.Valid(text) && decoder.Decode(&value) == nil {
+		if number, ok := value.(json.Number); ok {
+			if _, err := number.Int64(); err == nil {
+				t.union = json.RawMessage(number.String())
+				return nil
+			}
+		}
+	}
+	b, err := runtime.JSONMarshal(string(text))
+	if err != nil {
+		return err
+	}
+	t.union = b
+	return nil
+}
+
+// Bind implements runtime.Binder, which binds exploded query parameters; see UnmarshalText.
+func (t *Status) Bind(src string) error {
+	return t.UnmarshalText([]byte(src))
+}
+
+func (t Status) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *Status) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }

@@ -1,0 +1,2 @@
+# A whole file that is a scalar, used as a union branch.
+type: string

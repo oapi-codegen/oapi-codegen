@@ -54,6 +54,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Holder"
+  /scalar:
+    get:
+      responses:
+        "200":
+          description: A component schema union of two whole-file scalars.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scalar"
+  /status:
+    get:
+      responses:
+        "200":
+          description: A component schema union of a whole-file enum and a scalar.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
 components:
   schemas:
     Item:
@@ -67,3 +85,15 @@ components:
           oneOf:
             - $ref: ./user.yaml
             - $ref: ./group.yaml
+    # Whole-file branches whose types can name the accessors keep them:
+    # AsString and AsInt, as before the fix.
+    Scalar:
+      oneOf:
+        - $ref: ./text.yaml
+        - $ref: ./count.yaml
+    # An enum needs a name for its type and constants, so it is named after
+    # its path; the scalar next to it keeps its type.
+    Status:
+      oneOf:
+        - $ref: ./state.yaml
+        - $ref: ./count.yaml

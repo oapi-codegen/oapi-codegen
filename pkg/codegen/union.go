@@ -9,6 +9,7 @@ package codegen
 
 import (
 	"fmt"
+	"go/token"
 	"maps"
 	"slices"
 	"strings"
@@ -106,9 +107,15 @@ func generateUnions(ctx genContext, outSchema *Schema, schema *openapi3.Schema, 
 // elementPath, and returns its schema with GoType set to the type the union's
 // accessors use. An inline branch is named after its path, and defined under
 // that name in outSchema's additional types unless it generated as that named
-// type already, along with the types it brings. A $ref to a whole file names
-// no Go type (see IsGoTypeReference) and generates inline, so it is named the
-// same way.
+// type already, along with the types it brings.
+//
+// A $ref to a whole file names no Go type (see IsGoTypeReference) and
+// generates inline. It keeps the type it generates as when that type can name
+// the accessors (see isQualifiedIdent), as `string` or `time.Duration` do:
+// such a branch has always generated `AsString`, and renaming it would break
+// its users. One that can't, such as a struct or a slice, is named after its
+// path like an inline branch, and so is an enum, whose type and constants
+// need a name to be declared under.
 func generateUnionElement(ctx genContext, outSchema *Schema, element *openapi3.SchemaRef, elementPath []string) (Schema, error) {
 	elementSchema, err := generateGoSchema(ctx.at(elementPath), element, elementPath)
 	if err != nil {
@@ -116,7 +123,11 @@ func generateUnionElement(ctx genContext, outSchema *Schema, element *openapi3.S
 		// only thing that says which inline branch failed.
 		return Schema{}, fmt.Errorf("branch %s: %w", elementPath[len(elementPath)-1], err)
 	}
-	if !IsGoTypeReference(element.Ref) {
+	named := element.Ref == ""
+	if IsWholeDocumentReference(element.Ref) {
+		named = !isQualifiedIdent(elementSchema.TypeDecl()) || len(elementSchema.EnumValues) > 0
+	}
+	if named {
 		elementName := SchemaNameToTypeName(PathToTypeName(elementPath))
 		if elementSchema.TypeDecl() == elementName {
 			elementSchema.GoType = elementName
@@ -128,6 +139,18 @@ func generateUnionElement(ctx genContext, outSchema *Schema, element *openapi3.S
 		outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
 	}
 	return elementSchema, nil
+}
+
+// isQualifiedIdent reports whether goType is a Go identifier or a
+// package-qualified one, the only types UnionElement.Method can turn into the
+// name of an accessor.
+func isQualifiedIdent(goType string) bool {
+	for part := range strings.SplitSeq(goType, ".") {
+		if !token.IsIdentifier(part) {
+			return false
+		}
+	}
+	return true
 }
 
 // mapExplicitly maps goType, the type of the $ref variant ref, under every key
