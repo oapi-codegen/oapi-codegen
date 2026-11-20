@@ -91,8 +91,8 @@ components:
       oneOf:
         - $ref: ./text.yaml
         - $ref: ./count.yaml
-    # An enum needs a name for its type and constants, so it is named after
-    # its path; the scalar next to it keeps its type.
+    # An enum generates as its base type, so it keeps AsString too, as before
+    # the fix, and declares no type or constants of its own.
     Status:
       oneOf:
         - $ref: ./state.yaml

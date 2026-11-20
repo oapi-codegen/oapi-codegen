@@ -10,24 +10,6 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
-// Defines values for Status0.
-const (
-	Active  Status0 = "active"
-	Retired Status0 = "retired"
-)
-
-// Valid indicates whether the value is a known member of the Status0 enum.
-func (e Status0) Valid() bool {
-	switch e {
-	case Active:
-		return true
-	case Retired:
-		return true
-	default:
-		return false
-	}
-}
-
 // Holder defines model for Holder.
 type Holder struct {
 	Member *Holder_Member `json:"member,omitempty"`
@@ -72,9 +54,6 @@ type Scalar struct {
 type Status struct {
 	union json.RawMessage
 }
-
-// Status0 defines model for Status.0.
-type Status0 string
 
 // GetItems200JSONResponseBody0 defines model for GetItems200JSONResponseBody.0.
 type GetItems200JSONResponseBody0 struct {
@@ -320,22 +299,22 @@ func (t *Scalar) UnmarshalJSON(b []byte) error {
 	return err
 }
 
-// AsStatus0 returns the union data inside the Status as a Status0
-func (t Status) AsStatus0() (Status0, error) {
-	var body Status0
+// AsString returns the union data inside the Status as a string
+func (t Status) AsString() (string, error) {
+	var body string
 	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
-// FromStatus0 overwrites any union data inside the Status as the provided Status0
-func (t *Status) FromStatus0(v Status0) error {
+// FromString overwrites any union data inside the Status as the provided string
+func (t *Status) FromString(v string) error {
 	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
-// MergeStatus0 performs a merge with any union data inside the Status, using the provided Status0
-func (t *Status) MergeStatus0(v Status0) error {
+// MergeString performs a merge with any union data inside the Status, using the provided string
+func (t *Status) MergeString(v string) error {
 	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err

@@ -78,20 +78,20 @@ func TestScalarUnion(t *testing.T) {
 	assert.Equal(t, 7, count)
 }
 
-// TestEnumUnion checks that a whole-file enum branch is named after its path,
-// which declares its type and constants, next to a scalar that keeps its type.
+// TestEnumUnion checks that a whole-file enum branch keeps the accessors of
+// its base type, as it did before whole-file branches were named after their
+// paths.
 func TestEnumUnion(t *testing.T) {
 	var status wholefileunion.Status
-	require.NoError(t, status.FromStatus0(wholefileunion.Active))
+	require.NoError(t, status.FromString("active"))
 
 	b, err := json.Marshal(status)
 	require.NoError(t, err)
 	assert.JSONEq(t, `"active"`, string(b))
 
-	state, err := status.AsStatus0()
+	state, err := status.AsString()
 	require.NoError(t, err)
-	assert.Equal(t, wholefileunion.Active, state)
-	assert.True(t, state.Valid())
+	assert.Equal(t, "active", state)
 
 	require.NoError(t, status.FromInt(7))
 	count, err := status.AsInt()
