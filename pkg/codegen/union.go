@@ -112,7 +112,7 @@ func generateUnions(ctx genContext, outSchema *Schema, schema *openapi3.Schema, 
 // itself; see the comment on named below.
 func generateUnionElement(ctx genContext, outSchema *Schema, element *openapi3.SchemaRef, elementPath []string) (Schema, error) {
 	elementCtx := ctx.at(elementPath)
-	elementCtx.unionBranch = element.Ref == ""
+	elementCtx.pathTaken = element.Ref == ""
 	elementSchema, err := generateGoSchema(elementCtx, element, elementPath)
 	if err != nil {
 		// The caller names the keyword (anyOf/oneOf); the index is the

@@ -143,3 +143,70 @@ components:
 		})
 	}
 }
+
+// An inline enum reached from a branch through schemas that share the branch's
+// path (items, additionalProperties, and an allOf around the enum) is named
+// after its own position, whatever the nesting.
+func TestUnionBranchNestedInlineEnumName(t *testing.T) {
+	const enum = `{type: string, enum: [admin, viewer]}`
+	for _, tc := range []struct{ name, branch, branchType, enumType string }{
+		{"array of arrays", `{type: array, items: {type: array, items: ` + enum + `}}`,
+			`type Choice1 = [][]Choice1Item`, `Choice1Item`},
+		{"allOf items", `{type: array, items: {allOf: [` + enum + `]}}`,
+			`type Choice1 = []Choice1Item`, `Choice1Item`},
+		{"map", `{type: object, additionalProperties: ` + enum + `}`,
+			`type Choice1 map[string]Choice1AdditionalProperties`, `Choice1AdditionalProperties`},
+		{"object with additionalProperties", `{type: object, properties: {a: {type: string}}, additionalProperties: ` + enum + `}`,
+			`type Choice1 struct {`, `Choice1AdditionalProperties`},
+		{"array of maps", `{type: array, items: {type: object, additionalProperties: ` + enum + `}}`,
+			`type Choice1 = []map[string]Choice1AdditionalProperties`, `Choice1AdditionalProperties`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			spec := `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths: {}
+components:
+  schemas:
+    Choice:
+      oneOf:
+        - {type: string}
+        - ` + tc.branch + `
+`
+			swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+			require.NoError(t, err)
+			code, err := Generate(swagger, Configuration{
+				PackageName:   "api",
+				Generate:      GenerateOptions{Models: true},
+				OutputOptions: OutputOptions{SkipPrune: true},
+			})
+			require.NoError(t, err)
+			require.Contains(t, code, tc.branchType+"\n")
+			require.Contains(t, code, "type "+tc.enumType+" string\n")
+		})
+	}
+}
+
+// An enum that is itself the branch has the branch's name, and defines it.
+func TestUnionEnumBranchName(t *testing.T) {
+	const spec = `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths: {}
+components:
+  schemas:
+    Choice:
+      oneOf:
+        - {type: string, enum: [admin, viewer]}
+        - {type: integer}
+`
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	require.NoError(t, err)
+	code, err := Generate(swagger, Configuration{
+		PackageName:   "api",
+		Generate:      GenerateOptions{Models: true},
+		OutputOptions: OutputOptions{SkipPrune: true},
+	})
+	require.NoError(t, err)
+	require.Regexp(t, `(?m)^type Choice0 string$`, code)
+}
