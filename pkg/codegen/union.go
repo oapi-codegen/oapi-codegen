@@ -111,7 +111,9 @@ func generateUnions(ctx genContext, outSchema *Schema, schema *openapi3.Schema, 
 // named the same way when the type it generates can't name the accessors
 // itself; see the comment on named below.
 func generateUnionElement(ctx genContext, outSchema *Schema, element *openapi3.SchemaRef, elementPath []string) (Schema, error) {
-	elementSchema, err := generateGoSchema(ctx.at(elementPath), element, elementPath)
+	elementCtx := ctx.at(elementPath)
+	elementCtx.pathTaken = element.Ref == ""
+	elementSchema, err := generateGoSchema(elementCtx, element, elementPath)
 	if err != nil {
 		// The caller names the keyword (anyOf/oneOf); the index is the
 		// only thing that says which inline branch failed.

@@ -1512,7 +1512,7 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 				}
 				typeName = tn
 			} else {
-				typeName = SchemaNameToTypeName(PathToTypeName(path))
+				typeName = ctx.enumTypeName(path)
 			}
 			typeDef := TypeDefinition{
 				TypeName: typeName,
@@ -1571,7 +1571,7 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 			// above with the specific definition.
 			if schema.AdditionalProperties.Schema != nil {
 				apHint := append(slices.Clone(path), "AdditionalProperties")
-				additionalSchema, err := generateGoSchema(ctx.at(apHint), schema.AdditionalProperties.Schema, path)
+				additionalSchema, err := generateGoSchema(ctx.sharingPath(apHint), schema.AdditionalProperties.Schema, path)
 				if err != nil {
 					return Schema{}, fmt.Errorf("error generating type for additional properties: %w", err)
 				}
@@ -1823,7 +1823,7 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 					return outSchema, fmt.Errorf("invalid value for %q: %w", extGoTypeName, err)
 				}
 			} else {
-				typeName = SchemaNameToTypeName(PathToTypeName(path))
+				typeName = ctx.enumTypeName(path)
 			}
 
 			typeDef := TypeDefinition{
@@ -1859,7 +1859,7 @@ func oapiSchemaToGoType(ctx genContext, schema *openapi3.Schema, path []string, 
 		// For arrays, we'll get the type of the Items and throw a
 		// [] in front of it.
 		itemHint := append(slices.Clone(path), "Item")
-		arrayType, err := generateGoSchema(ctx.at(itemHint), schema.Items, path)
+		arrayType, err := generateGoSchema(ctx.sharingPath(itemHint), schema.Items, path)
 		if err != nil {
 			return fmt.Errorf("error generating type for array: %w", err)
 		}
