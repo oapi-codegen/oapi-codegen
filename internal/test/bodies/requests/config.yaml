@@ -6,3 +6,4 @@ generate:
   client: true
 output-options:
   skip-prune: true
+  optional-client-request-bodies: true

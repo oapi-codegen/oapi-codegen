@@ -1,4 +1,4 @@
-# Folded from schemas/schemas.yaml. Compile-only.
+# Folded from schemas/schemas.yaml.
 # issue #9: the client params type was incorrectly included for a request that has BOTH a
 # body and parameters; the generated client must compile with both present.
 openapi: "3.0.1"
@@ -26,3 +26,13 @@ paths:
         content:
           application/json:
             schema: { }
+          text/plain:
+            schema:
+              type: string
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required: [name]

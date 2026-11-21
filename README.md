@@ -763,6 +763,8 @@ func TestClient_canCall() {
 }
 ```
 
+With `output-options.optional-client-request-bodies: true`, typed client methods and request builders accept a pointer when the request body has `required: false` or omits `required`. Pass `nil` to send a request without a body or a `Content-Type` header. Pass a pointer to send the value, including an empty JSON object or empty text. Required bodies still take a value.
+
 ### With Server URLs
 
 An OpenAPI specification makes it possible to denote Servers that a client can interact with, such as:

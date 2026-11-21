@@ -560,6 +560,8 @@ type OutputOptions struct {
 	ResponseTypeSuffix string `yaml:"response-type-suffix,omitempty"`
 	// Override the default generated client type with the value
 	ClientTypeName string `yaml:"client-type-name,omitempty"`
+	// OptionalClientRequestBodies makes typed client methods accept a pointer for optional request bodies.
+	OptionalClientRequestBodies bool `yaml:"optional-client-request-bodies,omitempty"`
 	// AdditionalInitialisms is a list of additional initialisms to use when generating names.
 	// NOTE that this has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`
 	AdditionalInitialisms []string `yaml:"additional-initialisms,omitempty"`

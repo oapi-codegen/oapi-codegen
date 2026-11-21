@@ -58,6 +58,20 @@ func clientMethodComment(base, deprecation string, interfaceStyle bool) string {
 	return base + "\n" + deprecation
 }
 
+// HasOptionalClientPointer reports whether the typed client accepts nil to omit this body.
+func (r RequestBodyDefinition) HasOptionalClientPointer() bool {
+	return globalState.options.OutputOptions.OptionalClientRequestBodies && !r.Required
+}
+
+// ClientParameterType is the type used by both the typed client method and its request builder.
+func (r RequestBodyDefinition) ClientParameterType(operationID string) string {
+	name := operationID + r.NameTag + "RequestBody"
+	if r.HasOptionalClientPointer() {
+		return "*" + name
+	}
+	return name
+}
+
 // ClientMethodVariants returns the precomputed client method variants for this
 // operation: the generic variant first, then one per client-supported request
 // body. It is consumed by client.tmpl and client-with-responses.tmpl.
@@ -104,7 +118,7 @@ func (o OperationDefinition) ClientMethodVariants() []ClientMethodVariant {
 			continue
 		}
 		suffix := body.Suffix()
-		bodyDecl := fmt.Sprintf(", body %s%sRequestBody", o.OperationId, body.NameTag)
+		bodyDecl := ", body " + body.ClientParameterType(o.OperationId)
 		clientBase := body.GenerateFunctionComment(o.OperationId, o, suffix, false)
 		respBase := body.GenerateFunctionComment(o.OperationId, o, suffix+"WithResponse", true)
 		variants = append(variants, ClientMethodVariant{

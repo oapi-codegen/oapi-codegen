@@ -6,6 +6,7 @@ package bodiesrequests
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
@@ -17,6 +18,14 @@ import (
 // Issue9JSONBody defines body for Issue9 for application/json ContentType.
 type Issue9JSONBody = any
 
+// Issue9FormdataBody defines body for Issue9 for application/x-www-form-urlencoded ContentType.
+type Issue9FormdataBody struct {
+	Name string `form:"name" json:"name"`
+}
+
+// Issue9TextBody defines body for Issue9 for text/plain ContentType.
+type Issue9TextBody = string
+
 // Issue9Params defines parameters for Issue9.
 type Issue9Params struct {
 	Foo string `form:"foo" json:"foo"`
@@ -24,6 +33,12 @@ type Issue9Params struct {
 
 // Issue9JSONRequestBody defines body for Issue9 for application/json ContentType.
 type Issue9JSONRequestBody = Issue9JSONBody
+
+// Issue9FormdataRequestBody defines body for Issue9 for application/x-www-form-urlencoded ContentType.
+type Issue9FormdataRequestBody Issue9FormdataBody
+
+// Issue9TextRequestBody defines body for Issue9 for text/plain ContentType.
+type Issue9TextRequestBody = Issue9TextBody
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -111,7 +126,21 @@ type ClientInterface interface {
 	//
 	// Client params type incorrectly included for request with body and
 	// parameters.
-	Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+	Issue9(ctx context.Context, params *Issue9Params, body *Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// Issue9WithFormdataBody performs a GET /issues/9 (the `Issue9` operationId) request.
+	// Takes a body of the `application/x-www-form-urlencoded` content type.
+	//
+	// Client params type incorrectly included for request with body and
+	// parameters.
+	Issue9WithFormdataBody(ctx context.Context, params *Issue9Params, body *Issue9FormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// Issue9WithTextBody performs a GET /issues/9 (the `Issue9` operationId) request.
+	// Takes a body of the `text/plain` content type.
+	//
+	// Client params type incorrectly included for request with body and
+	// parameters.
+	Issue9WithTextBody(ctx context.Context, params *Issue9Params, body *Issue9TextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 // Issue9WithBody performs a GET /issues/9 (the `Issue9` operationId) request,
@@ -136,7 +165,7 @@ func (c *Client) Issue9WithBody(ctx context.Context, params *Issue9Params, conte
 //
 // Client params type incorrectly included for request with body and
 // parameters.
-func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body *Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewIssue9Request(c.Server, params, body)
 	if err != nil {
 		return nil, err
@@ -148,15 +177,95 @@ func (c *Client) Issue9(ctx context.Context, params *Issue9Params, body Issue9JS
 	return c.Client.Do(req)
 }
 
+// Issue9WithFormdataBody performs a GET /issues/9 (the `Issue9` operationId) request.
+// Takes a body of the `application/x-www-form-urlencoded` content type.
+//
+// Client params type incorrectly included for request with body and
+// parameters.
+func (c *Client) Issue9WithFormdataBody(ctx context.Context, params *Issue9Params, body *Issue9FormdataRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewIssue9RequestWithFormdataBody(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+// Issue9WithTextBody performs a GET /issues/9 (the `Issue9` operationId) request.
+// Takes a body of the `text/plain` content type.
+//
+// Client params type incorrectly included for request with body and
+// parameters.
+func (c *Client) Issue9WithTextBody(ctx context.Context, params *Issue9Params, body *Issue9TextRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewIssue9RequestWithTextBody(c.Server, params, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 // NewIssue9Request calls the generic Issue9 builder with application/json body
-func NewIssue9Request(server string, params *Issue9Params, body Issue9JSONRequestBody) (*http.Request, error) {
+func NewIssue9Request(server string, params *Issue9Params, body *Issue9JSONRequestBody) (*http.Request, error) {
+	if body == nil {
+		req, err := NewIssue9RequestWithBody(server, params, "", nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Del("Content-Type")
+		return req, nil
+	}
 	var bodyReader io.Reader
-	buf, err := runtime.JSONMarshal(body)
+	buf, err := runtime.JSONMarshal(*body)
 	if err != nil {
 		return nil, err
 	}
 	bodyReader = bytes.NewReader(buf)
 	return NewIssue9RequestWithBody(server, params, "application/json", bodyReader)
+}
+
+// NewIssue9RequestWithFormdataBody calls the generic Issue9 builder with application/x-www-form-urlencoded body
+func NewIssue9RequestWithFormdataBody(server string, params *Issue9Params, body *Issue9FormdataRequestBody) (*http.Request, error) {
+	if body == nil {
+		req, err := NewIssue9RequestWithBody(server, params, "", nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Del("Content-Type")
+		return req, nil
+	}
+	var bodyReader io.Reader
+	bodyStr, err := runtime.MarshalForm(*body, nil)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = strings.NewReader(bodyStr.Encode())
+	return NewIssue9RequestWithBody(server, params, "application/x-www-form-urlencoded", bodyReader)
+}
+
+// NewIssue9RequestWithTextBody calls the generic Issue9 builder with text/plain body
+func NewIssue9RequestWithTextBody(server string, params *Issue9Params, body *Issue9TextRequestBody) (*http.Request, error) {
+	if body == nil {
+		req, err := NewIssue9RequestWithBody(server, params, "", nil)
+		if err != nil {
+			return nil, err
+		}
+		req.Header.Del("Content-Type")
+		return req, nil
+	}
+	var bodyReader io.Reader
+	if stringer, ok := any(*body).(fmt.Stringer); ok {
+		bodyReader = strings.NewReader(stringer.String())
+	} else {
+		bodyReader = strings.NewReader(fmt.Sprint(*body))
+	}
+	return NewIssue9RequestWithBody(server, params, "text/plain", bodyReader)
 }
 
 // NewIssue9RequestWithBody constructs an http.Request for the Issue9 method, with any body, and a specified content type
@@ -269,7 +378,21 @@ type ClientWithResponsesInterface interface {
 	//
 	// Client params type incorrectly included for request with body and
 	// parameters.
-	Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error)
+	Issue9WithResponse(ctx context.Context, params *Issue9Params, body *Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error)
+
+	// Issue9WithFormdataBodyWithResponse performs a GET /issues/9 (the `Issue9` operationId) request.
+	// Takes a body of the `application/x-www-form-urlencoded` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Client params type incorrectly included for request with body and
+	// parameters.
+	Issue9WithFormdataBodyWithResponse(ctx context.Context, params *Issue9Params, body *Issue9FormdataRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error)
+
+	// Issue9WithTextBodyWithResponse performs a GET /issues/9 (the `Issue9` operationId) request.
+	// Takes a body of the `text/plain` content type, and returns a wrapper object for the known response body format(s).
+	//
+	// Client params type incorrectly included for request with body and
+	// parameters.
+	Issue9WithTextBodyWithResponse(ctx context.Context, params *Issue9Params, body *Issue9TextRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error)
 }
 
 type Issue9Response struct {
@@ -326,8 +449,34 @@ func (c *ClientWithResponses) Issue9WithBodyWithResponse(ctx context.Context, pa
 //
 // Client params type incorrectly included for request with body and
 // parameters.
-func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error) {
+func (c *ClientWithResponses) Issue9WithResponse(ctx context.Context, params *Issue9Params, body *Issue9JSONRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error) {
 	rsp, err := c.Issue9(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIssue9Response(rsp)
+}
+
+// Issue9WithFormdataBodyWithResponse performs a GET /issues/9 (the `Issue9` operationId) request.
+// Takes a body of the `application/x-www-form-urlencoded` content type, and returns a wrapper object for the known response body format(s).
+//
+// Client params type incorrectly included for request with body and
+// parameters.
+func (c *ClientWithResponses) Issue9WithFormdataBodyWithResponse(ctx context.Context, params *Issue9Params, body *Issue9FormdataRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error) {
+	rsp, err := c.Issue9WithFormdataBody(ctx, params, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseIssue9Response(rsp)
+}
+
+// Issue9WithTextBodyWithResponse performs a GET /issues/9 (the `Issue9` operationId) request.
+// Takes a body of the `text/plain` content type, and returns a wrapper object for the known response body format(s).
+//
+// Client params type incorrectly included for request with body and
+// parameters.
+func (c *ClientWithResponses) Issue9WithTextBodyWithResponse(ctx context.Context, params *Issue9Params, body *Issue9TextRequestBody, reqEditors ...RequestEditorFn) (*Issue9Response, error) {
+	rsp, err := c.Issue9WithTextBody(ctx, params, body, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
