@@ -271,6 +271,86 @@ func TestDeprecationComment(t *testing.T) {
 	}
 }
 
+func TestExtraCommentLines(t *testing.T) {
+	withComment := func(v any) OperationDefinition {
+		return OperationDefinition{
+			Spec: &openapi3.Operation{
+				Extensions: map[string]any{
+					"x-oapi-codegen-comment": v,
+				},
+			},
+		}
+	}
+	tests := []struct {
+		name string
+		op   OperationDefinition
+		want []string
+	}{
+		{
+			name: "nil spec returns nil",
+			op:   OperationDefinition{Spec: nil},
+			want: nil,
+		},
+		{
+			name: "no extension returns nil",
+			op: OperationDefinition{
+				Spec: &openapi3.Operation{},
+			},
+			want: nil,
+		},
+		{
+			name: "single line",
+			op:   withComment("This operation is in alpha."),
+			want: []string{"// This operation is in alpha."},
+		},
+		{
+			name: "surrounding whitespace is trimmed",
+			op:   withComment("  \n  This operation is in beta.  \n\n"),
+			want: []string{"// This operation is in beta."},
+		},
+		{
+			name: "multiple lines each become a comment line",
+			op:   withComment("Stability: alpha\nMay change without notice.\n\nSee https://example.com/stability"),
+			want: []string{
+				"// Stability: alpha",
+				"// May change without notice.",
+				"//",
+				"// See https://example.com/stability",
+			},
+		},
+		{
+			name: "CRLF and CR line endings can't escape the comment",
+			op:   withComment("first\r\nsecond\rfunc Evil() {}"),
+			want: []string{
+				"// first",
+				"// second",
+				"// func Evil() {}",
+			},
+		},
+		{
+			name: "empty string returns nil",
+			op:   withComment(""),
+			want: nil,
+		},
+		{
+			name: "whitespace-only string returns nil",
+			op:   withComment(" \n\t "),
+			want: nil,
+		},
+		{
+			name: "non-string value returns nil",
+			op:   withComment(42),
+			want: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.op.ExtraCommentLines())
+		})
+	}
+}
+
 func TestOperationDefinition_GenerateFunctionComment(t *testing.T) {
 	opWithBody := func(summary string) OperationDefinition {
 		return OperationDefinition{
@@ -558,6 +638,69 @@ func TestOperationDefinition_GenerateFunctionComment(t *testing.T) {
 				"//\n" +
 				"// Corresponds with GET /foo (the `GetFoo` operationId).",
 		},
+		{
+			name: "has summary, x-oapi-codegen-comment, not with responses",
+			op: OperationDefinition{
+				OperationId: "GetFoo",
+				Method:      "GET",
+				Path:        "/foo",
+				Summary:     "Get a foo",
+				Spec: &openapi3.Operation{
+					Extensions: map[string]any{
+						"x-oapi-codegen-comment": "Stability: alpha",
+					},
+				},
+			},
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "",
+			isFunctionWithResponses: false,
+			want: "// GetFoo Get a foo\n" +
+				"//\n" +
+				"// Corresponds with GET /foo (the `GetFoo` operationId).\n" +
+				"//\n" +
+				"// Stability: alpha",
+		},
+		{
+			name: "no summary, x-oapi-codegen-comment, not with responses",
+			op: OperationDefinition{
+				OperationId: "GetFoo",
+				Method:      "GET",
+				Path:        "/foo",
+				Spec: &openapi3.Operation{
+					Extensions: map[string]any{
+						"x-oapi-codegen-comment": "Stability: alpha",
+					},
+				},
+			},
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "",
+			isFunctionWithResponses: false,
+			want: "// GetFoo performs a GET /foo (the `GetFoo` operationId) request.\n" +
+				"//\n" +
+				"// Stability: alpha",
+		},
+		{
+			name: "no summary, x-oapi-codegen-comment, with responses",
+			op: OperationDefinition{
+				OperationId: "GetFoo",
+				Method:      "GET",
+				Path:        "/foo",
+				Spec: &openapi3.Operation{
+					Extensions: map[string]any{
+						"x-oapi-codegen-comment": "Stability: draft\nMay change without notice.",
+					},
+				},
+			},
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "WithResponse",
+			isFunctionWithResponses: true,
+			want: "// GetFooWithResponse performs a GET /foo (the `GetFoo` operationId) request.\n" +
+				"//\n" +
+				"// Returns a wrapper object for the known response body format(s).\n" +
+				"//\n" +
+				"// Stability: draft\n" +
+				"// May change without notice.",
+		},
 	}
 
 	for _, tt := range tests {
@@ -594,6 +737,27 @@ func TestRequestBodyDefinition_GenerateFunctionComment(t *testing.T) {
 		Method:      "POST",
 		Path:        "/foo",
 		Spec:        &openapi3.Operation{Description: "Detailed description."},
+	}
+	parentWithSummaryAndComment := OperationDefinition{
+		OperationId: "CreateFoo",
+		Method:      "POST",
+		Path:        "/foo",
+		Summary:     "Create a foo",
+		Spec: &openapi3.Operation{
+			Extensions: map[string]any{
+				"x-oapi-codegen-comment": "Stability: beta",
+			},
+		},
+	}
+	parentNoSummaryWithComment := OperationDefinition{
+		OperationId: "CreateFoo",
+		Method:      "POST",
+		Path:        "/foo",
+		Spec: &openapi3.Operation{
+			Extensions: map[string]any{
+				"x-oapi-codegen-comment": "Stability: beta",
+			},
+		},
 	}
 	body := RequestBodyDefinition{
 		ContentType: "application/json",
@@ -747,6 +911,48 @@ func TestRequestBodyDefinition_GenerateFunctionComment(t *testing.T) {
 				"// Takes a body of the `application/json` content type.\n" +
 				"//\n" +
 				"// Corresponds with POST /foo (the `CreateFoo` operationId).",
+		},
+		{
+			name:                    "has summary, x-oapi-codegen-comment, not with responses",
+			body:                    body,
+			parent:                  parentWithSummaryAndComment,
+			originalFunctionName:    "CreateFoo",
+			functionSuffix:          "WithJSONBody",
+			isFunctionWithResponses: false,
+			want: "// CreateFooWithJSONBody Create a foo\n" +
+				"//\n" +
+				"// Takes a body of the `application/json` content type.\n" +
+				"//\n" +
+				"// Corresponds with POST /foo (the `CreateFoo` operationId).\n" +
+				"//\n" +
+				"// Stability: beta",
+		},
+		{
+			name:                    "no summary, x-oapi-codegen-comment, not with responses",
+			body:                    body,
+			parent:                  parentNoSummaryWithComment,
+			originalFunctionName:    "CreateFoo",
+			functionSuffix:          "WithJSONBody",
+			isFunctionWithResponses: false,
+			want: "// CreateFooWithJSONBody performs a POST /foo (the `CreateFoo` operationId) request.\n" +
+				"// Takes a body of the `application/json` content type.\n" +
+				"//\n" +
+				"// Stability: beta",
+		},
+		{
+			name:                    "has summary, x-oapi-codegen-comment, with responses",
+			body:                    body,
+			parent:                  parentWithSummaryAndComment,
+			originalFunctionName:    "CreateFoo",
+			functionSuffix:          "WithJSONBodyWithResponse",
+			isFunctionWithResponses: true,
+			want: "// CreateFooWithJSONBodyWithResponse Create a foo\n" +
+				"//\n" +
+				"// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).\n" +
+				"//\n" +
+				"// Corresponds with POST /foo (the `CreateFoo` operationId).\n" +
+				"//\n" +
+				"// Stability: beta",
 		},
 	}
 

@@ -860,6 +860,7 @@ func prepareDescriptionLines(summary, description string) []string {
 // - if not present, an indication of the HTTP call this corresponds with
 // - the Description, if present
 // - whether this function takes a body and a content type
+// - the operation's x-oapi-codegen-comment, when set
 //
 // Takes originalFunctionName (the OperationId or the function name being generated for this Operation), a suffix (if necessary) and whether this is being generated for ClientInterface or ClientWithResponsesInterface
 func (o OperationDefinition) GenerateFunctionComment(originalFunctionName string, functionSuffix string, isFunctionWithResponses bool) string {
@@ -909,6 +910,10 @@ func (o OperationDefinition) GenerateFunctionComment(originalFunctionName string
 			parts = append(parts, "// Returns a wrapper object for the known response body format(s).")
 		}
 	}
+	if extra := o.ExtraCommentLines(); len(extra) > 0 {
+		parts = append(parts, "//")
+		parts = append(parts, extra...)
+	}
 
 	// make sure that each line is sanitised
 	for i, part := range parts {
@@ -916,6 +921,38 @@ func (o OperationDefinition) GenerateFunctionComment(originalFunctionName string
 	}
 
 	return strings.Join(parts, "\n")
+}
+
+// ExtraCommentLines returns the operation's x-oapi-codegen-comment as Go
+// comment lines, one per line of the value, or nil when it is unset, empty or
+// not a string. Each line starts with "//", so a newline in the value can't
+// end the comment.
+func (o OperationDefinition) ExtraCommentLines() []string {
+	if o.Spec == nil {
+		return nil
+	}
+	extension, ok := o.Spec.Extensions[extOapiCodegenComment]
+	if !ok {
+		return nil
+	}
+	comment, err := extString(extension)
+	if err != nil {
+		return nil
+	}
+	comment = strings.TrimSpace(normalizeWhitespace(comment))
+	if comment == "" {
+		return nil
+	}
+	lines := strings.Split(comment, "\n")
+	for i, line := range lines {
+		line = strings.TrimRightFunc(line, unicode.IsSpace)
+		if line == "" {
+			lines[i] = "//"
+		} else {
+			lines[i] = "// " + line
+		}
+	}
+	return lines
 }
 
 // DeprecationComment returns a Go-style deprecation comment if the operation is deprecated, otherwise returns an empty string.
@@ -1180,6 +1217,7 @@ type RequestBodyDefinition struct {
 // - the Summary, if present, as the first line of the comment
 // - if not present, an indication of the HTTP call this corresponds with
 // - whether this function takes a body and a content type
+// - the operation's x-oapi-codegen-comment, when set
 //
 // Takes originalFunctionName (the OperationId or the function name being generated for this Operation), a suffix (if necessary) and whether this is being generated for ClientInterface or ClientWithResponsesInterface
 func (r RequestBodyDefinition) GenerateFunctionComment(originalFunctionName string, parent OperationDefinition, functionSuffix string, isFunctionWithResponses bool) string {
@@ -1216,6 +1254,10 @@ func (r RequestBodyDefinition) GenerateFunctionComment(originalFunctionName stri
 				parts = append(parts, "// "+line)
 			}
 		}
+	}
+	if extra := parent.ExtraCommentLines(); len(extra) > 0 {
+		parts = append(parts, "//")
+		parts = append(parts, extra...)
 	}
 
 	// make sure that each line is sanitised

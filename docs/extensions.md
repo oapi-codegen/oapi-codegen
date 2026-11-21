@@ -658,6 +658,50 @@ Notice that because we've not set `deprecated: true` to the `name` field, it doe
 
 You can see this in more detail in [the example code](../examples/extensions/xdeprecatedreason/).
 
+## `x-oapi-codegen-comment`
+
+Add extra lines to an operation's generated client GoDoc.
+
+The generated client methods (`ClientInterface`, `Client`, `ClientWithResponsesInterface` and `ClientWithResponses`) are already documented with the operation's `summary` and `description`. When you want to say something in the GoDoc that doesn't belong in the API's own description, such as a stability level or an internal note, set `x-oapi-codegen-comment` on the operation to a string. Its value is added, as-is, as a final paragraph of each generated client method's GoDoc.
+
+Each line of the value becomes its own `//` comment line, and blank lines are kept as `//`, so multi-line values (for instance YAML block scalars) can't break out of the comment. Surrounding whitespace is trimmed. Operations without the extension, or with an empty or non-string value, generate exactly the same code as before.
+
+We can see this at play with the following operation:
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-oapi-codegen-comment
+paths:
+  /pets:
+    get:
+      operationId: listPets
+      summary: List pets
+      x-oapi-codegen-comment: |
+        Stability: alpha
+
+        This operation may change in backwards-incompatible ways.
+      responses:
+        "200":
+          description: A list of pets
+```
+
+From here, the generated client method is documented as:
+
+```go
+// ListPets List pets
+//
+// Corresponds with GET /pets (the `ListPets` operationId).
+//
+// Stability: alpha
+//
+// This operation may change in backwards-incompatible ways.
+ListPets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
+```
+
+You can see this in more detail in [the example code](../examples/extensions/xoapicodegencomment/).
+
 ## `x-order`
 
 Explicitly order struct fields.
