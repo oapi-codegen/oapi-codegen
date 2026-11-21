@@ -59,6 +59,10 @@ With `oapi-codegen`, there are a few [Key Design Decisions](#key-design-decision
   - [<code>additionalProperties</code> with an object](#additionalproperties-with-an-object)
 - [Globally skipping the &quot;optional pointer&quot;](#globally-skipping-the-optional-pointer)
 - [Changing the names of generated types](#changing-the-names-of-generated-types)
+  - [Adjusting how names are normalized](#adjusting-how-names-are-normalized)
+    - [<code>enum-values.keep-underscores</code>](#enum-valueskeep-underscores)
+    - [<code>properties.leading-underscore</code>](#propertiesleading-underscore)
+    - [<code>explicit-names</code>](#explicit-names)
 - [Examples](#examples)
   - [Blog posts](#blog-posts)
 - [Frequently Asked Questions (FAQs)](#frequently-asked-questions-faqs)
@@ -2367,6 +2371,58 @@ type ClientInterface interface {
 
 
 For more details of what the resulting code looks like, check out [the test cases](internal/test/options/name_normalizer/).
+
+### Adjusting how names are normalized
+
+The `name-normalizer` applies to every name in the spec. A few of its behaviors can be changed one at a time with `output-options.naming`, which leaves everything else as the normalizer you chose produces it. All of these are opt-in: without them, generated names do not change.
+
+```yaml
+output-options:
+  naming:
+    enum-values:
+      keep-underscores: true
+    properties:
+      leading-underscore: drop
+    explicit-names: verbatim
+```
+
+#### `enum-values.keep-underscores`
+
+By default an underscore in an enum value separates two words and is removed from the name of the constant. With `keep-underscores: true` the words are still normalized, but the underscore between them stays:
+
+| Enum value | Default | With `keep-underscores` |
+|---|---|---|
+| `SOME_ENUM_NAME` | `SOMEENUMNAME` | `SOME_ENUM_NAME` |
+| `some_enum_name` | `SomeEnumName` | `Some_Enum_Name` |
+| `ABC-DEF` | `ABCDEF` | `ABCDEF` |
+| `_FOO` | `UnderscoreFOO` | `Underscore_FOO` |
+
+This applies to the names given in `x-enum-varnames` as well, and works with every `name-normalizer`. It cannot be combined with `compatibility.old-enum-conflicts`.
+
+#### `properties.leading-underscore`
+
+By default the underscores at the start of a property name are spelled out in the name of its struct field. With `leading-underscore: drop` they contribute nothing:
+
+| Property | Default | With `leading-underscore: drop` |
+|---|---|---|
+| `_id` | `UnderscoreId` | `Id` |
+| `_UPPER_SNAKE_CASE` | `UnderscoreUPPERSNAKECASE` | `UPPERSNAKECASE` |
+| `__meta` | `UnderscoreUnderscoreMeta` | `Meta` |
+
+The same goes for an operation's query, header and cookie parameters, which are the fields of its parameters struct: a query parameter `_id` becomes `params.Id`. Path parameters are function arguments rather than fields and are not affected.
+
+An object that has both `_id` and `id` then has two properties that want the same field name, which is reported as an error. Rename one of them with `x-go-name`, or set `output-options.resolve-type-name-collisions` to have them renamed automatically.
+
+#### `explicit-names`
+
+By default a Go name that the spec states itself is normalized like any other name, so `x-go-name: HARD_CODED_ID` on a property becomes the field `HARDCODEDID`. With `explicit-names: verbatim` such a name is emitted exactly as written. This applies to:
+
+- `x-go-name` on a property or a parameter
+- `x-enum-varnames` and `x-enumNames`
+
+(`x-go-name` on a schema, response, request body or server, and `x-go-type-name`, are already used as written.)
+
+A verbatim name has to be a valid Go identifier, and nothing else about it is checked or changed: it is not capitalized, not renamed when it collides with another name, and an enum constant does not get the type name prefix that the enum's other constants may get. Whether it is exported, unique and otherwise usable is up to you, and the Go compiler will tell you if it is not.
 
 ## Examples
 

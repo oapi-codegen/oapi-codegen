@@ -23,6 +23,11 @@ type Schema struct {
 	ArrayType *Schema // The schema of array element
 
 	EnumValues map[string]string // Enum values
+	// verbatimEnumNames holds the keys of EnumValues that the spec stated
+	// itself and that are emitted exactly as written, which exempts them from
+	// the type name prefix an enum's constants may get. It is nil unless
+	// output-options.naming.explicit-names asks for that.
+	verbatimEnumNames map[string]struct{}
 
 	Properties               []Property       // For an object, the fields with names
 	HasAdditionalProperties  bool             // Whether we support additional properties
@@ -302,24 +307,7 @@ func (p Property) hasExplicitGoFieldName() bool {
 // derivedGoFieldName returns the field name p gets from its JSON name or its
 // x-go-name, before any collision with a sibling is resolved.
 func (p Property) derivedGoFieldName() string {
-	goFieldName := p.JsonFieldName
-	if extension, ok := p.Extensions[extGoName]; ok {
-		if extGoFieldName, err := extParseGoFieldName(extension); err == nil {
-			goFieldName = extGoFieldName
-		}
-	}
-
-	if globalState.options.Compatibility.AllowUnexportedStructFieldNames {
-		if extension, ok := p.Extensions[extOapiCodegenOnlyHonourGoName]; ok {
-			if extOapiCodegenOnlyHonourGoName, err := extParseOapiCodegenOnlyHonourGoName(extension); err == nil {
-				if extOapiCodegenOnlyHonourGoName {
-					return goFieldName
-				}
-			}
-		}
-	}
-
-	return SchemaNameToTypeName(goFieldName)
+	return goFieldName(p.JsonFieldName, p.Extensions)
 }
 
 func (p Property) GoTypeDef() string {
@@ -398,9 +386,45 @@ func (e *EnumDefinition) GetValues() map[string]string {
 	}
 	// If we do have conflicts, we will prefix the enum's typename to the values.
 	newValues := make(map[string]string, len(e.Schema.EnumValues))
-	for k, v := range e.Schema.EnumValues {
-		newName := e.TypeName + UppercaseFirstCharacter(k)
-		newValues[newName] = v
+	if len(e.Schema.verbatimEnumNames) == 0 {
+		for k, v := range e.Schema.EnumValues {
+			newName := e.TypeName + UppercaseFirstCharacter(k)
+			newValues[newName] = v
+		}
+		return newValues
+	}
+
+	// The names the spec states are emitted as written, so they take no
+	// prefix. A prefix can turn another name into one of them, though, and
+	// that name gets a suffix: left alone, the two values would share a key
+	// here and one of them would be lost.
+	prefixed := make(map[string]string, len(e.Schema.EnumValues))
+	used := make(map[string]struct{}, len(e.Schema.EnumValues))
+	for k := range e.Schema.EnumValues {
+		name := k
+		if _, verbatim := e.Schema.verbatimEnumNames[k]; !verbatim {
+			name = e.TypeName + UppercaseFirstCharacter(k)
+			prefixed[k] = name
+		}
+		used[name] = struct{}{}
+	}
+	for _, k := range SortedMapKeys(e.Schema.EnumValues) {
+		name, derived := prefixed[k]
+		if !derived {
+			newValues[k] = e.Schema.EnumValues[k]
+			continue
+		}
+		if _, taken := e.Schema.verbatimEnumNames[name]; taken {
+			for suffix := 1; ; suffix++ {
+				candidate := name + strconv.Itoa(suffix)
+				if _, taken := used[candidate]; !taken {
+					name = candidate
+					used[name] = struct{}{}
+					break
+				}
+			}
+		}
+		newValues[name] = e.Schema.EnumValues[k]
 	}
 	return newValues
 }
@@ -1498,7 +1522,7 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 		outSchema.DefineViaAlias = false
 		outSchema.EnumValues = make(map[string]string, len(items))
 		for _, it := range items {
-			outSchema.EnumValues[SchemaNameToTypeName(it.Title)] = it.Value
+			outSchema.EnumValues[enumValueNameToGoName(it.Title)] = it.Value
 		}
 		// Non-toplevel schemas need an explicit AdditionalType so the
 		// downstream EnumDefinition collector picks them up; toplevel
@@ -1782,7 +1806,11 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 			}
 		}
 
+		// With output-options.naming.explicit-names set to verbatim, a name
+		// the spec gives a value is emitted as written.
+		keepExtNames := explicitNamesVerbatim()
 		var enumNames, enumValues []string
+		var verbatim []bool
 		for i, enumValue := range enumSource {
 			// A non-string enum has no literal for null; the pointer or nullable field carries it.
 			if enumValue == nil && outSchema.GoType != "string" {
@@ -1795,20 +1823,35 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 			}
 			enumValues = append(enumValues, value)
 			enumNames = append(enumNames, name)
+			verbatim = append(verbatim, keepExtNames && i < len(extNames))
+		}
+		if err := checkVerbatimEnumNames(enumNames, verbatim); err != nil {
+			return outSchema, err
 		}
 
-		enumNames, enumValues = sanitizeEnumNamesInOrder(enumNames, enumValues)
+		enumNames, enumValues, verbatim = sanitizeEnumNamesKeeping(enumNames, enumValues, verbatim)
 		for i, name := range enumNames {
+			if verbatim[i] {
+				continue
+			}
 			if globalState.options.Compatibility.OldEnumConflicts {
 				if enumValues[i] == "" {
 					name = "Empty"
 				}
 				name = PathToTypeName(append(path, name))
 			}
-			enumNames[i] = SchemaNameToTypeName(name)
+			enumNames[i] = enumValueNameToGoName(name)
 		}
-		disambiguateEnumNames(enumNames)
+		disambiguateEnumNamesKeeping(enumNames, verbatim)
 		outSchema.EnumValues = enumValueMap(enumNames, enumValues)
+		for i, name := range enumNames {
+			if verbatim[i] {
+				if outSchema.verbatimEnumNames == nil {
+					outSchema.verbatimEnumNames = make(map[string]struct{})
+				}
+				outSchema.verbatimEnumNames[name] = struct{}{}
+			}
+		}
 		if len(path) > 1 { // handle additional type only on non-toplevel types
 			// Allow overriding autogenerated enum type names, since these may
 			// cause conflicts - see https://github.com/oapi-codegen/oapi-codegen/issues/832
