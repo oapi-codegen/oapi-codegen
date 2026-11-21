@@ -29,6 +29,8 @@ func mergeTwoV3(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
 }
 
 func TestMergeOpenapiSchemas_DiscriminatorPropagationV3(t *testing.T) {
+	resetGlobalState(t)
+
 	disc := &openapi3.Discriminator{
 		PropertyName: "type",
 	}
@@ -90,6 +92,8 @@ func TestMergeOpenapiSchemas_DiscriminatorPropagationV3(t *testing.T) {
 // merged result regardless of member order, while two members declaring
 // different types remain an error.
 func TestMergeOpenapiSchemas_TypePropagationV3(t *testing.T) {
+	resetGlobalState(t)
+
 	stringType := &openapi3.Types{"string"}
 	numberType := &openapi3.Types{"number"}
 	unionType := &openapi3.Types{"string", "number"}
@@ -182,6 +186,8 @@ func TestMergeOpenapiSchemas_TypePropagationV3(t *testing.T) {
 // erroring, which is what the allOf decorator idiom over format-carrying
 // scalars produces (e.g. $ref to {type: string, format: uuid} + nullable).
 func TestMergeOpenapiSchemas_FormatPropagationV3(t *testing.T) {
+	resetGlobalState(t)
+
 	t.Run("format on s2 only propagates", func(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Format: "uuid"}
@@ -233,6 +239,8 @@ func TestMergeOpenapiSchemas_FormatPropagationV3(t *testing.T) {
 // decorating a $ref with `nullable: true` via allOf (issue #1898). Members
 // disagreeing on nullability must merge (union) rather than error.
 func TestMergeOpenapiSchemas_NullableUnionV3(t *testing.T) {
+	resetGlobalState(t)
+
 	t.Run("nullable on s2 propagates to result", func(t *testing.T) {
 		s1 := openapi3.Schema{}
 		s2 := openapi3.Schema{Nullable: true}
@@ -274,6 +282,8 @@ func TestMergeOpenapiSchemas_NullableUnionV3(t *testing.T) {
 // type. Merging them must never fail: the allOf decorator idiom sets them on
 // one member only, and kin-openapi can't tell an unset flag from false.
 func TestMergeOpenapiSchemas_AnnotationsV3(t *testing.T) {
+	resetGlobalState(t)
+
 	merge := func(t *testing.T, s1, s2 openapi3.Schema) openapi3.Schema {
 		t.Helper()
 		result, err := mergeTwoV3(s1, s2)
@@ -310,6 +320,8 @@ func TestMergeOpenapiSchemas_AnnotationsV3(t *testing.T) {
 // where "null" spells nullability. It is unioned like 3.0's `nullable`
 // instead of taking part in the type comparison.
 func TestMergeOpenapiSchemas_NullInTypeArrayV3(t *testing.T) {
+	resetGlobalState(t)
+
 	object := &openapi3.Types{"object"}
 	nullableObject := &openapi3.Types{"object", "null"}
 
@@ -353,6 +365,8 @@ func TestMergeOpenapiSchemas_NullInTypeArrayV3(t *testing.T) {
 // TestMergeOpenapiSchemas_AdditionalPropertiesV3 covers two members that both
 // declare an additionalProperties schema.
 func TestMergeOpenapiSchemas_AdditionalPropertiesV3(t *testing.T) {
+	resetGlobalState(t)
+
 	withAP := func(ap *openapi3.SchemaRef) openapi3.Schema {
 		return openapi3.Schema{AdditionalProperties: openapi3.AdditionalProperties{Schema: ap}}
 	}
@@ -409,6 +423,8 @@ func assertAllOfOf(t *testing.T, ref *openapi3.SchemaRef, want ...*openapi3.Sche
 // TestMergeOpenapiSchemas_ItemsV3 covers array items, which used to be dropped
 // by every allOf merge.
 func TestMergeOpenapiSchemas_ItemsV3(t *testing.T) {
+	resetGlobalState(t)
+
 	merge := func(s1, s2 openapi3.Schema) (openapi3.Schema, error) {
 		return mergeTwoV3(s1, s2)
 	}
@@ -444,6 +460,8 @@ func TestMergeOpenapiSchemas_ItemsV3(t *testing.T) {
 }
 
 func TestMergeOpenapiSchemas_EnumV3(t *testing.T) {
+	resetGlobalState(t)
+
 	named := func(enum []any, names ...any) openapi3.Schema {
 		s := openapi3.Schema{Enum: enum}
 		if len(names) > 0 {
@@ -506,6 +524,8 @@ func TestMergeOpenapiSchemas_EnumV3(t *testing.T) {
 }
 
 func TestMergeOpenapiSchemas_ConstV3(t *testing.T) {
+	resetGlobalState(t)
+
 	t.Run("the same const merges", func(t *testing.T) {
 		result, err := mergeTwoV3(openapi3.Schema{Const: "cat"}, openapi3.Schema{Const: "cat"})
 		require.NoError(t, err)
@@ -530,6 +550,8 @@ func TestMergeOpenapiSchemas_ConstV3(t *testing.T) {
 }
 
 func TestMergeOpenapiSchemas_RequiredV3(t *testing.T) {
+	resetGlobalState(t)
+
 	result, err := mergeTwoV3(openapi3.Schema{Required: []string{"a", "b"}}, openapi3.Schema{Required: []string{"b", "c"}})
 	require.NoError(t, err)
 	assert.Equal(t, []string{"a", "b", "c"}, result.Required)
@@ -538,6 +560,8 @@ func TestMergeOpenapiSchemas_RequiredV3(t *testing.T) {
 // TestMergeOpenapiSchemas_NestedAllOfV3: a member that is itself an allOf
 // contributes its members and its own keywords; v2 dropped the latter.
 func TestMergeOpenapiSchemas_NestedAllOfV3(t *testing.T) {
+	resetGlobalState(t)
+
 	nested := openapi3.Schema{
 		Properties: openapi3.Schemas{"own": openapi3.NewSchemaRef("", openapi3.NewStringSchema())},
 		AllOf: openapi3.SchemaRefs{openapi3.NewSchemaRef("", &openapi3.Schema{
@@ -2382,9 +2406,7 @@ func TestPlacedDiscriminator(t *testing.T) {
 // GenFieldsFromProperties writes it: the template with the field's own flags,
 // x-go-json-ignore, or x-oapi-codegen-extra-tags.
 func TestFieldKey(t *testing.T) {
-	options, generator := globalState.options, globalState.schemaFieldTagGenerator
-	t.Cleanup(func() { globalState.options, globalState.schemaFieldTagGenerator = options, generator })
-	globalState.options = Configuration{}
+	resetGlobalState(t)
 	var err error
 	globalState.schemaFieldTagGenerator, err = newStructTagGenerator(StructTagsConfig{Tags: []StructTagTemplate{
 		{Name: "json", Template: `{{if .IsOptional}}opt_{{end}}{{.FieldName}}{{if .OmitEmpty}},omitempty{{end}}`},

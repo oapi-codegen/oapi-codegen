@@ -100,20 +100,8 @@ func TestToCamelCaseWithDigits(t *testing.T) {
 	}
 }
 
-func useDefaultInitialisms(t *testing.T) {
-	t.Helper()
-
-	oldInitialisms := globalState.initialismsMap
-	oldRegex := targetWordRegex
-	t.Cleanup(func() {
-		globalState.initialismsMap = oldInitialisms
-		targetWordRegex = oldRegex
-	})
-	globalState.initialismsMap = makeInitialismsMap(nil)
-}
-
 func TestToCamelCaseWithInitialisms(t *testing.T) {
-	useDefaultInitialisms(t)
+	resetGlobalState(t)
 
 	tests := []struct {
 		str  string
@@ -248,12 +236,7 @@ components:
 }
 
 func TestRefPathToGoType(t *testing.T) {
-	oldSpec := globalState.spec
-	oldImportMapping := globalState.importMapping
-	t.Cleanup(func() {
-		globalState.spec = oldSpec
-		globalState.importMapping = oldImportMapping
-	})
+	resetGlobalState(t)
 	globalState.spec = &openapi3.T{}
 	globalState.importMapping = constructImportMapping(
 		map[string]string{
@@ -1124,7 +1107,7 @@ func TestLowercaseFirstCharacters(t *testing.T) {
 }
 
 func Test_replaceInitialism(t *testing.T) {
-	useDefaultInitialisms(t)
+	resetGlobalState(t)
 
 	type args struct {
 		s string

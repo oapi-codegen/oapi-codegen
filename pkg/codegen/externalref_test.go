@@ -47,9 +47,8 @@ func TestQualifyExternalTypeNames(t *testing.T) {
 }
 
 func TestEnsureExternalRefsInSchema(t *testing.T) {
-	old := globalState.importMapping
+	resetGlobalState(t)
 	globalState.importMapping = constructImportMapping(map[string]string{"./ext.yaml": "example.com/ext"})
-	defer func() { globalState.importMapping = old }()
 	pkg := globalState.importMapping["./ext.yaml"].Name
 
 	const ref = "./ext.yaml#/components/responses/R"

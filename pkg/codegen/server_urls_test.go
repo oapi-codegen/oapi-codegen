@@ -65,9 +65,9 @@ func TestUsedAndUndeclaredVariables(t *testing.T) {
 // server-urls template for spec, mirroring the setup in Generate.
 func renderServerURLs(t *testing.T, spec *openapi3.T) string {
 	t.Helper()
-	// Generate registers `opts` before parsing; mirror that here so the
+	// Generate registers `opts` before parsing, and so does this, so the
 	// (unrelated) framework templates parse cleanly.
-	TemplateFunctions["opts"] = func() Configuration { return globalState.options }
+	resetGlobalState(t)
 	tmpl := template.New("oapi-codegen").Funcs(TemplateFunctions)
 	require.NoError(t, LoadTemplates(templates, tmpl))
 	out, err := GenerateServerURLs(tmpl, spec)
