@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: namingoptions
+output: options.gen.go
+generate:
+  models: true
+  client: true
+output-options:
+  skip-prune: true
+  naming:
+    enum-values:
+      keep-underscores: true
+    properties:
+      leading-underscore: drop
+    explicit-names: verbatim

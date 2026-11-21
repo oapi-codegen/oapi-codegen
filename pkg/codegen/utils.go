@@ -905,34 +905,65 @@ func SanitizeEnumNames(enumNames, enumValues []string) map[string]string {
 // sanitizeEnumNamesInOrder keeps names and values in declaration order so a
 // caller applying another naming transformation can resolve any new collisions.
 func sanitizeEnumNamesInOrder(enumNames, enumValues []string) (names, values []string) {
+	names, values, _ = sanitizeEnumNamesKeeping(enumNames, enumValues, nil)
+	return names, values
+}
+
+// sanitizeEnumNamesKeeping is sanitizeEnumNamesInOrder for an enum some of
+// whose names are emitted as written: verbatim[i] marks enumNames[i] as one.
+// Such a name is neither converted nor renamed, and the names derived for the
+// other values are kept clear of it. The returned kept marks the same names in
+// the result, which is shorter than the input when duplicates were dropped.
+func sanitizeEnumNamesKeeping(enumNames, enumValues []string, verbatim []bool) (names, values []string, kept []bool) {
 	names = make([]string, 0, len(enumValues))
 	values = make([]string, 0, len(enumValues))
+	kept = make([]bool, 0, len(enumValues))
 	seen := make(map[string]struct{}, len(enumValues))
 	for i, value := range enumValues {
 		name := value
 		if i < len(enumNames) {
 			name = enumNames[i]
 		}
-		if _, duplicate := seen[name]; duplicate {
-			continue
+		keep := i < len(verbatim) && verbatim[i]
+		if !keep {
+			if _, duplicate := seen[name]; duplicate {
+				continue
+			}
+			seen[name] = struct{}{}
+			name = SanitizeGoIdentity(enumValueNameToGoName(name))
 		}
-		seen[name] = struct{}{}
-		names = append(names, SanitizeGoIdentity(SchemaNameToTypeName(name)))
+		names = append(names, name)
 		values = append(values, value)
+		kept = append(kept, keep)
 	}
-	disambiguateEnumNames(names)
-	return names, values
+	disambiguateEnumNamesKeeping(names, kept)
+	return names, values, kept
 }
 
 // disambiguateEnumNames assigns numeric suffixes without using names that
 // another declaration already has, including declarations later in the list.
 func disambiguateEnumNames(names []string) {
+	disambiguateEnumNamesKeeping(names, nil)
+}
+
+// disambiguateEnumNamesKeeping is disambiguateEnumNames for a list in which
+// keep[i] marks names[i] as one that may not change. Every other name that
+// matches a kept one gets a suffix, wherever in the list it comes.
+func disambiguateEnumNamesKeeping(names []string, keep []bool) {
+	kept := func(i int) bool { return i < len(keep) && keep[i] }
+
 	used := make(map[string]struct{}, len(names))
-	for _, name := range names {
-		used[name] = struct{}{}
-	}
 	nextSuffix := make(map[string]int, len(names))
+	for i, name := range names {
+		used[name] = struct{}{}
+		if kept(i) {
+			nextSuffix[name] = 1
+		}
+	}
 	for i, base := range names {
+		if kept(i) {
+			continue
+		}
 		suffix := nextSuffix[base]
 		if suffix == 0 {
 			nextSuffix[base] = 1

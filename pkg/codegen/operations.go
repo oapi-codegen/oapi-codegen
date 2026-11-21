@@ -246,6 +246,9 @@ func (pd ParameterDefinition) GoName() string {
 	goName := pd.ParamName
 	if extension, ok := pd.Spec.Extensions[extGoName]; ok {
 		if extGoFieldName, err := extParseGoFieldName(extension); err == nil {
+			if explicitNamesVerbatim() {
+				return extGoFieldName
+			}
 			goName = extGoFieldName
 		}
 	}
