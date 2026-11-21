@@ -5,6 +5,7 @@ import (
 	"go/format"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -1349,4 +1350,118 @@ components:
 	require.NoError(t, err)
 	_, err = Generate(swagger, v1)
 	require.NoError(t, err)
+}
+
+func TestNullableAdditionalPropertiesAccessors(t *testing.T) {
+	const spec = `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths: {}
+components:
+  schemas:
+    MyModel:
+      type: object
+      additionalProperties:
+        type: string
+        nullable: true
+      properties:
+        blabla:
+          type: string
+    Base:
+      type: object
+      properties:
+        id:
+          type: string
+    MyAllOf:
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - type: object
+          properties:
+            name:
+              type: string
+          additionalProperties:
+            type: string
+            nullable: true
+    MyInlineAllOf:
+      allOf:
+        - type: object
+          properties:
+            a:
+              type: string
+          additionalProperties:
+            type: string
+            nullable: true
+        - type: object
+          properties:
+            b:
+              type: string
+          additionalProperties:
+            type: string
+            nullable: true
+`
+	// v1 additionally accepts members that disagree on nullable, which v2
+	// rejects.
+	const v1Spec = spec + `
+    MyMixedAllOf:
+      allOf:
+        - type: object
+          properties:
+            a:
+              type: string
+          additionalProperties:
+            type: string
+            nullable: true
+        - type: object
+          properties:
+            b:
+              type: string
+          additionalProperties:
+            type: string
+`
+	// structOf returns the declaration of the struct typeName.
+	structOf := func(t *testing.T, code, typeName string) string {
+		t.Helper()
+		_, rest, found := strings.Cut(code, "type "+typeName+" struct {")
+		require.True(t, found, "no struct %s", typeName)
+		body, _, found := strings.Cut(rest, "\n}")
+		require.True(t, found)
+		return body
+	}
+
+	for _, merging := range []string{SchemaMergingV1, SchemaMergingV2, SchemaMergingV3} {
+		t.Run("schema-merging-behavior="+merging, func(t *testing.T) {
+			resetGlobalState(t)
+
+			// Under v1 the map of an allOf has never held pointers for a
+			// nullable element, and that is kept; everywhere else the
+			// element is a pointer.
+			input := spec
+			elemTypes := map[string]string{"MyModel": "*string", "MyAllOf": "*string", "MyInlineAllOf": "*string"}
+			if merging == SchemaMergingV1 {
+				input = v1Spec
+				elemTypes = map[string]string{"MyModel": "*string", "MyAllOf": "string", "MyInlineAllOf": "string", "MyMixedAllOf": "string"}
+			}
+
+			swagger, err := openapi3.NewLoader().LoadFromData([]byte(input))
+			require.NoError(t, err)
+
+			code, err := Generate(swagger, Configuration{
+				PackageName:   "api",
+				Generate:      GenerateOptions{Models: true},
+				Compatibility: CompatibilityOptions{SchemaMergingBehavior: merging},
+				OutputOptions: OutputOptions{SkipPrune: true},
+			})
+			require.NoError(t, err)
+
+			// The struct declares the map once, and the accessors use its
+			// element type.
+			for typeName, elemType := range elemTypes {
+				body := structOf(t, code, typeName)
+				assert.Equal(t, 1, strings.Count(body, "AdditionalProperties "), "%s declares AdditionalProperties once", typeName)
+				assert.Regexp(t, `AdditionalProperties\s+map\[string\]`+regexp.QuoteMeta(elemType)+" `json:\"-\"`", body)
+				assert.Contains(t, code, "func (a "+typeName+") Get(fieldName string) (value "+elemType+", found bool) {")
+				assert.Contains(t, code, "func (a *"+typeName+") Set(fieldName string, value "+elemType+") {")
+			}
+		})
+	}
 }

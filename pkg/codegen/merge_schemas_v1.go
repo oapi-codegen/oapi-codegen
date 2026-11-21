@@ -73,6 +73,10 @@ func mergeSchemasV1(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 				// them
 				outSchema.HasAdditionalProperties = true
 				outSchema.AdditionalPropertiesType = schema.AdditionalPropertiesType
+				// genStructFromAllOf declares the map with this element
+				// type, without the pointer a nullable element gets
+				// elsewhere, so the accessors have to use it too.
+				outSchema.additionalPropertiesElemType = schema.AdditionalPropertiesType.TypeDecl()
 			}
 		}
 	}
