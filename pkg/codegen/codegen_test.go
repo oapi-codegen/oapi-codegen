@@ -5,6 +5,7 @@ import (
 	"go/format"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
@@ -1381,12 +1382,67 @@ components:
           additionalProperties:
             type: string
             nullable: true
+    MyInlineAllOf:
+      allOf:
+        - type: object
+          properties:
+            a:
+              type: string
+          additionalProperties:
+            type: string
+            nullable: true
+        - type: object
+          properties:
+            b:
+              type: string
+          additionalProperties:
+            type: string
+            nullable: true
 `
+	// v1 additionally accepts members that disagree on nullable, which v2
+	// rejects.
+	const v1Spec = spec + `
+    MyMixedAllOf:
+      allOf:
+        - type: object
+          properties:
+            a:
+              type: string
+          additionalProperties:
+            type: string
+            nullable: true
+        - type: object
+          properties:
+            b:
+              type: string
+          additionalProperties:
+            type: string
+`
+	// structOf returns the declaration of the struct typeName.
+	structOf := func(t *testing.T, code, typeName string) string {
+		t.Helper()
+		_, rest, found := strings.Cut(code, "type "+typeName+" struct {")
+		require.True(t, found, "no struct %s", typeName)
+		body, _, found := strings.Cut(rest, "\n}")
+		require.True(t, found)
+		return body
+	}
+
 	for _, merging := range []string{SchemaMergingV1, SchemaMergingV2, SchemaMergingV3} {
 		t.Run("schema-merging-behavior="+merging, func(t *testing.T) {
 			resetGlobalState(t)
 
-			swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+			// Under v1 the map of an allOf has never held pointers for a
+			// nullable element, and that is kept; everywhere else the
+			// element is a pointer.
+			input := spec
+			elemTypes := map[string]string{"MyModel": "*string", "MyAllOf": "*string", "MyInlineAllOf": "*string"}
+			if merging == SchemaMergingV1 {
+				input = v1Spec
+				elemTypes = map[string]string{"MyModel": "*string", "MyAllOf": "string", "MyInlineAllOf": "string", "MyMixedAllOf": "string"}
+			}
+
+			swagger, err := openapi3.NewLoader().LoadFromData([]byte(input))
 			require.NoError(t, err)
 
 			code, err := Generate(swagger, Configuration{
@@ -1397,14 +1453,15 @@ components:
 			})
 			require.NoError(t, err)
 
-			// The accessors must use the same element type as the map field.
-			for _, typeName := range []string{"MyModel", "MyAllOf"} {
-				assert.Contains(t, code, "func (a "+typeName+") Get(fieldName string) (value *string, found bool) {")
-				assert.Contains(t, code, "func (a *"+typeName+") Set(fieldName string, value *string) {")
+			// The struct declares the map once, and the accessors use its
+			// element type.
+			for typeName, elemType := range elemTypes {
+				body := structOf(t, code, typeName)
+				assert.Equal(t, 1, strings.Count(body, "AdditionalProperties "), "%s declares AdditionalProperties once", typeName)
+				assert.Regexp(t, `AdditionalProperties\s+map\[string\]`+regexp.QuoteMeta(elemType)+" `json:\"-\"`", body)
+				assert.Contains(t, code, "func (a "+typeName+") Get(fieldName string) (value "+elemType+", found bool) {")
+				assert.Contains(t, code, "func (a *"+typeName+") Set(fieldName string, value "+elemType+") {")
 			}
-			assert.Contains(t, code, "AdditionalProperties map[string]*string `json:\"-\"`")
-			assert.NotContains(t, code, "AdditionalProperties map[string]string")
-			assert.NotContains(t, code, "make(map[string]string)")
 		})
 	}
 }

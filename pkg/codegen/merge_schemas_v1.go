@@ -73,6 +73,10 @@ func mergeSchemasV1(ctx genContext, allOf []*openapi3.SchemaRef, path []string) 
 				// them
 				outSchema.HasAdditionalProperties = true
 				outSchema.AdditionalPropertiesType = schema.AdditionalPropertiesType
+				// genStructFromAllOf declares the map with this element
+				// type, without the pointer a nullable element gets
+				// elsewhere, so the accessors have to use it too.
+				outSchema.additionalPropertiesElemType = schema.AdditionalPropertiesType.TypeDecl()
 			}
 		}
 	}
@@ -143,7 +147,12 @@ func genStructFromAllOf(ctx genContext, allOf []*openapi3.SchemaRef, kinds []v1M
 			objectParts = append(objectParts, GenFieldsFromProperties(goSchema.Properties)...)
 
 			if goSchema.HasAdditionalProperties {
-				additionalPropertiesPart := fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", additionalPropertiesType(goSchema))
+				addPropsType := goSchema.AdditionalPropertiesType.GoType
+				if goSchema.AdditionalPropertiesType.RefType != "" {
+					addPropsType = goSchema.AdditionalPropertiesType.RefType
+				}
+
+				additionalPropertiesPart := fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", addPropsType)
 				if !slices.Contains(objectParts, additionalPropertiesPart) {
 					objectParts = append(objectParts, additionalPropertiesPart)
 				}

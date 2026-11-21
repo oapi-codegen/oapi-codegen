@@ -29,6 +29,13 @@ type Schema struct {
 	AdditionalPropertiesType *Schema          // And if we do, their type
 	AdditionalTypes          []TypeDefinition // We may need to generate auxiliary helper types, stored here
 
+	// additionalPropertiesElemType, when set, is the element type of the
+	// AdditionalProperties map, in place of the one additionalPropertiesType
+	// derives from AdditionalPropertiesType. schema-merging-behavior v1 sets
+	// it for an allOf, whose map has never held pointers for a nullable
+	// element.
+	additionalPropertiesElemType string
+
 	SkipOptionalPointer bool // Some types don't need a * in front when they're optional
 
 	Description string // The description of the element
@@ -2246,6 +2253,9 @@ func structFieldTags(p Property) map[string]string {
 }
 
 func additionalPropertiesType(schema Schema) string {
+	if schema.additionalPropertiesElemType != "" {
+		return schema.additionalPropertiesElemType
+	}
 	addPropsType := schema.AdditionalPropertiesType.GoType
 	if schema.AdditionalPropertiesType.RefType != "" {
 		addPropsType = schema.AdditionalPropertiesType.RefType
