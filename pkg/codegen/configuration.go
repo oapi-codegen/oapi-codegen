@@ -119,6 +119,13 @@ func (o Configuration) Validate() error {
 		}
 	}
 
+	// compatibility.old-enum-conflicts names enum constants along a code path
+	// of its own, which joins the pieces of a name with underscores and
+	// relies on the normalizer to remove them again.
+	if o.Compatibility.OldEnumConflicts && o.OutputOptions.Naming.EnumValues.KeepUnderscores {
+		errs = append(errs, errors.New("`output-options.naming.enum-values.keep-underscores` cannot be combined with `compatibility.old-enum-conflicts`"))
+	}
+
 	// import-mapping keys are the paths of $ref'd documents (a relative
 	// file path or URL). A JSON pointer key can never match anything —
 	// references within the same document always resolve to the package
@@ -576,6 +583,11 @@ type OutputOptions struct {
 	// NameNormalizer is the method used to normalize Go names and types, for instance converting the text `MyApi` to `MyAPI`. Corresponds with the constants defined for `codegen.NameNormalizerFunction`
 	NameNormalizer string `yaml:"name-normalizer,omitempty"`
 
+	// Naming holds opt-in adjustments to how the name normalizer derives the
+	// names of enum constants and struct fields, and whether it applies to
+	// names the spec states itself.
+	Naming NamingOptions `yaml:"naming,omitempty"`
+
 	// Overlay defines configuration for the OpenAPI Overlay (https://github.com/OAI/Overlay-Specification) to manipulate the OpenAPI specification before generation. This allows modifying the specification without needing to apply changes directly to it, making it easier to keep it up-to-date.
 	Overlay OutputOptionsOverlay `yaml:"overlay"`
 
@@ -703,6 +715,10 @@ func (oo OutputOptions) Validate() map[string]string {
 		return map[string]string{
 			"additional-initialisms": "You have specified `additional-initialisms`, but the `name-normalizer` is not set to `ToCamelCaseWithInitialisms`. Please specify `name-normalizer: ToCamelCaseWithInitialisms` or remove the `additional-initialisms` configuration",
 		}
+	}
+
+	if problems := oo.Naming.Validate(); problems != nil {
+		return problems
 	}
 
 	if _, err := compileStreamingContentTypes(oo.StreamingContentTypes); err != nil {
