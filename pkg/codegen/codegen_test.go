@@ -456,6 +456,111 @@ components:
 	assert.Contains(t, code, "CStateMigrating")
 }
 
+func TestGenerateKeepsEnumValuesAfterNamingCollisions(t *testing.T) {
+	const spec = `
+openapi: 3.0.3
+info: {title: Enum collisions, version: "1"}
+paths: {}
+servers:
+  - url: https://{stage}.example.org
+    description: Preview
+    variables:
+      stage:
+        default: Blue
+        enum: [blue, Blue, blue1, blue2]
+components:
+  schemas:
+    Token:
+      type: string
+      enum: ["A", "/a"]
+    Symbol:
+      type: string
+      enum: ["_", ":0"]
+    Spacing:
+      type: string
+      enum: ["", " "]
+`
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	code, err := Generate(swagger, Configuration{
+		PackageName:   "api",
+		Generate:      GenerateOptions{Models: true, ServerURLs: true},
+		OutputOptions: OutputOptions{SkipPrune: true},
+	})
+	require.NoError(t, err)
+
+	for _, declaration := range []string{
+		`A\s+Token\s*= "A"`,
+		`A1\s+Token\s*= "/a"`,
+		`Underscore\s+Symbol\s*= "_"`,
+		`Underscore1\s+Symbol\s*= ":0"`,
+		`Empty\s+Spacing\s*= ""`,
+		`Empty1\s+Spacing\s*= " "`,
+		`ServerUrlPreviewStageVariableBlue\s+ServerUrlPreviewStageVariable\s*= "blue"`,
+		`ServerUrlPreviewStageVariableBlue1\s+ServerUrlPreviewStageVariable\s*= "blue1"`,
+		`ServerUrlPreviewStageVariableBlue2\s+ServerUrlPreviewStageVariable\s*= "blue2"`,
+		`ServerUrlPreviewStageVariableBlue3\s+ServerUrlPreviewStageVariable\s*= "Blue"`,
+		`const ServerUrlPreviewStageVariableDefault\s+ServerUrlPreviewStageVariable\s*= ServerUrlPreviewStageVariableBlue3`,
+	} {
+		assert.Regexp(t, `(?m)^\s*`+declaration+"$", code)
+	}
+}
+
+// TestGenerateKeepsEnumValuesAfterNamingCollisionsOldEnumConflicts covers the
+// `compatibility.old-enum-conflicts` branch, where each enum name is prefixed
+// with the schema path before the final name conversion. Values whose names
+// collide after that conversion must each keep a constant, and a numeric
+// suffix must not reuse a name that a later value already owns.
+func TestGenerateKeepsEnumValuesAfterNamingCollisionsOldEnumConflicts(t *testing.T) {
+	const spec = `
+openapi: 3.0.3
+info: {title: Enum collisions, version: "1"}
+paths: {}
+components:
+  schemas:
+    Token:
+      type: string
+      enum: ["A", "/a"]
+    Symbol:
+      type: string
+      enum: ["_", ":0"]
+    Spacing:
+      type: string
+      enum: ["", " "]
+    Holder:
+      type: object
+      properties:
+        kind:
+          type: string
+          enum: ["B", "/b", "B1"]
+`
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	code, err := Generate(swagger, Configuration{
+		PackageName:   "api",
+		Generate:      GenerateOptions{Models: true},
+		OutputOptions: OutputOptions{SkipPrune: true},
+		Compatibility: CompatibilityOptions{OldEnumConflicts: true},
+	})
+	require.NoError(t, err)
+
+	for _, declaration := range []string{
+		`TokenA\s+Token\s*= "A"`,
+		`TokenA1\s+Token\s*= "/a"`,
+		`SymbolSymbolUnderscore\s+Symbol\s*= "_"`,
+		`SymbolSymbol\s+Symbol\s*= ":0"`,
+		`SpacingSpacingEmpty\s+Spacing\s*= ""`,
+		`SpacingSpacing\s+Spacing\s*= " "`,
+		`HolderKindB\s+HolderKind\s*= "B"`,
+		`HolderKindB1\s+HolderKind\s*= "B1"`,
+		`HolderKindB2\s+HolderKind\s*= "/b"`,
+	} {
+		assert.Regexp(t, `(?m)^\s*`+declaration+"$", code)
+	}
+}
+
 // TestEnumConflictDetectionBothOrders verifies that enum conflict detection
 // produces identical, fully-prefixed output regardless of the order the
 // schemas appear in the spec.

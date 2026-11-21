@@ -176,39 +176,22 @@ func serverURLVariableTypeName(serverGoName, varName string) string {
 // template-only path produced for happy-path specs (`<Prefix><Value | ucFirst>`),
 // so adopters with non-colliding enums keep their existing identifiers.
 //
-// When two values fold to the same suffix (e.g. `enum: ["foo", "FOO"]`,
-// both → `Foo`), later occurrences get a numeric suffix (`Foo`, `Foo1`,
-// `Foo2`, …) — same scheme as `SanitizeEnumNames`. The previous
-// template path didn't dedup at all and would have produced a
-// duplicate-const compile error for these specs; this is purely a
-// correctness improvement, not a naming change for any spec that
-// actually compiled before.
+// When values fold to the same suffix, later occurrences get the next
+// numeric suffix that is available after reserving all original names.
 func serverURLEnumKeys(v *openapi3.ServerVariable) []string {
 	keys := make([]string, len(v.Enum))
-	seen := make(map[string]int, len(v.Enum))
-	for i, val := range v.Enum {
-		base := UppercaseFirstCharacter(val)
-		if n, dup := seen[base]; dup {
-			keys[i] = base + strconv.Itoa(n)
-			seen[base] = n + 1
-		} else {
-			keys[i] = base
-			seen[base] = 1
-		}
+	for i, value := range v.Enum {
+		keys[i] = UppercaseFirstCharacter(value)
 	}
+	disambiguateEnumNames(keys)
 	return keys
 }
 
 // serverURLEnumValues returns the EnumValues map handed to GenerateEnums
-// for variable `v`: key is the deduplicated identifier suffix from
-// serverURLEnumKeys, value is the original enum string.
+// for variable `v`: key is the deduplicated identifier suffix, value is the
+// original enum string.
 func serverURLEnumValues(v *openapi3.ServerVariable) map[string]string {
-	keys := serverURLEnumKeys(v)
-	out := make(map[string]string, len(keys))
-	for i, k := range keys {
-		out[k] = v.Enum[i]
-	}
-	return out
+	return enumValueMap(serverURLEnumKeys(v), v.Enum)
 }
 
 // ServerURLDefaultPointer carries the pre-computed identifier names
