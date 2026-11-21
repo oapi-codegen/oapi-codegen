@@ -252,7 +252,10 @@ func (pd ParameterDefinition) GoName() string {
 			goName = extGoFieldName
 		}
 	}
-	return SchemaNameToTypeName(goName)
+	// A query, header or cookie parameter is a field of the operation's
+	// parameters struct, which is named as any other struct field is. This
+	// has to be that same name.
+	return propertyNameToGoName(goName)
 }
 
 // Deprecated: Use HasOptionalPointer, as it is clearer what the intent is.

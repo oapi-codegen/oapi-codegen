@@ -95,7 +95,8 @@ type Thing struct {
 
 // ListThingsParams defines parameters for ListThings.
 type ListThingsParams struct {
-	Page_Size *int `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Page_Size *int    `form:"page_size,omitempty" json:"page_size,omitempty"`
+	Filter    *string `form:"_filter,omitempty" json:"_filter,omitempty"`
 }
 
 // RequestEditorFn is the function signature for the RequestEditor callback function
@@ -220,6 +221,18 @@ func NewListThingsRequest(server string, params *ListThingsParams) (*http.Reques
 		if params.Page_Size != nil {
 
 			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "page_size", *params.Page_Size, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "integer", Format: ""}); err != nil {
+				return nil, err
+			} else {
+				for _, qp := range strings.Split(queryFrag, "&") {
+					rawQueryFragments = append(rawQueryFragments, qp)
+				}
+			}
+
+		}
+
+		if params.Filter != nil {
+
+			if queryFrag, err := runtime.StyleParamWithOptions("form", true, "_filter", *params.Filter, runtime.StyleParamOptions{ParamLocation: runtime.ParamLocationQuery, Type: "string", Format: ""}); err != nil {
 				return nil, err
 			} else {
 				for _, qp := range strings.Split(queryFrag, "&") {

@@ -2409,6 +2409,8 @@ By default the underscores at the start of a property name are spelled out in th
 | `_UPPER_SNAKE_CASE` | `UnderscoreUPPERSNAKECASE` | `UPPERSNAKECASE` |
 | `__meta` | `UnderscoreUnderscoreMeta` | `Meta` |
 
+The same goes for an operation's parameters, which are the fields of its parameters struct: a query parameter `_id` becomes `params.Id`.
+
 An object that has both `_id` and `id` then has two properties that want the same field name, which is reported as an error. Rename one of them with `x-go-name`, or set `output-options.resolve-type-name-collisions` to have them renamed automatically.
 
 #### `explicit-names`

@@ -14,7 +14,7 @@ type NamingOptions struct {
 	// EnumValues adjusts the names of the constants generated for enum values.
 	EnumValues EnumValueNamingOptions `yaml:"enum-values,omitempty"`
 	// Properties adjusts the names of the struct fields generated for object
-	// properties.
+	// properties and for the parameters of an operation.
 	Properties PropertyNamingOptions `yaml:"properties,omitempty"`
 	// ExplicitNames decides what happens to a Go name the spec states itself,
 	// with `x-go-name` on a property or a parameter, or with `x-enum-varnames`
@@ -33,10 +33,11 @@ type EnumValueNamingOptions struct {
 	KeepUnderscores bool `yaml:"keep-underscores,omitempty"`
 }
 
-// PropertyNamingOptions adjusts the names of struct fields.
+// PropertyNamingOptions adjusts the names of struct fields: those of an
+// object's properties, and those of an operation's parameters.
 type PropertyNamingOptions struct {
-	// LeadingUnderscore decides what the underscores a property name starts
-	// with contribute to its field name. By default each one is spelled out,
+	// LeadingUnderscore decides what the underscores a property or parameter
+	// name starts with contribute to its Go name. By default each one is spelled out,
 	// so `_id` becomes `UnderscoreId`. Set to `drop` for them to contribute
 	// nothing, so `_id` becomes `Id`.
 	LeadingUnderscore LeadingUnderscoreMode `yaml:"leading-underscore,omitempty"`
@@ -115,7 +116,9 @@ func normalizeKeepingUnderscores(name string) string {
 }
 
 // propertyNameToGoName is SchemaNameToTypeName for the name of a struct field,
-// adjusted by the property naming options.
+// adjusted by the property naming options. A parameter is named with it too:
+// it is a field of the operation's parameters struct, and the code that reads
+// the field has to arrive at the same name.
 func propertyNameToGoName(name string) string {
 	if globalState.options.OutputOptions.Naming.Properties.LeadingUnderscore == LeadingUnderscoreDrop {
 		// A name that is nothing but underscores keeps them: there is no

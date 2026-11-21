@@ -57,11 +57,16 @@ func TestPropertyNames(t *testing.T) {
 	assert.Equal(t, thing, decoded)
 }
 
-func TestParameterNameVerbatim(t *testing.T) {
-	pageSize := 10
-	params := ListThingsParams{Page_Size: &pageSize}
+func TestParameterNames(t *testing.T) {
+	pageSize, filter := 10, "new"
+	params := ListThingsParams{
+		Page_Size: &pageSize,
+		// "_filter", with its leading underscore dropped.
+		Filter: &filter,
+	}
 
 	req, err := NewListThingsRequest("https://example.com", &params)
 	require.NoError(t, err)
 	assert.Equal(t, "10", req.URL.Query().Get("page_size"))
+	assert.Equal(t, "new", req.URL.Query().Get("_filter"))
 }

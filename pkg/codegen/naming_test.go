@@ -3,6 +3,7 @@ package codegen
 import (
 	"go/format"
 	"math/rand"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -409,5 +410,160 @@ func TestNamingOptionsTogether(t *testing.T) {
 		"Page_Size ",
 	} {
 		assert.Contains(t, code, want)
+	}
+}
+
+// A parameter becomes a field of the operation's parameters struct, and the
+// client and server read that field by the parameter's own name for it. The
+// two have to agree whatever the naming options are.
+func TestNamingParametersMatchTheirFields(t *testing.T) {
+	const spec = `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths:
+  /things/{_thing}:
+    get:
+      operationId: getThing
+      parameters:
+        - {name: _thing, in: path, required: true, schema: {type: string}}
+        - {name: _id, in: query, schema: {type: string}}
+        - {name: _trace, in: header, schema: {type: string}}
+        - {name: _session, in: cookie, schema: {type: string}}
+        - {name: _named, in: query, x-go-name: _Named_Query, schema: {type: string}}
+      responses:
+        '200': {description: ok}
+`
+	for name, tc := range map[string]struct {
+		configure func(*Configuration)
+		want      []string
+	}{
+		"default": {
+			configure: func(*Configuration) {},
+			want: []string{
+				"UnderscoreId *string", "params.UnderscoreId",
+				"UnderscoreTrace *string", "params.UnderscoreTrace",
+				"UnderscoreSession *string", "params.UnderscoreSession",
+				"UnderscoreNamedQuery *string", "params.UnderscoreNamedQuery",
+				"underscoreThing string",
+			},
+		},
+		"leading underscores dropped": {
+			configure: func(c *Configuration) {
+				c.OutputOptions.Naming.Properties.LeadingUnderscore = LeadingUnderscoreDrop
+			},
+			want: []string{
+				"Id *string", "params.Id",
+				"Trace *string", "params.Trace",
+				"Session *string", "params.Session",
+				"NamedQuery *string", "params.NamedQuery",
+				"thing string",
+			},
+		},
+		"explicit names verbatim": {
+			configure: func(c *Configuration) {
+				c.OutputOptions.Naming.ExplicitNames = ExplicitNamesVerbatim
+			},
+			want: []string{
+				"UnderscoreId *string", "params.UnderscoreId",
+				"_Named_Query *string", "params._Named_Query",
+			},
+		},
+		"both": {
+			configure: func(c *Configuration) {
+				c.OutputOptions.Naming.Properties.LeadingUnderscore = LeadingUnderscoreDrop
+				c.OutputOptions.Naming.ExplicitNames = ExplicitNamesVerbatim
+			},
+			want: []string{
+				"Id *string", "params.Id",
+				"_Named_Query *string", "params._Named_Query",
+			},
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			for _, server := range []func(*GenerateOptions){
+				func(g *GenerateOptions) { g.StdHTTPServer = true },
+				func(g *GenerateOptions) { g.EchoServer = true },
+				func(g *GenerateOptions) { g.ChiServer = true; g.Strict = true },
+			} {
+				code, err := generateNamingOptions(t, spec, func(c *Configuration) {
+					server(&c.Generate)
+					tc.configure(c)
+				})
+				require.NoError(t, err)
+				for _, want := range tc.want {
+					assert.Contains(t, code, want)
+				}
+				// Every use of a field of the parameters struct names a
+				// field the struct has.
+				structBody := code[strings.Index(code, "type GetThingParams struct {"):]
+				structBody = structBody[:strings.Index(structBody, "}")]
+				for _, use := range regexp.MustCompile(`\bparams\.(\w+)`).FindAllStringSubmatch(code, -1) {
+					assert.Contains(t, structBody, " "+use[1]+" ", "params.%s is not a field of GetThingParams", use[1])
+				}
+			}
+		})
+	}
+}
+
+// The type name put in front of an enum's derived constants can produce a
+// name that the spec states for another value, which keeps it.
+func TestNamingExplicitNamesVerbatimPrefixCollision(t *testing.T) {
+	const spec = `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths: {}
+components:
+  schemas:
+    Level:
+      type: string
+      enum: [a, b, b1]
+      x-enum-varnames: [LevelB]
+`
+	for range 20 {
+		code, err := generateNamingOptions(t, spec, func(c *Configuration) {
+			c.OutputOptions.Naming.ExplicitNames = ExplicitNamesVerbatim
+			c.Compatibility.AlwaysPrefixEnumValues = true
+		})
+		require.NoError(t, err)
+
+		assert.Contains(t, code, `LevelB Level = "a"`)
+		assert.Contains(t, code, `LevelB1 Level = "b1"`)
+		assert.Contains(t, code, `LevelB2 Level = "b"`)
+		assert.Equal(t, 3, strings.Count(code, "return true"))
+	}
+}
+
+// The strict server copies each path parameter into a field of the request
+// object. A name emitted as written need not be exported, and the field and
+// the assignment to it have to spell it the same way.
+func TestNamingExplicitNamesVerbatimStrictPathParameter(t *testing.T) {
+	const spec = `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths:
+  /things/{id}:
+    get:
+      operationId: getThing
+      parameters:
+        - {name: id, in: path, required: true, x-go-name: thing_id, schema: {type: string}}
+      responses:
+        '200': {description: ok}
+`
+	for name, server := range map[string]func(*GenerateOptions){
+		"std-http": func(g *GenerateOptions) { g.StdHTTPServer = true },
+		"fiber":    func(g *GenerateOptions) { g.FiberServer = true },
+		"iris":     func(g *GenerateOptions) { g.IrisServer = true },
+	} {
+		t.Run(name, func(t *testing.T) {
+			code, err := generateNamingOptions(t, spec, func(c *Configuration) {
+				server(&c.Generate)
+				c.Generate.Strict = true
+				c.OutputOptions.Naming.ExplicitNames = ExplicitNamesVerbatim
+			})
+			require.NoError(t, err)
+
+			assert.Contains(t, code, "type GetThingRequestObject struct { thing_id string")
+			assert.Contains(t, code, "request.thing_id = thing_id")
+		})
 	}
 }

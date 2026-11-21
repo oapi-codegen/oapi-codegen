@@ -407,12 +407,45 @@ func (e *EnumDefinition) GetValues() map[string]string {
 	}
 	// If we do have conflicts, we will prefix the enum's typename to the values.
 	newValues := make(map[string]string, len(e.Schema.EnumValues))
-	for k, v := range e.Schema.EnumValues {
-		newName := e.TypeName + UppercaseFirstCharacter(k)
-		if _, verbatim := e.Schema.verbatimEnumNames[k]; verbatim {
-			newName = k
+	if len(e.Schema.verbatimEnumNames) == 0 {
+		for k, v := range e.Schema.EnumValues {
+			newName := e.TypeName + UppercaseFirstCharacter(k)
+			newValues[newName] = v
 		}
-		newValues[newName] = v
+		return newValues
+	}
+
+	// The names the spec states are emitted as written, so they take no
+	// prefix. A prefix can turn another name into one of them, though, and
+	// that name gets a suffix: left alone, the two values would share a key
+	// here and one of them would be lost.
+	prefixed := make(map[string]string, len(e.Schema.EnumValues))
+	used := make(map[string]struct{}, len(e.Schema.EnumValues))
+	for k := range e.Schema.EnumValues {
+		name := k
+		if _, verbatim := e.Schema.verbatimEnumNames[k]; !verbatim {
+			name = e.TypeName + UppercaseFirstCharacter(k)
+			prefixed[k] = name
+		}
+		used[name] = struct{}{}
+	}
+	for _, k := range SortedMapKeys(e.Schema.EnumValues) {
+		name, derived := prefixed[k]
+		if !derived {
+			newValues[k] = e.Schema.EnumValues[k]
+			continue
+		}
+		if _, taken := e.Schema.verbatimEnumNames[name]; taken {
+			for suffix := 1; ; suffix++ {
+				candidate := name + strconv.Itoa(suffix)
+				if _, taken := used[candidate]; !taken {
+					name = candidate
+					used[name] = struct{}{}
+					break
+				}
+			}
+		}
+		newValues[name] = e.Schema.EnumValues[k]
 	}
 	return newValues
 }
