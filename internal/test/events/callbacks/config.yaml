@@ -6,4 +6,6 @@ generate:
   std-http-server: true
 output-options:
   skip-prune: true
+  # Both the callback and its parent require a body and keep their value arguments.
+  optional-client-request-bodies: true
 output: callbacks.gen.go

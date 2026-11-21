@@ -228,6 +228,10 @@
           "type": "string",
           "description": "Override the default generated client type with the value"
         },
+        "optional-client-request-bodies": {
+          "type": "boolean",
+          "description": "Accept a pointer to an optional request body in typed clients. Pass nil to omit the body."
+        },
         "additional-initialisms": {
           "type": "array",
           "description": "AdditionalInitialisms defines additional initialisms to be used by the code generator. Has no effect unless the `name-normalizer` is set to `ToCamelCaseWithInitialisms`",

@@ -106,17 +106,28 @@ func (c *{{ $clientTypeName }}) {{$opid}}{{.Suffix}}(ctx context.Context{{.ArgsD
 {{range .}}
 {{$hasParams := .RequiresParamObject -}}
 {{$pathParams := .PathParams -}}
-{{$bodyRequired := .BodyRequired -}}
 {{$opid := .OperationId -}}
 {{$generic := .GenericClientVariant -}}
 
 {{range .Bodies}}
 {{if .IsSupportedByClient -}}
+{{$bodyValue := "body" -}}
 // New{{$opid}}Request{{.Suffix}} calls the generic {{$opid}} builder with {{.ContentType}} body
-func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{$opid}}{{.NameTag}}RequestBody) (*http.Request, error) {
+func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{if $hasParams}}, params *{{$opid}}Params{{end}}, body {{.ClientParameterType $opid}}) (*http.Request, error) {
+    {{if .HasOptionalClientPointer -}}
+    {{$bodyValue = "*body" -}}
+    if body == nil {
+        req, err := New{{$opid}}RequestWithBody(server{{genParamNames $pathParams}}{{if $hasParams}}, params{{end}}, "", nil)
+        if err != nil {
+            return nil, err
+        }
+        req.Header.Del("Content-Type")
+        return req, nil
+    }
+    {{end -}}
     var bodyReader io.Reader
     {{if .IsJSON -}}
-        buf, err := runtime.JSONMarshal(body)
+        buf, err := runtime.JSONMarshal({{$bodyValue}})
         if err != nil {
             return nil, err
         }
@@ -126,7 +137,7 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
         // These arrays are encoded in the exploded form style: as repeated keys.
         // The encodings are built in a scope of their own, so that nothing
         // declared for them can collide with an argument of this function.
-        bodyStr, err := runtime.MarshalForm(body, func() map[string]runtime.RequestBodyEncoding {
+        bodyStr, err := runtime.MarshalForm({{$bodyValue}}, func() map[string]runtime.RequestBodyEncoding {
             explode := true
             return map[string]runtime.RequestBodyEncoding{
             {{range .ExplodedFormArrays -}}
@@ -135,18 +146,18 @@ func New{{$opid}}Request{{.Suffix}}(server string{{genParamArgs $pathParams}}{{i
             }
         }())
         {{else -}}
-        bodyStr, err := runtime.MarshalForm(body, nil)
+        bodyStr, err := runtime.MarshalForm({{$bodyValue}}, nil)
         {{end -}}
         if err != nil {
             return nil, err
         }
         bodyReader = strings.NewReader(bodyStr.Encode())
     {{else if .IsText -}}
-        if stringer, ok := any(body).(fmt.Stringer); ok {
+        if stringer, ok := any({{$bodyValue}}).(fmt.Stringer); ok {
             bodyReader = strings.NewReader(stringer.String())
         } else {
         {{if .Schema.IsPrimitive -}}
-            bodyReader = strings.NewReader(fmt.Sprint(body))
+            bodyReader = strings.NewReader(fmt.Sprint({{$bodyValue}}))
         {{else -}}
             return nil, fmt.Errorf("text/plain is not supported for complex types, define a String() method on {{.Schema.TypeDecl}} to marshal it as text")
         {{end -}}

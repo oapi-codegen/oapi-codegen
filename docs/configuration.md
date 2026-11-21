@@ -81,6 +81,7 @@ output-options:
   additional-initialisms: []
   response-type-suffix: ""
   client-type-name: ""
+  optional-client-request-bodies: false
   nullable-type: false
   disable-type-aliases-for-type: []
   resolve-type-name-collisions: false   # also resolves colliding struct field names; not renamed, to keep existing configurations working
