@@ -549,6 +549,7 @@ var TemplateFunctions = template.FuncMap{
 	"toGoComment":                StringWithTypeNameToGoComment,
 	"unionTypes":                 unionTypesFragment,
 	"withoutPkgName":             withoutPkgName,
+	"additionalPropertiesType":   additionalPropertiesType,
 
 	"genServerURLWithVariablesFunctionParams": genServerURLWithVariablesFunctionParams,
 	"httpMethodConstant":                      httpMethodConstant,

@@ -1,4 +1,4 @@
-{{range .Types}}{{$addType := .Schema.AdditionalPropertiesType.TypeDecl}}
+{{range .Types}}{{$addType := additionalPropertiesType .Schema}}
 
 // Getter for additional properties for {{.TypeName}}. Returns the specified
 // element and whether it was found

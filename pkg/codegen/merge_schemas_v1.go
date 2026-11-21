@@ -143,12 +143,7 @@ func genStructFromAllOf(ctx genContext, allOf []*openapi3.SchemaRef, kinds []v1M
 			objectParts = append(objectParts, GenFieldsFromProperties(goSchema.Properties)...)
 
 			if goSchema.HasAdditionalProperties {
-				addPropsType := goSchema.AdditionalPropertiesType.GoType
-				if goSchema.AdditionalPropertiesType.RefType != "" {
-					addPropsType = goSchema.AdditionalPropertiesType.RefType
-				}
-
-				additionalPropertiesPart := fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", addPropsType)
+				additionalPropertiesPart := fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`", additionalPropertiesType(goSchema))
 				if !slices.Contains(objectParts, additionalPropertiesPart) {
 					objectParts = append(objectParts, additionalPropertiesPart)
 				}

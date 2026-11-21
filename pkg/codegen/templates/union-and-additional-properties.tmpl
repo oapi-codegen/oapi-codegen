@@ -1,6 +1,6 @@
 {{range .Types}}
 
-{{$addType := .Schema.AdditionalPropertiesType.TypeDecl}}
+{{$addType := additionalPropertiesType .Schema}}
 {{$typeName := .TypeName -}}
 {{$discriminator := .Schema.Discriminator}}
 {{$properties := .Schema.Properties -}}

@@ -1350,3 +1350,61 @@ components:
 	_, err = Generate(swagger, v1)
 	require.NoError(t, err)
 }
+
+func TestNullableAdditionalPropertiesAccessors(t *testing.T) {
+	const spec = `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths: {}
+components:
+  schemas:
+    MyModel:
+      type: object
+      additionalProperties:
+        type: string
+        nullable: true
+      properties:
+        blabla:
+          type: string
+    Base:
+      type: object
+      properties:
+        id:
+          type: string
+    MyAllOf:
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - type: object
+          properties:
+            name:
+              type: string
+          additionalProperties:
+            type: string
+            nullable: true
+`
+	for _, merging := range []string{SchemaMergingV1, SchemaMergingV2, SchemaMergingV3} {
+		t.Run("schema-merging-behavior="+merging, func(t *testing.T) {
+			resetGlobalState(t)
+
+			swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+			require.NoError(t, err)
+
+			code, err := Generate(swagger, Configuration{
+				PackageName:   "api",
+				Generate:      GenerateOptions{Models: true},
+				Compatibility: CompatibilityOptions{SchemaMergingBehavior: merging},
+				OutputOptions: OutputOptions{SkipPrune: true},
+			})
+			require.NoError(t, err)
+
+			// The accessors must use the same element type as the map field.
+			for _, typeName := range []string{"MyModel", "MyAllOf"} {
+				assert.Contains(t, code, "func (a "+typeName+") Get(fieldName string) (value *string, found bool) {")
+				assert.Contains(t, code, "func (a *"+typeName+") Set(fieldName string, value *string) {")
+			}
+			assert.Contains(t, code, "AdditionalProperties map[string]*string `json:\"-\"`")
+			assert.NotContains(t, code, "AdditionalProperties map[string]string")
+			assert.NotContains(t, code, "make(map[string]string)")
+		})
+	}
+}
