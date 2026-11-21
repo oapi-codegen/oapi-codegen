@@ -274,6 +274,42 @@
             "ToCamelCaseWithInitialisms"
           ]
         },
+        "naming": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Opt-in adjustments to how Go names are derived from the names in the spec. Each one changes a single, narrowly scoped behavior of the configured `name-normalizer`. With none of them set, names are derived exactly as before.",
+          "properties": {
+            "enum-values": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Adjusts the names of the constants generated for enum values.",
+              "properties": {
+                "keep-underscores": {
+                  "type": "boolean",
+                  "description": "Stops the name normalizer from treating an underscore as a word separator that it removes. The words on either side are normalized as usual and the underscore between them is kept, so the enum value `SOME_ENUM_NAME` becomes the constant `SOME_ENUM_NAME` rather than `SOMEENUMNAME`. Cannot be combined with `compatibility.old-enum-conflicts`.",
+                  "default": false
+                }
+              }
+            },
+            "properties": {
+              "type": "object",
+              "additionalProperties": false,
+              "description": "Adjusts the names of the struct fields generated for object properties.",
+              "properties": {
+                "leading-underscore": {
+                  "type": "string",
+                  "description": "What the underscores a property name starts with contribute to its field name. By default each one is spelled out, so `_id` becomes `UnderscoreId`. Set to `drop` for them to contribute nothing, so `_id` becomes `Id`.",
+                  "enum": ["drop"]
+                }
+              }
+            },
+            "explicit-names": {
+              "type": "string",
+              "description": "What happens to a Go name the spec states itself, with `x-go-name` on a property or a parameter, or with `x-enum-varnames` / `x-enumNames`. By default such a name goes through the name normalizer like any other. Set to `verbatim` to emit it exactly as written: it has to be a valid Go identifier, and it is not renamed, prefixed or otherwise adjusted.",
+              "enum": ["verbatim"]
+            }
+          }
+        },
         "overlay": {
           "type": "object",
           "description": "Overlay defines configuration for the OpenAPI Overlay (https://github.com/OAI/Overlay-Specification) to manipulate the OpenAPI specification before generation. This allows modifying the specification without needing to apply changes directly to it, making it easier to keep it up-to-date.",
