@@ -242,7 +242,20 @@ func (pd ParameterDefinition) GoVariableName() string {
 	return name
 }
 
+// GoName is the Go name of the parameter, and the only place that name is
+// made: everything that declares or refers to the parameter takes it from
+// here.
+//
+// A query, header or cookie parameter is a field of the operation's
+// parameters struct, so it is named as a struct field. A path parameter is a
+// function argument, and a field only of the strict server's request object;
+// it does not take part in the naming of struct fields, which could otherwise
+// turn it into an argument the generated functions already have, such as ctx.
 func (pd ParameterDefinition) GoName() string {
+	if pd.In != "path" {
+		return goFieldName(pd.ParamName, pd.Spec.Extensions)
+	}
+
 	goName := pd.ParamName
 	if extension, ok := pd.Spec.Extensions[extGoName]; ok {
 		if extGoFieldName, err := extParseGoFieldName(extension); err == nil {
@@ -252,10 +265,7 @@ func (pd ParameterDefinition) GoName() string {
 			goName = extGoFieldName
 		}
 	}
-	// A query, header or cookie parameter is a field of the operation's
-	// parameters struct, which is named as any other struct field is. This
-	// has to be that same name.
-	return propertyNameToGoName(goName)
+	return SchemaNameToTypeName(goName)
 }
 
 // Deprecated: Use HasOptionalPointer, as it is clearer what the intent is.
@@ -2649,6 +2659,12 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			NeedsFormTag:  param.Style() == "form",
 			Extensions:    extensions,
 			Deprecated:    param.Spec.Deprecated,
+			// The field is read as params.<GoName> by the client and the
+			// servers, so that is its name. Deriving it again from the
+			// property would not always give the same one: the extensions
+			// above include those of the parameter's schema, whose x-go-name
+			// names the schema's type and not this field.
+			resolvedGoFieldName: param.GoName(),
 		}
 		s.Properties = append(s.Properties, prop)
 	}

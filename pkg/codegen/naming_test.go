@@ -456,7 +456,8 @@ paths:
 				"Trace *string", "params.Trace",
 				"Session *string", "params.Session",
 				"NamedQuery *string", "params.NamedQuery",
-				"thing string",
+				// A path parameter is an argument, not a field.
+				"underscoreThing string",
 			},
 		},
 		"explicit names verbatim": {
@@ -566,4 +567,76 @@ paths:
 			assert.Contains(t, code, "request.thing_id = thing_id")
 		})
 	}
+}
+
+// A path parameter is a function argument. Naming it as a struct field would
+// let "_ctx" become ctx, an argument the client methods already have.
+func TestNamingPropertiesLeadingUnderscoreDropLeavesPathParameters(t *testing.T) {
+	const spec = `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths:
+  /things/{_ctx}:
+    get:
+      operationId: getThing
+      parameters:
+        - {name: _ctx, in: path, required: true, schema: {type: string}}
+        - {name: _ctx, in: query, schema: {type: string}}
+      responses:
+        '200': {description: ok}
+`
+	code, err := generateNamingOptions(t, spec, func(c *Configuration) {
+		c.Generate.StdHTTPServer = true
+		c.Generate.Strict = true
+		c.OutputOptions.Naming.Properties.LeadingUnderscore = LeadingUnderscoreDrop
+	})
+	require.NoError(t, err)
+
+	assert.Contains(t, code, "GetThing(ctx context.Context, underscoreCtx string, params *GetThingParams")
+	assert.Contains(t, code, "request.UnderscoreCtx = underscoreCtx")
+	// The query parameter of the same name is a field, and is renamed.
+	assert.Contains(t, code, "type GetThingParams struct { Ctx *string")
+	assert.Contains(t, code, "params.Ctx")
+}
+
+// The field a parameter gets in the parameters struct takes its name from the
+// parameter, so the two cannot differ. They used to be derived separately,
+// from extensions that were not the same.
+func TestParameterFieldIsNamedByTheParameter(t *testing.T) {
+	const spec = `
+openapi: 3.0.3
+info: {title: t, version: "1"}
+paths:
+  /things:
+    get:
+      operationId: listThings
+      parameters:
+        # x-go-name on the schema names its type, not this parameter's field
+        - name: kind
+          in: query
+          schema: {$ref: '#/components/schemas/Kind'}
+        - name: honored
+          in: query
+          x-go-name: lowerName
+          x-oapi-codegen-only-honour-go-name: true
+          schema: {type: string}
+      responses:
+        '200': {description: ok}
+components:
+  schemas:
+    Kind:
+      type: string
+      x-go-name: RenamedKind
+`
+	code, err := generateNamingOptions(t, spec, func(c *Configuration) {
+		c.Compatibility.AllowUnexportedStructFieldNames = true
+	})
+	require.NoError(t, err)
+
+	assert.Contains(t, code, "type ListThingsParams struct { Kind *RenamedKind")
+	assert.Contains(t, code, "params.Kind")
+	assert.NotContains(t, code, "params.RenamedKind")
+	assert.Contains(t, code, "lowerName *string")
+	assert.Contains(t, code, "params.lowerName")
+	assert.NotContains(t, code, "params.LowerName")
 }

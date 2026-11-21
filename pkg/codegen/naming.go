@@ -14,7 +14,8 @@ type NamingOptions struct {
 	// EnumValues adjusts the names of the constants generated for enum values.
 	EnumValues EnumValueNamingOptions `yaml:"enum-values,omitempty"`
 	// Properties adjusts the names of the struct fields generated for object
-	// properties and for the parameters of an operation.
+	// properties and for the query, header and cookie parameters of an
+	// operation.
 	Properties PropertyNamingOptions `yaml:"properties,omitempty"`
 	// ExplicitNames decides what happens to a Go name the spec states itself,
 	// with `x-go-name` on a property or a parameter, or with `x-enum-varnames`
@@ -34,10 +35,11 @@ type EnumValueNamingOptions struct {
 }
 
 // PropertyNamingOptions adjusts the names of struct fields: those of an
-// object's properties, and those of an operation's parameters.
+// object's properties, and those of an operation's query, header and cookie
+// parameters, which are the fields of its parameters struct.
 type PropertyNamingOptions struct {
-	// LeadingUnderscore decides what the underscores a property or parameter
-	// name starts with contribute to its Go name. By default each one is spelled out,
+	// LeadingUnderscore decides what the underscores such a name starts with
+	// contribute to its field name. By default each one is spelled out,
 	// so `_id` becomes `UnderscoreId`. Set to `drop` for them to contribute
 	// nothing, so `_id` becomes `Id`.
 	LeadingUnderscore LeadingUnderscoreMode `yaml:"leading-underscore,omitempty"`
@@ -115,10 +117,40 @@ func normalizeKeepingUnderscores(name string) string {
 	return strings.Join(words, "_")
 }
 
+// goFieldName is the name of the struct field generated for something the
+// spec calls name: a property of an object, or a query, header or cookie
+// parameter of an operation. extensions are the extensions of that property or
+// parameter, whose x-go-name replaces the name.
+//
+// This is the one place a field name is derived. Code that refers to a field
+// takes the name from whatever declared it rather than deriving it again, as
+// two derivations only agree until one of them is changed.
+func goFieldName(name string, extensions map[string]any) string {
+	explicit := false
+	if extension, ok := extensions[extGoName]; ok {
+		if goName, err := extParseGoFieldName(extension); err == nil {
+			name = goName
+			explicit = true
+		}
+	}
+
+	if globalState.options.Compatibility.AllowUnexportedStructFieldNames {
+		if extension, ok := extensions[extOapiCodegenOnlyHonourGoName]; ok {
+			if onlyHonourGoName, err := extParseOapiCodegenOnlyHonourGoName(extension); err == nil && onlyHonourGoName {
+				return name
+			}
+		}
+	}
+
+	if explicit && explicitNamesVerbatim() {
+		return name
+	}
+
+	return propertyNameToGoName(name)
+}
+
 // propertyNameToGoName is SchemaNameToTypeName for the name of a struct field,
-// adjusted by the property naming options. A parameter is named with it too:
-// it is a field of the operation's parameters struct, and the code that reads
-// the field has to arrive at the same name.
+// adjusted by the property naming options.
 func propertyNameToGoName(name string) string {
 	if globalState.options.OutputOptions.Naming.Properties.LeadingUnderscore == LeadingUnderscoreDrop {
 		// A name that is nothing but underscores keeps them: there is no

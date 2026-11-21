@@ -307,28 +307,7 @@ func (p Property) hasExplicitGoFieldName() bool {
 // derivedGoFieldName returns the field name p gets from its JSON name or its
 // x-go-name, before any collision with a sibling is resolved.
 func (p Property) derivedGoFieldName() string {
-	goFieldName := p.JsonFieldName
-	if extension, ok := p.Extensions[extGoName]; ok {
-		if extGoFieldName, err := extParseGoFieldName(extension); err == nil {
-			goFieldName = extGoFieldName
-		}
-	}
-
-	if globalState.options.Compatibility.AllowUnexportedStructFieldNames {
-		if extension, ok := p.Extensions[extOapiCodegenOnlyHonourGoName]; ok {
-			if extOapiCodegenOnlyHonourGoName, err := extParseOapiCodegenOnlyHonourGoName(extension); err == nil {
-				if extOapiCodegenOnlyHonourGoName {
-					return goFieldName
-				}
-			}
-		}
-	}
-
-	if explicitNamesVerbatim() && p.hasExplicitGoFieldName() {
-		return goFieldName
-	}
-
-	return propertyNameToGoName(goFieldName)
+	return goFieldName(p.JsonFieldName, p.Extensions)
 }
 
 func (p Property) GoTypeDef() string {

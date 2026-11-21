@@ -294,11 +294,11 @@
             "properties": {
               "type": "object",
               "additionalProperties": false,
-              "description": "Adjusts the names of the struct fields generated for object properties and for the parameters of an operation.",
+              "description": "Adjusts the names of the struct fields generated for object properties and for the query, header and cookie parameters of an operation.",
               "properties": {
                 "leading-underscore": {
                   "type": "string",
-                  "description": "What the underscores a property or parameter name starts with contribute to its Go name. By default each one is spelled out, so `_id` becomes `UnderscoreId`. Set to `drop` for them to contribute nothing, so `_id` becomes `Id`.",
+                  "description": "What the underscores a property name, or the name of a query, header or cookie parameter, starts with contribute to its field name. Path parameters are not affected. By default each one is spelled out, so `_id` becomes `UnderscoreId`. Set to `drop` for them to contribute nothing, so `_id` becomes `Id`.",
                   "enum": ["drop"]
                 }
               }
