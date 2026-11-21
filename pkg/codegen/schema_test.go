@@ -207,6 +207,7 @@ func TestProperty_GoTypeDef(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetGlobalState(t)
 			globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer = tt.fields.GlobalStateDisableRequiredReadOnlyAsPointer
 			p := Property{
 				Schema:    tt.fields.Schema,
@@ -446,6 +447,7 @@ func TestProperty_GoTypeDef_nullable(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetGlobalState(t)
 			globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer = tt.fields.GlobalStateDisableRequiredReadOnlyAsPointer
 			globalState.options.OutputOptions.NullableType = tt.fields.GlobalStateNullableType
 			p := Property{
@@ -606,8 +608,7 @@ func TestDescribeWithExamples(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			old := globalState.is31
-			defer func() { globalState.is31 = old }()
+			resetGlobalState(t)
 			globalState.is31 = tc.is31
 
 			assert.Equal(t, tc.want, describeWithExamples(tc.description, tc.schema))
@@ -829,10 +830,8 @@ func TestOapiSchemaToGoType_MultiTypeUnion(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			prev := globalState
-			t.Cleanup(func() { globalState = prev })
+			resetGlobalState(t)
 			globalState.is31 = true
-			globalState.typeMapping = DefaultTypeMapping
 
 			var out Schema
 			err := oapiSchemaToGoType(newGenContext(nil), &openapi3.Schema{Type: &tc.types}, []string{"Value"}, &out)
@@ -852,8 +851,7 @@ func TestOapiSchemaToGoType_MultiTypeUnion(t *testing.T) {
 // caller's schema keeps whatever it declared (here: nothing) and the copy is
 // what carries the type and format on to oapiSchemaToGoType.
 func TestDetectEnumViaOneOfInfersTypeWithoutMutating(t *testing.T) {
-	prev := globalState
-	t.Cleanup(func() { globalState = prev })
+	resetGlobalState(t)
 	globalState.is31 = true
 	globalState.options.OutputOptions.SkipEnumViaOneOf = false
 
@@ -892,8 +890,7 @@ func TestEnumViaOneOfInexactIntegerErrors(t *testing.T) {
 		{name: "type declared by the schema", types: &openapi3.Types{"integer"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			prev := globalState
-			t.Cleanup(func() { globalState = prev })
+			resetGlobalState(t)
 			globalState.is31 = true
 			globalState.options.OutputOptions.SkipEnumViaOneOf = false
 
@@ -920,8 +917,7 @@ func TestEnumViaOneOfInexactIntegerErrors(t *testing.T) {
 // skip-enum-via-oneof turns the whole path off before the exactness check runs,
 // so opting out of the idiom also opts out of failing over it.
 func TestEnumViaOneOfInexactIntegerSkipped(t *testing.T) {
-	prev := globalState
-	t.Cleanup(func() { globalState = prev })
+	resetGlobalState(t)
 	globalState.is31 = true
 	globalState.options.OutputOptions.SkipEnumViaOneOf = true
 
@@ -976,8 +972,7 @@ func TestEnumViaOneOfNonEnumsStillFallThrough(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			prev := globalState
-			t.Cleanup(func() { globalState = prev })
+			resetGlobalState(t)
 			globalState.is31 = true
 			globalState.options.OutputOptions.SkipEnumViaOneOf = false
 
@@ -992,10 +987,8 @@ func TestEnumViaOneOfNonEnumsStillFallThrough(t *testing.T) {
 // carrying one is malformed, so it keeps failing generation instead of
 // picking up the 3.1 union mapping.
 func TestOapiSchemaToGoType_MultiTypeUnionRequires31(t *testing.T) {
-	prev := globalState
-	t.Cleanup(func() { globalState = prev })
+	resetGlobalState(t)
 	globalState.is31 = false
-	globalState.typeMapping = DefaultTypeMapping
 
 	var out Schema
 	err := oapiSchemaToGoType(newGenContext(nil), &openapi3.Schema{Type: &openapi3.Types{"string", "number"}}, []string{"Value"}, &out)
@@ -1073,11 +1066,9 @@ func TestOapiSchemaToGoType_UnhandledTypeError(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			prev := globalState
-			t.Cleanup(func() { globalState = prev })
+			resetGlobalState(t)
 			globalState.is31 = tc.is31
 			globalState.spec = tc.spec
-			globalState.typeMapping = DefaultTypeMapping
 
 			var out Schema
 			err := oapiSchemaToGoType(newGenContext(nil), &openapi3.Schema{Type: &tc.types}, []string{"Value"}, &out)
@@ -1108,8 +1099,7 @@ func TestUnhandledSchemaTypeErrorVersionSuffix(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			prev := globalState
-			t.Cleanup(func() { globalState = prev })
+			resetGlobalState(t)
 			globalState.is31 = false
 			globalState.spec = tc.spec
 
@@ -1124,9 +1114,7 @@ func TestUnhandledSchemaTypeErrorVersionSuffix(t *testing.T) {
 // components.responses generate with no operation, so the response label is
 // the component name alone rather than an empty operation and a stray dot.
 func TestGenerateResponseDefinitionsNamesComponentResponses(t *testing.T) {
-	prev := globalState
-	t.Cleanup(func() { globalState = prev })
-	globalState.typeMapping = DefaultTypeMapping
+	resetGlobalState(t)
 
 	responses := map[string]*openapi3.ResponseRef{
 		"NotFound": {Value: &openapi3.Response{
@@ -1147,9 +1135,7 @@ func TestGenerateResponseDefinitionsNamesComponentResponses(t *testing.T) {
 // An inline oneOf/anyOf branch is only identifiable by its index, which
 // generateUnionElement computes for naming and used to discard on the error path.
 func TestGenerateUnionNamesFailingBranch(t *testing.T) {
-	prev := globalState
-	t.Cleanup(func() { globalState = prev })
-	globalState.typeMapping = DefaultTypeMapping
+	resetGlobalState(t)
 
 	_, err := GenerateGoSchema(&openapi3.SchemaRef{Value: &openapi3.Schema{
 		OneOf: openapi3.SchemaRefs{
@@ -1211,8 +1197,7 @@ func TestSchemaUnionTypes(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			prev := globalState
-			t.Cleanup(func() { globalState = prev })
+			resetGlobalState(t)
 			globalState.is31 = tc.is31
 
 			assert.Equal(t, tc.want, schemaUnionTypes(tc.in))
@@ -1225,8 +1210,7 @@ func TestSchemaUnionTypes(t *testing.T) {
 // typeless schemas. The previous first-entry behavior emitted "null" for
 // ["null", "string"] and a lone member for unions.
 func TestParameterDefinitionSchemaType(t *testing.T) {
-	prev := globalState
-	t.Cleanup(func() { globalState = prev })
+	resetGlobalState(t)
 	globalState.is31 = true
 
 	paramWithTypes := func(types *openapi3.Types) *ParameterDefinition {
@@ -1275,8 +1259,7 @@ func withGoName(p Property, name string) Property {
 // "host_fqdn") derive the same Go field name, which declared the field twice.
 
 func TestResolvePropertyGoFieldNameCollisions_ErrorsWithoutResolver(t *testing.T) {
-	prev := globalState
-	t.Cleanup(func() { globalState = prev })
+	resetGlobalState(t)
 	globalState.options.OutputOptions.ResolveTypeNameCollisions = false
 
 	schema := Schema{Properties: stringProps("host-fqdn", "host_fqdn", "other")}
@@ -1301,8 +1284,7 @@ func TestResolvePropertyGoFieldNameCollisions_ErrorsWithoutResolver(t *testing.T
 }
 
 func TestResolvePropertyGoFieldNameCollisions_RenamesEveryCollider(t *testing.T) {
-	prev := globalState
-	t.Cleanup(func() { globalState = prev })
+	resetGlobalState(t)
 	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
 
 	schema := Schema{Properties: stringProps("host-fqdn", "host_fqdn", "other")}
@@ -1332,8 +1314,7 @@ func TestResolvePropertyGoFieldNameCollisions_RenamesEveryCollider(t *testing.T)
 // different order, and a property which spells what a numeric suffix would
 // have produced all leave it alone.
 func TestResolvePropertyGoFieldNameCollisions_NamesAreStable(t *testing.T) {
-	prev := globalState
-	t.Cleanup(func() { globalState = prev })
+	resetGlobalState(t)
 	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
 
 	two := Schema{Properties: stringProps("host-fqdn", "host_fqdn")}
@@ -1355,8 +1336,7 @@ func TestResolvePropertyGoFieldNameCollisions_NamesAreStable(t *testing.T) {
 }
 
 func TestResolvePropertyGoFieldNameCollisions_KeepsExplicitNames(t *testing.T) {
-	prev := globalState
-	t.Cleanup(func() { globalState = prev })
+	resetGlobalState(t)
 	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
 
 	// x-go-name asks for a name another property derives: the derived one
@@ -1389,8 +1369,7 @@ func TestResolvePropertyGoFieldNameCollisions_KeepsExplicitNames(t *testing.T) {
 }
 
 func TestResolvePropertyGoFieldNameCollisions_ReservesAdditionalProperties(t *testing.T) {
-	prev := globalState
-	t.Cleanup(func() { globalState = prev })
+	resetGlobalState(t)
 	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
 
 	// The field holding additional properties keeps its name, and the
@@ -2011,8 +1990,7 @@ func TestDiscriminatorLiteralQuotesStrings(t *testing.T) {
 // A struct may declare any number of blank fields, so properties which are all
 // named "_" don't collide, whether or not collisions are being resolved.
 func TestResolvePropertyGoFieldNameCollisions_AllowsBlankFields(t *testing.T) {
-	prev := globalState
-	t.Cleanup(func() { globalState = prev })
+	resetGlobalState(t)
 	globalState.options.Compatibility.AllowUnexportedStructFieldNames = true
 
 	blank := func(p Property) Property {
