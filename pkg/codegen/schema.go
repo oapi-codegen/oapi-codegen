@@ -2131,20 +2131,29 @@ const additionalPropertiesFieldName = "AdditionalProperties"
 // A name the spec chose itself, with x-go-name, is never changed, and neither
 // is AdditionalProperties. Two of those colliding is an error. The blank
 // identifier is not a collision, as a struct may declare it more than once.
+// A property whose name derives no Go field name at all is an error too.
 func resolvePropertyGoFieldNameCollisions(schema *Schema, path []string) error {
+	where := "schema"
+	if len(path) > 0 {
+		where = "schema '" + strings.Join(path, ".") + "'"
+	}
+
 	groups := make(map[string][]int, len(schema.Properties))
 	for i, p := range schema.Properties {
 		name := p.derivedGoFieldName()
+		if name == "" {
+			// Name conversion keeps only upper and lower case letters and
+			// digits, so a name written in a script without case ("名前")
+			// derives nothing, and the field would be generated as an
+			// embedded one that encoding/json ignores.
+			return fmt.Errorf("%s: property '%s' derives an empty Go field name; please use x-go-name to give it one",
+				where, p.JsonFieldName)
+		}
 		if name == "_" {
 			// A struct may declare any number of blank fields.
 			continue
 		}
 		groups[name] = append(groups[name], i)
-	}
-
-	where := "schema"
-	if len(path) > 0 {
-		where = "schema '" + strings.Join(path, ".") + "'"
 	}
 
 	// describe lists the members of a collision for an error message.
