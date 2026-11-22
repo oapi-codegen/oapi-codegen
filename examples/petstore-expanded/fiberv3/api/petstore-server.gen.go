@@ -34,6 +34,11 @@ type ServerInterface interface {
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
+//
+// Fiber returns strings that alias buffers it reuses for the next request
+// (unless the app sets Immutable), so every parameter value read from the Fiber
+// context is copied with strings.Clone. The arguments passed to the handler
+// therefore stay valid after it returns.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
 	HandlerMiddlewares []HandlerMiddlewareFunc
@@ -113,7 +118,7 @@ func (siw *ServerInterfaceWrapper) DeletePet(c fiber.Ctx) error {
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64"})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", strings.Clone(c.Params("id")), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64"})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
@@ -142,7 +147,7 @@ func (siw *ServerInterfaceWrapper) FindPetByID(c fiber.Ctx) error {
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64"})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", strings.Clone(c.Params("id")), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64"})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}

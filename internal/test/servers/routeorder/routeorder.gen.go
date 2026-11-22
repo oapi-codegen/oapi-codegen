@@ -5,6 +5,7 @@ package routeorder
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/oapi-codegen/runtime"
@@ -21,6 +22,11 @@ type ServerInterface interface {
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
+//
+// Fiber returns strings that alias buffers it reuses for the next request
+// (unless the app sets Immutable), so every parameter value read from the Fiber
+// context is copied with strings.Clone. The arguments passed to the handler
+// therefore stay valid after it returns.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
 	HandlerMiddlewares []HandlerMiddlewareFunc
@@ -38,7 +44,7 @@ func (siw *ServerInterfaceWrapper) PrivateTemplateGet(c *fiber.Ctx) error {
 	// ------------- Path parameter "id" -------------
 	var id string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", strings.Clone(c.Params("id")), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
@@ -67,7 +73,7 @@ func (siw *ServerInterfaceWrapper) TemplateShortcutGetAll(c *fiber.Ctx) error {
 	// ------------- Path parameter "template_visibility" -------------
 	var templateVisibility string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "template_visibility", c.Params("template_visibility"), &templateVisibility, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "template_visibility", strings.Clone(c.Params("template_visibility")), &templateVisibility, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter template_visibility: %w", err).Error())
 	}
