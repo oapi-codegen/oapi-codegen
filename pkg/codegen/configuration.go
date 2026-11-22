@@ -287,7 +287,13 @@ func (oo GenerateOptions) warningForStdHTTP() string {
 	}
 
 	if !hasMinimalMinorGoDirective(minimumGoVersionForGenerateStdHTTPServer, mod) {
-		return fmt.Sprintf("Found a `go.mod` or a `tools.mod` at path %v, but it only had a version of %v, whereas the minimum required is 1.%d. It's very likely API interactions will result in a `404 page not found`. The Go directive (implying source compatibility for this module) needs to be bumped. See also: https://www.jvt.me/posts/2024/03/04/go-net-http-why-404/", pathToGoMod, mod.Go.Version, minimumGoVersionForGenerateStdHTTPServer)
+		// the `go` directive is optional, so `mod.Go` may be nil
+		version := "none"
+		if mod.Go != nil {
+			version = mod.Go.Version
+		}
+
+		return fmt.Sprintf("Found a `go.mod` or a `tools.mod` at path %v, but it only had a version of %v, whereas the minimum required is 1.%d. It's very likely API interactions will result in a `404 page not found`. The Go directive (implying source compatibility for this module) needs to be bumped. See also: https://www.jvt.me/posts/2024/03/04/go-net-http-why-404/", pathToGoMod, version, minimumGoVersionForGenerateStdHTTPServer)
 	}
 
 	return ""

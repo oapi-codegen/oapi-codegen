@@ -72,13 +72,24 @@ func findAndParseGoModuleForDepth(dir string, maxDepth int) (string, *modfile.Fi
 //	go 1.23
 //	go 1.22.1
 func hasMinimalMinorGoDirective(expected int, mod *modfile.File) bool {
+	// a `go.mod` or `tools.mod` is valid without a `go` directive, which the Go toolchain treats as an old language version
+	if mod == nil || mod.Go == nil {
+		return false
+	}
+
 	parts := strings.Split(mod.Go.Version, ".")
 
 	if len(parts) < 2 {
 		return false
 	}
 
-	actual, err := strconv.Atoi(parts[1])
+	// the minor version may be followed by a pre-release suffix, i.e. `go 1.22rc1` or `go 1.23beta1`, so only read its leading digits
+	minor := parts[1]
+	if end := strings.IndexFunc(minor, func(r rune) bool { return r < '0' || r > '9' }); end != -1 {
+		minor = minor[:end]
+	}
+
+	actual, err := strconv.Atoi(minor)
 	if err != nil {
 		return false
 	}
