@@ -862,6 +862,8 @@ func TestIsGoIdentity(t *testing.T) {
 		"1abc":    false,
 		"a b":     false,
 		"":        false,
+		"x²":      false, // superscript two is a Unicode number but not a decimal digit
+		"x٣":      true,  // Arabic-Indic digit three is a decimal digit (Nd)
 	} {
 		assert.Equal(t, want, IsGoIdentity(in), "IsGoIdentity(%q)", in)
 	}
@@ -898,6 +900,7 @@ func TestSanitizeGoIdentity(t *testing.T) {
 		"func": "_func",
 		"int":  "_int",
 		"":     "",
+		"x²":   "x_",
 	} {
 		assert.Equal(t, want, SanitizeGoIdentity(in), "SanitizeGoIdentity(%q)", in)
 	}

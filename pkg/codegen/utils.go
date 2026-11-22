@@ -846,12 +846,15 @@ func IsGoIdentity(str string) bool {
 	return !IsGoKeyword(str)
 }
 
+// isValidRuneForGoID follows the spec: identifiers are made of letters, '_'
+// and decimal digits (unicode.IsDigit, category Nd), which may not come
+// first. unicode.IsNumber would also accept runes such as '²' that Go rejects.
 func isValidRuneForGoID(index int, char rune) bool {
-	if index == 0 && unicode.IsNumber(char) {
+	if index == 0 && unicode.IsDigit(char) {
 		return false
 	}
 
-	return unicode.IsLetter(char) || char == '_' || unicode.IsNumber(char)
+	return unicode.IsLetter(char) || char == '_' || unicode.IsDigit(char)
 }
 
 // IsValidGoIdentity checks if the given string can be used as a
