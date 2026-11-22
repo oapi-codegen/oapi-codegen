@@ -7,8 +7,18 @@ import (
 	"github.com/kataras/iris/v12"
 )
 
+const (
+	BearerAuthScopes bearerAuthContextKey = "bearerAuth.Scopes"
+)
+
+// bearerAuthContextKey is the context key for bearerAuth security scheme
+type bearerAuthContextKey string
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+
+	// (GET /secured)
+	Secured(ctx iris.Context)
 
 	// (GET /test)
 	Test(ctx iris.Context)
@@ -20,6 +30,15 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc iris.Handler
+
+// Secured converts iris context to params.
+func (w *ServerInterfaceWrapper) Secured(ctx iris.Context) {
+
+	ctx.Values().Set(string(BearerAuthScopes), []string{"pet:read"})
+
+	// Invoke the callback with all the unmarshaled arguments
+	w.Handler.Secured(ctx)
+}
 
 // Test converts iris context to params.
 func (w *ServerInterfaceWrapper) Test(ctx iris.Context) {
@@ -50,6 +69,7 @@ func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, o
 	}
 
 	router.Get(options.BaseURL+"/test", wrapper.Test)
+	router.Get(options.BaseURL+"/secured", wrapper.Secured)
 
 	router.Build()
 }
