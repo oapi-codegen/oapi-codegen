@@ -848,6 +848,64 @@ func TestSchemaNameToTypeName(t *testing.T) {
 	}
 }
 
+func TestIsGoIdentity(t *testing.T) {
+	t.Parallel()
+
+	for in, want := range map[string]bool{
+		"foo":     true,
+		"_x":      true,
+		"foo1":    true,
+		"Foo_Bar": true,
+		"func":    false,
+		"type":    false,
+		"a-b":     false,
+		"1abc":    false,
+		"a b":     false,
+		"":        false,
+		"x²":      false, // superscript two is a Unicode number but not a decimal digit
+		"x٣":      true,  // Arabic-Indic digit three is a decimal digit (Nd)
+	} {
+		assert.Equal(t, want, IsGoIdentity(in), "IsGoIdentity(%q)", in)
+	}
+}
+
+func TestIsValidGoIdentity(t *testing.T) {
+	t.Parallel()
+
+	for in, want := range map[string]bool{
+		"foo":  true,
+		"_x":   true,
+		"Foo1": true,
+		"func": false,
+		"int":  false,
+		"a-b":  false,
+		"1abc": false,
+		"a b":  false,
+		"":     false,
+	} {
+		assert.Equal(t, want, IsValidGoIdentity(in), "IsValidGoIdentity(%q)", in)
+	}
+}
+
+// TestSanitizeGoIdentity also pins the empty name, which has always been
+// passed through (an enum value can derive no Go name at all) and must not
+// start to panic.
+func TestSanitizeGoIdentity(t *testing.T) {
+	t.Parallel()
+
+	for in, want := range map[string]string{
+		"foo":  "foo",
+		"a-b":  "a_b",
+		"1abc": "_abc",
+		"func": "_func",
+		"int":  "_int",
+		"":     "",
+		"x²":   "x_",
+	} {
+		assert.Equal(t, want, SanitizeGoIdentity(in), "SanitizeGoIdentity(%q)", in)
+	}
+}
+
 // TestPathToTypeName_LeadingDigit covers issue #2555 (a path built from a
 // bare numeric HTTP status segment, e.g. ["400", "Errors"], must not
 // assemble into an invalid Go identifier) and its Unicode follow-on: the
