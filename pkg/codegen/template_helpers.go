@@ -17,11 +17,15 @@ import (
 	"bytes"
 	"fmt"
 	"os"
+	"slices"
+	"strconv"
 	"strings"
 	"text/template"
 
 	"golang.org/x/text/cases"
 	"golang.org/x/text/language"
+
+	"github.com/getkin/kin-openapi/openapi3"
 
 	"github.com/oapi-codegen/oapi-codegen/v2/pkg/util"
 )
@@ -121,6 +125,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	// Add a case for each possible response:
 	buffer := new(bytes.Buffer)
 	responses := op.Spec.Responses
+	handledResponseNames := make(map[string]struct{})
 	for _, typeDefinition := range typeDefinitions {
 
 		responseRef := responses.Value(typeDefinition.ResponseName)
@@ -134,6 +139,8 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			continue
 		}
 
+		handledResponseNames[typeDefinition.ResponseName] = struct{}{}
+
 		// If there is no content-type then we have no unmarshaling to do:
 		if len(responseRef.Value.Content) == 0 {
 			caseAction := "break // No content-type"
@@ -146,15 +153,15 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 		SortedMapKeys := SortedMapKeys(responseRef.Value.Content)
 		jsonCount := 0
 		for _, contentTypeName := range SortedMapKeys {
-			if StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName) {
+			if slices.Contains(contentTypesJSON, contentTypeName) || util.IsMediaTypeJson(contentTypeName) {
 				jsonCount++
 			}
 		}
 
 		for _, contentTypeName := range SortedMapKeys {
 
-			// We get "interface{}" when using "anyOf" or "oneOf" (which doesn't work with Go types):
-			if typeDefinition.TypeName == "interface{}" {
+			// We get "any" when using "anyOf" or "oneOf" (which doesn't work with Go types):
+			if typeDefinition.TypeName == "any" {
 				// Unable to unmarshal this, so we leave it out:
 				continue
 			}
@@ -163,10 +170,10 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 			switch {
 
 			// JSON:
-			case StringInArray(contentTypeName, contentTypesJSON) || util.IsMediaTypeJson(contentTypeName):
+			case slices.Contains(contentTypesJSON, contentTypeName) || util.IsMediaTypeJson(contentTypeName):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
-						"if err := json.Unmarshal(bodyBytes, &dest); err != nil { \n"+
+						"if err := runtime.JSONUnmarshal(bodyBytes, &dest); err != nil { \n"+
 						" return nil, err \n"+
 						"}\n"+
 						"response.%s = &dest",
@@ -183,7 +190,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 				}
 
 			// YAML:
-			case StringInArray(contentTypeName, contentTypesYAML):
+			case slices.Contains(contentTypesYAML, contentTypeName):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := yaml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
@@ -197,7 +204,7 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 				}
 
 			// XML:
-			case StringInArray(contentTypeName, contentTypesXML):
+			case slices.Contains(contentTypesXML, contentTypeName):
 				if typeDefinition.ContentTypeName == contentTypeName {
 					caseAction := fmt.Sprintf("var dest %s\n"+
 						"if err := xml.Unmarshal(bodyBytes, &dest); err != nil { \n"+
@@ -215,6 +222,42 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 				caseAction := fmt.Sprintf("// Content-type (%s) unsupported", contentTypeName)
 				caseClauseKey := "case " + getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName) + ":"
 				unhandledCaseClauses[prefixLeastSpecific+caseClauseKey] = fmt.Sprintf("%s\n%s\n", caseClauseKey, caseAction)
+			}
+		}
+	}
+
+	// Emit explicit case clauses for responses declared without content (e.g.
+	// "204 No Content"). These responses have no type definitions, so the loop
+	// above never visits them. Without an explicit case clause, the "default"
+	// catch-all (which matches with "&& true") would attempt to unmarshal an
+	// empty body and fail.
+	//
+	// Keys follow the same "<responseName>.<detail>" scheme as
+	// buildUnmarshalCase, so an exact bodyless code (e.g. "204") sorts among
+	// its numeric peers, a range wildcard (e.g. "2XX") sorts after every
+	// explicit content case it covers (preventing it from shadowing them) but
+	// before the default catch-all, which sorts last.
+	//
+	// "default" itself is skipped — a bodyless default would emit "case true:"
+	// which shadows everything. Such a spec is degenerate and the existing
+	// behaviour (no guard) is acceptable.
+	if responses != nil {
+		for _, responseName := range SortedMapKeys(responses.Map()) {
+			if _, handled := handledResponseNames[responseName]; handled {
+				continue
+			}
+			if responseName == "default" {
+				continue
+			}
+			responseRef := responses.Value(responseName)
+			if responseRef == nil || responseRef.Value == nil {
+				continue
+			}
+			if len(responseRef.Value.Content) == 0 {
+				caseCondition := getConditionOfResponseName("rsp.StatusCode", responseName)
+				caseClause := fmt.Sprintf("case %s:\nbreak // No content-type\n", caseCondition)
+				caseKey := fmt.Sprintf("%s.%s.nocontent", prefixLeastSpecific, responseName)
+				handledCaseClauses[caseKey] = caseClause
 			}
 		}
 	}
@@ -241,23 +284,38 @@ func genResponseUnmarshal(op *OperationDefinition) string {
 	return buffer.String()
 }
 
-// buildUnmarshalCase builds an unmarshaling case clause for different content-types:
+// buildUnmarshalCase builds an unmarshaling case clause for different content-types.
+//
+// The sort key puts the response name before the content type so that
+// lexicographic ordering of the keys yields most-specific-first case clauses:
+// exact codes sort numerically ("200" < "204"), range wildcards sort after the
+// exact codes they cover ("204" < "2XX" since 'X' > '9') and before the next
+// tier ("2XX" < "300"), and "default" sorts after everything ('d' > 'X').
 func buildUnmarshalCase(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
-	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
+	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, typeDefinition.ResponseName, contentType)
 	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
-	caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), \"%s\") && %s:\n%s\n", "Content-Type", contentType, caseClauseKey, caseAction)
+	contentTypeLiteral := StringToGoString(contentType)
+	caseClause = fmt.Sprintf("case strings.Contains(rsp.Header.Get(\"%s\"), %s) && %s:\n%s\n", "Content-Type", contentTypeLiteral, caseClauseKey, caseAction)
 	return caseKey, caseClause
 }
 
+// buildUnmarshalCaseStrict is buildUnmarshalCase with an exact Content-Type
+// match; it uses the same "<responseName>.<contentType>" key scheme.
 func buildUnmarshalCaseStrict(typeDefinition ResponseTypeDefinition, caseAction string, contentType string) (caseKey string, caseClause string) {
-	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, contentType, typeDefinition.ResponseName)
+	caseKey = fmt.Sprintf("%s.%s.%s", prefixLeastSpecific, typeDefinition.ResponseName, contentType)
 	caseClauseKey := getConditionOfResponseName("rsp.StatusCode", typeDefinition.ResponseName)
-	caseClause = fmt.Sprintf("case rsp.Header.Get(\"%s\") == \"%s\" && %s:\n%s\n", "Content-Type", contentType, caseClauseKey, caseAction)
+	contentTypeLiteral := StringToGoString(contentType)
+	caseClause = fmt.Sprintf("case rsp.Header.Get(\"%s\") == %s && %s:\n%s\n", "Content-Type", contentTypeLiteral, caseClauseKey, caseAction)
 	return caseKey, caseClause
 }
 
-// genResponseTypeName creates the name of generated response types (given the operationID):
+// genResponseTypeName creates the name of generated response types (given the operationID).
+// It first checks if the multi-pass name resolver has assigned a name for this
+// wrapper type (which would happen if the default name collides with a schema type).
 func genResponseTypeName(operationID string) string {
+	if name, ok := globalState.resolvedClientWrapperNames[operationID]; ok {
+		return name
+	}
 	return fmt.Sprintf("%s%s", UppercaseFirstCharacter(operationID), responseTypeSuffix)
 }
 
@@ -281,27 +339,187 @@ func getConditionOfResponseName(statusCodeVar, responseName string) string {
 	}
 }
 
-// This outputs a string array
-func toStringArray(sarr []string) string {
-	s := strings.Join(sarr, `","`)
-	if len(s) > 0 {
-		s = `"` + s + `"`
+// responsesWithHeaders returns the subset of responses that declare headers,
+// ordered most-specific-first for emission as switch case clauses: exact
+// status codes sort numerically, range wildcards after the exact codes they
+// cover ("204" < "2XX" since 'X' > '9'), and "default" (which compiles to
+// `case true:`) after everything ('d' > 'X').
+func responsesWithHeaders(responses []ResponseDefinition) []ResponseDefinition {
+	var out []ResponseDefinition
+	for _, response := range responses {
+		if len(response.Headers) > 0 {
+			out = append(out, response)
+		}
 	}
-	return `[]string{` + s + `}`
+	slices.SortFunc(out, func(a, b ResponseDefinition) int {
+		return strings.Compare(a.StatusCode, b.StatusCode)
+	})
+	return out
 }
 
+// This outputs a string array
+// toStringArray renders a `[]string{...}` literal. Each element is quoted on
+// its own with strconv.Quote: joining raw values with `","` let a value ending
+// in a backslash escape the quote the joiner supplied, and whatever followed
+// became code.
+func toStringArray(sarr []string) string {
+	quoted := make([]string, len(sarr))
+	for i, s := range sarr {
+		quoted[i] = strconv.Quote(s)
+	}
+	return `[]string{` + strings.Join(quoted, ", ") + `}`
+}
+
+// stripNewLines removes newlines so untrusted spec text stays inside a single
+// generated `//` line comment instead of breaking out into real Go source.
 func stripNewLines(s string) string {
-	r := strings.NewReplacer("\n", "")
+	r := strings.NewReplacer("\n", "", "\r", "")
 	return r.Replace(s)
+}
+
+// genServerURLWithVariablesFunctionParams is a template helper method to generate the function parameters for the generated function for a Server object that contains `variables` (https://spec.openapis.org/oas/v3.0.3#server-object)
+//
+// goTypePrefix is the prefix being used to create underlying types in the template (likely the `ServerObjectDefinition.GoName`)
+// variables are this `ServerObjectDefinition`'s variables for the Server object (likely the `ServerObjectDefinition.OAPISchema`)
+//
+// Undeclared `{name}` placeholders that appear in the URL but have no
+// entry in `variables` are NOT handled here; they're emitted as plain
+// `string` parameters by `ServerObjectDefinition.NewFunctionParams`,
+// which the template calls instead of this helper. Custom
+// `server-urls.tmpl` overrides that still call this helper directly
+// keep their pre-existing two-argument signature.
+func genServerURLWithVariablesFunctionParams(goTypePrefix string, variables map[string]*openapi3.ServerVariable) string {
+	keys := SortedMapKeys(variables)
+
+	if len(variables) == 0 {
+		return ""
+	}
+	parts := make([]string, len(variables))
+
+	for i := range keys {
+		k := keys[i]
+		variableDefinitionPrefix := goTypePrefix + UppercaseFirstCharacter(k) + "Variable"
+		parts[i] = k + " " + variableDefinitionPrefix
+	}
+	return strings.Join(parts, ", ")
+}
+
+// httpMethodConstant converts an HTTP method string (e.g. "GET") to the
+// corresponding Go net/http constant (e.g. "http.MethodGet").
+func httpMethodConstant(method string) string {
+	switch method {
+	case "GET":
+		return "http.MethodGet"
+	case "POST":
+		return "http.MethodPost"
+	case "PUT":
+		return "http.MethodPut"
+	case "DELETE":
+		return "http.MethodDelete"
+	case "PATCH":
+		return "http.MethodPatch"
+	case "HEAD":
+		return "http.MethodHead"
+	case "OPTIONS":
+		return "http.MethodOptions"
+	case "TRACE":
+		return "http.MethodTrace"
+	default:
+		return fmt.Sprintf("%q", method)
+	}
+}
+
+// isCustomHTTPMethod reports whether method is one of the OpenAPI 3.2
+// additions to the path item: the fixed `query` field (HTTP QUERY) or any
+// key under `additionalOperations`. The OpenAPI 3.0/3.1 methods all have
+// dedicated registration shortcuts on every supported router
+// (router.Get(...), router.GET(...)), whereas these need the router's
+// generic string-method registration (chi.MethodFunc, echo.Add,
+// gin.Handle, fiber.Add, iris.Handle). net/http and gorilla/mux take the
+// method as a string either way.
+func isCustomHTTPMethod(method string) bool {
+	switch method {
+	case "GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "CONNECT", "OPTIONS", "TRACE":
+		return false
+	default:
+		return true
+	}
+}
+
+// customHTTPMethods returns the distinct custom HTTP methods (see
+// isCustomHTTPMethod) used by ops, sorted, so router templates can emit
+// one-time setup per method (e.g. chi.RegisterMethod) before registering
+// routes. Returns nil when the spec uses only standard methods, so the
+// generated code for existing specs does not change.
+func customHTTPMethods(ops []OperationDefinition) []string {
+	seen := map[string]struct{}{}
+	var methods []string
+	for _, op := range ops {
+		if !isCustomHTTPMethod(op.Method) {
+			continue
+		}
+		if _, ok := seen[op.Method]; ok {
+			continue
+		}
+		seen[op.Method] = struct{}{}
+		methods = append(methods, op.Method)
+	}
+	slices.Sort(methods)
+	return methods
+}
+
+// unionTypesFragment renders the Types field of a runtime bind-options
+// literal for an OpenAPI 3.1 multi-type union parameter, e.g.
+// `, Types: []string{"string", "integer"}`. It returns "" for the empty
+// list, so single-type parameters emit no Types field at all: code
+// generated from specs without union parameters stays byte-identical to
+// previous releases and keeps compiling against runtime versions before
+// v1.7.0. Only specs that actually use union parameters pick up the new
+// runtime requirement.
+func unionTypesFragment(types []string) string {
+	if len(types) == 0 {
+		return ""
+	}
+	return ", Types: " + toStringArray(types)
+}
+
+// dict builds a map[string]any from an even-length list of alternating
+// key/value arguments. It lets a template pass more than one named value to a
+// {{template}} invocation (text/template only accepts a single data argument),
+// e.g. {{template "partial" (dict "Headers" $headers "Setter" "w.Header().Set")}}.
+func dict(values ...any) (map[string]any, error) {
+	if len(values)%2 != 0 {
+		return nil, fmt.Errorf("dict requires an even number of arguments, got %d", len(values))
+	}
+	m := make(map[string]any, len(values)/2)
+	for i := 0; i < len(values); i += 2 {
+		key, ok := values[i].(string)
+		if !ok {
+			return nil, fmt.Errorf("dict keys must be strings, got %T", values[i])
+		}
+		m[key] = values[i+1]
+	}
+	return m, nil
+}
+
+// withoutPkgName strips a package qualifier from a Go type name, which gives
+// the field name Go uses when that type is embedded in a struct:
+// externalRef0.FooResponse is embedded as the field FooResponse.
+func withoutPkgName(typeName string) string {
+	if i := strings.LastIndex(typeName, "."); i >= 0 {
+		return typeName[i+1:]
+	}
+	return typeName
 }
 
 // TemplateFunctions is passed to the template engine, and we can call each
 // function here by keyName from the template code.
 var TemplateFunctions = template.FuncMap{
+	"dict":                       dict,
 	"genParamArgs":               genParamArgs,
 	"genParamTypes":              genParamTypes,
 	"genParamNames":              genParamNames,
-	"genParamFmtString":          ReplacePathParamsWithStr,
+	"genPathString":              GenPathString,
 	"swaggerUriToIrisUri":        SwaggerUriToIrisUri,
 	"swaggerUriToEchoUri":        SwaggerUriToEchoUri,
 	"swaggerUriToFiberUri":       SwaggerUriToFiberUri,
@@ -316,11 +534,25 @@ var TemplateFunctions = template.FuncMap{
 	"genResponsePayload":         genResponsePayload,
 	"genResponseTypeName":        genResponseTypeName,
 	"genResponseUnmarshal":       genResponseUnmarshal,
+	"getConditionOfResponseName": getConditionOfResponseName,
+	"responsesWithHeaders":       responsesWithHeaders,
 	"getResponseTypeDefinitions": getResponseTypeDefinitions,
 	"toStringArray":              toStringArray,
 	"lower":                      strings.ToLower,
+	"hasPrefix":                  strings.HasPrefix,
+	"hasSuffix":                  strings.HasSuffix,
 	"title":                      titleCaser.String,
 	"stripNewLines":              stripNewLines,
 	"sanitizeGoIdentity":         SanitizeGoIdentity,
+	"schemaNameToTypeName":       SchemaNameToTypeName,
+	"toGoString":                 StringToGoString,
 	"toGoComment":                StringWithTypeNameToGoComment,
+	"unionTypes":                 unionTypesFragment,
+	"withoutPkgName":             withoutPkgName,
+	"additionalPropertiesType":   additionalPropertiesType,
+
+	"genServerURLWithVariablesFunctionParams": genServerURLWithVariablesFunctionParams,
+	"httpMethodConstant":                      httpMethodConstant,
+	"isCustomHTTPMethod":                      isCustomHTTPMethod,
+	"customHTTPMethods":                       customHTTPMethods,
 }

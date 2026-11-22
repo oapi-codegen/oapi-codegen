@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: serverurls
+output: gen.go
+generate:
+  server-urls: true
+output-options:
+  # to make sure that all types are generated, even if they're unreferenced
+  skip-prune: true

@@ -1,0 +1,15 @@
+{{/*
+gin overrides for the shared server skeletons. This file is NOT loaded into the
+base template tree; it is parsed into a gin-specific clone of the tree by
+buildServerTemplates in codegen.go, where these {{define}} blocks replace the
+skeletons' {{block}} defaults.
+
+Only the ServerInterface handler signature is shared with the skeleton; gin's
+wrapper (gin/gin-wrappers.tmpl) and route registration (gin/gin-register.tmpl)
+keep their own gin-specific shape (the 3-arg ErrorHandler and the c.IsAborted()
+middleware loop), which does not reduce to a handful of hooks over the net/http
+skeleton.
+*/}}
+
+{{/* --- server-interface.tmpl --- */}}
+{{define "interface.handlerSignature"}}(c *gin.Context{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}){{end}}

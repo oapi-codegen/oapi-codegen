@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: openapi31params
+output: openapi31params.gen.go
+generate:
+  models: true
+  std-http-server: true
+  client: true

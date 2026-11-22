@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../configuration-schema.json
+package: openapi31
+output: openapi31.gen.go
+# models only; skip-prune keeps the path-free component schemas (and the
+# enum-via-oneOf negative-path alias MixedOneOf) from being pruned away.
+generate:
+  models: true
+output-options:
+  skip-prune: true

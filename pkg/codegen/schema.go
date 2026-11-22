@@ -1,8 +1,14 @@
 package codegen
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
+	"go/ast"
+	"iter"
+	"maps"
+	"math"
+	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
@@ -17,17 +23,56 @@ type Schema struct {
 	ArrayType *Schema // The schema of array element
 
 	EnumValues map[string]string // Enum values
+	// verbatimEnumNames holds the keys of EnumValues that the spec stated
+	// itself and that are emitted exactly as written, which exempts them from
+	// the type name prefix an enum's constants may get. It is nil unless
+	// output-options.naming.explicit-names asks for that.
+	verbatimEnumNames map[string]struct{}
 
 	Properties               []Property       // For an object, the fields with names
 	HasAdditionalProperties  bool             // Whether we support additional properties
 	AdditionalPropertiesType *Schema          // And if we do, their type
 	AdditionalTypes          []TypeDefinition // We may need to generate auxiliary helper types, stored here
 
+	// additionalPropertiesElemType, when set, is the element type of the
+	// AdditionalProperties map, in place of the one additionalPropertiesType
+	// derives from AdditionalPropertiesType. schema-merging-behavior v1 sets
+	// it for an allOf, whose map has never held pointers for a nullable
+	// element.
+	additionalPropertiesElemType string
+
 	SkipOptionalPointer bool // Some types don't need a * in front when they're optional
 
 	Description string // The description of the element
 
 	UnionElements []UnionElement // Possible elements of oneOf/anyOf union
+
+	// UnionTextKinds lists the JSON types ("boolean", "integer", "number",
+	// "string") of a union whose branches are all scalars, so that it can be
+	// bound from a parameter's text; nil for any other union.
+	UnionTextKinds []string
+
+	// UnionVariantProperties lists, sorted, the JSON property names that the
+	// union's branches declare. From* and Merge* drop these keys from the
+	// union's additionalProperties, where UnmarshalJSON also puts them.
+	UnionVariantProperties []string
+
+	// UnionOwnedKeys is set for a union that combines several oneOfs or
+	// anyOfs (schema-merging-behavior v3, see unionComponent): the JSON keys
+	// each variant's own union owns, which From* replaces, keeping the other
+	// unions' data, where for a single union it replaces all of it.
+	UnionOwnedKeys map[UnionElement][]string
+
+	// UnionRefComponents lists, for such a union, the unions that are a $ref
+	// to a union type, which get As* and From* of their own.
+	UnionRefComponents []UnionRefComponent
+
+	// UnionAllowedKeys maps each variant with `additionalProperties: false`
+	// to the JSON keys its As* allows: the variant's own, and those anything
+	// else in the union's object declares (schema-merging-behavior v3, see
+	// closeUnionVariants). As* returns an error for any other key.
+	UnionAllowedKeys map[UnionElement][]string
+
 	Discriminator *Discriminator // Describes which value is stored in a union
 
 	// If this is set, the schema will declare a type via alias, eg,
@@ -39,6 +84,24 @@ type Schema struct {
 
 	// The original OpenAPIv3 Schema.
 	OAPISchema *openapi3.Schema
+
+	// aliasOf is the OpenAPI schema of the type this schema is an alias of,
+	// when an allOf generated as another type, such as the $ref in
+	// `allOf: [$ref X, {description: ...}]`. OAPISchema is the allOf itself.
+	// finishAllOf and generateAnnotated set it; generatesMarshalJSON follows
+	// it.
+	aliasOf *openapi3.Schema
+}
+
+// IsPrimitive returns true if the schema represents a primitive OpenAPI type
+// (string, integer, number, or boolean) as opposed to an object, array, or
+// composed type.
+func (s Schema) IsPrimitive() bool {
+	if s.OAPISchema == nil {
+		return false
+	}
+	t := schemaPrimaryType(s.OAPISchema.Type)
+	return t.Is("string") || t.Is("integer") || t.Is("number") || t.Is("boolean")
 }
 
 func (s Schema) IsRef() bool {
@@ -50,6 +113,137 @@ func (s Schema) IsExternalRef() bool {
 		return false
 	}
 	return strings.Contains(s.RefType, ".")
+}
+
+// generatesMarshalJSON reports whether the named Go type this schema position
+// resolves to carries a generated MarshalJSON/UnmarshalJSON pair. A model gets
+// one exactly when its Schema has UnionElements (union.tmpl) or
+// HasAdditionalProperties (additional-properties.tmpl,
+// union-and-additional-properties.tmpl); see renderBoilerplate.
+//
+// Those flags only live on the Schema that was generated for the target, so
+// there are three ways to reach them:
+//
+//   - This position generated the schema itself (an inline union, or an
+//     object with additionalProperties): the flags are right here.
+//   - x-go-type-name moved the generated schema into a TypeDefinition and
+//     left an alias to it behind: the flags live on the wrapped definition.
+//   - This position is a `$ref`: it only carries the referenced OpenAPI
+//     schema, not the Go schema that was generated for it, so generate the
+//     referenced schema and ask that. A top-level oneOf/anyOf would be
+//     visible on the OpenAPI schema, but a union produced by an allOf merge,
+//     or properties alongside additionalProperties, is not
+//     (https://github.com/oapi-codegen/oapi-codegen/issues/2549). Asking the
+//     generated schema also keeps us in step with shapes that look like
+//     unions but don't generate one, e.g. an OpenAPI 3.1
+//     `anyOf: [{type: string}, {type: "null"}]` that collapses to a plain
+//     string alias.
+func (s Schema) generatesMarshalJSON() bool {
+	if len(s.UnionElements) > 0 || s.HasAdditionalProperties {
+		return true
+	}
+	if wrapped, ok := s.goTypeNameWrapper(); ok {
+		return wrapped.aliasGeneratesMarshalJSON(s.TypeDecl())
+	}
+	if s.OAPISchema == nil {
+		return false
+	}
+	target, err := GenerateGoSchema(&openapi3.SchemaRef{Value: s.OAPISchema}, []string{s.TypeDecl()})
+	if err != nil {
+		return false
+	}
+	return target.aliasGeneratesMarshalJSON(s.TypeDecl())
+}
+
+// aliasGeneratesMarshalJSON reports whether s, or the type it is an alias of,
+// carries a generated MarshalJSON. An allOf can generate as an alias of
+// another type (see aliasOf), whose flags live on that type's own schema, so
+// this follows the aliases (see aliasChain).
+func (s Schema) aliasGeneratesMarshalJSON(typeDecl string) bool {
+	generate := func(aliased *openapi3.Schema) (Schema, error) {
+		return GenerateGoSchema(&openapi3.SchemaRef{Value: aliased}, []string{typeDecl})
+	}
+	for level, err := range s.aliasChain(generate) {
+		if err != nil {
+			return false
+		}
+		if len(level.UnionElements) > 0 || level.HasAdditionalProperties {
+			return true
+		}
+	}
+	return false
+}
+
+// aliasChain yields s, then the type it is an alias of, and so on: at each
+// step the schema x-go-type-name or the anonymous-schema hoist wrapped, when
+// the step is the alias left behind (see goTypeNameWrapper), and the next
+// step is generated by generate from the schema aliasOf records. An error
+// from generate ends the chain, yielded on its own. It follows up to 100
+// aliases, far more than any spec chains.
+func (s Schema) aliasChain(generate func(*openapi3.Schema) (Schema, error)) iter.Seq2[Schema, error] {
+	return func(yield func(Schema, error) bool) {
+		for range 100 {
+			if wrapped, ok := s.goTypeNameWrapper(); ok {
+				s = wrapped
+			}
+			if !yield(s, nil) || s.aliasOf == nil {
+				return
+			}
+			var err error
+			if s, err = generate(s.aliasOf); err != nil {
+				yield(Schema{}, err)
+				return
+			}
+		}
+	}
+}
+
+// goTypeNameWrapper returns the schema that x-go-type-name (or the
+// anonymous-schema auto-hoist) moved into a TypeDefinition, when this schema
+// is just the alias left behind pointing at it.
+func (s Schema) goTypeNameWrapper() (Schema, bool) {
+	if s.GoType == "" {
+		return Schema{}, false
+	}
+	for _, td := range s.AdditionalTypes {
+		if td.TypeName == s.GoType {
+			return td.Schema, true
+		}
+	}
+	return Schema{}, false
+}
+
+// HasCustomMarshalJSON reports whether a named type declared over this schema
+// position (the strict-server response envelope, or a request-body wrapper)
+// needs a delegating MarshalJSON/UnmarshalJSON pair.
+//
+// The templates declare such a type either as an alias (`type X = Y`) or as a
+// defined type (`type X Y`), keyed on whether the schema carries a RefType
+// that lives in this package. An alias *is* Y, so Y's methods are already
+// reachable and delegating would redeclare them. A defined type has an empty
+// method set, so any marshalling Y generated is silently lost — that is the
+// data loss behind
+// https://github.com/oapi-codegen/oapi-codegen/issues/2549 — and we emit a
+// delegator.
+func (s Schema) HasCustomMarshalJSON() bool {
+	if s.IsRef() && !s.IsExternalRef() {
+		// Declared as an alias; the methods transfer.
+		return false
+	}
+	return s.generatesMarshalJSON()
+}
+
+// HasCustomMarshalJSONForRequestBody reports whether a named request body
+// wrapper needs to delegate JSON marshaling to its underlying type.
+//
+// The request-body template only asks when it declares the wrapper as a
+// defined type (`type XJSONRequestBody XJSONBody`), and a defined type has an
+// empty method set, so the answer is simply whether the underlying type has
+// generated marshalling. That includes an inline body with properties and
+// additionalProperties, which HasCustomMarshalJSON's alias shortcut would miss:
+// the body is a local RefType, yet the wrapper is not an alias of it.
+func (s Schema) HasCustomMarshalJSONForRequestBody() bool {
+	return s.generatesMarshalJSON()
 }
 
 func (s Schema) TypeDecl() string {
@@ -88,29 +282,39 @@ type Property struct {
 	ReadOnly      bool
 	WriteOnly     bool
 	NeedsFormTag  bool
-	Extensions    map[string]interface{}
+	Extensions    map[string]any
 	Deprecated    bool
+
+	// resolvedGoFieldName, when non-empty, is the Go field name
+	// resolvePropertyGoFieldNameCollisions gave this property because its own
+	// name collided with a sibling's. GoFieldName returns it, so the struct
+	// declaration and the marshaling boilerplate agree. See issue #2495.
+	resolvedGoFieldName string
 }
 
+// GoFieldName returns the name of the struct field generated for p.
 func (p Property) GoFieldName() string {
-	goFieldName := p.JsonFieldName
-	if extension, ok := p.Extensions[extGoName]; ok {
-		if extGoFieldName, err := extParseGoFieldName(extension); err == nil {
-			goFieldName = extGoFieldName
-		}
+	if p.resolvedGoFieldName != "" {
+		return p.resolvedGoFieldName
 	}
+	return p.derivedGoFieldName()
+}
 
-	if globalState.options.Compatibility.AllowUnexportedStructFieldNames {
-		if extension, ok := p.Extensions[extOapiCodegenOnlyHonourGoName]; ok {
-			if extOapiCodegenOnlyHonourGoName, err := extParseOapiCodegenOnlyHonourGoName(extension); err == nil {
-				if extOapiCodegenOnlyHonourGoName {
-					return goFieldName
-				}
-			}
-		}
+// hasExplicitGoFieldName reports whether the spec names p's field itself, with
+// x-go-name. Such a name is never changed to resolve a collision.
+func (p Property) hasExplicitGoFieldName() bool {
+	extension, ok := p.Extensions[extGoName]
+	if !ok {
+		return false
 	}
+	_, err := extParseGoFieldName(extension)
+	return err == nil
+}
 
-	return SchemaNameToTypeName(goFieldName)
+// derivedGoFieldName returns the field name p gets from its JSON name or its
+// x-go-name, before any collision with a sibling is resolved.
+func (p Property) derivedGoFieldName() string {
+	return goFieldName(p.JsonFieldName, p.Extensions)
 }
 
 func (p Property) GoTypeDef() string {
@@ -126,6 +330,42 @@ func (p Property) GoTypeDef() string {
 		typeDef = "*" + typeDef
 	}
 	return typeDef
+}
+
+// RequiresNilCheck indicates whether the generated property should have a nil check performed on it before other checks.
+// This should be used in templates when performing `nil` checks, but NOT when i.e. determining if there should be an optional pointer given to the type - in that case, use `HasOptionalPointer`
+func (p Property) RequiresNilCheck() bool {
+	return p.ZeroValueIsNil() || p.HasOptionalPointer()
+}
+
+// HasOptionalPointer indicates whether the generated property has an optional pointer associated with it.
+// This takes into account the `x-go-type-skip-optional-pointer` extension, allowing a parameter definition to control whether the pointer should be skipped.
+func (p Property) HasOptionalPointer() bool {
+	return !p.Required && !p.Schema.SkipOptionalPointer
+}
+
+// IsPointer reports whether the generated Go field for this property is
+// pointer-typed, i.e. GoTypeDef renders with a leading `*`. Templates use it
+// when assigning a value to the field requires taking an address first.
+func (p Property) IsPointer() bool {
+	return strings.HasPrefix(p.GoTypeDef(), "*")
+}
+
+// ZeroValueIsNil is a helper function to determine if the given Go type used
+// for this property has `nil` as its Go zero value. Slices (OpenAPI `array`)
+// and maps (OpenAPI `object` with only `additionalProperties`, rendered as
+// `map[K]V`) both satisfy this — the custom-marshal templates use it to decide
+// whether to emit a nil-check before reading the field.
+func (p Property) ZeroValueIsNil() bool {
+	if p.Schema.OAPISchema == nil {
+		return false
+	}
+
+	if schemaPrimaryType(p.Schema.OAPISchema.Type).Is("array") {
+		return true
+	}
+
+	return strings.HasPrefix(p.Schema.GoType, "map[")
 }
 
 // EnumDefinition holds type information for enum
@@ -153,18 +393,76 @@ func (e *EnumDefinition) GetValues() map[string]string {
 	}
 	// If we do have conflicts, we will prefix the enum's typename to the values.
 	newValues := make(map[string]string, len(e.Schema.EnumValues))
-	for k, v := range e.Schema.EnumValues {
-		newName := e.TypeName + UppercaseFirstCharacter(k)
-		newValues[newName] = v
+	if len(e.Schema.verbatimEnumNames) == 0 {
+		for k, v := range e.Schema.EnumValues {
+			newName := e.TypeName + UppercaseFirstCharacter(k)
+			newValues[newName] = v
+		}
+		return newValues
+	}
+
+	// The names the spec states are emitted as written, so they take no
+	// prefix. A prefix can turn another name into one of them, though, and
+	// that name gets a suffix: left alone, the two values would share a key
+	// here and one of them would be lost.
+	prefixed := make(map[string]string, len(e.Schema.EnumValues))
+	used := make(map[string]struct{}, len(e.Schema.EnumValues))
+	for k := range e.Schema.EnumValues {
+		name := k
+		if _, verbatim := e.Schema.verbatimEnumNames[k]; !verbatim {
+			name = e.TypeName + UppercaseFirstCharacter(k)
+			prefixed[k] = name
+		}
+		used[name] = struct{}{}
+	}
+	for _, k := range SortedMapKeys(e.Schema.EnumValues) {
+		name, derived := prefixed[k]
+		if !derived {
+			newValues[k] = e.Schema.EnumValues[k]
+			continue
+		}
+		if _, taken := e.Schema.verbatimEnumNames[name]; taken {
+			for suffix := 1; ; suffix++ {
+				candidate := name + strconv.Itoa(suffix)
+				if _, taken := used[candidate]; !taken {
+					name = candidate
+					used[name] = struct{}{}
+					break
+				}
+			}
+		}
+		newValues[name] = e.Schema.EnumValues[k]
 	}
 	return newValues
 }
 
+// SecuritySchemeProvider describes one security scheme from
+// components/securitySchemes for which a scopes context-key constant is
+// generated.
+type SecuritySchemeProvider struct {
+	// Name is the sanitized scheme name; templates derive the constant name
+	// (<Name>Scopes), the context key type name and the key's string value
+	// from it.
+	Name string
+	// ImportedScopes, when non-empty, is the scopes constant declared by the
+	// package that import-mapping assigns this scheme's $ref to (e.g.
+	// "externalRef0.BearerAuthScopes", or unqualified for the current
+	// package). The local constant is declared as an alias of it, so the
+	// context key — which context.Value compares by type and value — is
+	// shared across the generated packages. Empty means the scheme is
+	// declared locally with its own context key type.
+	ImportedScopes string
+}
+
 type Constants struct {
-	// SecuritySchemeProviderNames holds all provider names for security schemes.
-	SecuritySchemeProviderNames []string
+	// SecuritySchemeProviders holds all security schemes for which scopes
+	// context-key constants are generated.
+	SecuritySchemeProviders []SecuritySchemeProvider
 	// EnumDefinitions holds type and value information for all enums
 	EnumDefinitions []EnumDefinition
+	// SkipEnumValidate suppresses generation of the `Valid()` method on
+	// enum types. Mirrors OutputOptions.SkipEnumValidate.
+	SkipEnumValidate bool
 }
 
 // TypeDefinition describes a Go type definition in generated code.
@@ -188,6 +486,67 @@ type TypeDefinition struct {
 
 	// This is the Schema wrapper is used to populate the type description
 	Schema Schema
+
+	// ForceEnumPrefix, when true, forces the enum-value constants generated
+	// from this TypeDefinition to be prefixed with the type name, regardless
+	// of whether GenerateEnums detects a cross-enum conflict. Used for
+	// synthesised enum types (e.g. server-URL variable enums) whose
+	// generated identifiers must remain stable to avoid colliding with
+	// other constants emitted alongside them.
+	ForceEnumPrefix bool
+
+	// Deprecated marks this type as deprecated, independent of the underlying
+	// schema's own deprecated flag. Used when the type is generated for a
+	// deprecated operation (e.g. request/response body aliases).
+	Deprecated bool
+
+	// DeprecationReason is the human-readable reason for deprecation, used
+	// when Deprecated is true. If empty, a generic message is emitted.
+	DeprecationReason string
+
+	// Comment, when set, is the full doc comment (including the leading "//")
+	// emitted above the type in the operation parameter template, replacing the
+	// default "<name> defines parameters for <op>." line. Used to explain
+	// non-obvious generated names, e.g. the per-path hash prefix on a shared
+	// parameter disambiguated across paths (issue #2090).
+	Comment string
+}
+
+// DeprecationComment returns a Go-style deprecation comment if the type is
+// deprecated, otherwise returns an empty string.
+func (t TypeDefinition) DeprecationComment() string {
+	if t.Deprecated {
+		reason := t.DeprecationReason
+		if reason == "" {
+			reason = "this type has been marked as deprecated upstream, but no `x-deprecated-reason` was set"
+		}
+		return DeprecationComment(reason)
+	}
+	if t.Schema.OAPISchema == nil || !t.Schema.OAPISchema.Deprecated {
+		return ""
+	}
+	reason := "this type has been marked as deprecated upstream, but no `x-deprecated-reason` was set"
+	if extension, ok := t.Schema.OAPISchema.Extensions[extDeprecationReason]; ok {
+		if r, err := extParseDeprecationReason(extension); err == nil {
+			reason = r
+		}
+	}
+	return DeprecationComment(reason)
+}
+
+// DocComment returns the full Go doc comment for the type, including the
+// deprecation notice as a separate paragraph when the type is deprecated.
+func (t TypeDefinition) DocComment() string {
+	var comment string
+	if t.Schema.Description != "" {
+		comment = StringWithTypeNameToGoComment(t.Schema.Description, t.TypeName)
+	} else {
+		comment = fmt.Sprintf("// %s defines model for %s.", t.TypeName, t.JsonName)
+	}
+	if dc := t.DeprecationComment(); dc != "" {
+		comment += "\n//\n" + dc
+	}
+	return comment
 }
 
 // ResponseTypeDefinition is an extension of TypeDefinition, specifically for
@@ -204,7 +563,27 @@ type ResponseTypeDefinition struct {
 }
 
 func (t *TypeDefinition) IsAlias() bool {
-	return !globalState.options.Compatibility.OldAliasing && t.Schema.DefineViaAlias
+	return !globalState.options.Compatibility.OldAliasing && t.Schema.DefineViaAlias &&
+		!mentionsTypeName(t.Schema.TypeDecl(), t.TypeName)
+}
+
+// mentionsTypeName reports whether the Go type expression decl refers to the
+// unqualified type name, as `[]Node` does for Node. An alias cannot refer to
+// itself (`type Node = []Node` is an invalid recursive alias), but a defined
+// type can, so such a type is declared as a defined type instead. Only type
+// positions count: in `[]struct{ Node *string }` the field is merely named
+// Node. A decl that does not parse is treated as not referring to it.
+func mentionsTypeName(decl, name string) bool {
+	expr, _, ok := parseGoType(decl)
+	if !ok {
+		return false
+	}
+	found := false
+	typeIdents(expr, func(id *ast.Ident) bool {
+		found = id.Name == name
+		return !found
+	})
+	return found
 }
 
 type Discriminator struct {
@@ -213,18 +592,233 @@ type Discriminator struct {
 
 	// JSON property name that holds the discriminator
 	Property string
+
+	// ValueType is the JSON type of the discriminator property's values:
+	// "boolean", "integer" or "number" when the schemas declare one, and ""
+	// for the usual string discriminator.
+	ValueType string
+
+	// variants are the union members the discriminator tells apart, which can
+	// be only some of the union's: a union that combines several (see
+	// Schema.UnionOwnedKeys) has the discriminator of one of them, and an
+	// inline variant that pins no value has none. v1 and v2 leave it nil for
+	// all of the union's members.
+	variants []UnionElement
+
+	// literals is set by v3 for an integer or number discriminator: each
+	// mapping value as a Go literal of the type ValueByDiscriminator decodes
+	// the discriminator into (see SwitchType). The values are compared as
+	// numbers, so 1 and 1.0 of a number discriminator are one value.
+	literals map[string]string
+}
+
+// SwitchType returns the Go type ValueByDiscriminator decodes the
+// discriminator into and switches on: int64 or float64 for a v3 integer or
+// number discriminator, and "" when it compares the value's JSON text.
+func (d *Discriminator) SwitchType() string {
+	switch {
+	case d.literals == nil:
+		return ""
+	case d.ValueType == openapi3.TypeInteger:
+		return "int64"
+	}
+	return "float64"
+}
+
+// IsString reports whether the discriminator's values are JSON strings.
+func (d *Discriminator) IsString() bool {
+	return d.ValueType == "" || d.ValueType == openapi3.TypeString
+}
+
+// literal renders a mapping value as a literal of the discriminator's type,
+// valid in both JSON and Go. A value that doesn't parse as that type stays a
+// string, which is what every discriminator used to be.
+func (d *Discriminator) literal(value string) string {
+	var ok bool
+	switch d.ValueType {
+	case openapi3.TypeBoolean:
+		ok = value == "true" || value == "false"
+	case openapi3.TypeInteger:
+		_, err := strconv.ParseInt(value, 10, 64)
+		ok = err == nil
+	case openapi3.TypeNumber:
+		_, err := strconv.ParseFloat(value, 64)
+		ok = err == nil
+	}
+	if ok {
+		return value
+	}
+	return strconv.Quote(value)
 }
 
 func (d *Discriminator) JSONTag() string {
 	return fmt.Sprintf("`json:\"%s\"`", d.Property)
 }
 
-func (d *Discriminator) PropertyName() string {
-	return SchemaNameToTypeName(d.Property)
+// DiscriminatorStamp describes how the generated From*/Merge* union helpers
+// record the discriminator value for one union element.
+//
+// The value is always merged into the marshaled JSON via JSONPatch, so
+// Discriminator() and ValueByDiscriminator() — which read the union data —
+// see it immediately after From*/Merge*. Stamping at the JSON level stays
+// correct regardless of how the variant declares the property — pointer,
+// named enum type, renamed or absent field, or a type in an imported
+// package — none of which is knowable from the union's side (see issue
+// #2297). When the union struct itself declares the discriminator property,
+// the helpers additionally assign Value to that field: its JSON rendering
+// overwrites the union data in MarshalJSON, so the field is load-bearing.
+type DiscriminatorStamp struct {
+	// Value is the discriminator value mapped to this union element.
+	Value string
+	// Literal is Value written as a JSON and Go literal of the
+	// discriminator's type: "cat" for a string discriminator, false for a
+	// boolean one (issue #1619).
+	Literal string
+	// Property is the union struct's own discriminator field, matched by
+	// JSON property name, when it declares one; nil when it doesn't.
+	Property *Property
+	// JSONPatch is the JSON object literal merged into the union data,
+	// e.g. {"code":"resource_exists"}. Safe to embed in a backtick string
+	// literal: spec validation rejects discriminator property names and
+	// mapping keys containing quotes, backticks or control characters.
+	JSONPatch string
+}
+
+// DiscriminatorStampFor resolves the discriminator stamp for the given union
+// element, or nil when nothing should be stamped: there is no discriminator,
+// the mapping doesn't cover every element, or several mapping values share
+// one element type, making the value ambiguous (the 1:1 gate keeps parity
+// with issue #2071).
+func (s Schema) DiscriminatorStampFor(element UnionElement) *DiscriminatorStamp {
+	d := s.Discriminator
+	if d == nil {
+		return nil
+	}
+	// The values that lead to the element. A number's spellings, like 1 and
+	// 1.0, are one value when the discriminator compares numbers (see
+	// SwitchType).
+	var values []string
+	for _, value := range SortedMapKeys(d.Mapping) {
+		if d.Mapping[value] != element.String() {
+			continue
+		}
+		if literal, ok := d.literals[value]; ok {
+			value = literal
+		}
+		if !slices.Contains(values, value) {
+			values = append(values, value)
+		}
+	}
+	stamp := DiscriminatorStamp{}
+	switch {
+	case len(values) == 0:
+		return nil
+	case d.variants != nil && len(values) > 1:
+		// v3 stamps each variant exactly one value leads to: which of
+		// several to write would be arbitrary (#2071).
+		return nil
+	case d.variants == nil && len(d.Mapping) != len(s.UnionElements):
+		// v1 and v2 stamp only when every member has exactly one value.
+		return nil
+	}
+	stamp.Value = values[len(values)-1]
+	stamp.Literal = d.literal(stamp.Value)
+	stamp.JSONPatch = fmt.Sprintf(`{"%s":%s}`, d.Property, stamp.Literal)
+	// Match by JSON property name: the discriminator is a JSON-level
+	// concept, and the Go field may be renamed via x-go-name.
+	for i := range s.Properties {
+		if s.Properties[i].JsonFieldName == d.Property {
+			stamp.Property = &s.Properties[i]
+		}
+	}
+	return &stamp
+}
+
+// DiscriminatorCase is one arm of a union's ValueByDiscriminator() switch: a
+// discriminator value and the As* helper it dispatches to.
+type DiscriminatorCase struct {
+	// Value is the discriminator value that selects this element, e.g. "GitDiffFile".
+	Value string
+	// Method is the union element method suffix, e.g. "ExternalRef0GitDiffFile",
+	// so the generated call is t.As<Method>().
+	Method string
+}
+
+// DiscriminatorCases returns the ValueByDiscriminator() switch arms for the
+// union, sorted by discriminator value for deterministic output. Each mapping
+// value is the Go type of a union element (the union generators write both from
+// the same elementSchema.GoType), so it resolves to that element's Method(). A
+// mapping value not found among the union elements is skipped: it has no As*
+// helper to dispatch to, so no case is emitted and it falls through to the
+// switch default.
+func (s Schema) DiscriminatorCases() []DiscriminatorCase {
+	if s.Discriminator == nil {
+		return nil
+	}
+	known := make(map[string]UnionElement, len(s.UnionElements))
+	for _, el := range s.UnionElements {
+		known[el.String()] = el
+	}
+	cases := make([]DiscriminatorCase, 0, len(s.Discriminator.Mapping))
+	for _, value := range SortedMapKeys(s.Discriminator.Mapping) {
+		el, ok := known[s.Discriminator.Mapping[value]]
+		if !ok {
+			continue
+		}
+		if literal, ok := s.Discriminator.literals[value]; ok {
+			// A number, compared as one (see SwitchType): values spelled
+			// differently for one variant, like 2 and 2.0, are one case.
+			value = literal
+			if slices.Contains(cases, DiscriminatorCase{Value: value, Method: el.Method()}) {
+				continue
+			}
+		}
+		cases = append(cases, DiscriminatorCase{Value: value, Method: el.Method()})
+	}
+	return cases
 }
 
 // UnionElement describe union element, based on prefix externalRef\d+ and real ref name from external schema.
 type UnionElement string
+
+// UnionRefComponent is a union type that a union combining several includes
+// through a $ref (see Schema.UnionRefComponents).
+type UnionRefComponent struct {
+	// Type is the union's Go type.
+	Type UnionElement
+	// OwnedKeys are the JSON keys only this union's variants declare.
+	OwnedKeys []string
+	// OtherKeys are the JSON keys only the rest of the object declares, the
+	// other unions' variants and the object's own properties, which As*
+	// leaves out of this union.
+	OtherKeys []string
+}
+
+// InUnionComponent reports whether a variant belongs to one of several unions
+// the schema combines (see UnionOwnedKeys).
+func (s Schema) InUnionComponent(e UnionElement) bool {
+	_, ok := s.UnionOwnedKeys[e]
+	return ok
+}
+
+// UnionOwnedKeysFor returns the JSON keys a variant's own union owns (see
+// UnionOwnedKeys).
+func (s Schema) UnionOwnedKeysFor(e UnionElement) []string {
+	return s.UnionOwnedKeys[e]
+}
+
+// ClosedUnionVariant reports whether a variant's As* allows only some keys
+// (see UnionAllowedKeys).
+func (s Schema) ClosedUnionVariant(e UnionElement) bool {
+	_, ok := s.UnionAllowedKeys[e]
+	return ok
+}
+
+// UnionAllowedKeysFor returns the JSON keys a variant's As* allows (see
+// UnionAllowedKeys).
+func (s Schema) UnionAllowedKeysFor(e UnionElement) []string {
+	return s.UnionAllowedKeys[e]
+}
 
 // String returns externalRef\d+ and real ref name from external schema, like externalRef0.SomeType.
 func (u UnionElement) String() string {
@@ -233,65 +827,663 @@ func (u UnionElement) String() string {
 
 // Method generate union method name for template functions `As/From/Merge`.
 func (u UnionElement) Method() string {
-	var method string
-	for _, part := range strings.Split(string(u), `.`) {
-		method += UppercaseFirstCharacter(part)
+	var method strings.Builder
+	for part := range strings.SplitSeq(string(u), `.`) {
+		method.WriteString(UppercaseFirstCharacter(part))
 	}
-	return method
+	return method.String()
 }
 
 func PropertiesEqual(a, b Property) bool {
 	return a.JsonFieldName == b.JsonFieldName && a.Schema.TypeDecl() == b.Schema.TypeDecl() && a.Required == b.Required
 }
 
+// schemaIsNullable reports whether an OpenAPI schema represents a nullable
+// type. In OpenAPI 3.0 nullability is the explicit `nullable: true` flag;
+// in OpenAPI 3.1 the `nullable` keyword was removed in favor of including
+// "null" in the type array (e.g. `type: ["string","null"]`).
+//
+// Precondition: globalState.is31 must be set (Generate() does this at
+// entry from swagger.IsOpenAPI31OrLater()). This helper does not take
+// the version flag explicitly because every call site is reached
+// through Generate(); calling it before globalState is initialized
+// will silently take the wrong branch.
+//
+// Cross-version misuse (a 3.1 spec using `nullable: true`, or a 3.0 spec
+// using `type: [..., "null"]`) is documented as invalid input -- this
+// helper trusts its input to use the version-appropriate idiom.
+func schemaIsNullable(s *openapi3.Schema) bool {
+	return schemaIsNullableRec(s, nil)
+}
+
+// schemaIsNullableRec is schemaIsNullable's implementation, carrying a
+// `seen` set of already-visited schema values so that a cyclic allOf (a
+// $ref member resolving back to an ancestor — the same cycles
+// mergeOpenapiSchemas guards against) cannot cause unbounded recursion.
+// The set is allocated lazily: the common case (no allOf) never touches it.
+func schemaIsNullableRec(s *openapi3.Schema, seen map[*openapi3.Schema]bool) bool {
+	if s == nil {
+		return false
+	}
+	// A nullable member inside an allOf makes the whole schema nullable.
+	// In OpenAPI 3.0, allOf is the only place a sibling (`nullable: true`)
+	// may sit next to a $ref, so wrapping a $ref in allOf is the idiomatic
+	// way to decorate a referenced schema as nullable (issue #1898). This
+	// is where the flag lives — the outer schema's own Nullable is unset —
+	// so descend into the members. Descent is transitive to match the
+	// transitive allOf flattening in mergeOpenapiSchemas, and equally valid
+	// under 3.1's type-array idiom, hence checked before the version
+	// branch. mergeOpenapiSchemas unions nullability into the merged type;
+	// this surfaces it at the use site so the field is wrapped in a pointer
+	// / nullable.Nullable[T].
+	for _, member := range s.AllOf {
+		if member == nil || member.Value == nil || seen[member.Value] {
+			continue
+		}
+		if seen == nil {
+			seen = make(map[*openapi3.Schema]bool)
+		}
+		seen[member.Value] = true
+		if schemaIsNullableRec(member.Value, seen) {
+			return true
+		}
+	}
+	if globalState.is31 {
+		if s.Type != nil && s.Type.Includes("null") {
+			return true
+		}
+		// OpenAPI 3.1 also allows nullability to be expressed via an
+		// `anyOf` or `oneOf` branch whose only type is "null", which is
+		// semantically equivalent to including "null" in the outer
+		// type array. Detect it here so downstream code that wraps in a
+		// pointer (or nullable.Nullable[T]) reaches the right decision.
+		for _, branch := range s.AnyOf {
+			if branch != nil && isNullTypeSchema(branch.Value) {
+				return true
+			}
+		}
+		for _, branch := range s.OneOf {
+			if branch != nil && isNullTypeSchema(branch.Value) {
+				return true
+			}
+		}
+		return false
+	}
+	return s.Nullable
+}
+
+// isNullTypeSchema reports whether an OpenAPI 3.1 schema is a bare
+// `{"type": "null"}` -- i.e. a schema whose only type is "null" and
+// which is otherwise empty of constraints. Used to detect the
+// nullability-via-anyOf idiom in `schemaIsNullable` and to filter such
+// branches out of the union generators (see effectiveBranches: they're
+// nullability markers, not union variants for which we need a Go type).
+func isNullTypeSchema(s *openapi3.Schema) bool {
+	if s == nil || s.Type == nil {
+		return false
+	}
+	slice := s.Type.Slice()
+	return len(slice) == 1 && slice[0] == "null"
+}
+
+// enumViaOneOfValue is one branch of an OpenAPI 3.1 enum-via-oneOf schema.
+// Title is the per-branch identifier (becomes the Go constant name); Value
+// is the stringified `const` (the Go literal, unquoted; the enum
+// generation pipeline applies the appropriate quoting via ValueWrapper).
+type enumViaOneOfValue struct {
+	Title string
+	Value string
+}
+
+// detectEnumViaOneOf reports whether the schema matches the OpenAPI 3.1
+// enum-via-oneOf idiom and, if so, returns the per-branch values in
+// declaration order.
+//
+// The idiom:
+//
+//	Severity:
+//	  type: integer        # or "string"
+//	  oneOf:
+//	    - title: HIGH
+//	      const: 2
+//	      description: An urgent problem    # optional
+//	    - ...
+//
+// All members must carry both `title` and `const`; no member may itself
+// be a composition (oneOf/allOf/anyOf) or declare properties. The outer
+// schema's primary type must be a scalar (string or integer).
+//
+// The outer `type` may also be omitted, which is the more common spelling
+// of the idiom in the wild -- the consts already imply the family, so
+// repeating it is redundant. The family is then read back off those consts
+// (see inferEnumViaOneOfType).
+//
+// The second return is the schema that drives the Go base-type mapping:
+// the input as-is when it declares its own `type`, or a shallow copy
+// carrying the inferred type when it does not. oapiSchemaToGoType reads
+// Type and Format, so without the splice a typeless schema would land on
+// the generic `any` branch. The copy keeps the inference from leaking back
+// into the caller's schema as a side effect.
+//
+// Gated on globalState.is31 (the keyword `const` lands in OpenAPI 3.1)
+// AND !SkipEnumViaOneOf so users can fall through to the standard union
+// generator on demand. Because both gates sit at the top, the error below
+// is unreachable once skip-enum-via-oneof is set -- the escape hatch covers
+// it without needing to know about it.
+//
+// A nil error with nil items means the schema simply is not this idiom, and
+// the caller should carry on to its standard handling. A non-nil error means
+// the schema *is* the idiom but cannot be generated faithfully; that is worth
+// failing over rather than papering back over with a union.
+//
+// Precondition: globalState (both is31 and options) must be initialized
+// (see schemaIsNullable for context).
+func detectEnumViaOneOf(schema *openapi3.Schema) ([]enumViaOneOfValue, *openapi3.Schema, error) {
+	if !globalState.is31 {
+		return nil, nil, nil
+	}
+	if globalState.options.OutputOptions.SkipEnumViaOneOf {
+		return nil, nil, nil
+	}
+	if schema == nil || len(schema.OneOf) == 0 {
+		return nil, nil, nil
+	}
+	typeSource := schema
+	primary := schemaPrimaryType(schema.Type)
+	if primary == nil {
+		inferred, format, ok := inferEnumViaOneOfType(schema.OneOf)
+		if !ok {
+			return nil, nil, nil
+		}
+		cp := *schema
+		cp.Type, cp.Format = inferred, format
+		primary, typeSource = inferred, &cp
+	}
+	if !primary.Is("string") && !primary.Is("integer") {
+		return nil, nil, nil
+	}
+	items := make([]enumViaOneOfValue, 0, len(schema.OneOf))
+	for _, ref := range schema.OneOf {
+		if ref == nil || ref.Value == nil {
+			return nil, nil, nil
+		}
+		m := ref.Value
+		if m.Title == "" || m.Const == nil {
+			return nil, nil, nil
+		}
+		if len(m.OneOf) > 0 || len(m.AllOf) > 0 || len(m.AnyOf) > 0 {
+			return nil, nil, nil
+		}
+		if len(m.Properties) > 0 {
+			return nil, nil, nil
+		}
+		items = append(items, enumViaOneOfValue{
+			Title: m.Title,
+			Value: enumConstLiteral(m.Const),
+		})
+	}
+	// Only now, with the schema confirmed to be an enum, is an unrepresentable
+	// value an error rather than a reason to look elsewhere. This covers the
+	// declared spelling as well as the inferred one: `type: integer` reaches
+	// here without ever consulting the consts.
+	if primary.Is("integer") {
+		if err := checkIntegerConstsExact(schema.OneOf); err != nil {
+			return nil, nil, err
+		}
+	}
+	return items, typeSource, nil
+}
+
+// inferEnumViaOneOfType reads the outer scalar type of an enum-via-oneOf
+// schema back off its branch `const` values, for the common spelling of the
+// idiom that leaves `type` off the outer schema. It returns the inferred
+// type and, for integers, the `format` that selects a Go type wide enough
+// to hold every value seen.
+//
+// Every branch must land in the same family: a string next to a number has
+// no single Go type, so it is left to the union generator. The family is
+// reported honestly rather than filtered here -- a boolean or fractional
+// const yields "boolean"/"number", which the caller's existing scalar gate
+// then rejects.
+func inferEnumViaOneOfType(refs openapi3.SchemaRefs) (*openapi3.Types, string, bool) {
+	var family, format string
+	for _, ref := range refs {
+		if ref == nil || ref.Value == nil {
+			return nil, "", false
+		}
+		fam, wide, ok := constScalarFamily(ref.Value.Const)
+		if !ok {
+			return nil, "", false
+		}
+		switch {
+		case family == "":
+			family = fam
+		case family != fam:
+			return nil, "", false
+		}
+		// Any one value needing the wider integer type widens the whole enum.
+		if wide != "" {
+			format = wide
+		}
+	}
+	if family == "" {
+		return nil, "", false
+	}
+	return &openapi3.Types{family}, format, true
+}
+
+// constScalarFamily classifies one `const` value into the OpenAPI scalar
+// family it belongs to, plus the integer `format` needed to hold it ("" when
+// the default Go int is wide enough). It reports false for values that are
+// not scalars at all -- objects, arrays, JSON null -- and for integers too
+// large to survive the trip through the parser (see below).
+//
+// The cases run narrowest-first, the way the JSON value kinds nest: boolean
+// admits exactly two values, a number splits into integer or number
+// depending on whether it is whole, and string comes last because it is the
+// family that can spell anything.
+//
+// Widths are chosen against the values, not the spec: plain `int` is the
+// natural Go enum type and covers anything inside the int32 range, which is
+// also the range that stays correct on a 32-bit build; past that the enum
+// widens to `int64`.
+//
+// Integers the parser could not carry faithfully are classified here like any
+// other, and rejected later by checkIntegerConstsExact. Classification answers
+// "what family is this", which stays a question about shape; whether a value
+// survived parsing is a separate question with a separate answer (an error,
+// not a fall-through), and keeping them apart is what lets the caller tell a
+// schema that is not an enum from an enum it cannot generate.
+func constScalarFamily(v any) (family string, format string, ok bool) {
+	switch c := v.(type) {
+	case bool:
+		return "boolean", "", true
+	case float64:
+		if c != math.Trunc(c) {
+			return "number", "", true
+		}
+		if c < math.MinInt32 || c > math.MaxInt32 {
+			return "integer", "int64", true
+		}
+		return "integer", "", true
+	case string:
+		return "string", "", true
+	}
+	return "", "", false
+}
+
+// checkIntegerConstsExact verifies that every branch of an integer
+// enum-via-oneOf still carries the number its document declared.
+//
+// kin-openapi decodes every JSON number into a float64, so an integer at 2^53
+// or beyond arrives already rounded to a nearby representable value -- the
+// digits the spec wrote are gone before codegen runs. Generating the constant
+// anyway would bake in a number the document never used, silently and without
+// a compile error to catch it, so this is an error rather than a fall-through
+// to the union generator: every branch carrying `title` + `const` says plainly
+// that an enum was intended, and quietly handing back a shapeless union does
+// not serve that. Users who want the union can say so with
+// output-options.skip-enum-via-oneof, which turns this whole path off before
+// the check is ever reached.
+//
+// The bound excludes 2^53 itself, not just everything past it. 2^53 is exactly
+// representable, but nothing between it and 2^53+2 is: a document writing
+// 9007199254740993 also arrives as 9007199254740992. A value sitting on the
+// boundary is therefore ambiguous about which integer it came from, which is
+// the same reason the larger ones are refused.
+func checkIntegerConstsExact(refs openapi3.SchemaRefs) error {
+	for _, ref := range refs {
+		if ref == nil || ref.Value == nil {
+			continue
+		}
+		f, isFloat := ref.Value.Const.(float64)
+		if !isFloat || constIsExactInteger(f) {
+			continue
+		}
+		return fmt.Errorf(
+			"enum-via-oneOf branch %q has a const that did not survive parsing: it reached the generator as %s, "+
+				"because JSON numbers are decoded as float64 and integers at 2^53 or beyond no longer identify a "+
+				"single value. Generating this enum would emit a constant the document never declared. Carry the "+
+				"value as a JSON string instead (the OpenAPI format registry allows this for int64 and uint64), or "+
+				"set output-options.skip-enum-via-oneof to generate a union",
+			ref.Value.Title, strconv.FormatFloat(f, 'f', -1, 64))
+	}
+	return nil
+}
+
+// constIsExactInteger reports whether a whole float64 still identifies the one
+// integer the document wrote. See checkIntegerConstsExact for the bound.
+func constIsExactInteger(f float64) bool {
+	return f == math.Trunc(f) && f > minExactFloat64Int && f < maxExactFloat64Int
+}
+
+// enumConstLiteral renders a `const` value as the Go literal that goes into
+// the generated constant.
+//
+// Whole numbers are spelled out in full. They reach us as float64, and the
+// default formatting writes a round value in exponent form -- 5000000000
+// becomes "5e+09". Go accepts that as an integer constant, but nobody writes
+// a port number or a byte count that way.
+func enumConstLiteral(v any) string {
+	if f, ok := v.(float64); ok && constIsExactInteger(f) {
+		return strconv.FormatInt(int64(f), 10)
+	}
+	return fmt.Sprintf("%v", v)
+}
+
+// maxExactFloat64Int is 2^53, the largest magnitude below which every
+// integer still has its own float64 representation. Above it consecutive
+// integers start to share one, so a parsed value can no longer be trusted to
+// be the value the document wrote.
+const (
+	maxExactFloat64Int = 1 << 53
+	minExactFloat64Int = -maxExactFloat64Int
+)
+
+// describeWithExamples folds a schema's example data into its
+// description string for use in generated Go doc comments. Version-aware:
+// in 3.0 it reads schema.Example (singular); in 3.1 it prefers
+// schema.Examples (the JSON Schema plural array) and falls back to
+// schema.Example.
+//
+// The fallback matters because 3.1 keeps the singular `example` keyword
+// as a valid annotation, and specs written against 3.1 use it heavily.
+// kin-openapi parses it into schema.Example regardless of document
+// version, so without the fallback every such example is silently
+// dropped from the generated comments.
+//
+// The output appends `Examples: <v1>, <v2>, ...` (or `Example: <v>` for
+// a single value) on a new paragraph after any existing description
+// text. Non-string values are JSON-encoded so structured examples render
+// readably.
+//
+// Precondition: globalState.is31 must be set (see schemaIsNullable
+// for context).
+func describeWithExamples(description string, schema *openapi3.Schema) string {
+	if schema == nil {
+		return description
+	}
+	var values []any
+	label := "Example"
+	if globalState.is31 && len(schema.Examples) > 0 {
+		values = schema.Examples
+		label = "Examples"
+	} else {
+		if schema.Example == nil {
+			return description
+		}
+		values = []any{schema.Example}
+	}
+
+	formatted := make([]string, 0, len(values))
+	for _, v := range values {
+		formatted = append(formatted, formatExampleValue(v))
+	}
+
+	suffix := label + ": " + strings.Join(formatted, ", ")
+	if description == "" {
+		return suffix
+	}
+	return description + "\n\n" + suffix
+}
+
+// formatExampleValue renders an example value for inclusion in a Go doc
+// comment. Strings round-trip as themselves (no JSON quoting); other
+// values JSON-encode so structured examples remain readable.
+func formatExampleValue(v any) string {
+	if s, ok := v.(string); ok {
+		return s
+	}
+	if b, err := json.Marshal(v); err == nil {
+		return string(b)
+	}
+	return fmt.Sprintf("%v", v)
+}
+
+// schemaPrimaryType returns the type slice used for primitive-type dispatch
+// (`*Types.Is("string")` etc.). In OpenAPI 3.0 the type slice has at most
+// one entry and is returned unchanged. In OpenAPI 3.1 the "null" entry is
+// the nullability indicator (handled separately by schemaIsNullable); we
+// strip it here so the rest of the codegen can keep dispatching with
+// `Is("...")` as it always has.
+//
+// Precondition: globalState.is31 must be set (see schemaIsNullable
+// for context). The early-return on `!globalState.is31` is correct only
+// when the global state has actually been initialized -- a call before
+// Generate() runs would silently use the 3.0 branch.
+func schemaPrimaryType(t *openapi3.Types) *openapi3.Types {
+	if t == nil || !globalState.is31 {
+		return t
+	}
+	s := t.Slice()
+	if len(s) <= 1 {
+		return t
+	}
+	stripped := make(openapi3.Types, 0, len(s))
+	for _, name := range s {
+		if name != "null" {
+			stripped = append(stripped, name)
+		}
+	}
+	return &stripped
+}
+
+// isMultiTypeUnion reports whether t is an OpenAPI 3.1 multi-type union: a
+// `type` list naming more than one type, such as `type: [string, number]`.
+// A list is only legal `type` syntax in 3.1, so a 3.0 document carrying one
+// is malformed and keeps failing generation.
+//
+// Every entry must name a JSON Schema type, so a misspelled one
+// (`type: [strng, number]`) is not a union and still reaches the "unhandled
+// Schema type" error rather than being quietly widened to `any`. "null" is
+// excluded because it is the nullability marker rather than a member of the
+// union, so a list containing it is not a union on its account alone.
+//
+// Precondition: globalState.is31 must be set (see schemaIsNullable for
+// context).
+func isMultiTypeUnion(t *openapi3.Types) bool {
+	if !globalState.is31 {
+		return false
+	}
+	s := t.Slice()
+	if len(s) < 2 {
+		return false
+	}
+	for _, name := range s {
+		if name == "null" || !isJSONSchemaType(name) {
+			return false
+		}
+	}
+	return true
+}
+
+// jsonSchemaTypes are the values a schema's `type` may name, per JSON Schema
+// (and so per OpenAPI). The primitive-type dispatch handles every one of
+// them, which is what lets unhandledSchemaTypeError treat an unrecognized
+// name as a misspelling.
+var jsonSchemaTypes = []string{"array", "boolean", "integer", "null", "number", "object", "string"}
+
+func isJSONSchemaType(name string) bool {
+	return slices.Contains(jsonSchemaTypes, name)
+}
+
+// quoteTypeNames renders a `type` value the way the spec author wrote it: a
+// bare quoted name for a single type, a bracketed list for the 3.1 list form.
+func quoteTypeNames(names []string) string {
+	quoted := make([]string, len(names))
+	for i, name := range names {
+		quoted[i] = strconv.Quote(name)
+	}
+	if len(names) == 1 {
+		return quoted[0]
+	}
+	return "[" + strings.Join(quoted, ", ") + "]"
+}
+
+// unhandledSchemaTypeError explains why a schema's `type` fell off the end of
+// the primitive-type dispatch. The dispatch covers every JSON Schema type, so
+// reaching it means the `type` is not one this document may carry: a name
+// that is not a JSON Schema type at all, or the 3.1-only list form in an
+// earlier document. The message names the declared value verbatim and the
+// reason, so a typo is visible at a glance.
+// See https://github.com/oapi-codegen/oapi-codegen/issues/1977.
+//
+// declared is the schema's `type` as written, not the "null"-stripped value
+// the dispatch runs on, so the reader sees what is in their spec.
+//
+// Precondition: globalState.is31 must be set (see schemaIsNullable for
+// context). An unset is31 reads a 3.1 document as an earlier one and picks
+// the version branch below.
+func unhandledSchemaTypeError(declared *openapi3.Types) error {
+	names := declared.Slice()
+
+	var unknown []string
+	for _, name := range names {
+		if !isJSONSchemaType(name) {
+			unknown = append(unknown, strconv.Quote(name))
+		}
+	}
+
+	expected := fmt.Sprintf("expected one of %s", strings.Join(jsonSchemaTypes, ", "))
+
+	switch {
+	case len(unknown) > 0:
+		return fmt.Errorf("unhandled Schema type %s: %s (%s)",
+			quoteTypeNames(names), invalidTypeNamesPhrase(names, unknown), expected)
+	case len(names) > 1 && !globalState.is31:
+		// Every entry names a real type, so the list form itself is what is
+		// unusable here: a 3.1 document would have mapped it to `any`.
+		return fmt.Errorf("unhandled Schema type %s: a list of types requires OpenAPI 3.1 or later%s",
+			quoteTypeNames(names), declaredVersionSuffix())
+	default:
+		// An empty `type`, or a 3.1 list naming nothing but the "null"
+		// nullability marker, which leaves no type to map.
+		return fmt.Errorf("unhandled Schema type %s: type must name a JSON Schema type (%s)",
+			quoteTypeNames(names), expected)
+	}
+}
+
+// invalidTypeNamesPhrase names the entries that are not JSON Schema types.
+// A single-entry `type` is its own offender, so the phrase does not repeat
+// the name the message already printed.
+func invalidTypeNamesPhrase(names, unknown []string) string {
+	switch {
+	case len(names) == 1:
+		return "not a valid JSON Schema type"
+	case len(unknown) == 1:
+		return unknown[0] + " is not a valid JSON Schema type"
+	default:
+		return strings.Join(unknown, ", ") + " are not valid JSON Schema types"
+	}
+}
+
+// declaredVersionSuffix names the document's version when that explains the
+// failure, and says nothing when it would not. globalState.spec is unset
+// when codegen internals are exercised directly, and SetGlobalStateSpec sets
+// the spec without is31, so a spec already declaring 3.1 would contradict a
+// message about needing 3.1. Silence beats a self-contradicting hint.
+func declaredVersionSuffix() string {
+	if globalState.spec == nil || globalState.spec.OpenAPI == "" || globalState.spec.IsOpenAPI31OrLater() {
+		return ""
+	}
+	return fmt.Sprintf(", but this document declares OpenAPI %s", globalState.spec.OpenAPI)
+}
+
+// schemaUnionTypes returns t's member types as a string slice when t is an
+// OpenAPI 3.1 multi-type union after the "null" nullability marker is
+// stripped, or nil otherwise. Generated code passes the list to the
+// runtime's union-aware parameter binding (the Types option added in
+// runtime v1.7.0); it is nil for single-type schemas, which keep binding
+// through their concrete Go type.
+//
+// Precondition: globalState.is31 must be set (see schemaIsNullable for
+// context).
+func schemaUnionTypes(t *openapi3.Types) []string {
+	if t == nil {
+		return nil
+	}
+	primary := schemaPrimaryType(t)
+	if !isMultiTypeUnion(primary) {
+		return nil
+	}
+	return primary.Slice()
+}
+
+// GenerateGoSchema converts an OpenAPI schema into a Go type definition.
+//
+// It starts a fresh generation context, so a call made from outside the
+// package behaves exactly as it always has. Within the package, prefer
+// generateGoSchema so that the recursion state described by genContext
+// survives the descent.
 func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
+	return generateGoSchema(newGenContext(path), sref, path)
+}
+
+func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (Schema, error) {
 	// Add a fallback value in case the sref is nil.
 	// i.e. the parent schema defines a type:array, but the array has
 	// no items defined. Therefore, we have at least valid Go-Code.
 	if sref == nil {
-		return Schema{GoType: "interface{}"}, nil
+		return Schema{GoType: "any"}, nil
 	}
 
 	schema := sref.Value
+	extensions := combinedSchemaExtensions(sref)
+
+	// Check x-go-type-skip-optional-pointer, which will override if the type
+	// should be a pointer or not when the field is optional.
+	// NOTE skipOptionalPointer will be defaulted to the global value, but can be overridden on a per-type/-field basis
+	skipOptionalPointer := globalState.options.OutputOptions.PreferSkipOptionalPointer
+	if extension, ok := extensions[extPropGoTypeSkipOptionalPointer]; ok {
+		var err error
+		skipOptionalPointer, err = extParsePropGoTypeSkipOptionalPointer(extension)
+		if err != nil {
+			return Schema{}, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
+		}
+	}
 
 	// If Ref is set on the SchemaRef, it means that this type is actually a reference to
 	// another type. We're not de-referencing, so simply use the referenced type.
 	if IsGoTypeReference(sref.Ref) {
-		// Convert the reference path to Go type
-		refType, err := RefPathToGoType(sref.Ref)
-		if err != nil {
-			return Schema{}, fmt.Errorf("error turning reference (%s) into a Go type: %s",
-				sref.Ref, err)
+		var refType string
+
+		// check if there is an x-go-type extension next to the $ref and use that over the overrided type.
+		if extension, ok := sref.Extensions[extPropGoType]; ok {
+			var ok bool
+			refType, ok = extension.(string)
+			if !ok {
+				return Schema{}, fmt.Errorf("error turning '%s: %v' into string",
+					extPropGoType, extension)
+			}
+		} else {
+			// Convert the reference path to Go type
+			var err error
+			refType, err = RefPathToGoType(sref.Ref)
+			if err != nil {
+				return Schema{}, fmt.Errorf("error turning reference (%s) into a Go type: %s",
+					sref.Ref, err)
+			}
 		}
+
 		return Schema{
-			GoType:         refType,
-			Description:    schema.Description,
-			DefineViaAlias: true,
-			OAPISchema:     schema,
+			GoType:              refType,
+			Description:         describeWithExamples(schema.Description, schema),
+			DefineViaAlias:      true,
+			SkipOptionalPointer: skipOptionalPointer,
+			OAPISchema:          schema,
 		}, nil
 	}
 
 	outSchema := Schema{
-		Description: schema.Description,
-		OAPISchema:  schema,
-	}
-
-	// AllOf is interesting, and useful. It's the union of a number of other
-	// schemas. A common usage is to create a union of an object with an ID,
-	// so that in a RESTful paradigm, the Create operation can return
-	// (object, id), so that other operations can refer to (id)
-	if schema.AllOf != nil {
-		mergedSchema, err := MergeSchemas(schema.AllOf, path)
-		if err != nil {
-			return Schema{}, fmt.Errorf("error merging schemas: %w", err)
-		}
-		mergedSchema.OAPISchema = schema
-		return mergedSchema, nil
+		Description:         describeWithExamples(schema.Description, schema),
+		OAPISchema:          schema,
+		SkipOptionalPointer: skipOptionalPointer,
 	}
 
 	// Check x-go-type, which will completely override the definition of this
-	// schema with the provided type.
-	if extension, ok := schema.Extensions[extPropGoType]; ok {
+	// schema with the provided type. This must be checked before AllOf so
+	// that an override on the outer schema wins over allOf composition.
+	if extension, ok := extensions[extPropGoType]; ok {
 		typeName, err := extTypeName(extension)
 		if err != nil {
 			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoType, err)
@@ -302,18 +1494,74 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		return outSchema, nil
 	}
 
-	// Check x-go-type-skip-optional-pointer, which will override if the type
-	// should be a pointer or not when the field is optional.
-	if extension, ok := schema.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
-		skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension)
-		if err != nil {
-			return outSchema, fmt.Errorf("invalid value for %q: %w", extPropGoTypeSkipOptionalPointer, err)
-		}
-		outSchema.SkipOptionalPointer = skipOptionalPointer
+	// AllOf is interesting, and useful. It's the union of a number of other
+	// schemas. A common usage is to create a union of an object with an ID,
+	// so that in a RESTful paradigm, the Create operation can return
+	// (object, id), so that other operations can refer to (id)
+	if schema.AllOf != nil {
+		return generateAllOf(ctx, schema, path, extensions, skipOptionalPointer)
 	}
 
-	// Schema type and format, eg. string / binary
-	t := schema.Type
+	// schema-merging-behavior v3 generates no union for a oneOf or anyOf
+	// whose branches only add constraints, such as
+	// `oneOf: [{required: [email]}, {required: [phone]}]`.
+	if ctx.run.merging == SchemaMergingV3 {
+		schema = withoutConstraintOnlyUnions(schema, nil)
+	}
+
+	// OpenAPI 3.1 enum-via-oneOf: a scalar schema whose oneOf branches
+	// each carry `title` + `const` is rendered as a Go typed enum, not as
+	// a union. Detection is gated by version + the SkipEnumViaOneOf flag;
+	// when the idiom does not match, fall through to standard handling
+	// (which routes oneOf into generateUnions further below).
+	// The outer `type` may be absent, in which case typeSource carries the
+	// scalar type inferred from the branch consts; see detectEnumViaOneOf.
+	// A nil error with nil items just means this is not the idiom.
+	items, typeSource, err := detectEnumViaOneOf(schema)
+	if err != nil {
+		return Schema{}, err
+	}
+	if items != nil {
+		if err := oapiSchemaToGoType(ctx, typeSource, path, &outSchema); err != nil {
+			return Schema{}, fmt.Errorf("error resolving primitive type for enum-via-oneOf: %w", err)
+		}
+		// Force a typed declaration -- enums must not be aliased.
+		outSchema.DefineViaAlias = false
+		outSchema.EnumValues = make(map[string]string, len(items))
+		for _, it := range items {
+			outSchema.EnumValues[enumValueNameToGoName(it.Title)] = it.Value
+		}
+		// Non-toplevel schemas need an explicit AdditionalType so the
+		// downstream EnumDefinition collector picks them up; toplevel
+		// schemas are already collected via the components walk.
+		if len(path) > 1 {
+			var typeName string
+			if extension, ok := schema.Extensions[extGoTypeName]; ok {
+				tn, err := extString(extension)
+				if err != nil {
+					return outSchema, fmt.Errorf("invalid value for %q: %w", extGoTypeName, err)
+				}
+				typeName = tn
+			} else {
+				typeName = ctx.enumTypeName(path)
+			}
+			typeDef := TypeDefinition{
+				TypeName: typeName,
+				JsonName: strings.Join(path, "."),
+				Schema:   outSchema,
+			}
+			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, typeDef)
+			outSchema.RefType = typeName
+		}
+		return outSchema, nil
+	}
+
+	// Schema type and format, eg. string / binary. In OpenAPI 3.1, `type`
+	// may include "null" alongside the primary type to express nullability;
+	// strip "null" up front so the object / fall-through dispatch sees the
+	// underlying type. Nullability itself is captured by schemaIsNullable()
+	// at the call sites that wrap the result in a pointer.
+	t := schemaPrimaryType(schema.Type)
 	// Handle objects and empty schemas first as a special case
 	if t.Slice() == nil || t.Is("object") {
 		var outType string
@@ -324,11 +1572,14 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			if t.Is("object") {
 				// We have an object with no properties. This is a generic object
 				// expressed as a map.
-				outType = "map[string]interface{}"
+				outType = "map[string]any"
+				setSkipOptionalPointerForContainerType(&outSchema)
 			} else { // t == ""
 				// If we don't even have the object designator, we're a completely
 				// generic type.
-				outType = "interface{}"
+				outType = "any"
+				// this should never have an "optional pointer", as it doesn't make sense to be a `*any`
+				outSchema.SkipOptionalPointer = true
 			}
 			outSchema.GoType = outType
 			outSchema.DefineViaAlias = true
@@ -344,13 +1595,14 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			// Until we have a concrete additional properties type, we default to
 			// any schema.
 			outSchema.AdditionalPropertiesType = &Schema{
-				GoType: "interface{}",
+				GoType: "any",
 			}
 
 			// If additional properties are defined, we will override the default
 			// above with the specific definition.
 			if schema.AdditionalProperties.Schema != nil {
-				additionalSchema, err := GenerateGoSchema(schema.AdditionalProperties.Schema, path)
+				apHint := append(slices.Clone(path), "AdditionalProperties")
+				additionalSchema, err := generateGoSchema(ctx.sharingPath(apHint), schema.AdditionalProperties.Schema, path)
 				if err != nil {
 					return Schema{}, fmt.Errorf("error generating type for additional properties: %w", err)
 				}
@@ -385,19 +1637,20 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				// since we don't need them for a simple map.
 				outSchema.HasAdditionalProperties = false
 				outSchema.GoType = fmt.Sprintf("map[string]%s", additionalPropertiesType(outSchema))
+				setSkipOptionalPointerForContainerType(&outSchema)
 				return outSchema, nil
 			}
 
 			// We've got an object with some properties.
 			for _, pName := range SortedSchemaKeys(schema.Properties) {
 				p := schema.Properties[pName]
-				propertyPath := append(path, pName)
-				pSchema, err := GenerateGoSchema(p, propertyPath)
+				propertyPath := append(slices.Clone(path), pName)
+				pSchema, err := generateGoSchema(ctx.at(propertyPath), p, propertyPath)
 				if err != nil {
 					return Schema{}, fmt.Errorf("error generating Go schema for property '%s': %w", pName, err)
 				}
 
-				required := StringInArray(pName, schema.Required)
+				required := slices.Contains(schema.Required, pName)
 
 				if (pSchema.HasAdditionalProperties || len(pSchema.UnionElements) != 0) && pSchema.RefType == "" {
 					// If we have fields present which have additional properties or union values,
@@ -417,17 +1670,18 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				}
 				description := ""
 				if p.Value != nil {
-					description = p.Value.Description
+					description = describeWithExamples(p.Value.Description, p.Value)
 				}
+
 				prop := Property{
 					JsonFieldName: pName,
 					Schema:        pSchema,
 					Required:      required,
 					Description:   description,
-					Nullable:      p.Value.Nullable,
+					Nullable:      schemaIsNullable(p.Value),
 					ReadOnly:      p.Value.ReadOnly,
 					WriteOnly:     p.Value.WriteOnly,
-					Extensions:    p.Value.Extensions,
+					Extensions:    combinedSchemaExtensions(p),
 					Deprecated:    p.Value.Deprecated,
 				}
 				outSchema.Properties = append(outSchema.Properties, prop)
@@ -436,24 +1690,34 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 				}
 			}
 
-			if schema.AnyOf != nil {
-				if err := generateUnion(&outSchema, schema.AnyOf, schema.Discriminator, path); err != nil {
-					return Schema{}, fmt.Errorf("error generating type for anyOf: %w", err)
-				}
+			if err := generateUnions(ctx, &outSchema, schema, path); err != nil {
+				return Schema{}, err
 			}
-			if schema.OneOf != nil {
-				if err := generateUnion(&outSchema, schema.OneOf, schema.Discriminator, path); err != nil {
-					return Schema{}, fmt.Errorf("error generating type for oneOf: %w", err)
-				}
+			if len(outSchema.UnionElements) > 0 && len(outSchema.Properties) == 0 && !outSchema.HasAdditionalProperties {
+				outSchema.UnionTextKinds = unionTextKinds(slices.Concat(schema.AnyOf, schema.OneOf))
 			}
 
-			outSchema.GoType = GenStructFromSchema(outSchema)
+			// Only generate a struct literal if the schema actually has
+			// struct content. When collapseNullableUnion collapses a one-
+			// element nullable union (`anyOf: [{type: X}, {type: "null"}]`)
+			// down to the bare X branch, it sets outSchema.GoType to the
+			// primitive's Go type and clears the struct-shaped fields;
+			// rebuilding `struct {}` here would clobber that.
+			if len(outSchema.Properties) > 0 || outSchema.HasAdditionalProperties || len(outSchema.UnionElements) > 0 {
+				// Resolve field name collisions before rendering, so that the
+				// struct declaration and the marshaling boilerplate agree on
+				// the names. See issue #2495.
+				if err := resolvePropertyGoFieldNameCollisions(&outSchema, path); err != nil {
+					return Schema{}, err
+				}
+				outSchema.GoType = GenStructFromSchema(outSchema)
+			}
 		}
 
 		// Check for x-go-type-name. It behaves much like x-go-type, however, it will
 		// create a type definition for the named type, and use the named type in place
 		// of this schema.
-		if extension, ok := schema.Extensions[extGoTypeName]; ok {
+		if extension, ok := extensions[extGoTypeName]; ok {
 			typeName, err := extTypeName(extension)
 			if err != nil {
 				return outSchema, fmt.Errorf("invalid value for %q: %w", extGoTypeName, err)
@@ -461,6 +1725,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 			newTypeDef := TypeDefinition{
 				TypeName: typeName,
+				JsonName: strings.Join(path, "."),
 				Schema:   outSchema,
 			}
 			outSchema = Schema{
@@ -471,9 +1736,57 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			}
 		}
 
+		// Auto-hoist anonymous inline schemas to a named type when the
+		// output-options.generate-types-for-anonymous-schemas option is set.
+		// Mirrors the x-go-type-name path above but with a path-derived name
+		// and a distinct named type (DefineViaAlias=false). Only fires for
+		// schemas nested inside another schema (len(path) > 1) — top-level
+		// component schemas already have their own names. Skipped if the
+		// schema is already a named ref or has just been wrapped by
+		// x-go-type-name (DefineViaAlias=true above).
+		// See https://github.com/oapi-codegen/oapi-codegen/issues/1139
+		if globalState.options.OutputOptions.GenerateTypesForAnonymousSchemas &&
+			len(path) > 1 &&
+			outSchema.RefType == "" &&
+			!outSchema.DefineViaAlias &&
+			hasInlineStructuralContent(&outSchema) {
+			typeName := PathToTypeName(path)
+			typeDef := TypeDefinition{
+				TypeName: typeName,
+				JsonName: strings.Join(path, "."),
+				Schema:   outSchema,
+			}
+			outSchema = Schema{
+				Description: typeDef.Schema.Description,
+				GoType:      typeName,
+				// Mark the returned schema as a reference to the
+				// hoisted named type. This mirrors the convention
+				// followed by every other hoist path in this file
+				// (additionalProperties-hoist, property-hoist,
+				// array-item-hoist) and prevents any future hoist
+				// caller that asks "has this schema been named yet?"
+				// from re-hoisting under the same path-derived name.
+				RefType:         typeName,
+				AdditionalTypes: append(outSchema.AdditionalTypes, typeDef),
+			}
+		}
+
 		return outSchema, nil
-	} else if len(schema.Enum) > 0 {
-		err := oapiSchemaToGoType(schema, path, &outSchema)
+	} else if (len(schema.Enum) > 0 || (globalState.is31 && schema.Const != nil)) && !t.Is("array") && !isMultiTypeUnion(t) {
+		// An `enum` (or 3.1 `const`) is only meaningful on a scalar schema:
+		// it constrains a single value, which we render as a typed constant.
+		// A schema that combines `type: array` with an `enum` is malformed --
+		// the enum members are scalars, not arrays, so no array value could
+		// satisfy it (seen in the wild as a copy of the item enum onto the
+		// array; see issue #2176). Emitting constants there yields
+		// `const X SliceType = ...`, which is not a valid Go constant type.
+		// Fall through to normal array handling so the schema generates as a
+		// plain `[]ItemType`; the item schema carries the real enum.
+		//
+		// A multi-type union is excluded for the same reason: it lowers to
+		// `any`, and `const X any = ...` is not a valid Go constant either.
+		// Falling through generates the plain `any` the union maps to.
+		err := oapiSchemaToGoType(ctx, schema, path, &outSchema)
 		// Enums need to be typed, so that the values aren't interchangeable,
 		// so no matter what schema conversion thinks, we need to define a
 		// new type.
@@ -482,48 +1795,81 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 		if err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
-		enumValues := make([]string, len(schema.Enum))
-		for i, enumValue := range schema.Enum {
-			enumValues[i] = fmt.Sprintf("%v", enumValue)
+		// OpenAPI 3.1 `const: X` is shorthand for `enum: [X]`. Fold the
+		// two through the same enum-codegen path here so a top-level
+		// `const` schema becomes a typed alias plus a singleton constant,
+		// using the same name-derivation rules `enum` uses.
+		enumSource := schema.Enum
+		if len(enumSource) == 0 {
+			enumSource = []any{schema.Const}
 		}
-
-		enumNames := enumValues
+		var extNames []string
 		for _, key := range []string{extEnumVarNames, extEnumNames} {
-			if extension, ok := schema.Extensions[key]; ok {
+			if extension, ok := extensions[key]; ok {
 				if extEnumNames, err := extParseEnumVarNames(extension); err == nil {
-					enumNames = extEnumNames
+					extNames = extEnumNames
 					break
 				}
 			}
 		}
 
-		sanitizedValues := SanitizeEnumNames(enumNames, enumValues)
-		outSchema.EnumValues = make(map[string]string, len(sanitizedValues))
+		// With output-options.naming.explicit-names set to verbatim, a name
+		// the spec gives a value is emitted as written.
+		keepExtNames := explicitNamesVerbatim()
+		var enumNames, enumValues []string
+		var verbatim []bool
+		for i, enumValue := range enumSource {
+			// A non-string enum has no literal for null; the pointer or nullable field carries it.
+			if enumValue == nil && outSchema.GoType != "string" {
+				continue
+			}
+			value := fmt.Sprintf("%v", enumValue)
+			name := value
+			if i < len(extNames) {
+				name = extNames[i]
+			}
+			enumValues = append(enumValues, value)
+			enumNames = append(enumNames, name)
+			verbatim = append(verbatim, keepExtNames && i < len(extNames))
+		}
+		if err := checkVerbatimEnumNames(enumNames, verbatim); err != nil {
+			return outSchema, err
+		}
 
-		for k, v := range sanitizedValues {
-			var enumName string
-			if v == "" {
-				enumName = "Empty"
-			} else {
-				enumName = k
+		enumNames, enumValues, verbatim = sanitizeEnumNamesKeeping(enumNames, enumValues, verbatim)
+		for i, name := range enumNames {
+			if verbatim[i] {
+				continue
 			}
 			if globalState.options.Compatibility.OldEnumConflicts {
-				outSchema.EnumValues[SchemaNameToTypeName(PathToTypeName(append(path, enumName)))] = v
-			} else {
-				outSchema.EnumValues[SchemaNameToTypeName(k)] = v
+				if enumValues[i] == "" {
+					name = "Empty"
+				}
+				name = PathToTypeName(append(path, name))
+			}
+			enumNames[i] = enumValueNameToGoName(name)
+		}
+		disambiguateEnumNamesKeeping(enumNames, verbatim)
+		outSchema.EnumValues = enumValueMap(enumNames, enumValues)
+		for i, name := range enumNames {
+			if verbatim[i] {
+				if outSchema.verbatimEnumNames == nil {
+					outSchema.verbatimEnumNames = make(map[string]struct{})
+				}
+				outSchema.verbatimEnumNames[name] = struct{}{}
 			}
 		}
 		if len(path) > 1 { // handle additional type only on non-toplevel types
 			// Allow overriding autogenerated enum type names, since these may
 			// cause conflicts - see https://github.com/oapi-codegen/oapi-codegen/issues/832
 			var typeName string
-			if extension, ok := schema.Extensions[extGoTypeName]; ok {
+			if extension, ok := extensions[extGoTypeName]; ok {
 				typeName, err = extString(extension)
 				if err != nil {
 					return outSchema, fmt.Errorf("invalid value for %q: %w", extGoTypeName, err)
 				}
 			} else {
-				typeName = SchemaNameToTypeName(PathToTypeName(path))
+				typeName = ctx.enumTypeName(path)
 			}
 
 			typeDef := TypeDefinition{
@@ -535,7 +1881,7 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 			outSchema.RefType = typeName
 		}
 	} else {
-		err := oapiSchemaToGoType(schema, path, &outSchema)
+		err := oapiSchemaToGoType(ctx, schema, path, &outSchema)
 		if err != nil {
 			return Schema{}, fmt.Errorf("error resolving primitive type: %w", err)
 		}
@@ -545,22 +1891,37 @@ func GenerateGoSchema(sref *openapi3.SchemaRef, path []string) (Schema, error) {
 
 // oapiSchemaToGoType converts an OpenApi schema into a Go type definition for
 // all non-object types.
-func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schema) error {
+func oapiSchemaToGoType(ctx genContext, schema *openapi3.Schema, path []string, outSchema *Schema) error {
 	f := schema.Format
-	t := schema.Type
+	// In OpenAPI 3.1, `type` may be a multi-element array including "null"
+	// to express nullability. The dispatch below uses `*Types.Is("...")`,
+	// which only matches single-element type slices. Strip "null" up front
+	// so the dispatch sees the underlying primitive type. Nullability
+	// itself was already captured by schemaIsNullable() at the call sites
+	// that wrap the result in a pointer.
+	t := schemaPrimaryType(schema.Type)
 
 	if t.Is("array") {
 		// For arrays, we'll get the type of the Items and throw a
 		// [] in front of it.
-		arrayType, err := GenerateGoSchema(schema.Items, path)
+		itemHint := append(slices.Clone(path), "Item")
+		arrayType, err := generateGoSchema(ctx.sharingPath(itemHint), schema.Items, path)
 		if err != nil {
 			return fmt.Errorf("error generating type for array: %w", err)
 		}
-		if (arrayType.HasAdditionalProperties || len(arrayType.UnionElements) != 0) && arrayType.RefType == "" {
+
+		if (arrayType.HasAdditionalProperties ||
+			len(arrayType.UnionElements) != 0 ||
+			(globalState.options.OutputOptions.GenerateTypesForAnonymousSchemas && len(arrayType.Properties) > 0)) &&
+			arrayType.RefType == "" {
 			// If we have items which have additional properties or union values,
 			// but are not a pre-defined type, we need to define a type
 			// for them, which will be based on the field names we followed
-			// to get to the type.
+			// to get to the type. The third clause catches plain inline
+			// object items under generate-types-for-anonymous-schemas: the
+			// auto-hoist block in GenerateGoSchema only fires when
+			// len(path) > 1, so top-level array schemas (path length 1) fall
+			// through with their items left anonymous unless we hoist here.
 			typeName := PathToTypeName(append(path, "Item"))
 
 			typeDef := TypeDefinition{
@@ -572,82 +1933,115 @@ func oapiSchemaToGoType(schema *openapi3.Schema, path []string, outSchema *Schem
 
 			arrayType.RefType = typeName
 		}
+
+		typeDeclaration := arrayType.TypeDecl()
+		if schemaIsNullable(arrayType.OAPISchema) {
+			if globalState.options.OutputOptions.NullableType {
+				typeDeclaration = "nullable.Nullable[" + typeDeclaration + "]"
+			} else {
+				typeDeclaration = "*" + typeDeclaration
+			}
+		}
+
 		outSchema.ArrayType = &arrayType
-		outSchema.GoType = "[]" + arrayType.TypeDecl()
+		outSchema.GoType = "[]" + typeDeclaration
 		outSchema.AdditionalTypes = arrayType.AdditionalTypes
 		outSchema.Properties = arrayType.Properties
 		outSchema.DefineViaAlias = true
-		if sliceContains(globalState.options.OutputOptions.DisableTypeAliasesForType, "array") {
+		if slices.Contains(globalState.options.OutputOptions.DisableTypeAliasesForType, "array") {
 			outSchema.DefineViaAlias = false
 		}
+		setSkipOptionalPointerForContainerType(outSchema)
 
 	} else if t.Is("integer") {
-		// We default to int if format doesn't ask for something else.
-		if f == "int64" {
-			outSchema.GoType = "int64"
-		} else if f == "int32" {
-			outSchema.GoType = "int32"
-		} else if f == "int16" {
-			outSchema.GoType = "int16"
-		} else if f == "int8" {
-			outSchema.GoType = "int8"
-		} else if f == "int" {
-			outSchema.GoType = "int"
-		} else if f == "uint64" {
-			outSchema.GoType = "uint64"
-		} else if f == "uint32" {
-			outSchema.GoType = "uint32"
-		} else if f == "uint16" {
-			outSchema.GoType = "uint16"
-		} else if f == "uint8" {
-			outSchema.GoType = "uint8"
-		} else if f == "uint" {
-			outSchema.GoType = "uint"
-		} else {
-			outSchema.GoType = "int"
-		}
+		spec := globalState.typeMapping.Integer.Resolve(f)
+		outSchema.GoType = spec.Type
 		outSchema.DefineViaAlias = true
 	} else if t.Is("number") {
-		// We default to float for "number"
-		if f == "double" {
-			outSchema.GoType = "float64"
-		} else if f == "float" || f == "" {
-			outSchema.GoType = "float32"
-		} else {
-			return fmt.Errorf("invalid number format: %s", f)
-		}
+		spec := globalState.typeMapping.Number.Resolve(f)
+		outSchema.GoType = spec.Type
 		outSchema.DefineViaAlias = true
 	} else if t.Is("boolean") {
-		if f != "" {
-			return fmt.Errorf("invalid format (%s) for boolean", f)
-		}
-		outSchema.GoType = "bool"
+		spec := globalState.typeMapping.Boolean.Resolve(f)
+		outSchema.GoType = spec.Type
 		outSchema.DefineViaAlias = true
 	} else if t.Is("string") {
-		// Special case string formats here.
-		switch f {
-		case "byte":
-			outSchema.GoType = "[]byte"
-		case "email":
-			outSchema.GoType = "openapi_types.Email"
-		case "date":
-			outSchema.GoType = "openapi_types.Date"
-		case "date-time":
-			outSchema.GoType = "time.Time"
-		case "json":
-			outSchema.GoType = "json.RawMessage"
+		// OpenAPI 3.1: `contentMediaType` and `contentEncoding` are the
+		// JSON-Schema-aligned replacements for the 3.0 `format: binary`
+		// / `format: byte` idioms used to describe file uploads and
+		// base64-encoded binary data. When the spec author writes the
+		// 3.1 form (per learn.openapis.org/upgrading/v3.0-to-v3.1.html
+		// "Update file upload descriptions"), the schema arrives with
+		// no `format` set but one of these keywords populated; without
+		// this synthesis the field would fall through to the default
+		// `string` mapping and the user would silently lose the
+		// file/binary typing they had under 3.0. We only synthesize a
+		// format when the user has not explicitly set one, so any
+		// explicit `format` (or user-provided `type-mapping` overlay)
+		// continues to win.
+		resolvedFormat := f
+		if globalState.is31 && resolvedFormat == "" {
+			switch {
+			case schema.ContentMediaType != "":
+				// Raw binary content of any media type -- equivalent to
+				// 3.0 `format: binary`. Routes to openapi_types.File in
+				// the default mapping.
+				resolvedFormat = "binary"
+			case schema.ContentEncoding == "base64":
+				// Standard padded base64 is the one RFC4648 variant Go's
+				// encoding/json handles natively for []byte. Map to
+				// `byte` (-> []byte), matching the 3.0 `format: byte`
+				// behavior so the wire encoding is honored on
+				// marshal/unmarshal without user code.
+				resolvedFormat = "byte"
+				// Other contentEncoding values (base64url, base32, base16,
+				// quoted-printable) are intentionally NOT mapped to []byte.
+				// Go's JSON codec for []byte always emits/expects standard
+				// padded base64; using it for base64url would silently
+				// corrupt URL-safe characters (`-`/`_`) on unmarshal and
+				// re-emit them as standard base64 on marshal. Leaving the
+				// field as the default `string` keeps the raw declared
+				// wire encoding in user hands -- they can apply the
+				// correct codec at the application layer. Users who want
+				// a typed mapping can override via `type-mapping` (e.g.
+				// map a custom format to a wrapper type that implements
+				// encoding-aware MarshalJSON/UnmarshalJSON).
+			}
+		}
+		spec := globalState.typeMapping.String.Resolve(resolvedFormat)
+		outSchema.GoType = spec.Type
+		// Preserve special behaviors for specific types
+		if outSchema.GoType == "[]byte" {
+			setSkipOptionalPointerForContainerType(outSchema)
+		}
+		if outSchema.GoType == "json.RawMessage" {
 			outSchema.SkipOptionalPointer = true
-		case "uuid":
-			outSchema.GoType = "openapi_types.UUID"
-		case "binary":
-			outSchema.GoType = "openapi_types.File"
-		default:
-			// All unrecognized formats are simply a regular string.
-			outSchema.GoType = "string"
 		}
 		outSchema.DefineViaAlias = true
+	} else if t.Is("null") {
+		// OpenAPI 3.1 allows a schema whose only type is "null", which
+		// validates exactly the JSON value null. Go has no type whose only
+		// value is null, so map it to `any` — the same permissive mapping
+		// used for typeless schemas — rather than rejecting an otherwise
+		// valid spec. An optional pointer makes no sense for `any`, whose
+		// zero value is already nil, so skip it — mirroring the
+		// typeless-schema handling in GenerateGoSchema.
+		// See https://github.com/oapi-codegen/oapi-codegen/issues/2430
+		outSchema.GoType = "any"
+		outSchema.SkipOptionalPointer = true
+		outSchema.DefineViaAlias = true
+	} else if isMultiTypeUnion(t) {
+		// OpenAPI 3.1 allows `type` to be a list, so a value may be any one
+		// of several types (`type: [string, number, boolean]`). Go has no
+		// type matching that constraint. Map it to `any`, the same permissive
+		// mapping used for typeless schemas, rather than rejecting an
+		// otherwise valid spec. An optional pointer makes no sense for `any`,
+		// whose zero value is already nil, so skip it.
+		outSchema.GoType = "any"
+		outSchema.SkipOptionalPointer = true
+		outSchema.DefineViaAlias = true
 	} else {
-		return fmt.Errorf("unhandled Schema type: %v", t)
+		return unhandledSchemaTypeError(schema.Type)
 	}
 	return nil
 }
@@ -690,76 +2084,19 @@ func GenFieldsFromProperties(props []Property) []string {
 			// This comment has to be on its own line for godoc & IDEs to pick up
 			var deprecationReason string
 			if extension, ok := p.Extensions[extDeprecationReason]; ok {
-				if extOmitEmpty, err := extParseDeprecationReason(extension); err == nil {
-					deprecationReason = extOmitEmpty
+				if extDeprecationReason, err := extParseDeprecationReason(extension); err == nil {
+					deprecationReason = extDeprecationReason
 				}
 			}
 
 			field += fmt.Sprintf("%s\n", DeprecationComment(deprecationReason))
 		}
 
-		// Check x-go-type-skip-optional-pointer, which will override if the type
-		// should be a pointer or not when the field is optional.
-		if extension, ok := p.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
-			if skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension); err == nil {
-				p.Schema.SkipOptionalPointer = skipOptionalPointer
-			}
-		}
+		p = p.withSkipOptionalPointerExtension()
 
 		field += fmt.Sprintf("    %s %s", goFieldName, p.GoTypeDef())
 
-		shouldOmitEmpty := (!p.Required || p.ReadOnly || p.WriteOnly) &&
-			(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
-
-		omitEmpty := !p.Nullable && shouldOmitEmpty
-
-		if p.Nullable && globalState.options.OutputOptions.NullableType {
-			omitEmpty = shouldOmitEmpty
-		}
-
-		// Support x-omitempty
-		if extOmitEmptyValue, ok := p.Extensions[extPropOmitEmpty]; ok {
-			if extOmitEmpty, err := extParseOmitEmpty(extOmitEmptyValue); err == nil {
-				omitEmpty = extOmitEmpty
-			}
-		}
-
-		fieldTags := make(map[string]string)
-
-		if !omitEmpty {
-			fieldTags["json"] = p.JsonFieldName
-			if globalState.options.OutputOptions.EnableYamlTags {
-				fieldTags["yaml"] = p.JsonFieldName
-			}
-			if p.NeedsFormTag {
-				fieldTags["form"] = p.JsonFieldName
-			}
-		} else {
-			fieldTags["json"] = p.JsonFieldName + ",omitempty"
-			if globalState.options.OutputOptions.EnableYamlTags {
-				fieldTags["yaml"] = p.JsonFieldName + ",omitempty"
-			}
-			if p.NeedsFormTag {
-				fieldTags["form"] = p.JsonFieldName + ",omitempty"
-			}
-		}
-
-		// Support x-go-json-ignore
-		if extension, ok := p.Extensions[extPropGoJsonIgnore]; ok {
-			if goJsonIgnore, err := extParseGoJsonIgnore(extension); err == nil && goJsonIgnore {
-				fieldTags["json"] = "-"
-			}
-		}
-
-		// Support x-oapi-codegen-extra-tags
-		if extension, ok := p.Extensions[extPropExtraTags]; ok {
-			if tags, err := extExtraTags(extension); err == nil {
-				keys := SortedMapKeys(tags)
-				for _, k := range keys {
-					fieldTags[k] = tags[k]
-				}
-			}
-		}
+		fieldTags := structFieldTags(p)
 		// Convert the fieldTags map into Go field annotations.
 		keys := SortedMapKeys(fieldTags)
 		tags := make([]string, len(keys))
@@ -772,12 +2109,201 @@ func GenFieldsFromProperties(props []Property) []string {
 	return fields
 }
 
+// additionalPropertiesFieldName is the struct field that holds the additional
+// properties of a schema which also declares properties.
+const additionalPropertiesFieldName = "AdditionalProperties"
+
+// resolvePropertyGoFieldNameCollisions makes the Go field names of schema's
+// properties unique. Distinct JSON property names can derive the same Go
+// identifier ("host-fqdn" and "host_fqdn" are both "HostFqdn"), and a property
+// can derive the name of the AdditionalProperties field, either of which
+// declares a struct field twice.
+//
+// Without output-options.resolve-type-name-collisions, a collision is an
+// error. With it, every colliding property is renamed to its derived name plus
+// a short hash of its JSON name, as in "HostFqdn_1a2b3c4". The hash depends on
+// nothing but the property, so a name survives properties being added, removed
+// or reordered around it, and is the same in every schema the property is
+// merged into. No member of a collision keeps the bare name, because which
+// one deserves it can't be told from the spec, and handing it to another
+// property later would silently repoint code that uses it.
+//
+// A name the spec chose itself, with x-go-name, is never changed, and neither
+// is AdditionalProperties. Two of those colliding is an error. The blank
+// identifier is not a collision, as a struct may declare it more than once.
+func resolvePropertyGoFieldNameCollisions(schema *Schema, path []string) error {
+	groups := make(map[string][]int, len(schema.Properties))
+	for i, p := range schema.Properties {
+		name := p.derivedGoFieldName()
+		if name == "_" {
+			// A struct may declare any number of blank fields.
+			continue
+		}
+		groups[name] = append(groups[name], i)
+	}
+
+	where := "schema"
+	if len(path) > 0 {
+		where = "schema '" + strings.Join(path, ".") + "'"
+	}
+
+	// describe lists the members of a collision for an error message.
+	describe := func(name string, members []int) string {
+		var parts []string
+		for _, i := range members {
+			parts = append(parts, fmt.Sprintf("property '%s'", schema.Properties[i].JsonFieldName))
+		}
+		if name == additionalPropertiesFieldName && schema.HasAdditionalProperties {
+			parts = append(parts, "the field holding additional properties")
+		}
+		return strings.Join(parts, ", ")
+	}
+
+	taken := make(map[string]string, len(schema.Properties)+1)
+	if schema.HasAdditionalProperties {
+		taken[additionalPropertiesFieldName] = "the field holding additional properties"
+	}
+
+	for _, name := range SortedMapKeys(groups) {
+		members := groups[name]
+		reserved := name == additionalPropertiesFieldName && schema.HasAdditionalProperties
+		if len(members) == 1 && !reserved {
+			continue
+		}
+
+		if !globalState.options.OutputOptions.ResolveTypeNameCollisions {
+			return fmt.Errorf("%s: %s would all be the Go field '%s'; "+
+				"please use x-go-name to rename them, or set output-options.resolve-type-name-collisions to have them renamed automatically",
+				where, describe(name, members), name)
+		}
+
+		var explicit, derived []int
+		for _, i := range members {
+			if schema.Properties[i].hasExplicitGoFieldName() {
+				explicit = append(explicit, i)
+			} else {
+				derived = append(derived, i)
+			}
+		}
+		if len(explicit) > 1 || (reserved && len(explicit) > 0) {
+			return fmt.Errorf("%s: %s would all be the Go field '%s', and x-go-name fixes that name for more than one of them; "+
+				"please give them different names", where, describe(name, members), name)
+		}
+
+		keys := make([]string, 0, len(derived))
+		for _, i := range derived {
+			keys = append(keys, schema.Properties[i].JsonFieldName)
+		}
+		tokens := assignScopeTokens(keys)
+		for _, i := range derived {
+			p := &schema.Properties[i]
+			// The token is "h" and then the hash, which reads better as a
+			// prefix than it does after the separator.
+			p.resolvedGoFieldName = name + "_" + strings.TrimPrefix(tokens[p.JsonFieldName], "h")
+		}
+	}
+
+	// A renamed field is unique among the members of its own collision. It
+	// could still spell the name of an unrelated field, which nothing here
+	// can resolve.
+	for _, p := range schema.Properties {
+		name := p.GoFieldName()
+		if name == "_" {
+			continue
+		}
+		desc := fmt.Sprintf("property '%s'", p.JsonFieldName)
+		if other, found := taken[name]; found {
+			return fmt.Errorf("%s: %s and %s would both be the Go field '%s'; please use x-go-name to rename one of them",
+				where, other, desc, name)
+		}
+		taken[name] = desc
+	}
+	return nil
+}
+
+// withSkipOptionalPointerExtension returns p with x-go-type-skip-optional-pointer
+// applied, which overrides whether its type is a pointer when it's optional.
+func (p Property) withSkipOptionalPointerExtension() Property {
+	if extension, ok := p.Extensions[extPropGoTypeSkipOptionalPointer]; ok {
+		if skipOptionalPointer, err := extParsePropGoTypeSkipOptionalPointer(extension); err == nil {
+			p.Schema.SkipOptionalPointer = skipOptionalPointer
+		}
+	}
+	return p
+}
+
+// structFieldTags returns the struct tags GenFieldsFromProperties gives p's
+// field, by tag name.
+func structFieldTags(p Property) map[string]string {
+	p = p.withSkipOptionalPointerExtension()
+	shouldOmitEmpty := (!p.Required || p.ReadOnly || p.WriteOnly) &&
+		(!p.Required || !p.ReadOnly || !globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer)
+
+	// Nullable fields don't get omitempty: `null` is a meaningful wire
+	// value distinct from key absence, and a nil pointer under omitempty
+	// could never produce it. Required+nullable fields must always
+	// serialize their key per JSON Schema `required` semantics. The
+	// nullable-type option is the exception — nullable.Nullable[T]
+	// distinguishes absent from null itself and relies on omitempty for
+	// the absent case. Issue #2503.
+	omitEmpty := !p.Nullable && shouldOmitEmpty
+
+	if p.Nullable && globalState.options.OutputOptions.NullableType {
+		omitEmpty = shouldOmitEmpty
+	}
+
+	// default, but allow turning of
+	omitZero := shouldOmitEmpty && p.Schema.SkipOptionalPointer && globalState.options.OutputOptions.PreferSkipOptionalPointerWithOmitzero
+
+	// Support x-omitempty and x-omitzero
+	if extOmitEmptyValue, ok := p.Extensions[extPropOmitEmpty]; ok {
+		if xValue, err := extParseOmitEmpty(extOmitEmptyValue); err == nil {
+			omitEmpty = xValue
+		}
+	}
+
+	if extOmitEmptyValue, ok := p.Extensions[extPropOmitZero]; ok {
+		if xValue, err := extParseOmitZero(extOmitEmptyValue); err == nil {
+			omitZero = xValue
+		}
+	}
+
+	fieldTags := schemaFieldTagGenerator().generateTagsMap(StructTagInfo{
+		FieldName:    p.JsonFieldName,
+		IsOptional:   !p.Required,
+		OmitEmpty:    omitEmpty,
+		OmitZero:     omitZero,
+		NeedsFormTag: p.NeedsFormTag,
+	})
+
+	// Support x-go-json-ignore
+	if extension, ok := p.Extensions[extPropGoJsonIgnore]; ok {
+		if goJsonIgnore, err := extParseGoJsonIgnore(extension); err == nil && goJsonIgnore {
+			fieldTags["json"] = "-"
+		}
+	}
+
+	// Support x-oapi-codegen-extra-tags
+	if extension, ok := p.Extensions[extPropExtraTags]; ok {
+		if tags, err := extExtraTags(extension); err == nil {
+			keys := SortedMapKeys(tags)
+			for _, k := range keys {
+				fieldTags[k] = tags[k]
+			}
+		}
+	}
+	return fieldTags
+}
+
 func additionalPropertiesType(schema Schema) string {
+	if schema.additionalPropertiesElemType != "" {
+		return schema.additionalPropertiesElemType
+	}
 	addPropsType := schema.AdditionalPropertiesType.GoType
 	if schema.AdditionalPropertiesType.RefType != "" {
 		addPropsType = schema.AdditionalPropertiesType.RefType
 	}
-	if schema.AdditionalPropertiesType.OAPISchema != nil && schema.AdditionalPropertiesType.OAPISchema.Nullable {
+	if schemaIsNullable(schema.AdditionalPropertiesType.OAPISchema) {
 		addPropsType = "*" + addPropsType
 	}
 	return addPropsType
@@ -791,8 +2317,8 @@ func GenStructFromSchema(schema Schema) string {
 	// Close the struct
 	if schema.HasAdditionalProperties {
 		objectParts = append(objectParts,
-			fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`",
-				additionalPropertiesType(schema)))
+			fmt.Sprintf("%s map[string]%s `json:\"-\"`",
+				additionalPropertiesFieldName, additionalPropertiesType(schema)))
 	}
 	if len(schema.UnionElements) != 0 {
 		objectParts = append(objectParts, "union json.RawMessage")
@@ -837,61 +2363,42 @@ func paramToGoType(param *openapi3.Parameter, path []string) (Schema, error) {
 	return GenerateGoSchema(mt.Schema, path)
 }
 
-func generateUnion(outSchema *Schema, elements openapi3.SchemaRefs, discriminator *openapi3.Discriminator, path []string) error {
-	if discriminator != nil {
-		outSchema.Discriminator = &Discriminator{
-			Property: discriminator.PropertyName,
-			Mapping:  make(map[string]string),
-		}
+// setSkipOptionalPointerForContainerType ensures that the "optional pointer" is skipped on container types (such as a slice or a map).
+// This is controlled using the `prefer-skip-optional-pointer-on-container-types` Output Option
+// NOTE that it is still possible to override this on a per-field basis with `x-go-type-skip-optional-pointer`
+func setSkipOptionalPointerForContainerType(outSchema *Schema) {
+	if !globalState.options.OutputOptions.PreferSkipOptionalPointerOnContainerTypes {
+		return
 	}
 
-	refToGoTypeMap := make(map[string]string)
-	for i, element := range elements {
-		elementPath := append(path, fmt.Sprint(i))
-		elementSchema, err := GenerateGoSchema(element, elementPath)
-		if err != nil {
-			return err
-		}
+	outSchema.SkipOptionalPointer = true
+}
 
-		if element.Ref == "" {
-			elementName := SchemaNameToTypeName(PathToTypeName(elementPath))
-			if elementSchema.TypeDecl() == elementName {
-				elementSchema.GoType = elementName
-			} else {
-				td := TypeDefinition{Schema: elementSchema, TypeName: elementName}
-				outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, td)
-				elementSchema.GoType = td.TypeName
-			}
-			outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
-		} else {
-			refToGoTypeMap[element.Ref] = elementSchema.GoType
-		}
+// combinedSchemaExtensions returns one set of extensions taking
+// those from next to the $ref and the referenced schema itself.
+// Extensions next to the $ref take precedence.
+func combinedSchemaExtensions(r *openapi3.SchemaRef) map[string]any {
+	combined := map[string]any{}
 
-		if discriminator != nil {
-			if len(discriminator.Mapping) != 0 && element.Ref == "" {
-				return errors.New("ambiguous discriminator.mapping: please replace inlined object with $ref")
-			}
-
-			// Explicit mapping.
-			var mapped bool
-			for k, v := range discriminator.Mapping {
-				if v == element.Ref {
-					outSchema.Discriminator.Mapping[k] = elementSchema.GoType
-					mapped = true
-					break
-				}
-			}
-			// Implicit mapping.
-			if !mapped {
-				outSchema.Discriminator.Mapping[RefPathToObjName(element.Ref)] = elementSchema.GoType
-			}
-		}
-		outSchema.UnionElements = append(outSchema.UnionElements, UnionElement(elementSchema.GoType))
+	if r.Value != nil {
+		maps.Copy(combined, r.Value.Extensions)
 	}
 
-	if (outSchema.Discriminator != nil) && len(outSchema.Discriminator.Mapping) != len(elements) {
-		return errors.New("discriminator: not all schemas were mapped")
-	}
+	maps.Copy(combined, r.Extensions)
 
-	return nil
+	return combined
+}
+
+// hasInlineStructuralContent reports whether a generated Schema is an
+// anonymous inline that the generate-types-for-anonymous-schemas option
+// should turn into a named type. Pure scalars and aliases-to-refs are
+// excluded; objects with properties, schemas with additional-properties,
+// and union schemas all qualify.
+func hasInlineStructuralContent(s *Schema) bool {
+	if s == nil {
+		return false
+	}
+	return len(s.Properties) > 0 ||
+		s.HasAdditionalProperties ||
+		len(s.UnionElements) > 0
 }

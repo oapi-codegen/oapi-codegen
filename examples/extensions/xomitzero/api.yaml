@@ -1,0 +1,53 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: x-omitempty
+components:
+  schemas:
+    Client:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+    ClientWithExtension:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        id:
+          type: number
+          x-omitzero: true
+    ContainerTypeWithRequired:
+      type: object
+      properties:
+        has_is_zero:
+          $ref: "#/components/schemas/FieldWithCustomIsZeroMethod"
+      required:
+        - has_is_zero
+    ContainerTypeWithOptional:
+      type: object
+      properties:
+        has_is_zero:
+          $ref: "#/components/schemas/FieldWithCustomIsZeroMethod"
+    FieldWithCustomIsZeroMethod:
+      type: object
+      properties:
+        id:
+          type: string
+        value:
+          type: number
+      x-omitzero: true
+    FieldWithOmitZeroOnRequiredField:
+      type: object
+      properties:
+        id:
+          type: string
+          x-omitzero: true
+      required:
+        - id

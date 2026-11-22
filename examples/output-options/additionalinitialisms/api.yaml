@@ -1,0 +1,14 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: additional-initialisms
+components:
+  schemas:
+    Request:
+      type: object
+      required:
+        - csp_name
+      properties:
+        csp_name:
+          description: The Cloud Service Provider's name.
+          type: string

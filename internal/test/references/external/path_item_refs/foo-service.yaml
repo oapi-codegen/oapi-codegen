@@ -1,0 +1,11 @@
+# From issue-1378: a whole path item $ref'd from another spec, with a shared common package.
+openapi: 3.0.1
+
+info:
+  title: Test
+  description: Test
+  version: 1.0.0
+
+paths:
+  /bionicle/{name}:
+    $ref: "bionicle.yaml#/paths/~1bionicle~1{name}"

@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: api
+generate:
+  models: true
+import-mapping:
+  ./common/spec.yaml: github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/discriminated_union_allof/gen/common
+output: gen/api/api.gen.go
+output-options:
+  skip-prune: true
+compatibility:
+  # PRFile (issue #2470) merges a schema from another document with a local
+  # one. Later schema-merging-behavior versions reject that; this tests v2's
+  # output.
+  schema-merging-behavior: v2

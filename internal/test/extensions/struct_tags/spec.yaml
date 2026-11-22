@@ -1,0 +1,88 @@
+# ==========================================================================
+# Category: extensions/struct_tags
+# Tests:    x-oapi-codegen-extra-tags on schema properties; x-omitempty on
+#           optional fields with $ref and property-level overrides; sibling
+#           x-omitempty: false on a param $ref removes omitempty from the JSON tag.
+#
+# Folds in (provenance):
+#   - extensions/x-oapi-codegen-extra-tags  (extra struct tags on schema properties)
+#   - extensions/x-omitempty                (force-omit/non-omit via $ref + sibling)
+#   - extensions/param-ref-sibling-omitempty (x-omitempty: false sibling on param $ref)
+# ==========================================================================
+openapi: "3.0.0"
+info:
+  title: extensions/struct_tags
+  version: "1.0.0"
+  description: |
+    Struct-tag-related extensions: x-oapi-codegen-extra-tags on schema properties;
+    x-omitempty for force-include/exclude of omitempty on optional fields (via $ref
+    and property-level sibling overrides); and param-ref sibling x-omitempty: false
+    that removes omitempty from a query-parameter JSON tag.
+paths:
+  # extensions/param-ref-sibling-omitempty: x-omitempty: false sibling on a query
+  # param $ref must remove omitempty from the generated JSON tag for that field.
+  /things:
+    get:
+      operationId: listThings
+      parameters:
+        - name: filter
+          in: query
+          required: false
+          schema:
+            $ref: '#/components/schemas/FilterValue'
+            x-omitempty: false
+      responses:
+        '200':
+          description: OK
+components:
+  schemas:
+    # --- extensions/x-oapi-codegen-extra-tags: extra struct tags on schema properties ---
+    # The Port type carries a bson tag at the type level; SomeObject properties
+    # may override or add bson tags at the property level via x-oapi-codegen-extra-tags.
+    ExtraTagsPort:
+      type: integer
+      x-oapi-codegen-extra-tags:
+        bson: port
+    ExtraTagsObject:
+      type: object
+      properties:
+        port:
+          $ref: '#/components/schemas/ExtraTagsPort'
+          x-order: 1
+        start_port:
+          $ref: '#/components/schemas/ExtraTagsPort'
+          x-order: 2
+          x-oapi-codegen-extra-tags:
+            bson: start_port
+        end_port:
+          $ref: '#/components/schemas/ExtraTagsPort'
+          x-order: 3
+          x-oapi-codegen-extra-tags:
+            bson: end_port
+
+    # --- extensions/x-omitempty: x-omitempty on $ref + property-level sibling overrides ---
+    # OmitemptyDefault is a plain integer with no x-omitempty; OmitemptyTrue carries
+    # x-omitempty: true.  OmitemptyObject shows all three combinations:
+    #   1. $ref to OmitemptyTrue → inherits omitempty
+    #   2. $ref to OmitemptyTrue with x-omitempty: false sibling → no omitempty
+    #   3. $ref to OmitemptyDefault with x-omitempty: true sibling → forces omitempty
+    OmitemptyDefault:
+      type: integer
+    OmitemptyTrue:
+      type: integer
+      x-omitempty: true
+    OmitemptyObject:
+      type: object
+      properties:
+        omitempty:
+          $ref: '#/components/schemas/OmitemptyTrue'
+        omitempty_override_to_false:
+          $ref: '#/components/schemas/OmitemptyTrue'
+          x-omitempty: false
+        omitempty_next_to_ref:
+          $ref: '#/components/schemas/OmitemptyDefault'
+          x-omitempty: true
+
+    # --- extensions/param-ref-sibling-omitempty: type used by the /things query param ---
+    FilterValue:
+      type: string

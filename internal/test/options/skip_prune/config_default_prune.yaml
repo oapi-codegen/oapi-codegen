@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: optionsskipprune
+output: default_prune.gen.go
+# issue #240: default behavior — UnreferencedDefault schema is pruned (not emitted).
+# models-only: client/server cannot be combined across multiple triples in the same
+# package (shared infrastructure types collide); the skip-prune effect is fully
+# observable via the generated model types.
+generate:
+  models: true
+output-options:
+  # skip-prune is intentionally NOT set here; this triple tests the default (prune) path.
+  # UnreferencedDefault must be ABSENT from default_prune.gen.go.

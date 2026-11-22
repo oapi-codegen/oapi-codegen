@@ -1,0 +1,34 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: "Show that generated client boilerplate can clash if schemas are well named i.e. `*Request` and `*Response`"
+paths:
+  /client:
+    put:
+      operationId: updateClient
+      requestBodies:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateClientRequest'
+      responses:
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateClientResponse'
+components:
+  schemas:
+    UpdateClientRequest:
+      type: object
+      properties:
+        code:
+          type: string
+      required:
+      - code
+    UpdateClientResponse:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string

@@ -4,30 +4,55 @@
 // are present on both echo.Echo and echo.Group, since we want to allow using
 // either of them for path registration
 type EchoRouter interface {
-	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
+	CONNECT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
+	DELETE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
+	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
+	HEAD(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
+	OPTIONS(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
+	PATCH(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
+	POST(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
+	PUT(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
+	TRACE(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
+{{- if customHTTPMethods .Operations}}
+	// Add registers a route for an arbitrary HTTP method. It is required
+	// because this API uses the OpenAPI 3.2 QUERY method and/or
+	// additionalOperations, which have no dedicated echo shortcut.
+	Add(method, path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) {{.RouteReturnType}}
+{{- end}}
+}
+
+// RegisterHandlersOptions configures RegisterHandlersWithOptions.
+type RegisterHandlersOptions struct {
+    // BaseURL is prepended to every registered path so the API can be served
+    // under a prefix.
+    BaseURL string
+    // OperationMiddlewares lets the caller attach per-operation middleware at
+    // registration time. The map key is the OpenAPI `operationId` value as it
+    // appears in the spec (the raw, un-normalized form). Operations that have
+    // no entry are registered with no extra middleware. A nil map disables
+    // per-operation middleware entirely.
+    OperationMiddlewares map[string][]echo.MiddlewareFunc
 }
 
 // RegisterHandlers adds each server route to the EchoRouter.
 func RegisterHandlers(router EchoRouter, si ServerInterface) {
-    RegisterHandlersWithBaseURL(router, si, "")
+    RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{})
 }
 
-// Registers handlers, and prepends BaseURL to the paths, so that the paths
-// can be served under a prefix.
+// RegisterHandlersWithBaseURL registers handlers and prepends BaseURL to the
+// paths so the API can be served under a prefix.
 func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
-{{if .}}
+    RegisterHandlersWithOptions(router, si, RegisterHandlersOptions{BaseURL: baseURL})
+}
+
+// RegisterHandlersWithOptions registers handlers using the supplied options,
+// including any per-operation middleware.
+func RegisterHandlersWithOptions(router EchoRouter, si ServerInterface, options RegisterHandlersOptions) {
+{{if .Operations}}
     wrapper := ServerInterfaceWrapper{
         Handler: si,
     }
 {{end}}
-{{range .}}router.{{.Method}}(baseURL + "{{.Path | swaggerUriToEchoUri}}", wrapper.{{.OperationId}})
+{{range .Operations}}{{if isCustomHTTPMethod .Method}}router.Add({{.Method | toGoString}}, options.BaseURL + {{.Path | swaggerUriToEchoUri | toGoString}}, wrapper.{{.HandlerName}}, options.OperationMiddlewares[{{.MiddlewareKey | toGoString}}]...){{else}}router.{{.Method}}(options.BaseURL + {{.Path | swaggerUriToEchoUri | toGoString}}, wrapper.{{.HandlerName}}, options.OperationMiddlewares[{{.MiddlewareKey | toGoString}}]...){{end}}
 {{end}}
 }

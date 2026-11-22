@@ -29,7 +29,7 @@ func LoadEcdsaPublicKey(buf []byte) (*ecdsa.PublicKey, error) {
 	// which supports multiple types of keys.
 	keyIface, err := x509.ParsePKIXPublicKey(block.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("Error loading public key: %w", err)
+		return nil, fmt.Errorf("error loading public key: %w", err)
 	}
 
 	// Now, we're assuming the key content is ECDSA, and converting.
@@ -53,7 +53,7 @@ func LoadEcdsaPrivateKey(buf []byte) (*ecdsa.PrivateKey, error) {
 	// and we're assuming this encoding contains X509 key material.
 	privateKey, err := x509.ParseECPrivateKey(block.Bytes)
 	if err != nil {
-		return nil, fmt.Errorf("Error loading private ECDSA key: %w", err)
+		return nil, fmt.Errorf("error loading private ECDSA key: %w", err)
 	}
 	return privateKey, nil
 }
@@ -71,14 +71,15 @@ func StoreEcdsaPublicKey(publicKey *ecdsa.PublicKey) ([]byte, error) {
 	return pemEncodedKey, nil
 }
 
-// StoreEcdsaPrivateKey writes an ECDSA private key to a PEM encoding
+// StoreEcdsaPrivateKey writes an ECDSA private key to a PEM encoding. The key
+// is marshalled in SEC 1 form, so the PEM block is labelled "EC PRIVATE KEY".
 func StoreEcdsaPrivateKey(privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	encodedKey, err := x509.MarshalECPrivateKey(privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("error x509 encoding private key: %w", err)
 	}
 	pemEncodedKey := pem.EncodeToMemory(&pem.Block{
-		Type:  "PRIVATE KEY",
+		Type:  "EC PRIVATE KEY",
 		Bytes: encodedKey,
 	})
 	return pemEncodedKey, nil

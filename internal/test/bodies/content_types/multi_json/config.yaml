@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+# From issue-1208-1209
+package: multijson
+generate:
+  client: true
+  models: true
+  embedded-spec: true
+  gin-server: true
+  strict-server: true
+output: multi_json.gen.go

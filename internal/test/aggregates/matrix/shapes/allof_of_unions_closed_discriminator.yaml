@@ -1,0 +1,50 @@
+versions: [v2, v3]
+description: >-
+  allof_of_unions_closed with a discriminator next to the allOf, which the
+  merge gives to Payment. Payment's own type has no discriminator, so in v3
+  AsPayment leaves the key out, and Payment's closed variants read the rest.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Payment'
+    - $ref: '#/components/schemas/Delivery'
+  discriminator:
+    propertyName: method
+    mapping:
+      card: '#/components/schemas/Card'
+      transfer: '#/components/schemas/Transfer'
+components:
+  Payment:
+    oneOf:
+      - $ref: '#/components/schemas/Card'
+      - $ref: '#/components/schemas/Transfer'
+  Delivery:
+    oneOf:
+      - $ref: '#/components/schemas/Courier'
+      - $ref: '#/components/schemas/Pickup'
+  Card:
+    type: object
+    additionalProperties: false
+    required: [card]
+    properties:
+      card: {type: string}
+  Transfer:
+    type: object
+    additionalProperties: false
+    required: [iban]
+    properties:
+      iban: {type: string}
+  Courier:
+    type: object
+    additionalProperties: false
+    required: [address]
+    properties:
+      address: {type: string}
+  Pickup:
+    type: object
+    additionalProperties: false
+    required: [store]
+    properties:
+      store: {type: string}
+samples:
+  - '{"method": "card", "card": "4111", "address": "1 Main St"}'
+  - '{"method": "transfer", "iban": "DE00", "store": "Downtown"}'

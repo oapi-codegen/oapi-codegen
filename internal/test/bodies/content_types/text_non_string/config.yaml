@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+# From issue-1897
+package: textnonstring
+output: text_non_string.gen.go
+generate:
+  std-http-server: true
+  strict-server: true
+  models: true
+output-options:
+  skip-prune: true

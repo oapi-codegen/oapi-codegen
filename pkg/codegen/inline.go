@@ -15,7 +15,7 @@ package codegen
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"context"
 	"encoding/base64"
 	"fmt"
@@ -35,20 +35,21 @@ func GenerateInlinedSpec(t *template.Template, importMapping importMap, swagger 
 		return "", fmt.Errorf("error marshaling swagger: %w", err)
 	}
 
-	// gzip
+	// flate
 	var buf bytes.Buffer
-	zw, err := gzip.NewWriterLevel(&buf, gzip.BestCompression)
+	zw, err := flate.NewWriter(&buf, flate.BestCompression)
 	if err != nil {
-		return "", fmt.Errorf("error creating gzip compressor: %w", err)
+		return "", fmt.Errorf("new flate writer: %w", err)
 	}
-	_, err = zw.Write(encoded)
-	if err != nil {
-		return "", fmt.Errorf("error gzipping swagger file: %w", err)
+
+	if _, err := zw.Write(encoded); err != nil {
+		return "", fmt.Errorf("write flate: %w", err)
 	}
-	err = zw.Close()
-	if err != nil {
-		return "", fmt.Errorf("error gzipping swagger file: %w", err)
+
+	if err := zw.Close(); err != nil {
+		return "", fmt.Errorf("close flate writer: %w", err)
 	}
+
 	str := base64.StdEncoding.EncodeToString(buf.Bytes())
 
 	var parts []string

@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: serversmiddlewareiris
+generate:
+  iris-server: true
+  models: true
+# Opt into the deprecated scope-emission behavior so the issue-1988 regression
+# stays covered: the scopes must be stored through the Iris context's value
+# store, since iris.Context has no Set method.
+compatibility:
+  enable-auth-scopes-on-context: true
+output: middleware.gen.go

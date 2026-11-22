@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: extensionsskipoptionalpointer
+output: skip_optional_pointer.gen.go
+# Union of the flags every folded case needs (see TEST_CLEANUP_PLAN.md §0):
+#   - models  : the base / issue-2031 / issue1561 type-shape cases
+#   - client  : issue-2329 exercises NewListThingsRequest query serialization
+#   - skip-prune: keep schemas that no path references (e.g. issue-2031 ArrayContainer)
+#   - prefer-skip-optional-pointer-on-container-types: issue1561's behavior under test;
+#       safe to enable globally because the other cases pin their containers with an
+#       explicit x-go-type-skip-optional-pointer annotation, so none asserts a *pointer.
+generate:
+  models: true
+  client: true
+output-options:
+  skip-prune: true
+  prefer-skip-optional-pointer-on-container-types: true

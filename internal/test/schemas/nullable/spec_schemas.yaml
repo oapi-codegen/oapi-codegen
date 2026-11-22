@@ -1,0 +1,27 @@
+# issue #185: type generation when optional/required properties are nullable.
+# Folded from schemas/schemas.yaml. Compile-only.
+openapi: "3.0.1"
+info:
+  version: "1.0.0"
+  title: schemas/nullable (schemas fold)
+  description: |
+    The four-way matrix of optional/required x nullable/non-nullable string properties.
+paths: {}
+components:
+  schemas:
+    NullableProperties:
+      type: object
+      properties:
+        optional:
+          type: string
+          nullable: false
+        optionalAndNullable:
+          type: string
+          nullable: true
+        required:
+          type: string
+          nullable: false
+        requiredAndNullable:
+          type: string
+          nullable: true
+      required: [ required, requiredAndNullable ]

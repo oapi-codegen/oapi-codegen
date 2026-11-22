@@ -12,6 +12,7 @@ import (
 
 // Pong defines model for Pong.
 type Pong struct {
+	// Ping Example: pong
 	Ping string `json:"ping"`
 }
 
@@ -23,7 +24,6 @@ type ServerInterface interface {
 }
 
 // Unimplemented server implementation that returns http.StatusNotImplemented for each endpoint.
-
 type Unimplemented struct{}
 
 // (GET /ping)
@@ -161,6 +161,7 @@ func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handl
 			http.Error(w, err.Error(), http.StatusBadRequest)
 		}
 	}
+
 	wrapper := ServerInterfaceWrapper{
 		Handler:            si,
 		HandlerMiddlewares: options.Middlewares,

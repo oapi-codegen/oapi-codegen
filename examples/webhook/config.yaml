@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../configuration-schema.json
+package: doorbadge
+generate:
+  models: true
+  client: true
+  std-http-server: true
+output-options:
+  skip-prune: true
+  # Use ToCamelCaseWithInitialisms so spec fields like `url` and `id`
+  # generate as `URL` and `ID` (matching the example's Go code).
+  name-normalizer: ToCamelCaseWithInitialisms
+output: doorbadge.gen.go

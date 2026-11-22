@@ -1,0 +1,237 @@
+# ==========================================================================
+# Category: schemas/recursive
+# Tests:    recursive and cyclic schema patterns (models-only).
+#
+# Folds in (provenance):
+#   - issues/issue-52   (recursion via additionalProperties)
+#   - issues/issue-936  (cyclic oneOf)
+#   - issues/issue-1373 (recursive $ref via allOf)
+# ==========================================================================
+openapi: "3.0.3"
+info:
+  title: schemas/recursive
+  version: "1.0.0"
+  description: |
+    Recursive and cyclic schema patterns: self-referencing types via
+    additionalProperties; cyclic oneOf references (requires
+    circular-reference-limit); and recursive $ref inside allOf. All
+    cases verify that code generation and compilation succeed without
+    infinite loops.
+paths: {}
+components:
+  schemas:
+    # --- issue #52: recursion via additionalProperties ---
+    # Document -> fields: map of Value; Value -> ArrayValue; ArrayValue -> []Value
+    Document:
+      type: object
+      properties:
+        fields:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Value'
+    Value:
+      type: object
+      properties:
+        stringValue:
+          type: string
+        arrayValue:
+          $ref: '#/components/schemas/ArrayValue'
+    ArrayValue:
+      type: array
+      items:
+        $ref: '#/components/schemas/Value'
+
+    # --- issue #936: cyclic oneOf (deep recursive oneOf that requires circular-reference-limit) ---
+    # Via https://github.com/getkin/kin-openapi/blob/b31a4bb2dcd523b1477da8854f0f75859cd314b3/openapi3/testdata/recursiveRef/issue615.yml
+    FilterColumnIncludes:
+      type: object
+      properties:
+        $includes:
+          $ref: '#/components/schemas/FilterPredicate'
+      additionalProperties: false
+      maxProperties: 1
+      minProperties: 1
+    FilterPredicate:
+      oneOf:
+        - $ref: '#/components/schemas/FilterValue'
+        - type: array
+          items:
+            $ref: '#/components/schemas/FilterPredicate'
+          minLength: 1
+        - $ref: '#/components/schemas/FilterPredicateOp'
+        - $ref: '#/components/schemas/FilterPredicateRangeOp'
+    FilterPredicateOp:
+      type: object
+      properties:
+        $any:
+          oneOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/FilterPredicate'
+        $none:
+          oneOf:
+            - $ref: '#/components/schemas/FilterPredicate'
+            - type: array
+              items:
+                $ref: '#/components/schemas/FilterPredicate'
+      additionalProperties: false
+      maxProperties: 1
+      minProperties: 1
+    FilterPredicateRangeOp:
+      type: object
+      properties:
+        $lt:
+          $ref: '#/components/schemas/FilterRangeValue'
+      additionalProperties: false
+      maxProperties: 2
+      minProperties: 2
+    FilterRangeValue:
+      oneOf:
+        - type: number
+        - type: string
+    FilterValue:
+      oneOf:
+        - type: number
+        - type: string
+        - type: boolean
+
+    # --- issue #1373: recursive $ref via allOf ---
+    # RecursiveObject allOf-includes itself; codegen must not infinite-loop.
+    RecursiveObject:
+      allOf:
+        - $ref: "#/components/schemas/NonRecursiveObject"
+        - $ref: "#/components/schemas/RecursiveObject"
+        - properties:
+            FieldInRecursive::
+              type: string
+    NonRecursiveObject:
+      properties:
+        FieldInNonRecursive:
+          type: string
+
+    # --- issue #2542: recursive anyOf wrapping self-$ref in allOf ---
+    # Node is a union; one branch has a children array whose items are
+    # allOf: [$ref: Node, {extra}]. Merging that allOf used to
+    # re-propagate Node's anyOf and overflow the stack; it must
+    # terminate instead.
+    Node:
+      anyOf:
+        - type: object
+          properties:
+            leaf:
+              type: string
+        - type: object
+          properties:
+            children:
+              type: array
+              items:
+                allOf:
+                  - $ref: '#/components/schemas/Node'
+                  - type: object
+                    properties:
+                      extra:
+                        type: string
+
+    # --- issue #2542 (object variant): plain recursive object + allOf ---
+    # The same crash shape without a union: children items are
+    # allOf: [$ref: NodeObject, {extra}], which also overflowed the
+    # stack and now terminates with a reference back to NodeObject.
+    NodeObject:
+      type: object
+      properties:
+        children:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/NodeObject'
+              - type: object
+                properties:
+                  extra:
+                    type: string
+
+    # --- issue #2542 (transitive variant): self-$ref behind nested allOf ---
+    # The recursive $ref sits inside an allOf nested inside another
+    # allOf member. This escaped the cycle guard (PR #2543 review) and
+    # hung generation indefinitely; it must terminate with the
+    # reference preserved.
+    NodeNestedAllOf:
+      anyOf:
+        - type: object
+          properties:
+            leaf:
+              type: string
+        - type: object
+          properties:
+            children:
+              type: array
+              items:
+                allOf:
+                  - allOf:
+                      - $ref: '#/components/schemas/NodeNestedAllOf'
+                  - type: object
+                    properties:
+                      extra:
+                        type: string
+
+    # --- issue #2542 (mutual variant): a cycle that never reaches the
+    # component being generated. Generating MutualA walks into MutualB and
+    # MutualC, which compose each other, so a guard keyed on "refers back to
+    # the schema at the root of this generation" never fires.
+    MutualA:
+      type: object
+      properties:
+        b:
+          allOf:
+            - $ref: '#/components/schemas/MutualB'
+            - type: object
+              properties:
+                tag:
+                  type: string
+    MutualB:
+      type: object
+      properties:
+        c:
+          allOf:
+            - $ref: '#/components/schemas/MutualC'
+            - type: object
+              properties:
+                x:
+                  type: string
+    MutualC:
+      type: object
+      properties:
+        back:
+          allOf:
+            - $ref: '#/components/schemas/MutualB'
+            - type: object
+              properties:
+                y:
+                  type: string
+
+    # --- issue #2542 (bystander variant): the cycle is reached from a
+    # component that is not part of it. Wrapper inlines NodeObject's body,
+    # and it is that inlined body that re-enters itself.
+    Wrapper:
+      type: object
+      properties:
+        n:
+          allOf:
+            - $ref: '#/components/schemas/NodeObject'
+            - type: object
+              properties:
+                extra:
+                  type: string
+
+    # --- issue #2542 (additionalProperties variant): the cycle closes
+    # through a map at the component root. items and additionalProperties
+    # reuse their parent's path, so this sits at path length 1 and escapes
+    # any guard keyed on nesting depth.
+    NodeMap:
+      type: object
+      additionalProperties:
+        allOf:
+          - $ref: '#/components/schemas/NodeMap'
+          - type: object
+            properties:
+              extra:
+                type: string

@@ -1,0 +1,12 @@
+{
+  "strictness": 2,
+  "commentTypes": ["logic", "syntax"],
+  "fileSettings": [
+    {
+      "pattern": "**/*.gen.go",
+      "strictness": 1,
+      "commentTypes": ["logic"]
+    }
+  ]
+}
+

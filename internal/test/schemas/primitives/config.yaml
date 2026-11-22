@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: schemasprimitives
+output: primitives.gen.go
+# Union of flags the folded sources use:
+#   - models    : both issue-579 and issue609 need type definitions only
+#   - skip-prune: issue-579 (gen.go --generate=types,skip-prune) and
+#                 issue609 (output-options.skip-prune) both set this so that
+#                 schemas not referenced by any path are retained in output.
+generate:
+  models: true
+output-options:
+  skip-prune: true

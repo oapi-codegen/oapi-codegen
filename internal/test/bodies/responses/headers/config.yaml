@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+# From issue-1676
+package: responseheaders
+output: headers.gen.go
+generate:
+  models: true
+  gorilla-server: true
+  strict-server: true

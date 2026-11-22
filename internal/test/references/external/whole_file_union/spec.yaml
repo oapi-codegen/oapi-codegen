@@ -1,0 +1,99 @@
+# From issue-2639: oneOf/anyOf branches that $ref a whole file (no # fragment)
+# generated accessors named after the branch's inline struct, which didn't parse.
+openapi: 3.0.3
+info:
+  title: references/external/whole_file_union
+  version: "1"
+paths:
+  /items:
+    get:
+      responses:
+        "200":
+          description: A response body union of two whole-file refs.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: ./user.yaml
+                  - $ref: ./group.yaml
+  /mixed:
+    get:
+      responses:
+        "200":
+          description: An anyOf with one whole-file branch and one inline branch.
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: ./user.yaml
+                  - type: object
+                    properties:
+                      label:
+                        type: string
+  /items/{id}:
+    get:
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: A component schema union of two whole-file refs.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Item"
+  /holder:
+    get:
+      responses:
+        "200":
+          description: An object property union of two whole-file refs.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Holder"
+  /scalar:
+    get:
+      responses:
+        "200":
+          description: A component schema union of two whole-file scalars.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Scalar"
+  /status:
+    get:
+      responses:
+        "200":
+          description: A component schema union of a whole-file enum and a scalar.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Status"
+components:
+  schemas:
+    Item:
+      oneOf:
+        - $ref: ./user.yaml
+        - $ref: ./group.yaml
+    Holder:
+      type: object
+      properties:
+        member:
+          oneOf:
+            - $ref: ./user.yaml
+            - $ref: ./group.yaml
+    # Whole-file branches whose types can name the accessors keep them:
+    # AsString and AsInt, as before the fix.
+    Scalar:
+      oneOf:
+        - $ref: ./text.yaml
+        - $ref: ./count.yaml
+    # An enum generates as its base type, so it keeps AsString too, as before
+    # the fix, and declares no type or constants of its own.
+    Status:
+      oneOf:
+        - $ref: ./state.yaml
+        - $ref: ./count.yaml

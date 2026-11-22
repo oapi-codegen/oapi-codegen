@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: serversroutersbasic
+generate:
+  chi-server: true
+  models: true
+output: basic.gen.go

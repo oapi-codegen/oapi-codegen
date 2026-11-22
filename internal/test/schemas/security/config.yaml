@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: schemassecurity
+output: security.gen.go
+# issue #2367: undefined security scheme tolerated; gin-server + strict-server
+# are required to exercise the server-interface code path that exposed the bug
+# (a missing context-key type declaration for the undefined scheme).
+generate:
+  models: true
+  gin-server: true
+  strict-server: true

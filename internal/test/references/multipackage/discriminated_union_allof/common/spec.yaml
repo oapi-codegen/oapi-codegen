@@ -1,0 +1,31 @@
+# issue-2470: an external file defines a discriminated oneOf union that is later
+# pulled into an allOf from another package via import-mapping.
+openapi: "3.0.4"
+info:
+  title: Diff
+  version: "0.0.1"
+paths: {}
+components:
+  schemas:
+    GitDiffFile:
+      type: object
+      properties:
+        diff_type:
+          type: string
+        patch:
+          type: string
+      required: [diff_type]
+    AddedImageDiffFile:
+      type: object
+      properties:
+        diff_type:
+          type: string
+        image_url:
+          type: string
+      required: [diff_type]
+    DiffFile:
+      oneOf:
+        - $ref: "#/components/schemas/GitDiffFile"
+        - $ref: "#/components/schemas/AddedImageDiffFile"
+      discriminator:
+        propertyName: diff_type

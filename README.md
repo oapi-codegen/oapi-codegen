@@ -4,22 +4,84 @@
 
 `oapi-codegen` is a command-line tool and library to convert OpenAPI specifications to Go code, be it [server-side implementations](#generating-server-side-boilerplate), [API clients](#generating-api-clients), or simply [HTTP models](#generating-api-models).
 
-Using `oapi-codegen` allows you to reduce the boilerplate required to create or integrate with services based on [OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md), and instead focus on writing your business logic, and working on the real value-add for your organisation.
+Using `oapi-codegen` allows you to reduce the boilerplate required to create or integrate with services based on [OpenAPI 3.0](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.0.0.md) and [OpenAPI 3.1](https://github.com/OAI/OpenAPI-Specification/blob/main/versions/3.1.0.md), and instead focus on writing your business logic, and working on the real value-add for your organisation.
 
 With `oapi-codegen`, there are a few [Key Design Decisions](#key-design-decisions) we've made, including:
 
 - idiomatic Go, where possible
-- fairly simple generated code, erring on the side of duplicate code over nicely refactored code
-- supporting as much of OpenAPI 3.x as is possible, alongside Go's type system
+- fairly simple generated code, erring on the side of verbose code over complex modular code
+- supporting as much of OpenAPI 3.0 and 3.1 as is possible, alongside Go's type system
 
 `oapi-codegen` is one part of a wider ecosystem, which can be found described in further detail in the [oapi-codegen organisation on GitHub](https://github.com/oapi-codegen).
 
 ⚠️ This README may be for the latest development version, which may contain unreleased changes. Please ensure you're looking at the README for the latest release version.
 
-## Action Required: The repository for this project has changed
+## Table of Contents
+
+<!-- toc -->
+- [Installation](#installation)
+  - [Action Required: The repository for this project has changed](#action-required-the-repository-for-this-project-has-changed)
+  - [Installing](#installing)
+  - [Pinning to commits](#pinning-to-commits)
+- [Usage](#usage)
+  - [Backwards compatibility](#backwards-compatibility)
+- [Features](#features)
+- [What does it look like?](#what-does-it-look-like)
+- [Key design decisions](#key-design-decisions)
+- [Generating server-side boilerplate](#generating-server-side-boilerplate)
+  - [Supported Servers](#supported-servers)
+  - [OpenAPI 3.2 HTTP methods (<code>query</code> and <code>additionalOperations</code>)](#openapi-32-http-methods-query-and-additionaloperations)
+  - [Strict server](#strict-server)
+- [Generating API clients](#generating-api-clients)
+  - [With Server URLs](#with-server-urls)
+  - [Duplicate types generated for clients's response object types](#duplicate-types-generated-for-clientss-response-object-types)
+- [Generating API models](#generating-api-models)
+- [Splitting large OpenAPI specs across multiple packages (aka &quot;Import Mapping&quot; or &quot;external references&quot;)](#splitting-large-openapi-specs-across-multiple-packages-aka-import-mapping-or-external-references)
+  - [Using a single package with multiple OpenAPI specs](#using-a-single-package-with-multiple-openapi-specs)
+  - [Using multiple packages, with one OpenAPI spec per package](#using-multiple-packages-with-one-openapi-spec-per-package)
+- [Modifying the input OpenAPI Specification (with OpenAPI Overlay)](#modifying-the-input-openapi-specification-with-openapi-overlay)
+- [Generating Nullable types](#generating-nullable-types)
+- [OpenAPI extensions](#openapi-extensions)
+- [Request/response validation middleware](#requestresponse-validation-middleware)
+- [Implementing security](#implementing-security)
+  - [On the server](#on-the-server)
+    - [Deprecated: auth scopes on the request context](#deprecated-auth-scopes-on-the-request-context)
+  - [On the client](#on-the-client)
+- [Custom code generation](#custom-code-generation)
+  - [Local paths](#local-paths)
+  - [HTTPS paths](#https-paths)
+  - [Inline template](#inline-template)
+  - [Using the Go package](#using-the-go-package)
+- [Additional Properties (<code>additionalProperties</code>)](#additional-properties-additionalproperties)
+  - [Implicit <code>additionalProperties: true</code> / no <code>additionalProperties</code> set](#implicit-additionalproperties-true--no-additionalproperties-set)
+  - [Explicit <code>additionalProperties: true</code>](#explicit-additionalproperties-true)
+  - [<code>additionalProperties</code> as <code>integer</code>s](#additionalproperties-as-integers)
+  - [<code>additionalProperties</code> with an object](#additionalproperties-with-an-object)
+- [Globally skipping the &quot;optional pointer&quot;](#globally-skipping-the-optional-pointer)
+- [Changing the names of generated types](#changing-the-names-of-generated-types)
+  - [Adjusting how names are normalized](#adjusting-how-names-are-normalized)
+    - [<code>enum-values.keep-underscores</code>](#enum-valueskeep-underscores)
+    - [<code>properties.leading-underscore</code>](#propertiesleading-underscore)
+    - [<code>explicit-names</code>](#explicit-names)
+- [Examples](#examples)
+  - [Blog posts](#blog-posts)
+- [Frequently Asked Questions (FAQs)](#frequently-asked-questions-faqs)
+  - [Does <code>oapi-codegen</code> support OpenAPI 3.1?](#does-oapi-codegen-support-openapi-31)
+  - [How does <code>oapi-codegen</code> handle <code>anyOf</code>, <code>allOf</code> and <code>oneOf</code>?](#how-does-oapi-codegen-handle-anyof-allof-and-oneof)
+  - [How can I ignore parts of the spec I don't care about?](#how-can-i-ignore-parts-of-the-spec-i-dont-care-about)
+  - [Should I commit the generated code?](#should-i-commit-the-generated-code)
+  - [Should I lint the generated code?](#should-i-lint-the-generated-code)
+  - [I've just updated my version of <code>kin-openapi</code>, and now I can't build my code 😠](#ive-just-updated-my-version-of-kin-openapi-and-now-i-cant-build-my-code-)
+- [Contributors](#contributors)
+- [Sponsors](#sponsors)
+<!-- /toc -->
+
+## Installation
+
+### Action Required: The repository for this project has changed
 
 As announced in [May 2024](https://github.com/oapi-codegen/oapi-codegen/discussions/1605),
-we have moved the project from the deepmap organization to our own organization, and you will need to update your
+we have moved the project from the Deepmap organization to our own organization, and you will need to update your
 import paths to pull updates past this point. You need to do a recursive search/replace from
 `github.com/deepmap/oapi-codegen/v2` to `github.com/oapi-codegen/oapi-codegen/v2`.
 
@@ -40,11 +102,11 @@ If you are using `v2.3.0` or above, please install like so, using the new module
 go install github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen@latest
 ```
 
-## Install
+### Installing
 
-## For Go 1.24+
+`oapi-codegen` requires Go 1.26+ to build and install. The *generated* code requires Go 1.26+ as well — see [Supported Servers](#supported-servers).
 
-It is recommended to follow [the `go tool` support available from Go 1.24+](https://www.jvt.me/posts/2025/01/27/go-tools-124/) for managing the dependency of `oapi-codegen` alongside your core application.
+It is recommended to use [`go tool` support](https://www.jvt.me/posts/2025/01/27/go-tools-124/) for managing the dependency of `oapi-codegen` alongside your core application.
 
 To do this, you run `go get -tool`:
 
@@ -59,29 +121,6 @@ From there, each invocation of `oapi-codegen` would be used like so:
 //go:generate go tool oapi-codegen -config cfg.yaml ../../api.yaml
 ```
 
-## Prior to Go 1.24
-
-It is recommended to follow [the `tools.go` pattern](https://www.jvt.me/posts/2022/06/15/go-tools-dependency-management/) for managing the dependency of `oapi-codegen` alongside your core application.
-
-This would give you a `tools/tools.go`:
-
-```go
-//go:build tools
-// +build tools
-
-package main
-
-import (
-	_ "github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen"
-)
-```
-
-Then, each invocation of `oapi-codegen` would be used like so:
-
-```go
-//go:generate go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen --config=config.yaml ../../api.yaml
-```
-
 Alternatively, you can install it as a binary with:
 
 ```sh
@@ -94,8 +133,6 @@ Which then means you can invoke it like so:
 ```go
 //go:generate oapi-codegen --config=config.yaml ../../api.yaml
 ```
-
-Note that you can also [move your `tools.go` into its own sub-module](https://www.jvt.me/posts/2024/09/30/go-tools-module/) to reduce the impact on your top-level `go.mod`.
 
 ### Pinning to commits
 
@@ -130,23 +167,43 @@ index 44f29a4..436a780 100644
 
 ## Usage
 
-`oapi-codegen` is largely configured using a YAML configuration file, to simplify the number of flags that users need to remember, and to make reading the `go:generate` command less daunting.
+`oapi-codegen` is configured using a YAML configuration file, to simplify the number of flags that users need to remember, and to make reading the `go:generate` command less daunting.
+While some command line options are supported, they should be considered deprecated,
+we just maintain them for backward compatibility, but we're not extending
+them.
 
-For full details of what is supported, it's worth checking out [the GoDoc for `codegen.Configuration`](https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen#Configuration).
+For full details of what is supported, check out the [oapi-codegen configuration documentation](docs/configuration.md).
 
 We also have [a JSON Schema](configuration-schema.json) that can be used by IDEs/editors with the Language Server Protocol (LSP) to perform intelligent suggestions, i.e.:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
 package: api
 # ...
 ```
+
+Note that it's recommended to pin to a specific version of the configuration schema, so it matches the version of `oapi-codegen` you're using. For instance, if you're using [Renovate](https://docs.renovatebot.com/), you can [have Renovate automagically update this version for you](https://www.jvt.me/posts/2026/03/01/oapi-codegen-config-renovate/).
 
 ### Backwards compatibility
 
 Although we strive to retain backwards compatibility - as a project that's using a stable API per SemVer - there are sometimes opportunities we must take to fix a bug that could cause a breaking change for [people relying upon the behaviour](https://xkcd.com/1172/).
 
 In this case, we will expose a [compatibility option](https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg/codegen#CompatibilityOptions) to restore old behaviour.
+
+That all being said, we operate in a little bit of a grey area, since we are a code generator, we support template overrides, and
+our code can be imported. So this is how we will try to maintain compatibility:
+
+  - SemVer mostly applies to generated code. We strive to avoid breaking your code which depends on the generated code. We will
+    provide compatibility flags for major breaking changes.
+  - A breaking change could happen with either a compilation error (as something has changed in the generated code) or a behaviour change (we generate a slightly different implementation)
+  - However, if you're using generated code that is "off the beaten path", on a seldom encountered edge case, we'll sometimes decide to make a breaking change to avoid complicating usage or internals.
+  - [Our `pkg/` directory is importable](https://pkg.go.dev/github.com/oapi-codegen/oapi-codegen/v2/pkg). In retrospect, this was a mistake in our original design. Importing anything other than the `Generate` function and its related `Configuration` is considered unstable (and at this point, [hasn't (yet) been documented](https://github.com/oapi-codegen/oapi-codegen/issues/1487)). In the future, we will clean up our import surface.
+  - Template overrides are considered unstable, and you use them at your own risk. These are always drifting and so are their input contexts, so we can't guarantee much here.
+  - The command-line interface and/or the configuration file format are classed as stable
+
+Also note that - if a security vulnerability is found - we will opt for breaking all users if need be, if it is the most secure response.
+
+Unless explicitly called out above, your usage of `oapi-codegen` may be using unstable features, which may make it harder to upgrade over time.
 
 ## Features
 
@@ -382,19 +439,21 @@ func (p *PetStore) FindPets(ctx context.Context, request FindPetsRequestObject) 
 }
 ```
 
-We can see that this provides the best means to focus on the implementation of the business logic within the endpoint, rather than (un)marshalling types to and from JSON, or wrangling cookies or headers.
+We can see that this provides the best means to focus on the implementation of the business logic within the endpoint, rather than (un)marshalling types to and from JSON, or wrangling cookies or headers. In order to actually use your strict server implementation use `NewStrictHandler` or `NewStrictHandlerWithOptions` to generate a (non-strict) server interface to use with the examples below.
 
 ## Key design decisions
 
 - Produce an interface that can be satisfied by your implementation, with reduced boilerplate
 - Bulk processing and parsing of OpenAPI document in Go
 - Resulting output is using Go's `text/template`s, which are user-overridable
-- Attempts to produce Idiomatic Go
-- Single-file output
-- Support multiple OpenAPI files by having a package-per-OpenAPI file
-- Support of OpenAPI 3.0
-  - OpenAPI 3.1 support is [awaiting upstream support](https://github.com/oapi-codegen/oapi-codegen/issues/373)
-  - Note that this does not include OpenAPI 2.0 (aka Swagger)
+- Attempts to produce idiomatic Go
+- Support multiple OpenAPI files by having a package per OpenAPI file
+- Support of OpenAPI 3.0 and 3.1
+  - OpenAPI 3.1 support includes [webhooks](https://spec.openapis.org/oas/v3.1.0#oasWebhooks) and version-aware handling of 3.1 idioms such as `type: [T, "null"]` nullability and enums declared via `oneOf` + `const`
+  - OpenAPI 3.2's `query` operation (HTTP `QUERY`) and `additionalOperations` (arbitrary HTTP methods) are generated for clients and every server framework; see [OpenAPI 3.2 HTTP methods](#openapi-32-http-methods-query-and-additionaloperations)
+  - Note that this does not include OpenAPI 2.0 (aka Swagger). If you have an old Swagger
+    specification, you can use a [converter](https://converter.swagger.io/) before
+    using oapi-codegen.
 - Extract parameters from requests, to reduce work required by your implementation
 - Implicit `additionalProperties` are ignored by default ([more details](#additional-properties-additionalproperties))
 - Prune unused types by default
@@ -403,1098 +462,68 @@ We can see that this provides the best means to focus on the implementation of t
 
 `oapi-codegen` shines by making it fairly straightforward (note that this is a purposeful choice of wording here - we want to avoid words like "easy") to generate the server-side boilerplate for a backend API.
 
-Below you can find the supported servers, and more information about how to implement a server using them.
+You can find the supported HTTP server backends below, and more information about how to implement a server on top of each router.
 
 To provide you a fully Test Driven Development style test harness to confirm you are following the specification, you could use a tool such as [openapi.tanna.dev/go/validator](https://openapi.tanna.dev/go/validator/), or craft your own.
 
 ### Supported Servers
 
-Right now, we support the following servers, and are supportive of adding new servers, too!
+Right now, we support the following servers, and are supportive of adding new servers, too! Each
+server lists the minimum Go version required to compile the generated code. That is
+currently Go 1.26 for all of them, because the generated code imports
+`github.com/oapi-codegen/runtime`, which requires Go 1.26.
 
-<table>
+| Server | `generate` flag | Go Version | Documentation |
+| --- | --- |------------| --- |
+| [Chi](https://github.com/go-chi/chi) | `chi-server` | 1.26+      | [Chi documentation](docs/chi-server.md) |
+| [Echo](https://github.com/labstack/echo) | `echo-server` | 1.26+      | [Echo documentation](docs/echo-server.md) |
+| [Echo v5](https://github.com/labstack/echo) | `echo5-server` | 1.26+      | [Echo v5 documentation](docs/echo5-server.md) |
+| [Fiber](https://github.com/gofiber/fiber) | `fiber-server` | 1.26+      | [Fiber documentation](docs/fiber-server.md) |
+| [Fiber v3](https://github.com/gofiber/fiber) | `fiber-v3-server` | 1.26+      | [Fiber v3 documentation](docs/fiber-v3-server.md) |
+| [Gin](https://github.com/gin-gonic/gin) | `gin-server` | 1.26+      | [Gin documentation](docs/gin-server.md) |
+| [gorilla/mux](https://github.com/gorilla/mux) | `gorilla-server` | 1.26+      | [gorilla/mux documentation](docs/gorilla-server.md) |
+| [Iris](https://github.com/kataras/iris) | `iris-server` | 1.26+      | [Iris documentation](docs/iris-server.md) |
+| [`net/http`](https://pkg.go.dev/net/http) | `std-http-server` | 1.26+      | [`net/http` documentation](docs/stdhttp-server.md) |
 
-<tr>
-<th>
-Server
-</th>
-<th>
-<code>generate</code> flag to enable code generation
-</th>
-<th>
-Example usage
-</th>
-</tr>
+### OpenAPI 3.2 HTTP methods (`query` and `additionalOperations`)
 
-<tr>
-<td>
-
-[Chi](https://github.com/go-chi/chi)
-
-</td>
-<td>
-<code>chi-server</code>
-</td>
-<td>
-
-
-For a Chi server, you will want a configuration file such as:
+OpenAPI 3.2 adds the `query` operation (the HTTP [`QUERY`](https://datatracker.ietf.org/doc/draft-ietf-httpbis-safe-method-w-body/) method) to the Path Item, and an `additionalOperations` map for any other HTTP method:
 
 ```yaml
-# yaml-language-server: ...
-package: api
-generate:
-  chi-server: true
-  models: true
-output: gen.go
-```
-
-To implement this, check out [the Chi docs](#impl-chi).
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-[Echo](https://github.com/labstack/echo)
-
-</td>
-<td>
-<code>echo-server</code>
-</td>
-<td>
-
-For an Echo server, you will want a configuration file such as:
-
-```yaml
-# yaml-language-server: ...
-package: api
-generate:
-  echo-server: true
-  models: true
-output: gen.go
-```
-
-To implement this, check out [the Echo docs](#impl-echo).
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-[Fiber](https://github.com/gofiber/fiber)
-
-</td>
-<td>
-<code>fiber-server</code>
-</td>
-
-<td>
-
-For a Fiber server, you will want a configuration file such as:
-
-```yaml
-# yaml-language-server: ...
-package: api
-generate:
-  fiber-server: true
-  models: true
-output: gen.go
-```
-
-To implement this, check out [the Fiber docs](#impl-fiber).
-
-</td>
-</tr>
-
-
-<tr>
-<td>
-
-[Gin](https://github.com/gin-gonic/gin)
-
-</td>
-<td>
-<code>gin-server</code>
-</td>
-<td>
-
-For a Gin server, you will want a configuration file such as:
-
-```yaml
-# yaml-language-server: ...
-package: api
-generate:
-  gin-server: true
-  models: true
-output: gen.go
-```
-
-To implement this, check out [the Gin docs](#impl-gin).
-
-</td>
-
-</tr>
-
-<tr>
-<td>
-
-[gorilla/mux](https://github.com/gorilla/mux)
-
-</td>
-<td>
-<code>gorilla-server</code>
-</td>
-
-<td>
-
-For a gorilla/mux server, you will want a configuration file such as:
-
-```yaml
-# yaml-language-server: ...
-package: api
-generate:
-  gorilla-server: true
-  models: true
-output: gen.go
-```
-
-To implement this, check out [the gorilla/mux docs](#impl-gorillamux).
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-[Iris](https://github.com/kataras/iris)
-
-</td>
-<td>
-<code>iris-server</code>
-</td>
-
-<td>
-
-For a Iris server, you will want a configuration file such as:
-
-```yaml
-# yaml-language-server: ...
-package: api
-generate:
-  iris-server: true
-  models: true
-output: gen.go
-```
-
-To implement this, check out [the Iris docs](#impl-iris).
-
-</td>
-</tr>
-
-<tr>
-<td>
-
-[1.22+ `net/http`](https://pkg.go.dev/net/http)
-
-</td>
-<td>
-<code>std-http-server</code>
-</td>
-
-<td>
-
-To use purely `net/http` (for Go 1.22+), you will want a configuration file such as:
-
-```yaml
-# yaml-language-server: ...
-package: api
-generate:
-  std-http-server: true
-  models: true
-output: gen.go
-```
-
-To implement this, check out [the Go 1.22+ `net/http` docs](#impl-stdhttp).
-
-</td>
-</tr>
-
-</table>
-
-### Go 1.22+ `net/http`
-<a name="impl-stdhttp"></a>
-
-As of Go 1.22, enhancements have been made to the routing of the `net/http` package in the standard library, which makes it a great starting point for implementing a server with, before needing to reach for another router or a full framework.
-
-For instance, let's take this straightforward specification:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: Minimal ping API server
 paths:
-  /ping:
-    get:
-      responses:
-        '200':
-          description: pet response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pong'
-components:
-  schemas:
-    # base types
-    Pong:
-      type: object
-      required:
-        - ping
-      properties:
-        ping:
-          type: string
-          example: pong
+  /items:
+    query:
+      operationId: queryItems
+      # ...
+    additionalOperations:
+      PURGE:
+        operationId: purgeItem
+        # ...
 ```
 
-This then generates code such as:
-
-```go
-// Pong defines model for Pong.
-type Pong struct {
-	Ping string `json:"ping"`
-}
-
-// ServerInterface represents all server handlers.
-type ServerInterface interface {
-
-	// (GET /ping)
-	GetPing(w http.ResponseWriter, r *http.Request)
-}
-
-func HandlerFromMux(si ServerInterface, m ServeMux) http.Handler {
-	return HandlerWithOptions(si, StdHTTPServerOptions{
-		BaseRouter: m,
-	})
-}
-
-// HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.Handler {
-	m := options.BaseRouter
-
-	// ... omitted for brevity
-
-	m.HandleFunc("GET "+options.BaseURL+"/ping", wrapper.GetPing)
-
-	return m
-}
-```
-
-To implement this HTTP server, we need to write the following code in our [`api/impl.go`](examples/minimal-server/stdhttp/api/impl.go):
-
-```go
-import (
-	"encoding/json"
-	"net/http"
-)
-
-// optional code omitted
-
-type Server struct{}
-
-func NewServer() Server {
-	return Server{}
-}
-
-// (GET /ping)
-func (Server) GetPing(w http.ResponseWriter, r *http.Request) {
-	resp := Pong{
-		Ping: "pong",
-	}
-
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(resp)
-}
-```
-
-Now we've got our implementation, we can then write the following code to wire it up and get a running server:
-
-```go
-import (
-	"log"
-	"net/http"
-
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/minimal-server/stdhttp/api"
-)
-
-func main() {
-	// create a type that satisfies the `api.ServerInterface`, which contains an implementation of every operation from the generated code
-	server := api.NewServer()
-
-	r := http.NewServeMux()
-
-	// get an `http.Handler` that we can use
-	h := api.HandlerFromMux(server, r)
-
-	s := &http.Server{
-		Handler: h,
-		Addr:    "0.0.0.0:8080",
-	}
-
-	// And we serve HTTP until the world ends.
-	log.Fatal(s.ListenAndServe())
-}
-```
-
-> [!NOTE]
-> This doesn't include [validation of incoming requests](#requestresponse-validation-middleware).
-
-> [!NOTE]
-> If you feel like you've done everything right, but are still receiving `404 page not found` errors, make sure that you've got the `go` directive in your `go.mod` updated to:
-
-```go.mod
-go 1.22
-```
-
-</details>
-
-### Chi
-<a name="impl-chi"></a>
-
-For instance, let's take this straightforward specification:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: Minimal ping API server
-paths:
-  /ping:
-    get:
-      responses:
-        '200':
-          description: pet response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pong'
-components:
-  schemas:
-    # base types
-    Pong:
-      type: object
-      required:
-        - ping
-      properties:
-        ping:
-          type: string
-          example: pong
-```
-
-This then generates code such as:
-
-```go
-// Pong defines model for Pong.
-type Pong struct {
-	Ping string `json:"ping"`
-}
-
-// ServerInterface represents all server handlers.
-type ServerInterface interface {
-
-	// (GET /ping)
-	GetPing(w http.ResponseWriter, r *http.Request)
-}
-
-// HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *mux.Router) http.Handler {
-	return HandlerWithOptions(si, ChiServerOptions{
-		BaseRouter: r,
-	})
-}
-
-// HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {
-	r := options.BaseRouter
-
-	// ...
-
-	r.Group(func(r chi.Router) {
-		r.Get(options.BaseURL+"/ping", wrapper.GetPing)
-	})
-
-	return r
-}
-```
-
-To implement this HTTP server, we need to write the following code in our [`api/impl.go`](examples/minimal-server/chi/api/impl.go):
-
-```go
-import (
-	"encoding/json"
-	"net/http"
-)
-
-// optional code omitted
-
-type Server struct{}
-
-func NewServer() Server {
-	return Server{}
-}
-
-// (GET /ping)
-func (Server) GetPing(w http.ResponseWriter, r *http.Request) {
-	resp := Pong{
-		Ping: "pong",
-	}
-
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(resp)
-}
-```
-
-Now we've got our implementation, we can then write the following code to wire it up and get a running server:
-
-```go
-import (
-	"log"
-	"net/http"
-
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/minimal-server/chi/api"
-	"github.com/go-chi/chi/v5"
-)
-
-func main() {
-	// create a type that satisfies the `api.ServerInterface`, which contains an implementation of every operation from the generated code
-	server := api.NewServer()
-
-	r := chi.NewMux()
-
-	// get an `http.Handler` that we can use
-	h := api.HandlerFromMux(server, r)
-
-	s := &http.Server{
-		Handler: h,
-		Addr:    "0.0.0.0:8080",
-	}
-
-	// And we serve HTTP until the world ends.
-	log.Fatal(s.ListenAndServe())
-}
-```
-
-> [!NOTE]
-> This doesn't include [validation of incoming requests](#requestresponse-validation-middleware).
-
-### gorilla/mux
-<a name="impl-gorillamux"></a>
-
-For instance, let's take this straightforward specification:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: Minimal ping API server
-paths:
-  /ping:
-    get:
-      responses:
-        '200':
-          description: pet response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pong'
-components:
-  schemas:
-    # base types
-    Pong:
-      type: object
-      required:
-        - ping
-      properties:
-        ping:
-          type: string
-          example: pong
-```
-
-This then generates code such as:
-
-```go
-// Pong defines model for Pong.
-type Pong struct {
-	Ping string `json:"ping"`
-}
-
-// ServerInterface represents all server handlers.
-type ServerInterface interface {
-
-	// (GET /ping)
-	GetPing(w http.ResponseWriter, r *http.Request)
-}
-
-// HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
-func HandlerFromMux(si ServerInterface, r *mux.Router) http.Handler {
-	return HandlerWithOptions(si, GorillaServerOptions{
-		BaseRouter: r,
-	})
-}
-
-// HandlerWithOptions creates http.Handler with additional options
-func HandlerWithOptions(si ServerInterface, options GorillaServerOptions) http.Handler {
-	r := options.BaseRouter
-
-	// ...
-
-	r.HandleFunc(options.BaseURL+"/ping", wrapper.GetPing).Methods("GET")
-
-	return r
-}
-```
-
-To implement this HTTP server, we need to write the following code in our [`api/impl.go`](examples/minimal-server/gorillamux/api/impl.go):
-
-```go
-import (
-	"encoding/json"
-	"net/http"
-)
-
-// optional code omitted
-
-type Server struct{}
-
-func NewServer() Server {
-	return Server{}
-}
-
-// (GET /ping)
-func (Server) GetPing(w http.ResponseWriter, r *http.Request) {
-	resp := Pong{
-		Ping: "pong",
-	}
-
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(resp)
-}
-```
-
-Now we've got our implementation, we can then write the following code to wire it up and get a running server:
-
-```go
-import (
-	"log"
-	"net/http"
-
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/minimal-server/gorillamux/api"
-	"github.com/gorilla/mux"
-)
-
-func main() {
-	// create a type that satisfies the `api.ServerInterface`, which contains an implementation of every operation from the generated code
-	server := api.NewServer()
-
-	r := mux.NewRouter()
-
-	// get an `http.Handler` that we can use
-	h := api.HandlerFromMux(server, r)
-
-	s := &http.Server{
-		Handler: h,
-		Addr:    "0.0.0.0:8080",
-	}
-
-	// And we serve HTTP until the world ends.
-	log.Fatal(s.ListenAndServe())
-}
-```
-
-> [!NOTE]
-> This doesn't include [validation of incoming requests](#requestresponse-validation-middleware).
-
-### Echo server
-<a name="impl-echo"></a>
-
-For instance, let's take this straightforward specification:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: Minimal ping API server
-paths:
-  /ping:
-    get:
-      responses:
-        '200':
-          description: pet response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pong'
-components:
-  schemas:
-    # base types
-    Pong:
-      type: object
-      required:
-        - ping
-      properties:
-        ping:
-          type: string
-          example: pong
-```
-
-This then generates code such as:
-
-```go
-// Pong defines model for Pong.
-type Pong struct {
-	Ping string `json:"ping"`
-}
-
-// ServerInterface represents all server handlers.
-type ServerInterface interface {
-
-	// (GET /ping)
-	GetPing(ctx echo.Context) error
-}
-
-// This is a simple interface which specifies echo.Route addition functions which
-// are present on both echo.Echo and echo.Group, since we want to allow using
-// either of them for path registration
-type EchoRouter interface {
-	// ...
-	GET(path string, h echo.HandlerFunc, m ...echo.MiddlewareFunc) *echo.Route
-	// ...
-}
-
-// RegisterHandlers adds each server route to the EchoRouter.
-func RegisterHandlers(router EchoRouter, si ServerInterface) {
-	RegisterHandlersWithBaseURL(router, si, "")
-}
-
-// Registers handlers, and prepends BaseURL to the paths, so that the paths
-// can be served under a prefix.
-func RegisterHandlersWithBaseURL(router EchoRouter, si ServerInterface, baseURL string) {
-	// ...
-
-	router.GET(baseURL+"/ping", wrapper.GetPing)
-
-}
-```
-
-To implement this HTTP server, we need to write the following code in our [`api/impl.go`](examples/minimal-server/echo/api/impl.go):
-
-```go
-import (
-	"net/http"
-
-	"github.com/labstack/echo/v4"
-)
-
-// optional code omitted
-
-type Server struct{}
-
-func NewServer() Server {
-	return Server{}
-}
-
-// (GET /ping)
-func (Server) GetPing(ctx echo.Context) error {
-	resp := Pong{
-		Ping: "pong",
-	}
-
-	return ctx.JSON(http.StatusOK, resp)
-}
-```
-
-Now we've got our implementation, we can then write the following code to wire it up and get a running server:
-
-```go
-import (
-	"log"
-
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/minimal-server/echo/api"
-	"github.com/labstack/echo/v4"
-)
-
-func main() {
-	// create a type that satisfies the `api.ServerInterface`, which contains an implementation of every operation from the generated code
-	server := api.NewServer()
-
-	e := echo.New()
-
-	api.RegisterHandlers(e, server)
-
-	// And we serve HTTP until the world ends.
-	log.Fatal(e.Start("0.0.0.0:8080"))
-}
-```
-
-> [!NOTE]
-> This doesn't include [validation of incoming requests](#requestresponse-validation-middleware).
-
-### Fiber server
-<a name="impl-fiber"></a>
-
-For instance, let's take this straightforward specification:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: Minimal ping API server
-paths:
-  /ping:
-    get:
-      responses:
-        '200':
-          description: pet response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pong'
-components:
-  schemas:
-    # base types
-    Pong:
-      type: object
-      required:
-        - ping
-      properties:
-        ping:
-          type: string
-          example: pong
-```
-
-This then generates code such as:
-
-```go
-// Pong defines model for Pong.
-type Pong struct {
-	Ping string `json:"ping"`
-}
-
-// ServerInterface represents all server handlers.
-type ServerInterface interface {
-
-	// (GET /ping)
-	GetPing(c *fiber.Ctx) error
-}
-
-// RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
-func RegisterHandlers(router fiber.Router, si ServerInterface) {
-	RegisterHandlersWithOptions(router, si, FiberServerOptions{})
-}
-
-// RegisterHandlersWithOptions creates http.Handler with additional options
-func RegisterHandlersWithOptions(router fiber.Router, si ServerInterface, options FiberServerOptions) {
-	// ...
-
-	router.Get(options.BaseURL+"/ping", wrapper.GetPing)
-}
-```
-
-To implement this HTTP server, we need to write the following code in our [`api/impl.go`](examples/minimal-server/fiber/api/impl.go):
-
-```go
-import (
-	"net/http"
-
-	"github.com/gofiber/fiber/v2"
-)
-
-// ensure that we've conformed to the `ServerInterface` with a compile-time check
-var _ ServerInterface = (*Server)(nil)
-
-type Server struct{}
-
-func NewServer() Server {
-	return Server{}
-}
-
-// (GET /ping)
-func (Server) GetPing(ctx *fiber.Ctx) error {
-	resp := Pong{
-		Ping: "pong",
-	}
-
-	return ctx.
-		Status(http.StatusOK).
-		JSON(resp)
-}
-```
-
-Now we've got our implementation, we can then write the following code to wire it up and get a running server:
-
-```go
-import (
-	"log"
-
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/minimal-server/fiber/api"
-	"github.com/gofiber/fiber/v2"
-)
-
-func main() {
-	// create a type that satisfies the `api.ServerInterface`, which contains an implementation of every operation from the generated code
-	server := api.NewServer()
-
-	app := fiber.New()
-
-	api.RegisterHandlers(app, server)
-
-	// And we serve HTTP until the world ends.
-	log.Fatal(app.Listen("0.0.0.0:8080"))
-}
-```
-
-> [!NOTE]
-> This doesn't include [validation of incoming requests](#requestresponse-validation-middleware).
-
-### Gin server
-<a name="impl-gin"></a>
-
-For instance, let's take this straightforward specification:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: Minimal ping API server
-paths:
-  /ping:
-    get:
-      responses:
-        '200':
-          description: pet response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pong'
-components:
-  schemas:
-    # base types
-    Pong:
-      type: object
-      required:
-        - ping
-      properties:
-        ping:
-          type: string
-          example: pong
-```
-
-This then generates code such as:
-
-```go
-// Pong defines model for Pong.
-type Pong struct {
-	Ping string `json:"ping"`
-}
-
-// ServerInterface represents all server handlers.
-type ServerInterface interface {
-
-	// (GET /ping)
-	GetPing(c *gin.Context)
-}
-
-// RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
-func RegisterHandlers(router gin.IRouter, si ServerInterface) {
-	RegisterHandlersWithOptions(router, si, GinServerOptions{})
-}
-
-// RegisterHandlersWithOptions creates http.Handler with additional options
-func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options GinServerOptions) {
-	// ...
-
-	router.GET(options.BaseURL+"/ping", wrapper.GetPing)
-}
-```
-
-To implement this HTTP server, we need to write the following code in our [`api/impl.go`](examples/minimal-server/gorillamux/api/impl.go):
-
-```go
-import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
-)
-
-// optional code omitted
-
-type Server struct{}
-
-func NewServer() Server {
-	return Server{}
-}
-
-// (GET /ping)
-func (Server) GetPing(ctx *gin.Context) {
-	resp := Pong{
-		Ping: "pong",
-	}
-
-	ctx.JSON(http.StatusOK, resp)
-}
-```
-
-Now we've got our implementation, we can then write the following code to wire it up and get a running server:
-
-```go
-import (
-	"log"
-	"net/http"
-
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/minimal-server/gin/api"
-	"github.com/gin-gonic/gin"
-)
-
-func main() {
-	// create a type that satisfies the `api.ServerInterface`, which contains an implementation of every operation from the generated code
-	server := api.NewServer()
-
-	r := gin.Default()
-
-	api.RegisterHandlers(r, server)
-
-	// And we serve HTTP until the world ends.
-
-	s := &http.Server{
-		Handler: r,
-		Addr:    "0.0.0.0:8080",
-	}
-
-	// And we serve HTTP until the world ends.
-	log.Fatal(s.ListenAndServe())
-}
-```
-
-> [!NOTE]
-> This doesn't include [validation of incoming requests](#requestresponse-validation-middleware).
-
-### Iris server
-<a name="impl-iris"></a>
-
-For instance, let's take this straightforward specification:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: Minimal ping API server
-paths:
-  /ping:
-    get:
-      responses:
-        '200':
-          description: pet response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Pong'
-components:
-  schemas:
-    # base types
-    Pong:
-      type: object
-      required:
-        - ping
-      properties:
-        ping:
-          type: string
-          example: pong
-```
-
-This then generates code such as:
-
-```go
-// Pong defines model for Pong.
-type Pong struct {
-	Ping string `json:"ping"`
-}
-
-// ServerInterface represents all server handlers.
-type ServerInterface interface {
-
-	// (GET /ping)
-	GetPing(ctx iris.Context)
-}
-
-// RegisterHandlers creates http.Handler with routing matching OpenAPI spec.
-func RegisterHandlers(router *iris.Application, si ServerInterface) {
-	RegisterHandlersWithOptions(router, si, IrisServerOptions{})
-}
-
-// RegisterHandlersWithOptions creates http.Handler with additional options
-func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, options IrisServerOptions) {
-	// ...
-
-	router.Get(options.BaseURL+"/ping", wrapper.GetPing)
-
-	router.Build()
-}
-```
-
-To implement this HTTP server, we need to write the following code in our [`api/impl.go`](examples/minimal-server/gorillamux/api/impl.go):
-
-```go
-import (
-	"net/http"
-
-	"github.com/kataras/iris/v12"
-)
-
-// optional code omitted
-
-type Server struct{}
-
-func NewServer() Server {
-	return Server{}
-}
-
-// (GET /ping)
-func (Server) GetPing(ctx iris.Context) {
-	resp := Pong{
-		Ping: "pong",
-	}
-
-	ctx.StatusCode(http.StatusOK)
-	_ = ctx.JSON(resp)
-}
-```
-
-Now we've got our implementation, we can then write the following code to wire it up and get a running server:
-
-```go
-import (
-	"log"
-
-	"github.com/oapi-codegen/oapi-codegen/v2/examples/minimal-server/iris/api"
-	"github.com/kataras/iris/v12"
-)
-
-func main() {
-	// create a type that satisfies the `api.ServerInterface`, which contains an implementation of every operation from the generated code
-	server := api.NewServer()
-
-	i := iris.Default()
-
-	api.RegisterHandlers(i, server)
-
-	// And we serve HTTP until the world ends.
-	log.Fatal(i.Listen("0.0.0.0:8080"))
-}
-```
-
-> [!NOTE]
-> This doesn't include [validation of incoming requests](#requestresponse-validation-middleware).
+These are generated like any other operation, for clients, servers and strict servers. Route registration uses each router's string-method API. Some routers only accept methods they have been told about, and because that is application-wide state (one process often hosts several generated packages), the generated code never registers methods itself. Your application does it once, at startup, before any routes are registered:
+
+- **Chi**: call `chi.RegisterMethod` for each custom method before `Handler`/`HandlerFromMux`, otherwise route registration panics with `chi: 'QUERY' http method is not supported`:
+
+  ```go
+  chi.RegisterMethod("QUERY")
+  chi.RegisterMethod("PURGE")
+  r := chi.NewRouter()
+  api.HandlerFromMux(server, r)
+  ```
+
+- **Fiber** (v2 and v3): list the custom methods in the application config (keep the defaults, the list replaces them), otherwise `RegisterHandlers` panics with `add: invalid http method`:
+
+  ```go
+  app := fiber.New(fiber.Config{
+      RequestMethods: append(slices.Clone(fiber.DefaultMethods), "QUERY", "PURGE"),
+  })
+  api.RegisterHandlers(app, server)
+  ```
+
+- **Iris**: routes for custom methods work as-is. `iris.RegisterMethods("QUERY")` is only needed if you also want iris's `Any()` helpers and route debug listing to include them.
+- **Echo** (v4 and v5): nothing to register. The generated `EchoRouter` interface gains an `Add` method, which `*echo.Echo` and `*echo.Group` both satisfy; a custom `EchoRouter` implementation needs `Add` too.
+- **Gin**, **gorilla/mux**, **`net/http`**: nothing to do.
 
 ### Strict server
 
@@ -1523,7 +552,7 @@ You can see a little more detail of the generated code in the ["What does it loo
 > To configure the strict server generation, you must specify another server to be generated. For instance:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
 package: api
 generate:
   # NOTE another server must be added!
@@ -1534,6 +563,9 @@ output: server.gen.go
 
 > [!NOTE]
 > This doesn't include [validation of incoming requests](#requestresponse-validation-middleware).
+
+> [!IMPORTANT]
+> When a strict-server spec uses `$ref` to point at a `components/responses/...` (or `components/requestBodies/...`) defined in another spec via `import-mapping`, the destination spec **must also be generated with `strict-server: true`**. The strict envelope embeds the `<Name>JSONResponse` type from the destination package; that type only exists when the destination generates a strict server. Without it the generated code will fail to compile with an "undefined" error. See [issue #2010](https://github.com/oapi-codegen/oapi-codegen/issues/2010).
 
 ## Generating API clients
 
@@ -1598,7 +630,7 @@ components:
 And a `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
 package: client
 output: client.gen.go
 generate:
@@ -1731,6 +763,168 @@ func TestClient_canCall() {
 }
 ```
 
+### With Server URLs
+
+An OpenAPI specification makes it possible to denote Servers that a client can interact with, such as:
+
+```yaml
+servers:
+- url: https://development.gigantic-server.com/v1
+  description: Development server
+- url: https://{username}.gigantic-server.com:{port}/{basePath}
+  description: The production API server
+  variables:
+    username:
+      # note! no enum here means it is an open value
+      default: demo
+      description: this value is assigned by the service provider, in this example `gigantic-server.com`
+    port:
+      enum:
+        - '8443'
+        - '443'
+      default: '8443'
+    basePath:
+      # open meaning there is the opportunity to use special base paths as assigned by the provider, default is `v2`
+      default: v2
+```
+
+It is possible to opt-in to the generation of these Server URLs with the following configuration:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
+package: serverurls
+output: gen.go
+generate:
+  # NOTE that this uses default settings - if you want to use initialisms to generate i.e. `ServerURLDevelopmentServer`, you should look up the `output-options.name-normalizer` configuration
+  server-urls: true
+```
+
+This will then generate the following boilerplate:
+
+```go
+// (the below does not include comments that are generated)
+
+const ServerUrlDevelopmentServer = "https://development.gigantic-server.com/v1"
+
+type ServerUrlTheProductionAPIServerBasePathVariable string
+const ServerUrlTheProductionAPIServerBasePathVariableDefault = "v2"
+
+type ServerUrlTheProductionAPIServerPortVariable string
+const ServerUrlTheProductionAPIServerPortVariable8443 ServerUrlTheProductionAPIServerPortVariable = "8443"
+const ServerUrlTheProductionAPIServerPortVariable443 ServerUrlTheProductionAPIServerPortVariable = "443"
+const ServerUrlTheProductionAPIServerPortVariableDefault ServerUrlTheProductionAPIServerPortVariable = ServerUrlTheProductionAPIServerPortVariable8443
+
+type ServerUrlTheProductionAPIServerUsernameVariable string
+const ServerUrlTheProductionAPIServerUsernameVariableDefault = "demo"
+
+func ServerUrlTheProductionAPIServer(basePath ServerUrlTheProductionAPIServerBasePathVariable, port ServerUrlTheProductionAPIServerPortVariable, username ServerUrlTheProductionAPIServerUsernameVariable) (string, error) {
+    // ...
+}
+```
+
+Notice that for URLs that are not templated, a simple `const` definition is created.
+
+However, for more complex URLs that defined `variables` in them, we generate the types (and any `enum` values or `default` values), and instead use a function to create the URL.
+
+For a complete example see [`examples/generate/serverurls`](examples/generate/serverurls).
+
+### Duplicate types generated for clients's response object types
+
+When generating the types for interacting with the generated client, `oapi-codegen` will use the `operationId` and add on a `Request` or `Response` suffix.
+
+However, this can clash if you have named your component schemas in a similar way.
+
+For instance:
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: "Show that generated client boilerplate can clash if schemas are well named i.e. `*Request` and `*Response`"
+paths:
+  /client:
+    put:
+      operationId: updateClient
+      requestBodies:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateClientRequest'
+      responses:
+        400:
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateClientResponse'
+components:
+  schemas:
+    UpdateClientRequest:
+      type: object
+      properties:
+        code:
+          type: string
+      required:
+      - code
+    UpdateClientResponse:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+```
+
+If you were to generate with this configuration:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
+package: client
+output: client.gen.go
+generate:
+  models: true
+  client: true
+```
+
+This would then result in `go build` failures:
+
+```
+# github.com/oapi-codegen/oapi-codegen/v2/examples/clienttypenameclash
+./client.gen.go:184:6: UpdateClientResponse redeclared in this block
+        ./client.gen.go:17:6: other declaration of UpdateClientResponse
+./client.gen.go:192:7: r.HTTPResponse undefined (type UpdateClientResponse has no field or method HTTPResponse)
+./client.gen.go:193:12: r.HTTPResponse undefined (type UpdateClientResponse has no field or method HTTPResponse)
+./client.gen.go:200:7: r.HTTPResponse undefined (type UpdateClientResponse has no field or method HTTPResponse)
+./client.gen.go:201:12: r.HTTPResponse undefined (type UpdateClientResponse has no field or method HTTPResponse)
+./client.gen.go:224:3: unknown field Body in struct literal of type UpdateClientResponse
+./client.gen.go:225:3: unknown field HTTPResponse in struct literal of type UpdateClientResponse
+./client.gen.go:234:12: response.JSON400 undefined (type *UpdateClientResponse has no field or method JSON400)
+```
+
+To fix this, use the `response-type-suffix` Output Option:
+
+```diff
+ # yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
+ package: client
+ output: client.gen.go
+ generate:
+   models: true
+   client: true
++output-options:
++  response-type-suffix: Resp
+```
+
+This will then rename the generated types from the default to use the new suffix:
+
+```diff
+-type UpdateClientResponse struct {
++type UpdateClientResp struct {
+        Body         []byte
+        HTTPResponse *http.Response
+        JSON400      *UpdateClientResponse
+ }
+```
+
+There is no currently planned work to change this behaviour.
+
 ## Generating API models
 
 If you're looking to only generate the models for interacting with a remote service, for instance if you need to hand-roll the API client for whatever reason, you can do this as-is.
@@ -1798,7 +992,7 @@ components:
 And a `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
 package: onlymodels
 output: only-models.gen.go
 generate:
@@ -1827,7 +1021,7 @@ type Client struct {
 If you wish to also generate the `Unreferenced` type, you would need the following `cfg.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
 package: onlymodels
 output: only-models.gen.go
 generate:
@@ -1855,6 +1049,21 @@ When you've got a large OpenAPI specification, you may find it useful to split t
 ```
 
 This is supported by `oapi-codegen`, through the ability to perform "Import Mapping".
+
+> [!NOTE]
+> The keys of `import-mapping` are the paths of the `$ref`'d documents — a relative file path or a URL, exactly as it is written in the `$ref` — and the values are the Go packages their types are generated into.
+>
+> A key cannot be a JSON pointer such as `#/components/schemas`. References within a single document always resolve to the package being generated, so there's nothing to map — if you want your models in a different Go package to your server, split them into their own spec file and map that file, as shown below.
+
+<a name=remote-references></a>
+
+> [!IMPORTANT]
+> External references to local files are always followed. External references to URLs are **not** followed unless the URL is listed in `allow-remote-refs-from`, because an untrusted spec could otherwise make `oapi-codegen` issue requests to any host reachable from the machine running it. List each referenced document's URL exactly as it appears in the `$ref`, without the `#...` fragment, or `"*"` to allow any URL:
+>
+>     allow-remote-refs-from:
+>       - https://raw.githubusercontent.com/example/specs/main/common.yaml
+>
+> There is no host or prefix matching: a reference to a different path, port or scheme on the same host is refused until it is listed too. A relative `$ref` inside a remote document resolves to an absolute URL, and that absolute URL is what has to be listed. A spec passed to `oapi-codegen` as a URL is fetched without listing it, but the documents it references still have to be.
 
 For instance, let's say that we have a large API, which has a user-facing API and an admin API, both of which use a common set of API models.
 
@@ -1936,7 +1145,7 @@ $ go run github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen -config cfg-us
 This therefore means that we need multiple configuration files, such as `cfg-api.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
 package: samepackage
 output: server.gen.go
 generate:
@@ -1953,7 +1162,7 @@ import-mapping:
 And then our `cfg-user.yaml`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
 package: samepackage
 output: user.gen.go
 generate:
@@ -1973,17 +1182,17 @@ To get `oapi-codegen`'s multi-package support working, we need to set up our dir
 
 ```
 ├── admin
-│   ├── cfg.yaml
-│   └── generate.go
+│   ├── cfg.yaml
+│   └── generate.go
 └── common
     ├── cfg.yaml
-    └── generate.go
+    └── generate.go
 ```
 
 We could start with our configuration file for our admin API spec:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
 # admin/cfg.yaml
 package: admin
 output: server.gen.go
@@ -2005,7 +1214,7 @@ error generating code: error creating operation definitions: error generating re
 This is because `oapi-codegen` requires the `import-mapping`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
 package: admin
 output: server.gen.go
 generate:
@@ -2037,7 +1246,7 @@ If you don't want to do this, an alternate option is to [use a single package, w
 
 Check out [the import-mapping/multiplepackages example](examples/import-mapping/multiplepackages/) for the full code.
 
-## Modifying the input OpenAPI Specification
+## Modifying the input OpenAPI Specification (with OpenAPI Overlay)
 
 Prior to `oapi-codegen` v2.4.0, users wishing to override specific configuration, for instance taking advantage of extensions such as `x-go-type`  would need to modify the OpenAPI specification they are using.
 
@@ -2059,6 +1268,16 @@ This takes advantage of the [OpenAPI Overlay specification](https://github.com/O
 > We still heavily recommend using Overlay functionality, but would like users to be aware of this.
 >
 > There is a [proposed modification to the specification](https://github.com/OAI/Overlay-Specification/pull/32) which would relax the need for JSON Path as the targeting mechanism.
+
+> [!NOTE]
+> The Overlay implementation changed in v2.9.0: action targets are now [RFC 9535](https://www.rfc-editor.org/rfc/rfc9535) JSONPath, where earlier versions read them in a different dialect. The main differences are:
+>
+> - a filter selects the children of the node it follows that match it, so drop one `.*` before it: `$.paths.*.*[?(@.x-internal)]` becomes `$.paths.*[?@['x-internal']]`
+> - names that contain `-` or `/`, or start with a digit, must be bracketed: `.x-internal` becomes `['x-internal']`
+> - `X =~ /re/` becomes `search(X, 're')`
+> - `X[*] == v` becomes `X[?@ == v]`
+>
+> The setting is all-or-nothing: by default every target in the overlay is read as RFC 9535, including targets that are valid in both dialects but mean something different in each. For instance `$.paths.*.*[?(!@.servers)]` used to select operations without `servers`, and now selects the children of operations without `servers`; oapi-codegen does not try to detect which dialect a target was written in. Check your targets, or keep the previous behaviour for the whole overlay by setting `compatibility.overlays-use-yaml-jsonpath: true`.
 
 For instance, let's say that we have the following OpenAPI specification, which provides insight into an internal endpoint that we should not be generating any code for (denoted by `x-internal`):
 
@@ -2106,10 +1325,10 @@ actions:
           responses:
             '200':
               description: Perform a ping request
-- target: $.paths.*[?(@.x-internal)]
+- target: $.paths[?@['x-internal']]
   description: Remove internal endpoints (noted by x-internal)
   remove: true
-- target: $.paths.*.*[?(@.x-internal)]
+- target: $.paths.*[?@['x-internal']]
   description: Remove internal endpoints (noted by x-internal)
   remove: true
 ```
@@ -2117,7 +1336,7 @@ actions:
 And our configuration file for `oapi-codegen`:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
 package: api
 output: ping.gen.go
 generate:
@@ -2155,9 +1374,11 @@ The default behaviour in `oapi-codegen` is to generate:
 
 ```go
 type S struct {
-	Field *string `json:"field,omitempty"`
+	Field *string `json:"field"`
 }
 ```
+
+Note that there is no `omitempty` here: since the field is nullable, a `nil` pointer marshals as an explicit `null`, and `omitempty` would make that `null` impossible to produce.
 
 However, you lose the ability to understand the three cases, as there's no way to distinguish two of the types from each other:
 
@@ -2187,809 +1408,23 @@ type S struct {
 
 As well as the core OpenAPI support, we also support the following OpenAPI extensions, as denoted by the [OpenAPI Specification Extensions](https://spec.openapis.org/oas/v3.0.3#specification-extensions).
 
-<table>
-
-<tr>
-<th>
-Extension
-</th>
-<th>
-Description
-</th>
-<th>
-Example usage
-</th>
-</tr>
-
-<tr>
-<td>
-
-`x-go-type` <br>
-`x-go-type-import`
-
-</td>
-<td>
-Override the generated type definition (and optionally, add an import from another package)
-</td>
-<td>
-<details>
-
-Using the `x-go-type` (and optionally, `x-go-type-import` when you need to import another package) allows overriding the type that `oapi-codegen` determined the generated type should be.
-
-We can see this at play with the following schemas:
-
-```yaml
-components:
-  schemas:
-    Client:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-        id:
-          type: number
-    ClientWithExtension:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          # this is a bit of a contrived example, as you could instead use
-          # `format: uuid` but it explains how you'd do this when there may be
-          # a clash, for instance if you already had a `uuid` package that was
-          # being imported, or ...
-          x-go-type: googleuuid.UUID
-          x-go-type-import:
-            path: github.com/google/uuid
-            name: googleuuid
-        id:
-          type: number
-          # ... this is also a bit of a contrived example, as you could use
-          # `type: integer` but in the case that you know better than what
-          # oapi-codegen is generating, like so:
-          x-go-type: int64
-```
-
-From here, we now get two different models:
-
-```go
-// Client defines model for Client.
-type Client struct {
-	Id   *float32 `json:"id,omitempty"`
-	Name string   `json:"name"`
-}
-
-// ClientWithExtension defines model for ClientWithExtension.
-type ClientWithExtension struct {
-	Id   *int64          `json:"id,omitempty"`
-	Name googleuuid.UUID `json:"name"`
-}
-```
-
-You can see this in more detail in [the example code](examples/extensions/xgotype/).
-
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-go-type-skip-optional-pointer`
-
-</td>
-<td>
-Do not add a pointer type for optional fields in structs
-</td>
-<td>
-<details>
-
-By default, `oapi-codegen` will generate a pointer for optional fields.
-
-Using the `x-go-type-skip-optional-pointer` extension allows omitting that pointer.
-
-We can see this at play with the following schemas:
-
-```yaml
-components:
-  schemas:
-    Client:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-        id:
-          type: number
-    ClientWithExtension:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-        id:
-          type: number
-          x-go-type-skip-optional-pointer: true
-```
-
-From here, we now get two different models:
-
-```go
-// Client defines model for Client.
-type Client struct {
-	Id   *float32 `json:"id,omitempty"`
-	Name string   `json:"name"`
-}
-
-// ClientWithExtension defines model for ClientWithExtension.
-type ClientWithExtension struct {
-	Id   float32 `json:"id,omitempty"`
-	Name string  `json:"name"`
-}
-```
-
-You can see this in more detail in [the example code](examples/extensions/xgotypeskipoptionalpointer/).
-
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-go-name`
-
-</td>
-<td>
-Override the generated name of a field or a type
-</td>
-<td>
-<details>
-
-By default, `oapi-codegen` will attempt to generate the name of fields and types in as best a way it can.
-
-However, sometimes, the name doesn't quite fit what your codebase standards are, or the intent of the field, so you can override it with `x-go-name`.
-
-We can see this at play with the following schemas:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: x-go-name
-components:
-  schemas:
-    Client:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-        id:
-          type: number
-    ClientWithExtension:
-      type: object
-      # can be used on a type
-      x-go-name: ClientRenamedByExtension
-      required:
-        - name
-      properties:
-        name:
-          type: string
-        id:
-          type: number
-          # or on a field
-          x-go-name: AccountIdentifier
-```
-
-From here, we now get two different models:
-
-```go
-// Client defines model for Client.
-type Client struct {
-	Id   *float32 `json:"id,omitempty"`
-	Name string   `json:"name"`
-}
-
-// ClientRenamedByExtension defines model for ClientWithExtension.
-type ClientRenamedByExtension struct {
-	AccountIdentifier *float32 `json:"id,omitempty"`
-	Name              string   `json:"name"`
-}
-```
-
-You can see this in more detail in [the example code](examples/extensions/xgoname/).
-
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-go-type-name`
-
-</td>
-<td>
-Override the generated name of a type
-</td>
-<td>
-<details>
-
-> [!NOTE]
-> Notice that this is subtly different to the `x-go-name`, which also applies to _fields_ within `struct`s.
-
-By default, `oapi-codegen` will attempt to generate the name of types in as best a way it can.
-
-However, sometimes, the name doesn't quite fit what your codebase standards are, or the intent of the field, so you can override it with `x-go-name`.
-
-We can see this at play with the following schemas:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: x-go-type-name
-components:
-  schemas:
-    Client:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-        id:
-          type: number
-    ClientWithExtension:
-      type: object
-      x-go-type-name: ClientRenamedByExtension
-      required:
-        - name
-      properties:
-        name:
-          type: string
-        id:
-          type: number
-          # NOTE attempting a `x-go-type-name` here is a no-op, as we're not producing a _type_ only a _field_
-          x-go-type-name: ThisWillNotBeUsed
-```
-
-From here, we now get two different models and a type alias:
-
-```go
-// Client defines model for Client.
-type Client struct {
-	Id   *float32 `json:"id,omitempty"`
-	Name string   `json:"name"`
-}
-
-// ClientWithExtension defines model for ClientWithExtension.
-type ClientWithExtension = ClientRenamedByExtension
-
-// ClientRenamedByExtension defines model for .
-type ClientRenamedByExtension struct {
-	Id   *float32 `json:"id,omitempty"`
-	Name string   `json:"name"`
-}
-```
-
-You can see this in more detail in [the example code](examples/extensions/xgotypename/).
-
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-omitempty`
-
-</td>
-<td>
-Force the presence of the JSON tag `omitempty` on a field
-</td>
-<td>
-<details>
-
-In a case that you may want to add the JSON struct tag `omitempty` to types that don't have one generated by default - for instance a required field - you can use the `x-omitempty` extension.
-
-We can see this at play with the following schemas:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: x-omitempty
-components:
-  schemas:
-    Client:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-        id:
-          type: number
-    ClientWithExtension:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          # for some reason, you may want this behaviour, even though it's a required field
-          x-omitempty: true
-        id:
-          type: number
-```
-
-From here, we now get two different models:
-
-```go
-// Client defines model for Client.
-type Client struct {
-	Id   *float32 `json:"id,omitempty"`
-	Name string   `json:"name"`
-}
-
-// ClientWithExtension defines model for ClientWithExtension.
-type ClientWithExtension struct {
-	Id   *float32 `json:"id,omitempty"`
-	Name string   `json:"name,omitempty"`
-}
-```
-
-Notice that the `ComplexField` is still generated in full, but the type will then be ignored with JSON marshalling.
-
-You can see this in more detail in [the example code](examples/extensions/xgojsonignore/).
-
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-go-json-ignore`
-
-</td>
-<td>
-When (un)marshaling JSON, ignore field(s)
-</td>
-<td>
-<details>
-
-By default, `oapi-codegen` will generate `json:"..."` struct tags for all fields in a struct, so JSON (un)marshaling works.
-
-However, sometimes, you want to omit fields, which can be done with the `x-go-json-ignore` extension.
-
-We can see this at play with the following schemas:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: x-go-json-ignore
-components:
-  schemas:
-    Client:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-        complexField:
-          type: object
-          properties:
-            name:
-              type: string
-            accountName:
-              type: string
-          # ...
-    ClientWithExtension:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-        complexField:
-          type: object
-          properties:
-            name:
-              type: string
-            accountName:
-              type: string
-          # ...
-          x-go-json-ignore: true
-```
-
-From here, we now get two different models:
-
-```go
-// Client defines model for Client.
-type Client struct {
-	ComplexField *struct {
-		AccountName *string `json:"accountName,omitempty"`
-		Name        *string `json:"name,omitempty"`
-	} `json:"complexField,omitempty"`
-	Name string `json:"name"`
-}
-
-// ClientWithExtension defines model for ClientWithExtension.
-type ClientWithExtension struct {
-	ComplexField *struct {
-		AccountName *string `json:"accountName,omitempty"`
-		Name        *string `json:"name,omitempty"`
-	} `json:"-"`
-	Name string `json:"name"`
-}
-```
-
-Notice that the `ComplexField` is still generated in full, but the type will then be ignored with JSON marshalling.
-
-You can see this in more detail in [the example code](examples/extensions/xgojsonignore/).
-
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-oapi-codegen-extra-tags`
-
-</td>
-<td>
-Generate arbitrary struct tags to fields
-</td>
-<td>
-<details>
-
-If you're making use of a field's struct tags to i.e. apply validation, decide whether something should be logged, etc, you can use `x-oapi-codegen-extra-tags` to set additional tags for your generated types.
-
-We can see this at play with the following schemas:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: x-oapi-codegen-extra-tags
-components:
-  schemas:
-    Client:
-      type: object
-      required:
-        - name
-        - id
-      properties:
-        name:
-          type: string
-        id:
-          type: number
-    ClientWithExtension:
-      type: object
-      required:
-        - name
-        - id
-      properties:
-        name:
-          type: string
-        id:
-          type: number
-          x-oapi-codegen-extra-tags:
-            validate: "required,min=1,max=256"
-            safe-to-log: "true"
-            gorm: primarykey
-```
-
-From here, we now get two different models:
-
-```go
-// Client defines model for Client.
-type Client struct {
-	Id   float32 `json:"id"`
-	Name string  `json:"name"`
-}
-
-// ClientWithExtension defines model for ClientWithExtension.
-type ClientWithExtension struct {
-	Id   float32 `gorm:"primarykey" json:"id" safe-to-log:"true" validate:"required,min=1,max=256"`
-	Name string  `json:"name"`
-}
-```
-
-You can see this in more detail in [the example code](examples/extensions/xoapicodegenextratags/).
-
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-enum-varnames` / `x-enumNames`
-
-</td>
-<td>
-Override generated variable names for enum constants
-</td>
-<td>
-<details>
-
-When consuming an enum value from an external system, the name may not produce a nice variable name. Using the `x-enum-varnames` extension allows overriding the name of the generated variable names.
-
-We can see this at play with the following schemas:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: x-enumNames and x-enum-varnames
-components:
-  schemas:
-    ClientType:
-      type: string
-      enum:
-        - ACT
-        - EXP
-    ClientTypeWithNamesExtension:
-      type: string
-      enum:
-        - ACT
-        - EXP
-      x-enumNames:
-        - Active
-        - Expired
-    ClientTypeWithVarNamesExtension:
-      type: string
-      enum:
-        - ACT
-        - EXP
-      x-enum-varnames:
-        - Active
-        - Expired
-```
-
-From here, we now get two different forms of the same enum definition.
-
-```go
-// Defines values for ClientType.
-const (
-	ACT ClientType = "ACT"
-	EXP ClientType = "EXP"
-)
-
-// ClientType defines model for ClientType.
-type ClientType string
-
-// Defines values for ClientTypeWithExtension.
-const (
-	Active  ClientTypeWithExtension = "ACT"
-	Expired ClientTypeWithExtension = "EXP"
-)
-
-// ClientTypeWithExtension defines model for ClientTypeWithExtension.
-type ClientTypeWithExtension string
-```
-
-You can see this in more detail in [the example code](examples/extensions/xenumvarnames/).
-
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-deprecated-reason`
-
-</td>
-<td>
-Add a GoDoc deprecation warning to a type
-</td>
-<td>
-<details>
-
-When an OpenAPI type is deprecated, a deprecation warning can be added in the GoDoc using `x-deprecated-reason`.
-
-We can see this at play with the following schemas:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: x-deprecated-reason
-components:
-  schemas:
-    Client:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-        id:
-          type: number
-    ClientWithExtension:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          deprecated: true
-          x-deprecated-reason: Don't use because reasons
-        id:
-          type: number
-          # NOTE that this doesn't generate, as no `deprecated: true` is set
-          x-deprecated-reason: NOTE you shouldn't see this, as you've not deprecated this field
-```
-
-From here, we now get two different forms of the same enum definition.
-
-```go
-// Client defines model for Client.
-type Client struct {
-	Id   *float32 `json:"id,omitempty"`
-	Name string   `json:"name"`
-}
-
-// ClientWithExtension defines model for ClientWithExtension.
-type ClientWithExtension struct {
-	Id *float32 `json:"id,omitempty"`
-	// Deprecated: Don't use because reasons
-	Name string `json:"name"`
-}
-```
-
-Notice that because we've not set `deprecated: true` to the `name` field, it doesn't generate a deprecation warning.
-
-You can see this in more detail in [the example code](examples/extensions/xdeprecatedreason/).
-
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-order`
-
-</td>
-<td>
-Explicitly order struct fields
-</td>
-<td>
-<details>
-
-Whether you like certain fields being ordered before others, or you want to perform more efficient packing of your structs, the `x-order` extension is here for you.
-
-Note that `x-order` is 1-indexed - `x-order: 0` is not a valid value.
-
-When an OpenAPI type is deprecated, a deprecation warning can be added in the GoDoc using `x-deprecated-reason`.
-
-We can see this at play with the following schemas:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: x-order
-components:
-  schemas:
-    Client:
-      type: object
-      required:
-        - name
-      properties:
-        a_name:
-          type: string
-        id:
-          type: number
-    ClientWithExtension:
-      type: object
-      required:
-        - name
-      properties:
-        a_name:
-          type: string
-          x-order: 2
-        id:
-          type: number
-          x-order: 1
-```
-
-From here, we now get two different forms of the same type definition.
-
-```go
-// Client defines model for Client.
-type Client struct {
-	AName *string  `json:"a_name,omitempty"`
-	Id    *float32 `json:"id,omitempty"`
-}
-
-// ClientWithExtension defines model for ClientWithExtension.
-type ClientWithExtension struct {
-	Id    *float32 `json:"id,omitempty"`
-	AName *string  `json:"a_name,omitempty"`
-}
-```
-
-You can see this in more detail in [the example code](examples/extensions/xorder/).
-
-</details>
-</td>
-</tr>
-
-<tr>
-<td>
-
-`x-oapi-codegen-only-honour-go-name`
-
-</td>
-<td>
-Only honour the `x-go-name` when generating field names
-</td>
-<td>
-<details>
-
-> [!WARNING]
-> Using this option may lead to cases where `oapi-codegen`'s rewriting of field names to prevent clashes with other types, or to prevent including characters that may not be valid Go field names.
-
-In some cases, you may not want use the inbuilt options for converting an OpenAPI field name to a Go field name, such as the `name-normalizer: "ToCamelCaseWithInitialisms"`, and instead trust the name that you've defined for the type better.
-
-In this case, you can use `x-oapi-codegen-only-honour-go-name` to enforce this, alongside specifying the `allow-unexported-struct-field-names` compatibility option.
-
-This allows you to take a spec such as:
-
-```yaml
-openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: x-oapi-codegen-only-honour-go-name
-components:
-  schemas:
-    TypeWithUnexportedField:
-      description: A struct will be output where one of the fields is not exported
-      properties:
-        name:
-          type: string
-        id:
-          type: string
-          # NOTE that there is an explicit usage of a lowercase character
-          x-go-name: accountIdentifier
-          x-oapi-codegen-extra-tags:
-            json: "-"
-          x-oapi-codegen-only-honour-go-name: true
-```
-
-And we'll generate:
-
-```go
-// TypeWithUnexportedField A struct will be output where one of the fields is not exported
-type TypeWithUnexportedField struct {
-	accountIdentifier *string `json:"-"`
-	Name              *string `json:"name,omitempty"`
-}
-```
-
-You can see this in more detail in [the example code](examples/extensions/xoapicodegenonlyhonourgoname).
-
-</details>
-</td>
-</tr>
-
-</table>
+The following extensions are supported:
+
+| Extension | Description | Docs                                                                  |
+| --- | --- |-----------------------------------------------------------------------|
+| `x-go-type` / `x-go-type-import` | Override the generated type definition (and optionally, add an import from another package) | [(docs)](docs/extensions.md#x-go-type--x-go-type-import)              |
+| `x-go-type-skip-optional-pointer` | Do not add a pointer type for optional fields in structs | [(docs)](docs/extensions.md#x-go-type-skip-optional-pointer)          |
+| `x-go-name` | Override the generated name of a field or a type | [(docs)](docs/extensions.md#x-go-name)                                |
+| `x-go-type-name` | Override the generated name of a type | [(docs)](docs/extensions.md#x-go-type-name)                           |
+| `x-omitempty` | Force the presence of the JSON tag `omitempty` on a field | [(docs)](docs/extensions.md#x-omitempty)                              |
+| `x-omitzero` | Force the presence of the JSON tag `omitzero` on a field | [(docs)](docs/extensions.md#x-omitzero)                               |
+| `x-go-json-ignore` | When (un)marshaling JSON, ignore field(s) | [(docs)](docs/extensions.md#x-go-json-ignore)                         |
+| `x-oapi-codegen-extra-tags` | Generate arbitrary struct tags to fields | [(docs)](docs/extensions.md#x-oapi-codegen-extra-tags)                |
+| `x-enum-varnames` / `x-enumNames` | Override generated variable names for enum constants | [(docs)](docs/extensions.md#x-enum-varnames--x-enumnames)             |
+| `x-deprecated-reason` | Add a GoDoc deprecation warning to a type | [(docs)](docs/extensions.md#x-deprecated-reason)                      |
+| `x-order` | Explicitly order struct fields | [(docs)](docs/extensions.md#x-order)                                  |
+| `x-oapi-codegen-only-honour-go-name` | Only honour the `x-go-name` when generating field names | [(docs)](docs/extensions.md#x-oapi-codegen-only-honour-go-name)       |
+| `x-oapi-codegen-enum-merge` | Keep all the values of an `allOf`'s enums, with `schema-merging-behavior: v3` | [(docs)](docs/extensions.md#x-oapi-codegen-enum-merge)                |
 
 ## Request/response validation middleware
 
@@ -3095,7 +1530,21 @@ Middleware library
 <tr>
 <td>
 
-[1.22+ `net/http`](https://pkg.go.dev/net/http)
+[`net/http`](https://pkg.go.dev/net/http)
+
+</td>
+<td>
+
+[nethttp-middleware](https://github.com/oapi-codegen/nethttp-middleware)
+
+</td>
+
+</tr>
+
+<tr>
+<td>
+
+Any other server (which conforms to `net/http`)
 
 </td>
 <td>
@@ -3111,8 +1560,16 @@ Middleware library
 > [!NOTE]
 > It is [not currently possible](https://github.com/oapi-codegen/oapi-codegen/issues/1038) to validate the HTTP response with a middleware.
 
-> [!NOTE]
-> We're also [exploring](https://github.com/oapi-codegen/exp/issues/1) the use of [libopenapi-validator](https://github.com/pb33f/libopenapi-validator/) for request/response validation middleware
+> [!TIP]
+> A validation middleware decodes the JSON request body to validate it, and the generated handler then decodes it again. Because `encoding/json` matches member names case-insensitively, a body such as `{"role":"user","ROLE":"admin"}` validates as `role: user` but is bound as `Role: "admin"`, bypassing the schema's constraints.
+>
+> [Strict](#strict-server) net/http, Chi, gorilla/mux, Echo, Gin, Iris and Fiber servers avoid the second decode when the middleware keeps the value it validated. `nethttp-middleware` v1.3.1, `echo-middleware` v1.2.1, `echo-v5-middleware` v0.2.1, `gin-middleware` v1.2.1, `iris-middleware` v1.2.1, `fiber-middleware` v1.3.0 and `fiber-v3-middleware` v0.3.0 and later do this by default (opt out with `Options.DiscardValidatedValue`). With an older version, or with your own `openapi3filter` setup, set kin-openapi's `KeepValidatedValue` option, shown here for `nethttp-middleware`:
+>
+>     r.Use(middleware.OapiRequestValidatorWithOptions(spec, &middleware.Options{
+>         Options: openapi3filter.Options{KeepValidatedValue: true},
+>     }))
+>
+> The generated handler then binds the validated value (via `runtime.BindJSONBody` or `runtime.BindJSONValue`, runtime v1.8.0 or later) with exact member-name matching, and only falls back to the framework's decoder when no validated value is present. This requires kin-openapi v0.151.0 or later. Fiber does not run on `net/http`, so the validated value cannot travel on the request body; `fiber-middleware` and `fiber-v3-middleware` store it in the Fiber context under `ValidatedBodyLocalsKey` (`x-oapi-codegen-validated-body`) and the generated strict Fiber handler reads it from there, which means the Fiber middleware versions above are required rather than the `KeepValidatedValue` option alone. See [#2605](https://github.com/oapi-codegen/oapi-codegen/issues/2605).
 
 ## Implementing security
 
@@ -3123,11 +1580,28 @@ If you're using a specification with [Security Schemes](https://spec.openapis.or
 > [!NOTE]
 > Out-of-the-box, the server-side code generated by `oapi-codegen` does not provide security validation.
 >
-> To perform authentication, you will need to use the [validation middleware](#request-response-validation-middleware).
->
-> In the future, we plan to [implement server-side validation in the generated code](https://github.com/oapi-codegen/oapi-codegen/issues/1524)
+> To perform authentication, you will need to use the [validation middleware](#requestresponse-validation-middleware), which validates each request against the spec's security requirements and calls your `AuthenticationFunc` with the scheme name and required scopes.
 
 To see how this can work, check out the [authenticated API example](examples/authenticated-api/echo).
+
+#### Deprecated: auth scopes on the request context
+
+Historically, generated server code embedded each operation's security scopes into the request context:
+a context key type per security scheme (e.g. `bearerAuthContextKey`), a scope constant (e.g. `BearerAuthScopes`),
+and a per-operation call storing the operation's scopes into the request context.
+
+This mechanism is deprecated and no longer generated by default. It flattens the
+spec's `security` requirements into a per-scheme list of scopes, and cannot represent
+alternative schemes (OR), combined schemes (AND), or anonymous (`{}`) alternatives, so middleware built on it can't correctly enforce the spec. Use the [validation middleware](#requestresponse-validation-middleware) instead. Please see [#1524](https://github.com/oapi-codegen/oapi-codegen/issues/1524) for more background.
+
+If you have existing middleware that relies on these constants, you can re-enable them with:
+
+```yaml
+compatibility:
+  enable-auth-scopes-on-context: true
+```
+
+Note that even when re-enabled, an operation that includes an empty `{}` security alternative allows anonymous requests, and no scopes are embedded into the request context for that operation.
 
 ### On the client
 
@@ -3179,7 +1653,7 @@ You can specify, through your configuration file, the `output-options.user-templ
 Within your configuration file, you can specify relative or absolute paths to a file to reference for the template, such as:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
 # ...
 output-options:
   user-templates:
@@ -3200,12 +1674,14 @@ It is also possible to use HTTPS URLs.
 >
 > See [this blog post](https://www.jvt.me/posts/2024/04/27/github-actions-update-file/) for an example of how to use GitHub Actions to manage the updates of files across repos
 >
+> See [this blog post](https://www.jvt.me/posts/2026/02/27/renovate-update-file) for an example of how to use Renovate to manage the updates of files across repos
+>
 > This will be disabled by default (but possible to turn back on via configuration) [in the future](https://github.com/oapi-codegen/oapi-codegen/issues/1564)
 
 To use it, you can use the following configuration:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
 # ...
 output-options:
   user-templates:
@@ -3227,7 +1703,7 @@ output-options:
 It's also possible to set the templates inline in the configuration file:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
 # ...
 output-options:
   user-templates:
@@ -3338,13 +1814,13 @@ func (a *Thing) Set(fieldName string, value interface{}) {
 // Override default JSON handling for Thing to handle AdditionalProperties
 func (a *Thing) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["id"]; found {
-		err = json.Unmarshal(raw, &a.Id)
+		err = runtime.JSONUnmarshal(raw, &a.Id)
 		if err != nil {
 			return fmt.Errorf("error reading 'id': %w", err)
 		}
@@ -3355,7 +1831,7 @@ func (a *Thing) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]interface{})
 		for fieldName, fieldBuf := range object {
 			var fieldVal interface{}
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -3370,18 +1846,18 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["id"], err = json.Marshal(a.Id)
+	object["id"], err = runtime.JSONMarshal(a.Id)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'id': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 ```
 
@@ -3442,13 +1918,13 @@ func (a *Thing) Set(fieldName string, value int) {
 // Override default JSON handling for Thing to handle AdditionalProperties
 func (a *Thing) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["id"]; found {
-		err = json.Unmarshal(raw, &a.Id)
+		err = runtime.JSONUnmarshal(raw, &a.Id)
 		if err != nil {
 			return fmt.Errorf("error reading 'id': %w", err)
 		}
@@ -3459,7 +1935,7 @@ func (a *Thing) UnmarshalJSON(b []byte) error {
 		a.AdditionalProperties = make(map[string]int)
 		for fieldName, fieldBuf := range object {
 			var fieldVal int
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -3474,18 +1950,18 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["id"], err = json.Marshal(a.Id)
+	object["id"], err = runtime.JSONMarshal(a.Id)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'id': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 ```
 
@@ -3556,13 +2032,13 @@ func (a *Thing) Set(fieldName string, value struct {
 // Override default JSON handling for Thing to handle AdditionalProperties
 func (a *Thing) UnmarshalJSON(b []byte) error {
 	object := make(map[string]json.RawMessage)
-	err := json.Unmarshal(b, &object)
+	err := runtime.JSONUnmarshal(b, &object)
 	if err != nil {
 		return err
 	}
 
 	if raw, found := object["id"]; found {
-		err = json.Unmarshal(raw, &a.Id)
+		err = runtime.JSONUnmarshal(raw, &a.Id)
 		if err != nil {
 			return fmt.Errorf("error reading 'id': %w", err)
 		}
@@ -3577,7 +2053,7 @@ func (a *Thing) UnmarshalJSON(b []byte) error {
 			var fieldVal struct {
 				Foo *string `json:"foo,omitempty"`
 			}
-			err := json.Unmarshal(fieldBuf, &fieldVal)
+			err := runtime.JSONUnmarshal(fieldBuf, &fieldVal)
 			if err != nil {
 				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
 			}
@@ -3592,22 +2068,104 @@ func (a Thing) MarshalJSON() ([]byte, error) {
 	var err error
 	object := make(map[string]json.RawMessage)
 
-	object["id"], err = json.Marshal(a.Id)
+	object["id"], err = runtime.JSONMarshal(a.Id)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'id': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
-		object[fieldName], err = json.Marshal(field)
+		object[fieldName], err = runtime.JSONMarshal(field)
 		if err != nil {
 			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
 		}
 	}
-	return json.Marshal(object)
+	return runtime.JSONMarshal(object)
 }
 ```
 
 </details>
+
+## Globally skipping the "optional pointer"
+
+One of the key things `oapi-codegen` does is to use an "optional pointer", following idiomatic Go practices, to indicate that a field/type is optional.
+
+This can be tuned on a per-field basis, using the [`x-go-type-skip-optional-pointer` extension](#ext-x-go-type-skip-optional-pointer), but it can be a bit repetitive, or can be more complex when using an OpenAPI Overlay.
+
+As of `oapi-codegen` v2.5.0, this can be tuned in two specific ways, via the following `output-options:`:
+
+- `prefer-skip-optional-pointer`: a global default that you do _not_ want the "optional pointer" generated. Optional fields will not have an "optional pointer", and will have an `omitempty` JSON tag
+- `prefer-skip-optional-pointer-with-omitzero`: when used in conjunction with `prefer-skip-optional-pointer`, any optional fields are generated with an `omitzero` JSON tag. **Requires Go 1.24+**
+
+In both cases, there is control on a per-field level to set `x-go-type-skip-optional-pointer: false` or `x-omitzero: false` to undo these to field(s).
+
+For example, when combining both options:
+
+```yaml
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
+package: preferskipoptionalpointerwithomitzero
+output: gen.go
+generate:
+  # ...
+output-options:
+  # ...
+  prefer-skip-optional-pointer: true
+  prefer-skip-optional-pointer-with-omitzero: true
+```
+
+When we have the following spec:
+
+```yaml
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: prefer-skip-optional-pointer-with-omitzero
+components:
+  schemas:
+    ClientWithExtension:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          description: This field is required, so will never have an optional pointer, nor `omitzero`.
+          type: string
+        id:
+          description: This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer. However, it will receive `omitzero`.
+          type: number
+        pointer_id:
+          type: number
+          description: This field should have an optional pointer, as the field-level definition of `x-go-type-skip-optional-pointer` overrides the `prefer-skip-optional-pointer` Output Option. This will also not receive an `omitzero`.
+          # NOTE that this overrides the global preference
+          x-go-type-skip-optional-pointer: false
+        no_omit:
+          type: number
+          description: This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer. This will not receive `omitzero`, as the field-level definition of `x-omitzero` overrides the `prefer-skip-optional-pointer-with-omitzero` Output Option.
+          # NOTE that this overrides the global preference
+          x-omitzero: false
+```
+
+We then generate the following Go code:
+
+```go
+// ...
+
+// ClientWithExtension defines model for ClientWithExtension.
+type ClientWithExtension struct {
+	// Id This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer. However, it will receive `omitzero`.
+	Id float32 `json:"id,omitempty,omitzero"`
+
+	// Name This field is required, so will never have an optional pointer, nor `omitzero`.
+	Name string `json:"name"`
+
+	// NoOmit This field is optional, but the `prefer-skip-optional-pointer` Output Option ensures that this should not have an optional pointer. This will not receive `omitzero`, as the field-level definition of `x-omitzero` overrides the `prefer-skip-optional-pointer-with-omitzero` Output Option.
+	NoOmit float32 `json:"no_omit,omitempty"`
+
+	// PointerId This field should have an optional pointer, as the field-level definition of `x-go-type-skip-optional-pointer` overrides the `prefer-skip-optional-pointer` Output Option. This will also not receive an `omitzero`.
+	PointerId *float32 `json:"pointer_id,omitempty"`
+}
+```
+
+You can see this in more detail in [the example code for `prefer-skip-optional-pointer`](examples/output-options/preferskipoptionalpointer/) and [example code for `prefer-skip-optional-pointer-with-omitzero`](examples/output-options/preferskipoptionalpointerwithomitzero/)
 
 ## Changing the names of generated types
 
@@ -3812,7 +2370,59 @@ type ClientInterface interface {
 </details>
 
 
-For more details of what the resulting code looks like, check out [the test cases](internal/test/outputoptions/name-normalizer/).
+For more details of what the resulting code looks like, check out [the test cases](internal/test/options/name_normalizer/).
+
+### Adjusting how names are normalized
+
+The `name-normalizer` applies to every name in the spec. A few of its behaviors can be changed one at a time with `output-options.naming`, which leaves everything else as the normalizer you chose produces it. All of these are opt-in: without them, generated names do not change.
+
+```yaml
+output-options:
+  naming:
+    enum-values:
+      keep-underscores: true
+    properties:
+      leading-underscore: drop
+    explicit-names: verbatim
+```
+
+#### `enum-values.keep-underscores`
+
+By default an underscore in an enum value separates two words and is removed from the name of the constant. With `keep-underscores: true` the words are still normalized, but the underscore between them stays:
+
+| Enum value | Default | With `keep-underscores` |
+|---|---|---|
+| `SOME_ENUM_NAME` | `SOMEENUMNAME` | `SOME_ENUM_NAME` |
+| `some_enum_name` | `SomeEnumName` | `Some_Enum_Name` |
+| `ABC-DEF` | `ABCDEF` | `ABCDEF` |
+| `_FOO` | `UnderscoreFOO` | `Underscore_FOO` |
+
+This applies to the names given in `x-enum-varnames` as well, and works with every `name-normalizer`. It cannot be combined with `compatibility.old-enum-conflicts`.
+
+#### `properties.leading-underscore`
+
+By default the underscores at the start of a property name are spelled out in the name of its struct field. With `leading-underscore: drop` they contribute nothing:
+
+| Property | Default | With `leading-underscore: drop` |
+|---|---|---|
+| `_id` | `UnderscoreId` | `Id` |
+| `_UPPER_SNAKE_CASE` | `UnderscoreUPPERSNAKECASE` | `UPPERSNAKECASE` |
+| `__meta` | `UnderscoreUnderscoreMeta` | `Meta` |
+
+The same goes for an operation's query, header and cookie parameters, which are the fields of its parameters struct: a query parameter `_id` becomes `params.Id`. Path parameters are function arguments rather than fields and are not affected.
+
+An object that has both `_id` and `id` then has two properties that want the same field name, which is reported as an error. Rename one of them with `x-go-name`, or set `output-options.resolve-type-name-collisions` to have them renamed automatically.
+
+#### `explicit-names`
+
+By default a Go name that the spec states itself is normalized like any other name, so `x-go-name: HARD_CODED_ID` on a property becomes the field `HARDCODEDID`. With `explicit-names: verbatim` such a name is emitted exactly as written. This applies to:
+
+- `x-go-name` on a property or a parameter
+- `x-enum-varnames` and `x-enumNames`
+
+(`x-go-name` on a schema, response, request body or server, and `x-go-type-name`, are already used as written.)
+
+A verbatim name has to be a valid Go identifier, and nothing else about it is checked or changed: it is not capitalized, not renamed when it collides with another name, and an enum constant does not get the type name prefix that the enum's other constants may get. Whether it is exported, unique and otherwise usable is up to you, and the Go compiler will tell you if it is not.
 
 ## Examples
 
@@ -3837,9 +2447,25 @@ Got one to add? Please raise a PR!
 
 ## Frequently Asked Questions (FAQs)
 
+### Does `oapi-codegen` support OpenAPI 3.1?
+
+Yes. Initial OpenAPI 3.1 support landed with [#2336](https://github.com/oapi-codegen/oapi-codegen/pull/2336), including [webhooks](https://spec.openapis.org/oas/v3.1.0#oasWebhooks) and version-aware handling of 3.1 idioms such as `type: [T, "null"]` nullability and enums declared via `oneOf` + `const`.
+
+A 3.1 schema may also declare a multi-type union, such as `type: [string, number, boolean]`. Go has no type expressing that constraint, so these generate `any`.
+
+If you're on an older release that predates this, you can [use OpenAPI Overlay](#modifying-the-input-openapi-specification-with-openapi-overlay) to "downgrade" an OpenAPI 3.1 spec to OpenAPI 3.0, following [steps from this blog post](https://www.jvt.me/posts/2025/05/04/oapi-codegen-trick-openapi-3-1/).
+
 ### How does `oapi-codegen` handle `anyOf`, `allOf` and `oneOf`?
 
 `oapi-codegen` supports `anyOf`, `allOf` and `oneOf` for generated code.
+
+There are three ways of turning them into Go types, which the `compatibility.schema-merging-behavior` setting chooses between:
+
+- `v1` is the original behavior. It embeds the types of an `allOf`'s members in a struct, and is very limited.
+- `v2` merges an `allOf`'s members into one type. It is the current default.
+- `v3` merges them by what `allOf` means, reports conflicting members as errors, and models more of what `anyOf` and `oneOf` say. It is an option for now, and will become the default once it has been available as an option for at least one release.
+
+[How `allOf`, `anyOf` and `oneOf` become Go types](docs/schema-merging.md) describes how `v1` differs from the others, and compares `v2` and `v3` side by side. The example below generates the same code under `v2` and `v3`.
 
 For instance, through the following OpenAPI spec:
 
@@ -3867,7 +2493,7 @@ components:
         issuer:
           type: string
 
-    # allOf performs a union of all types defined
+    # allOf merges the schemas it lists into one type
     ClientWithId:
       allOf:
         - $ref: '#/components/schemas/Client'
@@ -3877,25 +2503,17 @@ components:
           required:
             - id
 
-    # allOf performs a union of all types defined, but if there's a duplicate field defined, it'll be overwritten by the last schema
-    # https://github.com/oapi-codegen/oapi-codegen/issues/1569
+    # a property several schemas declare is merged: here, the second schema
+    # adds a description and a length limit to Identity's `issuer`. Their
+    # types have to agree; `v3` reports an error when they can't
     IdentityWithDuplicateField:
       allOf:
-        # `issuer` will be ignored
         - $ref: '#/components/schemas/Identity'
-        # `issuer` will be ignored
         - properties:
             issuer:
-              type: integer
-        # `issuer` will take precedence
-        - properties:
-            issuer:
-              type: object
-              properties:
-                name:
-                  type: string
-              required:
-                - name
+              type: string
+              description: The URL of the issuer.
+              maxLength: 255
 
     # anyOf results in a type that has an `AsClient`/`MergeClient`/`FromClient` and an `AsIdentity`/`MergeIdentity`/`FromIdentity` method so you can choose which of them you want to retrieve
     ClientAndMaybeIdentity:
@@ -3943,9 +2561,8 @@ type ClientWithId struct {
 
 // IdentityWithDuplicateField defines model for IdentityWithDuplicateField.
 type IdentityWithDuplicateField struct {
-	Issuer struct {
-		Name string `json:"name"`
-	} `json:"issuer"`
+	// Issuer The URL of the issuer.
+	Issuer string `json:"issuer"`
 }
 ```
 
@@ -3970,20 +2587,20 @@ type ClientAndMaybeIdentity struct {
 // AsClient returns the union data inside the ClientAndMaybeIdentity as a Client
 func (t ClientAndMaybeIdentity) AsClient() (Client, error) {
 	var body Client
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromClient overwrites any union data inside the ClientAndMaybeIdentity as the provided Client
 func (t *ClientAndMaybeIdentity) FromClient(v Client) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeClient performs a merge with any union data inside the ClientAndMaybeIdentity, using the provided Client
 func (t *ClientAndMaybeIdentity) MergeClient(v Client) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -3996,20 +2613,20 @@ func (t *ClientAndMaybeIdentity) MergeClient(v Client) error {
 // AsIdentity returns the union data inside the ClientAndMaybeIdentity as a Identity
 func (t ClientAndMaybeIdentity) AsIdentity() (Identity, error) {
 	var body Identity
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromIdentity overwrites any union data inside the ClientAndMaybeIdentity as the provided Identity
 func (t *ClientAndMaybeIdentity) FromIdentity(v Identity) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeIdentity performs a merge with any union data inside the ClientAndMaybeIdentity, using the provided Identity
 func (t *ClientAndMaybeIdentity) MergeIdentity(v Identity) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -4042,20 +2659,20 @@ func (t *ClientAndMaybeIdentity) UnmarshalJSON(b []byte) error {
 // AsClient returns the union data inside the ClientOrIdentity as a Client
 func (t ClientOrIdentity) AsClient() (Client, error) {
 	var body Client
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromClient overwrites any union data inside the ClientOrIdentity as the provided Client
 func (t *ClientOrIdentity) FromClient(v Client) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeClient performs a merge with any union data inside the ClientOrIdentity, using the provided Client
 func (t *ClientOrIdentity) MergeClient(v Client) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -4068,20 +2685,20 @@ func (t *ClientOrIdentity) MergeClient(v Client) error {
 // AsIdentity returns the union data inside the ClientOrIdentity as a Identity
 func (t ClientOrIdentity) AsIdentity() (Identity, error) {
 	var body Identity
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromIdentity overwrites any union data inside the ClientOrIdentity as the provided Identity
 func (t *ClientOrIdentity) FromIdentity(v Identity) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeIdentity performs a merge with any union data inside the ClientOrIdentity, using the provided Identity
 func (t *ClientOrIdentity) MergeIdentity(v Identity) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -4113,7 +2730,7 @@ By default, `oapi-codegen` will generate everything from the specification.
 If you'd like to reduce what's generated, you can use one of a few options in [the configuration file](#usage) to tune the generation of the resulting output:
 
 ```yaml
-# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/HEAD/configuration-schema.json
+# yaml-language-server: $schema=https://raw.githubusercontent.com/oapi-codegen/oapi-codegen/v2.9.0/configuration-schema.json
 output-options:
   include-tags: []
   exclude-tags: []
@@ -4164,19 +2781,7 @@ Please consider sponsoring us through GitHub Sponsors either [on the organisatio
 
 See [this blog post from Tidelift](https://blog.tidelift.com/paying-maintainers-the-howto) for more details on how to talk to your company about sponsoring maintainers of (Open Source) projects you depend on.
 
-We are currently sponsored for 4 hours of work a month by Elastic:
-
-<p align="center">
-	<a href="https://elastic.co?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
-		<picture>
-		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/elastic-light.svg">
-		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/elastic-dark.svg">
-		  <img alt="Elastic logo" src=".github/sponsors/elastic-dark.svg" height="100px">
-		</picture>
-	</a>
-</p>
-
-In addition, we are also generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
+We are also generously sponsored by the following folks, each of whom provide sponsorship for 1 hour of work a month:
 
 <p align="center">
 	<a href="https://www.devzero.io/lp/dev-environment?utm_campaign=github&utm_source=oapi-codegen%20repo&utm_medium=github%20sponsorship">
@@ -4189,27 +2794,17 @@ In addition, we are also generously sponsored by the following folks, each of wh
 </p>
 
 <p align="center">
-	<a href="https://speakeasy.com?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
-		<picture>
-		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/speakeasy-light.svg">
-		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/speakeasy-dark.svg">
-		  <img alt="Speakeasy logo" src=".github/sponsors/speakeasy-dark.svg" height="100px">
-		</picture>
-	</a>
-</p>
-
-<p align="center">
 	<a href="https://cybozu.co.jp/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
 		<img alt="Cybozu logo" src=".github/sponsors/cybozu.svg" height="100px">
 	</a>
 </p>
 
 <p align="center">
-	<a href="https://livepeer.org/?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
+	<a href="https://elastic.co?utm_source=oapi-codegen+repo&utm_medium=github+sponsorship">
 		<picture>
-		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/livepeer-light.svg">
-		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/livepeer-dark.svg">
-		  <img alt="Livepeer logo" src=".github/sponsors/livepeer-dark.svg" height="50px">
+		  <source media="(prefers-color-scheme: light)" srcset=".github/sponsors/elastic-light.svg">
+		  <source media="(prefers-color-scheme: dark)" srcset=".github/sponsors/elastic-dark.svg">
+		  <img alt="Elastic logo" src=".github/sponsors/elastic-dark.svg" height="100px">
 		</picture>
 	</a>
 </p>

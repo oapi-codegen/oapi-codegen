@@ -1,0 +1,10 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+# From issue-2011
+package: responseheaders
+output: headers.gen.go
+generate:
+  models: true
+  client: true
+output-options:
+  # Exercises the nullable.Nullable[T] header-binding path (IsNullable).
+  nullable-type: true

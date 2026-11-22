@@ -1,0 +1,36 @@
+# ==========================================================================
+# Category: options/yaml_tags
+# Tests:    yaml-tags output option emits yaml:"..." struct tags.
+#
+# Folds in (provenance):
+#   - outputoptions/yaml-tags  (yaml struct tags on generated parameter types)
+# ==========================================================================
+openapi: "3.0.1"
+info:
+  title: options/yaml_tags
+  version: "1.0.0"
+  description: |
+    Exercises the yaml-tags output-option flag. When enabled, generated structs
+    include yaml:"..." struct tags alongside json:"..." tags, enabling YAML
+    marshalling/unmarshalling without extra configuration.
+paths:
+  # outputoptions/yaml-tags: cookie parameter struct must include yaml tags
+  /cookies:
+    get:
+      operationId: cookieParams
+      parameters:
+        - name: authId
+          description: Cookie parameter
+          in: cookie
+          required: false
+          schema:
+            type: string
+        - name: serverId
+          description: Another cookie parameter
+          in: cookie
+          required: false
+          schema:
+            type: string
+      responses:
+        "204":
+          description: no content

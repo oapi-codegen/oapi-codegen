@@ -1,5 +1,0 @@
-# yaml-language-server: $schema=../../../../configuration-schema.json
-package: api
-generate:
-  models: true
-output: petstore-types.gen.go

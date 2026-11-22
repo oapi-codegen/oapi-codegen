@@ -11,7 +11,9 @@ type Client struct {
 
 // ClientWithExtension defines model for ClientWithExtension.
 type ClientWithExtension struct {
-	Id *float32 `json:"id,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	DeprecatedWithoutReason *string  `json:"deprecated_without_reason,omitempty"`
+	Id                      *float32 `json:"id,omitempty"`
 	// Deprecated: Don't use because reasons
 	Name string `json:"name"`
 }

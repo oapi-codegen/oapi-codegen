@@ -1,0 +1,24 @@
+openapi: "3.0.1"
+components:
+  securitySchemes:
+    bearerAuth:
+      scheme: bearer
+      type: http
+paths:
+  /auth-check:
+    get:
+      operationId: authCheck
+      security:
+        - {}
+        - bearerAuth: []
+      responses:
+        200:
+          description: good
+  # From issue-1469: registering fiber handlers for an operation with an
+  # empty-object requestBody must not panic.
+  /test:
+    get:
+      operationId: test
+      responses:
+        200:
+          description: good

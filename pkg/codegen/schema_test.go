@@ -1,9 +1,14 @@
 package codegen
 
 import (
+	"math"
+	"net/url"
+	"strings"
 	"testing"
 
+	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestProperty_GoTypeDef(t *testing.T) {
@@ -202,6 +207,7 @@ func TestProperty_GoTypeDef(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetGlobalState(t)
 			globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer = tt.fields.GlobalStateDisableRequiredReadOnlyAsPointer
 			p := Property{
 				Schema:    tt.fields.Schema,
@@ -441,6 +447,7 @@ func TestProperty_GoTypeDef_nullable(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			resetGlobalState(t)
 			globalState.options.Compatibility.DisableRequiredReadOnlyAsPointer = tt.fields.GlobalStateDisableRequiredReadOnlyAsPointer
 			globalState.options.OutputOptions.NullableType = tt.fields.GlobalStateNullableType
 			p := Property{
@@ -452,5 +459,1552 @@ func TestProperty_GoTypeDef_nullable(t *testing.T) {
 			}
 			assert.Equal(t, tt.want, p.GoTypeDef())
 		})
+	}
+}
+
+func TestProperty_ZeroValueIsNil(t *testing.T) {
+	newType := func(typ string) *openapi3.Types {
+		return &openapi3.Types{typ}
+	}
+
+	tests := []struct {
+		name        string
+		oapiSchema  *openapi3.Schema
+		goType      string
+		expectIsNil bool
+	}{
+		{
+			name:        "when an array, returns true",
+			oapiSchema:  &openapi3.Schema{Type: newType("array")},
+			expectIsNil: true,
+		},
+		{
+			name:        "when an object, returns false",
+			oapiSchema:  &openapi3.Schema{Type: newType("object")},
+			expectIsNil: false,
+		},
+		{
+			name:        "when an object rendered as a map, returns true",
+			oapiSchema:  &openapi3.Schema{Type: newType("object")},
+			goType:      "map[string]string",
+			expectIsNil: true,
+		},
+		{
+			name:        "when a string, returns false",
+			oapiSchema:  &openapi3.Schema{Type: newType("string")},
+			expectIsNil: false,
+		},
+		{
+			name:        "when an integer, returns false",
+			oapiSchema:  &openapi3.Schema{Type: newType("integer")},
+			expectIsNil: false,
+		},
+		{
+			name:        "when a number, returns false",
+			oapiSchema:  &openapi3.Schema{Type: newType("number")},
+			expectIsNil: false,
+		},
+		{
+			name:        "when OAPISchema is nil, returns false",
+			oapiSchema:  nil,
+			expectIsNil: false,
+		},
+		{
+			name:        "when OAPISchema is zero value, returns false",
+			oapiSchema:  &openapi3.Schema{},
+			expectIsNil: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			prop := Property{
+				Schema: Schema{
+					OAPISchema: tt.oapiSchema,
+					GoType:     tt.goType,
+				},
+			}
+			if tt.expectIsNil {
+				require.True(t, prop.ZeroValueIsNil())
+			} else {
+				require.False(t, prop.ZeroValueIsNil())
+			}
+		})
+	}
+}
+
+// A bare OpenAPI 3.1 `type: "null"` schema validates exactly the JSON
+// value null. Go has no such type, so it maps to `any`, with the optional
+// pointer skipped (nil is already `any`'s zero value). Issue #2430.
+func TestOapiSchemaToGoType_NullType(t *testing.T) {
+	schema := &openapi3.Schema{Type: &openapi3.Types{"null"}}
+	var out Schema
+	require.NoError(t, oapiSchemaToGoType(newGenContext(nil), schema, []string{"Challenger"}, &out))
+	assert.Equal(t, "any", out.GoType)
+	assert.True(t, out.SkipOptionalPointer)
+	assert.True(t, out.DefineViaAlias)
+}
+
+func TestDescribeWithExamples(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		is31        bool
+		description string
+		schema      *openapi3.Schema
+		want        string
+	}{
+		{
+			name: "nil schema keeps description",
+			want: "",
+		},
+		{
+			name:        "3.0 singular example",
+			description: "The widget name.",
+			schema:      &openapi3.Schema{Example: "hammer"},
+			want:        "The widget name.\n\nExample: hammer",
+		},
+		{
+			name:   "3.0 singular example with no description",
+			schema: &openapi3.Schema{Example: "hammer"},
+			want:   "Example: hammer",
+		},
+		{
+			name:        "3.0 ignores plural examples",
+			description: "The widget name.",
+			schema:      &openapi3.Schema{Examples: []any{"hammer"}},
+			want:        "The widget name.",
+		},
+		{
+			name:        "3.1 plural examples",
+			is31:        true,
+			description: "The widget name.",
+			schema:      &openapi3.Schema{Examples: []any{"hammer", "wrench"}},
+			want:        "The widget name.\n\nExamples: hammer, wrench",
+		},
+		{
+			name:        "3.1 falls back to singular example",
+			is31:        true,
+			description: "The widget name.",
+			schema:      &openapi3.Schema{Example: "hammer"},
+			want:        "The widget name.\n\nExample: hammer",
+		},
+		{
+			name:   "3.1 prefers plural examples over singular",
+			is31:   true,
+			schema: &openapi3.Schema{Example: "ignored", Examples: []any{"hammer"}},
+			want:   "Examples: hammer",
+		},
+		{
+			name:        "3.1 with neither keeps description",
+			is31:        true,
+			description: "The widget name.",
+			schema:      &openapi3.Schema{},
+			want:        "The widget name.",
+		},
+		{
+			name:   "structured example is JSON encoded",
+			schema: &openapi3.Schema{Example: map[string]any{"k": "v"}},
+			want:   `Example: {"k":"v"}`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resetGlobalState(t)
+			globalState.is31 = tc.is31
+
+			assert.Equal(t, tc.want, describeWithExamples(tc.description, tc.schema))
+		})
+	}
+}
+
+// constScalarFamily is the type-inference core behind a no-outer-type
+// enum-via-oneOf: it maps a branch's `const` to the OpenAPI scalar family it
+// belongs to, and to the integer format wide enough to hold it. kin-openapi
+// decodes every JSON number into a float64, so the numeric cases all arrive
+// in that shape.
+func TestConstScalarFamily(t *testing.T) {
+	tests := []struct {
+		name       string
+		in         any
+		wantFamily string // "" = must not match
+		wantFormat string
+		ok         bool
+	}{
+		{name: "string", in: "available", wantFamily: "string", ok: true},
+		{name: "empty string", in: "", wantFamily: "string", ok: true},
+		{name: "bool is its own family", in: true, wantFamily: "boolean", ok: true},
+		{name: "fractional is a number, not an integer", in: 1.5, wantFamily: "number", ok: true},
+		{name: "whole float64 (kin-openapi yaml number)", in: float64(8080), wantFamily: "integer", ok: true},
+		{name: "zero", in: float64(0), wantFamily: "integer", ok: true},
+		{name: "negative", in: float64(-7), wantFamily: "integer", ok: true},
+
+		// int holds anything inside the int32 range on every build; past it
+		// the enum widens to int64 so a 32-bit build stays correct.
+		{name: "int32 max still fits plain int", in: float64(math.MaxInt32), wantFamily: "integer", ok: true},
+		{name: "int32 min still fits plain int", in: float64(math.MinInt32), wantFamily: "integer", ok: true},
+		{name: "past int32 widens to int64", in: float64(math.MaxInt32) + 1, wantFamily: "integer", wantFormat: "int64", ok: true},
+		{name: "below int32 widens to int64", in: float64(math.MinInt32) - 1, wantFamily: "integer", wantFormat: "int64", ok: true},
+
+		// Classification answers "what family", which stays true however big
+		// the number is. Whether the value survived parsing is a separate
+		// question, asked later by checkIntegerConstsExact.
+		{name: "largest unambiguous integer is still just an integer", in: float64(1<<53) - 1, wantFamily: "integer", wantFormat: "int64", ok: true},
+		{name: "2^53 classifies, exactness is not asked here", in: float64(1 << 53), wantFamily: "integer", wantFormat: "int64", ok: true},
+		{name: "uint64 max classifies too", in: float64(18446744073709551615), wantFamily: "integer", wantFormat: "int64", ok: true},
+
+		// Not scalars at all.
+		{name: "nil", in: nil, ok: false},
+		{name: "map (an object)", in: map[string]any{"a": 1}, ok: false},
+		{name: "slice (an array)", in: []any{1, 2}, ok: false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			fam, format, ok := constScalarFamily(tc.in)
+			assert.Equal(t, tc.ok, ok, "constScalarFamily(%v) ok mismatch", tc.in)
+			assert.Equal(t, tc.wantFamily, fam, "family mismatch")
+			assert.Equal(t, tc.wantFormat, format, "format mismatch")
+		})
+	}
+}
+
+// checkIntegerConstsExact is the guard that turns a value the parser mangled
+// into an error. The bound excludes 2^53 itself: 2^53+1 arrives as exactly
+// 2^53, so a value sitting on the boundary cannot be traced back to one
+// integer.
+func TestCheckIntegerConstsExact(t *testing.T) {
+	refs := func(consts ...any) openapi3.SchemaRefs {
+		out := make(openapi3.SchemaRefs, 0, len(consts))
+		for _, c := range consts {
+			out = append(out, &openapi3.SchemaRef{Value: &openapi3.Schema{Title: "T", Const: c}})
+		}
+		return out
+	}
+
+	for _, tc := range []struct {
+		name    string
+		in      openapi3.SchemaRefs
+		wantErr bool
+	}{
+		{name: "small values", in: refs(float64(0), float64(-1), float64(8080))},
+		{name: "largest unambiguous", in: refs(float64(1<<53) - 1)},
+		{name: "smallest unambiguous", in: refs(-float64(1<<53) + 1)},
+		{name: "past int32 but exact", in: refs(float64(5_000_000_000))},
+		{name: "strings are not this check's business", in: refs("available", "sold")},
+		{name: "a nil branch is someone else's problem", in: openapi3.SchemaRefs{nil}},
+
+		{name: "2^53 is ambiguous with 2^53+1", in: refs(float64(1 << 53)), wantErr: true},
+		{name: "2^53+1 arrives already rounded", in: refs(float64(9007199254740993)), wantErr: true},
+		{name: "-2^53 is ambiguous too", in: refs(-float64(1 << 53)), wantErr: true},
+		{name: "-(2^53+1) arrives already rounded", in: refs(-float64(9007199254740993)), wantErr: true},
+		{name: "uint64 max", in: refs(float64(18446744073709551615)), wantErr: true},
+		{name: "one bad value among good ones", in: refs(float64(1), float64(2), float64(1<<60)), wantErr: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			err := checkIntegerConstsExact(tc.in)
+			if tc.wantErr {
+				require.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+		})
+	}
+}
+
+// inferEnumViaOneOfType folds the per-branch families into the one type the
+// whole enum takes, and widens the integer format to fit the largest value.
+func TestInferEnumViaOneOfType(t *testing.T) {
+	refs := func(consts ...any) openapi3.SchemaRefs {
+		out := make(openapi3.SchemaRefs, 0, len(consts))
+		for _, c := range consts {
+			out = append(out, &openapi3.SchemaRef{Value: &openapi3.Schema{Const: c}})
+		}
+		return out
+	}
+
+	for _, tc := range []struct {
+		name       string
+		in         openapi3.SchemaRefs
+		wantType   *openapi3.Types
+		wantFormat string
+		ok         bool
+	}{
+		{
+			name:     "all strings",
+			in:       refs("available", "pending", "sold"),
+			wantType: &openapi3.Types{"string"},
+			ok:       true,
+		},
+		{
+			name:     "small integers keep the natural int",
+			in:       refs(float64(8080), float64(9090)),
+			wantType: &openapi3.Types{"integer"},
+			ok:       true,
+		},
+		{
+			name:       "one large value widens the whole enum",
+			in:         refs(float64(1), float64(5_000_000_000)),
+			wantType:   &openapi3.Types{"integer"},
+			wantFormat: "int64",
+			ok:         true,
+		},
+		{
+			name: "a string beside a number has no single Go type",
+			in:   refs("available", float64(1)),
+			ok:   false,
+		},
+		{
+			name: "an integer beside a fractional number disagrees too",
+			in:   refs(float64(1), 1.5),
+			ok:   false,
+		},
+		{
+			// Reported honestly; the caller's scalar gate is what rejects it.
+			name:     "all booleans",
+			in:       refs(true, false),
+			wantType: &openapi3.Types{"boolean"},
+			ok:       true,
+		},
+		{
+			name: "a non-scalar const stops inference",
+			in:   refs("available", []any{1, 2}),
+			ok:   false,
+		},
+		{
+			name: "a missing const stops inference",
+			in:   refs("available", nil),
+			ok:   false,
+		},
+		{
+			name: "no branches",
+			in:   nil,
+			ok:   false,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			gotType, gotFormat, ok := inferEnumViaOneOfType(tc.in)
+			assert.Equal(t, tc.ok, ok)
+			assert.Equal(t, tc.wantType, gotType)
+			assert.Equal(t, tc.wantFormat, gotFormat)
+		})
+	}
+}
+
+// An OpenAPI 3.1 `type` list holding more than one type after "null" is
+// stripped is a multi-type union. Go has no type accepting exactly those
+// types, so the union maps to `any`.
+func TestOapiSchemaToGoType_MultiTypeUnion(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		types    openapi3.Types
+		wantErr  string
+		wantType string
+		wantSkip bool
+	}{
+		{
+			name:     "three scalar types",
+			types:    openapi3.Types{"string", "number", "boolean"},
+			wantType: "any",
+			wantSkip: true,
+		},
+		{
+			name:     "array in a union does not take the array branch",
+			types:    openapi3.Types{"array", "string"},
+			wantType: "any",
+			wantSkip: true,
+		},
+		{
+			name:     "union alongside null",
+			types:    openapi3.Types{"string", "number", "null"},
+			wantType: "any",
+			wantSkip: true,
+		},
+		{
+			name:     "single type alongside null is not a union",
+			types:    openapi3.Types{"string", "null"},
+			wantType: "string",
+			wantSkip: false,
+		},
+		{
+			name:    "misspelled type name is still an error",
+			types:   openapi3.Types{"strng", "number"},
+			wantErr: `unhandled Schema type ["strng", "number"]: "strng" is not a valid JSON Schema type`,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resetGlobalState(t)
+			globalState.is31 = true
+
+			var out Schema
+			err := oapiSchemaToGoType(newGenContext(nil), &openapi3.Schema{Type: &tc.types}, []string{"Value"}, &out)
+			if tc.wantErr != "" {
+				assert.ErrorContains(t, err, tc.wantErr)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantType, out.GoType)
+			assert.Equal(t, tc.wantSkip, out.SkipOptionalPointer)
+			assert.True(t, out.DefineViaAlias)
+		})
+	}
+}
+
+// detectEnumViaOneOf splices the inferred type into a shallow copy, so the
+// caller's schema keeps whatever it declared (here: nothing) and the copy is
+// what carries the type and format on to oapiSchemaToGoType.
+func TestDetectEnumViaOneOfInfersTypeWithoutMutating(t *testing.T) {
+	resetGlobalState(t)
+	globalState.is31 = true
+	globalState.options.OutputOptions.SkipEnumViaOneOf = false
+
+	schema := &openapi3.Schema{
+		OneOf: openapi3.SchemaRefs{
+			{Value: &openapi3.Schema{Title: "Http", Const: float64(8080)}},
+			{Value: &openapi3.Schema{Title: "Ephemeral", Const: float64(5_000_000_000)}},
+		},
+	}
+
+	items, typeSource, err := detectEnumViaOneOf(schema)
+	require.NoError(t, err)
+	assert.Equal(t, []enumViaOneOfValue{
+		{Title: "Http", Value: "8080"},
+		{Title: "Ephemeral", Value: "5000000000"},
+	}, items)
+
+	assert.NotSame(t, schema, typeSource, "the inferred type belongs on a copy")
+	assert.Equal(t, &openapi3.Types{"integer"}, typeSource.Type)
+	assert.Equal(t, "int64", typeSource.Format, "5e9 does not fit a 32-bit int")
+	assert.Nil(t, schema.Type, "the caller's schema must be left alone")
+	assert.Empty(t, schema.Format)
+}
+
+// A const that lost precision in the parser is an error, not a fall-through.
+// The branches say plainly that an enum was meant, so quietly substituting a
+// union would hide the fact that the value cannot be generated faithfully.
+// Both spellings must report it: the inferred one, and the declared one that
+// never consults the consts on its way to a Go type.
+func TestEnumViaOneOfInexactIntegerErrors(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		types *openapi3.Types
+	}{
+		{name: "type inferred from consts", types: nil},
+		{name: "type declared by the schema", types: &openapi3.Types{"integer"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resetGlobalState(t)
+			globalState.is31 = true
+			globalState.options.OutputOptions.SkipEnumViaOneOf = false
+
+			schema := &openapi3.Schema{
+				Type: tc.types,
+				OneOf: openapi3.SchemaRefs{
+					{Value: &openapi3.Schema{Title: "Fine", Const: float64(1)}},
+					// 2^53+1 is the case that matters: it is not representable,
+					// so the parser rounded it to 2^53 before we saw it.
+					{Value: &openapi3.Schema{Title: "Enormous", Const: float64(9007199254740993)}},
+				},
+			}
+
+			items, typeSource, err := detectEnumViaOneOf(schema)
+			require.Error(t, err)
+			assert.Contains(t, err.Error(), "Enormous", "the message should name the offending branch")
+			assert.Contains(t, err.Error(), "9007199254740992", "and the value as it actually arrived")
+			assert.Nil(t, items)
+			assert.Nil(t, typeSource)
+		})
+	}
+}
+
+// skip-enum-via-oneof turns the whole path off before the exactness check runs,
+// so opting out of the idiom also opts out of failing over it.
+func TestEnumViaOneOfInexactIntegerSkipped(t *testing.T) {
+	resetGlobalState(t)
+	globalState.is31 = true
+	globalState.options.OutputOptions.SkipEnumViaOneOf = true
+
+	schema := &openapi3.Schema{
+		OneOf: openapi3.SchemaRefs{
+			{Value: &openapi3.Schema{Title: "Enormous", Const: float64(9007199254740993)}},
+		},
+	}
+
+	items, _, err := detectEnumViaOneOf(schema)
+	require.NoError(t, err, "the escape hatch must cover the error too")
+	assert.Nil(t, items)
+}
+
+// A oneOf that is not an enum at all still falls through silently -- the error
+// is reserved for schemas that are unmistakably enums we cannot generate.
+func TestEnumViaOneOfNonEnumsStillFallThrough(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		refs openapi3.SchemaRefs
+	}{
+		{
+			// Boolean is a scalar family, but not an enumerable one.
+			name: "boolean consts",
+			refs: openapi3.SchemaRefs{
+				{Value: &openapi3.Schema{Title: "Yes", Const: true}},
+				{Value: &openapi3.Schema{Title: "No", Const: false}},
+			},
+		},
+		{
+			name: "families disagree",
+			refs: openapi3.SchemaRefs{
+				{Value: &openapi3.Schema{Title: "Word", Const: "one"}},
+				{Value: &openapi3.Schema{Title: "Number", Const: float64(1)}},
+			},
+		},
+		{
+			// Even alongside an unrepresentable number: the shape is not an
+			// enum, so there is nothing to fail about.
+			name: "non-scalar const beside a huge one",
+			refs: openapi3.SchemaRefs{
+				{Value: &openapi3.Schema{Title: "Obj", Const: map[string]any{"a": 1}}},
+				{Value: &openapi3.Schema{Title: "Enormous", Const: float64(9007199254740993)}},
+			},
+		},
+		{
+			name: "a branch without a title",
+			refs: openapi3.SchemaRefs{
+				{Value: &openapi3.Schema{Title: "Fine", Const: float64(1)}},
+				{Value: &openapi3.Schema{Const: float64(9007199254740993)}},
+			},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resetGlobalState(t)
+			globalState.is31 = true
+			globalState.options.OutputOptions.SkipEnumViaOneOf = false
+
+			items, _, err := detectEnumViaOneOf(&openapi3.Schema{OneOf: tc.refs})
+			require.NoError(t, err, "a non-enum oneOf belongs to the union generator")
+			assert.Nil(t, items)
+		})
+	}
+}
+
+// A list-valued `type` is only legal syntax in OpenAPI 3.1. A 3.0 document
+// carrying one is malformed, so it keeps failing generation instead of
+// picking up the 3.1 union mapping.
+func TestOapiSchemaToGoType_MultiTypeUnionRequires31(t *testing.T) {
+	resetGlobalState(t)
+	globalState.is31 = false
+
+	var out Schema
+	err := oapiSchemaToGoType(newGenContext(nil), &openapi3.Schema{Type: &openapi3.Types{"string", "number"}}, []string{"Value"}, &out)
+	assert.ErrorContains(t, err,
+		`unhandled Schema type ["string", "number"]: a list of types requires OpenAPI 3.1 or later`)
+}
+
+// The dispatch handles every JSON Schema type, so falling off the end of it
+// means the `type` is not one the document may carry. The error has to say
+// which value that was and why, or the user is left with #1976's
+// "unhandled Schema type: &[int]" and nothing to act on.
+func TestOapiSchemaToGoType_UnhandledTypeError(t *testing.T) {
+	const expected = "expected one of array, boolean, integer, null, number, object, string"
+
+	for _, tc := range []struct {
+		name  string
+		is31  bool
+		spec  *openapi3.T
+		types openapi3.Types
+		want  []string
+	}{
+		{
+			name:  "unknown single type name",
+			types: openapi3.Types{"int"},
+			want:  []string{`unhandled Schema type "int": not a valid JSON Schema type`, expected},
+		},
+		{
+			name:  "unknown type name in a 3.1 list",
+			is31:  true,
+			types: openapi3.Types{"strng", "number"},
+			want: []string{
+				`unhandled Schema type ["strng", "number"]`,
+				`"strng" is not a valid JSON Schema type`,
+				expected,
+			},
+		},
+		{
+			name:  "several unknown type names in a 3.1 list",
+			is31:  true,
+			types: openapi3.Types{"strng", "numbr"},
+			want: []string{
+				`unhandled Schema type ["strng", "numbr"]`,
+				`"strng", "numbr" are not valid JSON Schema types`,
+			},
+		},
+		{
+			// The list form itself is what is unusable here: the entries are valid
+			// types, so the hint names the version.
+			name:  "list of valid types under a 3.0 document",
+			spec:  &openapi3.T{OpenAPI: "3.0.3"},
+			types: openapi3.Types{"string", "number"},
+			want: []string{
+				`unhandled Schema type ["string", "number"]`,
+				"a list of types requires OpenAPI 3.1 or later, but this document declares OpenAPI 3.0.3",
+			},
+		},
+		{
+			// The declared `type` is reported verbatim, "null" marker and
+			// all, so it matches what the reader has in front of them.
+			name:  "unknown type name alongside the null marker",
+			is31:  true,
+			types: openapi3.Types{"strng", "null"},
+			want:  []string{`unhandled Schema type ["strng", "null"]`, `"strng" is not a valid JSON Schema type`},
+		},
+		{
+			name:  "a type list naming nothing but null",
+			is31:  true,
+			types: openapi3.Types{"null", "null"},
+			want:  []string{`unhandled Schema type ["null", "null"]`, "type must name a JSON Schema type"},
+		},
+		{
+			name:  "an empty type list",
+			types: openapi3.Types{},
+			want:  []string{"unhandled Schema type []", "type must name a JSON Schema type"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resetGlobalState(t)
+			globalState.is31 = tc.is31
+			globalState.spec = tc.spec
+
+			var out Schema
+			err := oapiSchemaToGoType(newGenContext(nil), &openapi3.Schema{Type: &tc.types}, []string{"Value"}, &out)
+			require.Error(t, err)
+			for _, want := range tc.want {
+				assert.ErrorContains(t, err, want)
+			}
+		})
+	}
+}
+
+// The version hint is a suffix, not the message: a caller that never ran
+// Generate() has no spec to read, and SetGlobalStateSpec sets the spec
+// without is31, so a 3.1 spec would otherwise be told it needs 3.1. Both
+// drop the suffix and keep the requirement.
+func TestUnhandledSchemaTypeErrorVersionSuffix(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		spec *openapi3.T
+	}{
+		{name: "no spec at all", spec: nil},
+		{name: "spec with no declared version", spec: &openapi3.T{}},
+		{
+			// SetGlobalStateSpec sets the spec without is31, so the two can
+			// disagree. Citing 3.1 here would contradict the requirement.
+			name: "spec already declares 3.1",
+			spec: &openapi3.T{OpenAPI: "3.1.0"},
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resetGlobalState(t)
+			globalState.is31 = false
+			globalState.spec = tc.spec
+
+			err := unhandledSchemaTypeError(&openapi3.Types{"string", "number"})
+			assert.ErrorContains(t, err, "a list of types requires OpenAPI 3.1 or later")
+			assert.NotContains(t, err.Error(), "but this document declares",
+				"an unusable or contradictory version must not be cited")
+		})
+	}
+}
+
+// components.responses generate with no operation, so the response label is
+// the component name alone rather than an empty operation and a stray dot.
+func TestGenerateResponseDefinitionsNamesComponentResponses(t *testing.T) {
+	resetGlobalState(t)
+
+	responses := map[string]*openapi3.ResponseRef{
+		"NotFound": {Value: &openapi3.Response{
+			Content: openapi3.Content{
+				"application/json": &openapi3.MediaType{
+					Schema: &openapi3.SchemaRef{Value: &openapi3.Schema{Type: &openapi3.Types{"int"}}},
+				},
+			},
+		}},
+	}
+
+	_, err := GenerateResponseDefinitions("", responses, "")
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "for NotFound (application/json)")
+	assert.NotContains(t, err.Error(), "for .NotFound", "no empty operation prefix")
+}
+
+// An inline oneOf/anyOf branch is only identifiable by its index, which
+// generateUnionElement computes for naming and used to discard on the error path.
+func TestGenerateUnionNamesFailingBranch(t *testing.T) {
+	resetGlobalState(t)
+
+	_, err := GenerateGoSchema(&openapi3.SchemaRef{Value: &openapi3.Schema{
+		OneOf: openapi3.SchemaRefs{
+			{Value: &openapi3.Schema{Type: &openapi3.Types{"string"}}},
+			{Value: &openapi3.Schema{Type: &openapi3.Types{"int"}}},
+		},
+	}}, []string{"Choice"})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "branch 1")
+	assert.ErrorContains(t, err, `unhandled Schema type "int"`)
+}
+
+// schemaUnionTypes feeds the Types bind option emitted for union
+// parameters: the member list with "null" stripped for genuine 3.1
+// multi-type unions, nil for everything else (single types bind through
+// their concrete Go type, and a list is not legal syntax in 3.0).
+func TestSchemaUnionTypes(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		is31 bool
+		in   *openapi3.Types
+		want []string
+	}{
+		{
+			name: "union",
+			is31: true,
+			in:   &openapi3.Types{"string", "integer"},
+			want: []string{"string", "integer"},
+		},
+		{
+			name: "nullable union strips the null marker",
+			is31: true,
+			in:   &openapi3.Types{"integer", "string", "null"},
+			want: []string{"integer", "string"},
+		},
+		{
+			name: "nullable single type is not a union",
+			is31: true,
+			in:   &openapi3.Types{"string", "null"},
+			want: nil,
+		},
+		{
+			name: "single type is not a union",
+			is31: true,
+			in:   &openapi3.Types{"string"},
+			want: nil,
+		},
+		{
+			name: "nil types",
+			is31: true,
+			in:   nil,
+			want: nil,
+		},
+		{
+			name: "3.0 documents never produce a union",
+			is31: false,
+			in:   &openapi3.Types{"string", "integer"},
+			want: nil,
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resetGlobalState(t)
+			globalState.is31 = tc.is31
+
+			assert.Equal(t, tc.want, schemaUnionTypes(tc.in))
+		})
+	}
+}
+
+// SchemaType feeds the Type bind option: the single declared type with the
+// 3.1 "null" marker stripped, or "" for unions (carried by SchemaTypes) and
+// typeless schemas. The previous first-entry behavior emitted "null" for
+// ["null", "string"] and a lone member for unions.
+func TestParameterDefinitionSchemaType(t *testing.T) {
+	resetGlobalState(t)
+	globalState.is31 = true
+
+	paramWithTypes := func(types *openapi3.Types) *ParameterDefinition {
+		return &ParameterDefinition{
+			Spec: &openapi3.Parameter{
+				Schema: &openapi3.SchemaRef{Value: &openapi3.Schema{Type: types}},
+			},
+		}
+	}
+
+	assert.Equal(t, "string", paramWithTypes(&openapi3.Types{"string"}).SchemaType())
+	assert.Equal(t, "string", paramWithTypes(&openapi3.Types{"null", "string"}).SchemaType(),
+		"null is the nullability marker, not the parameter's type")
+	assert.Equal(t, "", paramWithTypes(&openapi3.Types{"string", "integer"}).SchemaType(),
+		"unions carry no single Type; SchemaTypes has the members")
+	assert.Equal(t, []string{"string", "integer"}, paramWithTypes(&openapi3.Types{"string", "integer", "null"}).SchemaTypes())
+	assert.Nil(t, paramWithTypes(&openapi3.Types{"string"}).SchemaTypes())
+}
+
+// fieldNames returns the Go field name of each of schema's properties, by JSON
+// name.
+func fieldNames(schema Schema) map[string]string {
+	names := make(map[string]string, len(schema.Properties))
+	for _, p := range schema.Properties {
+		names[p.JsonFieldName] = p.GoFieldName()
+	}
+	return names
+}
+
+// stringProps returns a required string property for each JSON name.
+func stringProps(jsonNames ...string) []Property {
+	var props []Property
+	for _, name := range jsonNames {
+		props = append(props, Property{JsonFieldName: name, Schema: Schema{GoType: "string"}, Required: true})
+	}
+	return props
+}
+
+// withGoName returns p named by x-go-name.
+func withGoName(p Property, name string) Property {
+	p.Extensions = map[string]any{extGoName: name}
+	return p
+}
+
+// Issue #2495: JSON properties which differ only by separator ("host-fqdn",
+// "host_fqdn") derive the same Go field name, which declared the field twice.
+
+func TestResolvePropertyGoFieldNameCollisions_ErrorsWithoutResolver(t *testing.T) {
+	resetGlobalState(t)
+	globalState.options.OutputOptions.ResolveTypeNameCollisions = false
+
+	schema := Schema{Properties: stringProps("host-fqdn", "host_fqdn", "other")}
+	err := resolvePropertyGoFieldNameCollisions(&schema, []string{"Info"})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "schema 'Info'")
+	assert.ErrorContains(t, err, "property 'host-fqdn', property 'host_fqdn'")
+	assert.ErrorContains(t, err, "Go field 'HostFqdn'")
+	assert.ErrorContains(t, err, "x-go-name")
+	assert.ErrorContains(t, err, "resolve-type-name-collisions")
+
+	// The field holding additional properties collides just the same.
+	schema = Schema{HasAdditionalProperties: true, Properties: stringProps("additionalProperties")}
+	err = resolvePropertyGoFieldNameCollisions(&schema, nil)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "the field holding additional properties")
+
+	// Nothing collides, nothing is reported or renamed.
+	schema = Schema{HasAdditionalProperties: true, Properties: stringProps("host-fqdn", "other")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	assert.Equal(t, map[string]string{"host-fqdn": "HostFqdn", "other": "Other"}, fieldNames(schema))
+}
+
+func TestResolvePropertyGoFieldNameCollisions_RenamesEveryCollider(t *testing.T) {
+	resetGlobalState(t)
+	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
+
+	schema := Schema{Properties: stringProps("host-fqdn", "host_fqdn", "other")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	names := fieldNames(schema)
+
+	// Neither collider keeps the bare name, and the bystander is untouched.
+	assert.Regexp(t, `^HostFqdn_[0-9a-f]{7}$`, names["host-fqdn"])
+	assert.Regexp(t, `^HostFqdn_[0-9a-f]{7}$`, names["host_fqdn"])
+	assert.NotEqual(t, names["host-fqdn"], names["host_fqdn"])
+	assert.Equal(t, "Other", names["other"])
+
+	// The struct carries the new names and the original JSON names.
+	fields := GenFieldsFromProperties(schema.Properties)
+	require.Len(t, fields, 3)
+	assert.Contains(t, fields[0], names["host-fqdn"]+" ")
+	assert.Contains(t, fields[0], `json:"host-fqdn"`)
+	assert.Contains(t, fields[1], names["host_fqdn"]+" ")
+	assert.Contains(t, fields[1], `json:"host_fqdn"`)
+
+	// Resolving again changes nothing.
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	assert.Equal(t, names, fieldNames(schema))
+}
+
+// A property's name depends on nothing but the property: more colliders, a
+// different order, and a property which spells what a numeric suffix would
+// have produced all leave it alone.
+func TestResolvePropertyGoFieldNameCollisions_NamesAreStable(t *testing.T) {
+	resetGlobalState(t)
+	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
+
+	two := Schema{Properties: stringProps("host-fqdn", "host_fqdn")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&two, nil))
+
+	more := Schema{Properties: stringProps("host_fqdn2", "host.fqdn", "host_fqdn", "host fqdn", "host-fqdn")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&more, nil))
+
+	before, after := fieldNames(two), fieldNames(more)
+	assert.Equal(t, before["host-fqdn"], after["host-fqdn"])
+	assert.Equal(t, before["host_fqdn"], after["host_fqdn"])
+	assert.Equal(t, "HostFqdn2", after["host_fqdn2"])
+
+	seen := map[string]bool{}
+	for _, name := range after {
+		assert.False(t, seen[name], "field %s is declared twice", name)
+		seen[name] = true
+	}
+}
+
+func TestResolvePropertyGoFieldNameCollisions_KeepsExplicitNames(t *testing.T) {
+	resetGlobalState(t)
+	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
+
+	// x-go-name asks for a name another property derives: the derived one
+	// gives way, whichever comes first.
+	props := stringProps("zed", "zzz")
+	props[1] = withGoName(props[1], "Zed")
+	schema := Schema{Properties: props}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	names := fieldNames(schema)
+	assert.Equal(t, "Zed", names["zzz"])
+	assert.Regexp(t, `^Zed_[0-9a-f]{7}$`, names["zed"])
+
+	// x-go-name moving a property out of a collision resolves it, and the
+	// other property keeps its bare name.
+	props = stringProps("host-fqdn", "host_fqdn")
+	props[0] = withGoName(props[0], "HostFqdnDashed")
+	schema = Schema{Properties: props}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	assert.Equal(t, map[string]string{"host-fqdn": "HostFqdnDashed", "host_fqdn": "HostFqdn"}, fieldNames(schema))
+
+	// Two properties asking for the same name can't both have it.
+	props = stringProps("a", "b")
+	props[0] = withGoName(props[0], "Same")
+	props[1] = withGoName(props[1], "Same")
+	schema = Schema{Properties: props}
+	err := resolvePropertyGoFieldNameCollisions(&schema, []string{"Info"})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "property 'a', property 'b'")
+	assert.ErrorContains(t, err, "x-go-name")
+}
+
+func TestResolvePropertyGoFieldNameCollisions_ReservesAdditionalProperties(t *testing.T) {
+	resetGlobalState(t)
+	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
+
+	// The field holding additional properties keeps its name, and the
+	// property is renamed.
+	schema := Schema{HasAdditionalProperties: true, Properties: stringProps("additionalProperties")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	assert.Regexp(t, `^AdditionalProperties_[0-9a-f]{7}$`, schema.Properties[0].GoFieldName())
+	assert.Contains(t, GenFieldsFromProperties(schema.Properties)[0], `json:"additionalProperties"`)
+
+	// Without additional properties there is no such field to collide with.
+	schema = Schema{Properties: stringProps("additionalProperties")}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	assert.Equal(t, "AdditionalProperties", schema.Properties[0].GoFieldName())
+
+	// A property which asks for the name with x-go-name can't have it.
+	props := stringProps("extras")
+	props[0] = withGoName(props[0], "AdditionalProperties")
+	schema = Schema{HasAdditionalProperties: true, Properties: props}
+	require.Error(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+}
+
+// TestStrictResponseDelegatesCustomMarshalJSON pins which strict-server
+// response envelopes get a delegating MarshalJSON/UnmarshalJSON pair.
+// See https://github.com/oapi-codegen/oapi-codegen/issues/2549.
+func TestStrictResponseDelegatesCustomMarshalJSON(t *testing.T) {
+	spec := `
+openapi: "3.1.0"
+info: {title: t, version: "1"}
+paths:
+  /thing:
+    get:
+      operationId: getThing
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Thing'}
+  /bag:
+    get:
+      operationId: getBag
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Bag'}
+  /event:
+    get:
+      operationId: getEvent
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Event'}
+  /maybe:
+    get:
+      operationId: getMaybe
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MaybeName'}
+  /renamed:
+    get:
+      operationId: getRenamed
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/RenamedEvent'}
+  /plain:
+    get:
+      operationId: getPlain
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Base'}
+  /inline-thing:
+    get:
+      operationId: getInlineThing
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Base'
+                  - oneOf:
+                      - $ref: '#/components/schemas/Cat'
+                      - $ref: '#/components/schemas/Dog'
+  /inline-event:
+    get:
+      operationId: getInlineEvent
+      responses:
+        '200':
+          description: ok
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/Cat'
+                  - $ref: '#/components/schemas/Dog'
+components:
+  schemas:
+    Base:
+      type: object
+      required: [id]
+      properties:
+        id: {type: string}
+    Cat:
+      type: object
+      properties:
+        meow: {type: string}
+    Dog:
+      type: object
+      properties:
+        woof: {type: string}
+    # allOf-composed union: UnionElements come from the merge, not from a
+    # top-level oneOf.
+    Thing:
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - oneOf:
+            - $ref: '#/components/schemas/Cat'
+            - $ref: '#/components/schemas/Dog'
+    # fixed properties plus additionalProperties
+    Bag:
+      type: object
+      required: [kind]
+      properties:
+        kind: {type: string}
+      additionalProperties: true
+    # plain top-level oneOf (issue #970)
+    Event:
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    # x-go-type-name wraps the union in a renamed type and aliases it; the
+    # envelope is a defined type over the alias, so it still needs a delegator
+    RenamedEvent:
+      x-go-type-name: EventImpl
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    # looks like a union, but collapses to a plain string alias, so there is
+    # no MarshalJSON to delegate to
+    MaybeName:
+      anyOf:
+        - type: string
+        - type: "null"
+`
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	require.NoError(t, err)
+	out, err := Generate(swagger, Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{Models: true, StdHTTPServer: true, Strict: true},
+	})
+	require.NoError(t, err)
+
+	delegator := func(name string) string {
+		return "func (t " + name + "200JSONResponse) MarshalJSON() ([]byte, error) {\n\treturn "
+	}
+	for _, name := range []string{"GetThing", "GetBag", "GetEvent", "GetRenamed"} {
+		assert.Contains(t, out, delegator(name), "%s must delegate to the model's MarshalJSON", name)
+	}
+	for _, name := range []string{"GetMaybe", "GetPlain", "GetInlineThing", "GetInlineEvent"} {
+		assert.NotContains(t, out, delegator(name), "%s must not get a delegator", name)
+	}
+
+	// Hoisted inline bodies are aliased, so they inherit the methods and the
+	// visitor encodes the response value itself — never the raw union field,
+	// which would drop the properties merged in by an allOf.
+	assert.NotContains(t, out, ".union)", "visitors must not encode the raw union field")
+	for _, name := range []string{"GetInlineThing", "GetInlineEvent"} {
+		assert.Contains(t, out, "type "+name+"200JSONResponse = "+name+"200JSONResponseBody")
+	}
+}
+
+// TestStrictComponentResponseWithInlineUnion pins the strict envelopes
+// generated for components/responses entries whose inline schema needs
+// hoisting: they must reference the type the model pass declared for the
+// component, not a <Name>JSONResponseBody that nothing declares.
+// See https://github.com/oapi-codegen/oapi-codegen/issues/2539.
+func TestStrictComponentResponseWithInlineUnion(t *testing.T) {
+	spec := `
+openapi: "3.0.3"
+info: {title: t, version: "1"}
+paths:
+  /things:
+    get:
+      operationId: listThings
+      responses:
+        '400': {$ref: '#/components/responses/BadRequest'}
+        '409': {$ref: '#/components/responses/Conflict'}
+        '422': {$ref: '#/components/responses/ServiceError'}
+        default: {$ref: '#/components/responses/BadRequest'}
+components:
+  schemas:
+    Base:
+      type: object
+      required: [id]
+      properties:
+        id: {type: string}
+    Cat:
+      type: object
+      properties:
+        meow: {type: string}
+    Dog:
+      type: object
+      properties:
+        woof: {type: string}
+  responses:
+    BadRequest:
+      description: inline union
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Cat'
+              - $ref: '#/components/schemas/Dog'
+    Conflict:
+      description: inline allOf-merged union
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Base'
+              - oneOf:
+                  - $ref: '#/components/schemas/Cat'
+                  - $ref: '#/components/schemas/Dog'
+    ServiceError:
+      description: inline union behind response headers
+      headers:
+        X-Request-Id:
+          required: true
+          schema: {type: string}
+      content:
+        application/json:
+          schema:
+            oneOf:
+              - $ref: '#/components/schemas/Cat'
+              - $ref: '#/components/schemas/Dog'
+`
+	swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+	require.NoError(t, err)
+	out, err := Generate(swagger, Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{Models: true, StdHTTPServer: true, Strict: true},
+	})
+	require.NoError(t, err)
+
+	// The envelopes alias the component models declared by the model pass.
+	assert.Contains(t, out, "type BadRequestJSONResponse = BadRequest\n")
+	assert.Contains(t, out, "type ConflictJSONResponse = Conflict\n")
+	// With headers the envelope is a struct whose Body is the component model.
+	assert.Contains(t, out, "type ServiceErrorJSONResponse struct {\n\tBody ServiceError\n")
+	// A non-fixed status code also wraps the component model, not an
+	// anonymous struct with an unexported union field.
+	assert.Contains(t, out, "type ListThingsdefaultJSONResponse struct {\n\tBody       BadRequest")
+	assert.NotContains(t, out, "JSONResponseBody", "no synthetic body type may be referenced for components/responses")
+	assert.NotContains(t, out, ".union)", "visitors must not encode the raw union field")
+	// The aliases must not redeclare the model's marshallers.
+	assert.NotContains(t, out, "func (t BadRequestJSONResponse) MarshalJSON()")
+	assert.NotContains(t, out, "func (t ConflictJSONResponse) MarshalJSON()")
+}
+
+// A form response reached through $ref embeds the reusable envelope, and
+// runtime.MarshalForm would encode that untagged embedded field under an
+// empty name ("[value]=..."), so the visitor marshals the envelope itself.
+func TestStrictReusableFormResponseMarshalsEnvelope(t *testing.T) {
+	const spec = `
+openapi: "3.0.3"
+info: {title: t, version: "1"}
+paths:
+  /local:
+    get:
+      operationId: localRef
+      responses:
+        "200": {$ref: "#/components/responses/Form"}
+  /external:
+    get:
+      operationId: externalRef
+      responses:
+        "200": {$ref: "./external.yaml#/components/responses/ExternalForm"}
+  /inline:
+    get:
+      operationId: inline
+      responses:
+        "200":
+          description: inline
+          content:
+            application/x-www-form-urlencoded:
+              schema: {$ref: "#/components/schemas/Example"}
+components:
+  schemas:
+    Example:
+      type: object
+      properties:
+        value: {type: string}
+  responses:
+    Form:
+      description: reusable
+      content:
+        application/x-www-form-urlencoded:
+          schema: {$ref: "#/components/schemas/Example"}
+`
+	const externalSpec = `
+openapi: "3.0.3"
+info: {title: external, version: "1"}
+paths: {}
+components:
+  schemas:
+    Example:
+      type: object
+      properties:
+        value: {type: string}
+  responses:
+    ExternalForm:
+      description: reusable
+      content:
+        application/x-www-form-urlencoded:
+          schema: {$ref: "#/components/schemas/Example"}
+`
+
+	visitor := func(t *testing.T, code, receiver string) string {
+		t.Helper()
+		start := strings.Index(code, "func (response "+receiver+") Visit")
+		require.NotEqual(t, -1, start, "no visitor for %s", receiver)
+		end := strings.Index(code[start:], "\n}\n")
+		require.NotEqual(t, -1, end)
+		return code[start : start+end]
+	}
+
+	for _, server := range []struct {
+		name     string
+		generate GenerateOptions
+	}{
+		{name: "standard", generate: GenerateOptions{StdHTTPServer: true}},
+		{name: "fiber", generate: GenerateOptions{FiberServer: true}},
+		{name: "iris", generate: GenerateOptions{IrisServer: true}},
+	} {
+		t.Run(server.name, func(t *testing.T) {
+			loader := openapi3.NewLoader()
+			loader.IsExternalRefsAllowed = true
+			loader.ReadFromURIFunc = func(_ *openapi3.Loader, _ *url.URL) ([]byte, error) {
+				return []byte(externalSpec), nil
+			}
+			swagger, err := loader.LoadFromDataWithPath([]byte(spec), &url.URL{Path: "root.yaml"})
+			require.NoError(t, err)
+
+			server.generate.Models = true
+			server.generate.Strict = true
+			code, err := Generate(swagger, Configuration{
+				PackageName:   "api",
+				Generate:      server.generate,
+				ImportMapping: map[string]string{"./external.yaml": "example.com/external"},
+			})
+			require.NoError(t, err)
+
+			assert.Contains(t, code, "type LocalRef200FormdataResponse struct{ FormFormdataResponse }")
+			assert.Contains(t, visitor(t, code, "LocalRef200FormdataResponse"), "runtime.MarshalForm(response.FormFormdataResponse, nil)")
+			assert.Contains(t, code, "type ExternalRef200FormdataResponse struct {\n\texternalRef0.ExternalFormFormdataResponse\n}")
+			assert.Contains(t, visitor(t, code, "ExternalRef200FormdataResponse"), "runtime.MarshalForm(response.ExternalFormFormdataResponse, nil)")
+			assert.Contains(t, visitor(t, code, "Inline200FormdataResponse"), "runtime.MarshalForm(response, nil)")
+		})
+	}
+}
+
+// TestUnionAdoptUnion pins what a union's From*/Merge* reconcile with its own
+// fields: only properties MarshalJSON always writes are filled from the
+// variant, an untyped (interface) property is checked without reflect
+// panicking on nil, and variant keys are dropped from additionalProperties.
+func TestUnionAdoptUnion(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Cat:
+      type: object
+      properties:
+        id: {type: string}
+        label: {type: string}
+        meta: {}
+        meow: {type: string}
+    Dog:
+      type: object
+      properties:
+        bark: {type: string}
+    Pet:
+      type: object
+      required: [id]
+      properties:
+        id: {type: string}
+        label: {type: string}
+        meta: {}
+      additionalProperties: true
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+`
+	code := generateSpec(t, spec)
+	start := strings.Index(code, "func (t *Pet) adoptUnion(previous, b json.RawMessage) {")
+	require.GreaterOrEqual(t, start, 0, "Pet must get adoptUnion")
+	body := code[start : start+strings.Index(code[start:], "\n}\n")]
+
+	assert.Contains(t, body, `object["id"]`, "a required property is always written, so it is adopted")
+	assert.Contains(t, body, `object["meta"]`, "an untyped property without a pointer is always written, so it is adopted")
+	assert.NotContains(t, body, `object["label"]`, "an optional pointer is written only when set, so it is left to the union data")
+	assert.Contains(t, body, "!current.IsValid() || current.IsZero()", "a nil interface has no reflect.Value to ask IsZero of")
+	for _, key := range []string{"bark", "id", "label", "meow", "meta"} {
+		assert.Contains(t, body, `delete(t.AdditionalProperties, "`+key+`")`, "variant key %q", key)
+	}
+}
+
+// TestUnionWithOnlyOptionalPropertiesDoesNotAdopt: with nothing to adopt and
+// no additionalProperties, From* needs no adoptUnion at all.
+func TestUnionWithOnlyOptionalPropertiesDoesNotAdopt(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Cat:
+      type: object
+      properties:
+        meow: {type: string}
+    Pet:
+      type: object
+      properties:
+        label: {type: string}
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+`
+	code := generateSpec(t, spec)
+	assert.NotContains(t, code, "adoptUnion")
+}
+
+// TestDuplicateUnionMembers: a type that is a member of both an anyOf and a
+// oneOf gets its accessors once, whether the two lists are on one schema or
+// the oneOf comes from an allOf member.
+func TestDuplicateUnionMembers(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Base:
+      type: object
+      properties:
+        id: {type: string}
+    Cat:
+      type: object
+      properties:
+        meow: {type: string}
+    Dog:
+      type: object
+      properties:
+        bark: {type: string}
+    Both:
+      anyOf:
+        - $ref: '#/components/schemas/Cat'
+      oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+    Nested:
+      allOf:
+        - $ref: '#/components/schemas/Base'
+        - oneOf:
+            - $ref: '#/components/schemas/Cat'
+            - $ref: '#/components/schemas/Dog'
+      anyOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+`
+	code := generateSpec(t, spec)
+	for _, union := range []string{"Both", "Nested"} {
+		for _, member := range []string{"Cat", "Dog"} {
+			assert.Equal(t, 1, strings.Count(code, "func (t "+union+") As"+member+"()"), "%s.As%s", union, member)
+		}
+	}
+}
+
+// TestSelfReferentialArrayIsDefinedType: an array schema whose items refer
+// back to it is declared as a defined type, since an alias cannot refer to
+// itself. That holds for the plain schema and for one merged from allOf.
+func TestSelfReferentialArrayIsDefinedType(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Tree:
+      type: array
+      items: {$ref: '#/components/schemas/Tree'}
+    NodeList:
+      allOf:
+        - type: array
+          items: {$ref: '#/components/schemas/NodeList'}
+        - description: A list of lists.
+    Forest:
+      type: array
+      items: {$ref: '#/components/schemas/Tree'}
+    Data:
+      type: array
+      items:
+        type: object
+        properties:
+          data: {type: string}
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "type Tree []Tree")
+	assert.Contains(t, code, "type NodeList []NodeList")
+	assert.Contains(t, code, "type Forest = []Tree", "an array of another type stays an alias")
+	assert.Contains(t, code, "type Data = []struct {", "a field merely named like the type is not a self-reference")
+}
+
+func TestMentionsTypeName(t *testing.T) {
+	for _, tc := range []struct {
+		decl string
+		want bool
+	}{
+		{"[]Node", true},
+		{"map[string]Node", true},
+		{"*Node", true},
+		{"Node", true},
+		{"[]NodeList", false},
+		{"[]MyNode", false},
+		{"[]externalRef0.Node", false},
+		{"[]Node_Item", false},
+		// A field named like the type is not a reference to it; a field of
+		// that type is.
+		{"[]struct {\n    Node *string `json:\"node,omitempty\"`\n}", false},
+		{"[]struct {\n    Next *Node `json:\"next,omitempty\"`\n}", true},
+		{"map[string]struct {\n    // Node is documented.\n    Node int `json:\"node\"`\n}", false},
+		{"not a type (", false},
+	} {
+		assert.Equal(t, tc.want, mentionsTypeName(tc.decl, "Node"), tc.decl)
+	}
+}
+
+// TestScalarUnionTextComment: the UnmarshalText doc comment reads correctly
+// for a union with only string branches.
+func TestScalarUnionTextComment(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    Color:
+      anyOf:
+        - type: string
+          enum: [red]
+        - type: string
+    Amount:
+      oneOf:
+        - type: number
+        - type: string
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "// parameter, which carries no JSON type.\n// The text is taken as a string.\nfunc (t *Color) UnmarshalText(")
+	assert.Contains(t, code, "// Text that is exactly a JSON number, with nothing around it, is taken as one; anything else is a string.\nfunc (t *Amount) UnmarshalText(")
+	assert.NotContains(t, code, "a JSON ,")
+}
+
+// TestUnionOfScalarUnionsBindsText: a union whose branch is itself a union of
+// scalars, here through a $ref, can still be bound from parameter text. A
+// union that contains itself cannot, and working that out must terminate.
+func TestUnionOfScalarUnionsBindsText(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths: {}
+components:
+  schemas:
+    IntOrString:
+      oneOf:
+        - type: integer
+        - type: string
+    Flag:
+      oneOf:
+        - $ref: '#/components/schemas/IntOrString'
+        - type: boolean
+    WithArray:
+      oneOf:
+        - $ref: '#/components/schemas/IntOrString'
+        - type: array
+          items: {type: string}
+    Loop:
+      oneOf:
+        - $ref: '#/components/schemas/Loop'
+        - type: string
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "func (t *Flag) UnmarshalText(text []byte) error {")
+	assert.Contains(t, code, "// Text that is exactly a JSON boolean or integer, with nothing around it, is taken as one; anything else is a string.\nfunc (t *Flag) UnmarshalText(")
+	assert.NotContains(t, code, "func (t *WithArray) UnmarshalText(", "an array branch can't be bound from text")
+	assert.NotContains(t, code, "func (t *Loop) UnmarshalText(", "a union that contains itself can't be bound from text")
+}
+
+// TestDiscriminatorLiteralQuotesStrings checks that a string discriminator
+// value is emitted through strconv.Quote rather than wrapped in quotes by hand,
+// so a backslash in it cannot swallow the closing quote.
+func TestDiscriminatorLiteralQuotesStrings(t *testing.T) {
+	d := &Discriminator{ValueType: openapi3.TypeString}
+	assert.Equal(t, `"plain"`, d.literal("plain"))
+	assert.Equal(t, `"ends with \\"`, d.literal(`ends with \`))
+	n := &Discriminator{ValueType: openapi3.TypeInteger}
+	assert.Equal(t, `7`, n.literal("7"))
+}
+
+// A struct may declare any number of blank fields, so properties which are all
+// named "_" don't collide, whether or not collisions are being resolved.
+func TestResolvePropertyGoFieldNameCollisions_AllowsBlankFields(t *testing.T) {
+	resetGlobalState(t)
+	globalState.options.Compatibility.AllowUnexportedStructFieldNames = true
+
+	blank := func(p Property) Property {
+		p.Extensions = map[string]any{extGoName: "_", extOapiCodegenOnlyHonourGoName: true}
+		return p
+	}
+
+	for _, resolve := range []bool{false, true} {
+		globalState.options.OutputOptions.ResolveTypeNameCollisions = resolve
+
+		props := stringProps("a", "b", "c")
+		props[0], props[1] = blank(props[0]), blank(props[1])
+		schema := Schema{Properties: props}
+		require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+		assert.Equal(t, map[string]string{"a": "_", "b": "_", "c": "C"}, fieldNames(schema))
 	}
 }

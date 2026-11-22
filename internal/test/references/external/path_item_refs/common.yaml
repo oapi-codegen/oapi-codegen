@@ -1,0 +1,17 @@
+# From issue-1378: common package shared by the referencing and referenced specs.
+openapi: 3.0.1
+
+info:
+  title: Test
+  description: Test
+  version: 1.0.0
+
+components:
+  schemas:
+    ErrTracingIdNotSent:
+      type: object
+      properties:
+        code:
+          type: string
+      required:
+        - code

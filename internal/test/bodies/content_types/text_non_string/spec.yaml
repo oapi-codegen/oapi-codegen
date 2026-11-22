@@ -1,0 +1,35 @@
+openapi: 3.0.3
+info:
+  title: test
+  version: 1.0.0
+paths:
+  /ping:
+    get:
+      operationId: getPing
+      responses:
+        "200":
+          $ref: "#/components/responses/StatusStr"
+        "201":
+          $ref: "#/components/responses/StatusInt"
+        "202":
+          $ref: "#/components/responses/StatusBool"
+components:
+  responses:
+    StatusStr:
+      description: status as string
+      content:
+        text/plain:
+          schema:
+            type: string
+    StatusInt:
+      description: status as integer
+      content:
+        text/plain:
+          schema:
+            type: integer
+    StatusBool:
+      description: status as boolean
+      content:
+        text/plain:
+          schema:
+            type: boolean
