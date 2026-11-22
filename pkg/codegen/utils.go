@@ -828,17 +828,22 @@ func IsPredeclaredGoIdentifier(str string) bool {
 }
 
 // IsGoIdentity checks if the given string can be used as an identity
-// in the generated code like a type name or constant name.
+// in the generated code like a type name or constant name: it is not empty,
+// is made of valid identifier runes and is not a keyword.
 //
 // See https://golang.org/ref/spec#Identifiers
 func IsGoIdentity(str string) bool {
+	if str == "" {
+		return false
+	}
+
 	for i, c := range str {
 		if !isValidRuneForGoID(i, c) {
 			return false
 		}
 	}
 
-	return IsGoKeyword(str)
+	return !IsGoKeyword(str)
 }
 
 func isValidRuneForGoID(index int, char rune) bool {
@@ -852,11 +857,7 @@ func isValidRuneForGoID(index int, char rune) bool {
 // IsValidGoIdentity checks if the given string can be used as a
 // name of variable, constant, or type.
 func IsValidGoIdentity(str string) bool {
-	if IsGoIdentity(str) {
-		return false
-	}
-
-	return !IsPredeclaredGoIdentifier(str)
+	return IsGoIdentity(str) && !IsPredeclaredGoIdentifier(str)
 }
 
 // SanitizeGoIdentifier replaces illegal runes in the given string so that
@@ -888,7 +889,9 @@ func SanitizeGoIdentity(str string) string {
 		str = "_" + str
 	}
 
-	if !IsValidGoIdentity(str) {
+	// An empty name (for example an enum value that derives no Go name) has
+	// always been passed through unchanged.
+	if str != "" && !IsValidGoIdentity(str) {
 		panic("here is a bug")
 	}
 
