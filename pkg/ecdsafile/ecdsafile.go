@@ -71,14 +71,15 @@ func StoreEcdsaPublicKey(publicKey *ecdsa.PublicKey) ([]byte, error) {
 	return pemEncodedKey, nil
 }
 
-// StoreEcdsaPrivateKey writes an ECDSA private key to a PEM encoding
+// StoreEcdsaPrivateKey writes an ECDSA private key to a PEM encoding. The key
+// is marshalled in SEC 1 form, so the PEM block is labelled "EC PRIVATE KEY".
 func StoreEcdsaPrivateKey(privateKey *ecdsa.PrivateKey) ([]byte, error) {
 	encodedKey, err := x509.MarshalECPrivateKey(privateKey)
 	if err != nil {
 		return nil, fmt.Errorf("error x509 encoding private key: %w", err)
 	}
 	pemEncodedKey := pem.EncodeToMemory(&pem.Block{
-		Type:  "PRIVATE KEY",
+		Type:  "EC PRIVATE KEY",
 		Bytes: encodedKey,
 	})
 	return pemEncodedKey, nil
