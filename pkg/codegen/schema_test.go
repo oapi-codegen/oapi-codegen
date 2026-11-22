@@ -1283,6 +1283,32 @@ func TestResolvePropertyGoFieldNameCollisions_ErrorsWithoutResolver(t *testing.T
 	assert.Equal(t, map[string]string{"host-fqdn": "HostFqdn", "other": "Other"}, fieldNames(schema))
 }
 
+// A property whose name has no upper case letter, lower case letter or digit
+// ("名前") derives an empty Go field name, which GenFieldsFromProperties would
+// render as an embedded field that encoding/json ignores. It is reported, with
+// or without output-options.resolve-type-name-collisions, and x-go-name fixes it.
+func TestResolvePropertyGoFieldNameCollisions_ErrorsOnEmptyName(t *testing.T) {
+	for _, resolve := range []bool{false, true} {
+		resetGlobalState(t)
+		globalState.options.OutputOptions.ResolveTypeNameCollisions = resolve
+
+		schema := Schema{Properties: stringProps("名前", "other")}
+		err := resolvePropertyGoFieldNameCollisions(&schema, []string{"Person"})
+		require.Error(t, err)
+		assert.ErrorContains(t, err, "schema 'Person'")
+		assert.ErrorContains(t, err, "property '名前'")
+		assert.ErrorContains(t, err, "empty Go field name")
+		assert.ErrorContains(t, err, "x-go-name")
+	}
+
+	resetGlobalState(t)
+	props := stringProps("名前", "other")
+	props[0] = withGoName(props[0], "Name")
+	schema := Schema{Properties: props}
+	require.NoError(t, resolvePropertyGoFieldNameCollisions(&schema, nil))
+	assert.Equal(t, map[string]string{"名前": "Name", "other": "Other"}, fieldNames(schema))
+}
+
 func TestResolvePropertyGoFieldNameCollisions_RenamesEveryCollider(t *testing.T) {
 	resetGlobalState(t)
 	globalState.options.OutputOptions.ResolveTypeNameCollisions = true
