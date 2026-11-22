@@ -354,10 +354,10 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Primitive, 1 is required, but %d found", n))
 		}
 		// Fiber returns strings that alias buffers it reuses for the next request,
-		// so the value is copied before it reaches the handler.
-		headerValue := strings.Clone(valueList[0])
+		// so the value is copied, in place, before it reaches the handler.
+		valueList[0] = strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Primitive", headerValue, &XPrimitive, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: "int32"})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Primitive", valueList[0], &XPrimitive, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: "int32"})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter X-Primitive: %w", err).Error())
 		}
@@ -374,10 +374,10 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Primitive-Exploded, 1 is required, but %d found", n))
 		}
 		// Fiber returns strings that alias buffers it reuses for the next request,
-		// so the value is copied before it reaches the handler.
-		headerValue := strings.Clone(valueList[0])
+		// so the value is copied, in place, before it reaches the handler.
+		valueList[0] = strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Primitive-Exploded", headerValue, &XPrimitiveExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "integer", Format: "int32"})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Primitive-Exploded", valueList[0], &XPrimitiveExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "integer", Format: "int32"})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter X-Primitive-Exploded: %w", err).Error())
 		}
@@ -394,10 +394,10 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Array-Exploded, 1 is required, but %d found", n))
 		}
 		// Fiber returns strings that alias buffers it reuses for the next request,
-		// so the value is copied before it reaches the handler.
-		headerValue := strings.Clone(valueList[0])
+		// so the value is copied, in place, before it reaches the handler.
+		valueList[0] = strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Array-Exploded", headerValue, &XArrayExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "array", Format: ""})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Array-Exploded", valueList[0], &XArrayExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "array", Format: ""})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter X-Array-Exploded: %w", err).Error())
 		}
@@ -414,10 +414,10 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Array, 1 is required, but %d found", n))
 		}
 		// Fiber returns strings that alias buffers it reuses for the next request,
-		// so the value is copied before it reaches the handler.
-		headerValue := strings.Clone(valueList[0])
+		// so the value is copied, in place, before it reaches the handler.
+		valueList[0] = strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Array", headerValue, &XArray, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "array", Format: ""})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Array", valueList[0], &XArray, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "array", Format: ""})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter X-Array: %w", err).Error())
 		}
@@ -434,10 +434,10 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Object-Exploded, 1 is required, but %d found", n))
 		}
 		// Fiber returns strings that alias buffers it reuses for the next request,
-		// so the value is copied before it reaches the handler.
-		headerValue := strings.Clone(valueList[0])
+		// so the value is copied, in place, before it reaches the handler.
+		valueList[0] = strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Object-Exploded", headerValue, &XObjectExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "", Format: ""})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Object-Exploded", valueList[0], &XObjectExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "", Format: ""})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter X-Object-Exploded: %w", err).Error())
 		}
@@ -454,10 +454,10 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Object, 1 is required, but %d found", n))
 		}
 		// Fiber returns strings that alias buffers it reuses for the next request,
-		// so the value is copied before it reaches the handler.
-		headerValue := strings.Clone(valueList[0])
+		// so the value is copied, in place, before it reaches the handler.
+		valueList[0] = strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Object", headerValue, &XObject, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "", Format: ""})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Object", valueList[0], &XObject, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "", Format: ""})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter X-Object: %w", err).Error())
 		}
@@ -474,10 +474,10 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Complex-Object, 1 is required, but %d found", n))
 		}
 		// Fiber returns strings that alias buffers it reuses for the next request,
-		// so the value is copied before it reaches the handler.
-		headerValue := strings.Clone(valueList[0])
+		// so the value is copied, in place, before it reaches the handler.
+		valueList[0] = strings.Clone(valueList[0])
 
-		err = runtime.JSONUnmarshal([]byte(headerValue), &XComplexObject)
+		err = runtime.JSONUnmarshal([]byte(valueList[0]), &XComplexObject)
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter 'X-Complex-Object' as JSON: %w", err).Error())
 		}
@@ -494,10 +494,10 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Pass-Through, 1 is required, but %d found", n))
 		}
 		// Fiber returns strings that alias buffers it reuses for the next request,
-		// so the value is copied before it reaches the handler.
-		headerValue := strings.Clone(valueList[0])
+		// so the value is copied, in place, before it reaches the handler.
+		valueList[0] = strings.Clone(valueList[0])
 
-		XPassThrough = headerValue
+		XPassThrough = valueList[0]
 
 		params.XPassThrough = &XPassThrough
 
@@ -511,10 +511,10 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName 1-Starting-With-Number, 1 is required, but %d found", n))
 		}
 		// Fiber returns strings that alias buffers it reuses for the next request,
-		// so the value is copied before it reaches the handler.
-		headerValue := strings.Clone(valueList[0])
+		// so the value is copied, in place, before it reaches the handler.
+		valueList[0] = strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "1-Starting-With-Number", headerValue, &N1StartingWithNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
+		err = runtime.BindStyledParameterWithOptions("simple", "1-Starting-With-Number", valueList[0], &N1StartingWithNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter 1-Starting-With-Number: %w", err).Error())
 		}

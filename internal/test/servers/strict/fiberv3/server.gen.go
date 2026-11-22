@@ -403,10 +403,10 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName header1, 1 is required, but %d found", n))
 		}
 		// Fiber returns strings that alias buffers it reuses for the next request,
-		// so the value is copied before it reaches the handler.
-		headerValue := strings.Clone(valueList[0])
+		// so the value is copied, in place, before it reaches the handler.
+		valueList[0] = strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "header1", headerValue, &Header1, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		err = runtime.BindStyledParameterWithOptions("simple", "header1", valueList[0], &Header1, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter header1: %w", err).Error())
 		}
@@ -425,10 +425,10 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c fiber.Ctx) error {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName header2, 1 is required, but %d found", n))
 		}
 		// Fiber returns strings that alias buffers it reuses for the next request,
-		// so the value is copied before it reaches the handler.
-		headerValue := strings.Clone(valueList[0])
+		// so the value is copied, in place, before it reaches the handler.
+		valueList[0] = strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "header2", headerValue, &Header2, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""})
+		err = runtime.BindStyledParameterWithOptions("simple", "header2", valueList[0], &Header2, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter header2: %w", err).Error())
 		}
