@@ -1,4 +1,9 @@
 // ServerInterfaceWrapper converts contexts to parameters.
+//
+// Fiber returns strings that alias buffers it reuses for the next request
+// (unless the app sets Immutable), so every parameter value read from the Fiber
+// context is copied with strings.Clone. The arguments passed to the handler
+// therefore stay valid after it returns.
 type ServerInterfaceWrapper struct {
     Handler ServerInterface
     HandlerMiddlewares []HandlerMiddlewareFunc
@@ -21,14 +26,14 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c {{template "fiber.ctxType" .}}) e
   var {{$varName := .GoVariableName}}{{$varName}} {{.TypeDef}}
 
   {{if .IsPassThrough}}
-  {{$varName}}, err = url.PathUnescape(c.Params("{{.ParamName}}"))
+  {{$varName}}, err = url.PathUnescape(strings.Clone(c.Params("{{.ParamName}}")))
   if err != nil {
     return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unescaping path parameter '{{.ParamName}}': %w", err).Error())
   }
   {{end}}
   {{if .IsJson}}
   {
-    paramValue, decErr := url.PathUnescape(c.Params("{{.ParamName}}"))
+    paramValue, decErr := url.PathUnescape(strings.Clone(c.Params("{{.ParamName}}")))
     if decErr != nil {
       return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unescaping path parameter '{{.ParamName}}': %w", decErr).Error())
     }
@@ -70,7 +75,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c {{template "fiber.ctxType" .}}) e
         // ------------- {{if .Required}}Required{{else}}Optional{{end}} query parameter "{{.ParamName}}" -------------
       {{ end }}
       {{ if (or .IsPassThrough .IsJson) }}
-        if paramValue := c.Query("{{.ParamName}}"); paramValue != "" {
+        if paramValue := strings.Clone(c.Query("{{.ParamName}}")); paramValue != "" {
 
         {{if .IsPassThrough}}
           params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}paramValue
@@ -107,20 +112,23 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c {{template "fiber.ctxType" .}}) e
           if n != 1 {
             return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName {{.ParamName}}, 1 is required, but %d found", n))
          }
+          // Fiber returns strings that alias buffers it reuses for the next request,
+          // so the value is copied before it reaches the handler.
+          headerValue := strings.Clone(valueList[0])
 
         {{if .IsPassThrough}}
-          {{.GoName}} = valueList[0]
+          {{.GoName}} = headerValue
         {{end}}
 
         {{if .IsJson}}
-          err = runtime.JSONUnmarshal([]byte(valueList[0]), &{{.GoName}})
+          err = runtime.JSONUnmarshal([]byte(headerValue), &{{.GoName}})
           if err != nil {
             return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
           }
         {{end}}
 
         {{if .IsStyled}}
-          err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"{{unionTypes .SchemaTypes}}})
+          err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", headerValue, &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"{{unionTypes .SchemaTypes}}})
           if err != nil {
             return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
           }
@@ -137,7 +145,7 @@ func (siw *ServerInterfaceWrapper) {{$opid}}(c {{template "fiber.ctxType" .}}) e
 
     {{range .CookieParams}}
       {
-      cookie := c.Cookies("{{.ParamName}}")
+      cookie := strings.Clone(c.Cookies("{{.ParamName}}"))
 
       if cookie != "" {
 

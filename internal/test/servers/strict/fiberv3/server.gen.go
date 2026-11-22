@@ -79,6 +79,11 @@ type ServerInterface interface {
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
+//
+// Fiber returns strings that alias buffers it reuses for the next request
+// (unless the app sets Immutable), so every parameter value read from the Fiber
+// context is copied with strings.Clone. The arguments passed to the handler
+// therefore stay valid after it returns.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
 	HandlerMiddlewares []HandlerMiddlewareFunc
@@ -222,7 +227,7 @@ func (siw *ServerInterfaceWrapper) ReservedGoKeywordParameters(c fiber.Ctx) erro
 	// ------------- Path parameter "type" -------------
 	var pType string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "type", c.Params("type"), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "type", strings.Clone(c.Params("type")), &pType, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter type: %w", err).Error())
 	}
@@ -287,7 +292,7 @@ func (siw *ServerInterfaceWrapper) SameNameParamAndBodyProperty(c fiber.Ctx) err
 	// ------------- Path parameter "name" -------------
 	var name string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "name", c.Params("name"), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "name", strings.Clone(c.Params("name")), &name, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter name: %w", err).Error())
 	}
@@ -397,8 +402,11 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c fiber.Ctx) error {
 		if n != 1 {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName header1, 1 is required, but %d found", n))
 		}
+		// Fiber returns strings that alias buffers it reuses for the next request,
+		// so the value is copied before it reaches the handler.
+		headerValue := strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "header1", valueList[0], &Header1, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		err = runtime.BindStyledParameterWithOptions("simple", "header1", headerValue, &Header1, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter header1: %w", err).Error())
 		}
@@ -416,8 +424,11 @@ func (siw *ServerInterfaceWrapper) HeadersExample(c fiber.Ctx) error {
 		if n != 1 {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName header2, 1 is required, but %d found", n))
 		}
+		// Fiber returns strings that alias buffers it reuses for the next request,
+		// so the value is copied before it reaches the handler.
+		headerValue := strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "header2", valueList[0], &Header2, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""})
+		err = runtime.BindStyledParameterWithOptions("simple", "header2", headerValue, &Header2, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: ""})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter header2: %w", err).Error())
 		}

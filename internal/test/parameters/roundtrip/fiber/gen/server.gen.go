@@ -107,6 +107,11 @@ type ServerInterface interface {
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
+//
+// Fiber returns strings that alias buffers it reuses for the next request
+// (unless the app sets Immutable), so every parameter value read from the Fiber
+// context is copied with strings.Clone. The arguments passed to the handler
+// therefore stay valid after it returns.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
 	HandlerMiddlewares []HandlerMiddlewareFunc
@@ -125,7 +130,7 @@ func (siw *ServerInterfaceWrapper) GetContentObject(c *fiber.Ctx) error {
 	var param ComplexObject
 
 	{
-		paramValue, decErr := url.PathUnescape(c.Params("param"))
+		paramValue, decErr := url.PathUnescape(strings.Clone(c.Params("param")))
 		if decErr != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unescaping path parameter 'param': %w", decErr).Error())
 		}
@@ -160,7 +165,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(c *fiber.Ctx) error {
 	var params GetCookieParams
 
 	{
-		cookie := c.Cookies("p")
+		cookie := strings.Clone(c.Cookies("p"))
 
 		if cookie != "" {
 			var value int32
@@ -174,7 +179,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(c *fiber.Ctx) error {
 	}
 
 	{
-		cookie := c.Cookies("ep")
+		cookie := strings.Clone(c.Cookies("ep"))
 
 		if cookie != "" {
 			var value int32
@@ -188,7 +193,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(c *fiber.Ctx) error {
 	}
 
 	{
-		cookie := c.Cookies("ea")
+		cookie := strings.Clone(c.Cookies("ea"))
 
 		if cookie != "" {
 			var value []int32
@@ -202,7 +207,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(c *fiber.Ctx) error {
 	}
 
 	{
-		cookie := c.Cookies("a")
+		cookie := strings.Clone(c.Cookies("a"))
 
 		if cookie != "" {
 			var value []int32
@@ -216,7 +221,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(c *fiber.Ctx) error {
 	}
 
 	{
-		cookie := c.Cookies("eo")
+		cookie := strings.Clone(c.Cookies("eo"))
 
 		if cookie != "" {
 			var value Object
@@ -230,7 +235,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(c *fiber.Ctx) error {
 	}
 
 	{
-		cookie := c.Cookies("o")
+		cookie := strings.Clone(c.Cookies("o"))
 
 		if cookie != "" {
 			var value Object
@@ -244,7 +249,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(c *fiber.Ctx) error {
 	}
 
 	{
-		cookie := c.Cookies("co")
+		cookie := strings.Clone(c.Cookies("co"))
 
 		if cookie != "" {
 			var value ComplexObject
@@ -265,7 +270,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(c *fiber.Ctx) error {
 	}
 
 	{
-		cookie := c.Cookies("1s")
+		cookie := strings.Clone(c.Cookies("1s"))
 
 		if cookie != "" {
 			var value string
@@ -348,8 +353,11 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 		if n != 1 {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Primitive, 1 is required, but %d found", n))
 		}
+		// Fiber returns strings that alias buffers it reuses for the next request,
+		// so the value is copied before it reaches the handler.
+		headerValue := strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Primitive", valueList[0], &XPrimitive, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: "int32"})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Primitive", headerValue, &XPrimitive, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "integer", Format: "int32"})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter X-Primitive: %w", err).Error())
 		}
@@ -365,8 +373,11 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 		if n != 1 {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Primitive-Exploded, 1 is required, but %d found", n))
 		}
+		// Fiber returns strings that alias buffers it reuses for the next request,
+		// so the value is copied before it reaches the handler.
+		headerValue := strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Primitive-Exploded", valueList[0], &XPrimitiveExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "integer", Format: "int32"})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Primitive-Exploded", headerValue, &XPrimitiveExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "integer", Format: "int32"})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter X-Primitive-Exploded: %w", err).Error())
 		}
@@ -382,8 +393,11 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 		if n != 1 {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Array-Exploded, 1 is required, but %d found", n))
 		}
+		// Fiber returns strings that alias buffers it reuses for the next request,
+		// so the value is copied before it reaches the handler.
+		headerValue := strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Array-Exploded", valueList[0], &XArrayExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "array", Format: ""})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Array-Exploded", headerValue, &XArrayExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "array", Format: ""})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter X-Array-Exploded: %w", err).Error())
 		}
@@ -399,8 +413,11 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 		if n != 1 {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Array, 1 is required, but %d found", n))
 		}
+		// Fiber returns strings that alias buffers it reuses for the next request,
+		// so the value is copied before it reaches the handler.
+		headerValue := strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Array", valueList[0], &XArray, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "array", Format: ""})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Array", headerValue, &XArray, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "array", Format: ""})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter X-Array: %w", err).Error())
 		}
@@ -416,8 +433,11 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 		if n != 1 {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Object-Exploded, 1 is required, but %d found", n))
 		}
+		// Fiber returns strings that alias buffers it reuses for the next request,
+		// so the value is copied before it reaches the handler.
+		headerValue := strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Object-Exploded", valueList[0], &XObjectExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "", Format: ""})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Object-Exploded", headerValue, &XObjectExploded, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: true, Required: false, Type: "", Format: ""})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter X-Object-Exploded: %w", err).Error())
 		}
@@ -433,8 +453,11 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 		if n != 1 {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Object, 1 is required, but %d found", n))
 		}
+		// Fiber returns strings that alias buffers it reuses for the next request,
+		// so the value is copied before it reaches the handler.
+		headerValue := strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "X-Object", valueList[0], &XObject, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "", Format: ""})
+		err = runtime.BindStyledParameterWithOptions("simple", "X-Object", headerValue, &XObject, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "", Format: ""})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter X-Object: %w", err).Error())
 		}
@@ -450,8 +473,11 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 		if n != 1 {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Complex-Object, 1 is required, but %d found", n))
 		}
+		// Fiber returns strings that alias buffers it reuses for the next request,
+		// so the value is copied before it reaches the handler.
+		headerValue := strings.Clone(valueList[0])
 
-		err = runtime.JSONUnmarshal([]byte(valueList[0]), &XComplexObject)
+		err = runtime.JSONUnmarshal([]byte(headerValue), &XComplexObject)
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter 'X-Complex-Object' as JSON: %w", err).Error())
 		}
@@ -467,8 +493,11 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 		if n != 1 {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName X-Pass-Through, 1 is required, but %d found", n))
 		}
+		// Fiber returns strings that alias buffers it reuses for the next request,
+		// so the value is copied before it reaches the handler.
+		headerValue := strings.Clone(valueList[0])
 
-		XPassThrough = valueList[0]
+		XPassThrough = headerValue
 
 		params.XPassThrough = &XPassThrough
 
@@ -481,8 +510,11 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *fiber.Ctx) error {
 		if n != 1 {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for ParamName 1-Starting-With-Number, 1 is required, but %d found", n))
 		}
+		// Fiber returns strings that alias buffers it reuses for the next request,
+		// so the value is copied before it reaches the handler.
+		headerValue := strings.Clone(valueList[0])
 
-		err = runtime.BindStyledParameterWithOptions("simple", "1-Starting-With-Number", valueList[0], &N1StartingWithNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
+		err = runtime.BindStyledParameterWithOptions("simple", "1-Starting-With-Number", headerValue, &N1StartingWithNumber, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false, Type: "string", Format: ""})
 		if err != nil {
 			return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter 1-Starting-With-Number: %w", err).Error())
 		}
@@ -515,7 +547,7 @@ func (siw *ServerInterfaceWrapper) GetLabelExplodeArray(c *fiber.Ctx) error {
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", c.Params("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("label", "param", strings.Clone(c.Params("param")), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
@@ -544,7 +576,7 @@ func (siw *ServerInterfaceWrapper) GetLabelExplodeObject(c *fiber.Ctx) error {
 	// ------------- Path parameter "param" -------------
 	var param Object
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", c.Params("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("label", "param", strings.Clone(c.Params("param")), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
@@ -573,7 +605,7 @@ func (siw *ServerInterfaceWrapper) GetLabelExplodePrimitive(c *fiber.Ctx) error 
 	// ------------- Path parameter "param" -------------
 	var param int32
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", c.Params("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("label", "param", strings.Clone(c.Params("param")), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32"})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
@@ -602,7 +634,7 @@ func (siw *ServerInterfaceWrapper) GetLabelNoExplodeArray(c *fiber.Ctx) error {
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", c.Params("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("label", "param", strings.Clone(c.Params("param")), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
@@ -631,7 +663,7 @@ func (siw *ServerInterfaceWrapper) GetLabelNoExplodeObject(c *fiber.Ctx) error {
 	// ------------- Path parameter "param" -------------
 	var param Object
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", c.Params("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("label", "param", strings.Clone(c.Params("param")), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
@@ -660,7 +692,7 @@ func (siw *ServerInterfaceWrapper) GetLabelPrimitive(c *fiber.Ctx) error {
 	// ------------- Path parameter "param" -------------
 	var param int32
 
-	err = runtime.BindStyledParameterWithOptions("label", "param", c.Params("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("label", "param", strings.Clone(c.Params("param")), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32"})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
@@ -689,7 +721,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixExplodeArray(c *fiber.Ctx) error {
 	// ------------- Path parameter "id" -------------
 	var id []int32
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", strings.Clone(c.Params("id")), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
@@ -718,7 +750,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixExplodeObject(c *fiber.Ctx) error {
 	// ------------- Path parameter "id" -------------
 	var id Object
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", strings.Clone(c.Params("id")), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
@@ -747,7 +779,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixExplodePrimitive(c *fiber.Ctx) error
 	// ------------- Path parameter "id" -------------
 	var id int32
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", strings.Clone(c.Params("id")), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32"})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
@@ -776,7 +808,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixNoExplodeArray(c *fiber.Ctx) error {
 	// ------------- Path parameter "id" -------------
 	var id []int32
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", strings.Clone(c.Params("id")), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
@@ -805,7 +837,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixNoExplodeObject(c *fiber.Ctx) error 
 	// ------------- Path parameter "id" -------------
 	var id Object
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", strings.Clone(c.Params("id")), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
@@ -834,7 +866,7 @@ func (siw *ServerInterfaceWrapper) GetMatrixPrimitive(c *fiber.Ctx) error {
 	// ------------- Path parameter "id" -------------
 	var id int32
 
-	err = runtime.BindStyledParameterWithOptions("matrix", "id", c.Params("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("matrix", "id", strings.Clone(c.Params("id")), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32"})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter id: %w", err).Error())
 	}
@@ -863,7 +895,7 @@ func (siw *ServerInterfaceWrapper) GetPassThrough(c *fiber.Ctx) error {
 	// ------------- Path parameter "param" -------------
 	var param string
 
-	param, err = url.PathUnescape(c.Params("param"))
+	param, err = url.PathUnescape(strings.Clone(c.Params("param")))
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unescaping path parameter 'param': %w", err).Error())
 	}
@@ -1030,7 +1062,7 @@ func (siw *ServerInterfaceWrapper) GetQueryForm(c *fiber.Ctx) error {
 
 	// ------------- Optional query parameter "co" -------------
 
-	if paramValue := c.Query("co"); paramValue != "" {
+	if paramValue := strings.Clone(c.Query("co")); paramValue != "" {
 
 		var value ComplexObject
 		err = runtime.JSONUnmarshal([]byte(paramValue), &value)
@@ -1073,7 +1105,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleExplodeArray(c *fiber.Ctx) error {
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", c.Params("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", strings.Clone(c.Params("param")), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "array", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
@@ -1102,7 +1134,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleExplodeObject(c *fiber.Ctx) error {
 	// ------------- Path parameter "param" -------------
 	var param Object
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", c.Params("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", strings.Clone(c.Params("param")), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
@@ -1131,7 +1163,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleExplodePrimitive(c *fiber.Ctx) error
 	// ------------- Path parameter "param" -------------
 	var param int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", c.Params("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", strings.Clone(c.Params("param")), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: true, Required: true, Type: "integer", Format: "int32"})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
@@ -1160,7 +1192,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleNoExplodeArray(c *fiber.Ctx) error {
 	// ------------- Path parameter "param" -------------
 	var param []int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", c.Params("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", strings.Clone(c.Params("param")), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "array", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
@@ -1189,7 +1221,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleNoExplodeObject(c *fiber.Ctx) error 
 	// ------------- Path parameter "param" -------------
 	var param Object
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", c.Params("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", strings.Clone(c.Params("param")), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
@@ -1218,7 +1250,7 @@ func (siw *ServerInterfaceWrapper) GetSimplePrimitive(c *fiber.Ctx) error {
 	// ------------- Path parameter "param" -------------
 	var param int32
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", c.Params("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32"})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", strings.Clone(c.Params("param")), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int32"})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
@@ -1247,7 +1279,7 @@ func (siw *ServerInterfaceWrapper) GetSimpleString(c *fiber.Ctx) error {
 	// ------------- Path parameter "param" -------------
 	var param string
 
-	err = runtime.BindStyledParameterWithOptions("simple", "param", c.Params("param"), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
+	err = runtime.BindStyledParameterWithOptions("simple", "param", strings.Clone(c.Params("param")), &param, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: ""})
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter param: %w", err).Error())
 	}
@@ -1276,7 +1308,7 @@ func (siw *ServerInterfaceWrapper) GetStartingWithNumber(c *fiber.Ctx) error {
 	// ------------- Path parameter "1param" -------------
 	var n1param string
 
-	n1param, err = url.PathUnescape(c.Params("1param"))
+	n1param, err = url.PathUnescape(strings.Clone(c.Params("1param")))
 	if err != nil {
 		return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unescaping path parameter '1param': %w", err).Error())
 	}
