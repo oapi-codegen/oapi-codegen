@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: schemasnullable
+output: nullable.gen.go
+# Union of flags needed by the folded sources:
+#   - models    : issue-1039 required/optional x nullable matrix; issue-2185 array of nullable items
+#   - client    : issue-1039 exercises client request code path
+#   - chi-server: issue-1039 exercises server stub code path
+#   - nullable-type: issue-1039 main behaviour; issue-2185 Container.MayBeNull uses nullable.Nullable[T]
+#   - skip-prune: issue-2185 Container has no path reference
+generate:
+  models: true
+  client: true
+  chi-server: true
+output-options:
+  nullable-type: true
+  skip-prune: true

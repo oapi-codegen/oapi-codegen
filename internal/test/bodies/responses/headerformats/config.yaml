@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+# From issue-2512
+package: responseheaderformats
+output: headerformats.gen.go
+generate:
+  models: true
+  std-http-server: true
+  strict-server: true
+  client: true

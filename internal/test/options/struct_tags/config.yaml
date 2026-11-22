@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: optionsstructtags
+output: struct_tags.gen.go
+generate:
+  models: true
+output-options:
+  skip-prune: true
+  # yaml-tags is superseded by the explicit yaml entry in struct-tags below:
+  # the entry's template wins over the flag's injected default.
+  yaml-tags: true
+  # struct-tags: user-configurable struct tag generation. Entries merge by
+  # name on top of the defaults (json, form), so the yaml entry overrides
+  # the yaml-tags default while validate/db add new tags.
+  struct-tags:
+    tags:
+      - name: yaml
+        template: '{{.FieldName}}'
+      - name: validate
+        template: '{{if not .IsOptional}}required{{end}}'
+      - name: db
+        template: '{{.FieldName}}'

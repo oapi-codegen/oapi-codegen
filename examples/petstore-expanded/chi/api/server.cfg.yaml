@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: api
+generate:
+  models: true
+  chi-server: true
+  embedded-spec: true
+compatibility:
+  apply-chi-middleware-first-to-last: true
+output: petstore-server.gen.go

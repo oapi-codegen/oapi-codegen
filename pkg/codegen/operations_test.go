@@ -14,10 +14,16 @@
 package codegen
 
 import (
+	"go/format"
 	"net/http"
+	"net/url"
+	"strings"
 	"testing"
+	"text/template"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestIsJson(t *testing.T) {
@@ -131,7 +137,7 @@ func TestGenerateDefaultOperationID(t *testing.T) {
 	}
 
 	for _, test := range suite {
-		got, err := generateDefaultOperationID(test.op, test.path, ToCamelCase)
+		got, err := generateDefaultOperationID(test.op, test.path)
 		if err != nil {
 			if !test.wantErr {
 				t.Fatalf("did not expected error but got %v", err)
@@ -145,4 +151,1634 @@ func TestGenerateDefaultOperationID(t *testing.T) {
 			t.Fatalf("Operation ID generation error. Want [%v] Got [%v]", test.want, got)
 		}
 	}
+}
+
+func TestSummaryAsComment(t *testing.T) {
+	tests := []struct {
+		name    string
+		summary string
+		prefix  string
+		want    string
+	}{
+		{
+			name:    "empty summary returns empty string",
+			summary: "",
+			prefix:  "GetFoo",
+			want:    "",
+		},
+		{
+			name:    "single line summary with prefix",
+			summary: "Get a foo",
+			prefix:  "GetFoo",
+			want:    "// GetFoo Get a foo",
+		},
+		{
+			name:    "single line summary with empty prefix",
+			summary: "Get a foo",
+			prefix:  "",
+			want:    "// Get a foo",
+		},
+		{
+			name:    "multiline summary with prefix only prefixes first line",
+			summary: "Get a foo\nReturns the foo resource",
+			prefix:  "GetFoo",
+			want:    "// GetFoo Get a foo\n// Returns the foo resource",
+		},
+		{
+			name:    "trailing newline is trimmed",
+			summary: "Get a foo\n\r",
+			prefix:  "GetFoo",
+			want:    "// GetFoo Get a foo",
+		},
+		{
+			name:    "CRLF line endings are treated as newlines",
+			summary: "Get a foo\r\nReturns the foo resource",
+			prefix:  "GetFoo",
+			want:    "// GetFoo Get a foo\n// Returns the foo resource",
+		},
+		{
+			name:    "bare CR is treated as a newline, not left in output",
+			summary: "Get a foo\rReturns the foo resource",
+			prefix:  "GetFoo",
+			want:    "// GetFoo Get a foo\n// Returns the foo resource",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			op := OperationDefinition{Summary: tt.summary}
+			got := op.SummaryAsComment(tt.prefix)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestDeprecationComment(t *testing.T) {
+	tests := []struct {
+		name string
+		op   *OperationDefinition
+		want string
+	}{
+		{
+			name: "nil spec returns empty string",
+			op:   &OperationDefinition{Spec: nil},
+			want: "",
+		},
+		{
+			name: "non-deprecated operation returns empty string",
+			op: &OperationDefinition{
+				Spec: &openapi3.Operation{Deprecated: false},
+			},
+			want: "",
+		},
+		{
+			name: "deprecated operation without x-deprecated-reason uses default message",
+			op: &OperationDefinition{
+				Spec: &openapi3.Operation{Deprecated: true},
+			},
+			want: "// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set",
+		},
+		{
+			name: "deprecated operation with x-deprecated-reason uses the reason",
+			op: &OperationDefinition{
+				Spec: &openapi3.Operation{
+					Deprecated: true,
+					Extensions: map[string]any{
+						"x-deprecated-reason": "Use /v2/foo instead.",
+					},
+				},
+			},
+			want: "// Deprecated: Use /v2/foo instead.",
+		},
+		{
+			name: "deprecated operation with non-string x-deprecated-reason falls back to default message",
+			op: &OperationDefinition{
+				Spec: &openapi3.Operation{
+					Deprecated: true,
+					Extensions: map[string]any{
+						"x-deprecated-reason": 42,
+					},
+				},
+			},
+			want: "// Deprecated: this operation has been marked as deprecated upstream, but no `x-deprecated-reason` was set",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.op.DeprecationComment())
+		})
+	}
+}
+
+func TestOperationDefinition_GenerateFunctionComment(t *testing.T) {
+	opWithBody := func(summary string) OperationDefinition {
+		return OperationDefinition{
+			OperationId: "GetFoo",
+			Method:      "GET",
+			Path:        "/foo",
+			Summary:     summary,
+			Spec: &openapi3.Operation{
+				RequestBody: &openapi3.RequestBodyRef{},
+			},
+		}
+	}
+	opWithoutBody := func(summary string) OperationDefinition {
+		return OperationDefinition{
+			OperationId: "GetFoo",
+			Method:      "GET",
+			Path:        "/foo",
+			Summary:     summary,
+			Spec:        &openapi3.Operation{},
+		}
+	}
+	opWithDescription := func(summary, description string) OperationDefinition {
+		return OperationDefinition{
+			OperationId: "GetFoo",
+			Method:      "GET",
+			Path:        "/foo",
+			Summary:     summary,
+			Spec:        &openapi3.Operation{Description: description},
+		}
+	}
+	opWithBodyAndDescription := func(summary, description string) OperationDefinition {
+		return OperationDefinition{
+			OperationId: "GetFoo",
+			Method:      "GET",
+			Path:        "/foo",
+			Summary:     summary,
+			Spec: &openapi3.Operation{
+				Description: description,
+				RequestBody: &openapi3.RequestBodyRef{},
+			},
+		}
+	}
+
+	tests := []struct {
+		name                    string
+		op                      OperationDefinition
+		originalFunctionName    string
+		functionSuffix          string
+		isFunctionWithResponses bool
+		want                    string
+	}{
+		{
+			name:                    "no summary, no body, not with responses",
+			op:                      opWithoutBody(""),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "",
+			isFunctionWithResponses: false,
+			want:                    "// GetFoo performs a GET /foo (the `GetFoo` operationId) request.",
+		},
+		{
+			name:                    "no summary, no body, with responses",
+			op:                      opWithoutBody(""),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "WithResponse",
+			isFunctionWithResponses: true,
+			want: "// GetFooWithResponse performs a GET /foo (the `GetFoo` operationId) request.\n" +
+				"//\n" +
+				"// Returns a wrapper object for the known response body format(s).",
+		},
+		{
+			name:                    "no summary, has body, not with responses",
+			op:                      opWithBody(""),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "",
+			isFunctionWithResponses: false,
+			want: "// GetFoo performs a GET /foo (the `GetFoo` operationId) request,\n" +
+				"// with any type of body and a specified content type.",
+		},
+		{
+			name:                    "no summary, has body, with responses",
+			op:                      opWithBody(""),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "WithResponse",
+			isFunctionWithResponses: true,
+			want: "// GetFooWithResponse performs a GET /foo (the `GetFoo` operationId) request,\n" +
+				"// with any type of body and a specified content type.\n" +
+				"//\n" +
+				"// Returns a wrapper object for the known response body format(s).",
+		},
+		{
+			name:                    "has summary, no body, not with responses",
+			op:                      opWithoutBody("Get a foo"),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "",
+			isFunctionWithResponses: false,
+			want: "// GetFoo Get a foo\n" +
+				"//\n" +
+				"// Corresponds with GET /foo (the `GetFoo` operationId).",
+		},
+		{
+			name:                    "has summary, no body, with responses",
+			op:                      opWithoutBody("Get a foo"),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "WithResponse",
+			isFunctionWithResponses: true,
+			want: "// GetFooWithResponse Get a foo\n" +
+				"//\n" +
+				"// Returns a wrapper object for the known response body format(s).\n" +
+				"//\n" +
+				"// Corresponds with GET /foo (the `GetFoo` operationId).",
+		},
+		{
+			name:                    "has summary, has body, not with responses",
+			op:                      opWithBody("Get a foo"),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "",
+			isFunctionWithResponses: false,
+			want: "// GetFoo Get a foo\n" +
+				"//\n" +
+				"// Takes any type of body and a specified content type.\n" +
+				"//\n" +
+				"// Corresponds with GET /foo (the `GetFoo` operationId).",
+		},
+		{
+			name:                    "has summary, has body, with responses",
+			op:                      opWithBody("Get a foo"),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "WithResponse",
+			isFunctionWithResponses: true,
+			want: "// GetFooWithResponse Get a foo\n" +
+				"//\n" +
+				"// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).\n" +
+				"//\n" +
+				"// Corresponds with GET /foo (the `GetFoo` operationId).",
+		},
+		{
+			name:                    "no summary, description, no body, not with responses",
+			op:                      opWithDescription("", "Detailed description."),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "",
+			isFunctionWithResponses: false,
+			want: "// GetFoo performs a GET /foo (the `GetFoo` operationId) request.\n" +
+				"//\n" +
+				"// Detailed description.",
+		},
+		{
+			name:                    "no summary, description, no body, with responses",
+			op:                      opWithDescription("", "Detailed description."),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "WithResponse",
+			isFunctionWithResponses: true,
+			want: "// GetFooWithResponse performs a GET /foo (the `GetFoo` operationId) request.\n" +
+				"//\n" +
+				"// Detailed description.\n" +
+				"//\n" +
+				"// Returns a wrapper object for the known response body format(s).",
+		},
+		{
+			name:                    "no summary, description, has body, not with responses",
+			op:                      opWithBodyAndDescription("", "Detailed description."),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "",
+			isFunctionWithResponses: false,
+			want: "// GetFoo performs a GET /foo (the `GetFoo` operationId) request,\n" +
+				"// with any type of body and a specified content type.\n" +
+				"//\n" +
+				"// Detailed description.",
+		},
+		{
+			name:                    "has summary, description, no body, not with responses",
+			op:                      opWithDescription("Get a foo", "Detailed description."),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "",
+			isFunctionWithResponses: false,
+			want: "// GetFoo Get a foo\n" +
+				"//\n" +
+				"// Detailed description.\n" +
+				"//\n" +
+				"// Corresponds with GET /foo (the `GetFoo` operationId).",
+		},
+		{
+			name:                    "has summary, description, no body, with responses",
+			op:                      opWithDescription("Get a foo", "Detailed description."),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "WithResponse",
+			isFunctionWithResponses: true,
+			want: "// GetFooWithResponse Get a foo\n" +
+				"//\n" +
+				"// Detailed description.\n" +
+				"//\n" +
+				"// Returns a wrapper object for the known response body format(s).\n" +
+				"//\n" +
+				"// Corresponds with GET /foo (the `GetFoo` operationId).",
+		},
+		{
+			name:                    "has summary, description, has body, with responses",
+			op:                      opWithBodyAndDescription("Get a foo", "Detailed description."),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "WithResponse",
+			isFunctionWithResponses: true,
+			want: "// GetFooWithResponse Get a foo\n" +
+				"//\n" +
+				"// Detailed description.\n" +
+				"//\n" +
+				"// Takes any type of body and a specified content type, and returns a wrapper object for the known response body format(s).\n" +
+				"//\n" +
+				"// Corresponds with GET /foo (the `GetFoo` operationId).",
+		},
+		{
+			name:                    "no summary, description, has body, with responses",
+			op:                      opWithBodyAndDescription("", "Detailed description."),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "WithResponse",
+			isFunctionWithResponses: true,
+			want: "// GetFooWithResponse performs a GET /foo (the `GetFoo` operationId) request,\n" +
+				"// with any type of body and a specified content type.\n" +
+				"//\n" +
+				"// Detailed description.\n" +
+				"//\n" +
+				"// Returns a wrapper object for the known response body format(s).",
+		},
+		{
+			name:                    "has summary, description, has body, not with responses",
+			op:                      opWithBodyAndDescription("Get a foo", "Detailed description."),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "",
+			isFunctionWithResponses: false,
+			want: "// GetFoo Get a foo\n" +
+				"//\n" +
+				"// Detailed description.\n" +
+				"//\n" +
+				"// Takes any type of body and a specified content type.\n" +
+				"//\n" +
+				"// Corresponds with GET /foo (the `GetFoo` operationId).",
+		},
+		{
+			name:                    "multiline description is rendered correctly",
+			op:                      opWithDescription("Get a foo", "Line one.\nLine two."),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "",
+			isFunctionWithResponses: false,
+			want: "// GetFoo Get a foo\n" +
+				"//\n" +
+				"// Line one.\n" +
+				"// Line two.\n" +
+				"//\n" +
+				"// Corresponds with GET /foo (the `GetFoo` operationId).",
+		},
+		{
+			name: "multiline summary strips embedded newlines in individual parts",
+			op: OperationDefinition{
+				OperationId: "GetFoo",
+				Method:      "GET",
+				Path:        "/foo",
+				Summary:     "Line one\nLine two",
+				Spec:        &openapi3.Operation{},
+			},
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "",
+			isFunctionWithResponses: false,
+			want: "// GetFoo Line one\n" +
+				"// Line two\n" +
+				"//\n" +
+				"// Corresponds with GET /foo (the `GetFoo` operationId).",
+		},
+		{
+			name:                    "CRLF in summary does not inject code",
+			op:                      opWithoutBody("Get a foo\r\nLine two"),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "",
+			isFunctionWithResponses: false,
+			want: "// GetFoo Get a foo\n" +
+				"// Line two\n" +
+				"//\n" +
+				"// Corresponds with GET /foo (the `GetFoo` operationId).",
+		},
+		{
+			name:                    "bare CR in summary does not inject code",
+			op:                      opWithoutBody("Get a foo\rLine two"),
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "",
+			isFunctionWithResponses: false,
+			want: "// GetFoo Get a foo\n" +
+				"// Line two\n" +
+				"//\n" +
+				"// Corresponds with GET /foo (the `GetFoo` operationId).",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.op.GenerateFunctionComment(tt.originalFunctionName, tt.functionSuffix, tt.isFunctionWithResponses)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestRequestBodyDefinition_GenerateFunctionComment(t *testing.T) {
+	parentWithSummary := OperationDefinition{
+		OperationId: "CreateFoo",
+		Method:      "POST",
+		Path:        "/foo",
+		Summary:     "Create a foo",
+		Spec:        &openapi3.Operation{},
+	}
+	parentNoSummary := OperationDefinition{
+		OperationId: "CreateFoo",
+		Method:      "POST",
+		Path:        "/foo",
+		Spec:        &openapi3.Operation{},
+	}
+	parentWithSummaryAndDescription := OperationDefinition{
+		OperationId: "CreateFoo",
+		Method:      "POST",
+		Path:        "/foo",
+		Summary:     "Create a foo",
+		Spec:        &openapi3.Operation{Description: "Detailed description."},
+	}
+	parentNoSummaryWithDescription := OperationDefinition{
+		OperationId: "CreateFoo",
+		Method:      "POST",
+		Path:        "/foo",
+		Spec:        &openapi3.Operation{Description: "Detailed description."},
+	}
+	body := RequestBodyDefinition{
+		ContentType: "application/json",
+	}
+
+	tests := []struct {
+		name                    string
+		body                    RequestBodyDefinition
+		originalFunctionName    string
+		parent                  OperationDefinition
+		functionSuffix          string
+		isFunctionWithResponses bool
+		want                    string
+	}{
+		{
+			name:                    "no summary, not with responses",
+			body:                    body,
+			parent:                  parentNoSummary,
+			originalFunctionName:    "CreateFoo",
+			functionSuffix:          "WithJSONBody",
+			isFunctionWithResponses: false,
+			want: "// CreateFooWithJSONBody performs a POST /foo (the `CreateFoo` operationId) request.\n" +
+				"// Takes a body of the `application/json` content type.",
+		},
+		{
+			name:                    "no summary, with responses",
+			body:                    body,
+			parent:                  parentNoSummary,
+			originalFunctionName:    "CreateFoo",
+			functionSuffix:          "WithJSONBodyWithResponse",
+			isFunctionWithResponses: true,
+			want: "// CreateFooWithJSONBodyWithResponse performs a POST /foo (the `CreateFoo` operationId) request.\n" +
+				"// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).",
+		},
+		{
+			name:                    "has summary, not with responses",
+			body:                    body,
+			parent:                  parentWithSummary,
+			originalFunctionName:    "CreateFoo",
+			functionSuffix:          "WithJSONBody",
+			isFunctionWithResponses: false,
+			want: "// CreateFooWithJSONBody Create a foo\n" +
+				"//\n" +
+				"// Takes a body of the `application/json` content type.\n" +
+				"//\n" +
+				"// Corresponds with POST /foo (the `CreateFoo` operationId).",
+		},
+		{
+			name:                    "has summary, with responses",
+			body:                    body,
+			parent:                  parentWithSummary,
+			originalFunctionName:    "CreateFoo",
+			functionSuffix:          "WithJSONBodyWithResponse",
+			isFunctionWithResponses: true,
+			want: "// CreateFooWithJSONBodyWithResponse Create a foo\n" +
+				"//\n" +
+				"// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).\n" +
+				"//\n" +
+				"// Corresponds with POST /foo (the `CreateFoo` operationId).",
+		},
+		{
+			name:                    "no summary, description, not with responses",
+			body:                    body,
+			parent:                  parentNoSummaryWithDescription,
+			originalFunctionName:    "CreateFoo",
+			functionSuffix:          "WithJSONBody",
+			isFunctionWithResponses: false,
+			want: "// CreateFooWithJSONBody performs a POST /foo (the `CreateFoo` operationId) request.\n" +
+				"// Takes a body of the `application/json` content type.\n" +
+				"//\n" +
+				"// Detailed description.",
+		},
+		{
+			name:                    "no summary, description, with responses",
+			body:                    body,
+			parent:                  parentNoSummaryWithDescription,
+			originalFunctionName:    "CreateFoo",
+			functionSuffix:          "WithJSONBodyWithResponse",
+			isFunctionWithResponses: true,
+			want: "// CreateFooWithJSONBodyWithResponse performs a POST /foo (the `CreateFoo` operationId) request.\n" +
+				"// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).\n" +
+				"//\n" +
+				"// Detailed description.",
+		},
+		{
+			name:                    "has summary, description, not with responses",
+			body:                    body,
+			parent:                  parentWithSummaryAndDescription,
+			originalFunctionName:    "CreateFoo",
+			functionSuffix:          "WithJSONBody",
+			isFunctionWithResponses: false,
+			want: "// CreateFooWithJSONBody Create a foo\n" +
+				"//\n" +
+				"// Detailed description.\n" +
+				"//\n" +
+				"// Takes a body of the `application/json` content type.\n" +
+				"//\n" +
+				"// Corresponds with POST /foo (the `CreateFoo` operationId).",
+		},
+		{
+			name:                    "has summary, description, with responses",
+			body:                    body,
+			parent:                  parentWithSummaryAndDescription,
+			originalFunctionName:    "CreateFoo",
+			functionSuffix:          "WithJSONBodyWithResponse",
+			isFunctionWithResponses: true,
+			want: "// CreateFooWithJSONBodyWithResponse Create a foo\n" +
+				"//\n" +
+				"// Detailed description.\n" +
+				"//\n" +
+				"// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).\n" +
+				"//\n" +
+				"// Corresponds with POST /foo (the `CreateFoo` operationId).",
+		},
+		{
+			name: "CRLF in parent summary does not inject code",
+			body: body,
+			parent: OperationDefinition{
+				OperationId: "CreateFoo",
+				Method:      "POST",
+				Path:        "/foo",
+				Summary:     "Create a foo\r\nLine two",
+				Spec:        &openapi3.Operation{},
+			},
+			originalFunctionName:    "CreateFoo",
+			functionSuffix:          "WithJSONBody",
+			isFunctionWithResponses: false,
+			want: "// CreateFooWithJSONBody Create a foo\n" +
+				"// Line two\n" +
+				"//\n" +
+				"// Takes a body of the `application/json` content type.\n" +
+				"//\n" +
+				"// Corresponds with POST /foo (the `CreateFoo` operationId).",
+		},
+		{
+			name: "bare CR in parent summary does not inject code",
+			body: body,
+			parent: OperationDefinition{
+				OperationId: "CreateFoo",
+				Method:      "POST",
+				Path:        "/foo",
+				Summary:     "Create a foo\rLine two",
+				Spec:        &openapi3.Operation{},
+			},
+			originalFunctionName:    "CreateFoo",
+			functionSuffix:          "WithJSONBody",
+			isFunctionWithResponses: false,
+			want: "// CreateFooWithJSONBody Create a foo\n" +
+				"// Line two\n" +
+				"//\n" +
+				"// Takes a body of the `application/json` content type.\n" +
+				"//\n" +
+				"// Corresponds with POST /foo (the `CreateFoo` operationId).",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.body.GenerateFunctionComment(tt.originalFunctionName, tt.parent, tt.functionSuffix, tt.isFunctionWithResponses)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestJsonTag(t *testing.T) {
+	t.Run("required param with no extra tags", func(t *testing.T) {
+		pd := ParameterDefinition{
+			ParamName: "foo",
+			Required:  true,
+			Spec:      &openapi3.Parameter{},
+		}
+		assert.Equal(t, "`json:\"foo\"`", pd.JsonTag())
+	})
+
+	t.Run("optional param with no extra tags", func(t *testing.T) {
+		pd := ParameterDefinition{
+			ParamName: "foo",
+			Required:  false,
+			Spec:      &openapi3.Parameter{},
+		}
+		assert.Equal(t, "`json:\"foo,omitempty\"`", pd.JsonTag())
+	})
+
+	t.Run("extra tags at parameter level", func(t *testing.T) {
+		pd := ParameterDefinition{
+			ParamName: "foo",
+			Required:  true,
+			Spec: &openapi3.Parameter{
+				Extensions: map[string]any{
+					"x-oapi-codegen-extra-tags": map[string]any{
+						"validate": "required",
+						"db":       "foo_col",
+					},
+				},
+			},
+		}
+		assert.Equal(t, "`db:\"foo_col\" json:\"foo\" validate:\"required\"`", pd.JsonTag())
+	})
+
+	t.Run("extra tags at schema level", func(t *testing.T) {
+		pd := ParameterDefinition{
+			ParamName: "foo",
+			Required:  true,
+			Spec: &openapi3.Parameter{
+				Schema: &openapi3.SchemaRef{
+					Value: &openapi3.Schema{
+						Extensions: map[string]any{
+							"x-oapi-codegen-extra-tags": map[string]any{
+								"validate": "required",
+							},
+						},
+					},
+				},
+			},
+		}
+		assert.Equal(t, "`json:\"foo\" validate:\"required\"`", pd.JsonTag())
+	})
+
+	t.Run("parameter level takes precedence over schema level", func(t *testing.T) {
+		pd := ParameterDefinition{
+			ParamName: "foo",
+			Required:  true,
+			Spec: &openapi3.Parameter{
+				Extensions: map[string]any{
+					"x-oapi-codegen-extra-tags": map[string]any{
+						"validate": "param-level",
+					},
+				},
+				Schema: &openapi3.SchemaRef{
+					Value: &openapi3.Schema{
+						Extensions: map[string]any{
+							"x-oapi-codegen-extra-tags": map[string]any{
+								"validate": "schema-level",
+								"db":       "foo_col",
+							},
+						},
+					},
+				},
+			},
+		}
+		// Parameter-level "validate" wins, schema-level "db" is kept
+		assert.Equal(t, "`db:\"foo_col\" json:\"foo\" validate:\"param-level\"`", pd.JsonTag())
+	})
+}
+
+// TestGenerateFunctionComment_GofmtHeading tests that a description emitted as
+// a standalone one-line paragraph with no terminal punctuation causes gofmt
+// (Go ≥ 1.19) to promote it to an old-style heading ("// # <text>").  This
+// applies both when summary == description (fix #1: drop the duplicate) and
+// when they differ but the description still looks like a heading (fix #2:
+// append a period).  These tests pin the current broken behaviour so we can
+// verify both fixes eliminate the "// # " lines.
+func TestGenerateFunctionComment_GofmtHeading(t *testing.T) {
+	tests := []struct {
+		name    string
+		comment string
+	}{
+		{
+			name: "OperationDefinition: summary equals description",
+			comment: func() string {
+				op := OperationDefinition{
+					OperationId: "ValidatePets",
+					Method:      "POST",
+					Path:        "/pets:validate",
+					Summary:     "Validate pets",
+					Spec:        &openapi3.Operation{Description: "Validate pets"},
+				}
+				return op.GenerateFunctionComment("ValidatePets", "", false)
+			}(),
+		},
+		{
+			name: "RequestBodyDefinition: summary equals description",
+			comment: func() string {
+				parent := OperationDefinition{
+					OperationId: "ValidatePets",
+					Method:      "POST",
+					Path:        "/pets:validate",
+					Summary:     "Validate pets",
+					Spec:        &openapi3.Operation{Description: "Validate pets"},
+				}
+				body := RequestBodyDefinition{ContentType: "application/json"}
+				return body.GenerateFunctionComment("ValidatePets", parent, "WithJSONBody", false)
+			}(),
+		},
+		{
+			name: "OperationDefinition: description differs from summary but still looks like a heading",
+			comment: func() string {
+				op := OperationDefinition{
+					OperationId: "ValidatePets",
+					Method:      "POST",
+					Path:        "/pets:validate",
+					Summary:     "Validate pets",
+					Spec:        &openapi3.Operation{Description: "Validates all pets in the store"},
+				}
+				return op.GenerateFunctionComment("ValidatePets", "", false)
+			}(),
+		},
+		{
+			name: "RequestBodyDefinition: description differs from summary but still looks like a heading",
+			comment: func() string {
+				parent := OperationDefinition{
+					OperationId: "ValidatePets",
+					Method:      "POST",
+					Path:        "/pets:validate",
+					Summary:     "Validate pets",
+					Spec:        &openapi3.Operation{Description: "Validates all pets in the store"},
+				}
+				body := RequestBodyDefinition{ContentType: "application/json"}
+				return body.GenerateFunctionComment("ValidatePets", parent, "WithJSONBody", false)
+			}(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Wrap the comment in a minimal valid Go source file so that
+			// go/format treats it as a doc comment on a top-level declaration,
+			// which is where gofmt's old-style heading promotion fires.
+			src := "package p\n\n" + tt.comment + "\nfunc F() {}\n"
+			formatted, err := format.Source([]byte(src))
+			require.NoError(t, err)
+			assert.NotContains(t, string(formatted), "// #",
+				"gofmt must not promote any description paragraph to a heading")
+		})
+	}
+}
+
+func TestNewInitiatorTemplateDataRejectsPathParams(t *testing.T) {
+	_, err := NewInitiatorTemplateData("Webhook", []OperationDefinition{
+		{
+			OperationId: "PetUpdated",
+			PathParams:  []ParameterDefinition{{ParamName: "petId"}},
+		},
+	})
+	require.ErrorContains(t, err, "path parameters")
+
+	data, err := NewInitiatorTemplateData("Callback", []OperationDefinition{
+		{OperationId: "PetUpdated"},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, "Callback", data.Prefix)
+	assert.Equal(t, "callback", data.PrefixLower)
+}
+
+// buildStrictTestTrees loads the real embedded templates and per-framework
+// clones the same way Generate() does, for exercising GenerateStrictServer.
+func buildStrictTestTrees(t *testing.T) (*template.Template, map[string]*template.Template) {
+	t.Helper()
+	funcs := make(template.FuncMap, len(TemplateFunctions)+1)
+	for k, v := range TemplateFunctions {
+		funcs[k] = v
+	}
+	// Generate() injects "opts" before loading templates; stub it here.
+	funcs["opts"] = func() Configuration { return Configuration{} }
+	base := template.New("codegen").Funcs(funcs)
+	require.NoError(t, LoadTemplates(templates, base))
+	clones, err := buildServerTemplates(templates, base)
+	require.NoError(t, err)
+	return base, clones
+}
+
+func TestGenerateStrictServerInterfaceDedup(t *testing.T) {
+	base, clones := buildStrictTestTrees(t)
+	ops := []OperationDefinition{{OperationId: "Ping"}}
+
+	// A single enabled server emits the interface exactly once.
+	out, err := GenerateStrictServer(base, clones, ops, Configuration{
+		Generate: GenerateOptions{ChiServer: true},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, 1, strings.Count(out, "type StrictServerInterface interface"))
+
+	// Configuration.Validate() permits only one server type; the strict
+	// generator enforces the same invariant for direct API callers, since
+	// every interface template declares the same package-level type names.
+	for name, generate := range map[string]GenerateOptions{
+		"fiber v2+v3": {FiberServer: true, FiberV3Server: true},
+		"echo+fiber":  {EchoServer: true, FiberServer: true},
+		"chi+gin":     {ChiServer: true, GinServer: true},
+	} {
+		_, err = GenerateStrictServer(base, clones, ops, Configuration{Generate: generate})
+		require.ErrorContains(t, err, "only one server type", name)
+	}
+}
+
+func TestStrictServerResponseReceiverCompatibility(t *testing.T) {
+	const spec = `
+openapi: "3.0.3"
+info: {title: t, version: "1"}
+paths:
+  /any:
+    get:
+      operationId: AnyResponse
+      responses:
+        "200":
+          description: Any response
+          content:
+            application/json:
+              schema: {}
+  /any-ref:
+    get:
+      operationId: AnyRefResponse
+      responses:
+        "200":
+          description: Referenced any response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AnyPayload"
+  /interface:
+    get:
+      operationId: InterfaceResponse
+      responses:
+        "200":
+          description: Interface response
+          content:
+            application/json:
+              schema:
+                x-go-type: "interface{ Value() string }"
+  /pointer:
+    get:
+      operationId: PointerResponse
+      responses:
+        "200":
+          description: Pointer response
+          content:
+            application/json:
+              schema:
+                x-go-type: "*string"
+  /external:
+    get:
+      operationId: ExternalResponse
+      responses:
+        "200":
+          description: External named response
+          content:
+            application/json:
+              schema:
+                x-go-type: external.Response
+                x-go-type-import:
+                  name: external
+                  path: example.com/external
+  /external-generic:
+    get:
+      operationId: ExternalGenericResponse
+      responses:
+        "200":
+          description: External generic response
+          content:
+            application/json:
+              schema:
+                x-go-type: external.Response[string]
+                x-go-type-import:
+                  name: external
+                  path: example.com/external
+  /local:
+    get:
+      operationId: LocalResponse
+      responses:
+        "200":
+          description: Local named response
+          content:
+            application/json:
+              schema:
+                x-go-type: UserResponse
+  /local-ref:
+    get:
+      operationId: LocalRefResponse
+      responses:
+        "200":
+          description: Referenced local named response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LocalUserPayload"
+  /multipart:
+    get:
+      operationId: MultipartResponse
+      responses:
+        "200":
+          description: Multipart response
+          content:
+            multipart/form-data:
+              schema: {}
+components:
+  schemas:
+    AnyPayload: {}
+    LocalUserPayload:
+      x-go-type: UserResponse
+`
+
+	servers := []struct {
+		name     string
+		generate GenerateOptions
+	}{
+		{name: "standard", generate: GenerateOptions{ChiServer: true}},
+		{name: "fiber", generate: GenerateOptions{FiberServer: true}},
+		{name: "iris", generate: GenerateOptions{IrisServer: true}},
+	}
+
+	for _, server := range servers {
+		t.Run(server.name, func(t *testing.T) {
+			swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+			require.NoError(t, err)
+
+			server.generate.Models = true
+			server.generate.Strict = true
+			code, err := Generate(swagger, Configuration{
+				PackageName: "api",
+				Generate:    server.generate,
+			})
+			require.NoError(t, err)
+			assert.Contains(t, code, "type AnyResponse200JSONResponse struct {\n\tBody any\n}")
+			assert.Contains(t, code, "type AnyRefResponse200JSONResponse struct {\n\tBody AnyPayload\n}")
+			assert.Contains(t, code, "type InterfaceResponse200JSONResponse struct {\n\tBody interface{ Value() string }\n}")
+			assert.Contains(t, code, "type PointerResponse200JSONResponse struct {\n\tBody *string\n}")
+			assert.Contains(t, code, "type ExternalResponse200JSONResponse external.Response")
+			assert.NotContains(t, code, "type ExternalResponse200JSONResponse struct {")
+			assert.Contains(t, code, "type ExternalGenericResponse200JSONResponse external.Response[string]")
+			assert.NotContains(t, code, "type ExternalGenericResponse200JSONResponse struct {")
+			assert.Contains(t, code, "type LocalResponse200JSONResponse UserResponse")
+			assert.NotContains(t, code, "type LocalResponse200JSONResponse struct {")
+			assert.Contains(t, code, "type LocalRefResponse200JSONResponse LocalUserPayload")
+			assert.NotContains(t, code, "type LocalRefResponse200JSONResponse struct {")
+			assert.Contains(t, code, "type MultipartResponse200MultipartResponse func(writer *multipart.Writer) error")
+			assert.NotContains(t, code, "type MultipartResponse200MultipartResponse struct {")
+		})
+	}
+}
+
+func TestStrictServerResolvedExternalResponseReceiverCompatibility(t *testing.T) {
+	const spec = `
+openapi: "3.0.3"
+info: {title: t, version: "1"}
+paths:
+  /empty:
+    get:
+      operationId: ExternalEmptyResponse
+      responses:
+        "200":
+          description: External empty response
+          content:
+            application/json:
+              schema:
+                $ref: "./external.yaml#/components/schemas/EmptyPayload"
+  /interface:
+    get:
+      operationId: ExternalInterfaceResponse
+      responses:
+        "200":
+          description: External interface response
+          content:
+            application/json:
+              schema:
+                $ref: "./external.yaml#/components/schemas/InterfacePayload"
+  /pointer:
+    get:
+      operationId: ExternalPointerResponse
+      responses:
+        "200":
+          description: External pointer response
+          content:
+            application/json:
+              schema:
+                $ref: "./external.yaml#/components/schemas/PointerPayload"
+  /concrete:
+    get:
+      operationId: ExternalConcreteResponse
+      responses:
+        "200":
+          description: External concrete response
+          content:
+            application/json:
+              schema:
+                $ref: "./external.yaml#/components/schemas/ConcretePayload"
+`
+	const externalSpec = `
+openapi: "3.0.3"
+info: {title: external, version: "1"}
+paths: {}
+components:
+  schemas:
+    EmptyPayload: {}
+    InterfacePayload:
+      x-go-type: "interface{ Value() string }"
+    PointerPayload:
+      x-go-type: "*string"
+    ConcretePayload:
+      type: object
+      properties:
+        value: {type: string}
+`
+
+	servers := []struct {
+		name     string
+		generate GenerateOptions
+	}{
+		{name: "standard", generate: GenerateOptions{ChiServer: true}},
+		{name: "fiber", generate: GenerateOptions{FiberServer: true}},
+		{name: "iris", generate: GenerateOptions{IrisServer: true}},
+	}
+
+	for _, server := range servers {
+		t.Run(server.name, func(t *testing.T) {
+			loader := openapi3.NewLoader()
+			loader.IsExternalRefsAllowed = true
+			loader.ReadFromURIFunc = func(_ *openapi3.Loader, _ *url.URL) ([]byte, error) {
+				return []byte(externalSpec), nil
+			}
+			swagger, err := loader.LoadFromDataWithPath([]byte(spec), &url.URL{Path: "root.yaml"})
+			require.NoError(t, err)
+
+			server.generate.Models = true
+			server.generate.Strict = true
+			code, err := Generate(swagger, Configuration{
+				PackageName: "api",
+				Generate:    server.generate,
+				ImportMapping: map[string]string{
+					"./external.yaml": "example.com/external",
+				},
+			})
+			require.NoError(t, err)
+			assert.Contains(t, code, "type ExternalEmptyResponse200JSONResponse struct {\n\tBody externalRef0.EmptyPayload\n}")
+			assert.Contains(t, code, "type ExternalInterfaceResponse200JSONResponse struct {\n\tBody externalRef0.InterfacePayload\n}")
+			assert.Contains(t, code, "type ExternalPointerResponse200JSONResponse struct {\n\tBody externalRef0.PointerPayload\n}")
+			assert.Contains(t, code, "type ExternalConcreteResponse200JSONResponse externalRef0.ConcretePayload")
+			assert.NotContains(t, code, "type ExternalConcreteResponse200JSONResponse struct {")
+		})
+	}
+}
+
+func TestGoTypeNeedsBodyWrapper(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		goType   string
+		receiver bool
+		embedded bool
+	}{
+		{name: "any", goType: "any", receiver: true, embedded: false},
+		{name: "error", goType: "error", receiver: true, embedded: false},
+		{name: "interface", goType: "interface{ Value() string }", receiver: true, embedded: false},
+		{name: "pointer", goType: "*string", receiver: true, embedded: true},
+		{name: "parenthesized pointer", goType: "(*string)", receiver: true, embedded: true},
+		{name: "external named", goType: "external.Response", receiver: false, embedded: false},
+		{name: "external generic", goType: "external.Response[string]", receiver: false, embedded: false},
+		{name: "local named", goType: "UserResponse", receiver: false, embedded: false},
+		{name: "local generic", goType: "Response[string]", receiver: false, embedded: false},
+		{name: "builtin", goType: "string", receiver: false, embedded: false},
+		{name: "slice", goType: "[]string", receiver: false, embedded: false},
+		{name: "map", goType: "map[string]any", receiver: false, embedded: false},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.receiver, goTypeNeedsBodyWrapper(tt.goType, false), "as a method receiver")
+			assert.Equal(t, tt.embedded, goTypeNeedsBodyWrapper(tt.goType, true), "as an embedded field")
+		})
+	}
+}
+
+// A components/responses envelope is embedded in the response struct of each
+// operation that reaches it through $ref. Embedding an interface compiles, so
+// an untyped or interface envelope keeps its direct type; only a pointer,
+// which cannot be embedded, is wrapped.
+func TestStrictServerReusableResponseEnvelopeCompatibility(t *testing.T) {
+	const spec = `
+openapi: "3.1.0"
+info: {title: t, version: "1"}
+paths:
+  /untyped:
+    get:
+      operationId: UntypedOp
+      responses:
+        "200": {$ref: "#/components/responses/Untyped"}
+  /multi:
+    get:
+      operationId: MultiOp
+      responses:
+        "200": {$ref: "#/components/responses/Multi"}
+  /interface:
+    get:
+      operationId: InterfaceOp
+      responses:
+        "200": {$ref: "#/components/responses/Interface"}
+  /pointer:
+    get:
+      operationId: PointerOp
+      responses:
+        "200": {$ref: "#/components/responses/Pointer"}
+components:
+  responses:
+    Untyped:
+      description: Untyped
+      content:
+        application/json:
+          schema: {}
+    Multi:
+      description: Lowered to any
+      content:
+        application/json:
+          schema: {type: [string, number]}
+    Interface:
+      description: Interface
+      content:
+        application/json:
+          schema:
+            x-go-type: "interface{ Value() string }"
+    Pointer:
+      description: Pointer
+      content:
+        application/json:
+          schema:
+            x-go-type: "*string"
+`
+
+	servers := []struct {
+		name     string
+		generate GenerateOptions
+	}{
+		{name: "standard", generate: GenerateOptions{ChiServer: true}},
+		{name: "fiber", generate: GenerateOptions{FiberServer: true}},
+		{name: "iris", generate: GenerateOptions{IrisServer: true}},
+	}
+
+	for _, server := range servers {
+		t.Run(server.name, func(t *testing.T) {
+			code := generateSpec(t, spec, func(c *Configuration) {
+				c.Generate = server.generate
+				c.Generate.Models = true
+				c.Generate.Strict = true
+			})
+			assert.Contains(t, code, "type UntypedJSONResponse any\n")
+			assert.Contains(t, code, "type MultiJSONResponse any\n")
+			assert.Contains(t, code, "type InterfaceJSONResponse interface{ Value() string }\n")
+			assert.Contains(t, code, "type PointerJSONResponse struct {\n\tBody *string\n}")
+
+			for _, name := range []string{"Untyped", "Multi", "Interface", "Pointer"} {
+				assert.Contains(t, code, "type "+name+"Op200JSONResponse struct{ "+name+"JSONResponse }")
+			}
+			// The embedded envelope itself is encoded, or its Body when it
+			// has one. Only the pointer envelope has a Body here.
+			assert.Contains(t, code, "response.UntypedJSONResponse)")
+			assert.Contains(t, code, "response.Body)")
+			assert.NotContains(t, code, "response.PointerJSONResponse)")
+		})
+	}
+}
+
+// A composition lowered to an untyped member's type is wrapped. How a
+// composition is lowered depends on the schema-merging behavior, so the
+// member is identified by the type the generator emitted; every behavior
+// lowers these to the member's type, v1 since #2590.
+func TestStrictServerComposedResponseReceiverCompatibility(t *testing.T) {
+	const spec = `
+openapi: "3.1.0"
+info: {title: t, version: "1"}
+paths:
+  /allof:
+    get:
+      operationId: AllOfOp
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Untyped"
+  /allof-sibling:
+    get:
+      operationId: AllOfSiblingOp
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/Untyped"
+                  - description: More
+  /wrapped:
+    get:
+      operationId: WrappedOp
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Wrapped"
+  /nullable:
+    get:
+      operationId: NullableOp
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: "#/components/schemas/Untyped"
+                  - type: "null"
+  /nullable-anyof:
+    get:
+      operationId: NullableAnyOfOp
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                anyOf:
+                  - $ref: "#/components/schemas/Untyped"
+                  - type: "null"
+  /named:
+    get:
+      operationId: NamedOp
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Named"
+components:
+  schemas:
+    Untyped: {}
+    Wrapped:
+      allOf:
+        - $ref: "#/components/schemas/Untyped"
+    Named:
+      x-go-type-name: NamedType
+`
+
+	wrapped := []string{"AllOfOp", "AllOfSiblingOp", "WrappedOp", "NullableOp", "NullableAnyOfOp", "NamedOp"}
+	for _, behavior := range []string{SchemaMergingV1, SchemaMergingV2, SchemaMergingV3} {
+		t.Run(behavior, func(t *testing.T) {
+			code := generateSpec(t, spec, func(c *Configuration) {
+				c.Compatibility.SchemaMergingBehavior = behavior
+				c.Generate.StdHTTPServer = true
+				c.Generate.Strict = true
+			})
+			for _, op := range wrapped {
+				assert.Contains(t, code, "type "+op+"200JSONResponse struct {\n\tBody ", op)
+			}
+		})
+	}
+}
+
+func TestResponseContentUsesSchemaReceiver(t *testing.T) {
+	for _, tt := range []struct {
+		contentType string
+		expected    bool
+	}{
+		{contentType: "application/json", expected: true},
+		{contentType: "application/x-www-form-urlencoded", expected: true},
+		{contentType: "text/plain", expected: true},
+		{contentType: "multipart/form-data", expected: false},
+		{contentType: "application/octet-stream", expected: false},
+	} {
+		t.Run(tt.contentType, func(t *testing.T) {
+			content := ResponseContentDefinition{ContentType: tt.contentType}
+			assert.Equal(t, tt.expected, content.usesSchemaReceiver())
+		})
+	}
+}
+
+// Text and form bodies are written from the response value just as JSON
+// bodies are, so an untyped one needs a Body field too. A reusable text
+// envelope is redeclared as the receiver of each operation that reaches it
+// through $ref, while a form envelope is embedded like a JSON one.
+func TestStrictServerTextAndFormResponseReceiverCompatibility(t *testing.T) {
+	const spec = `
+openapi: "3.0.3"
+info: {title: t, version: "1"}
+paths:
+  /text-untyped:
+    get:
+      operationId: TextUntypedOp
+      responses:
+        "200":
+          description: ok
+          content:
+            text/plain:
+              schema: {}
+  /text-no-schema:
+    get:
+      operationId: TextNoSchemaOp
+      responses:
+        "200":
+          description: ok
+          content:
+            text/plain: {}
+  /text-string:
+    get:
+      operationId: TextStringOp
+      responses:
+        "200":
+          description: ok
+          content:
+            text/plain:
+              schema: {type: string}
+  /text-ref:
+    get:
+      operationId: TextRefOp
+      responses:
+        "200": {$ref: "#/components/responses/UntypedText"}
+  /form-untyped:
+    get:
+      operationId: FormUntypedOp
+      responses:
+        "200":
+          description: ok
+          content:
+            application/x-www-form-urlencoded:
+              schema: {}
+  /form-object:
+    get:
+      operationId: FormObjectOp
+      responses:
+        "200":
+          description: ok
+          content:
+            application/x-www-form-urlencoded:
+              schema:
+                type: object
+                properties:
+                  name: {type: string}
+  /form-ref:
+    get:
+      operationId: FormRefOp
+      responses:
+        "200": {$ref: "#/components/responses/UntypedForm"}
+components:
+  responses:
+    UntypedText:
+      description: Untyped text
+      content:
+        text/plain:
+          schema: {}
+    UntypedForm:
+      description: Untyped form
+      content:
+        application/x-www-form-urlencoded:
+          schema: {}
+`
+
+	servers := []struct {
+		name     string
+		generate GenerateOptions
+	}{
+		{name: "standard", generate: GenerateOptions{ChiServer: true}},
+		{name: "fiber", generate: GenerateOptions{FiberServer: true}},
+		{name: "iris", generate: GenerateOptions{IrisServer: true}},
+	}
+
+	for _, server := range servers {
+		t.Run(server.name, func(t *testing.T) {
+			code := generateSpec(t, spec, func(c *Configuration) {
+				c.Generate = server.generate
+				c.Generate.Models = true
+				c.Generate.Strict = true
+			})
+			assert.Contains(t, code, "type TextUntypedOp200TextResponse struct {\n\tBody any\n}")
+			assert.Contains(t, code, "type TextNoSchemaOp200TextResponse struct {\n\tBody any\n}")
+			assert.Contains(t, code, "type TextStringOp200TextResponse string\n")
+			assert.Contains(t, code, "type UntypedTextTextResponse struct {\n\tBody any\n}")
+			assert.Contains(t, code, "type TextRefOp200TextResponse UntypedTextTextResponse\n")
+			assert.Contains(t, visitorOf(t, code, "TextUntypedOp200TextResponse"), "fmt.Sprint(response.Body)")
+			assert.Contains(t, visitorOf(t, code, "TextRefOp200TextResponse"), "fmt.Sprint(response.Body)")
+
+			assert.Contains(t, code, "type FormUntypedOp200FormdataResponse struct {\n\tBody any\n}")
+			assert.Contains(t, code, "type FormObjectOp200FormdataResponse struct {\n\tName *string")
+			assert.Contains(t, visitorOf(t, code, "FormUntypedOp200FormdataResponse"), "runtime.MarshalForm(response.Body, nil)")
+			// Only the shape of an embedded form envelope is pinned here, not
+			// how its visitor marshals it.
+			assert.Contains(t, code, "type UntypedFormFormdataResponse any\n")
+			assert.Contains(t, code, "type FormRefOp200FormdataResponse struct{ UntypedFormFormdataResponse }")
+		})
+	}
+}
+
+// visitorOf returns the source of the strict response visitor declared on
+// receiver.
+func visitorOf(t *testing.T, code, receiver string) string {
+	t.Helper()
+	start := strings.Index(code, "func (response "+receiver+") Visit")
+	require.GreaterOrEqual(t, start, 0, "no visitor for %s", receiver)
+	end := strings.Index(code[start:], "\n}\n")
+	require.GreaterOrEqual(t, end, 0, "unterminated visitor for %s", receiver)
+	return code[start : start+end]
+}
+
+func TestResponseContentCanUseDirectResponseType(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		content  ResponseContentDefinition
+		expected bool
+	}{
+		{
+			name:     "supported schema receiver",
+			content:  ResponseContentDefinition{ContentType: "application/json"},
+			expected: true,
+		},
+		{
+			name: "wrapped schema receiver",
+			content: ResponseContentDefinition{
+				ContentType:      "application/json",
+				NeedsBodyWrapper: true,
+			},
+			expected: false,
+		},
+		{
+			name:     "multipart callback",
+			content:  ResponseContentDefinition{ContentType: "multipart/form-data"},
+			expected: true,
+		},
+		{
+			name:     "unsupported reader",
+			content:  ResponseContentDefinition{ContentType: "application/octet-stream"},
+			expected: false,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, tt.content.CanUseDirectResponseType())
+		})
+	}
+}
+
+func TestInitiatorPathParamsRejectedAtExtraction(t *testing.T) {
+	webhookSpec := `
+openapi: "3.1.0"
+info: {title: t, version: "1"}
+webhooks:
+  petUpdated:
+    post:
+      parameters:
+        - name: petId
+          in: path
+          required: true
+          schema: {type: string}
+      responses:
+        '200': {description: OK}
+paths: {}
+`
+	callbackSpec := `
+openapi: "3.0.0"
+info: {title: t, version: "1"}
+paths:
+  /subscribe:
+    post:
+      callbacks:
+        petUpdated:
+          '{$request.body#/callbackUrl}':
+            post:
+              parameters:
+                - name: petId
+                  in: path
+                  required: true
+                  schema: {type: string}
+              responses:
+                '200': {description: OK}
+      responses:
+        '200': {description: OK}
+`
+	for name, spec := range map[string]string{"webhook": webhookSpec, "callback": callbackSpec} {
+		t.Run(name, func(t *testing.T) {
+			swagger, err := openapi3.NewLoader().LoadFromData([]byte(spec))
+			require.NoError(t, err)
+			_, err = Generate(swagger, Configuration{
+				PackageName: "api",
+				Generate:    GenerateOptions{Models: true},
+			})
+			require.ErrorContains(t, err, `path parameter "petId"`)
+		})
+	}
+}
+
+// TestSharedUnionParameterName: a union parameter shared by a path item has
+// no operation name in its path, so its union type is <Name>Param. A bare
+// Id would collide with the schema of that name.
+func TestSharedUnionParameterName(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths:
+  /things/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          anyOf:
+            - type: string
+              format: uuid
+            - type: string
+    get:
+      operationId: getThing
+      responses:
+        '200': {description: ok}
+  /other:
+    get:
+      operationId: getOther
+      parameters:
+        - name: q
+          in: query
+          schema:
+            oneOf:
+              - type: integer
+              - type: string
+      responses:
+        '200': {description: ok}
+components:
+  schemas:
+    Id:
+      type: object
+      properties:
+        value: {type: string}
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "type Id struct {")
+	assert.Contains(t, code, "type IdParam struct {")
+	assert.Contains(t, code, "type Id0 = openapi_types.UUID", "members keep their names")
+	assert.Contains(t, code, "type GetOtherParamsQ struct {", "an operation's own parameters are prefixed by it")
+}
+
+// TestOperationTypeNameCollidingWithComponent: a type declared for an
+// operation under a component type's name is a generation error, rather than
+// generated code that does not compile.
+func TestOperationTypeNameCollidingWithComponent(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths:
+  /things/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          anyOf:
+            - type: integer
+            - type: string
+    get:
+      operationId: getThing
+      responses:
+        '200': {description: ok}
+components:
+  schemas:
+    IdParam:
+      type: object
+      properties:
+        value: {type: string}
+`
+	_, err := generateSpecErr(spec)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "duplicate typename 'IdParam'")
+	assert.Contains(t, err.Error(), "operation GetThing")
+}
+
+// TestComponentUnionParameter: a oneOf parameter under components/parameters
+// names its members after itself and declares them. They used to be named from
+// an empty path (N0, N1) and never declared.
+func TestComponentUnionParameter(t *testing.T) {
+	const spec = `openapi: 3.0.0
+info: {title: repro, version: "1.0.0"}
+paths:
+  /things:
+    get:
+      operationId: getThings
+      parameters:
+        - $ref: '#/components/parameters/Filter'
+      responses:
+        '200': {description: ok}
+components:
+  parameters:
+    Filter:
+      name: filter
+      in: query
+      schema:
+        oneOf:
+          - type: integer
+          - type: string
+`
+	code := generateSpec(t, spec)
+	assert.Contains(t, code, "type Filter struct {")
+	assert.Contains(t, code, "type Filter0 = int")
+	assert.Contains(t, code, "type Filter1 = string")
+	assert.Contains(t, code, "func (t Filter) AsFilter0() (Filter0, error)")
+	assert.Contains(t, code, "Filter *Filter")
+	assert.NotContains(t, code, "N0")
 }

@@ -1,0 +1,44 @@
+versions: [v1, v2, v3]
+broken:
+  v1: "v1 embeds both unions, whose MarshalJSON and UnmarshalJSON then cancel out."
+description: >-
+  allOf over two $refs to unions and a member that allows additional string
+  properties. Setting one union's variant must keep the other's data and the
+  additional properties.
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Payment'
+    - $ref: '#/components/schemas/Delivery'
+    - additionalProperties: {type: string}
+components:
+  Payment:
+    oneOf:
+      - $ref: '#/components/schemas/Card'
+      - $ref: '#/components/schemas/Transfer'
+  Delivery:
+    oneOf:
+      - $ref: '#/components/schemas/Courier'
+      - $ref: '#/components/schemas/Pickup'
+  Card:
+    type: object
+    required: [card]
+    properties:
+      card: {type: string}
+  Transfer:
+    type: object
+    required: [iban]
+    properties:
+      iban: {type: string}
+  Courier:
+    type: object
+    required: [address]
+    properties:
+      address: {type: string}
+  Pickup:
+    type: object
+    required: [store]
+    properties:
+      store: {type: string}
+samples:
+  - '{"card": "4111", "address": "1 Main St", "note": "leave at door"}'
+  - '{"iban": "DE00", "store": "Downtown"}'

@@ -1,0 +1,33 @@
+versions: [v1, v2, v3]
+description: >-
+  An OpenAPI 3.1 nullable oneOf whose only other branch is an inline oneOf with
+  a discriminator. Generated the union without its JSON methods, accessors or
+  discriminator helpers, so a round trip dropped the payload (issue #2565).
+openapi: 3.1.0
+subject:
+  oneOf:
+    - oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+      discriminator:
+        propertyName: petType
+        mapping:
+          cat: '#/components/schemas/Cat'
+          dog: '#/components/schemas/Dog'
+    - type: 'null'
+components:
+  Cat:
+    type: object
+    required: [petType, meow]
+    properties:
+      petType: {type: string}
+      meow: {type: string}
+  Dog:
+    type: object
+    required: [petType, bark]
+    properties:
+      petType: {type: string}
+      bark: {type: string}
+samples:
+  - '{"petType": "cat", "meow": "purr"}'
+  - '{"petType": "dog", "bark": "woof"}'

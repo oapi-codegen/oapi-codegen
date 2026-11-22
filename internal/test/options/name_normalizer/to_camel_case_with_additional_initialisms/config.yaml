@@ -1,0 +1,19 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: optionsnamenormalizertocamelcasewithadditionalinitialisms
+output: name_normalizer.gen.go
+# name-normalizer: ToCamelCaseWithInitialisms + additional-initialisms: [NAME].
+# Builds on ToCamelCaseWithInitialisms so uuid → UUID, http → HTTP (GetHTTPPet),
+# id → ID, and the extra initialism NAME causes the "name" field to be rendered
+# as NAME.
+# gorilla-server + client so the tests can assert the operation-derived names
+# on both ServerInterfaceWrapper and Client.
+# skip-prune: retain the Error schema which is not referenced from any path.
+generate:
+  gorilla-server: true
+  client: true
+  models: true
+output-options:
+  skip-prune: true
+  name-normalizer: ToCamelCaseWithInitialisms
+  additional-initialisms:
+    - NAME

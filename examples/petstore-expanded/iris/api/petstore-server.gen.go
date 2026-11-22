@@ -5,7 +5,7 @@ package api
 
 import (
 	"bytes"
-	"compress/gzip"
+	"compress/flate"
 	"encoding/base64"
 	"fmt"
 	"net/http"
@@ -18,18 +18,60 @@ import (
 	"github.com/oapi-codegen/runtime"
 )
 
+// Error defines model for Error.
+type Error struct {
+	// Code Error code
+	Code int32 `json:"code"`
+
+	// Message Error message
+	Message string `json:"message"`
+}
+
+// NewPet defines model for NewPet.
+type NewPet struct {
+	// Name Name of the pet
+	Name string `json:"name"`
+
+	// Tag Type of the pet
+	Tag *string `json:"tag,omitempty"`
+}
+
+// Pet defines model for Pet.
+type Pet struct {
+	// Id Unique id of the pet
+	Id int64 `json:"id"`
+
+	// Name Name of the pet
+	Name string `json:"name"`
+
+	// Tag Type of the pet
+	Tag *string `json:"tag,omitempty"`
+}
+
+// FindPetsParams defines parameters for FindPets.
+type FindPetsParams struct {
+	// Tags tags to filter by
+	Tags *[]string `form:"tags,omitempty" json:"tags,omitempty"`
+
+	// Limit maximum number of results to return
+	Limit *int32 `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// AddPetJSONRequestBody defines body for AddPet for application/json ContentType.
+type AddPetJSONRequestBody = NewPet
+
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// Returns all pets
+	// FindPets Returns all pets
 	// (GET /pets)
 	FindPets(ctx iris.Context, params FindPetsParams)
-	// Creates a new pet
+	// AddPet Creates a new pet
 	// (POST /pets)
 	AddPet(ctx iris.Context)
-	// Deletes a pet by ID
+	// DeletePet Deletes a pet by ID
 	// (DELETE /pets/{id})
 	DeletePet(ctx iris.Context, id int64)
-	// Returns a pet by ID
+	// FindPetByID Returns a pet by ID
 	// (GET /pets/{id})
 	FindPetByID(ctx iris.Context, id int64)
 }
@@ -45,12 +87,13 @@ type MiddlewareFunc iris.Handler
 func (w *ServerInterfaceWrapper) FindPets(ctx iris.Context) {
 
 	var err error
+	_ = err
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params FindPetsParams
 	// ------------- Optional query parameter "tags" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "tags", ctx.Request().URL.Query(), &params.Tags)
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "tags", ctx.Request().URL.Query(), &params.Tags, runtime.BindQueryParameterOptions{Type: "array", Format: ""})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter tags: %s", err)
@@ -59,7 +102,7 @@ func (w *ServerInterfaceWrapper) FindPets(ctx iris.Context) {
 
 	// ------------- Optional query parameter "limit" -------------
 
-	err = runtime.BindQueryParameter("form", true, false, "limit", ctx.Request().URL.Query(), &params.Limit)
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", ctx.Request().URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: "int32"})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter limit: %s", err)
@@ -81,11 +124,12 @@ func (w *ServerInterfaceWrapper) AddPet(ctx iris.Context) {
 func (w *ServerInterfaceWrapper) DeletePet(ctx iris.Context) {
 
 	var err error
+	_ = err
 
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter id: %s", err)
@@ -100,11 +144,12 @@ func (w *ServerInterfaceWrapper) DeletePet(ctx iris.Context) {
 func (w *ServerInterfaceWrapper) FindPetByID(ctx iris.Context) {
 
 	var err error
+	_ = err
 
 	// ------------- Path parameter "id" -------------
 	var id int64
 
-	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true})
+	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Params().Get("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "int64", ValueIsUnescaped: true})
 	if err != nil {
 		ctx.StatusCode(http.StatusBadRequest)
 		ctx.Writef("Invalid format for parameter id: %s", err)
@@ -128,6 +173,9 @@ func RegisterHandlers(router *iris.Application, si ServerInterface) {
 
 // RegisterHandlersWithOptions creates http.Handler with additional options
 func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, options IrisServerOptions) {
+	for _, m := range options.Middlewares {
+		router.Use(m)
+	}
 
 	wrapper := ServerInterfaceWrapper{
 		Handler: si,
@@ -141,54 +189,55 @@ func RegisterHandlersWithOptions(router *iris.Application, si ServerInterface, o
 	router.Build()
 }
 
-// Base64 encoded, gzipped, json marshaled Swagger object
+// Base64 encoded, compressed with deflate, json marshaled OpenAPI spec.
+// Stored as a slice of fixed-width chunks rather than one concatenated
+// const string: with thousands of chunks the chained `+` fold is several
+// times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-
-	"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",
-	"97cAAAD//ykDnxlaEgAA",
+	"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",
 }
 
-// GetSwagger returns the content of the embedded swagger specification file
-// or error if failed to decode
+// decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,
+// after base64-decoding and flate-decompressing the embedded blob.
 func decodeSpec() ([]byte, error) {
-	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	encoded := strings.Join(swaggerSpec, "")
+	compressed, err := base64.StdEncoding.DecodeString(encoded)
 	if err != nil {
 		return nil, fmt.Errorf("error base64 decoding spec: %w", err)
 	}
-	zr, err := gzip.NewReader(bytes.NewReader(zipped))
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
-	}
+	zr := flate.NewReader(bytes.NewReader(compressed))
 	var buf bytes.Buffer
-	_, err = buf.ReadFrom(zr)
-	if err != nil {
-		return nil, fmt.Errorf("error decompressing spec: %w", err)
+	if _, err := buf.ReadFrom(zr); err != nil {
+		return nil, fmt.Errorf("read flate: %w", err)
+	}
+	if err := zr.Close(); err != nil {
+		return nil, fmt.Errorf("close flate reader: %w", err)
 	}
 
 	return buf.Bytes(), nil
@@ -196,7 +245,7 @@ func decodeSpec() ([]byte, error) {
 
 var rawSpec = decodeSpecCached()
 
-// a naive cached of a decoded swagger spec
+// a naive cache of the decoded OpenAPI spec
 func decodeSpecCached() func() ([]byte, error) {
 	data, err := decodeSpec()
 	return func() ([]byte, error) {
@@ -214,12 +263,12 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 	return res
 }
 
-// GetSwagger returns the Swagger specification corresponding to the generated code
-// in this file. The external references of Swagger specification are resolved.
-// The logic of resolving external references is tightly connected to "import-mapping" feature.
-// Externally referenced files must be embedded in the corresponding golang packages.
-// Urls can be supported but this task was out of the scope.
-func GetSwagger() (swagger *openapi3.T, err error) {
+// GetSpec returns the OpenAPI specification corresponding to the generated
+// code in this file. External references in the spec are resolved through
+// PathToRawSpec; externally-referenced files must be embedded in their
+// corresponding Go packages (via the import-mapping feature). URL-based
+// external refs are not supported.
+func GetSpec() (swagger *openapi3.T, err error) {
 	resolvePath := PathToRawSpec("")
 
 	loader := openapi3.NewLoader()
@@ -244,4 +293,23 @@ func GetSwagger() (swagger *openapi3.T, err error) {
 		return
 	}
 	return
+}
+
+// GetSpecJSON returns the raw JSON bytes of the embedded OpenAPI
+// specification: decompressed but not unmarshaled. External references
+// are not resolved here; the bytes are the spec exactly as embedded by
+// codegen. The result is cached at package init time, so repeated calls
+// are cheap.
+func GetSpecJSON() ([]byte, error) {
+	return rawSpec()
+}
+
+// GetSwagger returns the OpenAPI specification corresponding to the
+// generated code in this file.
+//
+// Deprecated: GetSwagger predates kin-openapi renaming openapi3.Swagger
+// to openapi3.T. Use [GetSpec] instead. This wrapper is retained for
+// backwards compatibility.
+func GetSwagger() (*openapi3.T, error) {
+	return GetSpec()
 }

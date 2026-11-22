@@ -26,7 +26,7 @@ func NewServer() *server {
 }
 
 func CreateMiddleware(v JWSValidator) ([]echo.MiddlewareFunc, error) {
-	spec, err := api.GetSwagger()
+	spec, err := api.GetSpec()
 	if err != nil {
 		return nil, fmt.Errorf("loading spec: %w", err)
 	}

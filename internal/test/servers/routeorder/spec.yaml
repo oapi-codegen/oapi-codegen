@@ -1,0 +1,23 @@
+openapi: 3.0.3
+info:
+  title: route-order
+  version: "1.0.0"
+# The templated-suffix route is declared BEFORE the concrete-segment route so
+# that, on order-dependent routers (Fiber), /templates/{visibility}/shortcuts
+# is matched before /templates/privates/{id}. Registration follows this spec
+# order (issue #1887); reordering these two paths flips the precedence.
+paths:
+  /api/v1/templates/{template_visibility}/shortcuts:
+    get:
+      operationId: templateShortcutGetAll
+      parameters:
+        - {name: template_visibility, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: ok}
+  /api/v1/templates/privates/{id}:
+    get:
+      operationId: privateTemplateGet
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: string}}
+      responses:
+        '200': {description: ok}

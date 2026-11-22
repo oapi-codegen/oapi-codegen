@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: aggregatesallof
+output: allof.gen.go
+# Union of the flags every folded case needs:
+#   - models     : all cases generate model types
+#   - skip-prune : keep schemas that no path references (issue193's Person, issue-1219's
+#                  WithAnyAdditional1 etc. are referenced only from other schemas)
+generate:
+  models: true
+output-options:
+  skip-prune: true

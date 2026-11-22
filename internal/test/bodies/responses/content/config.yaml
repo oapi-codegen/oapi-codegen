@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+# From issue-2389
+package: responsescontent
+output: content.gen.go
+generate:
+  models: true
+  client: true

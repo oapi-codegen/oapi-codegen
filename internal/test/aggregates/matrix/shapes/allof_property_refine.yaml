@@ -1,0 +1,20 @@
+versions: [v2, v3]
+description: >-
+  allOf over a $ref and a member that refines one of its properties, here to
+  make it nullable, the way a JSON Merge Patch body reuses a resource's schema
+  (issue #2107).
+subject:
+  allOf:
+    - $ref: '#/components/schemas/Base'
+    - properties:
+        name: {nullable: true}
+components:
+  Base:
+    type: object
+    required: [name]
+    properties:
+      name: {type: string}
+      age: {type: integer}
+samples:
+  - '{"name": "rex", "age": 3}'
+  - '{"name": null}'

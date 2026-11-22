@@ -1,0 +1,170 @@
+openapi: 3.0.3
+info:
+  title: Form body encodings
+  version: 1.0.0
+paths:
+  /subscriptions:
+    post:
+      operationId: subscribe
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [email, topic]
+              properties:
+                email:
+                  type: string
+                # Honored: arrays of primitives which are exploded form style,
+                # whether that is declared in full or left to the defaults.
+                topic:
+                  type: array
+                  items:
+                    type: string
+                ids:
+                  type: array
+                  items:
+                    type: integer
+                scores:
+                  type: array
+                  items:
+                    type: number
+                # Ignored: every other encoding keeps the indexed keys.
+                unencoded:
+                  type: array
+                  items:
+                    type: string
+                unexploded:
+                  type: array
+                  items:
+                    type: string
+                piped:
+                  type: array
+                  items:
+                    type: string
+                deep:
+                  type: array
+                  items:
+                    type: string
+                json:
+                  type: array
+                  items:
+                    type: string
+                objects:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/Filter'
+                filter:
+                  $ref: '#/components/schemas/Filter'
+            encoding:
+              topic:
+                style: form
+                explode: true
+              ids:
+                style: form
+              scores:
+                explode: true
+              unexploded:
+                style: form
+                explode: false
+              piped:
+                style: pipeDelimited
+              deep:
+                style: deepObject
+                explode: true
+              json:
+                contentType: application/json
+                style: form
+                explode: true
+              objects:
+                style: form
+                explode: true
+              filter:
+                style: form
+                explode: true
+              "no such property":
+                style: form
+                explode: true
+      responses:
+        '204':
+          description: Subscribed
+  /unsubscriptions:
+    post:
+      operationId: unsubscribe
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            # A referenced body, whose array comes from an allOf member.
+            schema:
+              $ref: '#/components/schemas/Unsubscription'
+            encoding:
+              topic:
+                style: form
+                explode: true
+      responses:
+        '204':
+          description: Unsubscribed
+  /lists/{explode}/subscriptions:
+    post:
+      # A path parameter becomes an argument of the request builder, which
+      # must not collide with anything the builder declares to set up the
+      # encoding.
+      operationId: subscribeToList
+      parameters:
+        - name: explode
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Topics'
+            encoding:
+              topic:
+                style: form
+                explode: true
+      responses:
+        '204':
+          description: Subscribed
+  /plain:
+    post:
+      operationId: plain
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            # No encoding at all: nothing changes.
+            schema:
+              $ref: '#/components/schemas/Topics'
+      responses:
+        '204':
+          description: OK
+components:
+  schemas:
+    Filter:
+      type: object
+      properties:
+        role:
+          type: string
+        age:
+          type: integer
+    Topics:
+      type: object
+      properties:
+        topic:
+          type: array
+          items:
+            type: string
+    Unsubscription:
+      allOf:
+        - $ref: '#/components/schemas/Topics'
+        - type: object
+          required: [email]
+          properties:
+            email:
+              type: string

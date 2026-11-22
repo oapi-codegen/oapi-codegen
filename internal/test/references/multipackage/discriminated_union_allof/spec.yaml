@@ -1,0 +1,33 @@
+# issue-2470: PRFile is an allOf combining an external discriminated union
+# (DiffFile, from ./common/spec.yaml) with a local object (ViewedStatus). The
+# generated PRFile.ValueByDiscriminator() must call the As* helper whose name
+# matches the union element's Method (AsExternalRef0GitDiffFile), not the raw
+# discriminator mapping value (externalRef0.GitDiffFile), which is invalid Go.
+openapi: "3.0.4"
+info:
+  title: Pulls
+  version: "0.0.1"
+paths:
+  /files:
+    get:
+      operationId: listFiles
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PRFile"
+components:
+  schemas:
+    ViewedStatus:
+      type: object
+      properties:
+        viewed:
+          type: boolean
+    PRFile:
+      allOf:
+        - $ref: "./common/spec.yaml#/components/schemas/DiffFile"
+        - $ref: "#/components/schemas/ViewedStatus"

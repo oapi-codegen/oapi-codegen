@@ -1,0 +1,6 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: serversmiddlewareiris
+generate:
+  iris-server: true
+  models: true
+output: middleware.gen.go

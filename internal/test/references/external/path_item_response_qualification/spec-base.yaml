@@ -1,0 +1,16 @@
+# From issue-2308: a response ref inside an external path item must be qualified with the external package.
+openapi: "3.1.0"
+info:
+  version: "0.0.1"
+  title: base
+paths:
+  # The whole path item is an external $ref into spec-ext.yaml. The operation's
+  # 200 response resolves to spec-ext.yaml's VersionGetResponse, so the embedded
+  # response struct must be qualified with the external package (issue #2308).
+  /v1/version:
+    $ref: 'spec-ext.yaml#/components/pathItems/VersionOperations'
+  # Same shape, but the external response is renamed via x-go-name: exercises
+  # the client wrapper / strict envelope picking up the imported package's
+  # actual type name rather than the raw component name.
+  /v1/outcome:
+    $ref: 'spec-ext.yaml#/components/pathItems/OutcomeOperations'

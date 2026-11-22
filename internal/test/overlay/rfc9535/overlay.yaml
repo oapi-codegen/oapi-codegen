@@ -1,0 +1,137 @@
+# The same actions as ../legacy_jsonpath/overlay.yaml, with targets in RFC 9535
+# JSONPath.
+overlay: 1.0.0
+info:
+  title: Overlay test (RFC 9535)
+  version: 1.0.0
+actions:
+  - target: $
+    description: A structural update of the whole document
+    update:
+      info:
+        x-overlay-applied: structured-overlay
+      paths:
+        /ping:
+          get:
+            responses:
+              '200':
+                description: Perform a ping request
+
+  - target: $.components.schemas.Pong
+    description: Rename the Pong type
+    update:
+      x-go-name: OverriddenPong
+
+  - target: $.components.schemas.Pong.properties.seed
+    description: Remove a property
+    remove: true
+
+  - target: $.components.schemas[?@['x-internal']]
+    description: Remove internal schemas
+    remove: true
+
+  - target: $.components.schemas.*.*[?@['x-internal']]
+    description: Remove internal properties of schemas
+    remove: true
+
+  - target: $.paths.*.*.requestBody.*.*.schema..[?@['x-internal']]
+    description: Remove internal properties of request bodies
+    remove: true
+
+  - target: $.paths.*.*.responses.*.*.*.schema..[?@['x-internal']]
+    description: Remove internal properties of responses
+    remove: true
+
+  - target: $.paths[?@['x-internal']]
+    description: Remove internal paths
+    remove: true
+
+  - target: $.paths.*[?@['x-internal']]
+    description: Remove internal operations
+    remove: true
+
+  - target: $.paths.*[?@.tags[?@ == 'internal']]
+    description: Remove operations tagged internal
+    remove: true
+
+  - target: $.paths.*[?search(@.operationId, '^debug')]
+    description: Remove debugging operations
+    remove: true
+
+  - target: $.paths.*[?!@.servers]
+    description: Give every operation without servers a default one
+    update:
+      servers:
+        - url: http://localhost:35123
+          description: The default server.
+
+  - target: $.paths['/ping'].get
+    description: Merge into an operation
+    update:
+      description: Check that the API is running OK
+
+  - target: $.paths['/ping'].get.tags
+    description: Append the elements of a sequence to a sequence
+    update:
+      - ping
+
+  - target: $.tags
+    description: Append a value to a sequence
+    update:
+      name: ping
+      description: Pinging the API
+
+  - target: $.components.schemas.Pong.properties.ping.example
+    description: Replace a scalar
+    update: PONG
+
+  - target: $.paths['/ping'].get.responses['200'].content['application/json']
+    description: Merge into a member whose name needs brackets
+    update:
+      x-media-type: json
+
+  - target: $.components.schemas[?@.description == 'rename me']
+    description: Rename the schemas a filter selects
+    update:
+      x-go-name: RenamedGizmo
+
+  - target: $.components.schemas[?@.format == 'widget-id']
+    description: Replace the Go type of the schemas a filter selects, with its import
+    update:
+      x-go-type: googleuuid.UUID
+      x-go-type-import:
+        path: github.com/google/uuid
+        name: googleuuid
+
+  - target: $.components.schemas.Widget.properties[?@.format == 'uuid']
+    description: Rename the properties a filter selects
+    update:
+      x-go-name: SerialNumber
+
+  - target: $.components.schemas.*.properties[?@.format == 'date-time']
+    description: Make optional date-time properties non-pointers
+    update:
+      x-go-type-skip-optional-pointer: true
+
+  - target: $.components.schemas.Widget.properties.label
+    description: Rename a property
+    update:
+      x-go-name: Title
+
+  - target: $.components.schemas.Widget.properties.notes
+    description: Drop omitempty from an optional property
+    update:
+      x-omitempty: false
+
+  - target: $.components.schemas.Widget.properties.secret
+    description: Leave a property out of JSON
+    update:
+      x-go-json-ignore: true
+
+  - target: $.components.schemas.Widget.properties
+    description: Order fields, with a structural update of the properties
+    update:
+      zeta:
+        x-order: 1
+      alpha:
+        x-order: 2

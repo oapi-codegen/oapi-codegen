@@ -97,6 +97,7 @@ paths:
               path: github.com/mailru/easyjson
         - name: path
           in: path
+          required: true
           schema:
             x-go-type: pgtype.Color
             x-go-type-import:
@@ -187,6 +188,7 @@ components:
     VersionPath:
       name: versionPath
       in: path
+      required: true
       schema:
         x-go-type: swag.Swag
         x-go-type-import:

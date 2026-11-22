@@ -1,0 +1,59 @@
+# ==========================================================================
+# Category: options/skip_prune (default-prune triple)
+# Tests:    default behavior — schemas not referenced by any path are pruned.
+#
+# Folds in (provenance):
+#   - issues/issue240  (Unreferenced schema pruned by default)
+# ==========================================================================
+openapi: "3.0.0"
+info:
+  title: options/skip_prune (default-prune)
+  version: "1.0.0"
+  description: |
+    Default pruning behaviour: schemas not referenced by any path operation are
+    removed from generated output. ClientTypeDefault is referenced; UnreferencedDefault
+    is not — it must be absent from default_prune.gen.go.
+paths:
+  /client-default:
+    get:
+      # issue #240: GET returns ClientTypeDefault (a referenced schema); always emitted.
+      operationId: getClientDefault
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClientTypeDefault"
+    put:
+      # issue #240: PUT returns an inline error body (400).
+      operationId: updateClientDefault
+      responses:
+        400:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                required:
+                  - code
+components:
+  schemas:
+    # issue #240: ClientTypeDefault is referenced by GET /client-default; always emitted.
+    ClientTypeDefault:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+    # issue #240: UnreferencedDefault is NOT referenced by any path operation.
+    # With default settings (skip-prune unset) this schema is pruned (not emitted).
+    UnreferencedDefault:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string

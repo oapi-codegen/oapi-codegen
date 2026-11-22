@@ -1,0 +1,5 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: fiberv3paramsgen
+generate:
+  models: true
+output: gen/types.gen.go

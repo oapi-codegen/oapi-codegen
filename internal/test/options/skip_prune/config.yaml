@@ -1,0 +1,17 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: optionsskipprune
+output: skip_prune.gen.go
+# issue #240: with skip-prune:true the UnreferencedSkip schema is preserved in output.
+# This triple also carries client + client-response-bytes-function (both set by the
+# source issue240 cfg.yaml). The default-prune triple is models-only, so the client
+# infrastructure types (Client, NewClient, *Response, Bytes()) are emitted only here —
+# no cross-triple collision.
+generate:
+  models: true
+  client: true
+output-options:
+  # skip-prune: keep schemas that no path references (e.g. issue #240 UnreferencedSkip)
+  skip-prune: true
+  # issue #240: client-response-bytes-function adds Bytes()/ContentType() helpers to the
+  # generated response wrappers (this is what the source cfg.yaml actually exercised).
+  client-response-bytes-function: true

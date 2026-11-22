@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: extensionsstructtags
+output: struct_tags_extra_tags_params.gen.go
+# issue #2232: x-oapi-codegen-extra-tags on query parameters (param level and schema level)
+# requires std-http-server to generate parameter-binding code that surfaces the tags;
+# this differs from the main triple which uses client only.
+generate:
+  std-http-server: true
+  models: true

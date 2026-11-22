@@ -1,0 +1,75 @@
+# x-go-name cases folded from components/components.yaml: renaming a schema (RenameMe ->
+# NewName) and having a $ref resolve to the new Go name (ReferenceToRenameMe.ToNewName),
+# plus x-go-name on a response (RenamedResponseObject) and a requestBody (RenamedRequestBody).
+# (ParameterObject is omitted — the source spec left its reference commented out.)
+openapi: "3.0.1"
+info:
+  version: "1.0.0"
+  title: extensions/x_go_name
+  description: |
+    The x-go-name extension overrides the generated Go identifier for schemas, responses,
+    and request bodies; $refs to a renamed schema must resolve to the new name.
+paths:
+  /x:
+    post:
+      operationId: x
+      requestBody:
+        $ref: "#/components/requestBodies/RequestBody"
+      responses:
+        default:
+          $ref: "#/components/responses/ResponseObject"
+components:
+  schemas:
+    SchemaObject:
+      properties:
+        role:
+          type: string
+        firstName:
+          type: string
+      required:
+        - role
+        - firstName
+    RenameMe:
+      description: This schema should be renamed via x-go-name when generating
+      x-go-name: NewName
+      type: object
+      properties:
+        prop1:
+          type: string
+        prop2:
+          type: string
+      required: [ prop1, prop2 ]
+    ReferenceToRenameMe:
+      description: When a Schema is renamed, $ref should refer to the new name
+      type: object
+      properties:
+        ToNewName:
+          $ref: "#/components/schemas/RenameMe"
+      required: [ ToNewName ]
+  responses:
+    ResponseObject:
+      x-go-name: RenamedResponseObject
+      description: A simple response object
+      content:
+        application/json:
+          schema:
+            properties:
+              Field:
+                $ref: "#/components/schemas/SchemaObject"
+            required: [ Field ]
+        text/plain:
+          schema:
+            type: string
+  requestBodies:
+    RequestBody:
+      x-go-name: RenamedRequestBody
+      content:
+        application/json:
+          schema:
+            properties:
+              Field:
+                $ref: "#/components/schemas/SchemaObject"
+            required: [ Field ]
+        text/plain:
+          schema:
+            type: string
