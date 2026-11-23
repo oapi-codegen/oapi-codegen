@@ -523,6 +523,9 @@ type OutputOptions struct {
 	SkipFmt bool `yaml:"skip-fmt,omitempty"`
 	// Whether to skip pruning unused components on the generated code
 	SkipPrune bool `yaml:"skip-prune,omitempty"`
+	// SkipUnimplemented disables generation of the Unimplemented server stub,
+	// which is currently only generated for Chi servers.
+	SkipUnimplemented bool `yaml:"skip-unimplemented,omitempty"`
 	// SkipEnumValidate disables the generation of the `Valid()` method on
 	// enum types. By default each generated enum type includes a `Valid()
 	// bool` method which returns true when the value matches one of the

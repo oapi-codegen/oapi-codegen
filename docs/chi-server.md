@@ -11,6 +11,18 @@ generate:
 output: gen.go
 ```
 
+By default, the generated `Unimplemented` type implements every server operation
+with an HTTP 501 response. To omit this type and its methods, set:
+
+```yaml
+output-options:
+  skip-unimplemented: true
+```
+
+The server interface, parameter types, and route handlers are still generated.
+This allows your application to define its own `Unimplemented` type in the same
+package without a name collision.
+
 ## Generated code
 
 For instance, let's take this straightforward specification:

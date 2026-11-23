@@ -22,4 +22,4 @@ type ServerInterface interface {
 {{end}}{{.OperationId}}{{block "interface.handlerSignature" .}}(w http.ResponseWriter, r *http.Request{{genParamArgs .PathParams}}{{if .RequiresParamObject}}, params {{.OperationId}}Params{{end}}){{end}}
 {{end}}{{end}}
 }
-{{block "interface.unimplemented" .}}{{end}}
+{{if not opts.OutputOptions.SkipUnimplemented}}{{block "interface.unimplemented" .}}{{end}}{{end}}

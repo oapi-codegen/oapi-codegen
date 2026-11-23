@@ -1,0 +1,22 @@
+openapi: 3.0.0
+info:
+  title: Custom Unimplemented server
+  version: 1.0.0
+paths:
+  /widgets/{id}:
+    get:
+      operationId: getWidget
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK

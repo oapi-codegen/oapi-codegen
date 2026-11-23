@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../configuration-schema.json
+package: skipunimplemented
+output: server.gen.go
+generate:
+  chi-server: true
+  models: true
+output-options:
+  skip-unimplemented: true
