@@ -60,3 +60,33 @@ func TestConfigurationValidateAllowRemoteRefsFrom(t *testing.T) {
 		assert.Contains(t, err.Error(), "allow-remote-refs-from")
 	}
 }
+
+// TestConfigurationWarningsClientWithoutModels verifies that a `client`
+// generator with `generate.models: false` warns, because the emitted code
+// references schema types this config never declares (#1567). A warning,
+// not an error, because a sibling config emitting `models: true` into the
+// same package is a legitimate setup.
+func TestConfigurationWarningsClientWithoutModels(t *testing.T) {
+	cfg := Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{Client: true},
+	}
+	assert.Contains(t, cfg.Warnings()["client"], "generate.models")
+
+	cfg.Generate.Models = true
+	assert.NotContains(t, cfg.Warnings(), "client")
+}
+
+// TestConfigurationWarningsStrictWithoutServer verifies that
+// `strict-server` without a server generator warns, since the strict
+// wrapper adapts to a server interface no selected generator emits (#1558).
+func TestConfigurationWarningsStrictWithoutServer(t *testing.T) {
+	cfg := Configuration{
+		PackageName: "api",
+		Generate:    GenerateOptions{Strict: true, Models: true},
+	}
+	assert.Contains(t, cfg.Warnings()["strict-server"], "server")
+
+	cfg.Generate.ChiServer = true
+	assert.NotContains(t, cfg.Warnings(), "strict-server")
+}

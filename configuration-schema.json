@@ -51,11 +51,11 @@
         },
         "strict-server": {
           "type": "boolean",
-          "description": "Strict specifies whether to generate strict server wrapper"
+          "description": "Strict specifies whether to generate strict server wrapper. Requires a server generator (chi-server, echo-server, ...) in the same config; without one, no strict code is emitted."
         },
         "client": {
           "type": "boolean",
-          "description": "Client specifies whether to generate client boilerplate"
+          "description": "Client specifies whether to generate client boilerplate. The emitted code references schema types, so pair it with `models` in this config or in a sibling config that emits into the same package."
         },
         "models": {
           "type": "boolean",
