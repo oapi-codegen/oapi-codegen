@@ -24,7 +24,7 @@ func operationsWithTags(paths *openapi3.Paths, tags map[string]bool, exclude boo
 		return
 	}
 
-	for _, pathItem := range paths.Map() {
+	for path, pathItem := range paths.Map() {
 		ops := pathItem.Operations()
 		names := make([]string, 0, len(ops))
 		for name, op := range ops {
@@ -34,6 +34,11 @@ func operationsWithTags(paths *openapi3.Paths, tags map[string]bool, exclude boo
 		}
 		for _, name := range names {
 			pathItem.SetOperation(name, nil)
+		}
+		// A path whose operations were all filtered out would otherwise be
+		// left behind as an empty entry in the embedded spec.
+		if len(names) > 0 && len(pathItem.Operations()) == 0 {
+			paths.Delete(path)
 		}
 	}
 }
@@ -65,7 +70,7 @@ func operationsWithOperationIDs(paths *openapi3.Paths, operationIDs map[string]b
 		return
 	}
 
-	for _, pathItem := range paths.Map() {
+	for path, pathItem := range paths.Map() {
 		ops := pathItem.Operations()
 		names := make([]string, 0, len(ops))
 		for name, op := range ops {
@@ -75,6 +80,11 @@ func operationsWithOperationIDs(paths *openapi3.Paths, operationIDs map[string]b
 		}
 		for _, name := range names {
 			pathItem.SetOperation(name, nil)
+		}
+		// A path whose operations were all filtered out would otherwise be
+		// left behind as an empty entry in the embedded spec.
+		if len(names) > 0 && len(pathItem.Operations()) == 0 {
+			paths.Delete(path)
 		}
 	}
 }
