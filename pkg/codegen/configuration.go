@@ -184,12 +184,12 @@ func (o Configuration) Warnings() map[string]string {
 	}
 
 	// `strict-server` wraps the typed handler interface that a server
-	// generator (chi-server, echo-server, ...) emits. Without a server
-	// generator no base interface exists for the strict wrapper to adapt and
-	// nothing usable is generated. The split-config caveat above applies here
-	// too, so this is a warning.
+	// generator (chi-server, echo-server, ...) emits. The strict templates
+	// are selected from this config's own server flags, so a sibling config's
+	// server output cannot supply the wrapper: without a server generator in
+	// the same config, this config emits no strict code at all.
 	if o.Generate.Strict && !o.Generate.AnyServerGenerator() {
-		warnings["strict-server"] = "the `strict-server` generator is set without a server generator. The strict wrapper adapts the interface a server generator declares, so on its own it emits no usable code. If a sibling config emits a server generator into the same Go package, you can ignore this warning. Otherwise, set one of the server generators."
+		warnings["strict-server"] = "the `strict-server` generator is set without a server generator. The strict wrapper adapts the interface a server generator declares, so this config emits no strict code at all. Set one of the server generators (for example `chi-server`) in the same config as `strict-server`."
 	}
 
 	return warnings
@@ -227,9 +227,13 @@ type GenerateOptions struct {
 	GorillaServer bool `yaml:"gorilla-server,omitempty"`
 	// StdHTTPServer specifies whether to generate stdlib http server boilerplate
 	StdHTTPServer bool `yaml:"std-http-server,omitempty"`
-	// Strict specifies whether to generate strict server wrapper
+	// Strict specifies whether to generate strict server wrapper. Requires a
+	// server generator (chi-server, echo-server, ...) in the same config;
+	// without one, no strict code is emitted.
 	Strict bool `yaml:"strict-server,omitempty"`
-	// Client specifies whether to generate client boilerplate
+	// Client specifies whether to generate client boilerplate. The emitted
+	// code references schema types, so pair it with `models` in this config
+	// or in a sibling config that emits into the same package.
 	Client bool `yaml:"client,omitempty"`
 	// Models specifies whether to generate type definitions
 	Models bool `yaml:"models,omitempty"`
