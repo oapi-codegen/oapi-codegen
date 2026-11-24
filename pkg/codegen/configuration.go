@@ -173,6 +173,25 @@ func (o Configuration) Warnings() map[string]string {
 		warnings["old-merge-schemas"] = fmt.Sprintf("is deprecated; set `compatibility.schema-merging-behavior: %s` instead, which it is an alias for.", SchemaMergingV1)
 	}
 
+	// `client` emits request and response code that references the schema
+	// types of the spec (response bodies, parameter objects). Those types are
+	// declared only when `generate.models: true`. A sibling config emitting
+	// `models: true` into the same Go package covers them, so we warn rather
+	// than error (see the `generate-types-for-anonymous-schemas` warning
+	// above for the same pattern).
+	if o.Generate.Client && !o.Generate.Models {
+		warnings["client"] = "the `client` generator is set with `generate.models: false`. The generated client references schema types this config does not declare, so it will not compile on its own. If a sibling config emits `generate.models: true` into the same Go package, you can ignore this warning. Otherwise, set `generate.models: true`."
+	}
+
+	// `strict-server` wraps the typed handler interface that a server
+	// generator (chi-server, echo-server, ...) emits. Without a server
+	// generator no base interface exists for the strict wrapper to adapt and
+	// nothing usable is generated. The split-config caveat above applies here
+	// too, so this is a warning.
+	if o.Generate.Strict && !o.Generate.AnyServerGenerator() {
+		warnings["strict-server"] = "the `strict-server` generator is set without a server generator. The strict wrapper adapts the interface a server generator declares, so on its own it emits no usable code. If a sibling config emits a server generator into the same Go package, you can ignore this warning. Otherwise, set one of the server generators."
+	}
+
 	return warnings
 }
 
@@ -258,6 +277,14 @@ func (g GenerateOptions) AnyOperationGenerator() bool {
 	return g.Client || g.IrisServer || g.EchoServer || g.Echo5Server ||
 		g.ChiServer || g.FiberServer || g.FiberV3Server || g.GinServer || g.GorillaServer ||
 		g.StdHTTPServer || g.Strict
+}
+
+// AnyServerGenerator returns true if any server generator is enabled. Used
+// to detect a `strict-server` config with no base server to wrap.
+func (g GenerateOptions) AnyServerGenerator() bool {
+	return g.IrisServer || g.EchoServer || g.Echo5Server ||
+		g.ChiServer || g.FiberServer || g.FiberV3Server || g.GinServer || g.GorillaServer ||
+		g.StdHTTPServer
 }
 
 func (oo GenerateOptions) Validate() map[string]string {
