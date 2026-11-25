@@ -271,6 +271,77 @@ func TestDeprecationComment(t *testing.T) {
 	}
 }
 
+func TestStabilityComment(t *testing.T) {
+	tests := []struct {
+		name string
+		op   OperationDefinition
+		want string
+	}{
+		{
+			name: "nil spec returns empty string",
+			op:   OperationDefinition{Spec: nil},
+			want: "",
+		},
+		{
+			name: "no extension returns empty string",
+			op: OperationDefinition{
+				Spec: &openapi3.Operation{},
+			},
+			want: "",
+		},
+		{
+			name: "alpha returns the stability comment",
+			op: OperationDefinition{
+				Spec: &openapi3.Operation{
+					Extensions: map[string]any{
+						"x-stability-level": "alpha",
+					},
+				},
+			},
+			want: "// This operation has been marked with the `alpha` stability level upstream (via `x-stability-level`).",
+		},
+		{
+			name: "surrounding whitespace is trimmed",
+			op: OperationDefinition{
+				Spec: &openapi3.Operation{
+					Extensions: map[string]any{
+						"x-stability-level": "  beta  ",
+					},
+				},
+			},
+			want: "// This operation has been marked with the `beta` stability level upstream (via `x-stability-level`).",
+		},
+		{
+			name: "empty string returns empty string",
+			op: OperationDefinition{
+				Spec: &openapi3.Operation{
+					Extensions: map[string]any{
+						"x-stability-level": "",
+					},
+				},
+			},
+			want: "",
+		},
+		{
+			name: "non-string value returns empty string",
+			op: OperationDefinition{
+				Spec: &openapi3.Operation{
+					Extensions: map[string]any{
+						"x-stability-level": 42,
+					},
+				},
+			},
+			want: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, tt.op.StabilityComment())
+		})
+	}
+}
+
 func TestOperationDefinition_GenerateFunctionComment(t *testing.T) {
 	opWithBody := func(summary string) OperationDefinition {
 		return OperationDefinition{
@@ -558,6 +629,68 @@ func TestOperationDefinition_GenerateFunctionComment(t *testing.T) {
 				"//\n" +
 				"// Corresponds with GET /foo (the `GetFoo` operationId).",
 		},
+		{
+			name: "has summary, x-stability-level, not with responses",
+			op: OperationDefinition{
+				OperationId: "GetFoo",
+				Method:      "GET",
+				Path:        "/foo",
+				Summary:     "Get a foo",
+				Spec: &openapi3.Operation{
+					Extensions: map[string]any{
+						"x-stability-level": "alpha",
+					},
+				},
+			},
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "",
+			isFunctionWithResponses: false,
+			want: "// GetFoo Get a foo\n" +
+				"//\n" +
+				"// Corresponds with GET /foo (the `GetFoo` operationId).\n" +
+				"//\n" +
+				"// This operation has been marked with the `alpha` stability level upstream (via `x-stability-level`).",
+		},
+		{
+			name: "no summary, x-stability-level, not with responses",
+			op: OperationDefinition{
+				OperationId: "GetFoo",
+				Method:      "GET",
+				Path:        "/foo",
+				Spec: &openapi3.Operation{
+					Extensions: map[string]any{
+						"x-stability-level": "alpha",
+					},
+				},
+			},
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "",
+			isFunctionWithResponses: false,
+			want: "// GetFoo performs a GET /foo (the `GetFoo` operationId) request.\n" +
+				"//\n" +
+				"// This operation has been marked with the `alpha` stability level upstream (via `x-stability-level`).",
+		},
+		{
+			name: "no summary, x-stability-level, with responses",
+			op: OperationDefinition{
+				OperationId: "GetFoo",
+				Method:      "GET",
+				Path:        "/foo",
+				Spec: &openapi3.Operation{
+					Extensions: map[string]any{
+						"x-stability-level": "draft",
+					},
+				},
+			},
+			originalFunctionName:    "GetFoo",
+			functionSuffix:          "WithResponse",
+			isFunctionWithResponses: true,
+			want: "// GetFooWithResponse performs a GET /foo (the `GetFoo` operationId) request.\n" +
+				"//\n" +
+				"// Returns a wrapper object for the known response body format(s).\n" +
+				"//\n" +
+				"// This operation has been marked with the `draft` stability level upstream (via `x-stability-level`).",
+		},
 	}
 
 	for _, tt := range tests {
@@ -594,6 +727,27 @@ func TestRequestBodyDefinition_GenerateFunctionComment(t *testing.T) {
 		Method:      "POST",
 		Path:        "/foo",
 		Spec:        &openapi3.Operation{Description: "Detailed description."},
+	}
+	parentWithSummaryAndStability := OperationDefinition{
+		OperationId: "CreateFoo",
+		Method:      "POST",
+		Path:        "/foo",
+		Summary:     "Create a foo",
+		Spec: &openapi3.Operation{
+			Extensions: map[string]any{
+				"x-stability-level": "beta",
+			},
+		},
+	}
+	parentNoSummaryWithStability := OperationDefinition{
+		OperationId: "CreateFoo",
+		Method:      "POST",
+		Path:        "/foo",
+		Spec: &openapi3.Operation{
+			Extensions: map[string]any{
+				"x-stability-level": "beta",
+			},
+		},
 	}
 	body := RequestBodyDefinition{
 		ContentType: "application/json",
@@ -747,6 +901,48 @@ func TestRequestBodyDefinition_GenerateFunctionComment(t *testing.T) {
 				"// Takes a body of the `application/json` content type.\n" +
 				"//\n" +
 				"// Corresponds with POST /foo (the `CreateFoo` operationId).",
+		},
+		{
+			name:                    "has summary, x-stability-level, not with responses",
+			body:                    body,
+			parent:                  parentWithSummaryAndStability,
+			originalFunctionName:    "CreateFoo",
+			functionSuffix:          "WithJSONBody",
+			isFunctionWithResponses: false,
+			want: "// CreateFooWithJSONBody Create a foo\n" +
+				"//\n" +
+				"// Takes a body of the `application/json` content type.\n" +
+				"//\n" +
+				"// Corresponds with POST /foo (the `CreateFoo` operationId).\n" +
+				"//\n" +
+				"// This operation has been marked with the `beta` stability level upstream (via `x-stability-level`).",
+		},
+		{
+			name:                    "no summary, x-stability-level, not with responses",
+			body:                    body,
+			parent:                  parentNoSummaryWithStability,
+			originalFunctionName:    "CreateFoo",
+			functionSuffix:          "WithJSONBody",
+			isFunctionWithResponses: false,
+			want: "// CreateFooWithJSONBody performs a POST /foo (the `CreateFoo` operationId) request.\n" +
+				"// Takes a body of the `application/json` content type.\n" +
+				"//\n" +
+				"// This operation has been marked with the `beta` stability level upstream (via `x-stability-level`).",
+		},
+		{
+			name:                    "has summary, x-stability-level, with responses",
+			body:                    body,
+			parent:                  parentWithSummaryAndStability,
+			originalFunctionName:    "CreateFoo",
+			functionSuffix:          "WithJSONBodyWithResponse",
+			isFunctionWithResponses: true,
+			want: "// CreateFooWithJSONBodyWithResponse Create a foo\n" +
+				"//\n" +
+				"// Takes a body of the `application/json` content type, and returns a wrapper object for the known response body format(s).\n" +
+				"//\n" +
+				"// Corresponds with POST /foo (the `CreateFoo` operationId).\n" +
+				"//\n" +
+				"// This operation has been marked with the `beta` stability level upstream (via `x-stability-level`).",
 		},
 	}
 
