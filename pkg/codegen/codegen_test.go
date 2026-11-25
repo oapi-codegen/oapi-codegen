@@ -751,6 +751,60 @@ paths:
 	assert.Contains(t, code, `ctx = context.WithValue(ctx, BearerAuthScopes, []string{"read"})`)
 }
 
+// TestEchoRedactBindErrors verifies that generated echo servers put the Go
+// error into the 400 body by default, and quote the caller's value and keep the
+// error on the HTTPError only when output-options.echo-redact-bind-errors is set.
+func TestEchoRedactBindErrors(t *testing.T) {
+	const spec = `
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Test Echo Bind Errors
+paths:
+  /items/{id}:
+    get:
+      operationId: getItem
+      parameters:
+        - {name: id, in: path, required: true, schema: {type: integer}}
+        - {name: tags, in: query, schema: {type: array, items: {type: integer}}}
+        - {name: X-Count, in: header, schema: {type: integer}}
+        - {name: session, in: cookie, schema: {type: integer}}
+      responses:
+        '200':
+          description: ok
+`
+	loader := openapi3.NewLoader()
+	swagger, err := loader.LoadFromData([]byte(spec))
+	require.NoError(t, err)
+
+	for _, tc := range []struct {
+		name     string
+		generate GenerateOptions
+		attach   string
+	}{
+		{"echo", GenerateOptions{EchoServer: true}, ".SetInternal(err)"},
+		{"echo5", GenerateOptions{Echo5Server: true}, ".Wrap(err)"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			opts := Configuration{PackageName: "api", Generate: tc.generate}
+
+			code, err := Generate(swagger, opts)
+			require.NoError(t, err)
+			assert.Contains(t, code, `fmt.Sprintf("Invalid format for parameter id: %s", err)`)
+			assert.NotContains(t, code, tc.attach)
+
+			opts.OutputOptions.EchoRedactBindErrors = true
+			code, err = Generate(swagger, opts)
+			require.NoError(t, err)
+			assert.NotContains(t, code, `: %s", err)`)
+			assert.Contains(t, code, `fmt.Sprintf("Invalid format for parameter id: '%s'", ctx.Param("id"))`+")"+tc.attach)
+			assert.Contains(t, code, `strings.Join(ctx.QueryParams()["tags"], ",")`)
+			assert.Contains(t, code, `fmt.Sprintf("Invalid format for parameter X-Count: '%s'", valueList[0])`+")"+tc.attach)
+			assert.Contains(t, code, `fmt.Sprintf("Invalid format for parameter session: '%s'", cookie.Value)`+")"+tc.attach)
+		})
+	}
+}
+
 // TestEnumValueEscaping verifies that a string enum value containing a
 // backslash is emitted as a valid, properly escaped Go string literal
 // (the constants go through strconv.Quote).

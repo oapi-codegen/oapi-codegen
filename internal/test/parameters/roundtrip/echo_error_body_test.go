@@ -16,7 +16,7 @@ import (
 	echov5gen "github.com/oapi-codegen/oapi-codegen/v2/internal/test/parameters/roundtrip/echov5/gen"
 )
 
-// echoBindErrorCases covers every parameter location whose bind error used to be
+// echoBindErrorCases (against fixtures generated with echo-redact-bind-errors) covers every parameter location whose bind error used to be
 // echoed to the client verbatim. The response must quote only what the caller
 // sent, never the Go error text produced by the runtime or strconv.
 var echoBindErrorCases = []struct {

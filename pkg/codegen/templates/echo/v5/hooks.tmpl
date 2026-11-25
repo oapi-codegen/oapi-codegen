@@ -13,7 +13,7 @@ from the shared echo templates (echo/echo-wrappers.tmpl, echo/echo-register.tmpl
 {{/* --- echo/echo-wrappers.tmpl --- */}}
 {{define "echo.ctxType"}}*echo.Context{{end}}
 {{/* v5's *echo.HTTPError has no SetInternal; Wrap attaches the inner error. */}}
-{{define "echo.attachErr"}}.Wrap(err){{end}}
+{{define "echo.attachErr"}}{{if opts.OutputOptions.EchoRedactBindErrors}}.Wrap(err){{end}}{{end}}
 
 {{/* --- strict/strict-echo.tmpl ---
 echo v5 renames the body-only bind helpers: the *echo.DefaultBinder assertion

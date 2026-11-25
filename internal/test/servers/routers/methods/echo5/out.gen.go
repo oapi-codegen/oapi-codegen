@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/labstack/echo/v5"
 	"github.com/oapi-codegen/runtime"
@@ -77,7 +76,7 @@ func (w *ServerInterfaceWrapper) PurgeItem(ctx *echo.Context) error {
 
 	err = runtime.BindStyledParameterWithOptions("simple", "id", ctx.Param("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: ctx.Request().URL.RawPath == ""})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: '%s'", ctx.Param("id"))).Wrap(err)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter id: %s", err))
 	}
 
 	// Parameter object where we will unmarshal all parameters from the context
@@ -86,7 +85,7 @@ func (w *ServerInterfaceWrapper) PurgeItem(ctx *echo.Context) error {
 
 	err = runtime.BindQueryParameterWithOptions("form", true, false, "force", ctx.QueryParams(), &params.Force, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter force: '%s'", strings.Join(ctx.QueryParams()["force"], ","))).Wrap(err)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter force: %s", err))
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
