@@ -41,7 +41,7 @@ func (w *ServerInterfaceWrapper) {{.OperationId}} (ctx {{block "echo.ctxType" .}
     {{if .IsStyled}}
     err = runtime.BindQueryParameterWithOptions("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.QueryParams(), &params.{{.GoName}}, runtime.BindQueryParameterOptions{Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"{{unionTypes .SchemaTypes}}})
     if err != nil {
-        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: {{if opts.OutputOptions.EchoRedactBindErrors}}'%s'", strings.Join(ctx.QueryParams()["{{.ParamName}}"], ","){{else}}%s", err{{end}})){{template "echo.attachErr"}}
+        return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}{{if opts.OutputOptions.EchoRedactBindErrors}}{{if .QueryKeysDiffer}}"{{else}}: '%s'", strings.Join(ctx.QueryParams()["{{.ParamName}}"], ","){{end}}{{else}}: %s", err{{end}})){{template "echo.attachErr"}}
     }
     {{else}}
     if paramValue := ctx.QueryParam("{{.ParamName}}"); paramValue != "" {

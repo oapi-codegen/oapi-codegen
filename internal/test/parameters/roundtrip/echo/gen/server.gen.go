@@ -611,7 +611,7 @@ func (w *ServerInterfaceWrapper) GetDeepObject(ctx echo.Context) error {
 
 	err = runtime.BindQueryParameterWithOptions("deepObject", true, true, "deepObj", ctx.QueryParams(), &params.DeepObj, runtime.BindQueryParameterOptions{Type: "", Format: ""})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter deepObj: '%s'", strings.Join(ctx.QueryParams()["deepObj"], ","))).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter deepObj")).SetInternal(err)
 	}
 
 	// Invoke the callback with all the unmarshaled arguments
@@ -668,7 +668,7 @@ func (w *ServerInterfaceWrapper) GetQueryForm(ctx echo.Context) error {
 
 	err = runtime.BindQueryParameterWithOptions("form", true, false, "eo", ctx.QueryParams(), &params.Eo, runtime.BindQueryParameterOptions{Type: "", Format: ""})
 	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter eo: '%s'", strings.Join(ctx.QueryParams()["eo"], ","))).SetInternal(err)
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter eo")).SetInternal(err)
 	}
 
 	// ------------- Optional query parameter "o" -------------

@@ -25,10 +25,15 @@ var echoBindErrorCases = []struct {
 	header http.Header
 	cookie *http.Cookie
 	want   string
+	// notWant must be absent, e.g. an empty quoted value.
+	notWant string
 }{
 	{name: "path", target: "/simplePrimitive/foo", want: "Invalid format for parameter param: 'foo'"},
 	{name: "query", target: "/queryForm?p=foo", want: "Invalid format for parameter p: 'foo'"},
 	{name: "query with repeated keys", target: "/queryForm?ea=1&ea=bar", want: "Invalid format for parameter ea: '1,bar'"},
+	// The value of a deepObject sits under "deepObj[Id]", not "deepObj", so
+	// it is left out rather than quoted as an empty string.
+	{name: "query deepObject", target: "/queryDeepObject?deepObj[Id]=foo", want: `Invalid format for parameter deepObj"`, notWant: "''"},
 	{name: "header", target: "/header", header: http.Header{"X-Primitive": {"foo"}}, want: "Invalid format for parameter X-Primitive: 'foo'"},
 	{name: "cookie", target: "/cookie", cookie: &http.Cookie{Name: "p", Value: "foo"}, want: "Invalid format for parameter p: 'foo'"},
 }
@@ -49,6 +54,9 @@ func testEchoBindErrorBody(t *testing.T, handler http.Handler) {
 
 			require.Equal(t, http.StatusBadRequest, rec.Code)
 			assert.Contains(t, rec.Body.String(), tc.want)
+			if tc.notWant != "" {
+				assert.NotContains(t, rec.Body.String(), tc.notWant)
+			}
 			assert.NotContains(t, rec.Body.String(), "strconv", "Go error text must not reach the response body")
 			assert.NotContains(t, rec.Body.String(), "parsing", "Go error text must not reach the response body")
 		})

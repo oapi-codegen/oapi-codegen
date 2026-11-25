@@ -187,6 +187,23 @@ func (pd *ParameterDefinition) Explode() bool {
 	return *pd.Spec.Explode
 }
 
+// QueryKeysDiffer reports whether a query parameter is carried under keys
+// other than its own name: deepObject (name[prop]=v) and an exploded object
+// (prop=v). Templates use it to avoid quoting the value stored under the
+// parameter's name, which is empty for these.
+func (pd *ParameterDefinition) QueryKeysDiffer() bool {
+	if pd.Style() == "deepObject" {
+		return true
+	}
+	if !pd.Explode() || pd.Spec.Schema == nil || pd.Spec.Schema.Value == nil {
+		return false
+	}
+	// Read the spec schema: pd.Schema has no properties for a $ref.
+	v := pd.Spec.Schema.Value
+	return v.Type.Includes("object") || len(v.Properties) > 0 || len(v.AllOf) > 0 ||
+		v.AdditionalProperties.Has != nil || v.AdditionalProperties.Schema != nil
+}
+
 // SchemaType returns the single OpenAPI type of this parameter's schema
 // (e.g. "string", "integer") with the OpenAPI 3.1 "null" nullability marker
 // stripped, or empty string when the schema declares no type or a
