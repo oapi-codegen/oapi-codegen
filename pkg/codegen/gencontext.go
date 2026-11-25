@@ -47,6 +47,14 @@ type genContext struct {
 	// changing that would rename nested types across every spec.
 	nameHint []string
 
+	// pathTaken marks that the caller defines a type named after this
+	// schema's path: generateUnionElement names a oneOf or anyOf branch that
+	// way. Items and additionalProperties are generated at their parent's
+	// path, so an inline enum there would take that same name; it is named
+	// after nameHint instead (see enumTypeName, issue #2640). For the branch
+	// itself nameHint is the path, so an enum branch keeps its name.
+	pathTaken bool
+
 	// rootPosition marks the top of a components/schemas entry, where
 	// GenerateTypesForSchemas defines the type under a name renameSchema
 	// chooses rather than one derived from the path. A composition there
@@ -165,6 +173,17 @@ func newRootGenContext(nameHint []string) genContext {
 func (ctx genContext) at(nameHint []string) genContext {
 	ctx.nameHint = slices.Clone(nameHint)
 	ctx.rootPosition = false
+	ctx.pathTaken = false
+	return ctx
+}
+
+// sharingPath returns a copy of ctx positioned at nameHint, for a schema that
+// is generated at its parent's path: items and additionalProperties. Unlike
+// at, it stays under a name the caller has taken (see pathTaken).
+func (ctx genContext) sharingPath(nameHint []string) genContext {
+	pathTaken := ctx.pathTaken
+	ctx = ctx.at(nameHint)
+	ctx.pathTaken = pathTaken
 	return ctx
 }
 
@@ -200,4 +219,18 @@ func (ctx genContext) typeName(path []string) string {
 		return PathToTypeName(slices.Clone(path))
 	}
 	return PathToTypeName(slices.Clone(ctx.nameHint))
+}
+
+// enumTypeName is the Go type an inline enum at path is defined as: one named
+// after its path, unless an enclosing type has that name (see pathTaken).
+//
+// PathToTypeName rewrites the slice it is handed, and path is always handed
+// over as it is: the callers go on to print it in the type's doc comment,
+// which has always shown the rewritten elements.
+func (ctx genContext) enumTypeName(path []string) string {
+	name := PathToTypeName(path)
+	if ctx.pathTaken {
+		name = PathToTypeName(slices.Clone(ctx.nameHint))
+	}
+	return SchemaNameToTypeName(name)
 }

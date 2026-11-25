@@ -898,36 +898,97 @@ func SanitizeGoIdentity(str string) string {
 // SanitizeEnumNames fixes illegal chars in the enum names
 // and removes duplicates
 func SanitizeEnumNames(enumNames, enumValues []string) map[string]string {
-	dupCheck := make(map[string]int, len(enumValues))
-	deDup := make([][]string, 0, len(enumValues))
+	names, values := sanitizeEnumNamesInOrder(enumNames, enumValues)
+	return enumValueMap(names, values)
+}
 
-	for i, v := range enumValues {
-		n := v
+// sanitizeEnumNamesInOrder keeps names and values in declaration order so a
+// caller applying another naming transformation can resolve any new collisions.
+func sanitizeEnumNamesInOrder(enumNames, enumValues []string) (names, values []string) {
+	names, values, _ = sanitizeEnumNamesKeeping(enumNames, enumValues, nil)
+	return names, values
+}
+
+// sanitizeEnumNamesKeeping is sanitizeEnumNamesInOrder for an enum some of
+// whose names are emitted as written: verbatim[i] marks enumNames[i] as one.
+// Such a name is neither converted nor renamed, and the names derived for the
+// other values are kept clear of it. The returned kept marks the same names in
+// the result, which is shorter than the input when duplicates were dropped.
+func sanitizeEnumNamesKeeping(enumNames, enumValues []string, verbatim []bool) (names, values []string, kept []bool) {
+	names = make([]string, 0, len(enumValues))
+	values = make([]string, 0, len(enumValues))
+	kept = make([]bool, 0, len(enumValues))
+	seen := make(map[string]struct{}, len(enumValues))
+	for i, value := range enumValues {
+		name := value
 		if i < len(enumNames) {
-			n = enumNames[i]
+			name = enumNames[i]
 		}
-		if _, dup := dupCheck[n]; !dup {
-			deDup = append(deDup, []string{n, v})
+		keep := i < len(verbatim) && verbatim[i]
+		if !keep {
+			if _, duplicate := seen[name]; duplicate {
+				continue
+			}
+			seen[name] = struct{}{}
+			name = SanitizeGoIdentity(enumValueNameToGoName(name))
 		}
-		dupCheck[n] = 0
+		names = append(names, name)
+		values = append(values, value)
+		kept = append(kept, keep)
 	}
+	disambiguateEnumNamesKeeping(names, kept)
+	return names, values, kept
+}
 
-	dupCheck = make(map[string]int, len(deDup))
-	sanitizedDeDup := make(map[string]string, len(deDup))
+// disambiguateEnumNames assigns numeric suffixes without using names that
+// another declaration already has, including declarations later in the list.
+func disambiguateEnumNames(names []string) {
+	disambiguateEnumNamesKeeping(names, nil)
+}
 
-	for _, p := range deDup {
-		n, v := p[0], p[1]
-		sanitized := SanitizeGoIdentity(SchemaNameToTypeName(n))
+// disambiguateEnumNamesKeeping is disambiguateEnumNames for a list in which
+// keep[i] marks names[i] as one that may not change. Every other name that
+// matches a kept one gets a suffix, wherever in the list it comes.
+func disambiguateEnumNamesKeeping(names []string, keep []bool) {
+	kept := func(i int) bool { return i < len(keep) && keep[i] }
 
-		if _, dup := dupCheck[sanitized]; !dup {
-			sanitizedDeDup[sanitized] = v
-		} else {
-			sanitizedDeDup[sanitized+strconv.Itoa(dupCheck[sanitized])] = v
+	used := make(map[string]struct{}, len(names))
+	nextSuffix := make(map[string]int, len(names))
+	for i, name := range names {
+		used[name] = struct{}{}
+		if kept(i) {
+			nextSuffix[name] = 1
 		}
-		dupCheck[sanitized]++
 	}
+	for i, base := range names {
+		if kept(i) {
+			continue
+		}
+		suffix := nextSuffix[base]
+		if suffix == 0 {
+			nextSuffix[base] = 1
+			continue
+		}
+		for {
+			candidate := base + strconv.Itoa(suffix)
+			suffix++
+			if _, taken := used[candidate]; taken {
+				continue
+			}
+			names[i] = candidate
+			used[candidate] = struct{}{}
+			nextSuffix[base] = suffix
+			break
+		}
+	}
+}
 
-	return sanitizedDeDup
+func enumValueMap(names, values []string) map[string]string {
+	result := make(map[string]string, len(names))
+	for i, name := range names {
+		result[name] = values[i]
+	}
+	return result
 }
 
 func typeNamePrefix(name string) (prefix string) {
@@ -1275,11 +1336,150 @@ func ParseGoImportExtension(v *openapi3.SchemaRef) (*goImport, error) {
 // TypeDefinitionsEquivalent checks for equality between two type definitions, but
 // not every field is considered. We only want to know if they are fundamentally
 // the same type.
+//
+// The schemas are compared like reflect.DeepEqual, except that kin-openapi's
+// source locations (*openapi3.Origin) are ignored, so the same schema declared
+// on two different lines is still the same type. Comparing the JSON encodings
+// instead would not work: a $ref encodes as its string alone, so two schemas
+// whose $refs resolve to different targets would look equal.
 func TypeDefinitionsEquivalent(t1, t2 TypeDefinition) bool {
 	if t1.TypeName != t2.TypeName {
 		return false
 	}
-	return reflect.DeepEqual(t1.Schema.OAPISchema, t2.Schema.OAPISchema)
+	return deepEqualIgnoringOrigin(
+		reflect.ValueOf(t1.Schema.OAPISchema),
+		reflect.ValueOf(t2.Schema.OAPISchema),
+		map[visitedPair]bool{},
+	)
+}
+
+var originPtrType = reflect.TypeFor[*openapi3.Origin]()
+
+// visitedPair identifies two references that deepEqualIgnoringOrigin has
+// started comparing. Like the visit type in reflect.DeepEqual, it lets the
+// comparison of recursive schemas terminate. sliceLen is only set for slices,
+// because slices of different lengths can share a first element.
+type visitedPair struct {
+	addr1, addr2 uintptr
+	typ          reflect.Type
+	sliceLen     int
+}
+
+// deepEqualIgnoringOrigin reports whether v1 and v2 are deeply equal, treating
+// any two *openapi3.Origin values as equal.
+//
+// It follows deepValueEqual in the standard library's reflect/deepequal.go,
+// which isn't exported, so that reviewers can compare the two. It differs in
+// the following ways:
+//   - It skips *openapi3.Origin values.
+//   - It records visits only for pointers, maps and slices, not interfaces.
+//     Any cycle passes through one of these kinds.
+//   - It compares channels and unsafe pointers by address, because the
+//     standard library's fallback relies on an unexported function.
+//   - It has no fast path for []byte.
+func deepEqualIgnoringOrigin(v1, v2 reflect.Value, visited map[visitedPair]bool) bool {
+	if !v1.IsValid() || !v2.IsValid() {
+		return v1.IsValid() == v2.IsValid()
+	}
+	if v1.Type() != v2.Type() {
+		return false
+	}
+	if v1.Type() == originPtrType {
+		return true
+	}
+
+	switch v1.Kind() {
+	case reflect.Pointer, reflect.Map, reflect.Slice:
+		if !v1.IsNil() && !v2.IsNil() {
+			addr1, addr2 := uintptr(v1.UnsafePointer()), uintptr(v2.UnsafePointer())
+			if addr1 > addr2 {
+				addr1, addr2 = addr2, addr1
+			}
+			pair := visitedPair{addr1: addr1, addr2: addr2, typ: v1.Type()}
+			if v1.Kind() == reflect.Slice {
+				pair.sliceLen = v1.Len()
+			}
+			if visited[pair] {
+				return true
+			}
+			visited[pair] = true
+		}
+	}
+
+	switch v1.Kind() {
+	case reflect.Array:
+		for i := range v1.Len() {
+			if !deepEqualIgnoringOrigin(v1.Index(i), v2.Index(i), visited) {
+				return false
+			}
+		}
+		return true
+	case reflect.Slice:
+		if v1.IsNil() != v2.IsNil() || v1.Len() != v2.Len() {
+			return false
+		}
+		if v1.UnsafePointer() == v2.UnsafePointer() {
+			return true
+		}
+		for i := range v1.Len() {
+			if !deepEqualIgnoringOrigin(v1.Index(i), v2.Index(i), visited) {
+				return false
+			}
+		}
+		return true
+	case reflect.Interface:
+		if v1.IsNil() || v2.IsNil() {
+			return v1.IsNil() == v2.IsNil()
+		}
+		return deepEqualIgnoringOrigin(v1.Elem(), v2.Elem(), visited)
+	case reflect.Pointer:
+		if v1.UnsafePointer() == v2.UnsafePointer() {
+			return true
+		}
+		return deepEqualIgnoringOrigin(v1.Elem(), v2.Elem(), visited)
+	case reflect.Struct:
+		for i := range v1.NumField() {
+			if !deepEqualIgnoringOrigin(v1.Field(i), v2.Field(i), visited) {
+				return false
+			}
+		}
+		return true
+	case reflect.Map:
+		if v1.IsNil() != v2.IsNil() || v1.Len() != v2.Len() {
+			return false
+		}
+		if v1.UnsafePointer() == v2.UnsafePointer() {
+			return true
+		}
+		iter := v1.MapRange()
+		for iter.Next() {
+			val2 := v2.MapIndex(iter.Key())
+			if !val2.IsValid() || !deepEqualIgnoringOrigin(iter.Value(), val2, visited) {
+				return false
+			}
+		}
+		return true
+	case reflect.Func:
+		// Like reflect.DeepEqual, functions are only equal if both are nil.
+		return v1.IsNil() && v2.IsNil()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return v1.Int() == v2.Int()
+	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
+		return v1.Uint() == v2.Uint()
+	case reflect.String:
+		return v1.String() == v2.String()
+	case reflect.Bool:
+		return v1.Bool() == v2.Bool()
+	case reflect.Float32, reflect.Float64:
+		return v1.Float() == v2.Float()
+	case reflect.Complex64, reflect.Complex128:
+		return v1.Complex() == v2.Complex()
+	case reflect.Chan, reflect.UnsafePointer:
+		return v1.UnsafePointer() == v2.UnsafePointer()
+	default:
+		// Only reflect.Invalid is left, and IsValid excludes it above.
+		return false
+	}
 }
 
 // isAdditionalPropertiesExplicitFalse determines whether an openapi3.Schema is explicitly defined as `additionalProperties: false`

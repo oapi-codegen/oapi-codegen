@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"compress/flate"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -125,7 +124,7 @@ func (siw *ServerInterfaceWrapper) GetContentObject(c *gin.Context) {
 	// ------------- Path parameter "param" -------------
 	var param ComplexObject
 
-	err = json.Unmarshal([]byte(c.Param("param")), &param)
+	err = runtime.JSONUnmarshal([]byte(c.Param("param")), &param)
 	if err != nil {
 		siw.ErrorHandler(c, fmt.Errorf("Error unmarshaling parameter 'param' as JSON"), http.StatusBadRequest)
 		return
@@ -252,7 +251,7 @@ func (siw *ServerInterfaceWrapper) GetCookie(c *gin.Context) {
 				return
 			}
 
-			err = json.Unmarshal([]byte(decoded), &value)
+			err = runtime.JSONUnmarshal([]byte(decoded), &value)
 			if err != nil {
 				siw.ErrorHandler(c, fmt.Errorf("Error unmarshaling parameter 'co' as JSON"), http.StatusBadRequest)
 				return
@@ -449,7 +448,7 @@ func (siw *ServerInterfaceWrapper) GetHeader(c *gin.Context) {
 			return
 		}
 
-		err = json.Unmarshal([]byte(valueList[0]), &XComplexObject)
+		err = runtime.JSONUnmarshal([]byte(valueList[0]), &XComplexObject)
 		if err != nil {
 			siw.ErrorHandler(c, fmt.Errorf("Error unmarshaling parameter 'X-Complex-Object' as JSON"), http.StatusBadRequest)
 			return
@@ -956,7 +955,7 @@ func (siw *ServerInterfaceWrapper) GetQueryForm(c *gin.Context) {
 	if paramValue := c.Query("co"); paramValue != "" {
 
 		var value ComplexObject
-		err = json.Unmarshal([]byte(paramValue), &value)
+		err = runtime.JSONUnmarshal([]byte(paramValue), &value)
 		if err != nil {
 			siw.ErrorHandler(c, fmt.Errorf("Error unmarshaling parameter 'co' as JSON: %w", err), http.StatusBadRequest)
 			return

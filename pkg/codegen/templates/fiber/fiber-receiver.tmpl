@@ -42,13 +42,13 @@ func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface) fiber.Handle
             return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Invalid format for parameter {{.ParamName}}: %w", err).Error())
         }
         {{else}}
-        if paramValue := c.Query("{{.ParamName}}"); paramValue != "" {
+        if paramValue := strings.Clone(c.Query("{{.ParamName}}")); paramValue != "" {
             {{if .IsPassThrough}}
             params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}paramValue
             {{end}}
             {{if .IsJson}}
             var value {{.TypeDef}}
-            err = json.Unmarshal([]byte(paramValue), &value)
+            err = runtime.JSONUnmarshal([]byte(paramValue), &value)
             if err != nil {
                 return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
             }
@@ -69,12 +69,15 @@ func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface) fiber.Handle
             if n != 1 {
                 return fiber.NewError(fiber.StatusBadRequest, fmt.Sprintf("Too many values for header {{.ParamName}}, 1 is required, but %d found", n))
             }
+          // Fiber returns strings that alias buffers it reuses for the next request,
+          // so the value is copied, in place, before it reaches the handler.
+          valueList[0] = strings.Clone(valueList[0])
             {{if .IsPassThrough}}
             {{.GoName}} = valueList[0]
             params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
             {{end}}
             {{if .IsJson}}
-            err = json.Unmarshal([]byte(valueList[0]), &{{.GoName}})
+            err = runtime.JSONUnmarshal([]byte(valueList[0]), &{{.GoName}})
             if err != nil {
                 return fiber.NewError(fiber.StatusBadRequest, fmt.Errorf("Error unmarshaling parameter '{{.ParamName}}' as JSON: %w", err).Error())
             }

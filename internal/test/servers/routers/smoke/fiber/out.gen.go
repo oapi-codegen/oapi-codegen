@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/oapi-codegen/runtime"
 )
 
 // PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsBody defines body for PostPostMultibody for application/ld+json; profile="https://www.w3.org/ns/activitystreams" ContentType.
@@ -48,6 +49,11 @@ type ServerInterface interface {
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
+//
+// Fiber returns strings that alias buffers it reuses for the next request
+// (unless the app sets Immutable), so every parameter value read from the Fiber
+// context is copied with strings.Clone. The arguments passed to the handler
+// therefore stay valid after it returns.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
 	HandlerMiddlewares []HandlerMiddlewareFunc
@@ -235,8 +241,11 @@ type StrictServerInterface interface {
 	PostPostObject(ctx context.Context, request PostPostObjectRequestObject) (PostPostObjectResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx *fiber.Ctx, args any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+// StrictHandlerFunc and StrictMiddlewareFunc are type aliases rather than
+// distinct named types, so middleware written against one generated package
+// can be shared with every other generated package using the same framework.
+type StrictHandlerFunc = func(ctx *fiber.Ctx, args any) (any, error)
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 func NewStrictHandler(ssi StrictServerInterface, middlewares []StrictMiddlewareFunc) ServerInterface {
 	return &strictHandler{ssi: ssi, middlewares: middlewares}
@@ -246,6 +255,12 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 }
+
+// validatedBodyLocalsKey is the c.Locals key under which fiber-middleware and
+// fiber-v3-middleware store the decoded request body value that passed
+// validation. It is defined here as well so generated code does not import the
+// middleware; keep it in sync with fibermiddleware.ValidatedBodyLocalsKey.
+const validatedBodyLocalsKey = "x-oapi-codegen-validated-body"
 
 // GetGetMultibody operation middleware
 func (sh *strictHandler) GetGetMultibody(ctx *fiber.Ctx) error {
@@ -304,7 +319,15 @@ func (sh *strictHandler) PostPostMultibody(ctx *fiber.Ctx) error {
 	if strings.HasPrefix(string(ctx.Request().Header.ContentType()), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams\"") {
 
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
-		if err := ctx.BodyParser(&body); err != nil {
+		var err error
+		// The validation middleware stores the value a kin-openapi validator
+		// validated in the Fiber context. Bind that value, matching member
+		// names exactly, so the handler receives what was validated instead
+		// of a second, case-insensitive decode.
+		if v := ctx.Locals(validatedBodyLocalsKey); v == nil || runtime.BindJSONValue(v, &body) != nil {
+			err = ctx.BodyParser(&body)
+		}
+		if err != nil {
 			if !errors.Is(err, io.EOF) {
 				return fiber.NewError(fiber.StatusBadRequest, err.Error())
 			}
@@ -315,7 +338,15 @@ func (sh *strictHandler) PostPostMultibody(ctx *fiber.Ctx) error {
 	if strings.HasPrefix(string(ctx.Request().Header.ContentType()), "application/ld+json; profile=\"https://www.w3.org/ns/activitystreams2\"") {
 
 		var body PostPostMultibodyApplicationLdPlusJSONProfilehttpswwwW3Orgnsactivitystreams2RequestBody
-		if err := ctx.BodyParser(&body); err != nil {
+		var err error
+		// The validation middleware stores the value a kin-openapi validator
+		// validated in the Fiber context. Bind that value, matching member
+		// names exactly, so the handler receives what was validated instead
+		// of a second, case-insensitive decode.
+		if v := ctx.Locals(validatedBodyLocalsKey); v == nil || runtime.BindJSONValue(v, &body) != nil {
+			err = ctx.BodyParser(&body)
+		}
+		if err != nil {
 			if !errors.Is(err, io.EOF) {
 				return fiber.NewError(fiber.StatusBadRequest, err.Error())
 			}
@@ -350,7 +381,15 @@ func (sh *strictHandler) PostPostObject(ctx *fiber.Ctx) error {
 	var request PostPostObjectRequestObject
 
 	var body PostPostObjectApplicationLdPlusJSONProfilehttpswwwW3OrgnsactivitystreamsRequestBody
-	if err := ctx.BodyParser(&body); err != nil {
+	var err error
+	// The validation middleware stores the value a kin-openapi validator
+	// validated in the Fiber context. Bind that value, matching member
+	// names exactly, so the handler receives what was validated instead
+	// of a second, case-insensitive decode.
+	if v := ctx.Locals(validatedBodyLocalsKey); v == nil || runtime.BindJSONValue(v, &body) != nil {
+		err = ctx.BodyParser(&body)
+	}
+	if err != nil {
 		if !errors.Is(err, io.EOF) {
 			return fiber.NewError(fiber.StatusBadRequest, err.Error())
 		}

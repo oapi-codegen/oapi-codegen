@@ -2,10 +2,23 @@ openapi: "3.0.1"
 info:
   title: Iris middleware test
   version: 1.0.0
+components:
+  securitySchemes:
+    bearerAuth:
+      scheme: bearer
+      type: http
 paths:
   /test:
     get:
       operationId: test
+      responses:
+        200:
+          description: good
+  /secured:
+    get:
+      operationId: secured
+      security:
+        - bearerAuth: ["pet:read"]
       responses:
         200:
           description: good

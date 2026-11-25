@@ -8,6 +8,8 @@ package codegen
 // step.
 
 import (
+	"fmt"
+	"go/token"
 	"maps"
 	"slices"
 	"strings"
@@ -48,7 +50,25 @@ func effectiveBranches(elements openapi3.SchemaRefs) (count int, hadNull bool, s
 // outSchema inherits the branch's underlying representation. The caller will
 // apply nullability (schemaIsNullable returns true because the original
 // anyOf/oneOf contained a null branch).
-func collapseNullableUnion(ctx genContext, outSchema *Schema, sole *openapi3.SchemaRef, path []string) error {
+//
+// The branch may itself be an inline union, as in `anyOf: [{oneOf: [A, B]},
+// {type: "null"}]` (issue #2565). Everything that describes the union is part
+// of that representation: the GoType is a struct holding the raw union, which
+// without its UnionElements and Discriminator gets no JSON methods or
+// accessors, so that a JSON round trip drops the payload; and the other Union*
+// fields decide what those accessors do, so without them the wrapped union
+// would behave differently from the same union on its own. UnionTextKinds is
+// the exception: the caller derives it from the schema's lists.
+//
+// The union's fields are copied only when the list is alone: the schema's one
+// anyOf or oneOf. v1 and v2 generate a schema's anyOf and its oneOf one after
+// the other into the same outSchema, so with `anyOf: [A, B]` next to `oneOf:
+// [{...}, {type: "null"}]`, outSchema holds the members of both lists. Those
+// versions don't tell the unions of one schema apart (a discriminator must
+// cover every member, say), so a list that isn't alone collapses as it always
+// has: the other list's members stay, and the branch's aren't added. v3
+// doesn't collapse such a list at all.
+func collapseNullableUnion(ctx genContext, outSchema *Schema, sole *openapi3.SchemaRef, path []string, alone bool) error {
 	elementSchema, err := generateGoSchema(ctx.at(path), sole, path)
 	if err != nil {
 		return err
@@ -61,6 +81,14 @@ func collapseNullableUnion(ctx genContext, outSchema *Schema, sole *openapi3.Sch
 	outSchema.AdditionalPropertiesType = elementSchema.AdditionalPropertiesType
 	outSchema.ArrayType = elementSchema.ArrayType
 	outSchema.SkipOptionalPointer = elementSchema.SkipOptionalPointer
+	if alone {
+		outSchema.UnionElements = elementSchema.UnionElements
+		outSchema.UnionVariantProperties = elementSchema.UnionVariantProperties
+		outSchema.UnionOwnedKeys = elementSchema.UnionOwnedKeys
+		outSchema.UnionRefComponents = elementSchema.UnionRefComponents
+		outSchema.UnionAllowedKeys = elementSchema.UnionAllowedKeys
+		outSchema.Discriminator = elementSchema.Discriminator
+	}
 	outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
 	return nil
 }
@@ -79,13 +107,39 @@ func generateUnions(ctx genContext, outSchema *Schema, schema *openapi3.Schema, 
 // elementPath, and returns its schema with GoType set to the type the union's
 // accessors use. An inline branch is named after its path, and defined under
 // that name in outSchema's additional types unless it generated as that named
-// type already, along with the types it brings.
+// type already, along with the types it brings. A $ref to a whole file is
+// named the same way when the type it generates can't name the accessors
+// itself; see the comment on named below.
 func generateUnionElement(ctx genContext, outSchema *Schema, element *openapi3.SchemaRef, elementPath []string) (Schema, error) {
-	elementSchema, err := generateGoSchema(ctx.at(elementPath), element, elementPath)
+	elementCtx := ctx.at(elementPath)
+	elementCtx.pathTaken = element.Ref == ""
+	elementSchema, err := generateGoSchema(elementCtx, element, elementPath)
 	if err != nil {
-		return Schema{}, err
+		// The caller names the keyword (anyOf/oneOf); the index is the
+		// only thing that says which inline branch failed.
+		return Schema{}, fmt.Errorf("branch %s: %w", elementPath[len(elementPath)-1], err)
 	}
-	if element.Ref == "" {
+	// Whether the branch is named after its path, instead of keeping the type
+	// it generated as. An inline branch always is, and a $ref to a component
+	// never is: it has that component's type.
+	//
+	// A $ref to a whole file is neither, which is why this is not one test of
+	// element.Ref. It has a Ref, but generates inline (issue #308), so there
+	// is no type name behind it. Leaving it unnamed produced accessors such
+	// as `AsStruct {...}()`, which don't parse, whenever the file was an
+	// object, array or map:
+	// https://github.com/oapi-codegen/oapi-codegen/issues/2639
+	//
+	// Naming every whole-file branch would fix that, but would also rename
+	// the accessors of the ones that have always worked: a file that is a
+	// scalar, an enum or an x-go-type generates `AsString` or
+	// `AsTimeDuration`, and specs in use depend on those names. So only the
+	// branches that could not generate before are named.
+	named := element.Ref == ""
+	if IsWholeDocumentReference(element.Ref) {
+		named = !isQualifiedIdent(elementSchema.TypeDecl())
+	}
+	if named {
 		elementName := SchemaNameToTypeName(PathToTypeName(elementPath))
 		if elementSchema.TypeDecl() == elementName {
 			elementSchema.GoType = elementName
@@ -97,6 +151,18 @@ func generateUnionElement(ctx genContext, outSchema *Schema, element *openapi3.S
 		outSchema.AdditionalTypes = append(outSchema.AdditionalTypes, elementSchema.AdditionalTypes...)
 	}
 	return elementSchema, nil
+}
+
+// isQualifiedIdent reports whether goType is a Go identifier or a
+// package-qualified one, the only types UnionElement.Method can turn into the
+// name of an accessor.
+func isQualifiedIdent(goType string) bool {
+	for part := range strings.SplitSeq(goType, ".") {
+		if !token.IsIdentifier(part) {
+			return false
+		}
+	}
+	return true
 }
 
 // mapExplicitly maps goType, the type of the $ref variant ref, under every key

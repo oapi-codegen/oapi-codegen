@@ -1,0 +1,72 @@
+openapi: "3.0.3"
+info:
+  title: Naming options
+  version: "1.0.0"
+paths:
+  /things:
+    get:
+      operationId: listThings
+      parameters:
+        # explicit-names: verbatim applies to a parameter's x-go-name
+        - name: page_size
+          in: query
+          x-go-name: Page_Size
+          schema:
+            type: integer
+        # properties.leading-underscore: drop applies to a parameter as well,
+        # and the client has to read the field by the same name
+        - name: _filter
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Thing"
+components:
+  schemas:
+    # enum-values.keep-underscores: issue 1996
+    LogLevel:
+      type: string
+      enum:
+        - LOG_LEVEL_DEBUG
+        - log_level_info
+        - LOG-LEVEL-WARN
+        - _hidden
+    # explicit-names: verbatim on x-enum-varnames: issue 1906. The third value
+    # has no name of its own and is named as usual.
+    Color:
+      type: string
+      enum:
+        - r
+        - g
+        - b
+      x-enum-varnames:
+        - COLOR_RED
+        - Color_green
+    # Shares the value "b" with Color, so the constants of both enums get the
+    # name of their type in front: all but the ones that are emitted as written.
+    Channel:
+      type: string
+      enum:
+        - a
+        - b
+      x-enumNames:
+        - CHANNEL_ALPHA
+    Thing:
+      type: object
+      properties:
+        # properties.leading-underscore: drop: issues 2032 and 2163
+        _id:
+          type: string
+        _UPPER_SNAKE_CASE:
+          type: string
+        # explicit-names: verbatim on a property's x-go-name: issue 1851
+        hardCodedId:
+          type: string
+          x-go-name: HARD_CODED_ID
+        level:
+          $ref: "#/components/schemas/LogLevel"

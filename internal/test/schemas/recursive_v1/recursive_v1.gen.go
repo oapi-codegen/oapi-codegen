@@ -124,20 +124,20 @@ type Wrapper struct {
 // AsNode0 returns the union data inside the Node as a Node0
 func (t Node) AsNode0() (Node0, error) {
 	var body Node0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromNode0 overwrites any union data inside the Node as the provided Node0
 func (t *Node) FromNode0(v Node0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeNode0 performs a merge with any union data inside the Node, using the provided Node0
 func (t *Node) MergeNode0(v Node0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -150,20 +150,20 @@ func (t *Node) MergeNode0(v Node0) error {
 // AsNode1 returns the union data inside the Node as a Node1
 func (t Node) AsNode1() (Node1, error) {
 	var body Node1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromNode1 overwrites any union data inside the Node as the provided Node1
 func (t *Node) FromNode1(v Node1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeNode1 performs a merge with any union data inside the Node, using the provided Node1
 func (t *Node) MergeNode1(v Node1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -186,20 +186,20 @@ func (t *Node) UnmarshalJSON(b []byte) error {
 // AsNodeNestedAllOf0 returns the union data inside the NodeNestedAllOf as a NodeNestedAllOf0
 func (t NodeNestedAllOf) AsNodeNestedAllOf0() (NodeNestedAllOf0, error) {
 	var body NodeNestedAllOf0
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromNodeNestedAllOf0 overwrites any union data inside the NodeNestedAllOf as the provided NodeNestedAllOf0
 func (t *NodeNestedAllOf) FromNodeNestedAllOf0(v NodeNestedAllOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeNodeNestedAllOf0 performs a merge with any union data inside the NodeNestedAllOf, using the provided NodeNestedAllOf0
 func (t *NodeNestedAllOf) MergeNodeNestedAllOf0(v NodeNestedAllOf0) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}
@@ -212,20 +212,20 @@ func (t *NodeNestedAllOf) MergeNodeNestedAllOf0(v NodeNestedAllOf0) error {
 // AsNodeNestedAllOf1 returns the union data inside the NodeNestedAllOf as a NodeNestedAllOf1
 func (t NodeNestedAllOf) AsNodeNestedAllOf1() (NodeNestedAllOf1, error) {
 	var body NodeNestedAllOf1
-	err := json.Unmarshal(t.union, &body)
+	err := runtime.JSONUnmarshal(t.union, &body)
 	return body, err
 }
 
 // FromNodeNestedAllOf1 overwrites any union data inside the NodeNestedAllOf as the provided NodeNestedAllOf1
 func (t *NodeNestedAllOf) FromNodeNestedAllOf1(v NodeNestedAllOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	t.union = b
 	return err
 }
 
 // MergeNodeNestedAllOf1 performs a merge with any union data inside the NodeNestedAllOf, using the provided NodeNestedAllOf1
 func (t *NodeNestedAllOf) MergeNodeNestedAllOf1(v NodeNestedAllOf1) error {
-	b, err := json.Marshal(v)
+	b, err := runtime.JSONMarshal(v)
 	if err != nil {
 		return err
 	}

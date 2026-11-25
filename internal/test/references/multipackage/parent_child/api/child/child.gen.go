@@ -8,7 +8,6 @@ import (
 	"compress/flate"
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -18,6 +17,7 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/gin-gonic/gin"
 	externalRef0 "github.com/oapi-codegen/oapi-codegen/v2/internal/test/references/multipackage/parent_child/api/parent"
+	"github.com/oapi-codegen/runtime"
 )
 
 // ServerInterface represents all server handlers.
@@ -91,7 +91,7 @@ type GetPets200JSONResponse externalRef0.Pet
 func (response GetPets200JSONResponse) VisitGetPetsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := runtime.JSONMarshalWrite(&buf, response); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -107,8 +107,11 @@ type StrictServerInterface interface {
 	GetPets(ctx context.Context, request GetPetsRequestObject) (GetPetsResponseObject, error)
 }
 
-type StrictHandlerFunc func(ctx *gin.Context, request any) (any, error)
-type StrictMiddlewareFunc func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
+// StrictHandlerFunc and StrictMiddlewareFunc are type aliases rather than
+// distinct named types, so middleware written against one generated package
+// can be shared with every other generated package using the same framework.
+type StrictHandlerFunc = func(ctx *gin.Context, request any) (any, error)
+type StrictMiddlewareFunc = func(f StrictHandlerFunc, operationID string) StrictHandlerFunc
 
 type StrictGinServerOptions struct {
 	// RequestErrorHandlerFunc is called when a request cannot be parsed or
@@ -193,12 +196,12 @@ func (sh *strictHandler) GetPets(ctx *gin.Context) {
 // const string: with thousands of chunks the chained `+` fold is several
 // times slower for the Go compiler than parsing a slice literal.
 var swaggerSpec = []string{
-	"bFFBbuMwDPyKMLtHI/bu3vSBRW9B0VsaFKpMxwpsSSXpAkHgvxeSEaRFexIpDofD4RU+zTlFiiqwV4gf",
-	"aXY1zI4p6suetGacMrEGqrXoZiqvXjLBQpRDPGFtoO70w//agOltCUw97GHrPjY3VHo9k1esBRbikApB",
-	"T+I5ZA0pwuJpDGL8GKbeSCZvwpwTq5g59TSJGTjNRkcym+SKQQMNOhX+2ogG78Sy8f3ZdUVsyhRdDrD4",
-	"t+t2HRpkp2NdsM20GXIi/a7nkXThKCaT3ofLRZRK6LTmixCb0Ylx3pOI0fQcUYeyKzwPPSz+k+7LpGKQ",
-	"5BRl8/dv15XHp6gUqwCX8xR8bWzPkuL9WCX6zTTA4ld7v2a7VaX9dMdq8ddVnJGl6huWydw0FGCBCnEx",
-	"DfZwxcITLNrNzPW4fgwA",
+	"bFHdavMwDH0Vo++7DEm23fkFxu7K2F1XhucojUtia5IyKCXvPmxTyn6uLEtHR0dHF/BpoRQxqoC9gPgJ",
+	"F1dCcoxRW0fhbYdaMpwIWQOWenQL5lfPhGBBlEM8wtaAuuMf+a0Bxo81MA5g97X70FxR6f2EXmHLsBDH",
+	"lAkGFM+BNKQIFl6mIMZPYR6MEHoTFkqsYpY04Cxm5LQYndBU2QUDDWjQOfOXRmjgE1kq313bZ7GJMDoK",
+	"YOGh7dseGiCnU1mwI6ymHFF/63lGXTmKIdTbcDmLYg6dlv8qyGZyYpz3KGI0vUYoQ9llnqcBLDyi7vKk",
+	"bJBQilL9ve/7/PgUFWMR4Ijm4Etjd5IUbwfL0X/GESz8624X7WpVuh+3LDZ/X8cZWYvGcZ3NVUcGZqgg",
+	"Z+PA7i+w8gwWumrodti+BgA=",
 }
 
 // decodeSpec returns the embedded OpenAPI spec as raw JSON bytes,

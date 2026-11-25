@@ -23,11 +23,23 @@ type Schema struct {
 	ArrayType *Schema // The schema of array element
 
 	EnumValues map[string]string // Enum values
+	// verbatimEnumNames holds the keys of EnumValues that the spec stated
+	// itself and that are emitted exactly as written, which exempts them from
+	// the type name prefix an enum's constants may get. It is nil unless
+	// output-options.naming.explicit-names asks for that.
+	verbatimEnumNames map[string]struct{}
 
 	Properties               []Property       // For an object, the fields with names
 	HasAdditionalProperties  bool             // Whether we support additional properties
 	AdditionalPropertiesType *Schema          // And if we do, their type
 	AdditionalTypes          []TypeDefinition // We may need to generate auxiliary helper types, stored here
+
+	// additionalPropertiesElemType, when set, is the element type of the
+	// AdditionalProperties map, in place of the one additionalPropertiesType
+	// derives from AdditionalPropertiesType. schema-merging-behavior v1 sets
+	// it for an allOf, whose map has never held pointers for a nullable
+	// element.
+	additionalPropertiesElemType string
 
 	SkipOptionalPointer bool // Some types don't need a * in front when they're optional
 
@@ -272,27 +284,37 @@ type Property struct {
 	NeedsFormTag  bool
 	Extensions    map[string]any
 	Deprecated    bool
+
+	// resolvedGoFieldName, when non-empty, is the Go field name
+	// resolvePropertyGoFieldNameCollisions gave this property because its own
+	// name collided with a sibling's. GoFieldName returns it, so the struct
+	// declaration and the marshaling boilerplate agree. See issue #2495.
+	resolvedGoFieldName string
 }
 
+// GoFieldName returns the name of the struct field generated for p.
 func (p Property) GoFieldName() string {
-	goFieldName := p.JsonFieldName
-	if extension, ok := p.Extensions[extGoName]; ok {
-		if extGoFieldName, err := extParseGoFieldName(extension); err == nil {
-			goFieldName = extGoFieldName
-		}
+	if p.resolvedGoFieldName != "" {
+		return p.resolvedGoFieldName
 	}
+	return p.derivedGoFieldName()
+}
 
-	if globalState.options.Compatibility.AllowUnexportedStructFieldNames {
-		if extension, ok := p.Extensions[extOapiCodegenOnlyHonourGoName]; ok {
-			if extOapiCodegenOnlyHonourGoName, err := extParseOapiCodegenOnlyHonourGoName(extension); err == nil {
-				if extOapiCodegenOnlyHonourGoName {
-					return goFieldName
-				}
-			}
-		}
+// hasExplicitGoFieldName reports whether the spec names p's field itself, with
+// x-go-name. Such a name is never changed to resolve a collision.
+func (p Property) hasExplicitGoFieldName() bool {
+	extension, ok := p.Extensions[extGoName]
+	if !ok {
+		return false
 	}
+	_, err := extParseGoFieldName(extension)
+	return err == nil
+}
 
-	return SchemaNameToTypeName(goFieldName)
+// derivedGoFieldName returns the field name p gets from its JSON name or its
+// x-go-name, before any collision with a sibling is resolved.
+func (p Property) derivedGoFieldName() string {
+	return goFieldName(p.JsonFieldName, p.Extensions)
 }
 
 func (p Property) GoTypeDef() string {
@@ -371,9 +393,45 @@ func (e *EnumDefinition) GetValues() map[string]string {
 	}
 	// If we do have conflicts, we will prefix the enum's typename to the values.
 	newValues := make(map[string]string, len(e.Schema.EnumValues))
-	for k, v := range e.Schema.EnumValues {
-		newName := e.TypeName + UppercaseFirstCharacter(k)
-		newValues[newName] = v
+	if len(e.Schema.verbatimEnumNames) == 0 {
+		for k, v := range e.Schema.EnumValues {
+			newName := e.TypeName + UppercaseFirstCharacter(k)
+			newValues[newName] = v
+		}
+		return newValues
+	}
+
+	// The names the spec states are emitted as written, so they take no
+	// prefix. A prefix can turn another name into one of them, though, and
+	// that name gets a suffix: left alone, the two values would share a key
+	// here and one of them would be lost.
+	prefixed := make(map[string]string, len(e.Schema.EnumValues))
+	used := make(map[string]struct{}, len(e.Schema.EnumValues))
+	for k := range e.Schema.EnumValues {
+		name := k
+		if _, verbatim := e.Schema.verbatimEnumNames[k]; !verbatim {
+			name = e.TypeName + UppercaseFirstCharacter(k)
+			prefixed[k] = name
+		}
+		used[name] = struct{}{}
+	}
+	for _, k := range SortedMapKeys(e.Schema.EnumValues) {
+		name, derived := prefixed[k]
+		if !derived {
+			newValues[k] = e.Schema.EnumValues[k]
+			continue
+		}
+		if _, taken := e.Schema.verbatimEnumNames[name]; taken {
+			for suffix := 1; ; suffix++ {
+				candidate := name + strconv.Itoa(suffix)
+				if _, taken := used[candidate]; !taken {
+					name = candidate
+					used[name] = struct{}{}
+					break
+				}
+			}
+		}
+		newValues[name] = e.Schema.EnumValues[k]
 	}
 	return newValues
 }
@@ -590,7 +648,7 @@ func (d *Discriminator) literal(value string) string {
 	if ok {
 		return value
 	}
-	return `"` + value + `"`
+	return strconv.Quote(value)
 }
 
 func (d *Discriminator) JSONTag() string {
@@ -1232,13 +1290,103 @@ func isMultiTypeUnion(t *openapi3.Types) bool {
 		return false
 	}
 	for _, name := range s {
-		switch name {
-		case "array", "boolean", "integer", "number", "object", "string":
-		default:
+		if name == "null" || !isJSONSchemaType(name) {
 			return false
 		}
 	}
 	return true
+}
+
+// jsonSchemaTypes are the values a schema's `type` may name, per JSON Schema
+// (and so per OpenAPI). The primitive-type dispatch handles every one of
+// them, which is what lets unhandledSchemaTypeError treat an unrecognized
+// name as a misspelling.
+var jsonSchemaTypes = []string{"array", "boolean", "integer", "null", "number", "object", "string"}
+
+func isJSONSchemaType(name string) bool {
+	return slices.Contains(jsonSchemaTypes, name)
+}
+
+// quoteTypeNames renders a `type` value the way the spec author wrote it: a
+// bare quoted name for a single type, a bracketed list for the 3.1 list form.
+func quoteTypeNames(names []string) string {
+	quoted := make([]string, len(names))
+	for i, name := range names {
+		quoted[i] = strconv.Quote(name)
+	}
+	if len(names) == 1 {
+		return quoted[0]
+	}
+	return "[" + strings.Join(quoted, ", ") + "]"
+}
+
+// unhandledSchemaTypeError explains why a schema's `type` fell off the end of
+// the primitive-type dispatch. The dispatch covers every JSON Schema type, so
+// reaching it means the `type` is not one this document may carry: a name
+// that is not a JSON Schema type at all, or the 3.1-only list form in an
+// earlier document. The message names the declared value verbatim and the
+// reason, so a typo is visible at a glance.
+// See https://github.com/oapi-codegen/oapi-codegen/issues/1977.
+//
+// declared is the schema's `type` as written, not the "null"-stripped value
+// the dispatch runs on, so the reader sees what is in their spec.
+//
+// Precondition: globalState.is31 must be set (see schemaIsNullable for
+// context). An unset is31 reads a 3.1 document as an earlier one and picks
+// the version branch below.
+func unhandledSchemaTypeError(declared *openapi3.Types) error {
+	names := declared.Slice()
+
+	var unknown []string
+	for _, name := range names {
+		if !isJSONSchemaType(name) {
+			unknown = append(unknown, strconv.Quote(name))
+		}
+	}
+
+	expected := fmt.Sprintf("expected one of %s", strings.Join(jsonSchemaTypes, ", "))
+
+	switch {
+	case len(unknown) > 0:
+		return fmt.Errorf("unhandled Schema type %s: %s (%s)",
+			quoteTypeNames(names), invalidTypeNamesPhrase(names, unknown), expected)
+	case len(names) > 1 && !globalState.is31:
+		// Every entry names a real type, so the list form itself is what is
+		// unusable here: a 3.1 document would have mapped it to `any`.
+		return fmt.Errorf("unhandled Schema type %s: a list of types requires OpenAPI 3.1 or later%s",
+			quoteTypeNames(names), declaredVersionSuffix())
+	default:
+		// An empty `type`, or a 3.1 list naming nothing but the "null"
+		// nullability marker, which leaves no type to map.
+		return fmt.Errorf("unhandled Schema type %s: type must name a JSON Schema type (%s)",
+			quoteTypeNames(names), expected)
+	}
+}
+
+// invalidTypeNamesPhrase names the entries that are not JSON Schema types.
+// A single-entry `type` is its own offender, so the phrase does not repeat
+// the name the message already printed.
+func invalidTypeNamesPhrase(names, unknown []string) string {
+	switch {
+	case len(names) == 1:
+		return "not a valid JSON Schema type"
+	case len(unknown) == 1:
+		return unknown[0] + " is not a valid JSON Schema type"
+	default:
+		return strings.Join(unknown, ", ") + " are not valid JSON Schema types"
+	}
+}
+
+// declaredVersionSuffix names the document's version when that explains the
+// failure, and says nothing when it would not. globalState.spec is unset
+// when codegen internals are exercised directly, and SetGlobalStateSpec sets
+// the spec without is31, so a spec already declaring 3.1 would contradict a
+// message about needing 3.1. Silence beats a self-contradicting hint.
+func declaredVersionSuffix() string {
+	if globalState.spec == nil || globalState.spec.OpenAPI == "" || globalState.spec.IsOpenAPI31OrLater() {
+		return ""
+	}
+	return fmt.Sprintf(", but this document declares OpenAPI %s", globalState.spec.OpenAPI)
 }
 
 // schemaUnionTypes returns t's member types as a string slice when t is an
@@ -1381,7 +1529,7 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 		outSchema.DefineViaAlias = false
 		outSchema.EnumValues = make(map[string]string, len(items))
 		for _, it := range items {
-			outSchema.EnumValues[SchemaNameToTypeName(it.Title)] = it.Value
+			outSchema.EnumValues[enumValueNameToGoName(it.Title)] = it.Value
 		}
 		// Non-toplevel schemas need an explicit AdditionalType so the
 		// downstream EnumDefinition collector picks them up; toplevel
@@ -1395,7 +1543,7 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 				}
 				typeName = tn
 			} else {
-				typeName = SchemaNameToTypeName(PathToTypeName(path))
+				typeName = ctx.enumTypeName(path)
 			}
 			typeDef := TypeDefinition{
 				TypeName: typeName,
@@ -1454,7 +1602,7 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 			// above with the specific definition.
 			if schema.AdditionalProperties.Schema != nil {
 				apHint := append(slices.Clone(path), "AdditionalProperties")
-				additionalSchema, err := generateGoSchema(ctx.at(apHint), schema.AdditionalProperties.Schema, path)
+				additionalSchema, err := generateGoSchema(ctx.sharingPath(apHint), schema.AdditionalProperties.Schema, path)
 				if err != nil {
 					return Schema{}, fmt.Errorf("error generating type for additional properties: %w", err)
 				}
@@ -1556,6 +1704,12 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 			// primitive's Go type and clears the struct-shaped fields;
 			// rebuilding `struct {}` here would clobber that.
 			if len(outSchema.Properties) > 0 || outSchema.HasAdditionalProperties || len(outSchema.UnionElements) > 0 {
+				// Resolve field name collisions before rendering, so that the
+				// struct declaration and the marshaling boilerplate agree on
+				// the names. See issue #2495.
+				if err := resolvePropertyGoFieldNameCollisions(&outSchema, path); err != nil {
+					return Schema{}, err
+				}
 				outSchema.GoType = GenStructFromSchema(outSchema)
 			}
 		}
@@ -1649,35 +1803,60 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 		if len(enumSource) == 0 {
 			enumSource = []any{schema.Const}
 		}
-		enumValues := make([]string, len(enumSource))
-		for i, enumValue := range enumSource {
-			enumValues[i] = fmt.Sprintf("%v", enumValue)
-		}
-
-		enumNames := enumValues
+		var extNames []string
 		for _, key := range []string{extEnumVarNames, extEnumNames} {
 			if extension, ok := extensions[key]; ok {
 				if extEnumNames, err := extParseEnumVarNames(extension); err == nil {
-					enumNames = extEnumNames
+					extNames = extEnumNames
 					break
 				}
 			}
 		}
 
-		sanitizedValues := SanitizeEnumNames(enumNames, enumValues)
-		outSchema.EnumValues = make(map[string]string, len(sanitizedValues))
+		// With output-options.naming.explicit-names set to verbatim, a name
+		// the spec gives a value is emitted as written.
+		keepExtNames := explicitNamesVerbatim()
+		var enumNames, enumValues []string
+		var verbatim []bool
+		for i, enumValue := range enumSource {
+			// A non-string enum has no literal for null; the pointer or nullable field carries it.
+			if enumValue == nil && outSchema.GoType != "string" {
+				continue
+			}
+			value := fmt.Sprintf("%v", enumValue)
+			name := value
+			if i < len(extNames) {
+				name = extNames[i]
+			}
+			enumValues = append(enumValues, value)
+			enumNames = append(enumNames, name)
+			verbatim = append(verbatim, keepExtNames && i < len(extNames))
+		}
+		if err := checkVerbatimEnumNames(enumNames, verbatim); err != nil {
+			return outSchema, err
+		}
 
-		for k, v := range sanitizedValues {
-			var enumName string
-			if v == "" {
-				enumName = "Empty"
-			} else {
-				enumName = k
+		enumNames, enumValues, verbatim = sanitizeEnumNamesKeeping(enumNames, enumValues, verbatim)
+		for i, name := range enumNames {
+			if verbatim[i] {
+				continue
 			}
 			if globalState.options.Compatibility.OldEnumConflicts {
-				outSchema.EnumValues[SchemaNameToTypeName(PathToTypeName(append(path, enumName)))] = v
-			} else {
-				outSchema.EnumValues[SchemaNameToTypeName(k)] = v
+				if enumValues[i] == "" {
+					name = "Empty"
+				}
+				name = PathToTypeName(append(path, name))
+			}
+			enumNames[i] = enumValueNameToGoName(name)
+		}
+		disambiguateEnumNamesKeeping(enumNames, verbatim)
+		outSchema.EnumValues = enumValueMap(enumNames, enumValues)
+		for i, name := range enumNames {
+			if verbatim[i] {
+				if outSchema.verbatimEnumNames == nil {
+					outSchema.verbatimEnumNames = make(map[string]struct{})
+				}
+				outSchema.verbatimEnumNames[name] = struct{}{}
 			}
 		}
 		if len(path) > 1 { // handle additional type only on non-toplevel types
@@ -1690,7 +1869,7 @@ func generateGoSchema(ctx genContext, sref *openapi3.SchemaRef, path []string) (
 					return outSchema, fmt.Errorf("invalid value for %q: %w", extGoTypeName, err)
 				}
 			} else {
-				typeName = SchemaNameToTypeName(PathToTypeName(path))
+				typeName = ctx.enumTypeName(path)
 			}
 
 			typeDef := TypeDefinition{
@@ -1726,7 +1905,7 @@ func oapiSchemaToGoType(ctx genContext, schema *openapi3.Schema, path []string, 
 		// For arrays, we'll get the type of the Items and throw a
 		// [] in front of it.
 		itemHint := append(slices.Clone(path), "Item")
-		arrayType, err := generateGoSchema(ctx.at(itemHint), schema.Items, path)
+		arrayType, err := generateGoSchema(ctx.sharingPath(itemHint), schema.Items, path)
 		if err != nil {
 			return fmt.Errorf("error generating type for array: %w", err)
 		}
@@ -1862,7 +2041,7 @@ func oapiSchemaToGoType(ctx genContext, schema *openapi3.Schema, path []string, 
 		outSchema.SkipOptionalPointer = true
 		outSchema.DefineViaAlias = true
 	} else {
-		return fmt.Errorf("unhandled Schema type: %v", t)
+		return unhandledSchemaTypeError(schema.Type)
 	}
 	return nil
 }
@@ -1928,6 +2107,118 @@ func GenFieldsFromProperties(props []Property) []string {
 		fields = append(fields, field)
 	}
 	return fields
+}
+
+// additionalPropertiesFieldName is the struct field that holds the additional
+// properties of a schema which also declares properties.
+const additionalPropertiesFieldName = "AdditionalProperties"
+
+// resolvePropertyGoFieldNameCollisions makes the Go field names of schema's
+// properties unique. Distinct JSON property names can derive the same Go
+// identifier ("host-fqdn" and "host_fqdn" are both "HostFqdn"), and a property
+// can derive the name of the AdditionalProperties field, either of which
+// declares a struct field twice.
+//
+// Without output-options.resolve-type-name-collisions, a collision is an
+// error. With it, every colliding property is renamed to its derived name plus
+// a short hash of its JSON name, as in "HostFqdn_1a2b3c4". The hash depends on
+// nothing but the property, so a name survives properties being added, removed
+// or reordered around it, and is the same in every schema the property is
+// merged into. No member of a collision keeps the bare name, because which
+// one deserves it can't be told from the spec, and handing it to another
+// property later would silently repoint code that uses it.
+//
+// A name the spec chose itself, with x-go-name, is never changed, and neither
+// is AdditionalProperties. Two of those colliding is an error. The blank
+// identifier is not a collision, as a struct may declare it more than once.
+func resolvePropertyGoFieldNameCollisions(schema *Schema, path []string) error {
+	groups := make(map[string][]int, len(schema.Properties))
+	for i, p := range schema.Properties {
+		name := p.derivedGoFieldName()
+		if name == "_" {
+			// A struct may declare any number of blank fields.
+			continue
+		}
+		groups[name] = append(groups[name], i)
+	}
+
+	where := "schema"
+	if len(path) > 0 {
+		where = "schema '" + strings.Join(path, ".") + "'"
+	}
+
+	// describe lists the members of a collision for an error message.
+	describe := func(name string, members []int) string {
+		var parts []string
+		for _, i := range members {
+			parts = append(parts, fmt.Sprintf("property '%s'", schema.Properties[i].JsonFieldName))
+		}
+		if name == additionalPropertiesFieldName && schema.HasAdditionalProperties {
+			parts = append(parts, "the field holding additional properties")
+		}
+		return strings.Join(parts, ", ")
+	}
+
+	taken := make(map[string]string, len(schema.Properties)+1)
+	if schema.HasAdditionalProperties {
+		taken[additionalPropertiesFieldName] = "the field holding additional properties"
+	}
+
+	for _, name := range SortedMapKeys(groups) {
+		members := groups[name]
+		reserved := name == additionalPropertiesFieldName && schema.HasAdditionalProperties
+		if len(members) == 1 && !reserved {
+			continue
+		}
+
+		if !globalState.options.OutputOptions.ResolveTypeNameCollisions {
+			return fmt.Errorf("%s: %s would all be the Go field '%s'; "+
+				"please use x-go-name to rename them, or set output-options.resolve-type-name-collisions to have them renamed automatically",
+				where, describe(name, members), name)
+		}
+
+		var explicit, derived []int
+		for _, i := range members {
+			if schema.Properties[i].hasExplicitGoFieldName() {
+				explicit = append(explicit, i)
+			} else {
+				derived = append(derived, i)
+			}
+		}
+		if len(explicit) > 1 || (reserved && len(explicit) > 0) {
+			return fmt.Errorf("%s: %s would all be the Go field '%s', and x-go-name fixes that name for more than one of them; "+
+				"please give them different names", where, describe(name, members), name)
+		}
+
+		keys := make([]string, 0, len(derived))
+		for _, i := range derived {
+			keys = append(keys, schema.Properties[i].JsonFieldName)
+		}
+		tokens := assignScopeTokens(keys)
+		for _, i := range derived {
+			p := &schema.Properties[i]
+			// The token is "h" and then the hash, which reads better as a
+			// prefix than it does after the separator.
+			p.resolvedGoFieldName = name + "_" + strings.TrimPrefix(tokens[p.JsonFieldName], "h")
+		}
+	}
+
+	// A renamed field is unique among the members of its own collision. It
+	// could still spell the name of an unrelated field, which nothing here
+	// can resolve.
+	for _, p := range schema.Properties {
+		name := p.GoFieldName()
+		if name == "_" {
+			continue
+		}
+		desc := fmt.Sprintf("property '%s'", p.JsonFieldName)
+		if other, found := taken[name]; found {
+			return fmt.Errorf("%s: %s and %s would both be the Go field '%s'; please use x-go-name to rename one of them",
+				where, other, desc, name)
+		}
+		taken[name] = desc
+	}
+	return nil
 }
 
 // withSkipOptionalPointerExtension returns p with x-go-type-skip-optional-pointer
@@ -2005,6 +2296,9 @@ func structFieldTags(p Property) map[string]string {
 }
 
 func additionalPropertiesType(schema Schema) string {
+	if schema.additionalPropertiesElemType != "" {
+		return schema.additionalPropertiesElemType
+	}
 	addPropsType := schema.AdditionalPropertiesType.GoType
 	if schema.AdditionalPropertiesType.RefType != "" {
 		addPropsType = schema.AdditionalPropertiesType.RefType
@@ -2023,8 +2317,8 @@ func GenStructFromSchema(schema Schema) string {
 	// Close the struct
 	if schema.HasAdditionalProperties {
 		objectParts = append(objectParts,
-			fmt.Sprintf("AdditionalProperties map[string]%s `json:\"-\"`",
-				additionalPropertiesType(schema)))
+			fmt.Sprintf("%s map[string]%s `json:\"-\"`",
+				additionalPropertiesFieldName, additionalPropertiesType(schema)))
 	}
 	if len(schema.UnionElements) != 0 {
 		objectParts = append(objectParts, "union json.RawMessage")

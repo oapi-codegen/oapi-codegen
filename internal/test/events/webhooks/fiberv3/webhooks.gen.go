@@ -6,13 +6,13 @@ package fiberv3
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/gofiber/fiber/v3"
+	"github.com/oapi-codegen/runtime"
 )
 
 // Defines values for PetStatusEventStatus.
@@ -267,7 +267,7 @@ func (p *WebhookInitiator) PetStatusChanged(ctx context.Context, targetURL strin
 // NewPetStatusChangedWebhookRequest builds a application/json POST request for the petStatusChanged webhook
 func NewPetStatusChangedWebhookRequest(targetURL string, body PetStatusChangedJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
-	buf, err := json.Marshal(body)
+	buf, err := runtime.JSONMarshal(body)
 	if err != nil {
 		return nil, err
 	}
@@ -300,6 +300,11 @@ type ServerInterface interface {
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
+//
+// Fiber returns strings that alias buffers it reuses for the next request
+// (unless the app sets Immutable), so every parameter value read from the Fiber
+// context is copied with strings.Clone. The arguments passed to the handler
+// therefore stay valid after it returns.
 type ServerInterfaceWrapper struct {
 	Handler            ServerInterface
 	HandlerMiddlewares []HandlerMiddlewareFunc

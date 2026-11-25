@@ -1,0 +1,48 @@
+versions: [v1, v2, v3]
+description: >-
+  An anyOf over two $refs next to an OpenAPI 3.1 nullable oneOf whose only
+  other branch is an inline oneOf with a discriminator. v1 and v2 keep the
+  anyOf's variants and don't add the nested oneOf's, whose discriminator
+  couldn't cover the anyOf's; the data round-trips all the same. v3 makes the
+  nested oneOf a variant of its own (PR #2566).
+openapi: 3.1.0
+subject:
+  anyOf:
+    - $ref: '#/components/schemas/Red'
+    - $ref: '#/components/schemas/Blue'
+  oneOf:
+    - oneOf:
+        - $ref: '#/components/schemas/Cat'
+        - $ref: '#/components/schemas/Dog'
+      discriminator:
+        propertyName: petType
+        mapping:
+          cat: '#/components/schemas/Cat'
+          dog: '#/components/schemas/Dog'
+    - type: 'null'
+components:
+  Cat:
+    type: object
+    required: [petType, meow]
+    properties:
+      petType: {type: string}
+      meow: {type: string}
+  Dog:
+    type: object
+    required: [petType, bark]
+    properties:
+      petType: {type: string}
+      bark: {type: string}
+  Red:
+    type: object
+    required: [red]
+    properties:
+      red: {type: string}
+  Blue:
+    type: object
+    required: [blue]
+    properties:
+      blue: {type: string}
+samples:
+  - '{"petType": "cat", "meow": "purr", "red": "crimson"}'
+  - '{"petType": "dog", "bark": "woof", "blue": "navy"}'

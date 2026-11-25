@@ -242,10 +242,26 @@ func (pd ParameterDefinition) GoVariableName() string {
 	return name
 }
 
+// GoName is the Go name of the parameter, and the only place that name is
+// made: everything that declares or refers to the parameter takes it from
+// here.
+//
+// A query, header or cookie parameter is a field of the operation's
+// parameters struct, so it is named as a struct field. A path parameter is a
+// function argument, and a field only of the strict server's request object;
+// it does not take part in the naming of struct fields, which could otherwise
+// turn it into an argument the generated functions already have, such as ctx.
 func (pd ParameterDefinition) GoName() string {
+	if pd.In != "path" {
+		return goFieldName(pd.ParamName, pd.Spec.Extensions)
+	}
+
 	goName := pd.ParamName
 	if extension, ok := pd.Spec.Extensions[extGoName]; ok {
 		if extGoFieldName, err := extParseGoFieldName(extension); err == nil {
+			if explicitNamesVerbatim() {
+				return extGoFieldName
+			}
 			goName = extGoFieldName
 		}
 	}
@@ -1186,6 +1202,12 @@ type RequestBodyDefinition struct {
 	// Contains encoding options for formdata
 	Encoding map[string]RequestBodyEncoding
 
+	// ExplodedFormArrays lists, sorted, the properties of a form-urlencoded
+	// body which the client serializes with repeated keys (name=a&name=b)
+	// rather than indexed ones (name[0]=a&name[1]=b). See
+	// explodedFormArrays.
+	ExplodedFormArrays []string
+
 	// Deprecated indicates the parent operation is deprecated, so this body
 	// type alias should be marked deprecated too.
 	Deprecated bool
@@ -1322,6 +1344,73 @@ func (r RequestBodyDefinition) HasModel() bool {
 // IsFixedContentType returns true if content type has fixed content type, i.e. contains no "*" symbol
 func (r RequestBodyDefinition) IsFixedContentType() bool {
 	return !strings.Contains(r.ContentType, "*")
+}
+
+// explodedFormArrays returns, sorted, the names of the properties of a
+// form-urlencoded body whose encoding asks for repeated keys: an array of
+// primitives which declares style form, explode true, or both, and nothing to
+// the contrary (form is the default style, and it explodes by default).
+//
+// This is deliberately the one encoding the client honors. Generated servers
+// bind form bodies without looking at the encoding, and repeated keys are the
+// only styled serialization they read back the same as the indexed keys the
+// client writes otherwise. Every other declared encoding is ignored, as it
+// always has been: https://github.com/oapi-codegen/oapi-codegen/issues/2676
+func explodedFormArrays(schema *openapi3.SchemaRef, encodings map[string]*openapi3.Encoding) []string {
+	var names []string
+	if schema == nil {
+		return nil
+	}
+	for name, encoding := range encodings {
+		if encoding == nil || encoding.ContentType != "" {
+			continue
+		}
+		if encoding.Style == "" && encoding.Explode == nil {
+			continue
+		}
+		if encoding.Style != "" && encoding.Style != "form" {
+			continue
+		}
+		if encoding.Explode != nil && !*encoding.Explode {
+			continue
+		}
+		if isArrayOfPrimitives(findProperty(schema.Value, name, 0)) {
+			names = append(names, name)
+		}
+	}
+	slices.Sort(names)
+	return names
+}
+
+// isArrayOfPrimitives reports whether a schema is plainly an array of strings,
+// numbers or booleans, whose Go type is a slice of values that each serialize
+// to a single form value.
+func isArrayOfPrimitives(array *openapi3.Schema) bool {
+	if array == nil {
+		return false
+	}
+	if !array.Type.Is("array") || array.Nullable || array.Extensions[extPropGoType] != nil {
+		return false
+	}
+	if array.Items == nil || array.Items.Value == nil {
+		return false
+	}
+	item := array.Items.Value
+	if item.Nullable || item.Extensions[extPropGoType] != nil {
+		return false
+	}
+	if len(item.OneOf) != 0 || len(item.AnyOf) != 0 || len(item.AllOf) != 0 {
+		return false
+	}
+	switch {
+	case item.Type.Is("string"):
+		// Binary and base64 strings are files and byte slices, not single
+		// values.
+		return item.Format != "binary" && item.Format != "byte"
+	case item.Type.Is("integer"), item.Type.Is("number"), item.Type.Is("boolean"):
+		return true
+	}
+	return false
 }
 
 type RequestBodyEncoding struct {
@@ -2190,7 +2279,7 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 		bodyTypeName := operationID + tag + "Body"
 		bodySchema, err := GenerateGoSchema(content.Schema, []string{bodyTypeName})
 		if err != nil {
-			return nil, nil, fmt.Errorf("error generating request body definition: %w", err)
+			return nil, nil, fmt.Errorf("error generating request body definition for %s (%s): %w", operationID, contentType, err)
 		}
 
 		// If the body is a pre-defined type
@@ -2249,6 +2338,9 @@ func GenerateBodyDefinitions(operationID string, bodyOrRef *openapi3.RequestBody
 				encoding := RequestBodyEncoding{ContentType: v.ContentType, Style: v.Style, Explode: v.Explode}
 				bd.Encoding[k] = encoding
 			}
+			if bd.IsFormdata() {
+				bd.ExplodedFormArrays = explodedFormArrays(content.Schema, content.Encoding)
+			}
 		}
 
 		bodyDefinitions = append(bodyDefinitions, bd)
@@ -2272,6 +2364,16 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			continue
 		}
 		response := responseOrRef.Value
+
+		// Reusable components.responses are generated with no operation
+		// (see the GenerateResponseDefinitions("", ...) call in Generate),
+		// and the map key is then a response component name rather than a
+		// status code. Name it alone instead of qualifying it with an empty
+		// operation, which would read as a leading ".".
+		responseLabel := statusCode
+		if operationID != "" {
+			responseLabel = operationID + "." + statusCode
+		}
 
 		var responseContentDefinitions []ResponseContentDefinition
 
@@ -2309,7 +2411,7 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			responseBodyTypeName := responseTypeName + "Body"
 			contentSchema, err := GenerateGoSchema(content.Schema, []string{responseBodyTypeName})
 			if err != nil {
-				return nil, fmt.Errorf("error generating request body definition: %w", err)
+				return nil, fmt.Errorf("error generating response body definition for %s (%s): %w", responseLabel, contentType, err)
 			}
 
 			// Hoist inline response-root schemas that need method-emitting
@@ -2396,7 +2498,7 @@ func GenerateResponseDefinitions(operationID string, responses map[string]*opena
 			header := response.Headers[headerName]
 			contentSchema, err := GenerateGoSchema(header.Value.Schema, []string{})
 			if err != nil {
-				return nil, fmt.Errorf("error generating response header definition: %w", err)
+				return nil, fmt.Errorf("error generating response header definition for %s header %q: %w", responseLabel, headerName, err)
 			}
 			// When the header component itself is an external `$ref` (it lives
 			// in another file) and its schema references a named type, that
@@ -2585,6 +2687,12 @@ func GenerateParamsTypes(op OperationDefinition) []TypeDefinition {
 			NeedsFormTag:  param.Style() == "form",
 			Extensions:    extensions,
 			Deprecated:    param.Spec.Deprecated,
+			// The field is read as params.<GoName> by the client and the
+			// servers, so that is its name. Deriving it again from the
+			// property would not always give the same one: the extensions
+			// above include those of the parameter's schema, whose x-go-name
+			// names the schema's type and not this field.
+			resolvedGoFieldName: param.GoName(),
 		}
 		s.Properties = append(s.Properties, prop)
 	}

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"go/token"
+	"regexp"
 	"strings"
 	"unicode"
 
@@ -24,20 +25,71 @@ import (
 //
 // It is meant to run after any overlay has been applied and after tag/operation
 // filtering and component pruning, so only values that will actually be emitted
-// are checked. `$ref`s are not followed: every ref resolves to a component that
-// is validated at its own definition, and the contents of external documents are
-// never copied into the generated output, so they cannot affect it.
+// are checked. A `$ref` with a fragment is not followed: it resolves to a
+// component that is validated at its own definition, or to a type in another
+// package whose contents are never copied into the generated output. A
+// whole-document `$ref` (one without a fragment, such as `./other.yaml`) is
+// followed, because code generation inlines what it points at (see descend).
+//
+// The members of an allOf are validated as the default schema-merging
+// behavior combines them (see allOfMergesUnions). Generate validates with the
+// behavior its options select instead, through validateSpec.
 func ValidateSpec(spec *openapi3.T) error {
+	return validateSpec(spec, true)
+}
+
+// validateSpec is ValidateSpec for a known schema-merging behavior: mergeAllOf
+// says whether the members of an allOf are merged into one schema before
+// generation, so that their oneOf and anyOf lists and a discriminator one of
+// them declares form a single union (see allOfMergesUnions).
+func validateSpec(spec *openapi3.T, mergeAllOf bool) error {
 	if spec == nil {
 		return nil
 	}
-	v := &specValidator{}
+	v := &specValidator{mergeAllOf: mergeAllOf}
 	v.walkDocument(spec)
 	return errors.Join(v.errs...)
 }
 
 type specValidator struct {
 	errs []error
+	// mergeAllOf is whether the allOf members are combined into one union
+	// (see validateSpec).
+	mergeAllOf bool
+	// seen holds the resolved values of the whole-document $refs that have
+	// been walked, so that documents referring to each other are walked once.
+	seen map[any]bool
+}
+
+// descend reports whether the validator should walk into a $ref's resolved
+// value, given the ref string and the (non-nil) value it resolved to.
+//
+// An inline object (no ref) is always walked. A ref with a fragment, local
+// (`#/components/schemas/Foo`) or external (`other.yaml#/components/schemas/Foo`),
+// is not: a local one resolves to a component that is validated at its own
+// definition, and an external one becomes a type in another Go package whose
+// contents are never copied into the generated output. A whole-document ref
+// (`./other.yaml`, with no fragment) has no name that could be referred to, so
+// code generation inlines its contents as if they were written in place
+// (IsGoTypeReference is false for it); everything in that document reaches the
+// generated source and has to be checked like the inline object it becomes.
+// Each such document is walked once, so documents that refer to each other
+// do not loop.
+func (v *specValidator) descend(ref string, value any) bool {
+	if ref == "" {
+		return true
+	}
+	if !IsWholeDocumentReference(ref) {
+		return false
+	}
+	if v.seen[value] {
+		return false
+	}
+	if v.seen == nil {
+		v.seen = make(map[any]bool)
+	}
+	v.seen[value] = true
+	return true
 }
 
 func (v *specValidator) addf(format string, args ...any) {
@@ -73,6 +125,22 @@ func (v *specValidator) checkNoControl(value, what string) {
 	}
 }
 
+// checkDiscriminatorValue validates a discriminator mapping key, explicit or
+// implicit. Besides the places checkText guards, the value is written between
+// the quotes of an interpreted Go string literal (`case "<value>":`) and into
+// the JSON object the From* helpers stamp, where a backslash starts an escape
+// sequence: `case "Dog\Name":` does not compile. So a backslash is rejected
+// too, as the union generators already do for the value an inline variant
+// pins.
+func (v *specValidator) checkDiscriminatorValue(value, what string) {
+	for _, r := range value {
+		if r == '"' || r == '`' || r == '\\' || unicode.IsControl(r) {
+			v.addf("%s may not contain %s: %q", what, describeRune(r), value)
+			return
+		}
+	}
+}
+
 // checkIdentifier validates a value that becomes a Go identifier (the `x-go-name`
 // and `x-go-type-name` extensions). It must be a valid, non-keyword Go
 // identifier, which by definition excludes quotes, backticks and control
@@ -95,6 +163,20 @@ func (v *specValidator) checkGoType(value, what string) {
 			v.addf("%s must be a Go type expression and may not contain %s: %q", what, describeRune(r), value)
 			return
 		}
+	}
+}
+
+// responseKeyRE matches the response keys OpenAPI allows: a status code, a
+// range such as 2XX, or default.
+var responseKeyRE = regexp.MustCompile(`^(default|[1-5]XX|[1-9][0-9][0-9])$`)
+
+// checkResponseKey validates a key of an operation's responses map. The key is
+// copied into the generated code as part of type names and, for the client, as
+// the right-hand side of a status comparison (`rsp.StatusCode == 200`), so it
+// has to be one of the forms OpenAPI defines and nothing else.
+func (v *specValidator) checkResponseKey(key, what string) {
+	if !responseKeyRE.MatchString(key) {
+		v.addf("%s must be a three-digit status code, a range such as 2XX, or default: %q", what, key)
 	}
 }
 
@@ -148,12 +230,27 @@ func (v *specValidator) checkSecurity(reqs openapi3.SecurityRequirements, where 
 	}
 }
 
+// mappedExplicitly reports whether the discriminator's mapping names ref as
+// one of its values, in which case the mapping key is used rather than the
+// name derived from the ref. This mirrors how the union generators decide
+// between an explicit and an implicit mapping.
+func mappedExplicitly(d *openapi3.Discriminator, ref string) bool {
+	for _, target := range d.Mapping {
+		if target.Ref == ref {
+			return true
+		}
+	}
+	return false
+}
+
 func describeRune(r rune) string {
 	switch r {
 	case '"':
 		return "a double quote"
 	case '`':
 		return "a backtick"
+	case '\\':
+		return "a backslash"
 	case '\n':
 		return "a newline"
 	case '\r':
@@ -240,24 +337,37 @@ func (v *specValidator) walkDocument(spec *openapi3.T) {
 	}
 }
 
+// walkComponents validates every component. Component names become Go
+// identifiers only after sanitization, but they are also copied verbatim into
+// single-line doc comments ("X defines model for <name>."), so a name may not
+// contain a control character; quotes are fine there.
 func (v *specValidator) walkComponents(c *openapi3.Components) {
 	for _, name := range SortedMapKeys(c.Schemas) {
+		v.checkNoControl(name, "schema name")
 		v.walkSchemaRef(c.Schemas[name], fmt.Sprintf("schema %q", name))
 	}
 	for _, name := range SortedMapKeys(c.Parameters) {
+		v.checkNoControl(name, "component parameter name")
 		v.walkParameterRef(c.Parameters[name], fmt.Sprintf("component parameter %q", name))
 	}
 	for _, name := range SortedMapKeys(c.RequestBodies) {
+		v.checkNoControl(name, "component request body name")
 		v.walkRequestBodyRef(c.RequestBodies[name], fmt.Sprintf("component request body %q", name))
 	}
 	for _, name := range SortedMapKeys(c.Responses) {
+		v.checkNoControl(name, "component response name")
 		v.walkResponseRef(c.Responses[name], fmt.Sprintf("component response %q", name))
 	}
 	for _, name := range SortedMapKeys(c.Headers) {
+		v.checkNoControl(name, "component header name")
 		v.walkHeaderRef(c.Headers[name], fmt.Sprintf("component header %q", name))
 	}
 	for _, name := range SortedMapKeys(c.Callbacks) {
+		v.checkNoControl(name, "component callback name")
 		v.walkCallbackRef(c.Callbacks[name], fmt.Sprintf("component callback %q", name))
+	}
+	for _, name := range SortedSecuritySchemeKeys(c.SecuritySchemes) {
+		v.checkNoControl(name, "security scheme name")
 	}
 }
 
@@ -278,6 +388,10 @@ func (v *specValidator) walkOperation(op *openapi3.Operation, where string) {
 		return
 	}
 	v.checkExtensions(op.Extensions, where)
+	// The operationId becomes a Go identifier only after normalization, but
+	// the Echo templates also copy it verbatim (quoted) as the per-operation
+	// middleware key, so it is checked like other quoted text.
+	v.checkNoControl(op.OperationID, "operationId in "+where)
 	if op.Security != nil {
 		v.checkSecurity(*op.Security, where)
 	}
@@ -288,6 +402,7 @@ func (v *specValidator) walkOperation(op *openapi3.Operation, where string) {
 	if op.Responses != nil {
 		responses := op.Responses.Map()
 		for _, name := range SortedMapKeys(responses) {
+			v.checkResponseKey(name, "response key in "+where)
 			v.walkResponseRef(responses[name], fmt.Sprintf("response %q in %s", name, where))
 		}
 	}
@@ -302,7 +417,7 @@ func (v *specValidator) walkParameterRef(ref *openapi3.ParameterRef, where strin
 		return
 	}
 	v.checkExtensions(ref.Extensions, where)
-	if ref.Ref != "" || ref.Value == nil {
+	if ref.Value == nil || !v.descend(ref.Ref, ref.Value) {
 		return
 	}
 	p := ref.Value
@@ -319,7 +434,7 @@ func (v *specValidator) walkRequestBodyRef(ref *openapi3.RequestBodyRef, where s
 		return
 	}
 	v.checkExtensions(ref.Extensions, where)
-	if ref.Ref != "" || ref.Value == nil {
+	if ref.Value == nil || !v.descend(ref.Ref, ref.Value) {
 		return
 	}
 	loc := "request body in " + where
@@ -332,7 +447,7 @@ func (v *specValidator) walkResponseRef(ref *openapi3.ResponseRef, where string)
 		return
 	}
 	v.checkExtensions(ref.Extensions, where)
-	if ref.Ref != "" || ref.Value == nil {
+	if ref.Value == nil || !v.descend(ref.Ref, ref.Value) {
 		return
 	}
 	r := ref.Value
@@ -349,12 +464,60 @@ func (v *specValidator) walkHeaderRef(ref *openapi3.HeaderRef, where string) {
 		return
 	}
 	v.checkExtensions(ref.Extensions, where)
-	if ref.Ref != "" || ref.Value == nil {
+	if ref.Value == nil || !v.descend(ref.Ref, ref.Value) {
 		return
 	}
 	v.checkExtensions(ref.Value.Extensions, where)
+	v.checkText(ref.Value.Style, "style of header in "+where)
 	v.walkContent(ref.Value.Content, where)
 	v.walkSchemaRef(ref.Value.Schema, where)
+}
+
+// ValidateServerURLs checks the parts of the document's servers that the
+// `server-urls` generator copies into Go source as identifiers: the x-go-name
+// extension, the names of the variables the URL uses (function parameters and
+// type names), the `{placeholder}` names a URL uses without declaring (also
+// parameters), and the enum values of the used variables, which are appended
+// to the variable's type name to form constant names. None of them is
+// sanitized on the way, so names have to be Go identifiers as written and enum
+// values have to be made of identifier characters. A declared variable whose
+// placeholder does not appear in the URL produces no code and is not checked.
+// The function is separate from ValidateSpec because it only applies when
+// server URLs are generated: specs with, say, a hyphenated variable name are
+// fine otherwise.
+func ValidateServerURLs(spec *openapi3.T) error {
+	if spec == nil {
+		return nil
+	}
+	v := &specValidator{}
+	for i, server := range spec.Servers {
+		if server == nil {
+			continue
+		}
+		where := fmt.Sprintf("server %d (%s)", i, server.URL)
+		v.checkExtensions(server.Extensions, where)
+		used := ServerObjectDefinition{OAPISchema: server}.UsedVariables()
+		for _, name := range SortedMapKeys(used) {
+			v.checkIdentifier(name, "server variable name in "+where)
+			variable := used[name]
+			if variable == nil {
+				continue
+			}
+			for _, value := range variable.Enum {
+				// The constant is <TypeName><Value>, so the value may start
+				// with a digit but must otherwise be identifier characters.
+				if value == "" || !token.IsIdentifier("_"+value) {
+					v.addf("enum value of server variable %q in %s must consist of letters, digits and underscores: %q", name, where, value)
+				}
+			}
+		}
+		for name := range urlPlaceholders(server.URL) {
+			if _, declared := server.Variables[name]; !declared {
+				v.checkIdentifier(name, "undeclared URL placeholder in "+where)
+			}
+		}
+	}
+	return errors.Join(v.errs...)
 }
 
 func (v *specValidator) walkCallbackRef(ref *openapi3.CallbackRef, where string) {
@@ -362,7 +525,7 @@ func (v *specValidator) walkCallbackRef(ref *openapi3.CallbackRef, where string)
 		return
 	}
 	v.checkExtensions(ref.Extensions, where)
-	if ref.Ref != "" || ref.Value == nil {
+	if ref.Value == nil || !v.descend(ref.Ref, ref.Value) {
 		return
 	}
 	items := ref.Value.Map()
@@ -390,14 +553,119 @@ func (v *specValidator) walkSchemaRef(ref *openapi3.SchemaRef, where string) {
 	}
 	// Extensions on the ref node itself are honoured by code generation even for
 	// a $ref — e.g. an `x-go-type` sibling next to a `$ref` overrides the
-	// referenced type — so they must be checked here. The referenced target is
-	// validated at its own definition, so we still do not follow the ref, which
-	// also keeps inline schemas a finite tree with no cycle tracking needed.
+	// referenced type — so they must be checked here. Whether the target is
+	// walked too is decided by descend: only a whole-document ref is, since
+	// its contents are inlined into the generated code.
 	v.checkExtensions(ref.Extensions, where)
-	if ref.Ref != "" || ref.Value == nil {
+	if ref.Value == nil {
+		return
+	}
+	// An x-go-type next to a whole-document ref, or at the root of the
+	// document it points at, replaces the document: generateGoSchema returns
+	// the override before it reads any of the document's contents, so none
+	// of them reach the generated code. Only the root's own extensions are
+	// checked then. This is decided before descend marks the document as
+	// walked: another ref to the same document without an override inlines
+	// it, and has to find it unvisited. An inline schema with x-go-type has
+	// always been walked in full, and still is.
+	if IsWholeDocumentReference(ref.Ref) {
+		if _, overridden := combinedSchemaExtensions(ref)[extPropGoType]; overridden {
+			v.checkExtensions(ref.Value.Extensions, where)
+			return
+		}
+	}
+	if !v.descend(ref.Ref, ref.Value) {
 		return
 	}
 	v.walkSchema(ref.Value, where)
+}
+
+// unionView is the discriminated union a schema describes once its allOf, if
+// any, has been merged: every discriminator and every oneOf/anyOf variant
+// found on the schema itself or on any member, through nested allOf and
+// through $ref members, which the merge resolves. The merge concatenates the
+// members' oneOf and anyOf lists and lets the one member that declares a
+// discriminator govern the result, so a $ref variant from one member and a
+// discriminator from another form a discriminated union that neither member
+// shows on its own.
+type unionView struct {
+	discriminators []*openapi3.Discriminator
+	variants       []*openapi3.SchemaRef
+}
+
+// collectUnionView gathers s's unionView. The allOf members are included
+// only when the merge in effect combines them (see allOfMergesUnions). seen
+// stops at a composition that refers back to itself.
+func collectUnionView(s *openapi3.Schema, view *unionView, mergeAllOf bool, seen map[*openapi3.Schema]bool) {
+	if s == nil || seen[s] {
+		return
+	}
+	seen[s] = true
+	if s.Discriminator != nil {
+		view.discriminators = append(view.discriminators, s.Discriminator)
+	}
+	view.variants = append(view.variants, s.OneOf...)
+	view.variants = append(view.variants, s.AnyOf...)
+	if !mergeAllOf {
+		return
+	}
+	for _, member := range s.AllOf {
+		if member != nil {
+			collectUnionView(member.Value, view, mergeAllOf, seen)
+		}
+	}
+}
+
+// allOfMergesUnions reports whether the schema-merging behavior of the
+// current run merges the members of an allOf into one schema before
+// generating it, so that the members' oneOf and anyOf lists and the
+// discriminator one of them declares form a single union. The v1 merge
+// (`old-merge-schemas: true`) generates each member on its own instead, and a
+// member's union then has only the discriminator the member itself declares.
+// Like the generators, this reads the options of the run Generate has set up;
+// ValidateSpec does not call it, so that its result does not depend on an
+// earlier run.
+func allOfMergesUnions() bool {
+	version, err := globalState.options.Compatibility.schemaMergingVersion()
+	return err != nil || version != SchemaMergingV1
+}
+
+// checkImplicitMappingKeys validates the discriminator mapping keys the union
+// generators derive rather than read from the spec. A $ref variant the mapping
+// does not name is mapped implicitly, under the last segment of its ref (the
+// schema's name), and that key is written into the generated code exactly
+// like an explicit one. The name itself is otherwise allowed to contain quotes
+// (see walkComponents), and a ref into another document names a schema this
+// walk never sees, so the derived key is checked here. A null-typed branch is
+// a nullability marker the union generators skip before mapping, so it never
+// becomes a key.
+//
+// The variants and the discriminator are taken from the schema's unionView,
+// so a union the allOf merge assembles from several members is checked too.
+// A $ref member's own union is also validated where it is defined; here it
+// is seen as part of the composition it is merged into.
+func (v *specValidator) checkImplicitMappingKeys(s *openapi3.Schema, where string) {
+	var view unionView
+	collectUnionView(s, &view, v.mergeAllOf, map[*openapi3.Schema]bool{})
+	if len(view.discriminators) == 0 {
+		return
+	}
+	for _, variant := range view.variants {
+		if variant == nil || variant.Ref == "" || isNullTypeSchema(variant.Value) {
+			continue
+		}
+		explicit := false
+		for _, d := range view.discriminators {
+			if mappedExplicitly(d, variant.Ref) {
+				explicit = true
+				break
+			}
+		}
+		if explicit {
+			continue
+		}
+		v.checkDiscriminatorValue(RefPathToObjName(variant.Ref), fmt.Sprintf("implicit discriminator mapping key for %s in %s", variant.Ref, where))
+	}
 }
 
 func (v *specValidator) walkSchema(s *openapi3.Schema, where string) {
@@ -421,9 +689,10 @@ func (v *specValidator) walkSchema(s *openapi3.Schema, where string) {
 	if s.Discriminator != nil {
 		v.checkText(s.Discriminator.PropertyName, "discriminator propertyName in "+where)
 		for _, key := range SortedMapKeys(s.Discriminator.Mapping) {
-			v.checkText(key, "discriminator mapping key in "+where)
+			v.checkDiscriminatorValue(key, "discriminator mapping key in "+where)
 		}
 	}
+	v.checkImplicitMappingKeys(s, where)
 	for _, name := range SortedMapKeys(s.Properties) {
 		v.checkText(name, "property name in "+where)
 		v.walkSchemaRef(s.Properties[name], fmt.Sprintf("property %q in %s", name, where))
