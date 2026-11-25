@@ -173,6 +173,11 @@
           "type": "boolean",
           "description": "Disables detection of the OpenAPI 3.1 enum-via-oneOf idiom: a schema with `type: string|integer` and `oneOf:` members that each carry `const` + `title` will normally be emitted as a Go enum with named constants. Set this to true to fall through to the standard union generator instead."
         },
+        "echo-redact-bind-errors": {
+          "type": "boolean",
+          "description": "Keeps the Go error out of the 400 response that generated echo (v4 and v5) servers, and their webhook and callback receivers, send when a path, query, header or cookie parameter fails to bind. By default the body is `Invalid format for parameter X: ` followed by err.Error(), which is the runtime's or strconv's wording and can change between releases. When set, the body quotes the value the caller sent instead (`Invalid format for parameter X: 'foo'`), and the error stays on the echo.HTTPError (SetInternal for v4, Wrap for v5) for server-side error handlers to log.",
+          "default": false
+        },
         "lenient-union-accessors": {
           "type": "boolean",
           "description": "Makes a union's As* methods ignore the properties a variant with `additionalProperties: false` doesn't declare, as they do for any other variant. By default, with `compatibility.schema-merging-behavior: v3`, such a variant's As* returns an error for a property that neither the variant nor anything else in the union's object declares, so that data of another variant isn't taken for it. The older values ignore this option: their As* always ignore such properties.",

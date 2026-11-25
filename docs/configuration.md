@@ -89,6 +89,7 @@ output-options:
   prefer-skip-optional-pointer-on-container-types: false
   skip-enum-validate: false
   skip-enum-via-oneof: false
+  echo-redact-bind-errors: false   # echo only: 400 bodies quote the caller's value instead of the Go error text
   lenient-union-accessors: false   # schema-merging-behavior v3 only: see <a href="schema-merging.md#variants-with-additionalproperties-false">schema-merging.md</a>
   generate-types-for-anonymous-schemas: false
   # How OpenAPI type/format combinations map to Go types; user-specified

@@ -187,6 +187,23 @@ func (pd *ParameterDefinition) Explode() bool {
 	return *pd.Spec.Explode
 }
 
+// QueryKeysDiffer reports whether a query parameter is carried under keys
+// other than its own name: deepObject (name[prop]=v) and an exploded object
+// (prop=v). Templates use it to avoid quoting the value stored under the
+// parameter's name, which is empty for these.
+func (pd *ParameterDefinition) QueryKeysDiffer() bool {
+	if pd.Style() == "deepObject" {
+		return true
+	}
+	if !pd.Explode() || pd.Spec.Schema == nil || pd.Spec.Schema.Value == nil {
+		return false
+	}
+	// Read the spec schema: pd.Schema has no properties for a $ref.
+	v := pd.Spec.Schema.Value
+	return v.Type.Includes("object") || len(v.Properties) > 0 || len(v.AllOf) > 0 ||
+		v.AdditionalProperties.Has != nil || v.AdditionalProperties.Schema != nil
+}
+
 // SchemaType returns the single OpenAPI type of this parameter's schema
 // (e.g. "string", "integer") with the OpenAPI 3.1 "null" nullability marker
 // stripped, or empty string when the schema declares no type or a
@@ -747,7 +764,11 @@ type ReceiverTemplateData struct {
 	// "*fiber.Ctx" vs "fiber.Ctx" for fiber v2/v3. Only the echo and fiber
 	// receiver templates read it; the other frameworks' templates embed
 	// their fixed context type directly and leave this empty.
-	CtxType    string
+	CtxType string
+	// AttachErr is the echo.HTTPError method call (".SetInternal(err)" for v4,
+	// ".Wrap(err)" for v5) that keeps a binding error server-side instead of
+	// putting it in the response body. Only the echo receiver template reads it.
+	AttachErr  string
 	Operations []OperationDefinition
 }
 
@@ -2999,6 +3020,7 @@ func GenerateGorillaReceiver(t *template.Template, prefix string, ops []Operatio
 func GenerateEchoReceiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
 	data := NewReceiverTemplateData(prefix, ops)
 	data.CtxType = "echo.Context"
+	data.AttachErr = ".SetInternal(err)"
 	return GenerateTemplates([]string{"echo/echo-receiver.tmpl"}, t, data)
 }
 
@@ -3008,6 +3030,7 @@ func GenerateEchoReceiver(t *template.Template, prefix string, ops []OperationDe
 func GenerateEcho5Receiver(t *template.Template, prefix string, ops []OperationDefinition) (string, error) {
 	data := NewReceiverTemplateData(prefix, ops)
 	data.CtxType = "*echo.Context"
+	data.AttachErr = ".Wrap(err)"
 	return GenerateTemplates([]string{"echo/echo-receiver.tmpl"}, t, data)
 }
 

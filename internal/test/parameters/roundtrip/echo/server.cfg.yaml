@@ -4,3 +4,5 @@ generate:
   echo-server: true
   embedded-spec: true
 output: gen/server.gen.go
+output-options:
+  echo-redact-bind-errors: true

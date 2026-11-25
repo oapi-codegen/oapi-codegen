@@ -535,6 +535,16 @@ type OutputOptions struct {
 	// named constants. Set this to true to fall through to the standard union
 	// generator instead.
 	SkipEnumViaOneOf bool `yaml:"skip-enum-via-oneof,omitempty"`
+	// EchoRedactBindErrors keeps the Go error out of the 400 response that
+	// generated echo (v4 and v5) servers, and their webhook and callback
+	// receivers, send when a path, query, header or cookie parameter fails to
+	// bind. By default the response body is "Invalid format for parameter X: "
+	// followed by err.Error(), which is the runtime's or strconv's wording and
+	// can change between releases. When set, the body quotes the value the
+	// caller sent instead ("Invalid format for parameter X: 'foo'"), and the
+	// error stays on the echo.HTTPError (SetInternal for v4, Wrap for v5) for
+	// server-side error handlers to log.
+	EchoRedactBindErrors bool `yaml:"echo-redact-bind-errors,omitempty"`
 	// LenientUnionAccessors makes a union's As* methods ignore the properties
 	// a variant with `additionalProperties: false` doesn't declare, as they
 	// do for any other variant. By default, with schema-merging-behavior v3,

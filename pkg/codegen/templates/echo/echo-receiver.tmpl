@@ -32,7 +32,7 @@ func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface, middlewares 
         {{if .IsStyled}}
         err = runtime.BindQueryParameterWithOptions("{{.Style}}", {{.Explode}}, {{.Required}}, "{{.ParamName}}", ctx.QueryParams(), &params.{{.GoName}}, runtime.BindQueryParameterOptions{Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"{{unionTypes .SchemaTypes}}})
         if err != nil {
-            return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+            return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}{{if opts.OutputOptions.EchoRedactBindErrors}}{{if .QueryKeysDiffer}}"{{else}}: '%s'", strings.Join(ctx.QueryParams()["{{.ParamName}}"], ","){{end}}{{else}}: %s", err{{end}})){{if opts.OutputOptions.EchoRedactBindErrors}}{{$.AttachErr}}{{end}}
         }
         {{else}}
         if paramValue := ctx.QueryParam("{{.ParamName}}"); paramValue != "" {
@@ -73,7 +73,7 @@ func {{$opid}}{{$.Prefix}}Handler(si {{$.Prefix}}ReceiverInterface, middlewares 
             {{if .IsStyled}}
             err = runtime.BindStyledParameterWithOptions("{{.Style}}", "{{.ParamName}}", valueList[0], &{{.GoName}}, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: {{.Explode}}, Required: {{.Required}}, Type: "{{.SchemaType}}", Format: "{{.SchemaFormat}}"{{unionTypes .SchemaTypes}}})
             if err != nil {
-                return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: %s", err))
+                return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter {{.ParamName}}: {{if opts.OutputOptions.EchoRedactBindErrors}}'%s'", valueList[0]{{else}}%s", err{{end}})){{if opts.OutputOptions.EchoRedactBindErrors}}{{$.AttachErr}}{{end}}
             }
             params.{{.GoName}} = {{if .HasOptionalPointer}}&{{end}}{{.GoName}}
             {{end}}
