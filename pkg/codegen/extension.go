@@ -29,10 +29,8 @@ const (
 	extEnumVarNames      = "x-enum-varnames"
 	extEnumNames         = "x-enumNames"
 	extDeprecationReason = "x-deprecated-reason"
-	// extOapiCodegenComment adds extra lines to the Godoc of an operation's
-	// generated client methods.
-	extOapiCodegenComment = "x-oapi-codegen-comment"
-	extOrder              = "x-order"
+	extStabilityLevel    = "x-stability-level"
+	extOrder             = "x-order"
 	// extOapiCodegenEnumMerge chooses how schema-merging-behavior v3 merges
 	// the enums of an allOf's members: "intersection", the default, allows
 	// the values every enum allows, which is what allOf means and what

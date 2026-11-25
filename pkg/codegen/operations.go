@@ -860,7 +860,7 @@ func prepareDescriptionLines(summary, description string) []string {
 // - if not present, an indication of the HTTP call this corresponds with
 // - the Description, if present
 // - whether this function takes a body and a content type
-// - the operation's x-oapi-codegen-comment, when set
+// - the operation's x-stability-level, when set
 //
 // Takes originalFunctionName (the OperationId or the function name being generated for this Operation), a suffix (if necessary) and whether this is being generated for ClientInterface or ClientWithResponsesInterface
 func (o OperationDefinition) GenerateFunctionComment(originalFunctionName string, functionSuffix string, isFunctionWithResponses bool) string {
@@ -910,9 +910,8 @@ func (o OperationDefinition) GenerateFunctionComment(originalFunctionName string
 			parts = append(parts, "// Returns a wrapper object for the known response body format(s).")
 		}
 	}
-	if extra := o.ExtraCommentLines(); len(extra) > 0 {
-		parts = append(parts, "//")
-		parts = append(parts, extra...)
+	if stability := o.StabilityComment(); stability != "" {
+		parts = append(parts, "//", stability)
 	}
 
 	// make sure that each line is sanitised
@@ -923,36 +922,24 @@ func (o OperationDefinition) GenerateFunctionComment(originalFunctionName string
 	return strings.Join(parts, "\n")
 }
 
-// ExtraCommentLines returns the operation's x-oapi-codegen-comment as Go
-// comment lines, one per line of the value, or nil when it is unset, empty or
-// not a string. Each line starts with "//", so a newline in the value can't
-// end the comment.
-func (o OperationDefinition) ExtraCommentLines() []string {
+// StabilityComment returns a Go comment for the operation's x-stability-level, or an empty string when it is unset.
+func (o OperationDefinition) StabilityComment() string {
 	if o.Spec == nil {
-		return nil
+		return ""
 	}
-	extension, ok := o.Spec.Extensions[extOapiCodegenComment]
+	extension, ok := o.Spec.Extensions[extStabilityLevel]
 	if !ok {
-		return nil
+		return ""
 	}
-	comment, err := extString(extension)
+	level, err := extString(extension)
 	if err != nil {
-		return nil
+		return ""
 	}
-	comment = strings.TrimSpace(normalizeWhitespace(comment))
-	if comment == "" {
-		return nil
+	level = strings.TrimSpace(level)
+	if level == "" {
+		return ""
 	}
-	lines := strings.Split(comment, "\n")
-	for i, line := range lines {
-		line = strings.TrimRightFunc(line, unicode.IsSpace)
-		if line == "" {
-			lines[i] = "//"
-		} else {
-			lines[i] = "// " + line
-		}
-	}
-	return lines
+	return fmt.Sprintf("// This operation has been marked with the `%s` stability level upstream (via `%s`).", level, extStabilityLevel)
 }
 
 // DeprecationComment returns a Go-style deprecation comment if the operation is deprecated, otherwise returns an empty string.
@@ -1211,7 +1198,7 @@ type RequestBodyDefinition struct {
 // - the Summary, if present, as the first line of the comment
 // - if not present, an indication of the HTTP call this corresponds with
 // - whether this function takes a body and a content type
-// - the operation's x-oapi-codegen-comment, when set
+// - the operation's x-stability-level, when set
 //
 // Takes originalFunctionName (the OperationId or the function name being generated for this Operation), a suffix (if necessary) and whether this is being generated for ClientInterface or ClientWithResponsesInterface
 func (r RequestBodyDefinition) GenerateFunctionComment(originalFunctionName string, parent OperationDefinition, functionSuffix string, isFunctionWithResponses bool) string {
@@ -1249,9 +1236,8 @@ func (r RequestBodyDefinition) GenerateFunctionComment(originalFunctionName stri
 			}
 		}
 	}
-	if extra := parent.ExtraCommentLines(); len(extra) > 0 {
-		parts = append(parts, "//")
-		parts = append(parts, extra...)
+	if stability := parent.StabilityComment(); stability != "" {
+		parts = append(parts, "//", stability)
 	}
 
 	// make sure that each line is sanitised

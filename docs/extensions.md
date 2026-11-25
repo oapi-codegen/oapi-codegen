@@ -621,13 +621,11 @@ Notice that because we've not set `deprecated: true` to the `name` field, it doe
 
 You can see this in more detail in [the example code](../examples/extensions/xdeprecatedreason/).
 
-## `x-oapi-codegen-comment`
+## `x-stability-level`
 
-Add extra lines to an operation's generated client GoDoc.
+Note an operation's stability level in the generated client GoDoc.
 
-The generated client methods (`ClientInterface`, `Client`, `ClientWithResponsesInterface` and `ClientWithResponses`) are already documented with the operation's `summary` and `description`. When you want to say something in the GoDoc that doesn't belong in the API's own description, such as a stability level or an internal note, set `x-oapi-codegen-comment` on the operation to a string. Its value is added, as-is, as a final paragraph of each generated client method's GoDoc.
-
-Each line of the value becomes its own `//` comment line, and blank lines are kept as `//`, so multi-line values (for instance YAML block scalars) can't break out of the comment. Surrounding whitespace is trimmed. Operations without the extension, or with an empty or non-string value, generate exactly the same code as before.
+When an operation sets `x-stability-level` to a string, that level is noted in the Godoc of the generated client methods (`ClientInterface`, `Client`, `ClientWithResponsesInterface` and `ClientWithResponses`), so callers can see whether the API is potentially unstable. The value is rendered as-is; [oasdiff](https://github.com/oasdiff/oasdiff/blob/main/docs/STABILITY.md) defines the levels `draft`, `alpha`, `beta` and `stable`, and treats operations without the extension as `stable`. Operations without the extension get no extra Godoc.
 
 We can see this at play with the following operation:
 
@@ -635,16 +633,13 @@ We can see this at play with the following operation:
 openapi: "3.0.0"
 info:
   version: 1.0.0
-  title: x-oapi-codegen-comment
+  title: x-stability-level
 paths:
   /pets:
     get:
       operationId: listPets
       summary: List pets
-      x-oapi-codegen-comment: |
-        Stability: alpha
-
-        This operation may change in backwards-incompatible ways.
+      x-stability-level: alpha
       responses:
         "200":
           description: A list of pets
@@ -657,13 +652,11 @@ From here, the generated client method is documented as:
 //
 // Corresponds with GET /pets (the `ListPets` operationId).
 //
-// Stability: alpha
-//
-// This operation may change in backwards-incompatible ways.
+// This operation has been marked with the `alpha` stability level upstream (via `x-stability-level`).
 ListPets(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 ```
 
-You can see this in more detail in [the example code](../examples/extensions/xoapicodegencomment/).
+You can see this in more detail in [the example code](../examples/extensions/xstabilitylevel/).
 
 ## `x-order`
 
