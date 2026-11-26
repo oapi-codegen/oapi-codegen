@@ -15,8 +15,8 @@ package codegen
 
 import (
 	"bytes"
-	"errors"
 	"cmp"
+	"errors"
 	"fmt"
 	"go/token"
 	"maps"
