@@ -1,0 +1,8 @@
+# yaml-language-server: $schema=../../../../../configuration-schema.json
+package: optionsdefaultresponseerrordefault
+output: default_response_error.gen.go
+# default-response-error is left UNSET, so the default behaviour applies: an
+# unmatched response is returned with no error.
+generate:
+  client: true
+  models: true
